@@ -13,7 +13,7 @@
 
 - [x] **TASK-03**: Transcribir `contract.model.ts` (dato puro) desde la entidad real de `docs/referencia` — campos, columnas, defaults, índices, unique
 - [x] **TASK-04**: `generator.ts`: cargar el modelo, calcular sustituciones (`names()`, helpers) y expandir `files/` — con test unitario del cálculo de sustituciones (TDD)
-- [ ] **TASK-05**: Plantilla `typeorm-__name__.entity.ts.template` — iterar hasta **diff vacío** contra la entidad real de contracts (el diff es el test RED→GREEN)
+- [x] **TASK-05**: Plantilla `typeorm-__name__.entity.ts.template` — iterar hasta **diff vacío** contra la entidad real de contracts (el diff es el test RED→GREEN)
 
 ## Cierre
 

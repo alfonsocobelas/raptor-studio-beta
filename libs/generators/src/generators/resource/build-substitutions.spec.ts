@@ -30,6 +30,24 @@ describe('buildSubstitutions', () => {
       expect(subs.audit).toBe(true)
     })
 
+    it('computes the typeorm import list sorted alphabetically', () => {
+      const subs = buildSubstitutions(contract)
+
+      expect(subs.typeormImports).toBe('Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn')
+    })
+
+    it('imports only what a minimal model uses', () => {
+      const minimal: ResourceModel = {
+        name: 'thing',
+        plural: 'things',
+        context: 'demo',
+        schemaName: 'demo',
+        fields: [{ name: 'id', tsType: 'string', column: 'uuid', pk: true }]
+      }
+
+      expect(buildSubstitutions(minimal).typeormImports).toBe('Entity, PrimaryColumn')
+    })
+
     it('reports no flags for a minimal model', () => {
       // GIVEN
       const minimal: ResourceModel = {

@@ -1,0 +1,45 @@
+import { <%- typeormImports %> } from 'typeorm'
+<%_ if (needsNullable) { _%>
+import { Nullable } from '../../../../../../shared/domain/types'
+<%_ } _%>
+<%_ if (constraintsConst) { _%>
+import { <%- constraintsConst %> as LIMITS } from '../../../domain/<%- fileName %>-constants'
+<%_ } _%>
+<%_ if (needsNumericTransformer) { _%>
+
+const numericTransformer = {
+  to: (value: number): number => value,
+  from: (value: string): number => Number(value)
+}
+<%_ } _%>
+<%_ if (needsNullableNumericTransformer) { _%>
+
+// Variante null-safe para columnas NUMERIC nullable: Number(null) sería 0 (dato corrupto silencioso)
+const nullableNumericTransformer = {
+  to: (value: Nullable<number>): Nullable<number> => value,
+  from: (value: Nullable<string>): Nullable<number> => (value === null ? null : Number(value))
+}
+<%_ } _%>
+
+@Entity({ name: '<%- plural %>', schema: '<%- schemaName %>' })
+export class TypeOrm<%- className %>Entity {
+<%_ columns.forEach((c, i) => { _%>
+<%_ if (i > 0) { _%>
+
+<%_ } _%>
+<%_ c.comment.forEach(line => { _%>
+  // <%- line %>
+<%_ }) _%>
+  @<%- c.decorator %>(<%- c.argsSrc %>)
+  <%- c.name %>!: <%- c.tsType %>
+<%_ }) _%>
+<%_ if (audit) { _%>
+
+  // --- AUDIT FIELDS --- //
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date
+<%_ } _%>
+}

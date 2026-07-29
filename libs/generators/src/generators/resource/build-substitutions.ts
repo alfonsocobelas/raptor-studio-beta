@@ -22,6 +22,8 @@ export interface ResourceSubstitutions {
   needsNullable: boolean
   needsNumericTransformer: boolean
   needsNullableNumericTransformer: boolean
+  /** Pre-rendered typeorm import list, e.g. "Column, Entity, PrimaryColumn" */
+  typeormImports: string
   columns: ColumnSubstitution[]
 }
 
@@ -41,8 +43,17 @@ export function buildSubstitutions(model: ResourceModel): ResourceSubstitutions 
     needsNullable: model.fields.some(f => f.tsType.includes('Nullable<')),
     needsNumericTransformer: model.fields.some(f => f.options?.transformer === 'numeric'),
     needsNullableNumericTransformer: model.fields.some(f => f.options?.transformer === 'nullableNumeric'),
+    typeormImports: renderTypeormImports(model),
     columns: model.fields.map(renderColumn)
   }
+}
+
+function renderTypeormImports(model: ResourceModel): string {
+  const imports = ['Entity']
+  if (model.fields.some(f => f.pk)) imports.push('PrimaryColumn')
+  if (model.fields.some(f => !f.pk)) imports.push('Column')
+  if (model.audit) imports.push('CreateDateColumn', 'UpdateDateColumn')
+  return imports.sort().join(', ')
 }
 
 function renderColumn(field: ResourceField): ColumnSubstitution {
