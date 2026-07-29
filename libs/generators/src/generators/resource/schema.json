@@ -1,17 +1,22 @@
 {
   "$schema": "https://json-schema.org/schema",
   "$id": "Resource",
-  "title": "",
+  "title": "Resource generator",
+  "description": "Generates a resource module from a registered resource-schema model",
   "type": "object",
   "properties": {
     "name": {
       "type": "string",
-      "description": "",
+      "description": "Name of a registered resource model (e.g. 'contract')",
       "$default": {
         "$source": "argv",
         "index": 0
       },
-      "x-prompt": "What name would you like to use?"
+      "x-prompt": "Which resource model should be generated?"
+    },
+    "directory": {
+      "type": "string",
+      "description": "Output directory; defaults to tmp/generated/<plural>"
     }
   },
   "required": ["name"]
