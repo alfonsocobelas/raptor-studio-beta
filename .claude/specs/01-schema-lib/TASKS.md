@@ -7,7 +7,7 @@
 ## La lib
 
 - [x] **TASK-01**: Scaffold de `libs/schema` (`@nx/js:library`, importPath `@acc/schema`, jest, sin bundler) + limpiar el ejemplo generado; lint y test verdes
-- [ ] **TASK-02**: `resource-types.ts` (formato canónico completo del DESIGN) + `validation-errors.ts` (`SchemaValidationError` con lista de problemas) + barrel — sin tests (tipos y clase de error sin lógica)
+- [x] **TASK-02**: `resource-types.ts` (formato canónico completo del DESIGN) + `validation-errors.ts` (`SchemaValidationError` con lista de problemas) + barrel — sin tests (tipos y clase de error sin lógica)
 
 ## defineResource (TDD)
 
