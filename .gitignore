@@ -1,0 +1,22 @@
+# Dependencias y builds (cuando exista el workspace Nx)
+node_modules/
+dist/
+tmp/
+.nx/cache
+.nx/workspace-data
+
+# Proyecto de referencia: copia completa de sap-licenses.
+# NO se versiona: contiene credenciales reales (terraform.auto.tfvars.json, probe.env)
+# y un repositorio git embebido.
+docs/referencia/
+
+# Secretos y entorno
+.env
+.env.*
+*.tfvars.json
+tfplan
+probe.env
+
+# Sistema / editor
+.DS_Store
+.claude/settings.local.json
