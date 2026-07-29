@@ -20,3 +20,9 @@ probe.env
 # Sistema / editor
 .DS_Store
 .claude/settings.local.json
+
+.nx/installation
+.nx/self-healing
+.nx/migrate-runs
+.nx/polygraph
+.claude/worktrees

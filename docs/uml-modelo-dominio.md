@@ -129,21 +129,21 @@ El backend **no usa relaciones TypeORM** (`@ManyToOne`/`@OneToMany`): todas las 
 
 El hijo pertenece al padre, comparte ciclo de vida y vive en el mismo módulo.
 
-| Padre → Hijo | Módulo | Implicación para el generador |
-|---|---|---|
-| CUSTOMER → CONTACT | `customers` | Se crea/borra con el cliente. Cascada. UI: sub-tabla dentro de la ficha de cliente. |
-| LICENSE → CONSUMPTION_RECORD | `licenses` | Histórico de consumo propio de la licencia. |
+| Padre → Hijo                 | Módulo      | Implicación para el generador                                                       |
+| ---------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| CUSTOMER → CONTACT           | `customers` | Se crea/borra con el cliente. Cascada. UI: sub-tabla dentro de la ficha de cliente. |
+| LICENSE → CONSUMPTION_RECORD | `licenses`  | Histórico de consumo propio de la licencia.                                         |
 
 ### Referencia entre contextos (soft reference)
 
 Solo se guarda el ID; no hay FK dura porque cruza límites de contexto/agregado. Se resuelve con un lookup en la aplicación.
 
-| Origen → Destino | Cruza | Implicación para el generador |
-|---|---|---|
-| CUSTOMER.assignedKamId → USER | `sap_licensing` → `iam` | Solo ID + lookup. Nunca join duro entre esquemas. |
-| CONTRACT.customerId → CUSTOMER | módulos hermanos | ID + drill-down. Detalle de cliente lista sus contratos. |
-| LICENSE.customerId / contractId → CUSTOMER / CONTRACT | módulos hermanos | Doble referencia. Drill-down desde cliente y desde contrato. |
-| PROJECT.customerId → CUSTOMER | módulos hermanos | ID + drill-down. |
+| Origen → Destino                                      | Cruza                   | Implicación para el generador                                |
+| ----------------------------------------------------- | ----------------------- | ------------------------------------------------------------ |
+| CUSTOMER.assignedKamId → USER                         | `sap_licensing` → `iam` | Solo ID + lookup. Nunca join duro entre esquemas.            |
+| CONTRACT.customerId → CUSTOMER                        | módulos hermanos        | ID + drill-down. Detalle de cliente lista sus contratos.     |
+| LICENSE.customerId / contractId → CUSTOMER / CONTRACT | módulos hermanos        | Doble referencia. Drill-down desde cliente y desde contrato. |
+| PROJECT.customerId → CUSTOMER                         | módulos hermanos        | ID + drill-down.                                             |
 
 ```mermaid
 flowchart TD

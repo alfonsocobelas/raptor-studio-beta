@@ -12,9 +12,9 @@
 
 El maestro (§11) marca ADR-001 vigente para "capas, backend genérico, multi-tenant". Pero ADR-001 contiene tres cosas que el diseño final rechazó:
 
-1. **§2 y §4.4 "UI declarativa (schema-driven)"** describen un *render engine* que **interpreta** el schema en runtime (§2: "un motor que interpreta una definición declarativa (JSON/TS) de cada vista y la pinta"). Es exactamente lo contrario del principio "generar, no interpretar" (resource-schema §1: "el schema es entrada de un generador, no un intérprete de runtime"). Un lector nuevo —o el proceso de spec— recibe instrucciones opuestas según qué documento abra.
-2. **§2 y §4.1-4.2** presentan los contratos headless + adapters como decisión adoptada *ahora*; ADR-003 los relega a Nivel 2 "bajo demanda, no especulativo".
-3. **§6** recomienda multi-tenant A+RLS como *default*; ADR-005 lo convierte en perfil seleccionable (single | pooled) sin default global.
+1. **§2 y §4.4 "UI declarativa (schema-driven)"** describen un _render engine_ que **interpreta** el schema en runtime (§2: "un motor que interpreta una definición declarativa (JSON/TS) de cada vista y la pinta"). Es exactamente lo contrario del principio "generar, no interpretar" (resource-schema §1: "el schema es entrada de un generador, no un intérprete de runtime"). Un lector nuevo —o el proceso de spec— recibe instrucciones opuestas según qué documento abra.
+2. **§2 y §4.1-4.2** presentan los contratos headless + adapters como decisión adoptada _ahora_; ADR-003 los relega a Nivel 2 "bajo demanda, no especulativo".
+3. **§6** recomienda multi-tenant A+RLS como _default_; ADR-005 lo convierte en perfil seleccionable (single | pooled) sin default global.
 
 **Acción:** o se reescribe ADR-001, o (más barato) se le cambia el estado a "Superseded parcialmente por ADR-003/005 y el principio generar-no-interpretar" con una nota al inicio que diga qué secciones sobreviven (§5 backend genérico, §7 monorepo) y cuáles no (§4.4, §4.1-4.2 como presente, §6 como default). Tal como está, es una mina para el futuro tú.
 
@@ -31,14 +31,14 @@ Si el código generado se posee y se edita, regenerar pisa las ediciones (ADR-00
 **Acción:** decidir explícitamente y escribirlo en un sitio (propuesta coherente con lo demás):
 
 - La regeneración es **solo para crear módulos nuevos**, nunca mecanismo de actualización de módulos existentes.
-- El cambio de piel en Nivel 1 se apoya casi por completo en que las features importan *shared* — cambiar shared basta sin regenerar; la regeneración solo entra si cambia el contrato de las plantillas.
+- El cambio de piel en Nivel 1 se apoya casi por completo en que las features importan _shared_ — cambiar shared basta sin regenerar; la regeneración solo entra si cambia el contrato de las plantillas.
 - Las 4 referencias de oro se **congelan como fixtures** (snapshot del estado actual) para validar el generador v1; no se persigue diff limpio contra el código vivo para siempre. Cuando el generador evolucione, se re-baselinea conscientemente.
 
 ### A3. ADR-004 mezcla dos mecanismos de selección de adapter incompatibles
 
-ADR-004 §2.3 dice que el composition root **generado** registra el adapter ("`app.config: StoragePort = AzureBlobAdapter`"). ADR-004 §4-Capa A dice que los adapters se seleccionan "**por env en runtime** (12-factor): un mismo build despliega en cualquier cloud cambiando config". Son estrategias distintas con consecuencias distintas: la selección por env exige que *todos* los adapters (y los SDKs de todos los clouds) viajen en el build; la selección en generación produce un build por proveedor con un solo SDK.
+ADR-004 §2.3 dice que el composition root **generado** registra el adapter ("`app.config: StoragePort = AzureBlobAdapter`"). ADR-004 §4-Capa A dice que los adapters se seleccionan "**por env en runtime** (12-factor): un mismo build despliega en cualquier cloud cambiando config". Son estrategias distintas con consecuencias distintas: la selección por env exige que _todos_ los adapters (y los SDKs de todos los clouds) viajen en el build; la selección en generación produce un build por proveedor con un solo SDK.
 
-**Acción:** elegir una. Para tu caso (una app por cliente, cloud conocido al crearla) la coherente es: **el adapter se fija en generación** (composition root) y el env solo lleva configuración y credenciales *de ese* adapter. Reservar la selección runtime para el único caso que la justifique (¿tests e2e contra MinIO/local?), que se resuelve con un segundo composition root de test, no con un switch por env.
+**Acción:** elegir una. Para tu caso (una app por cliente, cloud conocido al crearla) la coherente es: **el adapter se fija en generación** (composition root) y el env solo lleva configuración y credenciales _de ese_ adapter. Reservar la selección runtime para el único caso que la justifique (¿tests e2e contra MinIO/local?), que se resuelve con un segundo composition root de test, no con un switch por env.
 
 ### A4. El formato del schema difiere entre documentos
 
@@ -52,13 +52,13 @@ ADR-004 §2.3 dice que el composition root **generado** registra el adapter ("`a
 
 ### B1. No hay modelo de distribución del kernel entre proyectos de clientes
 
-ADR-001 pone como requisito no funcional "un bug corregido en el core se propaga a todos los proyectos". ADR-004 responde con "provisión por referencia, no copia"… **dentro de un monorepo**. Pero el acelerador genera *proyectos distintos para clientes distintos*, y ADR-007 deja abierto el envoltorio (monorepo único vs standalone). Si cada cliente vive en su repo, "por referencia" significa **paquetes npm publicados** (registro privado, versionado semántico, política de breaking changes, matriz de compatibilidad kernel↔apps) — nada de eso está decidido. Y si todos los clientes viven en un único monorepo tuyo, hay otra conversación (aislamiento, entregas, propiedad del código del cliente).
+ADR-001 pone como requisito no funcional "un bug corregido en el core se propaga a todos los proyectos". ADR-004 responde con "provisión por referencia, no copia"… **dentro de un monorepo**. Pero el acelerador genera _proyectos distintos para clientes distintos_, y ADR-007 deja abierto el envoltorio (monorepo único vs standalone). Si cada cliente vive en su repo, "por referencia" significa **paquetes npm publicados** (registro privado, versionado semántico, política de breaking changes, matriz de compatibilidad kernel↔apps) — nada de eso está decidido. Y si todos los clientes viven en un único monorepo tuyo, hay otra conversación (aislamiento, entregas, propiedad del código del cliente).
 
 Es probablemente **la decisión abierta más cara de las que quedan**, porque condiciona ADR-004 entero (fix-once-propagate) y el ROI del catálogo. Merece un ADR-008, aunque su primera versión sea "de momento un monorepo, npm privado cuando haya 2º cliente" — pero escrito, con el disparador definido.
 
 ### B2. La propagación de la denormalización debería generarla el generador, no quedar como "limitación documentada"
 
-ADR-002 deja la propagación de copias como action item ("definir dónde se propaga… o se documenta como limitación conocida"). En `sap-licences` se sostiene porque las copias se escriben en el sync con SAP. Pero el acelerador generaliza a clientes **sin** sync: si un usuario edita `customer.name` en la app, todas las copias en contract/license/project quedan obsoletas — es un bug de datos *por defecto* en toda app generada.
+ADR-002 deja la propagación de copias como action item ("definir dónde se propaga… o se documenta como limitación conocida"). En `sap-licences` se sostiene porque las copias se escriben en el sync con SAP. Pero el acelerador generaliza a clientes **sin** sync: si un usuario edita `customer.name` en la app, todas las copias en contract/license/project quedan obsoletas — es un bug de datos _por defecto_ en toda app generada.
 
 Lo interesante es que **el schema ya sabe todo lo necesario**: qué campo es copia, de qué entidad y por qué referencia (`relation` + campo denormalizado). La propagación es derivable de forma determinista — el generador puede emitir el handler de propagación (en el `updateDetails` del agregado origen o como evento de dominio) igual que emite los `ALLOWED_FILTERS`. Propuesta: añadir al schema `denormalizedFrom: { entity, field, via }` en los campos copia, y que la plantilla del use-case de update del origen emita la actualización de las copias. Convierte la mayor debilidad de ADR-002 en código generado y testeado.
 
@@ -88,13 +88,13 @@ Relacionado técnico (para cuando llegue): RLS con pool de conexiones exige `SET
 
 Hoy la coherencia "sale gratis" **en el momento de generar**: `columns[]` y `ALLOWED_FILTERS` nacen del mismo array. Pero con "generar y poseer", en cuanto alguien edite uno de los dos a mano, la desincronización vuelve (el problema original del comentario). Mejora: en lugar de generar dos artefactos gemelos, generar **una sola constante compartida** (`libs/contracts/<recurso>.fields.ts` con los campos filtrables/ordenables/buscables) que importan tanto el `search-config` del back como el `columns[]` del front. La coherencia pasa de ser una propiedad del instante de generación a ser una propiedad estructural del código en runtime. Coste: una plantilla más; encaja con el `@acc/contracts` que ADR-001 ya preveía.
 
-### C2. Normalizar los 4 módulos a mano *antes* de perseguir el diff vacío
+### C2. Normalizar los 4 módulos a mano _antes_ de perseguir el diff vacío
 
 El diff de oro asume que los 4 módulos escritos a mano son perfectamente uniformes entre sí. Casi seguro no lo son (orden de imports, pequeñas variantes de estilo, decisiones locales). Una sola plantilla no puede reproducir 4 idiosincrasias distintas — el riesgo es acabar metiendo flags en el schema para reproducir accidentes históricos (inner-platform por la puerta de atrás). Mejora: paso 0 de la spec = pasada de **uniformización de los 4 módulos** (que el diff entre ellos, módulo la sustitución de nombres, sea vacío) y después construir el generador contra esa forma canónica. Además define "diff cosmético" de forma operativa: diff tras `prettier` + orden de imports normalizado.
 
 ### C3. El gate acepta tests escritos por la misma IA que escribió el código
 
-En el paso ② (post-generación), la IA rellena la validación de negocio **y** los tests de casos límite. El gate ("pasan los tests") tiene entonces un punto ciego: tests y código salen de la misma mano no determinista, pueden ser coherentes entre sí y ambos incorrectos. No invalida el mecanismo (compilación, boundaries y diff siguen siendo independientes), pero merece una línea en `integracion-ia-generador.md`: los *asserts* de los tests rellenados por IA se revisan a mano (son pequeños y legibles — mismo argumento que el paso ①), o se separan las pasadas (IA-código e IA-tests en llamadas independientes sin ver la otra salida).
+En el paso ② (post-generación), la IA rellena la validación de negocio **y** los tests de casos límite. El gate ("pasan los tests") tiene entonces un punto ciego: tests y código salen de la misma mano no determinista, pueden ser coherentes entre sí y ambos incorrectos. No invalida el mecanismo (compilación, boundaries y diff siguen siendo independientes), pero merece una línea en `integracion-ia-generador.md`: los _asserts_ de los tests rellenados por IA se revisan a mano (son pequeños y legibles — mismo argumento que el paso ①), o se separan las pasadas (IA-código e IA-tests en llamadas independientes sin ver la otra salida).
 
 ### C4. Declarar versión del schema desde el día 1
 

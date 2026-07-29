@@ -30,10 +30,12 @@ libs/generators/
 
 ```typescript
 export const contract = {
-  name: 'contract', plural: 'contracts', context: 'sap-licensing',
+  name: 'contract',
+  plural: 'contracts',
+  context: 'sap-licensing',
   fields: [
     { name: 'id', tsType: 'string', column: 'uuid', pk: true },
-    { name: 'contractNumber', tsType: 'string', column: 'varchar', required: true, unique: true },
+    { name: 'contractNumber', tsType: 'string', column: 'varchar', required: true, unique: true }
     // …campos copiados fielmente de la entidad real de docs/referencia
   ]
 } as const
@@ -58,17 +60,17 @@ diff tmp/... docs/referencia/libs/backend/src/contexts/sap-licensing/modules/con
 
 ## Decisiones técnicas
 
-| Decisión | Opción elegida | Razón |
-| --- | --- | --- |
-| Preset del workspace | ts vacío, sin apps | Solo hace falta el plugin; las apps de demo llegan después |
-| Ubicación del modelo | junto al generador (provisional) | `libs/schema` es la spec 01; no adelantar estructura |
-| Alcance de plantilla | solo entidad TypeORM | Ver el mecanismo end-to-end con lo mínimo (guía §9.2) |
-| Git | rama `develop`, commits directos | Decisión 2026-07-29 (CLAUDE.md) |
+| Decisión             | Opción elegida                   | Razón                                                      |
+| -------------------- | -------------------------------- | ---------------------------------------------------------- |
+| Preset del workspace | ts vacío, sin apps               | Solo hace falta el plugin; las apps de demo llegan después |
+| Ubicación del modelo | junto al generador (provisional) | `libs/schema` es la spec 01; no adelantar estructura       |
+| Alcance de plantilla | solo entidad TypeORM             | Ver el mecanismo end-to-end con lo mínimo (guía §9.2)      |
+| Git                  | rama `develop`, commits directos | Decisión 2026-07-29 (CLAUDE.md)                            |
 
 ## Riesgos identificados
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-| --- | --- | --- | --- |
-| El diff nunca vacía por detalles de formato (prettier/imports) | media | medio | `formatFiles` + copiar convenciones exactas de la referencia; documentar los cosméticos que se acepten |
-| La entidad real usa detalles no capturables por el modelo mínimo (índices compuestos, defaults) | media | bajo | Ampliar el modelo solo con lo que la entidad real exige; nada especulativo |
-| Versiones de Nx/plugin incompatibles con lo documentado | baja | medio | No inventar API: verificar contra la doc de la versión instalada |
+| Riesgo                                                                                          | Probabilidad | Impacto | Mitigación                                                                                             |
+| ----------------------------------------------------------------------------------------------- | ------------ | ------- | ------------------------------------------------------------------------------------------------------ |
+| El diff nunca vacía por detalles de formato (prettier/imports)                                  | media        | medio   | `formatFiles` + copiar convenciones exactas de la referencia; documentar los cosméticos que se acepten |
+| La entidad real usa detalles no capturables por el modelo mínimo (índices compuestos, defaults) | media        | bajo    | Ampliar el modelo solo con lo que la entidad real exige; nada especulativo                             |
+| Versiones de Nx/plugin incompatibles con lo documentado                                         | baja         | medio   | No inventar API: verificar contra la doc de la versión instalada                                       |

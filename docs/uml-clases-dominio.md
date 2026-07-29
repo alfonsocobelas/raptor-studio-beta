@@ -198,15 +198,15 @@ El patrón se repite por módulo: `ContractRepository`, `LicenseRepository`, `Pr
 
 ## 4. Qué es estructura y qué es binding (para el generador/RAG)
 
-| Elemento del UML | Clasificación | Por qué |
-|---|---|---|
+| Elemento del UML                                                    | Clasificación  | Por qué                                        |
+| ------------------------------------------------------------------- | -------------- | ---------------------------------------------- |
 | Protocolo `create/fromPrimitives/toPrimitives/updateDetails/equals` | **Estructura** | Idéntico en los 4 agregados; se copia tal cual |
-| Herencia de `AggregateRoot` / `StringValueObject` | **Estructura** | Base del esqueleto |
-| Interfaz de repositorio (`matching/exists/count/get/save…`) | **Estructura** | Firma común; solo cambia el tipo de agregado |
-| Lista de atributos-VO de cada agregado | **Binding** | Deriva de la entidad concreta |
-| VOs concretos y sus reglas de `create()` | **Binding** | Validación específica del campo |
-| Métodos de unicidad (`newSapIdIfChanged`, `uniquenessKeyIfChanged`) | **Binding** | Dependen de qué campos son únicos |
-| Specifications concretas | **Binding** | Consultas propias del dominio |
+| Herencia de `AggregateRoot` / `StringValueObject`                   | **Estructura** | Base del esqueleto                             |
+| Interfaz de repositorio (`matching/exists/count/get/save…`)         | **Estructura** | Firma común; solo cambia el tipo de agregado   |
+| Lista de atributos-VO de cada agregado                              | **Binding**    | Deriva de la entidad concreta                  |
+| VOs concretos y sus reglas de `create()`                            | **Binding**    | Validación específica del campo                |
+| Métodos de unicidad (`newSapIdIfChanged`, `uniquenessKeyIfChanged`) | **Binding**    | Dependen de qué campos son únicos              |
+| Specifications concretas                                            | **Binding**    | Consultas propias del dominio                  |
 
 Esto refina el "hueco de binding" del contrato de unidad-vista: no basta con generar la entidad TypeORM y `columns[]`; hay que generar también **el agregado con su protocolo, sus VOs y sus specifications**. El comportamiento (los métodos) es justo lo que el diagrama ER no capturaba y por lo que un UML de clases es imprescindible aquí.
 

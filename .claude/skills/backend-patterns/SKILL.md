@@ -14,7 +14,6 @@ description: >
 > Toda ruta `libs/backend/...` citada abajo se refiere a ese repo de referencia. Si una plantilla emite código
 > que viola estos patrones, la plantilla está mal.
 
-
 # Patrones de backend — extraídos del repositorio de referencia
 
 Estos patrones están implementados en `../sap-licences-backend/`. Léelos ahí antes de implementar — **no improvises basándote en este resumen**.
@@ -88,11 +87,11 @@ export class Contract extends AggregateRoot {
 
 El agregado tiene **tres puertas de entrada**, cada una con una intención distinta:
 
-| Constructor             | Entrada              | Defaults | Cuándo                                             |
-| ----------------------- | -------------------- | -------- | -------------------------------------------------- |
-| `create(props)`         | Value Objects        | no       | ensamblado interno / cuando ya tienes VOs          |
-| `fromPrimitives(props)` | todos los primitivos | no       | rehidratar desde persistencia (round-trip exacto)  |
-| `register(props)`       | primitivos parciales | **sí**   | alta de una entidad nueva                          |
+| Constructor             | Entrada              | Defaults | Cuándo                                            |
+| ----------------------- | -------------------- | -------- | ------------------------------------------------- |
+| `create(props)`         | Value Objects        | no       | ensamblado interno / cuando ya tienes VOs         |
+| `fromPrimitives(props)` | todos los primitivos | no       | rehidratar desde persistencia (round-trip exacto) |
+| `register(props)`       | primitivos parciales | **sí**   | alta de una entidad nueva                         |
 
 **Regla:** los defaults de creación (`source='AVVALE_SOLD'`, `currency='EUR'`, `totalValue=0`…) son **reglas de negocio** y viven en `register`, dentro del agregado. **Nunca en un mapper de la capa de aplicación.** Un mapper que traduce primitivos→VOs y de paso aplica defaults es **anemia de dominio**: obliga a todo el que cree la entidad a pasar por él o a replicar los defaults, y `create()` deja de ser autosuficiente.
 
@@ -468,7 +467,7 @@ Comportamiento verificado en el código de TypeORM (`query-builder/`):
 Estrategia consolidada del repo (2026-07-13): las migraciones se escriben **a mano** (`typeorm:migration:create` + SQL) y `synchronize: false` en los 5 environments, incluido test (la BD de test también se monta con migraciones).
 
 - **`@Index` / `@Check` / `@Unique` NO se usan en entidades TypeORM.** Son metadatos de DDL puro: en runtime TypeORM no los lee para nada (ni construye queries con ellos, ni valida). Solo los consumen `synchronize` y `migration:generate` — ninguno de los dos está en nuestro flujo. Índices, uniques, checks y defaults viven **solo** en la migración SQL.
-- **`typeorm:migration:generate` está VETADO** para producir migraciones commiteables. Diffea *decoradores vs BD real*: como nuestras entidades no declaran los índices/checks que sí existen en la BD, generaría `DROP INDEX`/`DROP CONSTRAINT` de todo lo creado a mano. Como mucho sirve de chuleta local para ver el SQL de una columna nueva, descartando su salida.
+- **`typeorm:migration:generate` está VETADO** para producir migraciones commiteables. Diffea _decoradores vs BD real_: como nuestras entidades no declaran los índices/checks que sí existen en la BD, generaría `DROP INDEX`/`DROP CONSTRAINT` de todo lo creado a mano. Como mucho sirve de chuleta local para ver el SQL de una columna nueva, descartando su salida.
 - La entidad TypeORM declara solo lo que el runtime necesita: `@PrimaryColumn`, `@Column` (tipo, length, nullable, default de lectura), `@CreateDateColumn`/`@UpdateDateColumn` y relaciones.
 - Razón de fondo: dos fuentes de verdad (decorador + migración) que nadie sincroniza acaban divergiendo, y un decorador que miente es peor que su ausencia (ver el gap de `DEFAULT now()` en «Columnas de auditoría»). El SQL a mano además permite lo que los decoradores no expresan: índices parciales, `CREATE INDEX CONCURRENTLY`, backfills.
 
@@ -476,12 +475,12 @@ Estrategia consolidada del repo (2026-07-13): las migraciones se escriben **a ma
 
 La FK se decide por la frontera del agregado, no por si existe una columna `*_id`:
 
-| Relación                                | ¿FK?                | Por qué                                                                            |
-| --------------------------------------- | ------------------- | ---------------------------------------------------------------------------------- |
-| **Composición** (dentro del agregado)   | **SÍ**, `RESTRICT`  | El repo persiste padre e hijos en la misma transacción: la FK es el espejo físico del invariante |
-| **Asociación** (entre agregados)        | **NO**              | Referencia por identidad (DDD). La existencia la valida el **caso de uso**, no la BD |
+| Relación                              | ¿FK?               | Por qué                                                                                          |
+| ------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------ |
+| **Composición** (dentro del agregado) | **SÍ**, `RESTRICT` | El repo persiste padre e hijos en la misma transacción: la FK es el espejo físico del invariante |
+| **Asociación** (entre agregados)      | **NO**             | Referencia por identidad (DDD). La existencia la valida el **caso de uso**, no la BD             |
 
-Regla enseñable: *¿lo persiste el mismo repositorio en la misma transacción?* → FK. Si no → identidad + validación en el use case.
+Regla enseñable: _¿lo persiste el mismo repositorio en la misma transacción?_ → FK. Si no → identidad + validación en el use case.
 
 - Con FK hoy: `contacts→customers`, `consumption_records→licenses`, `qbr_activities→qbr_declarations`, `qbr_evidences→qbr_activities`. Más los dos `CASCADE` de IAM (`session`/`auth_token` → `user`), que son infra de auth y se dejan a propósito.
 - Sin FK a propósito: `contracts→customers`, `licenses→contracts|customers`, `projects→customers`, `metric_consumption→customers`, `qbr_declarations→customers`.
@@ -493,11 +492,11 @@ Los VOs solo protegen las escrituras que pasan por la aplicación. Scripts, fixe
 
 Toda columna nueva nace con su CHECK si encaja en una de estas tres familias (ver `1785300000000-AddCheckConstraints`, 50 constraints):
 
-| Familia            | Cuándo                                    | Ejemplo                                                     |
-| ------------------ | ----------------------------------------- | ----------------------------------------------------------- |
-| Enum               | La columna está respaldada por un VO enum | `CHECK (status IN ('active','expiring','expired','terminated'))` |
-| Longitud mínima    | El `LIMITS.*.MIN` del dominio             | `CHECK (char_length(sap_id) >= 3)` — el MAX ya lo da `VARCHAR(n)` |
-| Rango numérico     | Cotas del dominio                         | `CHECK (quarter BETWEEN 1 AND 4)`                            |
+| Familia         | Cuándo                                    | Ejemplo                                                           |
+| --------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| Enum            | La columna está respaldada por un VO enum | `CHECK (status IN ('active','expiring','expired','terminated'))`  |
+| Longitud mínima | El `LIMITS.*.MIN` del dominio             | `CHECK (char_length(sap_id) >= 3)` — el MAX ya lo da `VARCHAR(n)` |
+| Rango numérico  | Cotas del dominio                         | `CHECK (quarter BETWEEN 1 AND 4)`                                 |
 
 - Convención de nombre: `ck_<tabla>_<campo>` (y sufijo `_length` / `_range` cuando no es un enum).
 - Columnas nullable: `col IS NULL OR <condición>`. Texto libre (`business_model`, `metric_name`, `notes`) **no** lleva CHECK.
@@ -508,12 +507,12 @@ Toda columna nueva nace con su CHECK si encaja en una de estas tres familias (ve
 
 Regla: **el mother/builder vive en la misma capa que el objeto que fabrica**, no en la del test que lo consume (un mother es un fixture transversal: lo usan tests de dominio, aplicación e infraestructura por igual).
 
-| Qué construye el mother | Dónde vive |
-| --- | --- |
-| Agregado de dominio (`Contract`, `User`, `License`…) | `tests/modules/<módulo>/domain/mothers/` |
-| Value Object | `tests/modules/<módulo>/domain/value-objects/` |
-| DTO de input/output de aplicación | `tests/modules/<módulo>/application/mothers/` (o `application/dtos/`) |
-| Primitivos compartidos (uuid, string, enum…) | `tests/modules/shared/domain/mothers/` |
+| Qué construye el mother                              | Dónde vive                                                            |
+| ---------------------------------------------------- | --------------------------------------------------------------------- |
+| Agregado de dominio (`Contract`, `User`, `License`…) | `tests/modules/<módulo>/domain/mothers/`                              |
+| Value Object                                         | `tests/modules/<módulo>/domain/value-objects/`                        |
+| DTO de input/output de aplicación                    | `tests/modules/<módulo>/application/mothers/` (o `application/dtos/`) |
+| Primitivos compartidos (uuid, string, enum…)         | `tests/modules/shared/domain/mothers/`                                |
 
 Error típico a evitar: colocar el mother de un agregado bajo `application/mothers/` solo porque el primer test que lo usó era un use case. Es inercia, no diseño — el mismo mother lo acaba usando el test del mapper (infraestructura). Ubícalo por lo que **fabrica**, no por quién lo estrena.
 

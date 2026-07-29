@@ -11,7 +11,7 @@
 
 Según el cliente, la app puede necesitar ser **multi-tenant** o **single-tenant con user/admin simple**. Es una decisión **profunda** (toca el modelo de datos y la auth) y **difícil de revertir**, así que debe elegirse al crear la app, no improvisarse.
 
-El espectro completo de tenancy va de *pool* (todo compartido) a *silo* (todo aislado): single-tenant dedicado, multi pooled (tenant_id), schema-per-tenant, DB-per-tenant, instancia-per-tenant. De todo ello, el acelerador soporta **solo dos perfiles** por decisión explícita; el resto añade complejidad de migración/operación que rara vez compensa y se deja fuera del catálogo salvo demanda concreta.
+El espectro completo de tenancy va de _pool_ (todo compartido) a _silo_ (todo aislado): single-tenant dedicado, multi pooled (tenant_id), schema-per-tenant, DB-per-tenant, instancia-per-tenant. De todo ello, el acelerador soporta **solo dos perfiles** por decisión explícita; el resto añade complejidad de migración/operación que rara vez compensa y se deja fuera del catálogo salvo demanda concreta.
 
 ---
 
@@ -79,15 +79,18 @@ Es una decisión **por cliente**, no un default global.
 ## 6. Consecuencias
 
 **Más fácil**
+
 - App single mínima; app pooled con aislamiento robusto (RLS).
 - Código de dominio agnóstico a la tenancy (solo cambia cableado + esquema).
 
 **Más difícil / a vigilar**
+
 - Migrar single→pooled a posteriori es costoso → decidir bien al crear.
 - Dos ramas en las plantillas del generador (con/sin `tenant_id`).
 - Disciplina: **ningún use-case debe llevar `if (multiTenant)`**; si aparece, el diseño se rompió.
 
 **A revisar**
+
 - Si un cliente single crece hacia multi → aplicar el hedge o planificar migración.
 - Perfiles intermedios (schema/DB-per-tenant) solo si un cliente los exige.
 

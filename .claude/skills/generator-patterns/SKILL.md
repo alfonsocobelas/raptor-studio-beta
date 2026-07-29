@@ -41,8 +41,8 @@ Convenciones de nombre que Nx entiende: `__name__` → valor de `name`; sufijo `
 import { Tree, formatFiles, generateFiles, names, joinPathFragments } from '@nx/devkit'
 
 export async function resourceGenerator(tree: Tree, options: ResourceSchema) {
-  const model = loadModel(options.name)          // lee el resource-schema
-  const n = names(model.name)                    // { className, propertyName, constantName… }
+  const model = loadModel(options.name) // lee el resource-schema
+  const n = names(model.name) // { className, propertyName, constantName… }
 
   const substitutions = {
     ...model,
@@ -51,14 +51,14 @@ export async function resourceGenerator(tree: Tree, options: ResourceSchema) {
     constantName: n.constantName,
     // helpers pre-masticados para las plantillas:
     searchable: model.fields.filter(f => f.query?.searchable).map(f => f.name),
-    sortable:   model.fields.filter(f => f.query?.sortable).map(f => f.name),
+    sortable: model.fields.filter(f => f.query?.sortable).map(f => f.name),
     filterable: model.fields.filter(f => f.query?.filterable).map(f => f.name),
-    columns:    model.fields.filter(f => f.table?.show),
+    columns: model.fields.filter(f => f.table?.show),
     formFields: model.fields.filter(f => f.form?.control && f.form.control !== 'none')
   }
 
   generateFiles(tree, joinPathFragments(__dirname, 'files'), targetDir, substitutions)
-  await formatFiles(tree)                        // aplica prettier del repo
+  await formatFiles(tree) // aplica prettier del repo
 }
 ```
 

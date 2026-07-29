@@ -135,25 +135,25 @@ Jerarquía de instrucciones inamovible: (1) este `CLAUDE.md` y mis specs → (2)
 
 | Skill                  | Cuándo se activa                                                        |
 | ---------------------- | ----------------------------------------------------------------------- |
-| `session-start`        | Al inicio de una sesión nueva                                            |
-| `spec-driven-workflow` | Al pedir nueva feature o trabajar con specs                              |
-| `tdd-enforcer`         | Al implementar lógica (generator.ts, helpers, adapters, código emitido)  |
-| `architecture-guard`   | Al añadir imports, módulos o estructura nueva                            |
-| `git-workflow`         | Al hacer commit o terminar una tarea (versión develop-only)              |
-| `generator-patterns`   | Al trabajar en el plugin Nx, plantillas EJS o `generator.ts`             |
-| `schema-authoring`     | Al escribir o modificar un resource-schema                               |
-| `golden-diff`          | Al validar plantillas contra las referencias de oro / re-baseline        |
-| `backend-patterns`     | Al escribir plantillas o código backend (patrones que debe emitir)       |
-| `frontend-patterns`    | Al escribir plantillas o código frontend (patrones que debe emitir)      |
+| `session-start`        | Al inicio de una sesión nueva                                           |
+| `spec-driven-workflow` | Al pedir nueva feature o trabajar con specs                             |
+| `tdd-enforcer`         | Al implementar lógica (generator.ts, helpers, adapters, código emitido) |
+| `architecture-guard`   | Al añadir imports, módulos o estructura nueva                           |
+| `git-workflow`         | Al hacer commit o terminar una tarea (versión develop-only)             |
+| `generator-patterns`   | Al trabajar en el plugin Nx, plantillas EJS o `generator.ts`            |
+| `schema-authoring`     | Al escribir o modificar un resource-schema                              |
+| `golden-diff`          | Al validar plantillas contra las referencias de oro / re-baseline       |
+| `backend-patterns`     | Al escribir plantillas o código backend (patrones que debe emitir)      |
+| `frontend-patterns`    | Al escribir plantillas o código frontend (patrones que debe emitir)     |
 
 ---
 
 ## Comandos personalizados (`/comando`)
 
-| Comando        | Función                                                                    |
-| -------------- | --------------------------------------------------------------------------- |
-| `/spec-new`    | Crea esqueleto de spec (REQUIREMENTS + DESIGN + TASKS)                      |
-| `/spec-status` | Muestra el estado de todas las specs y la tarea activa                      |
-| `/task-next`   | Identifica y propone la siguiente tarea atómica de la spec activa           |
-| `/arch-review` | Audita un fichero o módulo contra las reglas de arquitectura                |
-| `/golden-diff` | Regenera las referencias de oro y reporta el diff contra las fixtures       |
+| Comando        | Función                                                               |
+| -------------- | --------------------------------------------------------------------- |
+| `/spec-new`    | Crea esqueleto de spec (REQUIREMENTS + DESIGN + TASKS)                |
+| `/spec-status` | Muestra el estado de todas las specs y la tarea activa                |
+| `/task-next`   | Identifica y propone la siguiente tarea atómica de la spec activa     |
+| `/arch-review` | Audita un fichero o módulo contra las reglas de arquitectura          |
+| `/golden-diff` | Regenera las referencias de oro y reporta el diff contra las fixtures |

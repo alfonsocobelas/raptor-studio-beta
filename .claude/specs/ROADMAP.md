@@ -6,34 +6,34 @@
 
 ## Fase 1 — Núcleo del generador (el 70-80% de probabilidad de éxito)
 
-| Nº | Spec | Objetivo | Estado |
-|----|------|----------|--------|
-| 00 | `generador-recurso` | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | **Activa** |
-| 01 | `schema-lib` | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5) | Pendiente |
-| 02 | `golden-fixtures` | Congelar los 4 módulos de oro desde `docs/referencia` + comando/target de diff | Pendiente |
-| 03 | `plantillas-backend` | Módulo backend completo (domain + application + infrastructure) con diff vacío para `contract` | Pendiente |
-| 04 | `plantillas-frontend` | Vista completa (list + dialog + detail + service + rutas) con diff vacío | Pendiente |
-| 05 | `validacion-4-entidades` | Las 4 referencias de oro generan con diff vacío (gate completo) | Pendiente |
+| Nº  | Spec                     | Objetivo                                                                                                      | Estado     |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------- | ---------- |
+| 00  | `generador-recurso`      | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | **Activa** |
+| 01  | `schema-lib`             | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5)                  | Pendiente  |
+| 02  | `golden-fixtures`        | Congelar los 4 módulos de oro desde `docs/referencia` + comando/target de diff                                | Pendiente  |
+| 03  | `plantillas-backend`     | Módulo backend completo (domain + application + infrastructure) con diff vacío para `contract`                | Pendiente  |
+| 04  | `plantillas-frontend`    | Vista completa (list + dialog + detail + service + rutas) con diff vacío                                      | Pendiente  |
+| 05  | `validacion-4-entidades` | Las 4 referencias de oro generan con diff vacío (gate completo)                                               | Pendiente  |
 
 ## Fase 2 — Catálogo de infra (Azure primero, ADR-004)
 
-| Nº | Spec | Objetivo | Estado |
-|----|------|----------|--------|
-| 06 | `infra-ports` | `libs/infra/ports`: `StoragePort` + test de conformidad | Pendiente |
-| 07 | `adapter-storage-azure` | Copiar/adaptar `AzureBlobFileStorage` + config/Key Vault loader de la referencia | Pendiente |
-| 08 | `composition-root` | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`) | Pendiente |
+| Nº  | Spec                    | Objetivo                                                                                            | Estado    |
+| --- | ----------------------- | --------------------------------------------------------------------------------------------------- | --------- |
+| 06  | `infra-ports`           | `libs/infra/ports`: `StoragePort` + test de conformidad                                             | Pendiente |
+| 07  | `adapter-storage-azure` | Copiar/adaptar `AzureBlobFileStorage` + config/Key Vault loader de la referencia                    | Pendiente |
+| 08  | `composition-root`      | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`) | Pendiente |
 
 ## Fase 3 — Bordes (bajo demanda, no especulativo)
 
-| Nº | Spec | Objetivo | Estado |
-|----|------|----------|--------|
-| 09 | `ia-pre-generacion` | IA redacta el `*.model.ts` desde NL/SQL/captura, bajo gate | Bajo demanda |
-| 10 | `ia-post-generacion` | Huecos `// @ai:begin…@ai:end` + gate determinista | Bajo demanda |
-| — | `ui-nivel-2` | Contratos headless + adapters de piel (ADR-003) | Solo con cliente real |
-| — | `adapter-storage-s3` | 2º proveedor: valida la abstracción del puerto | Solo con cliente AWS |
-| — | `arquetipo-bridge-api` | Perfil `bridge-api` (ref. ip-opentext-cmis-api) | Solo con proyecto real |
-| — | `demo-app-gate-visual` | App de demo que monta el código generado + recuperar el gate visual Playwright MCP para conducir las vistas emitidas | Tras spec 04 |
-| — | `gitflow-completo` | Reinstaurar ramas/PRs/rulesets (base: spec 51 de la referencia) | Cuando madure |
+| Nº  | Spec                   | Objetivo                                                                                                             | Estado                 |
+| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 09  | `ia-pre-generacion`    | IA redacta el `*.model.ts` desde NL/SQL/captura, bajo gate                                                           | Bajo demanda           |
+| 10  | `ia-post-generacion`   | Huecos `// @ai:begin…@ai:end` + gate determinista                                                                    | Bajo demanda           |
+| —   | `ui-nivel-2`           | Contratos headless + adapters de piel (ADR-003)                                                                      | Solo con cliente real  |
+| —   | `adapter-storage-s3`   | 2º proveedor: valida la abstracción del puerto                                                                       | Solo con cliente AWS   |
+| —   | `arquetipo-bridge-api` | Perfil `bridge-api` (ref. ip-opentext-cmis-api)                                                                      | Solo con proyecto real |
+| —   | `demo-app-gate-visual` | App de demo que monta el código generado + recuperar el gate visual Playwright MCP para conducir las vistas emitidas | Tras spec 04           |
+| —   | `gitflow-completo`     | Reinstaurar ramas/PRs/rulesets (base: spec 51 de la referencia)                                                      | Cuando madure          |
 
 ## Pendientes conocidos (no bloquean la spec 00)
 

@@ -8,7 +8,7 @@
 
 ## 0. Idea en una frase
 
-Una **unidad-vista** es un módulo de feature completo (back + front) que resuelve un patrón de pantalla —tabla paginada con búsqueda/filtros/orden + CRUD + export—, **depende solo del esqueleto**, y expone su parte específica del dominio en un puñado de ficheros bien localizados. El RAG guarda la *forma* (idéntica entre vistas) junto a una captura; el LLM, al insertarla, deriva el *binding* concreto de la entidad nueva.
+Una **unidad-vista** es un módulo de feature completo (back + front) que resuelve un patrón de pantalla —tabla paginada con búsqueda/filtros/orden + CRUD + export—, **depende solo del esqueleto**, y expone su parte específica del dominio en un puñado de ficheros bien localizados. El RAG guarda la _forma_ (idéntica entre vistas) junto a una captura; el LLM, al insertarla, deriva el _binding_ concreto de la entidad nueva.
 
 La clave que hace todo esto viable ya está en el proyecto: **una vista nunca importa otra vista.** Solo importa de `shared`/`core`/`ui`. Esa dirección de dependencias es el contrato de compatibilidad, y es forzable por lint de módulos de Nx.
 
@@ -18,29 +18,29 @@ La clave que hace todo esto viable ya está en el proyecto: **una vista nunca im
 
 ### Esqueleto — backend (`libs/backend/src/contexts/shared/` + `iam`)
 
-| Elemento | Rol |
-|---|---|
+| Elemento                                                                                     | Rol                                                     |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `shared/domain/query/` (`criteria`, `filter`, `filters`, `order`, `global-search`, `cursor`) | Lenguaje genérico de filtrado/orden/búsqueda/paginación |
-| `shared/infrastructure/pipes/parse-criteria.pipe.ts` | Traduce query params REST → Criteria |
-| `shared/infrastructure/pipes/parse-uuid-v7.pipe.ts` | Validación de IDs |
-| `shared/infrastructure/dtos/paginate-offset.dto.ts` | DTO de paginación |
-| `shared/application/dtos/search-output.dto.ts` (`OffsetPaginatedOutput<T>`) | Forma de respuesta paginada |
-| `shared/infrastructure/export/build-export-file.ts` | Genera CSV/XLSX desde filas + columnas |
-| `shared/infrastructure/{filters,interceptors,logger,config,telemetry,http,persistence}` | Cross-cutting |
-| `iam/modules/auth` | Autenticación |
+| `shared/infrastructure/pipes/parse-criteria.pipe.ts`                                         | Traduce query params REST → Criteria                    |
+| `shared/infrastructure/pipes/parse-uuid-v7.pipe.ts`                                          | Validación de IDs                                       |
+| `shared/infrastructure/dtos/paginate-offset.dto.ts`                                          | DTO de paginación                                       |
+| `shared/application/dtos/search-output.dto.ts` (`OffsetPaginatedOutput<T>`)                  | Forma de respuesta paginada                             |
+| `shared/infrastructure/export/build-export-file.ts`                                          | Genera CSV/XLSX desde filas + columnas                  |
+| `shared/infrastructure/{filters,interceptors,logger,config,telemetry,http,persistence}`      | Cross-cutting                                           |
+| `iam/modules/auth`                                                                           | Autenticación                                           |
 
 ### Esqueleto — frontend (`libs/frontend/src/{core,shared}` + `libs/ui/*` + `layout`)
 
-| Elemento | Rol |
-|---|---|
+| Elemento                                                                                                 | Rol                                                                                        |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `shared/components/data-table.ts` (`DataTable`, `ColumnDef`, `ColumnFilter`, `SortOrder`, `TableAction`) | Tabla server-side genérica: paginación, orden, filtros, búsqueda, export, create, acciones |
-| `core/http/` (`api-base-url` token + interceptors, `auth.interceptor`) | Base HTTP transversal |
-| `core/services/export-filename.ts` | Parseo de `Content-Disposition` |
-| `shared/utils/` (`uuid`, `download-file`) | Utilidades |
-| `libs/ui/*` (Spartan NG: dialog, alert-dialog, button, form-field, pagination…) | Primitivos de UI |
-| `domains/admin/layout/sidebar` | Layout/navegación |
+| `core/http/` (`api-base-url` token + interceptors, `auth.interceptor`)                                   | Base HTTP transversal                                                                      |
+| `core/services/export-filename.ts`                                                                       | Parseo de `Content-Disposition`                                                            |
+| `shared/utils/` (`uuid`, `download-file`)                                                                | Utilidades                                                                                 |
+| `libs/ui/*` (Spartan NG: dialog, alert-dialog, button, form-field, pagination…)                          | Primitivos de UI                                                                           |
+| `domains/admin/layout/sidebar`                                                                           | Layout/navegación                                                                          |
 
-> Nota sobre el desacoplamiento de librería: hoy las vistas usan directamente `HlmDialogImports`, `HlmButtonImports`, etc. Si en el futuro quieres pieles intercambiables por cliente (la idea de los *adapters*), esos imports Spartan deberían pasar tras contratos headless. **Para el RAG no es bloqueante**: mientras todas las piezas usen el mismo conjunto de primitivos, siguen siendo conformes entre sí. El desacoplamiento de librería es una capa ortogonal que se añade cuando haga falta.
+> Nota sobre el desacoplamiento de librería: hoy las vistas usan directamente `HlmDialogImports`, `HlmButtonImports`, etc. Si en el futuro quieres pieles intercambiables por cliente (la idea de los _adapters_), esos imports Spartan deberían pasar tras contratos headless. **Para el RAG no es bloqueante**: mientras todas las piezas usen el mismo conjunto de primitivos, siguen siendo conformes entre sí. El desacoplamiento de librería es una capa ortogonal que se añade cuando haga falta.
 
 ### Pieza (unidad-vista) — lo que aporta `customers`
 
@@ -89,9 +89,9 @@ search(@Query(new ParseCriteriaPipe()) query: PaginateOffsetDto)
 Y `search-customer-config.ts` es el mejor ejemplo de **binding puro**: es literalmente la lista de campos de la entidad que se pueden filtrar/ordenar/buscar.
 
 ```typescript
-const CUSTOMER_ALLOWED_FILTERS = ['id','sapId','name','taxId','industry','assignedKamId'] as const
-const CUSTOMER_ALLOWED_ORDERS  = ['name','sapId','taxId','industry'] as const
-const CUSTOMER_SEARCHABLE_FIELDS = ['name','industry','taxId','address','phone'] as const
+const CUSTOMER_ALLOWED_FILTERS = ['id', 'sapId', 'name', 'taxId', 'industry', 'assignedKamId'] as const
+const CUSTOMER_ALLOWED_ORDERS = ['name', 'sapId', 'taxId', 'industry'] as const
+const CUSTOMER_SEARCHABLE_FIELDS = ['name', 'industry', 'taxId', 'address', 'phone'] as const
 ```
 
 ### 2.2 Frontend — ficheros de una unidad-vista
@@ -155,15 +155,15 @@ Cada muestra del RAG = **captura + código + metadatos estructurados**. No index
 ```jsonc
 {
   "id": "customers-list",
-  "screenshot": "customers-list.png",           // clave de búsqueda visual (embedding)
-  "kind": "list+crud+export",                    // patrón de pantalla
-  "features": ["pagination","search","filters","sort","export","create","edit","delete","detail"],
-  "ui_primitives": ["data-table","dialog","alert-dialog","button"],
-  "field_types": ["text","select","date"],       // tipos presentes → guía el binding
+  "screenshot": "customers-list.png", // clave de búsqueda visual (embedding)
+  "kind": "list+crud+export", // patrón de pantalla
+  "features": ["pagination", "search", "filters", "sort", "export", "create", "edit", "delete", "detail"],
+  "ui_primitives": ["data-table", "dialog", "alert-dialog", "button"],
+  "field_types": ["text", "select", "date"], // tipos presentes → guía el binding
   "back_files": ["modules/customers/**"],
-  "front_files": ["features/customers/**","core/services/customer.service.ts"],
-  "binding_holes": [ /* ver sección 5 */ ],
-  "seams": [ /* ver sección 6 */ ]
+  "front_files": ["features/customers/**", "core/services/customer.service.ts"],
+  "binding_holes": [/* ver sección 5 */],
+  "seams": [/* ver sección 6 */]
 }
 ```
 
@@ -176,6 +176,7 @@ El flujo de recuperación: embebes la captura objetivo → filtras candidatos po
 Al insertar la pieza, esto **no se copia** del vecino: se genera a partir de la definición de la entidad destino.
 
 **Backend**
+
 - `domain/customer-types.ts` → props de la entidad nueva.
 - `domain/value-objects/*` → un VO por campo con reglas.
 - `application/config/search-*-config.ts` → allowedFilters/Orders/searchable.
@@ -184,6 +185,7 @@ Al insertar la pieza, esto **no se copia** del vecino: se genera a partir de la 
 - DTOs de entrada.
 
 **Frontend**
+
 - `columns: ColumnDef[]` y `actions: TableAction[]` en el `*-list.component.ts`.
 - Campos del formulario en `*-dialog.component.ts`.
 - Contenido de la ficha en `*-detail.component.ts`.
@@ -198,11 +200,11 @@ Todo lo demás (controller, handlers, use-cases, `resource()`, `criteriaParams()
 
 Tres puntos de inserción, ninguno dentro de la pieza:
 
-| Costura | Fichero | Qué se añade |
-|---|---|---|
-| Ruta (front) | `sap-licensing/sap-licensing.routes.ts` | entrada de ruta a la nueva feature |
-| Navegación (front) | `domains/admin/layout/sidebar` | ítem de menú |
-| Registro (back) | módulo de contexto `sap-licensing` | alta del nuevo `*.module.ts` |
+| Costura            | Fichero                                 | Qué se añade                       |
+| ------------------ | --------------------------------------- | ---------------------------------- |
+| Ruta (front)       | `sap-licensing/sap-licensing.routes.ts` | entrada de ruta a la nueva feature |
+| Navegación (front) | `domains/admin/layout/sidebar`          | ítem de menú                       |
+| Registro (back)    | módulo de contexto `sap-licensing`      | alta del nuevo `*.module.ts`       |
 
 El controller ya define su propia ruta base (`@Controller('customers')`), así que el prefijo REST viaja con la pieza. Las costuras son exactamente lo que un generador (o el LLM) modifica al insertar.
 

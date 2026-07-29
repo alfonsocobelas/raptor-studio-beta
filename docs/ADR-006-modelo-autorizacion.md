@@ -90,17 +90,20 @@ Pragmatismo (YAGNI): empezar con RBAC-con-permisos y añadir scoping por propied
 ## 6. Consecuencias
 
 **Más fácil**
+
 - Añadir/cambiar roles sin tocar código (reagrupar permisos).
 - Permisos base gratis (derivados del schema por el generador).
 - Mismo modelo en single y pooled.
 
 **Más difícil / a vigilar**
+
 - Definir dónde aplica el scoping por propiedad (no meterlo en todo).
 - Mantener el guard como único punto de decisión (no dispersar checks).
 - No escalar a ABAC completo sin necesidad real.
 
 **A revisar**
-- Si aparecen reglas de acceso muy dinámicas o multi-atributo → evaluar un motor de políticas (Opción C) para *ese* subconjunto.
+
+- Si aparecen reglas de acceso muy dinámicas o multi-atributo → evaluar un motor de políticas (Opción C) para _ese_ subconjunto.
 - Rol super-admin de plataforma en pooled: definir su alcance con cuidado.
 
 ---

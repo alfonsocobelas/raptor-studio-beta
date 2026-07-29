@@ -15,11 +15,11 @@ Queremos un **acelerador**: generar dashboards de negocio (tablas paginadas con 
 
 La idea central, madurada a lo largo del diseño, es que **una vista nueva no se escribe: se recupera y se re-liga.** Para eso combinamos tres artefactos que operan en planos distintos:
 
-- **Imagen** (captura de la vista) → *qué aspecto tiene*. Clave de búsqueda.
-- **Código** (unidad-vista: estructura reutilizable + binding específico) → *cómo se construye*. Lo que se ensambla.
-- **Diagramas** (UML de clases + ER) → *qué significa y con qué se conecta*. La semántica: entidades, relaciones, comportamiento.
+- **Imagen** (captura de la vista) → _qué aspecto tiene_. Clave de búsqueda.
+- **Código** (unidad-vista: estructura reutilizable + binding específico) → _cómo se construye_. Lo que se ensambla.
+- **Diagramas** (UML de clases + ER) → _qué significa y con qué se conecta_. La semántica: entidades, relaciones, comportamiento.
 
-Sobre un **esqueleto tested y libre de bugs**, cada pieza es conforme (depende solo del esqueleto, nunca de otra pieza), y el sistema copia la *forma* (idéntica entre vistas) mientras deriva el *binding* del modelo de dominio.
+Sobre un **esqueleto tested y libre de bugs**, cada pieza es conforme (depende solo del esqueleto, nunca de otra pieza), y el sistema copia la _forma_ (idéntica entre vistas) mientras deriva el _binding_ del modelo de dominio.
 
 ---
 
@@ -64,10 +64,10 @@ flowchart TD
 
 ### 1.3 Por qué hacen falta los tres (si quitas uno, se rompe algo)
 
-| Falta… | Se rompe… |
-|---|---|
-| Imagen | La UX de autoría: no hay forma rápida de decir "quiero algo así". |
-| Código | La reutilización: vuelves a escribir boilerplate. |
+| Falta…   | Se rompe…                                                                                                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Imagen   | La UX de autoría: no hay forma rápida de decir "quiero algo así".                                                                                                                                                    |
+| Código   | La reutilización: vuelves a escribir boilerplate.                                                                                                                                                                    |
 | Diagrama | La seguridad de las "pequeñas modificaciones": el LLM adivina tipos y conexiones desde píxeles. El UML de clases además aporta el **comportamiento** (invariantes de VOs, protocolo de mutación), no solo los datos. |
 
 Esta es la razón por la que el ER no bastaba y hacía falta el UML de clases: **la imagen da la piel, el ER da los datos, pero el comportamiento y las invariantes solo los da el UML de clases.**
@@ -104,7 +104,7 @@ graph TD
     RE <-->|REST / OpenAPI| BC
 ```
 
-**Desacoplamiento de librería (opcional, capa ortogonal).** El código de negocio depende de **contratos headless** (`InjectionToken` + interfaces); cada librería es un **adapter** intercambiable. Cambiar de diseño por cliente = proveer otro adapter en el arranque. Hoy el proyecto usa Spartan directamente; esta capa se añade solo cuando un cliente pida otra piel. Aviso: perseguir paridad perfecta entre librerías es caro — diseñar para el 80% común con *escape hatches*.
+**Desacoplamiento de librería (opcional, capa ortogonal).** El código de negocio depende de **contratos headless** (`InjectionToken` + interfaces); cada librería es un **adapter** intercambiable. Cambiar de diseño por cliente = proveer otro adapter en el arranque. Hoy el proyecto usa Spartan directamente; esta capa se añade solo cuando un cliente pida otra piel. Aviso: perseguir paridad perfecta entre librerías es caro — diseñar para el 80% común con _escape hatches_.
 
 Detalle completo en `arquitectura-acelerador-dashboards.md`.
 
@@ -247,6 +247,7 @@ flowchart LR
 **Más fácil:** entregar el mismo producto con diseños distintos; crear una vista (definir schema); propagar fixes desde el core; onboarding rápido de tenants.
 
 **Más difícil / riesgos a vigilar:**
+
 - Inversión inicial de plataforma (esqueleto, contratos, generador) antes de ver retorno.
 - Disciplina de conformidad: cada pieza debe cumplir el contrato de admisión o el corpus se degrada (mitigado con lint de boundaries).
 - Coherencia front↔back de campos: hoy manual (por comentario); el resource-schema único la elimina de raíz — es la mejora a reforzar antes de escalar.
@@ -257,10 +258,10 @@ flowchart LR
 
 ## 8. Documentos del dossier
 
-| Documento | Contenido |
-|---|---|
-| `dossier-acelerador-dashboards.md` | Este documento maestro |
-| `arquitectura-acelerador-dashboards.md` | ADR: capas, desacoplamiento UI, backend genérico, multi-tenant (detalle) |
-| `uml-clases-dominio.md` | UML de clases: agregados, VOs, puertos (con métodos) |
-| `uml-modelo-dominio.md` | ER: entidades, relaciones, tipos de arista |
-| `contrato-unidad-vista-rag.md` | Anatomía de la unidad-vista, contrato de admisión, huecos de binding, costuras |
+| Documento                               | Contenido                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| `dossier-acelerador-dashboards.md`      | Este documento maestro                                                         |
+| `arquitectura-acelerador-dashboards.md` | ADR: capas, desacoplamiento UI, backend genérico, multi-tenant (detalle)       |
+| `uml-clases-dominio.md`                 | UML de clases: agregados, VOs, puertos (con métodos)                           |
+| `uml-modelo-dominio.md`                 | ER: entidades, relaciones, tipos de arista                                     |
+| `contrato-unidad-vista-rag.md`          | Anatomía de la unidad-vista, contrato de admisión, huecos de binding, costuras |

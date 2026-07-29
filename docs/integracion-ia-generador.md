@@ -8,7 +8,7 @@
 
 ## 1. Principio: determinismo en el centro, IA en los bordes, verificación en la frontera
 
-El generador vale precisamente porque es determinista: misma entrada → mismo código, sin red, sin coste, sin sorpresas. Meter IA *dentro* del núcleo destruiría esa propiedad. Por eso la IA se coloca **alrededor**, en dos puntos concretos, y todo lo que produzca pasa por un **gate de verificación determinista** antes de aceptarse.
+El generador vale precisamente porque es determinista: misma entrada → mismo código, sin red, sin coste, sin sorpresas. Meter IA _dentro_ del núcleo destruiría esa propiedad. Por eso la IA se coloca **alrededor**, en dos puntos concretos, y todo lo que produzca pasa por un **gate de verificación determinista** antes de aceptarse.
 
 ```mermaid
 flowchart TD
@@ -74,13 +74,13 @@ static create(value: string): ContractNumber {
 
 La pasada de relleno busca los bloques `@ai:begin … @ai:end` y pide al modelo que complete **solo dentro de los marcadores**, con el contexto alrededor como referencia. Esto **acota el radio de acción de la IA**: escribe en huecos delimitados, jamás en la estructura. Si no hay marcadores, la IA no toca nada.
 
-| Hueco típico | Por qué el determinismo no llega |
-|---|---|
-| Validación de VO no trivial | Regla de negocio, no derivable de `min/max` |
-| Método de negocio del agregado | Lógica específica (cálculos, transiciones de estado) |
+| Hueco típico                         | Por qué el determinismo no llega                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------- |
+| Validación de VO no trivial          | Regla de negocio, no derivable de `min/max`                                   |
+| Método de negocio del agregado       | Lógica específica (cálculos, transiciones de estado)                          |
 | Tests de casos límite significativos | El molde solo da el happy path + estados; los edge cases dependen del dominio |
-| Seed/fixtures realistas | Datos verosímiles, no aleatorios |
-| Etiquetas/textos en español | Se pueden inferir del nombre del campo, pero la IA los mejora |
+| Seed/fixtures realistas              | Datos verosímiles, no aleatorios                                              |
+| Etiquetas/textos en español          | Se pueden inferir del nombre del campo, pero la IA los mejora                 |
 
 ---
 
@@ -126,13 +126,13 @@ El generador queda **puro y offline**: solo emite los `TODO(ai)` en los huecos m
 
 ## 5. Reparto de responsabilidades (resumen)
 
-| Tarea | Quién | Determinista |
-|---|---|---|
-| Estructura del módulo (controller, handlers, service, tabla, protocolo de agregado) | Plantillas Nx | ✅ Sí |
-| Binding regular (columnas, search-config, entidad, DTOs, VOs estándar) | Plantillas Nx (desde el modelo) | ✅ Sí |
-| Traducir input difuso → modelo | IA (paso ①, opcional) | ❌ No → revisado por humano |
-| Validación de negocio, métodos específicos, tests edge, seed | IA (paso ②, opcional) | ❌ No → contenido por el gate |
-| Aceptar/rechazar el resultado | Gate (compila + lint + tests + diff) | ✅ Sí |
+| Tarea                                                                               | Quién                                | Determinista                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------ | ----------------------------- |
+| Estructura del módulo (controller, handlers, service, tabla, protocolo de agregado) | Plantillas Nx                        | ✅ Sí                         |
+| Binding regular (columnas, search-config, entidad, DTOs, VOs estándar)              | Plantillas Nx (desde el modelo)      | ✅ Sí                         |
+| Traducir input difuso → modelo                                                      | IA (paso ①, opcional)                | ❌ No → revisado por humano   |
+| Validación de negocio, métodos específicos, tests edge, seed                        | IA (paso ②, opcional)                | ❌ No → contenido por el gate |
+| Aceptar/rechazar el resultado                                                       | Gate (compila + lint + tests + diff) | ✅ Sí                         |
 
 El 80% (estructura + binding regular) es determinista y gratis. La IA solo interviene en el 20% difícil, siempre en los bordes y siempre bajo verificación.
 

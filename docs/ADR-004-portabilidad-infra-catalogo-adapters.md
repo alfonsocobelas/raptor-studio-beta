@@ -105,13 +105,13 @@ El adapter de infra es **estable y no específico de la app** → almacenarlo y 
 
 **Ranking de abstraibilidad (ROI real):**
 
-| Concern | Dificultad | Nota |
-|---|---|---|
-| Object storage | Baja | API S3-compatible cubre S3/R2/MinIO; Blob y GCS mapean. Empezar aquí. |
-| Postgres gestionado | Baja | Todos ofrecen Postgres; solo cambia la connection string. |
-| Secretos / email / colas | Media | Abstraíbles, con fugas. |
-| Identidad | Alta | Usar **OIDC** como denominador común; APIs de admin difieren. |
-| Cómputo / runtime | Muy alta | **Cloudflare Workers no es un contenedor Node** → tu NestJS puede no arrancar. "Soporta Cloudflare" ≠ "corre en Cloudflare". |
+| Concern                  | Dificultad | Nota                                                                                                                         |
+| ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Object storage           | Baja       | API S3-compatible cubre S3/R2/MinIO; Blob y GCS mapean. Empezar aquí.                                                        |
+| Postgres gestionado      | Baja       | Todos ofrecen Postgres; solo cambia la connection string.                                                                    |
+| Secretos / email / colas | Media      | Abstraíbles, con fugas.                                                                                                      |
+| Identidad                | Alta       | Usar **OIDC** como denominador común; APIs de admin difieren.                                                                |
+| Cómputo / runtime        | Muy alta   | **Cloudflare Workers no es un contenedor Node** → tu NestJS puede no arrancar. "Soporta Cloudflare" ≠ "corre en Cloudflare". |
 
 Disciplina del puerto: se diseña por lo que **todos** los proveedores objetivo comparten; lo específico va en **interfaces de capacidad opcionales**, no en el puerto principal.
 
@@ -120,7 +120,7 @@ Disciplina del puerto: se diseña por lo que **todos** los proveedores objetivo 
 ## 7. Alcance (disciplina, no completismo)
 
 - **Azure como referencia** (tu mayoritario): define puertos + adapter real.
-- **AWS como segundo adapter, bajo demanda**: el segundo proveedor es el que *demuestra* que la abstracción aguanta (como la referencia de oro del generador). Con dos reales, el tercero es barato.
+- **AWS como segundo adapter, bajo demanda**: el segundo proveedor es el que _demuestra_ que la abstracción aguanta (como la referencia de oro del generador). Con dos reales, el tercero es barato.
 - **Cloudflare, no especulativo**, y con el aviso de runtime por delante.
 - **Empezar por `StoragePort`** (el más uniforme; ya previsto como `@acc/files`), no por auth ni cómputo.
 
@@ -131,17 +131,20 @@ No construir todos-los-proveedores × todos-los-servicios de golpe.
 ## 8. Consecuencias
 
 **Más fácil**
+
 - Desplegar la misma app contra el cloud de cada cliente (elegir adapter + IaC).
 - Fix-once en un adapter → propaga por versión.
 - Añadir un proveedor nuevo = un adapter que pasa el test de conformidad.
 - Mismo mecanismo que UI (ADR-003) → un solo modelo mental de "puerto + catálogo + composition root".
 
 **Más difícil / a vigilar**
+
 - Calidad del puerto (mínimo común denominador); las fugas rompen el catálogo.
 - Versionado de adapters: "última vs congelada por cliente".
 - Cómputo/runtime: no prometer "corre en cualquier sitio"; prometer "aprovisiona y se conecta a los servicios equivalentes del proveedor".
 
 **A revisar**
+
 - Primer cliente no-Azure → dispara el segundo adapter.
 - Concerns que resulten irreduciblemente específicos → dejarlos fuera del catálogo (escape hatch), no forzar el puerto.
 

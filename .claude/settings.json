@@ -72,5 +72,21 @@
       "Bash(git show:*)"
     ],
     "deny": ["Bash(rm -rf /*)", "Bash(git push --force:*)", "Bash(git reset --hard:*)"]
+  },
+  "extraKnownMarketplaces": {
+    "nx-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "nrwl/nx-ai-agents-config"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "nx@nx-claude-plugins": true
+  },
+  "sandbox": {
+    "network": {
+      "allowedDomains": ["www.google-analytics.com"]
+    }
   }
 }

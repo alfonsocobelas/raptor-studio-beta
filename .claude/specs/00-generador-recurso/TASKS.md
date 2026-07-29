@@ -6,7 +6,7 @@
 
 ## Arranque del repo
 
-- [ ] **TASK-01**: Inicializar workspace Nx vacío (preset ts, sin apps) + prettier/eslint/editorconfig con las convenciones del proyecto + `.gitignore`
+- [x] **TASK-01**: Inicializar workspace Nx vacío (preset ts, sin apps) + prettier/eslint/editorconfig con las convenciones del proyecto + `.gitignore`
 - [ ] **TASK-02**: Añadir `@nx/plugin` y generar el esqueleto del generador `resource` en `libs/generators` (comprobar que `nx generate @acc/generators:resource --dry-run` corre con el ejemplo por defecto)
 
 ## Modelo y plantilla

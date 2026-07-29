@@ -13,7 +13,6 @@ description: >
 > Toda ruta `libs/frontend/...` citada abajo se refiere a ese repo de referencia. Si una plantilla emite código
 > que viola estos patrones, la plantilla está mal.
 
-
 # Patrones de frontend — Angular 21 con Signals + Spartan NG
 
 Estos patrones están implementados en el prototipo `../aurora-catalyst-prototype/`. **Léelos ahí antes de implementar.** No improvises basándote solo en este resumen.
@@ -95,16 +94,16 @@ readonly loadError = computed(() => this._service.contract.error() !== undefined
 
 ```html
 @if (loading()) {
-  <p class="text-muted-foreground py-12 text-center text-sm">Cargando contrato…</p>
+<p class="text-muted-foreground py-12 text-center text-sm">Cargando contrato…</p>
 } @else if (loadError()) {
-  <div class="py-12 text-center">
-    <p class="text-destructive text-sm">No se pudo cargar el contrato</p>
-    <button class="text-primary text-sm underline" (click)="goBack()">Volver a la lista</button>
-  </div>
+<div class="py-12 text-center">
+  <p class="text-destructive text-sm">No se pudo cargar el contrato</p>
+  <button class="text-primary text-sm underline" (click)="goBack()">Volver a la lista</button>
+</div>
 } @else if (contract(); as c) {
-  <!-- detalle -->
+<!-- detalle -->
 } @else {
-  <!-- not found (cubre el 404 y el value undefined) -->
+<!-- not found (cubre el 404 y el value undefined) -->
 }
 ```
 
@@ -360,7 +359,7 @@ Capa e2e del front, separada de los unit de Vitest (spec 13). Combinación está
 - **Estrategia API mockeada**: se sirve **solo el frontend**; toda petición `/api/**` se intercepta en el navegador. **No se levanta backend ni la BD del puerto 5433.** Helper `e2e/support/api-mock.ts`:
   ```ts
   await mockApi(page, {
-    'GET /api/v1/auth/me': unauthenticated(),   // helpers: ok/created/noContent/unauthenticated/notFound/serverError
+    'GET /api/v1/auth/me': unauthenticated(), // helpers: ok/created/noContent/unauthenticated/notFound/serverError
     'POST /api/v1/auth/login': ok(adminUser())
   })
   ```

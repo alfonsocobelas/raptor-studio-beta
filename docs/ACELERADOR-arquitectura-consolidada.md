@@ -51,7 +51,7 @@ Cada ADR cuelga de un lado del hexágono:
 
 Hasta la **entrada del generador** encaja: en `ddd-fullstack` la entidad describe a la vez el contrato primario (API CRUD) y el puerto secundario (persistencia); en `bridge-api` la entrada describe el **puerto primario** (los endpoints expuestos), porque el secundario es un adapter fijo sobre el sistema externo. Los perfiles difieren en **qué lado del hexágono describe la entrada**.
 
-**Contrapeso (regla de los dos).** No conocer el adapter *concreto* está bien; no conocer el *conjunto* de adapters previstos, no. Un puerto solo se diseña bien contra un conjunto real de implementaciones (mínimo común denominador). **Un puerto se gana su sitio en el segundo o tercer adapter real**, no en el primero: con uno solo, adapter directo; el puerto se extrae cuando aparece el segundo. Igual en el lado primario: hoy REST; no abstraer para GraphQL/gRPC hasta que un proyecto lo pida.
+**Contrapeso (regla de los dos).** No conocer el adapter _concreto_ está bien; no conocer el _conjunto_ de adapters previstos, no. Un puerto solo se diseña bien contra un conjunto real de implementaciones (mínimo común denominador). **Un puerto se gana su sitio en el segundo o tercer adapter real**, no en el primero: con uno solo, adapter directo; el puerto se extrae cuando aparece el segundo. Igual en el lado primario: hoy REST; no abstraer para GraphQL/gRPC hasta que un proyecto lo pida.
 
 ---
 
@@ -67,7 +67,7 @@ La observación que lo hace tratable, verificada en el código: cada vista parec
 
 **Elegido: generación determinista schema-driven.** Una definición de entidad → plantillas Nx → código real, editable, tuyo. Reproducible, offline, sin coste por ejecución.
 
-**Explorado y descartado: RAG por imagen.** La idea inicial —almacenar pares (captura, código) e indexar por similitud visual para recuperar y re-ligar— se estudió a fondo (ver §11, doc marcado *superado*). Se descartó porque: (a) su valor marginal sobre un buen generador es bajo; (b) depende fuertemente de IA, justo lo que se quería minimizar; (c) para cuando el corpus estuviera listo, un LLM genérico haría lo mismo sin él. Llevada a su conclusión lógica, **convergía en la generación schema-driven** — así que se fue directo al destino.
+**Explorado y descartado: RAG por imagen.** La idea inicial —almacenar pares (captura, código) e indexar por similitud visual para recuperar y re-ligar— se estudió a fondo (ver §11, doc marcado _superado_). Se descartó porque: (a) su valor marginal sobre un buen generador es bajo; (b) depende fuertemente de IA, justo lo que se quería minimizar; (c) para cuando el corpus estuviera listo, un LLM genérico haría lo mismo sin él. Llevada a su conclusión lógica, **convergía en la generación schema-driven** — así que se fue directo al destino.
 
 Lo que la exploración del RAG dejó y sí se conserva: el split **estructura/binding**, el **UML/ER como fuente**, y el **contrato de conformidad** de las piezas.
 
@@ -102,7 +102,7 @@ Entre el modelo de dominio y el generador está el **resource-schema**: una proy
 
 Verificado: el schema de `customers` reproduce el módulo actual campo a campo (ver `resource-schema-customers.md`, §4 de fidelidad).
 
-Principio: **generar, no interpretar.** El schema cubre el caso canónico; lo raro se edita a mano sobre el código generado. Nunca se retuerce el schema para modelarlo todo (evita el *inner-platform effect*).
+Principio: **generar, no interpretar.** El schema cubre el caso canónico; lo raro se edita a mano sobre el código generado. Nunca se retuerce el schema para modelarlo todo (evita el _inner-platform effect_).
 
 ---
 
@@ -130,7 +130,7 @@ flowchart LR
 
 El generador no depende de la IA. Ésta interviene solo donde el determinismo no llega, y siempre bajo verificación:
 
-- **① Pre-generación:** la IA redacta el *modelo* (no el código) desde lenguaje natural / SQL / captura. Salida pequeña, revisable; el código lo produce la plantilla.
+- **① Pre-generación:** la IA redacta el _modelo_ (no el código) desde lenguaje natural / SQL / captura. Salida pequeña, revisable; el código lo produce la plantilla.
 - **② Post-generación:** la IA rellena **huecos marcados** (`// @ai:begin … @ai:end`): validación de negocio, métodos específicos, tests de casos límite, seed. Radio de acción acotado a los marcadores.
 - **Gate determinista:** nada se acepta sin compilar + pasar `enforce-module-boundaries` + tests + diff de oro. **Se confía en el gate, no en la IA.**
 
@@ -140,17 +140,17 @@ Integración recomendada: IA **alrededor** del generador (pasos separados y opci
 
 ## 8. Los ejes de decisión (ADRs)
 
-**Decisión de nivel 0 — arquetipo de arquitectura (ADR-007).** Se elige *primero*, según el problema: `ddd-fullstack` (dominio rico + BD + UI, ref. `sap-licences`) o `bridge-api` (proxy/traducción a sistema externo, sin BD ni UI, ref. `ip-opentext-cmis-api`). Hallazgo: ambos comparten la **misma espina ports & adapters**; solo varían el grado de dominio, qué envuelven los adapters (BD vs API externa) y la entrada del generador. El kernel se reutiliza; el arquetipo decide la forma. Determina todo lo de abajo.
+**Decisión de nivel 0 — arquetipo de arquitectura (ADR-007).** Se elige _primero_, según el problema: `ddd-fullstack` (dominio rico + BD + UI, ref. `sap-licences`) o `bridge-api` (proxy/traducción a sistema externo, sin BD ni UI, ref. `ip-opentext-cmis-api`). Hallazgo: ambos comparten la **misma espina ports & adapters**; solo varían el grado de dominio, qué envuelven los adapters (BD vs API externa) y la entrada del generador. El kernel se reutiliza; el arquetipo decide la forma. Determina todo lo de abajo.
 
 Sobre ese arquetipo, un mismo patrón —**puerto + catálogo de adapters + composition root generado**— resuelve los ejes de desacoplamiento:
 
 - **Datos (ADR-002):** denormalización por defecto en listados CRUD (lectura de una tabla); JOIN/read-model solo para reporting a mano; composición cargable dentro del agregado. Mantiene el generador simple.
-- **UI (ADR-003):** desacoplamiento por capas. *Nivel 1* (ahora): plantillas emiten contra componentes shared → cambiar piel = shared + regenerar. *Nivel 2* (bajo demanda): contratos headless + adapters, cambio sin regenerar. La tabla ya está desacoplada (`data-table`); faltan diálogos/botones. Regla de lint: prohibir `@spartan-ng/*` en features.
+- **UI (ADR-003):** desacoplamiento por capas. _Nivel 1_ (ahora): plantillas emiten contra componentes shared → cambiar piel = shared + regenerar. _Nivel 2_ (bajo demanda): contratos headless + adapters, cambio sin regenerar. La tabla ya está desacoplada (`data-table`); faltan diálogos/botones. Regla de lint: prohibir `@spartan-ng/*` en features.
 - **Infra (ADR-004):** puertos (`StoragePort`, `AuthPort`…) + catálogo de adapters por referencia + composition root con `.env` y Terraform. Runtime por env (12-factor). Ranking de ROI: storage y Postgres fáciles; identidad vía OIDC; **cómputo muy difícil (Cloudflare Workers ≠ contenedor Node)**. Test de conformidad por puerto obligatorio.
 
 Y dos ejes más, de perfil por app:
 
-- **Tenancy (ADR-005):** dos perfiles seleccionables al crear la app — *single-tenant* (sin `tenant_id`, user/admin simple) y *multi-tenant pooled* (`tenant_id` + RLS). Puerto `TenantContext` siempre presente; el dominio es agnóstico. Es perfil de generación (toca el esquema), no de runtime. Hedge "build for multi, run as single" si el cliente puede crecer.
+- **Tenancy (ADR-005):** dos perfiles seleccionables al crear la app — _single-tenant_ (sin `tenant_id`, user/admin simple) y _multi-tenant pooled_ (`tenant_id` + RLS). Puerto `TenantContext` siempre presente; el dominio es agnóstico. Es perfil de generación (toca el esquema), no de runtime. Hedge "build for multi, run as single" si el cliente puede crecer.
 - **Autorización (ADR-006):** RBAC con permisos `recurso:acción` agrupados en roles; checks por permiso, no por rol; scoping por propiedad (ABAC ligero) solo donde el dominio lo pida (`customer↔KAM`). Los permisos base los deriva el generador del schema.
 
 Base de capas y desacoplamiento general: ADR-001.
@@ -186,23 +186,23 @@ Regla de oro del proyecto: construir la versión aburrida primero y dejar que **
 
 ## 11. Índice de documentos fuente
 
-| Documento | Rol | Estado |
-|---|---|---|
-| **ACELERADOR-arquitectura-consolidada.md** | Este maestro | Vigente |
-| `arquitectura-acelerador-dashboards.md` (ADR-001) | Capas, backend genérico, multi-tenant | Vigente |
-| `ADR-002-denormalizacion-vs-join.md` | Decisión de acceso a datos | Vigente |
-| `ADR-003-desacoplamiento-ui.md` | Desacoplamiento de librería UI | Vigente |
-| `ADR-004-portabilidad-infra-catalogo-adapters.md` | Portabilidad de infra + catálogo | Vigente |
-| `ADR-005-tenancy-perfil-seleccionable.md` | Tenancy: single / multi-pooled + RLS | Vigente |
-| `ADR-006-modelo-autorizacion.md` | Autorización: RBAC con permisos + ABAC ligero | Vigente |
-| `ADR-007-arquetipos-arquitectura.md` | Arquetipos: ddd-fullstack / bridge-api, espina común | Vigente |
-| `uml-clases-dominio.md` | UML de clases (comportamiento) | Vigente |
-| `uml-modelo-dominio.md` | ER (datos y relaciones) | Vigente |
-| `resource-schema-customers.md` | Proyección + fidelidad | Vigente |
-| `guia-generador-nx.md` | Mecanismo del generador | Vigente |
-| `integracion-ia-generador.md` | IA en los bordes | Vigente |
-| `contrato-unidad-vista-rag.md` | Anatomía de la unidad-vista | Vigente (concepto), **RAG superado** |
-| `dossier-acelerador-dashboards.md` | Dossier previo | **Superado por este** |
+| Documento                                         | Rol                                                  | Estado                               |
+| ------------------------------------------------- | ---------------------------------------------------- | ------------------------------------ |
+| **ACELERADOR-arquitectura-consolidada.md**        | Este maestro                                         | Vigente                              |
+| `arquitectura-acelerador-dashboards.md` (ADR-001) | Capas, backend genérico, multi-tenant                | Vigente                              |
+| `ADR-002-denormalizacion-vs-join.md`              | Decisión de acceso a datos                           | Vigente                              |
+| `ADR-003-desacoplamiento-ui.md`                   | Desacoplamiento de librería UI                       | Vigente                              |
+| `ADR-004-portabilidad-infra-catalogo-adapters.md` | Portabilidad de infra + catálogo                     | Vigente                              |
+| `ADR-005-tenancy-perfil-seleccionable.md`         | Tenancy: single / multi-pooled + RLS                 | Vigente                              |
+| `ADR-006-modelo-autorizacion.md`                  | Autorización: RBAC con permisos + ABAC ligero        | Vigente                              |
+| `ADR-007-arquetipos-arquitectura.md`              | Arquetipos: ddd-fullstack / bridge-api, espina común | Vigente                              |
+| `uml-clases-dominio.md`                           | UML de clases (comportamiento)                       | Vigente                              |
+| `uml-modelo-dominio.md`                           | ER (datos y relaciones)                              | Vigente                              |
+| `resource-schema-customers.md`                    | Proyección + fidelidad                               | Vigente                              |
+| `guia-generador-nx.md`                            | Mecanismo del generador                              | Vigente                              |
+| `integracion-ia-generador.md`                     | IA en los bordes                                     | Vigente                              |
+| `contrato-unidad-vista-rag.md`                    | Anatomía de la unidad-vista                          | Vigente (concepto), **RAG superado** |
+| `dossier-acelerador-dashboards.md`                | Dossier previo                                       | **Superado por este**                |
 
 > El `contrato-unidad-vista-rag.md` conserva valor por la anatomía estructura/binding de un módulo; su marco de recuperación por imagen queda superado por el generador determinista.
 

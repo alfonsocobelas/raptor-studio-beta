@@ -102,35 +102,35 @@ Definimos la UI como un conjunto de **contratos abstractos** (clases abstractas 
 ```typescript
 // contracts/data-table.contract.ts
 export interface TableColumn<T> {
-  field: keyof T & string;
-  header: string;
-  sortable?: boolean;
-  filter?: 'text' | 'select' | 'date' | 'number';
-  cell?: (row: T) => string; // formateo opcional
+  field: keyof T & string
+  header: string
+  sortable?: boolean
+  filter?: 'text' | 'select' | 'date' | 'number'
+  cell?: (row: T) => string // formateo opcional
 }
 
 export interface DataTableRequest {
-  page: number;
-  pageSize: number;
-  sort?: { field: string; dir: 'asc' | 'desc' };
-  filters?: Record<string, unknown>;
-  search?: string;
+  page: number
+  pageSize: number
+  sort?: { field: string; dir: 'asc' | 'desc' }
+  filters?: Record<string, unknown>
+  search?: string
 }
 
 export interface DataTablePage<T> {
-  rows: T[];
-  total: number;
+  rows: T[]
+  total: number
 }
 
 // Contrato que TODO adapter de tabla debe cumplir
 export abstract class DataTableContract<T = unknown> {
-  abstract columns: TableColumn<T>[];
-  abstract data: DataTablePage<T>;
-  abstract loading: boolean;
-  abstract request: (req: DataTableRequest) => void; // emite cambios de página/sort/filter
+  abstract columns: TableColumn<T>[]
+  abstract data: DataTablePage<T>
+  abstract loading: boolean
+  abstract request: (req: DataTableRequest) => void // emite cambios de página/sort/filter
 }
 
-export const DATA_TABLE = new InjectionToken<Type<DataTableContract>>('DATA_TABLE');
+export const DATA_TABLE = new InjectionToken<Type<DataTableContract>>('DATA_TABLE')
 ```
 
 Lo mismo se define para las demás primitivas: `BUTTON`, `DIALOG_SERVICE`, `FORM_FIELD`, `TOAST_SERVICE`, `FILE_UPLOAD`, `SELECT`, `DATE_PICKER`, etc. El conjunto de contratos es el "kernel" estable del acelerador.
@@ -144,19 +144,19 @@ Cada librería vive en su **propio paquete** del monorepo e implementa los contr
 export const materialUiProviders: Provider[] = [
   { provide: DATA_TABLE, useValue: MatDataTableComponent },
   { provide: DIALOG_SERVICE, useClass: MatDialogService },
-  { provide: BUTTON, useValue: MatButtonComponent },
+  { provide: BUTTON, useValue: MatButtonComponent }
   // ...
-];
+]
 
 // app.config.ts  (cliente A → Material)
 export const appConfig: ApplicationConfig = {
-  providers: [...materialUiProviders],
-};
+  providers: [...materialUiProviders]
+}
 
 // app.config.ts  (cliente B → PrimeNG, sin tocar nada más)
 export const appConfig: ApplicationConfig = {
-  providers: [...primengUiProviders],
-};
+  providers: [...primengUiProviders]
+}
 ```
 
 ```mermaid
@@ -195,19 +195,19 @@ export const usersDashboard: ResourceView = {
       { field: 'name', header: 'Nombre', sortable: true, filter: 'text' },
       { field: 'email', header: 'Email', filter: 'text' },
       { field: 'role', header: 'Rol', filter: 'select' },
-      { field: 'createdAt', header: 'Alta', sortable: true, filter: 'date' },
+      { field: 'createdAt', header: 'Alta', sortable: true, filter: 'date' }
     ],
     search: ['name', 'email'],
-    actions: ['create', 'edit', 'delete', 'export'],
+    actions: ['create', 'edit', 'delete', 'export']
   },
   form: {
     fields: [
       { name: 'name', type: 'text', required: true },
       { name: 'email', type: 'email', required: true },
-      { name: 'role', type: 'select', optionsEndpoint: '/api/roles' },
-    ],
-  },
-};
+      { name: 'role', type: 'select', optionsEndpoint: '/api/roles' }
+    ]
+  }
+}
 ```
 
 El mismo esquema produce una tabla idéntica en Material o PrimeNG. Añadir un dashboard = añadir un esquema.
@@ -225,7 +225,7 @@ flowchart LR
 
 ### 4.5 Aviso honesto sobre la abstracción
 
-La paridad perfecta entre librerías es una ilusión cara. Difieren en features (virtual scroll, edición inline, agrupación de filas, tree tables). Recomendación: **diseñar los contratos para el 80 % común y ofrecer "escape hatches"** (por ejemplo, permitir proyectar un `TemplateRef` específico de una librería para casos límite) en lugar de perseguir cobertura del 100 %. Cada primitiva añadida al kernel es un coste de mantenimiento en *todos* los adapters.
+La paridad perfecta entre librerías es una ilusión cara. Difieren en features (virtual scroll, edición inline, agrupación de filas, tree tables). Recomendación: **diseñar los contratos para el 80 % común y ofrecer "escape hatches"** (por ejemplo, permitir proyectar un `TemplateRef` específico de una librería para casos límite) en lugar de perseguir cobertura del 100 %. Cada primitiva añadida al kernel es un coste de mantenimiento en _todos_ los adapters.
 
 ---
 
@@ -242,30 +242,31 @@ Un único parser traduce los query params REST a un `FindManyOptions`/`QueryBuil
 @Injectable()
 export class QueryBuilderService {
   build<T>(repo: Repository<T>, query: ListQueryDto, cfg: ResourceQueryConfig<T>) {
-    const qb = repo.createQueryBuilder('e');
+    const qb = repo.createQueryBuilder('e')
 
     // Búsqueda global sobre campos permitidos
     if (query.search && cfg.searchable.length) {
-      qb.andWhere(new Brackets(w => {
-        cfg.searchable.forEach((f, i) =>
-          w.orWhere(`e.${f} ILIKE :s`, { s: `%${query.search}%` }));
-      }));
+      qb.andWhere(
+        new Brackets(w => {
+          cfg.searchable.forEach((f, i) => w.orWhere(`e.${f} ILIKE :s`, { s: `%${query.search}%` }))
+        })
+      )
     }
 
     // Filtros por campo (solo whitelisted)
     for (const [field, cond] of Object.entries(query.filter ?? {})) {
-      if (!cfg.filterable.includes(field)) continue;
-      applyOperator(qb, `e.${field}`, cond); // eq, gte, lte, in, like...
+      if (!cfg.filterable.includes(field)) continue
+      applyOperator(qb, `e.${field}`, cond) // eq, gte, lte, in, like...
     }
 
     // Orden (solo whitelisted)
     if (query.sort && cfg.sortable.includes(query.sort.field)) {
-      qb.orderBy(`e.${query.sort.field}`, query.sort.dir.toUpperCase() as 'ASC' | 'DESC');
+      qb.orderBy(`e.${query.sort.field}`, query.sort.dir.toUpperCase() as 'ASC' | 'DESC')
     }
 
     // Paginación
-    qb.skip((query.page - 1) * query.pageSize).take(query.pageSize);
-    return qb;
+    qb.skip((query.page - 1) * query.pageSize).take(query.pageSize)
+    return qb
   }
 }
 ```
@@ -276,20 +277,24 @@ export class QueryBuilderService {
 
 ```typescript
 export class BaseService<T extends ObjectLiteral> {
-  constructor(protected repo: Repository<T>,
-              protected qb: QueryBuilderService,
-              protected cfg: ResourceQueryConfig<T>) {}
+  constructor(
+    protected repo: Repository<T>,
+    protected qb: QueryBuilderService,
+    protected cfg: ResourceQueryConfig<T>
+  ) {}
 
   list(q: ListQueryDto): Promise<DataTablePage<T>> {
-    const query = this.qb.build(this.repo, q, this.cfg);
-    return query.getManyAndCount().then(([rows, total]) => ({ rows, total }));
+    const query = this.qb.build(this.repo, q, this.cfg)
+    return query.getManyAndCount().then(([rows, total]) => ({ rows, total }))
   }
   // create, findOne, update, remove...
 }
 
 @Controller('users')
 export class UsersController extends BaseController<User> {
-  constructor(svc: UsersService) { super(svc); }
+  constructor(svc: UsersService) {
+    super(svc)
+  }
 }
 ```
 
@@ -324,16 +329,16 @@ Es la decisión más difícil de revertir porque contamina el modelo de datos, l
 
 Todas las tablas llevan `tenant_id`; el filtrado por tenant se aplica de forma transversal.
 
-| Dimensión | Valoración |
-|-----------|-----------|
-| Complejidad | Baja |
-| Coste | Bajo (una sola BD) |
-| Aislamiento | Bajo–medio (lógico) |
-| Escalabilidad | Alta hasta cierto punto; tablas grandes compartidas |
-| Onboarding de tenant | Instantáneo |
+| Dimensión            | Valoración                                          |
+| -------------------- | --------------------------------------------------- |
+| Complejidad          | Baja                                                |
+| Coste                | Bajo (una sola BD)                                  |
+| Aislamiento          | Bajo–medio (lógico)                                 |
+| Escalabilidad        | Alta hasta cierto punto; tablas grandes compartidas |
+| Onboarding de tenant | Instantáneo                                         |
 
 **Pros:** máxima simplicidad operativa, migraciones únicas, coste mínimo, onboarding inmediato.
-**Cons:** el aislamiento depende de que *nunca* falle un filtro (riesgo de fuga entre tenants); "ruidoso vecino" en rendimiento; difícil dar backups/exportaciones por cliente.
+**Cons:** el aislamiento depende de que _nunca_ falle un filtro (riesgo de fuga entre tenants); "ruidoso vecino" en rendimiento; difícil dar backups/exportaciones por cliente.
 
 > **Mitigación clave:** activar **Row-Level Security (RLS) de PostgreSQL**. La base de datos fuerza el aislamiento aunque una query olvide el `WHERE tenant_id`. Esto convierte el mayor punto débil de la opción A en un riesgo controlado.
 
@@ -341,13 +346,13 @@ Todas las tablas llevan `tenant_id`; el filtrado por tenant se aplica de forma t
 
 Una BD, un schema Postgres por tenant, mismas tablas replicadas.
 
-| Dimensión | Valoración |
-|-----------|-----------|
-| Complejidad | Media |
-| Coste | Medio |
-| Aislamiento | Medio–alto |
-| Escalabilidad | Buena hasta cientos/miles de schemas |
-| Onboarding de tenant | Requiere crear/migrar schema |
+| Dimensión            | Valoración                           |
+| -------------------- | ------------------------------------ |
+| Complejidad          | Media                                |
+| Coste                | Medio                                |
+| Aislamiento          | Medio–alto                           |
+| Escalabilidad        | Buena hasta cientos/miles de schemas |
+| Onboarding de tenant | Requiere crear/migrar schema         |
 
 **Pros:** buen equilibrio aislamiento/coste; backups y export por tenant más sencillos; sin riesgo de fuga por filtro olvidado.
 **Cons:** las migraciones deben aplicarse a N schemas (herramienta necesaria); la conexión debe fijar `search_path` por request; degrada con muchísimos tenants.
@@ -356,13 +361,13 @@ Una BD, un schema Postgres por tenant, mismas tablas replicadas.
 
 Una BD (o instancia) por cliente.
 
-| Dimensión | Valoración |
-|-----------|-----------|
-| Complejidad | Alta |
-| Coste | Alto |
-| Aislamiento | Máximo |
-| Escalabilidad | Excelente por tenant; pesada de operar en conjunto |
-| Onboarding de tenant | Aprovisionamiento completo |
+| Dimensión            | Valoración                                         |
+| -------------------- | -------------------------------------------------- |
+| Complejidad          | Alta                                               |
+| Coste                | Alto                                               |
+| Aislamiento          | Máximo                                             |
+| Escalabilidad        | Excelente por tenant; pesada de operar en conjunto |
+| Onboarding de tenant | Aprovisionamiento completo                         |
 
 **Pros:** aislamiento total (seguridad, rendimiento, residencia de datos por región); ideal para clientes enterprise/regulados; escalado y tuning independiente.
 **Cons:** coste y complejidad operativa altos; orquestación de migraciones y despliegues; onboarding lento; observabilidad fragmentada.
@@ -446,4 +451,7 @@ Nx aporta: límites de dependencia forzados (un feature no puede importar un ada
 5. [ ] Implementar `@acc/tenant` con AsyncLocalStorage + RLS en PostgreSQL.
 6. [ ] Configurar el monorepo Nx con límites de dependencia y un generador de recurso.
 7. [ ] Validar el desacoplamiento levantando la misma app con dos adapters distintos.
+
+```
+
 ```

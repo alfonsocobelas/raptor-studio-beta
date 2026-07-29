@@ -14,14 +14,14 @@ No todos los clientes necesitan la misma arquitectura. Un dashboard con dominio 
 
 **Hallazgo (verificado sobre los dos proyectos):** no son paradigmas opuestos. Ambos comparten la **misma espina dorsal ports & adapters** (puertos abstractos en el core, adapters en infraestructura, cross-cutting compartido). Difieren de forma **gradual**:
 
-| | `sap-licences` | `ip-opentext-cmis-api` |
-|---|---|---|
-| Espina | ports & adapters | ports & adapters (**igual**) |
-| Dominio | rico (agregados, VOs, use-cases) | casi nulo (traducción de protocolo) |
-| Adapters envuelven | BD (TypeORM) | API externa (OpenText, vía axios) |
-| BD propia | sí | no |
-| UI | sí (Angular) | no (API headless) |
-| Entrada del generador | definición de entidad | endpoints / mapeo upstream |
+|                       | `sap-licences`                   | `ip-opentext-cmis-api`              |
+| --------------------- | -------------------------------- | ----------------------------------- |
+| Espina                | ports & adapters                 | ports & adapters (**igual**)        |
+| Dominio               | rico (agregados, VOs, use-cases) | casi nulo (traducción de protocolo) |
+| Adapters envuelven    | BD (TypeORM)                     | API externa (OpenText, vía axios)   |
+| BD propia             | sí                               | no                                  |
+| UI                    | sí (Angular)                     | no (API headless)                   |
+| Entrada del generador | definición de entidad            | endpoints / mapeo upstream          |
 
 En `cmis-api`, el módulo `cmis` define puertos (`ContentRepository`, `SearchService`, `UploadService`, `UploadSessionStore`) y `opentext` los implementa como adapters con mappers/translators. El "repositorio" es un adapter sobre un sistema externo, no sobre una BD.
 
@@ -100,16 +100,19 @@ El eje es **ajuste al problema vs. coste de mantener varios perfiles**. Como la 
 ## 6. Consecuencias
 
 **Más fácil**
+
 - Elegir la arquitectura adecuada sin pagar ceremonia de más ni de menos.
 - Reutilizar la espina/kernel entre proyectos muy distintos.
 - Validar cada perfil por diff contra su proyecto de referencia.
 
 **Más difícil / a vigilar**
+
 - Familia de generadores: entrada y plantillas por perfil.
 - Decidir el **envoltorio**: `sap-licences` es Nx monorepo; `cmis-api` es una app NestJS suelta. Hay que decidir si todos los perfiles viven en un monorepo o si un bridge pequeño puede ser standalone. (Un bridge no necesita el Nx completo.)
 - No añadir perfiles sin proyecto de referencia real.
 
 **A revisar**
+
 - Aparición de un caso `layered` (CRUD con BD, dominio fino) → crear el perfil con su referencia.
 - Si un bridge crece hacia dominio propio → puede necesitar migrar de perfil (decisión consciente, no automática).
 

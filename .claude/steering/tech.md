@@ -2,10 +2,10 @@
 
 ## Dos planos (no confundir)
 
-| Plano | Tecnología |
-| --- | --- |
-| **El acelerador** (este repo) | Nx + plugin local `@acc/generators` (generators + EJS) · TypeScript 5 · Node `>=24` · Jest/Vitest para el generador |
-| **El código emitido** (lo que producen las plantillas) | Angular 21 (Signals, `resource()`) + Spartan NG + Tailwind v4 · NestJS 11 + TypeORM + PostgreSQL |
+| Plano                                                  | Tecnología                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **El acelerador** (este repo)                          | Nx + plugin local `@acc/generators` (generators + EJS) · TypeScript 5 · Node `>=24` · Jest/Vitest para el generador |
+| **El código emitido** (lo que producen las plantillas) | Angular 21 (Signals, `resource()`) + Spartan NG + Tailwind v4 · NestJS 11 + TypeORM + PostgreSQL                    |
 
 El código emitido debe ser indistinguible del escrito a mano en `docs/referencia/libs/` — mismas convenciones, mismos patrones.
 
@@ -36,18 +36,23 @@ nx generate @acc/generators:resource <entidad>             # generación real
 ## Decisiones técnicas y sus razones
 
 ### Plantillas tontas, lógica en `generator.ts`
+
 Todo cálculo (filtrar campos, derivar nombres, decidir tipos) se hace en la función y se pasa masticado a la plantilla. Si aparecen `if` anidados en `<% %>`, la lógica se extrae a `generator.ts`.
 
 ### Coherencia front↔back gratis
+
 `columns[]` (front) y `ALLOWED_FILTERS/ORDERS` (back) salen del mismo array `fields` del schema → imposible desincronizarlos.
 
 ### Generar una vez, poseer el código
+
 Regenerar pisa lo editado. Política inicial: se genera una vez y el código pasa a ser del proyecto. Sin separación "generado vs editado".
 
 ### Puerto = abstract class, DI por la propia clase
+
 Patrón de la referencia: puerto como `abstract class` en `domain/` o `application/ports/`, adapter `@Injectable()` que la `extends`, y `{ provide: Puerto, useClass: Adapter }`. Sin tokens string/Symbol.
 
 ### Config JSON por entorno + Key Vault
+
 El patrón de config de la referencia (JSON bundleado + placeholders `vault.*` + `DefaultAzureCredential`) es el mecanismo canónico del catálogo Azure.
 
 ## Path aliases previstos

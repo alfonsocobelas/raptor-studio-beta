@@ -66,23 +66,44 @@ export const contract = {
   plural: 'contracts',
   context: 'sap-licensing',
   fields: [
-    { name: 'id',             tsType: 'string',   column: 'uuid',    pk: true },
-    { name: 'contractNumber', tsType: 'string',   column: 'varchar', required: true,
-      vo: 'ContractNumber', max: 40, unique: true,
+    { name: 'id', tsType: 'string', column: 'uuid', pk: true },
+    {
+      name: 'contractNumber',
+      tsType: 'string',
+      column: 'varchar',
+      required: true,
+      vo: 'ContractNumber',
+      max: 40,
+      unique: true,
       table: { show: true, label: 'Nº contrato', minWidth: 160 },
       query: { sortable: true, filterable: true, searchable: true },
-      form:  { control: 'text', label: 'Nº contrato' } },
-    { name: 'customerId',     tsType: 'string',   column: 'uuid',    required: true,
+      form: { control: 'text', label: 'Nº contrato' }
+    },
+    {
+      name: 'customerId',
+      tsType: 'string',
+      column: 'uuid',
+      required: true,
       relation: { to: 'customer', kind: 'reference' },
-      query: { filterable: true } },
-    { name: 'totalValue',     tsType: 'number',   column: 'numeric',
+      query: { filterable: true }
+    },
+    {
+      name: 'totalValue',
+      tsType: 'number',
+      column: 'numeric',
       vo: 'ContractValue',
       table: { show: true, label: 'Valor', minWidth: 140 },
       query: { sortable: true },
-      form:  { control: 'number', label: 'Valor total' } },
-    { name: 'isFavorite',     tsType: 'boolean',  column: 'boolean', default: false,
+      form: { control: 'number', label: 'Valor total' }
+    },
+    {
+      name: 'isFavorite',
+      tsType: 'boolean',
+      column: 'boolean',
+      default: false,
       table: { show: true, label: 'Favorito' },
-      form:  { control: 'checkbox', label: 'Favorito' } }
+      form: { control: 'checkbox', label: 'Favorito' }
+    }
     // ...resto de campos reales de contract
   ]
 } as const
@@ -103,32 +124,31 @@ import { ResourceSchema } from './schema'
 import { loadModel } from './load-model'
 
 export async function resourceGenerator(tree: Tree, options: ResourceSchema) {
-  const model = loadModel(options.name)          // carga contract.model.ts
-  const n = names(model.name)                    // { className:'Contract', propertyName:'contract', ... }
+  const model = loadModel(options.name) // carga contract.model.ts
+  const n = names(model.name) // { className:'Contract', propertyName:'contract', ... }
 
   const substitutions = {
-    ...model,                                    // name, plural, context, fields[]
-    className: n.className,                       // Contract
-    propertyName: n.propertyName,                 // contract
-    constantName: n.constantName,                 // CONTRACT
+    ...model, // name, plural, context, fields[]
+    className: n.className, // Contract
+    propertyName: n.propertyName, // contract
+    constantName: n.constantName, // CONTRACT
     // helpers que las plantillas usarán:
     searchable: model.fields.filter(f => f.query?.searchable).map(f => f.name),
-    sortable:   model.fields.filter(f => f.query?.sortable).map(f => f.name),
+    sortable: model.fields.filter(f => f.query?.sortable).map(f => f.name),
     filterable: model.fields.filter(f => f.query?.filterable).map(f => f.name),
-    columns:    model.fields.filter(f => f.table?.show),
+    columns: model.fields.filter(f => f.table?.show),
     formFields: model.fields.filter(f => f.form?.control && f.form.control !== 'none')
   }
 
   generateFiles(
     tree,
-    joinPathFragments(__dirname, 'files'),                                   // de dónde: las plantillas
-    joinPathFragments('libs/backend/src/contexts', model.context,
-                      'modules', model.plural),                             // a dónde: el módulo destino
-    substitutions                                                           // con qué: los datos
+    joinPathFragments(__dirname, 'files'), // de dónde: las plantillas
+    joinPathFragments('libs/backend/src/contexts', model.context, 'modules', model.plural), // a dónde: el módulo destino
+    substitutions // con qué: los datos
   )
   // (idéntico para el front, con otra carpeta files/ y otro destino)
 
-  await formatFiles(tree)                        // pasa prettier con tus reglas (sin ; comillas simples...)
+  await formatFiles(tree) // pasa prettier con tus reglas (sin ; comillas simples...)
 }
 ```
 
@@ -190,8 +210,8 @@ const <%= constantName %>_SEARCHABLE       = [<%= searchable.map(f => `'${f}'`).
 
 ```typescript
 const CONTRACT_ALLOWED_FILTERS = ['contractNumber', 'customerId'] as const
-const CONTRACT_ALLOWED_ORDERS  = ['contractNumber', 'totalValue'] as const
-const CONTRACT_SEARCHABLE       = ['contractNumber'] as const
+const CONTRACT_ALLOWED_ORDERS = ['contractNumber', 'totalValue'] as const
+const CONTRACT_SEARCHABLE = ['contractNumber'] as const
 ```
 
 ### 5.3 Las columnas del front

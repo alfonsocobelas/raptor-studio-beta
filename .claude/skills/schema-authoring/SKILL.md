@@ -22,29 +22,38 @@ El schema es **entrada de un generador**, no un intérprete de runtime. Cubre el
 import { defineResource } from '@acc/schema'
 
 export const customerResource = defineResource({
-  name: 'customer', plural: 'customers',
+  name: 'customer',
+  plural: 'customers',
   context: 'sap-licensing',
-  route: '/sap-licensing/customers', api: '/api/v1/customers',
+  route: '/sap-licensing/customers',
+  api: '/api/v1/customers',
   labels: { singular: 'Cliente', plural: 'Clientes' },
 
   fields: {
-    id:   { type: 'uuid', origin: 'auto', pk: true },
+    id: { type: 'uuid', origin: 'auto', pk: true },
     name: {
-      type: 'string', origin: 'sap', required: true,
+      type: 'string',
+      origin: 'sap',
+      required: true,
       vo: 'CustomerName',
-      form:  { control: 'text', label: 'Nombre' },
+      form: { control: 'text', label: 'Nombre' },
       table: { show: true, label: 'Nombre', minWidth: 220 },
       query: { sortable: true, filterable: true, searchable: true }
     }
     // …cada campo declara: vo+constraints, query, table, form, unique, relation
   },
 
-  list: { defaultSort: { field: 'name', dir: 'asc' }, pageSize: 10,
-          features: { create: true, export: ['csv', 'xlsx'], search: true },
-          actions: [ /* view / edit / delete */ ] },
+  list: {
+    defaultSort: { field: 'name', dir: 'asc' },
+    pageSize: 10,
+    features: { create: true, export: ['csv', 'xlsx'], search: true },
+    actions: [/* view / edit / delete */]
+  },
 
-  relations: { contacts:  { kind: 'composition', of: 'contact', in: 'detail' },
-               contracts: { kind: 'inbound', from: 'contract', by: 'customerId', drilldown: true } },
+  relations: {
+    contacts: { kind: 'composition', of: 'contact', in: 'detail' },
+    contracts: { kind: 'inbound', from: 'contract', by: 'customerId', drilldown: true }
+  },
 
   detail: { title: 'name', sections: ['fields', 'contacts', 'contracts'] }
 })
@@ -52,15 +61,15 @@ export const customerResource = defineResource({
 
 ## Qué genera cada bloque
 
-| Bloque | Backend | Frontend |
-| --- | --- | --- |
-| `vo` + constraints | VOs con `create()` validador | tipos del Dto |
-| `query` | `search-config` (ALLOWED_FILTERS/ORDERS/SEARCHABLE) | flags de `ColumnDef` |
-| `table` | — | `columns: ColumnDef[]` |
-| `form` | validadores del DTO | dialog + `Validators` |
-| `unique` | specifications + `new*IfChanged()` | — |
-| `relations.composition` | entidad hija + repo `getWith*` | sub-tabla en detail |
-| `relations.inbound` | — | drill-down a tabla filtrada |
+| Bloque                  | Backend                                             | Frontend                    |
+| ----------------------- | --------------------------------------------------- | --------------------------- |
+| `vo` + constraints      | VOs con `create()` validador                        | tipos del Dto               |
+| `query`                 | `search-config` (ALLOWED_FILTERS/ORDERS/SEARCHABLE) | flags de `ColumnDef`        |
+| `table`                 | —                                                   | `columns: ColumnDef[]`      |
+| `form`                  | validadores del DTO                                 | dialog + `Validators`       |
+| `unique`                | specifications + `new*IfChanged()`                  | —                           |
+| `relations.composition` | entidad hija + repo `getWith*`                      | sub-tabla en detail         |
+| `relations.inbound`     | —                                                   | drill-down a tabla filtrada |
 
 Dos tipos de arista, tratados distinto: **composición** (hijo propio, cascada en el agregado) y **referencia entre contextos** (solo ID + lookup, sin FK dura).
 

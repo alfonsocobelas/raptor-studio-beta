@@ -46,12 +46,12 @@ Las features importan Spartan directamente (como hoy en diálogos/botones).
 
 Las features (generadas) solo conocen componentes shared del acelerador; la librería concreta vive dentro de esos shared.
 
-| Dimensión | Valoración |
-|---|---|
-| Complejidad | Baja-media |
-| Coste inicial | Bajo (ya hecho para la tabla) |
-| Cambio de librería | Cambiar shared + regenerar |
-| Runtime | Una librería a la vez por build |
+| Dimensión          | Valoración                      |
+| ------------------ | ------------------------------- |
+| Complejidad        | Baja-media                      |
+| Coste inicial      | Bajo (ya hecho para la tabla)   |
+| Cambio de librería | Cambiar shared + regenerar      |
+| Runtime            | Una librería a la vez por build |
 
 **Pros:** barato, aprovecha lo ya hecho (`data-table`), concentra el acoplamiento en pocos ficheros. El generador amplifica: un cambio en shared se propaga por regeneración.
 **Cons:** el cambio exige regenerar (o rebuild); no permite dos pieles simultáneas en la misma app; si hay ediciones a mano sobre lo generado, regenerar puede pisarlas.
@@ -60,21 +60,21 @@ Las features (generadas) solo conocen componentes shared del acelerador; la libr
 
 Las features dependen de contratos (`DATA_TABLE`, `DIALOG_SERVICE`, `BUTTON`…); cada librería es un adapter registrado en el arranque.
 
-| Dimensión | Valoración |
-|---|---|
-| Complejidad | Alta |
-| Coste inicial | Alto (contratos + ≥1 adapter) |
-| Cambio de librería | Proveer otro adapter (sin regenerar) |
-| Runtime | Intercambiable por configuración/cliente |
+| Dimensión          | Valoración                               |
+| ------------------ | ---------------------------------------- |
+| Complejidad        | Alta                                     |
+| Coste inicial      | Alto (contratos + ≥1 adapter)            |
+| Cambio de librería | Proveer otro adapter (sin regenerar)     |
+| Runtime            | Intercambiable por configuración/cliente |
 
 **Pros:** desacoplamiento real; cambio de piel sin regenerar; distintos clientes con distintos adapters desde el mismo código.
-**Cons:** inversión de plataforma antes de ver retorno; hay que definir y mantener el kernel de contratos; paridad imperfecta entre librerías (features que una tiene y otra no) → necesidad de *escape hatches*. Histórico de la industria: estas abstracciones tienden a filtrar.
+**Cons:** inversión de plataforma antes de ver retorno; hay que definir y mantener el kernel de contratos; paridad imperfecta entre librerías (features que una tiene y otra no) → necesidad de _escape hatches_. Histórico de la industria: estas abstracciones tienden a filtrar.
 
 ---
 
 ## 4. Análisis de trade-offs
 
-El eje es **coste de plataforma vs. flexibilidad de runtime**. Hoy no hay un cliente que exija piel distinta, así que pagar el Nivel 2 sería *over-engineering* (coherente con la valoración previa: adapters ~50%, dependientes de demanda).
+El eje es **coste de plataforma vs. flexibilidad de runtime**. Hoy no hay un cliente que exija piel distinta, así que pagar el Nivel 2 sería _over-engineering_ (coherente con la valoración previa: adapters ~50%, dependientes de demanda).
 
 El generador reduce el coste de esperar: como el acoplamiento vive en plantillas + shared, subir del Nivel 1 al Nivel 2 más adelante es **cambiar las plantillas una vez** para emitir contra contratos, no reescribir features. Es decir, empezar por el Nivel 1 **no cierra la puerta** al Nivel 2; la deja barata.
 
@@ -95,16 +95,19 @@ El generador reduce el coste de esperar: como el acoplamiento vive en plantillas
 ## 6. Consecuencias
 
 **Más fácil**
+
 - Rebranding (tokens) sin tocar código.
 - Cambio de librería como operación de plantilla + shared (Nivel 1), sin editar features.
 - Migración futura a Nivel 2 acotada (cambio de plantillas, no de features).
 
 **Más difícil / a vigilar**
+
 - Disciplina de que las features **nunca** importen la librería directamente (forzar por lint).
 - Si se edita a mano lo generado, la regeneración puede pisarlo → política de "generar y poseer" clara.
 - No caer en construir el kernel de contratos antes de necesitarlo.
 
 **A revisar**
+
 - Primer cliente con requisito de piel distinta → disparador del Nivel 2.
 - Alcance del kernel de contratos cuando se llegue (evitar que se hinche).
 

@@ -129,6 +129,7 @@ Queries semánticas siempre: `getByRole`, `getByText`, `getByLabelText`. **No ve
   Motivo: un guard `if (updates.campo)` en vez de `if (updates.campo !== undefined)` convierte ambos casos en no-op silencioso y NI la cobertura de líneas NI los tests de happy path lo detectan. Sin estos tests, la suite en verde NO protege refactors de los guards. Los guards de "campo presente" se escriben siempre con `!== undefined` (o `'campo' in updates` para nullables), nunca con check truthy — uniformemente en todos los campos, aunque para alguno el truthy fuera equivalente.
 
   Para saber si un VO acepta un falsy, leer TAMBIÉN las clases base (`StringValueObject.ensureIsString` rechaza `''` y whitespace; patrón del repo de referencia `docs/referencia/libs/backend/`), no solo el `create()` concreto.
+
 - IDs de mocks: UUIDs reales generados con `generateId()`.
 - **Clases base de Value Object** (`StringValueObject`, `BooleanValueObject`, `NumberValueObject`, `IntegerValueObject`…): aunque sean abstractas, llevan su propio test en `tests/modules/shared/domain/value-objects/`, usando una subclase concreta mínima inline (`TestXxxVo`) para poder instanciarla. No omitir el test por ser abstracta.
 
