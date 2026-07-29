@@ -26,6 +26,9 @@ npx nx generate @acc/generators:resource contract
 npx nx generate @acc/generators:resource contract --directory tmp/probe
 ```
 
+> Nota: si el destino ya contiene el fichero con contenido idéntico, Nx no imprime `CREATE`
+> (no hay cambios que aplicar). Para ver la generación desde cero: `rm -rf tmp/generated`.
+
 La entrada es un **modelo registrado** (dato puro) en
 `libs/generators/src/generators/resource/models/`. Hoy: `contract`. Los modelos nuevos se
 registran en el mapa `MODELS` de `resource.ts`.
