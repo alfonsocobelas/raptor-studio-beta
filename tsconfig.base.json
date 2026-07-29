@@ -17,7 +17,8 @@
     "sourceMap": true,
     "importHelpers": false,
     "paths": {
-      "@acc/generators": ["./libs/generators/src/index.ts"]
+      "@acc/generators": ["./libs/generators/src/index.ts"],
+      "@acc/schema": ["./libs/schema/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist", "docs/referencia"]
