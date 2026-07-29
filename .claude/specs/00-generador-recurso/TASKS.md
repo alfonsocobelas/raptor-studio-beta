@@ -17,8 +17,8 @@
 
 ## Cierre
 
-- [ ] **TASK-06**: Documentar en el README del repo cómo ejecutar el generador y cómo validar por diff
-- [ ] **TASK-07**: Verificación final: `--dry-run` + generación + diff vacío + lint verde; marcar spec como completa
+- [x] **TASK-06**: Documentar en el README del repo cómo ejecutar el generador y cómo validar por diff
+- [x] **TASK-07**: Verificación final: `--dry-run` + generación + diff vacío + lint verde; marcar spec como completa
 
 ---
 
