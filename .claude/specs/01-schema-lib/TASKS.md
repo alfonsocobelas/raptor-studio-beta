@@ -11,7 +11,7 @@
 
 ## defineResource (TDD)
 
-- [ ] **TASK-03**: Tests + implementación de `defineResource()` — las 8 reglas de validación del DESIGN, acumulativas, con mensajes "campo: motivo"; casos: modelo válido (contract), cada regla violada, varios problemas a la vez, freeze
+- [x] **TASK-03**: Tests + implementación de `defineResource()` — las 8 reglas de validación del DESIGN, acumulativas, con mensajes "campo: motivo"; casos: modelo válido (contract), cada regla violada, varios problemas a la vez, freeze
 
 ## Migración del generador
 
