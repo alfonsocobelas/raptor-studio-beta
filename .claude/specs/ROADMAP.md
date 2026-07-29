@@ -41,5 +41,5 @@ Del README del starter (2026-07-12): ADR-008 distribución del kernel (B1), sele
 generación (A3), propagación de denormalización (B2), scoping en Criteria (B4), constante compartida
 de campos (C1), uniformización de los 4 módulos de oro (C2), anotar ADR-001 (A1).
 
-⚠️ Además: **ratificar las 5 decisiones del resource-schema** (propuestas en la skill `schema-authoring`) —
+✅ Las 5 decisiones del resource-schema fueron **ratificadas el 2026-07-30** (ver skill `schema-authoring`) —
 el starter original las tenía cerradas pero no llegó a este repo.

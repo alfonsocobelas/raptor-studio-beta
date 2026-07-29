@@ -73,17 +73,16 @@ export const customerResource = defineResource({
 
 Dos tipos de arista, tratados distinto: **composición** (hijo propio, cascada en el agregado) y **referencia entre contextos** (solo ID + lookup, sin FK dura).
 
-## Decisiones de formato (⚠️ propuestas pendientes de ratificar por Alfonso)
+## Decisiones de formato (✅ RATIFICADAS por Alfonso, 2026-07-30)
 
-> Las 5 decisiones abiertas de `docs/resource-schema-customers.md` §5 se cerraron en el starter pack
-> original, que no está en este repo. Estas son las propuestas de trabajo; ratificar o corregir antes
-> de implementarlas en el generador.
+> Cierran las 5 decisiones abiertas de `docs/resource-schema-customers.md` §5. Son vinculantes
+> para `libs/schema` y el generador; no re-litigar sin motivo nuevo.
 
-1. **Unicidad en campos opcionales** = semántica `ifPresent` por defecto (solo aplica si no vacío), como el `taxId` real.
-2. **`origin: 'sap'`** afecta **solo al sync**, no a la editabilidad del formulario (hoy `sapId` es editable). La editabilidad la declara `form.control`.
-3. **Drill-down**: se **infiere del hijo** (`contract.customerId` con `relation.to`), no se duplica en el padre. El bloque `relations.inbound` del padre es derivable.
+1. **Unicidad en campos opcionales** = semántica `ifPresent` (solo aplica si no vacío), como el `taxId` real. Sin flag extra hasta que un caso real lo pida.
+2. **`origin: 'sap'`** afecta **solo al sync**, no a la editabilidad del formulario (`sapId` es editable en el form real). La editabilidad la declara `form.control`.
+3. **Drill-down**: se **infiere del hijo** (`contract.customerId` con `relation.to`), no se duplica en el padre. `relations.inbound` del padre es derivado, nunca fuente.
 4. **Campos con relación sin UI** (ej. `assignedKamId`): `form.control: 'none'` explícito; el generador **omite** el control hasta que exista el endpoint de lookup.
-5. **Nombres de VO explícitos** (`vo: 'SapId'`), no derivados — más control, coincide con el código real.
+5. **Nombres de VO explícitos** (`vo: 'SapId'`), no derivados — más control, cero magia, coincide con el código de oro.
 
 ## Checklist al escribir un schema
 
