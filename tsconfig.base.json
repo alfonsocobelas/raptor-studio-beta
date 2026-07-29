@@ -16,7 +16,9 @@
     "declaration": true,
     "sourceMap": true,
     "importHelpers": false,
-    "paths": {}
+    "paths": {
+      "@acc/generators": ["./libs/generators/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp", "dist", "docs/referencia"]
 }

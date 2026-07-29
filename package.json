@@ -13,11 +13,33 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
     "@nx/eslint": "23.1.0",
+    "@nx/eslint-plugin": "23.1.0",
+    "@nx/jest": "23.1.0",
+    "@nx/js": "23.1.0",
+    "@nx/plugin": "23.1.0",
+    "@swc-node/register": "~1.11.1",
+    "@swc/cli": "~0.8.1",
+    "@swc/core": "~1.15.5",
+    "@swc/helpers": "~0.5.18",
+    "@types/jest": "~30.0.0",
+    "@types/node": "^22.0.0",
     "eslint": "^9.8.0",
+    "eslint-config-prettier": "^10.0.0",
+    "jest": "~30.3.0",
+    "jest-environment-node": "~30.3.0",
+    "jest-util": "~30.3.0",
+    "jsonc-eslint-parser": "^2.1.0",
     "nx": "23.1.0",
     "prettier": "3.9.6",
-    "typescript": "6.0.3"
+    "ts-jest": "^29.4.7",
+    "ts-node": "10.9.1",
+    "tslib": "^2.3.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.58.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@nx/devkit": "23.1.0"
+  }
 }
