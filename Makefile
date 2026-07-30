@@ -32,6 +32,10 @@ build:
 golden-diff:
 	npm run golden:diff
 
+# Conformidad de adapters contra backends reales (requiere docker-local-start)
+conformance:
+	INTEGRATION=1 npx nx run-many -t test -p infra-storage-azure infra-storage-s3 --skip-nx-cache
+
 format:
 	npm run format
 
