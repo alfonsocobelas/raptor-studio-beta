@@ -6,14 +6,14 @@
 
 ## Fase 1 — Núcleo del generador (el 70-80% de probabilidad de éxito)
 
-| Nº  | Spec                       | Objetivo                                                                                                      | Estado        |
-| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------- |
-| 00  | `generador-recurso` [DONE] | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | ✅ Completada |
-| 01  | `schema-lib` [DONE]        | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5)                  | Pendiente     |
-| 02  | `golden-fixtures`          | Congelar los 4 módulos de oro desde `docs/referencia` + comando/target de diff                                | Pendiente     |
-| 03  | `plantillas-backend`       | Módulo backend completo (domain + application + infrastructure) con diff vacío para `contract`                | Pendiente     |
-| 04  | `plantillas-frontend`      | Vista completa (list + dialog + detail + service + rutas) con diff vacío                                      | Pendiente     |
-| 05  | `validacion-4-entidades`   | Las 4 referencias de oro generan con diff vacío (gate completo)                                               | Pendiente     |
+| Nº  | Spec                                             | Objetivo                                                                                                      | Estado        |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------- |
+| 00  | ✅ `generador-recurso` [DONE]                    | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | ✅ Completada |
+| 01  | ✅ `schema-lib` [DONE]                           | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5)                  | Pendiente     |
+| 02  | ✅ `golden-fixtures`                             | Congelar los 4 módulos de oro desde `docs/referencia` + comando/target de diff                                | Pendiente     |
+| 03  | ✅ `plantillas-backend` (corte canónico)         | Módulo backend completo (domain + application + infrastructure) con diff vacío para `contract`                | Pendiente     |
+| 04  | ⏸ `plantillas-frontend` (explorada; requiere C2) | Vista completa (list + dialog + detail + service + rutas) con diff vacío                                      | Pendiente     |
+| 05  | `validacion-4-entidades`                         | Las 4 referencias de oro generan con diff vacío (gate completo)                                               | Pendiente     |
 
 ## Fase 2 — Catálogo de infra (Azure primero, ADR-004)
 
