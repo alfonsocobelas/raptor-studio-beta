@@ -1,0 +1,19 @@
+import { Register<%- className %>Input } from '../../application/dtos/register-<%- fileName %>-input.dto'
+
+// UUIDv7 deterministas (reproducibles entre ejecuciones); la idempotencia la dan
+// los checks de unicidad del Register use case.
+const DERIVED: Register<%- className %>Input[] = [
+<%_ entry.seedItems.forEach((item, i) => { _%>
+  {
+<%_ item.forEach((line, j) => { _%>
+    <%- line %><%- j < item.length - 1 ? ',' : '' %>
+<%_ }) _%>
+  }<%- i < entry.seedItems.length - 1 ? ',' : '' %>
+<%_ }) _%>
+]
+
+// @ai:begin seed-data — filas realistas del cliente (mismo shape Register<%- className %>Input)
+const CUSTOM: Register<%- className %>Input[] = []
+// @ai:end
+
+export const <%- entry.seedConst %>: Register<%- className %>Input[] = [...DERIVED, ...CUSTOM]

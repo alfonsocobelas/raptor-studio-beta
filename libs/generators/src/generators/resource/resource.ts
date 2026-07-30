@@ -93,6 +93,16 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     }
   }
 
+  // seed local idempotente (solo recursos con formulario: siembra vía Register use case)
+  if (substitutions.entry.emit && substitutions.app.writes) {
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-seed'),
+      path.join(outputDir, 'backend/infrastructure/seed'),
+      substitutions
+    )
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     const comp = substitutions.aggregate.composition

@@ -7,9 +7,8 @@ export interface ProjectSeedSummary {
   projectsSkipped: number
 }
 
-// Siembra idempotente de proyectos para el entorno local vía RegisterProjectUseCase
-// (respeta invariantes); los duplicados (customerId, name) se saltan capturando
-// AlreadyExistsError.
+// Siembra idempotente de projects para el entorno local vía RegisterProjectUseCase
+// (respeta invariantes); los duplicados se saltan capturando AlreadyExistsError.
 export class ProjectLocalSeeder {
   constructor(private readonly registerProject: RegisterProjectUseCase) {}
 

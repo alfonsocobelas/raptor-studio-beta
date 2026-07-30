@@ -7,9 +7,8 @@ export interface ContractSeedSummary {
   contractsSkipped: number
 }
 
-// Siembra idempotente de contratos para el entorno local vía RegisterContractUseCase
-// (respeta invariantes); los duplicados (contractNumber) se saltan capturando
-// AlreadyExistsError.
+// Siembra idempotente de contracts para el entorno local vía RegisterContractUseCase
+// (respeta invariantes); los duplicados se saltan capturando AlreadyExistsError.
 export class ContractLocalSeeder {
   constructor(private readonly registerContract: RegisterContractUseCase) {}
 

@@ -1,0 +1,36 @@
+import { AlreadyExistsError } from '../../../../../shared/domain/errors'
+import { Register<%- className %>Input } from '../../application/dtos/register-<%- fileName %>-input.dto'
+import { Register<%- className %>UseCase } from '../../application/use-cases/register-<%- fileName %>-usecase.service'
+
+export interface <%- className %>SeedSummary {
+  <%- plural %>Created: number
+  <%- plural %>Skipped: number
+}
+
+// Siembra idempotente de <%- plural %> para el entorno local vía Register<%- className %>UseCase
+// (respeta invariantes); los duplicados se saltan capturando AlreadyExistsError.
+export class <%- className %>LocalSeeder {
+  constructor(private readonly register<%- className %>: Register<%- className %>UseCase) {}
+
+  async seed(<%- plural %>: Register<%- className %>Input[]): Promise<<%- className %>SeedSummary> {
+    const summary: <%- className %>SeedSummary = {
+      <%- plural %>Created: 0,
+      <%- plural %>Skipped: 0
+    }
+
+    for (const <%- propertyName %> of <%- plural %>) {
+      try {
+        await this.register<%- className %>.invoke(<%- propertyName %>)
+        summary.<%- plural %>Created++
+      } catch (error) {
+        if (error instanceof AlreadyExistsError) {
+          summary.<%- plural %>Skipped++
+          continue
+        }
+        throw error
+      }
+    }
+
+    return summary
+  }
+}

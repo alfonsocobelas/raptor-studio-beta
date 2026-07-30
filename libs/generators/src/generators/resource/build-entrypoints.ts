@@ -40,6 +40,9 @@ export interface EntrypointBindings {
   moduleHandlerImports: string[]
   moduleUseCaseImports: string[]
   moduleProviderNames: string[]
+  /** filas derivadas del schema para el seed local (2 items; lo realista va al hueco @ai) */
+  seedItems: string[][]
+  seedConst: string
 }
 
 interface Ctx {
@@ -148,8 +151,43 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     childControllerFile: comp ? `${n.fileName}-${comp.plural}` : '',
     moduleHandlerImports,
     moduleUseCaseImports,
-    moduleProviderNames
+    moduleProviderNames,
+    seedItems: [1, 2].map(i => renderSeedItem(definition, dtoCtxs, i)),
+    seedConst: `SEED_${names(definition.plural).constantName}`
   }
+}
+
+// UUIDv7-like determinista: categoría estable por recurso (hash del plural) + índice
+function seedUuid(plural: string, n: number): string {
+  const category = [...plural].reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 0xffff, 7)
+  return `019eb800-${category.toString(16).padStart(4, '0')}-7000-8000-${n.toString().padStart(12, '0')}`
+}
+
+function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number): string[] {
+  const lines = [`id: '${seedUuid(definition.plural, i)}'`]
+
+  for (const c of ctxs) {
+    const vo = typeof c.field.vo === 'object' ? c.field.vo : undefined
+    const label = names(c.name).className
+
+    if (c.field.relation && c.field.type === 'uuid') {
+      lines.push(`${c.name}: '${seedUuid(`${c.field.relation.to}s`, i)}'`)
+      continue
+    }
+    if (vo?.values?.length) {
+      lines.push(`${c.name}: '${vo.values[(i - 1) % vo.values.length]}'`)
+      continue
+    }
+    if (!c.required) continue
+
+    if (c.field.type === 'boolean') lines.push(`${c.name}: false`)
+    else if (c.field.type === 'number' || c.field.type === 'integer') lines.push(`${c.name}: ${i}`)
+    else if (c.field.type === 'date' || c.field.type === 'timestamptz') lines.push(`${c.name}: '2026-01-0${i}'`)
+    else if (vo?.noInnerWhitespace) lines.push(`${c.name}: 'SEED-${names(definition.name).constantName}-${i}'`)
+    else lines.push(`${c.name}: '${label} seed ${i}'`)
+  }
+
+  return lines
 }
 
 function idDtoField(name: string): DtoFieldBinding {

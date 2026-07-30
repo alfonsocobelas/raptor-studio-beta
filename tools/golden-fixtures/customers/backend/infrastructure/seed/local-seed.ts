@@ -1,19 +1,18 @@
 import 'reflect-metadata'
 import { Module } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
-import { DataSource } from 'typeorm'
 import { CoreConfigModule } from '../../../../../shared/infrastructure/config/config.module'
 import { LoggerModule } from '../../../../../shared/infrastructure/logger/logger.module'
 import { SharedPersistenceModule } from '../../../../../shared/infrastructure/persistence/typeorm/shared-persistence.module'
-import { CustomersModule } from '../../customers.module'
 import { RegisterCustomerUseCase } from '../../application/use-cases/register-customer-usecase.service'
-import { LocalSeeder } from './local-seeder'
-import { SEED_CONTACTS, SEED_CUSTOMERS } from './local-seed.fixtures'
+import { CustomersModule } from '../../customers.module'
+import { SEED_CUSTOMERS } from './local-seed.fixtures'
+import { CustomerLocalSeeder } from './local-seeder'
 
 @Module({
   imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule]
 })
-class SeedModule {}
+class CustomerSeedModule {}
 
 async function bootstrap(): Promise<void> {
   const env = process.env['NODE_ENV']
@@ -21,18 +20,14 @@ async function bootstrap(): Promise<void> {
     throw new Error(`Local seed can only run with NODE_ENV=local (got: ${env ?? 'undefined'})`)
   }
 
-  const context = await NestFactory.createApplicationContext(SeedModule, { logger: ['error', 'warn'] })
+  const context = await NestFactory.createApplicationContext(CustomerSeedModule, { logger: ['error', 'warn'] })
   try {
     const registerCustomer = context.get(RegisterCustomerUseCase)
-    const dataSource = context.get(DataSource)
-    const seeder = new LocalSeeder(registerCustomer, dataSource)
+    const seeder = new CustomerLocalSeeder(registerCustomer)
 
-    const summary = await seeder.seed(SEED_CUSTOMERS, SEED_CONTACTS)
+    const summary = await seeder.seed(SEED_CUSTOMERS)
 
-    console.log(
-      `[seed] customers: +${summary.customersCreated} created, ${summary.customersSkipped} skipped | ` +
-        `contacts: +${summary.contactsCreated} created, ${summary.contactsSkipped} skipped`
-    )
+    console.log(`[seed] customers: +${summary.customersCreated} created, ${summary.customersSkipped} skipped`)
   } finally {
     await context.close()
   }
