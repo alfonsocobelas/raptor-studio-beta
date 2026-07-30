@@ -1,24 +1,26 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core'
-import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
+import { MatButtonModule } from '@angular/material/button'
 
-/** Confirmación destructiva. Todo el bloque de la librería queda encapsulado aquí. */
+/** Confirmación destructiva (piel Material). Misma API que la implementación Spartan. */
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [HlmAlertDialogImports],
+  imports: [MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-alert-dialog [state]="open() ? 'open' : 'closed'" (closed)="closed.emit()">
-      <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-        <hlm-alert-dialog-header>
-          <h2 hlmAlertDialogTitle>{{ title() }}</h2>
-          <p hlmAlertDialogDescription>{{ description() }}</p>
-        </hlm-alert-dialog-header>
-        <hlm-alert-dialog-footer>
-          <button hlmAlertDialogCancel (click)="ctx.close()">{{ cancelLabel() }}</button>
-          <button hlmAlertDialogAction (click)="confirmed.emit(); ctx.close()">{{ confirmLabel() }}</button>
-        </hlm-alert-dialog-footer>
-      </hlm-alert-dialog-content>
-    </hlm-alert-dialog>
+    @if (open()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closed.emit()">
+        <div class="mat-elevation-z8 w-full max-w-md rounded-lg bg-white p-6" (click)="$event.stopPropagation()">
+          <h2 class="mat-headline-small mb-2">{{ title() }}</h2>
+          <p class="mat-body-medium mb-6">{{ description() }}</p>
+          <div class="flex justify-end gap-2">
+            <button matButton (click)="closed.emit()">{{ cancelLabel() }}</button>
+            <button matButton="filled" color="warn" (click)="confirmed.emit(); closed.emit()">
+              {{ confirmLabel() }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class AppConfirmDialog {

@@ -1,0 +1,32 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+/* Tema prefabricado de Angular Material: evita tener que compilar SCSS en el proyecto. */
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Tokens mínimos que usan las clases de utilidad de los componentes emitidos. */
+:root {
+  --mat-sys-surface: #ffffff;
+}
+
+.bg-card,
+.bg-background {
+  background: var(--mat-sys-surface, #fff);
+}
+
+.text-destructive {
+  color: var(--mat-sys-error, #b3261e);
+}
+
+.bg-surface-variant {
+  background: var(--mat-sys-surface-variant, #e7e0ec);
+}

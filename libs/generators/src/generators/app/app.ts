@@ -118,8 +118,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   }
   tree.delete(path.join(root, '.gen'))
 
-  // 4. esqueleto: copia literal, sin plantillas
+  // 4. esqueleto: copia literal, sin plantillas. La capa por librería va después
+  //    para que pueda sobrescribir lo que dependa de la piel (hoja de estilos).
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
+  copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
 
   // 5. lo único que depende de los modelos
   generateFiles(tree, path.join(__dirname, 'files'), root, {

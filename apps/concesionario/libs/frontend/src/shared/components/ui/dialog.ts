@@ -17,7 +17,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
     @if (open()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closed.emit()">
         <div
-          class="bg-background text-foreground rounded-lg border p-6 shadow-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+          class="mat-elevation-z8 rounded-lg bg-white p-6 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
           (click)="$event.stopPropagation()"
         >
           <ng-content />

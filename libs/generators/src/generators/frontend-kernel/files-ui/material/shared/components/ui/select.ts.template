@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core'
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
+import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatSelectModule } from '@angular/material/select'
 
 export interface AppSelectOption {
@@ -10,15 +11,17 @@ export interface AppSelectOption {
 /** Desplegable (piel Material). Misma API que la implementación Spartan. */
 @Component({
   selector: 'app-select',
-  imports: [MatSelectModule],
+  imports: [MatFormFieldModule, MatSelectModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppSelect), multi: true }],
   template: `
-    <mat-select [id]="controlId()" [value]="value()" [placeholder]="placeholder()" (valueChange)="onSelect($event)">
-      @for (option of options(); track option.value) {
-        <mat-option [value]="option.value">{{ option.label }}</mat-option>
-      }
-    </mat-select>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+      <mat-select [id]="controlId()" [value]="value()" [placeholder]="placeholder()" (valueChange)="onSelect($event)">
+        @for (option of options(); track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   `
 })
 export class AppSelect implements ControlValueAccessor {
