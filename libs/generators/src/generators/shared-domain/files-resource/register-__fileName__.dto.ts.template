@@ -1,0 +1,9 @@
+<%_ if (unions.length) { _%>
+import { <%- unions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
+
+<%_ } _%>
+export interface Register<%- className %>Dto {
+<%_ registerLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}

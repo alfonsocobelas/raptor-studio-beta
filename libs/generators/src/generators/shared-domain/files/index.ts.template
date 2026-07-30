@@ -1,0 +1,4 @@
+// shared/domain barrel — todos los tipos, DTOs e interfaces compartidos front ⇄ back
+<%_ exportLines.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>

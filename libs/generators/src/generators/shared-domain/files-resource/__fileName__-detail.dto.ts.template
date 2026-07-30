@@ -1,0 +1,8 @@
+<%_ if (comp) { _%>
+import { <%- comp.childClass %>Dto } from './child.dto'
+import { <%- className %>Dto } from './<%- fileName %>.dto'
+
+export interface <%- className %>DetailDto extends <%- className %>Dto {
+  <%- comp.childrenProp %>: <%- comp.childClass %>Dto[]
+}
+<%_ } _%>

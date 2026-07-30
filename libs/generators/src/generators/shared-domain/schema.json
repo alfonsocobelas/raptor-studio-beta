@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "SharedDomain",
+  "title": "Shared domain generator",
+  "description": "Generates the frontend/backend shared DTO lib (per-resource DTOs derived from the models + auth/export statics)",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Output directory; defaults to tmp/generated/shared-domain"
+    }
+  }
+}

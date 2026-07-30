@@ -1,0 +1,19 @@
+<%_ if (comp) { _%>
+export interface <%- comp.childClass %>Dto {
+<%_ comp.childDtoLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+
+export interface Add<%- comp.childClass %>Dto {
+<%_ comp.addChildLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+
+export interface Update<%- comp.childClass %>Dto {
+<%_ comp.updateChildLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+<%_ } _%>
