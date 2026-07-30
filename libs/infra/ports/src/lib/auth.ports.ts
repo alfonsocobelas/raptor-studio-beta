@@ -34,6 +34,24 @@ export interface SessionRecord {
   createdAt: string
   expiresAt: string
   lastSeenAt: string
+  /** Multi-tenant deployments stamp the owning tenant; single-tenant apps omit it. */
+  tenantId?: string
+}
+
+/** Framework-free request surface a tenant resolver needs (works for Nest/Express/Fastify). */
+export interface TenantRequestContext {
+  headers: Record<string, string | string[] | undefined>
+  /** Host header ('acme.dashboards.example.com[:port]') when resolving by subdomain. */
+  host?: string
+}
+
+/**
+ * Resolves the tenant of an incoming request. Returns null when the request
+ * cannot be attributed to a tenant — callers must reject, NEVER fall back to
+ * a default tenant (cross-tenant leakage).
+ */
+export abstract class TenantResolver {
+  abstract resolve(ctx: TenantRequestContext): Nullable<string>
 }
 
 export abstract class SessionStore {
