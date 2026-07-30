@@ -12,6 +12,7 @@ export const contract = defineResource({
   schemaName: 'sap_licensing',
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
+  skipEmit: ['frontendList'],
   auditComment: true,
   searchNotes: [
     'Free-text columns only: badge/enum columns (status, source…) store values that differ from their',

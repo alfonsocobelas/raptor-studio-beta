@@ -10,6 +10,7 @@ export const project = defineResource({
   schemaName: 'sap_licensing',
   constraintsConst: 'PROJECT_CONSTRAINTS',
   audit: true,
+  skipEmit: ['frontendList'],
   auditComment: true,
   softDelete: true,
   searchNotes: ['Free-text columns shown in the table (spec 25: status/implementer are badges, dates are out).'],

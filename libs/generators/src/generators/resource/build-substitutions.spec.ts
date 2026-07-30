@@ -1,5 +1,6 @@
 import { buildSubstitutions } from './build-substitutions'
 import { contract } from './models/contract.model'
+import { customer } from './models/customer.model'
 import { ResourceDefinition } from '@acc/schema'
 
 describe('buildSubstitutions', () => {
@@ -270,5 +271,37 @@ describe('buildSubstitutions — license-style bindings', () => {
 
   it('renders extra constant groups', () => {
     expect(subs.extraConstantBlocks).toEqual(['OBSERVABILITY_THRESHOLDS: { UNDERUSED_PCT: 40, OVERUSED_PCT: 95 }'])
+  })
+})
+
+describe('buildSubstitutions — frontend bindings', () => {
+  const subs = buildSubstitutions(customer)
+
+  it('derives UI strings from labels and gender', () => {
+    expect(subs.ui).toEqual({
+      title: 'Clientes',
+      subtitle: 'Gestión de clientes SAP',
+      loading: 'Cargando clientes…',
+      error: 'No se pudieron cargar los clientes',
+      empty: 'No hay clientes registrados',
+      createLabel: 'Nuevo cliente',
+      exportFilename: 'clientes',
+      toastCreated: 'Cliente creado correctamente',
+      toastUpdated: 'Cliente actualizado correctamente',
+      toastCreateError: 'No se pudo crear el cliente',
+      toastUpdateError: 'No se pudo actualizar el cliente'
+    })
+  })
+
+  it('renders plain columns inline and badge columns expanded', () => {
+    expect(subs.frontendColumns[0]).toBe("{ key: 'name', label: 'Nombre', filterable: true, minWidth: 220 }")
+    expect(subs.frontendColumns[1]).toContain("key: 'status'")
+    expect(subs.frontendColumns[1]).toContain('\n')
+    expect(subs.frontendColumns[1]).toContain("active: { label: 'Activo', variant: 'outline' }")
+  })
+
+  it('exposes route and shared domain alias', () => {
+    expect(subs.route).toBe('/sap-licensing/customers')
+    expect(subs.sharedDomainAlias).toBe('@sap-licenses/shared/domain')
   })
 })

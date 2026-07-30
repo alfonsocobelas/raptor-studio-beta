@@ -12,7 +12,7 @@ export const license = defineResource({
   constraintsConst: 'LICENSE_CONSTRAINTS',
   audit: true,
   softDelete: true,
-  skipEmit: ['mapper'],
+  skipEmit: ['mapper', 'frontendList'],
   ordersNotes: ['Allowlist única (spec 26): con el snapshot en columnas, todas las vistas ordenan en SQL.'],
   searchNotes: [
     'Free-text columns shown in the table (spec 25). The SQL path ORs them with ILIKE; the health',

@@ -30,10 +30,22 @@ export interface FieldQuery {
   filterNote?: string[]
 }
 
+export interface BadgeEntry {
+  label: string
+  variant: string
+}
+
 export interface FieldTable {
   show: boolean
+  /** Position in the emitted columns[] (UI order differs from field order in the golden modules) */
+  order?: number
   label?: string
   minWidth?: number
+  /** UI truth of the DataTable (independent of backend query flags, as in the golden modules) */
+  filterable?: boolean
+  sortable?: false
+  type?: 'badge'
+  badgeMap?: Record<string, BadgeEntry>
 }
 
 export interface FieldForm {
@@ -121,6 +133,8 @@ export interface ResourceLabels {
   singular: string
   plural: string
   subtitle?: string
+  /** Grammatical gender of the singular, to derive UI strings (Nuevo/Nueva, el/la, creado/a) */
+  gender?: 'm' | 'f'
 }
 
 export interface ResourceDefinition {
@@ -134,6 +148,8 @@ export interface ResourceDefinition {
   schemaName: string
   route?: string
   api?: string
+  /** Import alias of the app's shared domain lib in emitted frontend code */
+  sharedDomainAlias?: string
   labels?: ResourceLabels
   /** Domain constraints constant imported as LIMITS (e.g. 'CONTRACT_CONSTRAINTS') */
   constraintsConst?: string
@@ -144,7 +160,7 @@ export interface ResourceDefinition {
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
   /** Files NOT to emit for this resource (C2: golden modules carry hand extensions the canon does not cover) */
-  skipEmit?: ('mapper' | 'constants')[]
+  skipEmit?: ('mapper' | 'constants' | 'frontendList')[]
   /** Emit a DeleteDateColumn soft-delete column (deletedAt) */
   softDelete?: boolean
   /** Comment lines emitted above ALLOWED_ORDERS in the search-config */

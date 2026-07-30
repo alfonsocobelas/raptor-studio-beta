@@ -1,5 +1,12 @@
 import { names } from '@nx/devkit'
-import { ColumnDefinition, ConstraintValue, FieldDefinition, FieldType, ResourceDefinition } from '@acc/schema'
+import {
+  ColumnDefinition,
+  ConstraintValue,
+  FieldDefinition,
+  FieldTable,
+  FieldType,
+  ResourceDefinition
+} from '@acc/schema'
 
 export interface ColumnSubstitution {
   name: string
@@ -43,6 +50,26 @@ export interface ResourceSubstitutions {
   /** Pre-rendered mapper lines */
   toDomainProps: string[]
   toPersistenceLines: string[]
+  /** Frontend bindings */
+  route: string
+  sharedDomainAlias: string
+  ui: UiStrings
+  /** Pre-rendered ColumnDef entries (badge columns expanded multiline, prettier preserves it) */
+  frontendColumns: string[]
+}
+
+export interface UiStrings {
+  title: string
+  subtitle: string
+  loading: string
+  error: string
+  empty: string
+  createLabel: string
+  exportFilename: string
+  toastCreated: string
+  toastUpdated: string
+  toastCreateError: string
+  toastUpdateError: string
 }
 
 // Defaults derived from the schema field type; column.type / column.tsType override them.
@@ -108,8 +135,57 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     ),
     hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => typeof v === 'object' && 'shared' in v),
     toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
-    toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f))
+    toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f)),
+    route: definition.route ?? `/${definition.context}/${definition.plural}`,
+    sharedDomainAlias: definition.sharedDomainAlias ?? '@acc/shared/domain',
+    ui: renderUiStrings(definition),
+    frontendColumns: fields
+      .filter(([, f]) => f.table?.show)
+      .sort(([, a], [, b]) => (a.table?.order ?? Number.MAX_SAFE_INTEGER) - (b.table?.order ?? Number.MAX_SAFE_INTEGER))
+      .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable))
   }
+}
+
+function renderUiStrings(definition: ResourceDefinition): UiStrings {
+  const labels = definition.labels ?? { singular: definition.name, plural: definition.plural }
+  const singular = labels.singular
+  const plural = labels.plural
+  const lowerSingular = singular.toLowerCase()
+  const lowerPlural = plural.toLowerCase()
+  const feminine = labels.gender === 'f'
+  const article = feminine ? 'la' : 'el'
+  const suffix = feminine ? 'a' : 'o'
+
+  return {
+    title: plural,
+    subtitle: labels.subtitle ?? '',
+    loading: `Cargando ${lowerPlural}…`,
+    error: `No se pudieron cargar ${feminine ? 'las' : 'los'} ${lowerPlural}`,
+    empty: `No hay ${lowerPlural} registrad${suffix}s`,
+    createLabel: `Nuev${suffix} ${lowerSingular}`,
+    exportFilename: lowerPlural,
+    toastCreated: `${singular} cread${suffix} correctamente`,
+    toastUpdated: `${singular} actualizad${suffix} correctamente`,
+    toastCreateError: `No se pudo crear ${article} ${lowerSingular}`,
+    toastUpdateError: `No se pudo actualizar ${article} ${lowerSingular}`
+  }
+}
+
+function renderFrontendColumn(name: string, table: FieldTable): string {
+  const parts = [`key: '${name}'`, `label: '${table.label}'`]
+  if (table.filterable) parts.push('filterable: true')
+  if (table.sortable === false) parts.push('sortable: false')
+  if (table.minWidth !== undefined) parts.push(`minWidth: ${table.minWidth}`)
+  if (table.type === 'badge' && table.badgeMap) {
+    parts.push(`type: 'badge'`)
+    const entries = Object.entries(table.badgeMap)
+      .map(([key, badge]) => `      ${key}: { label: '${badge.label}', variant: '${badge.variant}' }`)
+      .join(',\n')
+    parts.push(`badgeMap: {\n${entries}\n    }`)
+    // objeto expandido: prettier preserva la multilinea, como en el módulo de oro
+    return `{\n    ${parts.join(',\n    ')}\n  }`
+  }
+  return `{ ${parts.join(', ')} }`
 }
 
 type QueryFlag = 'filterable' | 'sortable' | 'searchable'
