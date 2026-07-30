@@ -152,4 +152,7 @@ export class LicensesListComponent {
     const license = event.row as unknown as LicenseWithConsumptionDto
     this._router.navigate(['/sap-licensing/licenses', license.id])
   }
+
+  // @ai:begin list-extra — acciones, columnas o estados a medida
+  // @ai:end
 }

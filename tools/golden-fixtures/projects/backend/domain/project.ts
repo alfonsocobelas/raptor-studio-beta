@@ -263,4 +263,7 @@ export class Project extends AggregateRoot {
 
     return newName
   }
+
+  // @ai:begin domain-extra — métodos de negocio no derivables del schema
+  // @ai:end
 }

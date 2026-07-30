@@ -293,4 +293,7 @@ export class Customer extends AggregateRoot {
 
     return contact
   }
+
+  // @ai:begin domain-extra — métodos de negocio no derivables del schema
+  // @ai:end
 }

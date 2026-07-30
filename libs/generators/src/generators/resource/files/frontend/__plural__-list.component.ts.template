@@ -292,4 +292,7 @@ export class <%- className %>sListComponent {
     }
   }
 <%_ } _%>
+
+  // @ai:begin list-extra — acciones, columnas o estados a medida
+  // @ai:end
 }

@@ -354,4 +354,7 @@ export class Contract extends AggregateRoot {
 
     return newContractNumber
   }
+
+  // @ai:begin domain-extra — métodos de negocio no derivables del schema
+  // @ai:end
 }

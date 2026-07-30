@@ -101,6 +101,9 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
   }
+
+  // @ai:begin repository-extra — implementación de los finders del port-extra
+  // @ai:end
 <%_ if (comp) { _%>
 
   // <%- KidsCap %> que ya no viven en el agregado y hay que soft-borrar (diff contra la BD).

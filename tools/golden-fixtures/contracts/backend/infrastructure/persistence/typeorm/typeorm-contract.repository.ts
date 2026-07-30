@@ -51,4 +51,7 @@ export class TypeOrmContractRepository extends TypeOrmRepository<TypeOrmContract
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
   }
+
+  // @ai:begin repository-extra — implementación de los finders del port-extra
+  // @ai:end
 }

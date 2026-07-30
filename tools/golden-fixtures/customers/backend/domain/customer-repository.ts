@@ -14,4 +14,6 @@ export abstract class CustomerRepository {
   abstract findByTaxId(taxId: TaxId): Promise<Nullable<Customer>>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
+  // @ai:begin port-extra — finders no derivables (sync, agregaciones)
+  // @ai:end
 }

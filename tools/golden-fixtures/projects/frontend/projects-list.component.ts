@@ -253,4 +253,7 @@ export class ProjectsListComponent {
       toast.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
     }
   }
+
+  // @ai:begin list-extra — acciones, columnas o estados a medida
+  // @ai:end
 }

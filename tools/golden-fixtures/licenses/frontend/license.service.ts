@@ -86,4 +86,7 @@ export class LicenseService {
 
     return params
   }
+
+  // @ai:begin service-extra — endpoints a medida del módulo
+  // @ai:end
 }

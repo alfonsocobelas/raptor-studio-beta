@@ -53,4 +53,7 @@ export class ProjectMapper {
 
     return entity
   }
+
+  // @ai:begin mapper-extra — transformaciones a medida (denormalizaciones, derivados)
+  // @ai:end
 }

@@ -16,5 +16,7 @@ export abstract class <%- className %>Repository {
 <%_ }) _%>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
+  // @ai:begin port-extra — finders no derivables (sync, agregaciones)
+  // @ai:end
 }
 <%_ } _%>

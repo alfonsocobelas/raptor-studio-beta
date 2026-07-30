@@ -98,4 +98,7 @@ export class CustomerService {
 
     return params
   }
+
+  // @ai:begin service-extra — endpoints a medida del módulo
+  // @ai:end
 }

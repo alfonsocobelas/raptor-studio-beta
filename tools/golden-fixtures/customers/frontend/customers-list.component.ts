@@ -208,4 +208,7 @@ export class CustomersListComponent {
       toast.error(editing ? 'No se pudo actualizar el cliente' : 'No se pudo crear el cliente')
     }
   }
+
+  // @ai:begin list-extra — acciones, columnas o estados a medida
+  // @ai:end
 }

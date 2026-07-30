@@ -73,6 +73,9 @@ export class TypeOrmCustomerRepository extends TypeOrmRepository<TypeOrmCustomer
     return this.countByCriteria(criteria)
   }
 
+  // @ai:begin repository-extra — implementación de los finders del port-extra
+  // @ai:end
+
   // Contacts que ya no viven en el agregado y hay que soft-borrar (diff contra la BD).
   // Guard: In([]) genera `NOT IN ()`, SQL inválido. Sin supervivientes = todos los del padre son huérfanos.
   private orphanedContactsWhere(customerId: string, keptIds: string[]): FindOptionsWhere<TypeOrmContactEntity> {

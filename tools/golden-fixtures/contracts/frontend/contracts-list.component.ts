@@ -219,4 +219,7 @@ export class ContractsListComponent {
       toast.error(editing ? 'No se pudo actualizar el contrato' : 'No se pudo crear el contrato')
     }
   }
+
+  // @ai:begin list-extra — acciones, columnas o estados a medida
+  // @ai:end
 }

@@ -33,6 +33,9 @@ export class <%- className %>Mapper {
 
     return entity
   }
+
+  // @ai:begin mapper-extra — transformaciones a medida (denormalizaciones, derivados)
+  // @ai:end
 <%_ if (comp) { _%>
 
   static <%- comp.childrenProp %>ToPersistence(domain: <%- className %>): TypeOrm<%- comp.childClass %>Entity[] {

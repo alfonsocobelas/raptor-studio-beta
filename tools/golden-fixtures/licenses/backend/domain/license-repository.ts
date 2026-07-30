@@ -10,4 +10,6 @@ export abstract class LicenseRepository {
   abstract matching(criteria: Criteria): Promise<License[]>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
+  // @ai:begin port-extra — finders no derivables (sync, agregaciones)
+  // @ai:end
 }

@@ -1,6 +1,7 @@
 import { formatFiles, generateFiles, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { buildSubstitutions } from './build-substitutions'
+import { harvestAiSlots, reinjectAiSlots } from './ai-slots'
 import { ResourceDefinition } from '@acc/schema'
 import { contract } from './models/contract.model'
 import { customer } from './models/customer.model'
@@ -25,6 +26,9 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
 
   const substitutions = buildSubstitutions(model)
   const outputDir = options.directory ?? path.join('tmp', 'generated', model.plural)
+
+  // §7 del maestro: lo escrito en los huecos @ai sobrevive a la regeneración
+  const aiSlots = harvestAiSlots(tree, outputDir)
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
@@ -141,6 +145,8 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       substitutions
     )
   }
+
+  reinjectAiSlots(tree, outputDir, aiSlots)
 
   await formatFiles(tree)
 }

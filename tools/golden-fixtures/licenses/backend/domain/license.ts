@@ -282,4 +282,7 @@ export class License extends AggregateRoot {
     }
     return this._id.equals(other._id)
   }
+
+  // @ai:begin domain-extra — métodos de negocio no derivables del schema
+  // @ai:end
 }
