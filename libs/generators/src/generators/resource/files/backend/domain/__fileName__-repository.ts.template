@@ -6,6 +6,9 @@
 export abstract class <%- className %>Repository {
   abstract register(<%- propertyName %>: <%- className %>): Promise<void>
   abstract save(<%- propertyName %>: <%- className %>): Promise<void>
+<%_ if (app.removes) { _%>
+  abstract remove(<%- propertyName %>Id: <%- className %>Id): Promise<void>
+<%_ } _%>
   abstract get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>>
   abstract matching(criteria: Criteria): Promise<<%- className %>[]>
 <%_ domainTests.uniqueFinders.forEach(f => { _%>

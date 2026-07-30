@@ -7,6 +7,7 @@ import { Project } from './project'
 export abstract class ProjectRepository {
   abstract register(project: Project): Promise<void>
   abstract save(project: Project): Promise<void>
+  abstract remove(projectId: ProjectId): Promise<void>
   abstract get(projectId: ProjectId): Promise<Nullable<Project>>
   abstract matching(criteria: Criteria): Promise<Project[]>
   abstract findByName(name: ProjectName): Promise<Nullable<Project>>

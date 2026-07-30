@@ -1,0 +1,24 @@
+import { Injectable } from '@nestjs/common'
+<%_ if (app.hasUniqueChecks) { _%>
+import { AlreadyExistsError } from '../../../../../shared/domain/errors'
+<%_ } _%>
+import { <%- className %> } from '../../domain/<%- fileName %>'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ app.registerSpecImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+import { Register<%- className %>Input } from '../dtos/register-<%- fileName %>-input.dto'
+
+@Injectable()
+export class Register<%- className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: Register<%- className %>Input): Promise<void> {
+    const <%- propertyName %> = <%- className %>.register(input)
+<%_ app.registerCheckBlocks.forEach(block => { _%>
+<%- block %>
+
+<%_ }) _%>
+    await this.<%- propertyName %>Repository.register(<%- propertyName %>)
+  }
+}

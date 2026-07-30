@@ -1,0 +1,33 @@
+import { Injectable } from '@nestjs/common'
+<%_ if (app.hasUniqueChecks) { _%>
+import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
+<%_ } else { _%>
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+<%_ } _%>
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ app.registerSpecImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { Update<%- className %>Input } from '../dtos/update-<%- fileName %>-input.dto'
+
+@Injectable()
+export class Update<%- className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: Update<%- className %>Input): Promise<void> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.id)
+    const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+    if (!<%- propertyName %>) {
+      throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+<%_ app.updateCheckBlocks.forEach(block => { _%>
+<%- block %>
+
+<%_ }) _%>
+    <%- propertyName %>.updateDetails(input.updates)
+    await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+  }
+}

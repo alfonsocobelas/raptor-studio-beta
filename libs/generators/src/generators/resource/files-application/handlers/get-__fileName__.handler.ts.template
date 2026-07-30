@@ -1,0 +1,15 @@
+import { Injectable } from '@nestjs/common'
+import { Get<%- className %>Input } from '../dtos/get-<%- fileName %>-input.dto'
+import { Get<%- className %>UseCase<% if (aggregate.composition) { %>, <%- className %>DetailOutput<% } %> } from '../use-cases/get-<%- fileName %>-usecase.service'
+<%_ if (!aggregate.composition) { _%>
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+<%_ } _%>
+
+@Injectable()
+export class Get<%- className %>Handler {
+  constructor(private readonly useCase: Get<%- className %>UseCase) {}
+
+  async handle(input: Get<%- className %>Input): Promise<<%- className %><%- aggregate.composition ? 'DetailOutput' : 'PrimitiveProps' %>> {
+    return this.useCase.invoke(input)
+  }
+}

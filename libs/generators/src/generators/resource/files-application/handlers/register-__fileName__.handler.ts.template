@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+import { Register<%- className %>Input } from '../dtos/register-<%- fileName %>-input.dto'
+import { Register<%- className %>UseCase } from '../use-cases/register-<%- fileName %>-usecase.service'
+
+@Injectable()
+export class Register<%- className %>Handler {
+  constructor(private readonly useCase: Register<%- className %>UseCase) {}
+
+  async handle(input: Register<%- className %>Input): Promise<void> {
+    await this.useCase.invoke(input)
+  }
+}

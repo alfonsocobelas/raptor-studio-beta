@@ -1,0 +1,31 @@
+import { Criteria } from '../../../../../shared/domain/query/criteria'
+import { Filter } from '../../../../../shared/domain/query/filter'
+import { FilterField } from '../../../../../shared/domain/query/filter-field'
+import { FilterOperator, Operator } from '../../../../../shared/domain/query/filter-operator'
+import { FilterValue } from '../../../../../shared/domain/query/filter-value'
+import { Filters } from '../../../../../shared/domain/query/filters'
+<%_ if (spec.voLocal) { _%>
+import { <%- spec.voName %> } from '../value-objects/<%- spec.voFileName %>.vo'
+<%_ } else { _%>
+import { <%- spec.voName %> } from '../../../shared/domain/value-objects/<%- spec.voFileName %>.vo'
+<%_ } _%>
+
+export class <%- spec.specClass %> extends Criteria {
+  private constructor(<%- spec.field %>: <%- spec.voName %>) {
+    super({
+      filters: new Filters([
+        new Filter(
+          FilterField.create('<%- spec.field %>'),
+          FilterOperator.create(Operator.EQUAL),
+          FilterValue.create(<%- spec.field %>.value)
+        )
+      ])
+    })
+  }
+
+  static <%- spec.fn %>(<%- spec.field %>: <%- spec.voName %>): <%- spec.specClass %> {
+    return new <%- spec.specClass %>(<%- spec.field %>)
+  }
+}
+
+export const <%- spec.fn %> = <%- spec.specClass %>.<%- spec.fn %>

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
-import { ContractId } from '../../../../../shared/domain/value-objects/contracts/contract-id.vo'
 import { ContractRepository } from '../../domain/contract-repository'
-import { withContractNumber } from '../../domain/specifications/contract-with-number.specification'
+import { withContractNumber } from '../../domain/specifications/contract-with-contract-number.specification'
+import { ContractId } from '../../../../../shared/domain/value-objects/contracts/contract-id.vo'
 import { UpdateContractInput } from '../dtos/update-contract-input.dto'
 
 @Injectable()
@@ -20,9 +20,9 @@ export class UpdateContractUseCase {
     const newContractNumber = contract.newContractNumberIfChanged(input.updates)
 
     if (newContractNumber) {
-      const existsContract = await this.contractRepository.exists(withContractNumber(newContractNumber))
+      const contractNumberExists = await this.contractRepository.exists(withContractNumber(newContractNumber))
 
-      if (existsContract) {
+      if (contractNumberExists) {
         throw new AlreadyExistsError('Contract', 'contractNumber', newContractNumber.value)
       }
     }

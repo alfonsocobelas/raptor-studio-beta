@@ -1,0 +1,33 @@
+import { Injectable, Optional } from '@nestjs/common'
+import { Criteria, UnpaginatedInput } from '../../../../../shared/domain/query/criteria'
+import { ExportTooLargeError } from '../../../../../shared/domain/errors'
+import { EXPORT_ROW_LIMIT } from '../../../../../shared/infrastructure/export/export-limit'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+import search<%- className %>Config from '../config/search-<%- fileName %>-config'
+
+@Injectable()
+export class Export<%- pluralClassName %>UseCase {
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+    @Optional() private readonly rowLimit: number = EXPORT_ROW_LIMIT
+  ) {}
+
+  async invoke(input: UnpaginatedInput): Promise<<%- className %>PrimitiveProps[]> {
+    const { allowedFilters, allowedOrders, searchableFields } = search<%- className %>Config
+    const criteria = Criteria.fromUnpaginated(
+      input,
+      allowedFilters as string[],
+      allowedOrders as string[],
+      searchableFields as string[]
+    )
+
+    const total = await this.<%- propertyName %>Repository.count(criteria)
+    if (total > this.rowLimit) {
+      throw new ExportTooLargeError(total, this.rowLimit)
+    }
+
+    const <%- plural %> = await this.<%- propertyName %>Repository.matching(criteria)
+    return <%- plural %>.map(<%- propertyName %> => <%- propertyName %>.toPrimitives())
+  }
+}

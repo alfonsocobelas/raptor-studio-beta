@@ -1,0 +1,13 @@
+import { Injectable } from '@nestjs/common'
+import { UnpaginatedInput } from '../../../../../shared/domain/query/criteria'
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+import { Export<%- pluralClassName %>UseCase } from '../use-cases/export-<%- plural %>-usecase.service'
+
+@Injectable()
+export class Export<%- pluralClassName %>Handler {
+  constructor(private readonly useCase: Export<%- pluralClassName %>UseCase) {}
+
+  async handle(input: UnpaginatedInput): Promise<<%- className %>PrimitiveProps[]> {
+    return this.useCase.invoke(input)
+  }
+}

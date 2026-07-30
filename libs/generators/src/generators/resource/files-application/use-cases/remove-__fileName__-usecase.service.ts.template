@@ -1,0 +1,21 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { Remove<%- className %>Input } from '../dtos/remove-<%- fileName %>-input.dto'
+
+@Injectable()
+export class Remove<%- className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: Remove<%- className %>Input): Promise<void> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.id)
+    const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+    if (!<%- propertyName %>) {
+      throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+    await this.<%- propertyName %>Repository.remove(<%- propertyName %>Id)
+  }
+}

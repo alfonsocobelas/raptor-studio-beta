@@ -42,6 +42,37 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     )
   }
 
+  // capa de aplicación (use cases + handlers + input DTOs + specs de unicidad)
+  if (substitutions.app.emit) {
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-application'),
+      path.join(outputDir, 'backend/application'),
+      substitutions
+    )
+    for (const spec of substitutions.app.uniqueSpecs) {
+      generateFiles(
+        tree,
+        path.join(__dirname, '..', 'resource', 'files-uspec'),
+        path.join(outputDir, 'backend/domain/specifications'),
+        { ...substitutions, spec, specFileName: spec.specFileName }
+      )
+    }
+    const app = path.join(outputDir, 'backend/application')
+    if (!substitutions.app.writes) {
+      for (const op of ['register', 'update']) {
+        tree.delete(path.join(app, 'dtos', `${op}-${substitutions.fileName}-input.dto.ts`))
+        tree.delete(path.join(app, 'use-cases', `${op}-${substitutions.fileName}-usecase.service.ts`))
+        tree.delete(path.join(app, 'handlers', `${op}-${substitutions.fileName}.handler.ts`))
+      }
+    }
+    if (!substitutions.app.removes) {
+      tree.delete(path.join(app, 'dtos', `remove-${substitutions.fileName}-input.dto.ts`))
+      tree.delete(path.join(app, 'use-cases', `remove-${substitutions.fileName}-usecase.service.ts`))
+      tree.delete(path.join(app, 'handlers', `remove-${substitutions.fileName}.handler.ts`))
+    }
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-composition'), outputDir, {

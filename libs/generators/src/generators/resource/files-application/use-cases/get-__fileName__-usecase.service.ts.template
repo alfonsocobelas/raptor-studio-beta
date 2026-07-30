@@ -1,0 +1,41 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ if (aggregate.composition) { _%>
+import { <%- aggregate.composition.childClass %>PrimitiveProps, <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+<%_ } else { _%>
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+<%_ } _%>
+import { Get<%- className %>Input } from '../dtos/get-<%- fileName %>-input.dto'
+<%_ if (aggregate.composition) { _%>
+
+export interface <%- className %>DetailOutput extends <%- className %>PrimitiveProps {
+  <%- aggregate.composition.childrenProp %>: <%- aggregate.composition.childClass %>PrimitiveProps[]
+}
+<%_ } _%>
+
+@Injectable()
+export class Get<%- className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: Get<%- className %>Input): Promise<<%- className %><%- aggregate.composition ? 'DetailOutput' : 'PrimitiveProps' %>> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.id)
+    const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+    if (!<%- propertyName %>) {
+      throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+<%_ if (aggregate.composition) { _%>
+    return {
+      ...<%- propertyName %>.toPrimitives(),
+      <%- aggregate.composition.childrenProp %>: <%- propertyName %>.<%- aggregate.composition.childrenProp %>.map(<%- aggregate.composition.childProp %> =>
+        <%- aggregate.composition.childProp %>.toPrimitives()
+      )
+    }
+<%_ } else { _%>
+    return <%- propertyName %>.toPrimitives()
+<%_ } _%>
+  }
+}

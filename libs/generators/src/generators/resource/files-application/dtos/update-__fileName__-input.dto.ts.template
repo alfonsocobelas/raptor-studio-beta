@@ -1,0 +1,6 @@
+import { <%- className %>UpdateProps } from '../../domain/<%- fileName %>-types'
+
+export interface Update<%- className %>Input {
+  id: string
+  updates: <%- className %>UpdateProps
+}

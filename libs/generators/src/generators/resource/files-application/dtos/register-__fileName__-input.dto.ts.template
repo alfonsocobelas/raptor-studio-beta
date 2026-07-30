@@ -1,0 +1,1 @@
+export type { Register<%- className %>Props as Register<%- className %>Input } from '../../domain/<%- fileName %>-types'

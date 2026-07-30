@@ -18,12 +18,10 @@ export class RegisterCustomerUseCase {
       throw new AlreadyExistsError('Customer', 'sapId', customer.sapId.value)
     }
 
-    if (customer.hasTaxId()) {
-      const taxIdExists = await this.customerRepository.exists(withTaxId(customer.taxId))
+    const taxIdExists = await this.customerRepository.exists(withTaxId(customer.taxId))
 
-      if (taxIdExists) {
-        throw new AlreadyExistsError('Customer', 'taxId', customer.taxId.value)
-      }
+    if (taxIdExists) {
+      throw new AlreadyExistsError('Customer', 'taxId', customer.taxId.value)
     }
 
     await this.customerRepository.register(customer)

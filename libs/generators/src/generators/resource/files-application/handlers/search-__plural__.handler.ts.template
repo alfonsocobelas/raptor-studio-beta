@@ -1,0 +1,14 @@
+import { Injectable } from '@nestjs/common'
+import { OffsetPaginatedOutput } from '../../../../../shared/application/dtos/search-output.dto'
+import { OffsetInput } from '../../../../../shared/domain/query/criteria'
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+import { Search<%- pluralClassName %>UseCase } from '../use-cases/search-<%- plural %>-usecase.service'
+
+@Injectable()
+export class Search<%- pluralClassName %>Handler {
+  constructor(private readonly useCase: Search<%- pluralClassName %>UseCase) {}
+
+  async handle(input: OffsetInput): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
+    return this.useCase.invoke(input)
+  }
+}

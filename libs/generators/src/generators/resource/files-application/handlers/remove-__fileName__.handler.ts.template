@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+import { Remove<%- className %>Input } from '../dtos/remove-<%- fileName %>-input.dto'
+import { Remove<%- className %>UseCase } from '../use-cases/remove-<%- fileName %>-usecase.service'
+
+@Injectable()
+export class Remove<%- className %>Handler {
+  constructor(private readonly useCase: Remove<%- className %>UseCase) {}
+
+  async handle(input: Remove<%- className %>Input): Promise<void> {
+    await this.useCase.invoke(input)
+  }
+}

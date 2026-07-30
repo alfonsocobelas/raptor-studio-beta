@@ -1,5 +1,6 @@
 import { names } from '@nx/devkit'
 import { AggregateBindings, renderAggregate } from './build-aggregate'
+import { ApplicationBindings, renderApplication } from './build-application'
 import { DomainTestBindings, renderDomainTests } from './build-tests'
 import {
   ColumnDefinition,
@@ -24,6 +25,7 @@ export interface ResourceSubstitutions {
   className: string
   propertyName: string
   fileName: string
+  pluralClassName: string
   constantName: string
   plural: string
   context: string
@@ -93,6 +95,7 @@ export interface ResourceSubstitutions {
   /** Value objects to emit (fields whose vo is declared in object form) */
   vos: VoSubstitution[]
   aggregate: AggregateBindings
+  app: ApplicationBindings
   domainTests: DomainTestBindings
 }
 
@@ -201,11 +204,13 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
   const n = names(definition.name)
   const fields = Object.entries(definition.fields)
   const columns = fields.map(([name, field]) => renderColumn(name, field))
+  const aggregate = renderAggregate(definition)
 
   return {
     className: n.className,
     propertyName: n.propertyName,
     fileName: n.fileName,
+    pluralClassName: names(definition.plural).className,
     constantName: n.constantName,
     plural: definition.plural,
     context: definition.context,
@@ -260,7 +265,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     ...renderForm(definition, n.fileName),
     test: renderTestBindings(definition),
     vos: renderVos(definition, n.className),
-    aggregate: renderAggregate(definition),
+    aggregate,
+    app: renderApplication(definition, aggregate.emitAggregate),
     domainTests: renderDomainTests(definition)
   }
 }

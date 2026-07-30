@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { ProjectPrimitiveProps } from '../../domain/project-types'
 import { GetProjectInput } from '../dtos/get-project-input.dto'
 import { GetProjectUseCase } from '../use-cases/get-project-usecase.service'
+import { ProjectPrimitiveProps } from '../../domain/project-types'
 
 @Injectable()
 export class GetProjectHandler {

@@ -15,10 +15,14 @@ export class ExportContractsUseCase {
 
   async invoke(input: UnpaginatedInput): Promise<ContractPrimitiveProps[]> {
     const { allowedFilters, allowedOrders, searchableFields } = searchContractConfig
-    const criteria = Criteria.fromUnpaginated(input, allowedFilters, allowedOrders, searchableFields)
+    const criteria = Criteria.fromUnpaginated(
+      input,
+      allowedFilters as string[],
+      allowedOrders as string[],
+      searchableFields as string[]
+    )
 
     const total = await this.contractRepository.count(criteria)
-
     if (total > this.rowLimit) {
       throw new ExportTooLargeError(total, this.rowLimit)
     }

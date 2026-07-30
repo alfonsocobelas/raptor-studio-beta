@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+import { Update<%- className %>Input } from '../dtos/update-<%- fileName %>-input.dto'
+import { Update<%- className %>UseCase } from '../use-cases/update-<%- fileName %>-usecase.service'
+
+@Injectable()
+export class Update<%- className %>Handler {
+  constructor(private readonly useCase: Update<%- className %>UseCase) {}
+
+  async handle(input: Update<%- className %>Input): Promise<void> {
+    await this.useCase.invoke(input)
+  }
+}

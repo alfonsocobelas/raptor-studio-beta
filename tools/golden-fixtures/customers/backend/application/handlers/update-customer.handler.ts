@@ -7,6 +7,6 @@ export class UpdateCustomerHandler {
   constructor(private readonly useCase: UpdateCustomerUseCase) {}
 
   async handle(input: UpdateCustomerInput): Promise<void> {
-    return this.useCase.invoke(input)
+    await this.useCase.invoke(input)
   }
 }

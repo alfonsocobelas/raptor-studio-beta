@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
-import { ProjectId } from '../../../../../shared/domain/value-objects/projects/project-id.vo'
 import { ProjectRepository } from '../../domain/project-repository'
-import { withCustomerIdAndName } from '../../domain/specifications/project-with-customer-and-name.specification'
+import { withName } from '../../domain/specifications/project-with-name.specification'
+import { ProjectId } from '../../../../../shared/domain/value-objects/projects/project-id.vo'
 import { UpdateProjectInput } from '../dtos/update-project-input.dto'
 
 @Injectable()
@@ -14,16 +14,16 @@ export class UpdateProjectUseCase {
     const project = await this.projectRepository.get(projectId)
 
     if (!project) {
-      throw new EntityNotFoundError('Project', projectId.value)
+      throw new EntityNotFoundError('Project', input.id)
     }
 
-    const newKey = project.uniquenessKeyIfChanged(input.updates)
+    const newName = project.newNameIfChanged(input.updates)
 
-    if (newKey) {
-      const nameExists = await this.projectRepository.exists(withCustomerIdAndName(newKey.customerId, newKey.name))
+    if (newName) {
+      const nameExists = await this.projectRepository.exists(withName(newName))
 
       if (nameExists) {
-        throw new AlreadyExistsError('Project', 'name', newKey.name.value)
+        throw new AlreadyExistsError('Project', 'name', newName.value)
       }
     }
 
