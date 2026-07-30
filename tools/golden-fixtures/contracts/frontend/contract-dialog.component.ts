@@ -26,16 +26,16 @@ export interface ContractFormValue {
   contractType: ContractTypeEnum
   contractNumber: string
   customerId: string
-  customerName: string
+  isFavorite: boolean
+  status: ContractStatusEnum
+  source: ContractSourceEnum
   startDate: string
   endDate: string | null
-  status: ContractStatusEnum
   currency: string
   billingFrequency: BillingFrequencyEnum
   renewalType: RenewalTypeEnum
-  source: ContractSourceEnum
-  isFavorite: boolean
   notes: string
+  customerName: string
 }
 
 const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {
@@ -76,7 +76,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="ctype">Tipo</label>
-              <hlm-select formControlName="contractType" [itemToString]="typeToLabel">
+              <hlm-select formControlName="contractType" [itemToString]="contractTypeToLabel">
                 <hlm-select-trigger buttonId="ctype">
                   <hlm-select-value />
                 </hlm-select-trigger>
@@ -88,13 +88,13 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="ccust">Cliente</label>
-              <hlm-select formControlName="customerId" [itemToString]="customerToLabel">
+              <hlm-select formControlName="customerId" [itemToString]="customerIdToLabel">
                 <hlm-select-trigger buttonId="ccust">
                   <hlm-select-value placeholder="Seleccionar cliente" />
                 </hlm-select-trigger>
                 <hlm-select-content *hlmSelectPortal showScroll>
-                  @for (cust of customers(); track cust.id) {
-                    <hlm-select-item [value]="cust.id">{{ cust.name }}</hlm-select-item>
+                  @for (item of customers(); track item.id) {
+                    <hlm-select-item [value]="item.id">{{ item.name }}</hlm-select-item>
                   }
                 </hlm-select-content>
               </hlm-select>
@@ -135,7 +135,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="cbilling">Facturación</label>
-              <hlm-select formControlName="billingFrequency" [itemToString]="billingToLabel">
+              <hlm-select formControlName="billingFrequency" [itemToString]="billingFrequencyToLabel">
                 <hlm-select-trigger buttonId="cbilling">
                   <hlm-select-value />
                 </hlm-select-trigger>
@@ -149,7 +149,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="crenewal">Renovación</label>
-              <hlm-select formControlName="renewalType" [itemToString]="renewalToLabel">
+              <hlm-select formControlName="renewalType" [itemToString]="renewalTypeToLabel">
                 <hlm-select-trigger buttonId="crenewal">
                   <hlm-select-value />
                 </hlm-select-trigger>
@@ -208,18 +208,18 @@ export class ContractDialogComponent {
 
   readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
 
-  // itemToString: con el popover cerrado los items no están instanciados y el trigger
-  // mostraría el valor crudo del control en vez de su etiqueta de presentación.
-  protected readonly typeToLabel = (value: unknown): string => CONTRACT_TYPE_LABELS[value as ContractTypeEnum] ?? ''
+  protected readonly contractTypeToLabel = (value: unknown): string =>
+    CONTRACT_TYPE_LABELS[value as ContractTypeEnum] ?? ''
   protected readonly statusToLabel = (value: unknown): string =>
     CONTRACT_STATUS_LABELS[value as ContractStatusEnum] ?? ''
-  protected readonly billingToLabel = (value: unknown): string =>
-    BILLING_FREQUENCY_LABELS[value as BillingFrequencyEnum] ?? ''
-  protected readonly renewalToLabel = (value: unknown): string => RENEWAL_TYPE_LABELS[value as RenewalTypeEnum] ?? ''
   protected readonly sourceToLabel = (value: unknown): string =>
     CONTRACT_SOURCE_LABELS[value as ContractSourceEnum] ?? ''
-  protected readonly customerToLabel = (value: unknown): string =>
-    this.customers().find(c => c.id === value)?.name ?? ''
+  protected readonly billingFrequencyToLabel = (value: unknown): string =>
+    BILLING_FREQUENCY_LABELS[value as BillingFrequencyEnum] ?? ''
+  protected readonly renewalTypeToLabel = (value: unknown): string =>
+    RENEWAL_TYPE_LABELS[value as RenewalTypeEnum] ?? ''
+  protected readonly customerIdToLabel = (value: unknown): string =>
+    this.customers().find(item => item.id === value)?.name ?? ''
 
   readonly form = this._fb.nonNullable.group(
     {
@@ -227,14 +227,14 @@ export class ContractDialogComponent {
       contractNumber: ['', Validators.required],
       // null (no ''): hlm-select solo muestra el placeholder cuando el valor es null.
       customerId: this._fb.control<string | null>(null, Validators.required),
+      isFavorite: [false],
+      status: [ContractStatusEnum.ACTIVE],
+      source: [ContractSourceEnum.AVVALE_SOLD],
       startDate: ['', Validators.required],
       endDate: [''],
-      status: [ContractStatusEnum.ACTIVE],
       currency: ['EUR'],
       billingFrequency: [BillingFrequencyEnum.YEARLY],
       renewalType: [RenewalTypeEnum.MANUAL],
-      source: [ContractSourceEnum.AVVALE_SOLD],
-      isFavorite: [false],
       notes: ['']
     },
     { validators: dateRangeValidator }
@@ -244,25 +244,21 @@ export class ContractDialogComponent {
     effect(() => {
       const contract = this.contract()
       if (contract) {
-        this.patchFromContract(contract)
+        this.form.patchValue({
+          contractType: contract.contractType,
+          contractNumber: contract.contractNumber ?? '',
+          customerId: contract.customerId,
+          isFavorite: contract.isFavorite,
+          status: contract.status,
+          source: contract.source,
+          startDate: contract.startDate ?? '',
+          endDate: contract.endDate ?? '',
+          currency: contract.currency ?? '',
+          billingFrequency: contract.billingFrequency,
+          renewalType: contract.renewalType,
+          notes: contract.notes ?? ''
+        })
       }
-    })
-  }
-
-  patchFromContract(contract: ContractDto): void {
-    this.form.patchValue({
-      contractType: contract.contractType,
-      contractNumber: contract.contractNumber ?? '',
-      customerId: contract.customerId,
-      startDate: contract.startDate ?? '',
-      endDate: contract.endDate ?? '',
-      status: contract.status,
-      currency: contract.currency,
-      billingFrequency: contract.billingFrequency,
-      renewalType: contract.renewalType,
-      source: contract.source,
-      isFavorite: contract.isFavorite,
-      notes: contract.notes
     })
   }
 
@@ -271,12 +267,10 @@ export class ContractDialogComponent {
       return
     }
     const raw = this.form.getRawValue()
-    const customerName = this.customers().find(c => c.id === raw.customerId)?.name ?? ''
     this.saved.emit({
       ...raw,
       customerId: raw.customerId ?? '',
-      customerName,
-      startDate: raw.startDate,
+      customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
     ctx.close()

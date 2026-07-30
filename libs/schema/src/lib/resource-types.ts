@@ -9,6 +9,15 @@ export type FieldOrigin = 'auto' | 'sap' | 'manual'
 
 export type FormControl = 'text' | 'textarea' | 'number' | 'checkbox' | 'date' | 'select' | 'none'
 
+export interface FieldLookup {
+  /** Resource whose service provides the options (e.g. 'customer' → CustomerService) */
+  resource: string
+  /** Field of the looked-up item shown as label (e.g. 'name') */
+  labelField: string
+  /** FormValue field filled from the chosen item's labelField at save (e.g. 'customerName') */
+  denormalizes?: string
+}
+
 export type RelationKind = 'reference' | 'composition'
 
 export interface FieldRelation {
@@ -70,6 +79,14 @@ export interface FieldForm {
   options?: SelectOption[]
   /** Shared-domain type of the select value (e.g. 'CustomerClassification'); imported and used in the FormValue */
   optionsType?: string
+  /** Default value expression for the reactive control (e.g. 'ContractTypeEnum.CLOUD'); '' when absent */
+  default?: string
+  /** Group-validator error shown under this control with forceShow (e.g. dateRange end field) */
+  groupErrorMessage?: string
+  /** Dynamic select fed by another resource's service (realizes decision 4) */
+  lookup?: FieldLookup
+  /** Const of labels imported from <fileName>-labels instead of inlined in the dialog */
+  labelsConst?: string
   placeholder?: string
 }
 
@@ -188,6 +205,10 @@ export interface ResourceDefinition {
   dtoName?: string
   /** Dialog form sections, in emission order */
   formSections?: { id: string; title: string }[]
+  /** Group-level validators the dialog attaches (known set: 'dateRange') */
+  formGroupValidators?: { kind: 'dateRange'; startField: string; endField: string }[]
+  /** Labels module imported by the dialog (<fileName>-labels); when set, label consts are not inlined */
+  labelsModule?: boolean
   labels?: ResourceLabels
   /** Domain constraints constant imported as LIMITS (e.g. 'CONTRACT_CONSTRAINTS') */
   constraintsConst?: string

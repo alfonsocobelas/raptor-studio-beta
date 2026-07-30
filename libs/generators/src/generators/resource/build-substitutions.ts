@@ -71,19 +71,33 @@ export interface ResourceSubstitutions {
   formPatchLines: string[]
   dialogSharedImports: string
   needsSelect: boolean
-  savedEmitSrc: string
+  savedEmitLines: string[]
+  formHelperLines: string[]
+  lookupInjectLines: string[]
+  lookupComputedLines: string[]
+  lookupServiceImports: string[]
+  labelsModuleImports: string[]
+  groupValidatorDefs: string[]
+  groupValidatorOption: string
+  needsGroupValidatorTypes: boolean
+  needsComputed: boolean
+  inlineLabelConsts: string[]
 }
 
 export interface FormFieldSubstitution {
   name: string
   id: string
   label: string
-  control: 'text' | 'textarea' | 'select'
+  control: 'text' | 'textarea' | 'select' | 'date' | 'checkbox'
   rows?: number
   required: boolean
   options: { value: string; label: string }[]
   optionsType?: string
+  default?: string
   placeholder?: string
+  labelsConst?: string
+  groupErrorMessage?: string
+  lookup?: { resource: string; labelField: string; denormalizes?: string }
 }
 
 export interface FormSectionSubstitution {
@@ -207,12 +221,26 @@ type FormBindings = Pick<
   | 'formPatchLines'
   | 'dialogSharedImports'
   | 'needsSelect'
-  | 'savedEmitSrc'
+  | 'savedEmitLines'
+  | 'formHelperLines'
+  | 'lookupInjectLines'
+  | 'lookupComputedLines'
+  | 'lookupServiceImports'
+  | 'labelsModuleImports'
+  | 'groupValidatorDefs'
+  | 'groupValidatorOption'
+  | 'needsGroupValidatorTypes'
+  | 'needsComputed'
+  | 'inlineLabelConsts'
 >
 
 function renderForm(definition: ResourceDefinition, fileName: string): FormBindings {
   const idPrefix = fileName.charAt(0)
-  const propertyName = names(definition.name).propertyName
+  const n = names(definition.name)
+  const propertyName = n.propertyName
+  const className = n.className
+  const dtoName = definition.dtoName ?? `${className}Dto`
+
   const formFields = Object.entries(definition.fields)
     .filter(([, f]) => f.form && f.form.control !== 'none')
     .map(([name, f]) => renderFormField(name, f, idPrefix))
@@ -228,25 +256,126 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     return { title: section.title, grid: fields.length > 1, fields }
   })
 
-  const typedSelects = formFields.filter(f => f.optionsType)
-  const sharedTypes = [
-    ...new Set([
-      definition.dtoName ?? `${names(definition.name).className}Dto`,
-      ...typedSelects.map(f => f.optionsType as string)
-    ])
+  const selects = formFields.filter(f => f.control === 'select')
+  const enumSelects = selects.filter(f => f.optionsType)
+  const lookups = formFields.filter(f => f.lookup)
+  const denorms = lookups.map(f => f.lookup?.denormalizes).filter((d): d is string => d !== undefined)
+
+  // FormValue: campos declarados (enum-typed o string) + denormalizados por lookup (string)
+  const formValueLines = [...formFields.map(f => `${f.name}: ${valueType(f)}`), ...denorms.map(d => `${d}: string`)]
+
+  // Shared imports: DTO + enums de los selects tipados (labels van por su propio import)
+  const sharedTypes = [...new Set([dtoName, ...enumSelects.map(f => f.optionsType as string)])].sort()
+
+  // Label consts: inline si labelsConst ausente; import si presente
+  const inlineLabelFields = enumSelects.filter(f => !f.labelsConst)
+  const labelsModuleImports = [
+    ...new Set(enumSelects.filter(f => f.labelsConst).map(f => f.labelsConst as string))
   ].sort()
+
+  const groupValidators = definition.formGroupValidators ?? []
 
   return {
     formSections: sections,
-    formValueLines: formFields.map(f => `${f.name}: ${f.optionsType ?? 'string'}`),
+    formValueLines,
     formGroupLines: formFields.map(renderFormGroupLine),
     formPatchLines: formFields.map(f => renderFormPatchLine(f, propertyName, definition.fields[f.name])),
     dialogSharedImports: sharedTypes.join(', '),
-    needsSelect: formFields.some(f => f.control === 'select'),
-    savedEmitSrc: typedSelects.length
-      ? `this.saved.emit({ ...raw, ${typedSelects.map(f => `${f.name}: raw.${f.name} as ${f.optionsType}`).join(', ')} })`
-      : 'this.saved.emit(raw)'
+    needsSelect: selects.length > 0,
+    savedEmitLines: renderSavedEmit(formFields, lookups),
+    formHelperLines: renderHelpers(
+      inlineLabelFields,
+      enumSelects.filter(f => f.labelsConst),
+      lookups
+    ),
+    lookupInjectLines: lookups.map(
+      f => `private readonly _${f.lookup?.resource}Service = inject(${cap(f.lookup?.resource ?? '')}Service)`
+    ),
+    lookupComputedLines: lookups.map(
+      f =>
+        `readonly ${f.lookup?.resource}s = computed(() => this._${f.lookup?.resource}Service.${f.lookup?.resource}s.value()?.items ?? [])`
+    ),
+    lookupServiceImports: [...new Set(lookups.map(f => f.lookup?.resource ?? ''))],
+    labelsModuleImports,
+    groupValidatorDefs: groupValidators.map(renderGroupValidatorDef),
+    groupValidatorOption: groupValidators.length
+      ? `,\n    { validators: ${groupValidators.map(v => `${v.kind}Validator`).join(', ')} }`
+      : '',
+    needsGroupValidatorTypes: groupValidators.length > 0,
+    needsComputed: lookups.length > 0,
+    inlineLabelConsts: inlineLabelFields.map(f => {
+      const entries = f.options.map(o => `  ${o.value}: '${o.label}'`).join(',\n')
+      return `const ${constName(f.name)}_LABELS: Record<string, string> = {\n${entries}\n}`
+    })
   }
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function constName(name: string): string {
+  return name.replace(/([A-Z])/g, '_$1').toUpperCase()
+}
+
+function valueType(field: FormFieldSubstitution): string {
+  if (field.optionsType) return field.optionsType
+  if (field.control === 'checkbox') return 'boolean'
+  if (field.control === 'date') return field.required ? 'string' : 'string | null'
+  return 'string'
+}
+
+function renderHelpers(
+  inlineLabelFields: FormFieldSubstitution[],
+  importedLabelFields: FormFieldSubstitution[],
+  lookups: FormFieldSubstitution[]
+): string[] {
+  const lines: string[] = []
+  for (const f of [...inlineLabelFields, ...importedLabelFields]) {
+    const labelConst = f.labelsConst ?? `${constName(f.name)}_LABELS`
+    const cast = f.optionsType ? ` as ${f.optionsType}` : ''
+    lines.push(`protected readonly ${f.name}ToLabel = (value: unknown): string => ${labelConst}[value${cast}] ?? ''`)
+  }
+  for (const f of lookups) {
+    const resource = f.lookup?.resource ?? ''
+    const labelField = f.lookup?.labelField ?? 'name'
+    lines.push(
+      `protected readonly ${f.name}ToLabel = (value: unknown): string => this.${resource}s().find(item => item.id === value)?.${labelField} ?? ''`
+    )
+  }
+  return lines
+}
+
+function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {
+  const casts = formFields
+    .filter(f => f.optionsType && !f.default)
+    .map(f => `${f.name}: raw.${f.name} as ${f.optionsType}`)
+  const lookupFixes = lookups.map(f => `${f.name}: raw.${f.name} ?? ''`)
+  const denormLines = lookups
+    .filter(f => f.lookup?.denormalizes)
+    .map(
+      f =>
+        `${f.lookup?.denormalizes}: this.${f.lookup?.resource}s().find(item => item.id === raw.${f.name})?.${f.lookup?.labelField} ?? ''`
+    )
+  const dateNulls = formFields
+    .filter(f => f.control === 'date' && !f.required)
+    .map(f => `${f.name}: raw.${f.name} || null`)
+  const extras = [...casts, ...lookupFixes, ...denormLines, ...dateNulls]
+  if (!extras.length) return ['this.saved.emit(raw)']
+  return ['this.saved.emit({', `  ...raw,`, ...extras.map(e => `  ${e},`), '})']
+}
+
+function renderGroupValidatorDef(v: { kind: string; startField: string; endField: string }): string {
+  if (v.kind === 'dateRange') {
+    return [
+      `const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {`,
+      `  const start = group.get('${v.startField}')?.value`,
+      `  const end = group.get('${v.endField}')?.value`,
+      `  return start && end && end < start ? { dateRange: true } : null`,
+      `}`
+    ].join('\n')
+  }
+  return ''
 }
 
 function renderFormField(name: string, field: FieldDefinition, idPrefix: string): FormFieldSubstitution {
@@ -255,26 +384,40 @@ function renderFormField(name: string, field: FieldDefinition, idPrefix: string)
     name,
     id: `${idPrefix}${form.id ?? name}`,
     label: form.label ?? name,
-    control: form.control as 'text' | 'textarea' | 'select',
+    control: form.control as FormFieldSubstitution['control'],
     rows: form.rows,
     required: field.required ?? false,
     options: form.options ?? [],
     optionsType: form.optionsType,
-    placeholder: form.placeholder
+    default: form.default,
+    placeholder: form.placeholder,
+    labelsConst: form.labelsConst,
+    groupErrorMessage: form.groupErrorMessage,
+    lookup: form.lookup
   }
 }
 
 function renderFormGroupLine(field: FormFieldSubstitution): string {
-  if (field.control === 'select') {
+  if (field.control === 'checkbox') return `${field.name}: [${field.default ?? 'false'}]`
+  if (field.lookup) {
     const comment = "// null (no ''): hlm-select solo muestra el placeholder cuando el valor es null."
     return `${comment}\n    ${field.name}: this._fb.control<string | null>(null${field.required ? ', Validators.required' : ''})`
   }
+  if (field.control === 'select') {
+    if (field.default) return `${field.name}: [${field.default}]`
+    const comment = "// null (no ''): hlm-select solo muestra el placeholder cuando el valor es null."
+    return `${comment}\n    ${field.name}: this._fb.control<string | null>(null${field.required ? ', Validators.required' : ''})`
+  }
+  if (field.default) return `${field.name}: [${field.default}]`
   return field.required ? `${field.name}: ['', Validators.required]` : `${field.name}: ['']`
 }
 
 function renderFormPatchLine(field: FormFieldSubstitution, propertyName: string, definition: FieldDefinition): string {
-  if (field.control === 'select') return `${field.name}: ${propertyName}.${field.name} ?? null`
-  if (definition.required) return `${field.name}: ${propertyName}.${field.name}`
+  if (field.control === 'checkbox') return `${field.name}: ${propertyName}.${field.name}`
+  if (field.lookup) return `${field.name}: ${propertyName}.${field.name}`
+  if (field.control === 'select' && !field.default) return `${field.name}: ${propertyName}.${field.name} ?? null`
+  if (field.control === 'select') return `${field.name}: ${propertyName}.${field.name}`
+  if (definition.required && !definition.nullable) return `${field.name}: ${propertyName}.${field.name}`
   return `${field.name}: ${propertyName}.${field.name} ?? ''`
 }
 

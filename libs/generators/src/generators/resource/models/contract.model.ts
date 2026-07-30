@@ -19,6 +19,12 @@ export const contract = defineResource({
     gender: 'm'
   },
   list: { viewLabel: 'Ver detalle' },
+  labelsModule: true,
+  formSections: [
+    { id: 'contract', title: 'Datos del contrato' },
+    { id: 'notes', title: 'Notas' }
+  ],
+  formGroupValidators: [{ kind: 'dateRange', startField: 'startDate', endField: 'endDate' }],
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
   auditComment: true,
@@ -57,6 +63,20 @@ export const contract = defineResource({
           maintenance: { label: 'Mantenimiento', variant: 'outline' }
         }
       },
+      form: {
+        control: 'select',
+        label: 'Tipo',
+        id: 'type',
+        section: 'contract',
+        order: 3,
+        optionsType: 'ContractTypeEnum',
+        default: 'ContractTypeEnum.CLOUD',
+        labelsConst: 'CONTRACT_TYPE_LABELS',
+        options: [
+          { value: 'cloud', label: 'Cloud' },
+          { value: 'onprem', label: 'On-premise' }
+        ]
+      },
       column: { type: 'varchar', length: 20 }
     },
     contractNumber: {
@@ -64,13 +84,29 @@ export const contract = defineResource({
       nullable: true,
       query: { filterable: 7, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Nº Contrato', filterable: true, minWidth: 180 },
+      required: true,
+      form: { control: 'text', label: 'Nº Contrato', id: 'num', section: 'contract', order: 2 },
       comment: [
         'nullable a nivel de tipo desde spec 44 (maintenance: 36% de ISMaintenances sin ContractID);',
         'la columna física sigue NOT NULL hasta que la migración de la spec 44 la altere.'
       ],
       column: { type: 'varchar', lengthConst: 'CONTRACT_NUMBER.MAX', tsType: 'Nullable<string>' }
     },
-    customerId: { type: 'uuid', query: { filterable: 5 }, relation: { to: 'customer', kind: 'reference' } },
+    customerId: {
+      type: 'uuid',
+      required: true,
+      query: { filterable: 5 },
+      relation: { to: 'customer', kind: 'reference' },
+      form: {
+        control: 'select',
+        label: 'Cliente',
+        id: 'cust',
+        section: 'contract',
+        order: 4,
+        placeholder: 'Seleccionar cliente',
+        lookup: { resource: 'customer', labelField: 'name', denormalizes: 'customerName' }
+      }
+    },
     customerName: {
       type: 'string',
       query: { filterable: 6, sortable: 2, searchable: 2 },
@@ -88,7 +124,11 @@ export const contract = defineResource({
       column: { type: 'text', array: true, defaultRaw: '"\'{}\'"', tsType: 'string[]' }
     },
     nbrOfContracts: { type: 'integer', column: { type: 'int', default: 1 } },
-    isFavorite: { type: 'boolean', column: { type: 'boolean', default: false } },
+    isFavorite: {
+      type: 'boolean',
+      form: { control: 'checkbox', label: 'Marcar como favorito', section: 'contract', order: 12 },
+      column: { type: 'boolean', default: false }
+    },
     status: {
       type: 'string',
       query: { filterable: 3, sortable: 6 },
@@ -106,11 +146,41 @@ export const contract = defineResource({
           terminated: { label: 'Terminado', variant: 'destructive' }
         }
       },
+      form: {
+        control: 'select',
+        label: 'Estado',
+        id: 'status',
+        section: 'contract',
+        order: 7,
+        optionsType: 'ContractStatusEnum',
+        default: 'ContractStatusEnum.ACTIVE',
+        labelsConst: 'CONTRACT_STATUS_LABELS',
+        options: [
+          { value: 'active', label: 'Activo' },
+          { value: 'expiring', label: 'Por expirar' },
+          { value: 'expired', label: 'Expirado' },
+          { value: 'terminated', label: 'Terminado' }
+        ]
+      },
       column: { type: 'varchar', length: 20, default: 'active' }
     },
     source: {
       type: 'string',
       query: { filterable: 4 },
+      form: {
+        control: 'select',
+        label: 'Origen',
+        id: 'source',
+        section: 'contract',
+        order: 11,
+        optionsType: 'ContractSourceEnum',
+        default: 'ContractSourceEnum.AVVALE_SOLD',
+        labelsConst: 'CONTRACT_SOURCE_LABELS',
+        options: [
+          { value: 'AVVALE_SOLD', label: 'Vendido por Avvale' },
+          { value: 'CUSTOMER_OWNED', label: 'Propiedad del cliente' }
+        ]
+      },
       column: { type: 'varchar', length: 20, default: 'AVVALE_SOLD' }
     },
     startDate: {
@@ -118,6 +188,8 @@ export const contract = defineResource({
       nullable: true,
       query: { sortable: 3 },
       table: { show: true, order: 4, label: 'Inicio', type: 'date', minWidth: 120 },
+      required: true,
+      form: { control: 'date', label: 'Fecha inicio', id: 'start', section: 'contract', order: 5 },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     endDate: {
@@ -125,6 +197,14 @@ export const contract = defineResource({
       nullable: true,
       query: { sortable: 4 },
       table: { show: true, order: 5, label: 'Fin', type: 'date', minWidth: 120 },
+      form: {
+        control: 'date',
+        label: 'Fecha fin',
+        id: 'end',
+        section: 'contract',
+        order: 6,
+        groupErrorMessage: 'La fecha fin debe ser posterior a la de inicio'
+      },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     totalValue: {
@@ -133,7 +213,11 @@ export const contract = defineResource({
       table: { show: true, order: 7, label: 'Valor total', type: 'number', minWidth: 140 },
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
     },
-    currency: { type: 'string', column: { type: 'varchar', lengthConst: 'CURRENCY.LENGTH', default: 'EUR' } },
+    currency: {
+      type: 'string',
+      form: { control: 'text', label: 'Moneda', id: 'currency', section: 'contract', order: 8, default: "'EUR'" },
+      column: { type: 'varchar', lengthConst: 'CURRENCY.LENGTH', default: 'EUR' }
+    },
     billingFrequency: {
       type: 'string',
       table: {
@@ -144,10 +228,48 @@ export const contract = defineResource({
         minWidth: 120,
         valueMapConst: 'BILLING_FREQUENCY_LABELS'
       },
+      form: {
+        control: 'select',
+        label: 'Facturación',
+        id: 'billing',
+        section: 'contract',
+        order: 9,
+        optionsType: 'BillingFrequencyEnum',
+        default: 'BillingFrequencyEnum.YEARLY',
+        labelsConst: 'BILLING_FREQUENCY_LABELS',
+        options: [
+          { value: 'monthly', label: 'Mensual' },
+          { value: 'quarterly', label: 'Trimestral' },
+          { value: 'semiannual', label: 'Semestral' },
+          { value: 'yearly', label: 'Anual' }
+        ]
+      },
       column: { type: 'varchar', length: 20, default: 'yearly' }
     },
-    renewalType: { type: 'string', column: { type: 'varchar', length: 20, default: 'manual' } },
-    notes: { type: 'string', column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' } },
+    renewalType: {
+      type: 'string',
+      form: {
+        control: 'select',
+        label: 'Renovación',
+        id: 'renewal',
+        section: 'contract',
+        order: 10,
+        optionsType: 'RenewalTypeEnum',
+        default: 'RenewalTypeEnum.MANUAL',
+        labelsConst: 'RENEWAL_TYPE_LABELS',
+        options: [
+          { value: 'auto', label: 'Automática' },
+          { value: 'manual', label: 'Manual' },
+          { value: 'none', label: 'Sin renovación' }
+        ]
+      },
+      column: { type: 'varchar', length: 20, default: 'manual' }
+    },
+    notes: {
+      type: 'string',
+      form: { control: 'textarea', label: 'Notas internas', id: 'notes', section: 'notes', order: 13, rows: 3 },
+      column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
+    },
     origin: {
       type: 'string',
       optionalPrimitive: true,
