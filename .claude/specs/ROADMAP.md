@@ -15,13 +15,24 @@
 | 04  | ⏸ `plantillas-frontend` (explorada; requiere C2) | Vista completa (list + dialog + detail + service + rutas) con diff vacío                                      | Pendiente     |
 | 05  | `validacion-4-entidades`                         | Las 4 referencias de oro generan con diff vacío (gate completo)                                               | Pendiente     |
 
-## Fase 2 — Catálogo de infra (Azure primero, ADR-004)
+## Fase 2 — Catálogo de infra (ADR-004) — ampliada 2026-07-30 a petición de Alfonso
 
-| Nº  | Spec                    | Objetivo                                                                                            | Estado    |
-| --- | ----------------------- | --------------------------------------------------------------------------------------------------- | --------- |
-| 06  | `infra-ports`           | `libs/infra/ports`: `StoragePort` + test de conformidad                                             | Pendiente |
-| 07  | `adapter-storage-azure` | Copiar/adaptar `AzureBlobFileStorage` + config/Key Vault loader de la referencia                    | Pendiente |
-| 08  | `composition-root`      | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`) | Pendiente |
+| Nº  | Spec                    | Objetivo                                                                                                                                                                       | Estado        |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| 06  | `infra-ports`           | `FileStoragePort` + suite de conformidad reutilizable                                                                                                                          | ✅ 2026-07-30 |
+| 07  | `adapter-storage-azure` | `AzureBlobFileStorage` (Blob) con tests de SDK mockeado                                                                                                                        | ✅ 2026-07-30 |
+| 08  | `config-azure`          | Plugin de config: loader JSON por entorno + resolver `vault.*` de Key Vault (copiar de referencia)                                                                             | Pendiente     |
+| 09  | `composition-root`      | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`)                                                                            | Pendiente     |
+| 10  | `adapter-storage-s3`    | Adapter S3-compatible (cubre **AWS S3, Cloudflare R2, MinIO local**) — valida el puerto con el 2º proveedor real; conformidad contra MinIO en docker                           | Pendiente     |
+| 11  | `adapter-storage-gcs`   | Adapter Google Cloud Storage (3º barato una vez validado el puerto)                                                                                                            | Pendiente     |
+| 12  | `secrets-port`          | `SecretsPort` + adapters: **Azure Key Vault** (referencia) · **Doppler** · **Bitwarden/Infisical** (free-tier para stacks Cloudflare)                                          | Pendiente     |
+| 13  | `observability-port`    | `AppLogger`/telemetría: **App Insights** (referencia) · **Prometheus+Grafana** (prom-client, self-host free) · **Sentry**                                                      | Pendiente     |
+| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases) — hoy los módulos de oro los tienen y el generador no los produce | Pendiente     |
+| 15  | `kernel-config-infra`   | Replicar del esqueleto de referencia: config por entornos JSON, logger, filtros/interceptores, health checks, Dockerfiles, CI                                                  | Pendiente     |
+
+Nota (regla de los dos, ADR-004): la ampliación multi-cloud la pidió Alfonso el 2026-07-30. Orden de
+ROI: S3-compatible primero (un adapter cubre 3 proveedores y valida el puerto), GCS después. Cómputo
+sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 
 ## Fase 3 — Bordes (bajo demanda, no especulativo)
 
