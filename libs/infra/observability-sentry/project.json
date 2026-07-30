@@ -1,0 +1,26 @@
+{
+  "name": "infra-observability-sentry",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/infra/observability-sentry/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/infra/observability-sentry",
+        "main": "libs/infra/observability-sentry/src/index.ts",
+        "tsConfig": "libs/infra/observability-sentry/tsconfig.lib.json",
+        "assets": ["libs/infra/observability-sentry/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/infra/observability-sentry/jest.config.cts"
+      }
+    }
+  }
+}

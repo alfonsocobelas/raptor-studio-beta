@@ -45,3 +45,30 @@ describe('DopplerSecrets', () => {
     await expect(new DopplerSecrets({ token: 't' }, fakeFetch(500)).get('boom')).rejects.toThrow('status 500')
   })
 })
+
+import { InfisicalSecrets } from './infisical-secrets'
+
+describe('InfisicalSecrets', () => {
+  const fakeFetch = (status: number, body?: unknown): FetchLike =>
+    jest.fn(async () => ({ ok: status < 400, status, json: async () => body }))
+
+  it('reads the raw secret scoped to project and environment', async () => {
+    const fetchFn = fakeFetch(200, { secret: { secretValue: 'inf-value' } })
+    const secrets = new InfisicalSecrets(
+      { token: 'st.xxx', projectId: 'proj-1', environment: 'prod', baseUrl: 'https://infisical.local' },
+      fetchFn
+    )
+
+    expect(await secrets.get('DATABASE_URL')).toBe('inf-value')
+    expect(fetchFn).toHaveBeenCalledWith(
+      'https://infisical.local/api/v3/secrets/raw/DATABASE_URL?workspaceId=proj-1&environment=prod&secretPath=%2F',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer st.xxx' }) })
+    )
+  })
+
+  it('maps 404 to null', async () => {
+    const secrets = new InfisicalSecrets({ token: 't', projectId: 'p', environment: 'dev' }, fakeFetch(404))
+
+    expect(await secrets.get('nope')).toBeNull()
+  })
+})
