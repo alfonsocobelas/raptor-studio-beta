@@ -102,6 +102,7 @@ describe('AwsSecretsManagerSecrets', () => {
   })
 })
 
+import { BitwardenSecrets } from './bitwarden-secrets'
 import { GcpSecretManagerSecrets } from './gcp-secret-manager-secrets'
 
 describe('GcpSecretManagerSecrets', () => {
@@ -139,5 +140,33 @@ describe('GcpSecretManagerSecrets', () => {
 
     expect(await missing.get('nope')).toBeNull()
     await expect(broken.get('x')).rejects.toThrow('denied')
+  })
+})
+
+describe('BitwardenSecrets', () => {
+  it('resolves a secret value by key through the injected SDK client', async () => {
+    const client = {
+      secrets: jest.fn(() => ({
+        getByIds: jest.fn(),
+        list: jest.fn(async () => ({ data: [{ id: 'uuid-1', key: 'typeorm-host' }] })),
+        get: jest.fn(async () => ({ id: 'uuid-1', key: 'typeorm-host', value: 'bw-value' }))
+      }))
+    }
+    const secrets = new BitwardenSecrets({ organizationId: 'org-1' }, client)
+
+    expect(await secrets.get('typeorm-host')).toBe('bw-value')
+  })
+
+  it('returns null when no secret matches the key', async () => {
+    const client = {
+      secrets: jest.fn(() => ({
+        getByIds: jest.fn(),
+        list: jest.fn(async () => ({ data: [{ id: 'uuid-1', key: 'other' }] })),
+        get: jest.fn()
+      }))
+    }
+    const secrets = new BitwardenSecrets({ organizationId: 'org-1' }, client)
+
+    expect(await secrets.get('missing')).toBeNull()
   })
 })
