@@ -97,6 +97,8 @@ export interface FormFieldSubstitution {
   placeholder?: string
   labelsConst?: string
   groupErrorMessage?: string
+  maxLength?: number
+  fullWidth?: boolean
   lookup?: { resource: string; labelField: string; denormalizes?: string }
 }
 
@@ -393,6 +395,8 @@ function renderFormField(name: string, field: FieldDefinition, idPrefix: string)
     placeholder: form.placeholder,
     labelsConst: form.labelsConst,
     groupErrorMessage: form.groupErrorMessage,
+    maxLength: form.maxLength,
+    fullWidth: form.fullWidth,
     lookup: form.lookup
   }
 }
@@ -409,6 +413,10 @@ function renderFormGroupLine(field: FormFieldSubstitution): string {
     return `${comment}\n    ${field.name}: this._fb.control<string | null>(null${field.required ? ', Validators.required' : ''})`
   }
   if (field.default) return `${field.name}: [${field.default}]`
+  if (field.required && field.maxLength) {
+    return `${field.name}: ['', [Validators.required, Validators.maxLength(${field.maxLength})]]`
+  }
+  if (field.maxLength) return `${field.name}: ['', Validators.maxLength(${field.maxLength})]`
   return field.required ? `${field.name}: ['', Validators.required]` : `${field.name}: ['']`
 }
 

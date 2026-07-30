@@ -17,6 +17,8 @@ export const project = defineResource({
     gender: 'm'
   },
   list: { features: { view: false, delete: true } },
+  formSections: [{ id: 'general', title: 'Datos generales' }],
+  formGroupValidators: [{ kind: 'dateRange', startField: 'startDate', endField: 'endDate' }],
   constraintsConst: 'PROJECT_CONSTRAINTS',
   audit: true,
   auditComment: true,
@@ -29,7 +31,21 @@ export const project = defineResource({
   },
   fields: {
     id: { type: 'uuid', pk: true, query: { filterable: 1 } },
-    customerId: { type: 'uuid', query: { filterable: 4 }, relation: { to: 'customer', kind: 'reference' } },
+    customerId: {
+      type: 'uuid',
+      required: true,
+      query: { filterable: 4 },
+      relation: { to: 'customer', kind: 'reference' },
+      form: {
+        control: 'select',
+        label: 'Cliente',
+        id: 'customer',
+        section: 'general',
+        order: 3,
+        placeholder: 'Seleccionar cliente',
+        lookup: { resource: 'customer', labelField: 'name', denormalizes: 'customerName' }
+      }
+    },
     customerName: {
       type: 'string',
       query: { filterable: 5, sortable: 2, searchable: 2 },
@@ -40,14 +56,30 @@ export const project = defineResource({
       type: 'string',
       query: { filterable: 6, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Nombre', filterable: true, minWidth: 250 },
+      required: true,
+      form: { control: 'text', label: 'Nombre', section: 'general', order: 1, maxLength: 200, fullWidth: true },
       column: { type: 'varchar', lengthConst: 'NAME.MAX' }
     },
-    description: { type: 'string', column: { type: 'varchar', lengthConst: 'DESCRIPTION.MAX', default: '' } },
+    description: {
+      type: 'string',
+      form: {
+        control: 'textarea',
+        label: 'Descripción',
+        id: 'desc',
+        section: 'general',
+        order: 2,
+        rows: 3,
+        fullWidth: true
+      },
+      column: { type: 'varchar', lengthConst: 'DESCRIPTION.MAX', default: '' }
+    },
     startDate: {
       type: 'date',
       nullable: true,
       query: { sortable: 3 },
       table: { show: true, order: 4, label: 'Fecha inicio', type: 'date', minWidth: 120 },
+      required: true,
+      form: { control: 'date', label: 'Fecha inicio', id: 'start', section: 'general', order: 5 },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     endDate: {
@@ -55,6 +87,14 @@ export const project = defineResource({
       nullable: true,
       query: { sortable: 4 },
       table: { show: true, order: 5, label: 'Fecha fin', type: 'date', minWidth: 120 },
+      form: {
+        control: 'date',
+        label: 'Fecha fin',
+        id: 'end',
+        section: 'general',
+        order: 6,
+        groupErrorMessage: 'La fecha fin debe ser posterior a la de inicio'
+      },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     status: {
@@ -74,6 +114,21 @@ export const project = defineResource({
           closed: { label: 'Cerrado', variant: 'ghost' }
         }
       },
+      form: {
+        control: 'select',
+        label: 'Estado',
+        id: 'status',
+        section: 'general',
+        order: 4,
+        optionsType: 'ProjectStatusEnum',
+        default: 'ProjectStatusEnum.PLANNING',
+        options: [
+          { value: 'planning', label: 'Planificación' },
+          { value: 'active', label: 'Activo' },
+          { value: 'onhold', label: 'En pausa' },
+          { value: 'closed', label: 'Cerrado' }
+        ]
+      },
       column: { type: 'varchar', length: 20, default: 'planning' }
     },
     implementer: {
@@ -90,6 +145,19 @@ export const project = defineResource({
           AVVALE: { label: 'AVVALE', variant: 'default' },
           THIRD_PARTY: { label: 'Tercero', variant: 'secondary' }
         }
+      },
+      form: {
+        control: 'select',
+        label: 'Implementador',
+        id: 'impl',
+        section: 'general',
+        order: 7,
+        optionsType: 'ProjectImplementerEnum',
+        default: 'ProjectImplementerEnum.AVVALE',
+        options: [
+          { value: 'AVVALE', label: 'AVVALE' },
+          { value: 'THIRD_PARTY', label: 'Tercero' }
+        ]
       },
       column: { type: 'varchar', length: 20, default: 'AVVALE' }
     },

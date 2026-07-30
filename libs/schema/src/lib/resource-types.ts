@@ -83,6 +83,10 @@ export interface FieldForm {
   default?: string
   /** Group-validator error shown under this control with forceShow (e.g. dateRange end field) */
   groupErrorMessage?: string
+  /** Emits Validators.maxLength (explicit: the golden modules apply it inconsistently) */
+  maxLength?: number
+  /** Field spans the full grid width (sm:col-span-2) */
+  fullWidth?: boolean
   /** Dynamic select fed by another resource's service (realizes decision 4) */
   lookup?: FieldLookup
   /** Const of labels imported from <fileName>-labels instead of inlined in the dialog */

@@ -105,6 +105,9 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             <hlm-field>
               <label hlmFieldLabel for="cstart">Fecha inicio</label>
               <input id="cstart" type="date" hlmInput formControlName="startDate" />
+              @if (form.controls.startDate.touched && form.controls.startDate.invalid) {
+                <hlm-field-error>Obligatorio</hlm-field-error>
+              }
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="cend">Fecha fin</label>

@@ -1,36 +1,34 @@
-import { DatePipe } from '@angular/common'
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
-import { HlmBadgeImports } from '@spartan-ng/helm/badge'
 import { HlmButtonImports } from '@spartan-ng/helm/button'
 import { HlmDialogImports } from '@spartan-ng/helm/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInputImports } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
-import { ProjectDto, ProjectImplementerEnum, ProjectOriginEnum, ProjectStatusEnum } from '@sap-licenses/shared/domain'
+import { ProjectDto, ProjectImplementerEnum, ProjectStatusEnum } from '@sap-licenses/shared/domain'
 import { CustomerService } from '../../../../../../core/services/customer.service'
+
+const STATUS_LABELS: Record<string, string> = {
+  planning: 'Planificación',
+  active: 'Activo',
+  onhold: 'En pausa',
+  closed: 'Cerrado'
+}
+
+const IMPLEMENTER_LABELS: Record<string, string> = {
+  AVVALE: 'AVVALE',
+  THIRD_PARTY: 'Tercero'
+}
 
 export interface ProjectFormValue {
   customerId: string
-  customerName: string
   name: string
   description: string
   startDate: string
   endDate: string | null
   status: ProjectStatusEnum
   implementer: ProjectImplementerEnum
-}
-
-const PROJECT_STATUS_LABELS: Record<ProjectStatusEnum, string> = {
-  [ProjectStatusEnum.PLANNING]: 'Planificación',
-  [ProjectStatusEnum.ACTIVE]: 'Activo',
-  [ProjectStatusEnum.ONHOLD]: 'En pausa',
-  [ProjectStatusEnum.CLOSED]: 'Cerrado'
-}
-
-const PROJECT_IMPLEMENTER_LABELS: Record<ProjectImplementerEnum, string> = {
-  [ProjectImplementerEnum.AVVALE]: 'AVVALE',
-  [ProjectImplementerEnum.THIRD_PARTY]: 'Tercero'
+  customerName: string
 }
 
 const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {
@@ -44,40 +42,20 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
   imports: [
     ReactiveFormsModule,
     HlmDialogImports,
-    HlmBadgeImports,
     HlmButtonImports,
     HlmFieldImports,
     HlmInputImports,
     HlmSelectImports
   ],
-  providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
       <hlm-dialog-header>
-        <h3 hlmDialogTitle>
-          {{ project() ? 'Editar proyecto' : 'Nuevo proyecto' }}
-          @if (isMeSap()) {
-            <span class="ml-2 align-middle" variant="outline" hlmBadge>SAP</span>
-          }
-        </h3>
+        <h3 hlmDialogTitle>{{ project() ? 'Editar proyecto' : 'Nuevo proyecto' }}</h3>
         <p hlmDialogDescription>
           {{ project() ? 'Modifica los datos del proyecto' : 'Introduce los datos del nuevo proyecto' }}
         </p>
       </hlm-dialog-header>
-      @if (isMeSap()) {
-        <div class="bg-muted/50 rounded-md p-4" data-testid="sap-info">
-          <h4 class="mb-3 text-sm font-semibold">Datos SAP</h4>
-          <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
-            @for (item of sapInfo(); track item.label) {
-              <div>
-                <dt class="text-muted-foreground">{{ item.label }}</dt>
-                <dd>{{ item.value }}</dd>
-              </div>
-            }
-          </dl>
-        </div>
-      }
       <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos generales</h4>
@@ -95,13 +73,13 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="pcustomer">Cliente</label>
-              <hlm-select formControlName="customerId" [itemToString]="customerToLabel">
+              <hlm-select formControlName="customerId" [itemToString]="customerIdToLabel">
                 <hlm-select-trigger buttonId="pcustomer">
                   <hlm-select-value placeholder="Seleccionar cliente" />
                 </hlm-select-trigger>
                 <hlm-select-content *hlmSelectPortal showScroll>
-                  @for (c of customers(); track c.id) {
-                    <hlm-select-item [value]="c.id">{{ c.name }}</hlm-select-item>
+                  @for (item of customers(); track item.id) {
+                    <hlm-select-item [value]="item.id">{{ item.name }}</hlm-select-item>
                   }
                 </hlm-select-content>
               </hlm-select>
@@ -133,8 +111,10 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
             <hlm-field>
               <label hlmFieldLabel for="pend">Fecha fin</label>
               <input id="pend" type="date" hlmInput formControlName="endDate" />
+              <!-- forceShow: dateRange es un error de grupo; sin él, hlm-field-error se oculta porque
+                   el control endDate está válido (solo mira los errores de su propio control). -->
               @if (form.errors?.['dateRange']) {
-                <hlm-field-error>La fecha fin debe ser posterior a la de inicio</hlm-field-error>
+                <hlm-field-error forceShow>La fecha fin debe ser posterior a la de inicio</hlm-field-error>
               }
             </hlm-field>
             <hlm-field>
@@ -165,49 +145,24 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
 export class ProjectDialogComponent {
   private readonly _fb = inject(FormBuilder)
   private readonly _customerService = inject(CustomerService)
-  private readonly _datePipe = inject(DatePipe)
 
   readonly project = input<ProjectDto | null>(null)
   readonly saved = output<ProjectFormValue>()
 
   readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
 
-  // itemToString: con el popover cerrado los items no están instanciados y el trigger
-  // mostraría el valor crudo del control en vez de su etiqueta de presentación.
-  protected readonly statusToLabel = (value: unknown): string => PROJECT_STATUS_LABELS[value as ProjectStatusEnum] ?? ''
+  protected readonly statusToLabel = (value: unknown): string => STATUS_LABELS[value as ProjectStatusEnum] ?? ''
   protected readonly implementerToLabel = (value: unknown): string =>
-    PROJECT_IMPLEMENTER_LABELS[value as ProjectImplementerEnum] ?? ''
-  protected readonly customerToLabel = (value: unknown): string =>
-    this.customers().find(c => c.id === value)?.name ?? ''
-
-  readonly isMeSap = computed(() => this.project()?.origin === ProjectOriginEnum.ME_SAP)
-
-  // Datos SAP de solo lectura (spec 46): crudos del feed, con guion para lo nunca observado.
-  readonly sapInfo = computed(() => {
-    const project = this.project()
-    if (!project) {
-      return []
-    }
-    const dash = (value: string | number | null): string => (value === null ? '—' : String(value))
-    return [
-      {
-        label: 'Go-live planificado',
-        value: project.planToGoLive ? (this._datePipe.transform(project.planToGoLive, 'dd-MM-yyyy') ?? '—') : '—'
-      },
-      { label: 'Nº de waves', value: dash(project.nbrOfWaves) },
-      { label: 'Fase de la wave', value: dash(project.waveStage) },
-      { label: 'Estado de la wave', value: dash(project.waveStatus) },
-      { label: 'En riesgo', value: dash(project.atRisk) },
-      { label: 'En escalación', value: dash(project.inEscalation) }
-    ]
-  })
+    IMPLEMENTER_LABELS[value as ProjectImplementerEnum] ?? ''
+  protected readonly customerIdToLabel = (value: unknown): string =>
+    this.customers().find(item => item.id === value)?.name ?? ''
 
   readonly form = this._fb.nonNullable.group(
     {
-      name: ['', [Validators.required, Validators.maxLength(200)]],
-      description: [''],
       // null (no ''): hlm-select solo muestra el placeholder cuando el valor es null.
       customerId: this._fb.control<string | null>(null, Validators.required),
+      name: ['', [Validators.required, Validators.maxLength(200)]],
+      description: [''],
       startDate: ['', Validators.required],
       endDate: [''],
       status: [ProjectStatusEnum.PLANNING],
@@ -220,37 +175,16 @@ export class ProjectDialogComponent {
     effect(() => {
       const project = this.project()
       if (project) {
-        this.patchFromProject(project)
+        this.form.patchValue({
+          customerId: project.customerId,
+          name: project.name,
+          description: project.description ?? '',
+          startDate: project.startDate ?? '',
+          endDate: project.endDate ?? '',
+          status: project.status,
+          implementer: project.implementer
+        })
       }
-      if (this.isMeSap()) {
-        this.disableSyncGovernedControls()
-      }
-    })
-  }
-
-  // Campos sync-gobernados (spec 46): solo el sync los escribe en un ME_SAP — el backend los
-  // rechaza con 422, así que el formulario ni los ofrece. description/implementer siguen libres.
-  private disableSyncGovernedControls(): void {
-    for (const control of [
-      this.form.controls.name,
-      this.form.controls.customerId,
-      this.form.controls.status,
-      this.form.controls.startDate,
-      this.form.controls.endDate
-    ]) {
-      control.disable()
-    }
-  }
-
-  patchFromProject(project: ProjectDto): void {
-    this.form.patchValue({
-      name: project.name,
-      description: project.description,
-      customerId: project.customerId,
-      startDate: project.startDate ?? '',
-      endDate: project.endDate ?? '',
-      status: project.status,
-      implementer: project.implementer
     })
   }
 
@@ -259,12 +193,10 @@ export class ProjectDialogComponent {
       return
     }
     const raw = this.form.getRawValue()
-    const customerName = this.customers().find(c => c.id === raw.customerId)?.name ?? ''
     this.saved.emit({
       ...raw,
       customerId: raw.customerId ?? '',
-      customerName,
-      startDate: raw.startDate,
+      customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
     ctx.close()

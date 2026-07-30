@@ -59,8 +59,9 @@ export interface <%- className %>FormValue {
 <%_ } _%>
 <%_ section.fields.forEach(f => { _%>
 <%_ const pad = section.grid ? '            ' : '          ' _%>
+<%_ const fieldOpen = '<hlm-field' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
 <%_ if (f.lookup) { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
 <%- pad %>  <hlm-select formControlName="<%- f.name %>" [itemToString]="<%- f.name %>ToLabel">
 <%- pad %>    <hlm-select-trigger buttonId="<%- f.id %>">
@@ -79,7 +80,7 @@ export interface <%- className %>FormValue {
 <%_ } _%>
 <%- pad %></hlm-field>
 <%_ } else if (f.control === 'select') { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
 <%- pad %>  <hlm-select formControlName="<%- f.name %>" [itemToString]="<%- f.name %>ToLabel">
 <%- pad %>    <hlm-select-trigger buttonId="<%- f.id %>">
@@ -96,21 +97,26 @@ export interface <%- className %>FormValue {
 <%_ } _%>
 <%- pad %></hlm-field>
 <%_ } else if (f.control === 'checkbox') { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel class="flex items-center gap-2">
 <%- pad %>    <input type="checkbox" formControlName="<%- f.name %>" />
 <%- pad %>    <%- f.label %>
 <%- pad %>  </label>
 <%- pad %></hlm-field>
 <%_ } else if (f.control === 'textarea') { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
 <%- pad %>  <textarea id="<%- f.id %>" class="resize-none" hlmInput formControlName="<%- f.name %>" rows="<%- f.rows %>"></textarea>
 <%- pad %></hlm-field>
 <%_ } else if (f.control === 'date') { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
 <%- pad %>  <input id="<%- f.id %>" type="date" hlmInput formControlName="<%- f.name %>" />
+<%_ if (f.required) { _%>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <hlm-field-error>Obligatorio</hlm-field-error>
+<%- pad %>  }
+<%_ } _%>
 <%_ if (f.groupErrorMessage) { _%>
 <%- pad %>  <!-- forceShow: dateRange es un error de grupo; sin él, hlm-field-error se oculta porque
 <%- pad %>       el control <%- f.name %> está válido (solo mira los errores de su propio control). -->
@@ -120,7 +126,7 @@ export interface <%- className %>FormValue {
 <%_ } _%>
 <%- pad %></hlm-field>
 <%_ } else { _%>
-<%- pad %><hlm-field>
+<%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
 <%- pad %>  <input id="<%- f.id %>" hlmInput formControlName="<%- f.name %>" />
 <%_ if (f.required) { _%>
