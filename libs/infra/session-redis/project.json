@@ -1,0 +1,26 @@
+{
+  "name": "infra-session-redis",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/infra/session-redis/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/infra/session-redis",
+        "main": "libs/infra/session-redis/src/index.ts",
+        "tsConfig": "libs/infra/session-redis/tsconfig.lib.json",
+        "assets": ["libs/infra/session-redis/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/infra/session-redis/jest.config.cts"
+      }
+    }
+  }
+}
