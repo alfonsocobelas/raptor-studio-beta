@@ -1,6 +1,9 @@
 import { AggregateRoot } from '../../../../shared/domain/aggregate-root'
-import { EntityNotFoundError } from '../../../../shared/domain/errors'
 import { Nullable, Undefinable } from '../../../../shared/domain/types'
+import { CustomerId } from '../../../../shared/domain/value-objects/customers/customer-id.vo'
+import { CustomerName } from '../../../shared/domain/value-objects/customer-name.vo'
+import { Phone } from '../../../shared/domain/value-objects/phone.vo'
+import { SyncTimestamp } from '../../../shared/domain/value-objects/sync-timestamp.vo'
 import {
   ContactPrimitiveProps,
   CustomerAggregateProps,
@@ -11,23 +14,20 @@ import {
   NewContactProps,
   RegisterCustomerProps
 } from './customer-types'
+import { CustomerAddress } from './value-objects/customer-address.vo'
+import { CustomerCity } from './value-objects/customer-city.vo'
+import { CustomerCountry } from './value-objects/customer-country.vo'
+import { CustomerIndustry } from './value-objects/customer-industry.vo'
+import { CustomerNotes } from './value-objects/customer-notes.vo'
+import { CustomerStatus } from './value-objects/customer-status.vo'
+import { CustomerType } from './value-objects/customer-type.vo'
+import { SapId } from './value-objects/sap-id.vo'
+import { TaxId } from './value-objects/tax-id.vo'
+import { EntityNotFoundError } from '../../../../shared/domain/errors'
 import { Contact } from './contact'
 import { ContactId } from './value-objects/contact-id.vo'
 import { CUSTOMER_CONSTRAINTS } from './customer-constants'
 import { CustomerError } from './customer-errors'
-import { CustomerAddress } from './value-objects/customer-address.vo'
-import { CustomerCity } from './value-objects/customer-city.vo'
-import { CustomerCountry } from './value-objects/customer-country.vo'
-import { CustomerId } from '../../../../shared/domain/value-objects/customers/customer-id.vo'
-import { CustomerIndustry } from './value-objects/customer-industry.vo'
-import { CustomerType } from './value-objects/customer-type.vo'
-import { CustomerName } from '../../../shared/domain/value-objects/customer-name.vo'
-import { CustomerNotes } from './value-objects/customer-notes.vo'
-import { Phone } from '../../../shared/domain/value-objects/phone.vo'
-import { SapId } from './value-objects/sap-id.vo'
-import { SyncTimestamp } from '../../../shared/domain/value-objects/sync-timestamp.vo'
-import { TaxId } from './value-objects/tax-id.vo'
-import { CustomerStatus } from './value-objects/customer-status.vo'
 
 export class Customer extends AggregateRoot {
   private constructor(
@@ -39,13 +39,13 @@ export class Customer extends AggregateRoot {
     private _address: CustomerAddress,
     private _phone: Phone,
     private _notes: CustomerNotes,
+    private _city: CustomerCity,
+    private _country: CustomerCountry,
+    private _customerType: CustomerType,
     private readonly _contacts: Contact[],
     private _status: CustomerStatus,
     private _archivedAt: Nullable<SyncTimestamp>,
-    private _lastSeenInSyncAt: Nullable<SyncTimestamp>,
-    private _city: CustomerCity,
-    private _country: CustomerCountry,
-    private _customerType: CustomerType
+    private _lastSeenInSyncAt: Nullable<SyncTimestamp>
   ) {
     super()
   }
@@ -75,6 +75,15 @@ export class Customer extends AggregateRoot {
   get notes(): CustomerNotes {
     return this._notes
   }
+  get city(): CustomerCity {
+    return this._city
+  }
+  get country(): CustomerCountry {
+    return this._country
+  }
+  get customerType(): CustomerType {
+    return this._customerType
+  }
   get contacts(): readonly Contact[] {
     return this._contacts
   }
@@ -86,15 +95,6 @@ export class Customer extends AggregateRoot {
   }
   get lastSeenInSyncAt(): Nullable<SyncTimestamp> {
     return this._lastSeenInSyncAt
-  }
-  get city(): CustomerCity {
-    return this._city
-  }
-  get country(): CustomerCountry {
-    return this._country
-  }
-  get customerType(): CustomerType {
-    return this._customerType
   }
   //#endregion
 
@@ -108,33 +108,13 @@ export class Customer extends AggregateRoot {
       props.address,
       props.phone,
       props.notes,
-      contacts,
-      CustomerStatus.active(),
-      SyncTimestamp.never(),
-      SyncTimestamp.never(),
       props.city,
       props.country,
-      props.customerType
-    )
-  }
-
-  static fromPrimitives(props: CustomerPrimitiveProps, contacts: ContactPrimitiveProps[] = []): Customer {
-    return new Customer(
-      CustomerId.create(props.id),
-      SapId.create(props.sapId),
-      CustomerName.create(props.name),
-      TaxId.create(props.taxId),
-      CustomerIndustry.create(props.industry),
-      CustomerAddress.create(props.address),
-      Phone.create(props.phone),
-      CustomerNotes.create(props.notes),
-      contacts.map(Contact.fromPrimitives),
-      props.status ? CustomerStatus.create(props.status) : CustomerStatus.active(),
-      props.archivedAt ? SyncTimestamp.fromISOString(props.archivedAt) : null,
-      props.lastSeenInSyncAt ? SyncTimestamp.fromISOString(props.lastSeenInSyncAt) : null,
-      CustomerCity.create(props.city ?? ''),
-      CustomerCountry.create(props.country ?? ''),
-      CustomerType.create(props.customerType)
+      props.customerType,
+      contacts,
+      CustomerStatus.create('active'),
+      null,
+      null
     )
   }
 
@@ -154,6 +134,26 @@ export class Customer extends AggregateRoot {
     })
   }
 
+  static fromPrimitives(props: CustomerPrimitiveProps, contacts: ContactPrimitiveProps[] = []): Customer {
+    return new Customer(
+      CustomerId.create(props.id),
+      SapId.create(props.sapId),
+      CustomerName.create(props.name),
+      TaxId.create(props.taxId),
+      CustomerIndustry.create(props.industry),
+      CustomerAddress.create(props.address),
+      Phone.create(props.phone),
+      CustomerNotes.create(props.notes),
+      CustomerCity.create(props.city ?? ''),
+      CustomerCountry.create(props.country ?? ''),
+      CustomerType.create(props.customerType),
+      contacts.map(Contact.fromPrimitives),
+      props.status ? CustomerStatus.create(props.status) : CustomerStatus.create('active'),
+      props.archivedAt ? SyncTimestamp.fromISOString(props.archivedAt) : null,
+      props.lastSeenInSyncAt ? SyncTimestamp.fromISOString(props.lastSeenInSyncAt) : null
+    )
+  }
+
   toPrimitives(): CustomerPrimitiveProps {
     return {
       id: this._id.value,
@@ -164,38 +164,13 @@ export class Customer extends AggregateRoot {
       address: this._address.value,
       phone: this._phone.value,
       notes: this._notes.value,
-      status: this._status.value,
-      archivedAt: this._archivedAt?.toISOString() ?? null,
-      lastSeenInSyncAt: this._lastSeenInSyncAt?.toISOString() ?? null,
       city: this._city.value,
       country: this._country.value,
-      customerType: this._customerType.value
+      customerType: this._customerType.value,
+      status: this._status.value,
+      archivedAt: this._archivedAt?.toISOString() ?? null,
+      lastSeenInSyncAt: this._lastSeenInSyncAt?.toISOString() ?? null
     }
-  }
-
-  /** Marks presence in a sync run; if archived, reappearing in SAP reactivates it. */
-  markSeenInSync(seenAt: Date): void {
-    this._lastSeenInSyncAt = SyncTimestamp.create(seenAt)
-
-    if (this._status.isArchived()) {
-      this._status = CustomerStatus.active()
-      this._archivedAt = SyncTimestamp.never()
-    }
-  }
-
-  /**
-   * Archives due to absence in SAP feeds. Invariants: a customer never seen in SAP
-   * (manual entry) cannot be archived by sync; re-archiving is a no-op (preserves archivedAt).
-   */
-  archive(at: Date): void {
-    if (this._status.isArchived()) {
-      return
-    }
-    if (this._lastSeenInSyncAt === null) {
-      throw new CustomerError('Cannot archive a customer never seen in SAP')
-    }
-    this._status = CustomerStatus.archived()
-    this._archivedAt = SyncTimestamp.create(at)
   }
 
   updateDetails(updates: CustomerUpdateProps): void {
@@ -238,18 +213,14 @@ export class Customer extends AggregateRoot {
     return this._id.equals(other._id)
   }
 
-  hasTaxId(): boolean {
-    return !this._taxId.isEmpty()
-  }
-
   newSapIdIfChanged(updates: CustomerUniquenessUpdateProps): Undefinable<SapId> {
-    if (updates.sapId === undefined) {
+    if (!updates.sapId) {
       return
     }
 
     const newSapId = SapId.create(updates.sapId)
 
-    if (newSapId.equals(this._sapId)) {
+    if (this._sapId.equals(newSapId)) {
       return
     }
 
@@ -257,13 +228,13 @@ export class Customer extends AggregateRoot {
   }
 
   newTaxIdIfChanged(updates: CustomerUniquenessUpdateProps): Undefinable<TaxId> {
-    if (updates.taxId === undefined) {
+    if (!updates.taxId) {
       return
     }
 
     const newTaxId = TaxId.create(updates.taxId)
 
-    if (newTaxId.isEmpty() || newTaxId.equals(this._taxId)) {
+    if (this._taxId.equals(newTaxId)) {
       return
     }
 

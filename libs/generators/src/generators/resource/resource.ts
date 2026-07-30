@@ -42,6 +42,14 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     )
   }
 
+  // composición (B3): la entidad hija vive en el domain del padre
+  if (substitutions.aggregate.composition) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-composition'), outputDir, {
+      ...substitutions,
+      childFileName: substitutions.aggregate.composition.childFileName
+    })
+  }
+
   // C2: los módulos de oro llevan extensiones a mano que el canon no cubre; se omiten por dato
   const skipPaths: Record<string, string> = {
     mapper: path.join('backend/infrastructure/persistence/typeorm', `${substitutions.fileName}.mapper.ts`),

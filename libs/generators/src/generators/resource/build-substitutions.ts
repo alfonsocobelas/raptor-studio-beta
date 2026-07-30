@@ -99,7 +99,7 @@ export interface ResourceSubstitutions {
 export interface VoSubstitution {
   voClassName: string
   voFileName: string
-  kind: 'string' | 'enum' | 'number' | 'integer' | 'boolean' | 'stringArray'
+  kind: 'string' | 'enum' | 'number' | 'integer' | 'boolean' | 'stringArray' | 'uuid'
   fieldName: string
   errorClass: string
   constraintsConst: string
@@ -107,6 +107,7 @@ export interface VoSubstitution {
   ensure: 'defined' | 'string'
   noInnerWhitespace: boolean
   minLength: boolean
+  email: boolean
   lengthRule?: 'max' | 'exact'
   lengthMessage: string
   min: boolean
@@ -265,7 +266,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
 }
 
 function renderVos(definition: ResourceDefinition, className: string): VoSubstitution[] {
-  return Object.entries(definition.fields)
+  const allFields = { ...definition.fields, ...(definition.composition?.fields ?? {}) }
+  return Object.entries(allFields)
     .filter((entry): entry is [string, FieldDefinition & { vo: VoDefinition }] => typeof entry[1].vo === 'object')
     .map(([name, field]) => {
       const vo = field.vo
@@ -283,6 +285,7 @@ function renderVos(definition: ResourceDefinition, className: string): VoSubstit
         ensure: vo.ensure ?? 'defined',
         noInnerWhitespace: vo.noInnerWhitespace ?? false,
         minLength: vo.minLength ?? false,
+        email: vo.email ?? false,
         lengthRule: vo.lengthRule,
         lengthMessage:
           vo.lengthRule === 'exact'
@@ -299,6 +302,7 @@ function renderVos(definition: ResourceDefinition, className: string): VoSubstit
 
 function voKind(field: FieldDefinition, vo: VoDefinition): VoSubstitution['kind'] {
   if (vo.values?.length) return 'enum'
+  if (field.type === 'uuid') return 'uuid'
   if (field.type === 'boolean') return 'boolean'
   if (field.type === 'integer') return 'integer'
   if (field.type === 'number') return 'number'

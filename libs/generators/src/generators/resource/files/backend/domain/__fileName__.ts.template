@@ -18,7 +18,7 @@ export class <%- className %> extends AggregateRoot {
 <%_ }) _%>
   //#endregion
 
-  static create(props: <%- className %>AggregateProps): <%- className %> {
+  static create(props: <%- className %>AggregateProps<% if (aggregate.composition) { %>, <%- aggregate.composition.parentCreateParam %><% } %>): <%- className %> {
     return new <%- className %>(
 <%_ aggregate.createArgs.forEach((arg, i) => { _%>
       <%- arg %><%- i < aggregate.createArgs.length - 1 ? ',' : '' %>
@@ -34,7 +34,7 @@ export class <%- className %> extends AggregateRoot {
     })
   }
 
-  static fromPrimitives(props: <%- className %>PrimitiveProps): <%- className %> {
+  static fromPrimitives(props: <%- className %>PrimitiveProps<% if (aggregate.composition) { %>, <%- aggregate.composition.parentFromPrimitivesParam %><% } %>): <%- className %> {
     return new <%- className %>(
 <%_ aggregate.fromPrimitivesArgs.forEach((arg, i) => { _%>
       <%- arg %><%- i < aggregate.fromPrimitivesArgs.length - 1 ? ',' : '' %>
@@ -66,5 +66,9 @@ export class <%- className %> extends AggregateRoot {
 
 <%- method %>
 <%_ }) _%>
+<%_ if (aggregate.composition) { aggregate.composition.parentMethods.forEach(method => { _%>
+
+<%- method %>
+<%_ }) } _%>
 }
 <%_ } _%>

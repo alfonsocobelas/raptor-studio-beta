@@ -1,4 +1,19 @@
-<%_ if (vo.kind === 'enum') { _%>
+<%_ if (vo.kind === 'uuid') { _%>
+import { UuidV7ValueObject } from '../../../../../shared/domain/value-objects/uuidv7-value-object'
+
+export class <%- vo.voClassName %> extends UuidV7ValueObject {
+  protected static override fieldName = '<%- vo.fieldName %>'
+
+  private constructor(value: string) {
+    super(value)
+  }
+
+  static create(value: string): <%- vo.voClassName %> {
+    this.ensureIsValidUuidV7(value)
+    return new <%- vo.voClassName %>(value)
+  }
+}
+<%_ } else if (vo.kind === 'enum') { _%>
 import { EnumValueObject } from '../../../../../shared/domain/value-objects/enum-value-object'
 
 export type <%- vo.valueTypeName %> = <%- vo.valuesUnion %>
@@ -94,6 +109,10 @@ import { <%- vo.errorClass %> } from '../<%- fileName %>-errors'
 
 export class <%- vo.voClassName %> extends StringValueObject {
   protected static override fieldName = '<%- vo.fieldName %>'
+<%_ if (vo.email) { _%>
+
+  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+<%_ } _%>
 
   private constructor(value: string) {
     super(value)
@@ -116,7 +135,14 @@ export class <%- vo.voClassName %> extends StringValueObject {
     if (value.length > <%- vo.constraintsConst %>.<%- vo.constraintKey %>.MAX) {
       throw new <%- vo.errorClass %>(`<%- vo.lengthMessage %>`)
     }
-<%_ } else if (vo.lengthRule === 'exact') { _%>
+<%_ } _%>
+<%_ if (vo.email) { _%>
+
+    if (value !== '' && !<%- vo.voClassName %>.EMAIL_REGEX.test(value)) {
+      throw new <%- vo.errorClass %>('<%- vo.fieldName %> format is invalid')
+    }
+<%_ } _%>
+<%_ if (vo.lengthRule === 'exact') { _%>
 
     if (value.length !== <%- vo.constraintsConst %>.<%- vo.constraintKey %>.LENGTH) {
       throw new <%- vo.errorClass %>(`<%- vo.lengthMessage %>`)

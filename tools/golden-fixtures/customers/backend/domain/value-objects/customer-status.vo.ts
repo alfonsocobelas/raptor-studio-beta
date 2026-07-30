@@ -14,20 +14,4 @@ export class CustomerStatus extends EnumValueObject<CustomerStatusValue> {
     this.ensureIsValidEnum(value as CustomerStatusValue, this.VALUES)
     return new CustomerStatus(value as CustomerStatusValue)
   }
-
-  static active(): CustomerStatus {
-    return new CustomerStatus('active')
-  }
-
-  static archived(): CustomerStatus {
-    return new CustomerStatus('archived')
-  }
-
-  isActive(): boolean {
-    return this.value === 'active'
-  }
-
-  isArchived(): boolean {
-    return this.value === 'archived'
-  }
 }

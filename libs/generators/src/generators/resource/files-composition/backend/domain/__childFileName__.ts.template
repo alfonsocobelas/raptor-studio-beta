@@ -1,0 +1,47 @@
+<%_ aggregate.composition.childImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+
+export class <%- aggregate.composition.childClass %> {
+  private constructor(
+<%_ aggregate.composition.childCtorParams.forEach((param, i) => { _%>
+    <%- param %><%- i < aggregate.composition.childCtorParams.length - 1 ? ',' : '' %>
+<%_ }) _%>
+  ) {}
+
+  //#region ...Getters...
+<%_ aggregate.composition.childGetters.forEach(block => { _%>
+<%- block %>
+<%_ }) _%>
+  //#endregion
+
+  static create(props: <%- aggregate.composition.childClass %>AggregateProps): <%- aggregate.composition.childClass %> {
+    return new <%- aggregate.composition.childClass %>(<%- aggregate.composition.childCreateArgs %>)
+  }
+
+  static fromPrimitives(props: <%- aggregate.composition.childClass %>PrimitiveProps): <%- aggregate.composition.childClass %> {
+    return new <%- aggregate.composition.childClass %>(
+<%_ aggregate.composition.childFromPrimitivesArgs.forEach((arg, i) => { _%>
+      <%- arg %><%- i < aggregate.composition.childFromPrimitivesArgs.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    )
+  }
+
+  toPrimitives(): <%- aggregate.composition.childClass %>PrimitiveProps {
+    return {
+<%_ aggregate.composition.childToPrimitivesLines.forEach((line, i) => { _%>
+      <%- line %><%- i < aggregate.composition.childToPrimitivesLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    }
+  }
+
+  updateDetails(updates: <%- aggregate.composition.childClass %>UpdateProps): void {
+<%_ aggregate.composition.childUpdateGuards.forEach(block => { _%>
+<%- block %>
+<%_ }) _%>
+  }
+<%_ aggregate.composition.childPrimaryMethods.forEach(method => { _%>
+
+<%- method %>
+<%_ }) _%>
+}

@@ -33,4 +33,22 @@ export interface Register<%- className %>Props {
   <%- line %>
 <%_ }) _%>
 }
+<%_ if (aggregate.composition) { _%>
+
+export interface <%- aggregate.composition.childClass %>AggregateProps {
+<%_ aggregate.composition.childAggregatePropsLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+
+export interface <%- aggregate.composition.childClass %>PrimitiveProps {
+<%_ aggregate.composition.childPrimitivePropsLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+<%_ aggregate.composition.typeAliasLines.forEach(line => { _%>
+
+<%- line %>
+<%_ }) _%>
+<%_ } _%>
 <%_ } _%>

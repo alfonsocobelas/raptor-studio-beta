@@ -1,5 +1,6 @@
 import { names } from '@nx/devkit'
 import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
+import { CompositionBindings, renderComposition } from './build-composition'
 
 /**
  * Canonical aggregate synthesis (C2 decision, like the list): protocol
@@ -26,7 +27,10 @@ export interface AggregateBindings {
   uniquenessPickKeys: string[]
   registerPropsLines: string[]
   aggregateTypeNames: string[]
+  composition: CompositionBindings | null
 }
+
+
 
 interface FieldCtx {
   name: string
@@ -70,7 +74,9 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
   // El par de fechas del period se pliega en un solo miembro `period`
   const periodFields = period ? [period.start, period.end] : []
   const members = ctxs.filter(c => !periodFields.includes(c.name))
-  const editable = ctxs.filter(c => !c.sync && !c.maint && !periodFields.includes(c.name))
+  const editable = ctxs.filter(
+    c => !c.sync && (!c.maint || c.field.updatable) && !periodFields.includes(c.name)
+  )
 
   const sharedVoNames = new Set<string>()
   for (const c of ctxs) if (c.field.voShared) sharedVoNames.add(c.field.voShared.name)
@@ -88,10 +94,12 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     `Register${className}Props`
   ].sort()
 
-  return {
+  const composition = renderComposition(definition, className)
+
+  const bindings: AggregateBindings = {
     emitAggregate: true,
-    aggImports: renderAggImports(definition, idClass, sharedVoNames, localVoNames, ctxs),
-    typesImports: renderTypesImports(definition, idClass, sharedVoNames, localVoNames, ctxs),
+    aggImports: renderAggImports(definition, idClass, sharedVoNames, localVoNames, ctxs, composition),
+    typesImports: renderTypesImports(definition, idClass, sharedVoNames, localVoNames, ctxs, composition),
     ctorParams: [
       `private readonly _id: ${idClass}`,
       ...members.map(c => `private _${c.name}: ${memberType(c)}`),
@@ -129,7 +137,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
       ...(period ? ['period: Period'] : [])
     ],
     primitivePropsLines: ['id: string', ...ctxs.map(c => primitiveLine(c))],
-    updateOmitKeys: ['id', ...ctxs.filter(c => c.sync || c.maint).map(c => c.name)],
+    updateOmitKeys: ['id', ...ctxs.filter(c => c.sync || (c.maint && !c.field.updatable)).map(c => c.name)],
     uniquenessPickKeys: ctxs.filter(c => c.unique).map(c => c.name),
     registerPropsLines: [
       'id: string',
@@ -141,13 +149,27 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
             : `${c.name}?: ${c.nullable ? `${primitiveType(c)} | null` : primitiveType(c)}`
         )
     ],
-    aggregateTypeNames
+    aggregateTypeNames,
+    composition
   }
+
+  if (composition) {
+    // el hijo se inserta justo antes del primer miembro sync (canon customer.ts); +1 por el slot del id
+    const firstSync = members.findIndex(c => c.sync)
+    const at = firstSync === -1 ? members.length + 1 : firstSync + 1
+    bindings.ctorParams.splice(at, 0, composition.parentCtorParam)
+    bindings.getterBlocks.splice(at, 0, composition.parentGetter)
+    bindings.createArgs.splice(at, 0, composition.parentCreateArg)
+    bindings.fromPrimitivesArgs.splice(at, 0, composition.parentFromPrimitivesArg)
+  }
+
+  return bindings
 }
 
 function emptyBindings(): AggregateBindings {
   return {
     emitAggregate: false,
+    composition: null,
     aggImports: [],
     typesImports: [],
     ctorParams: [],
@@ -323,7 +345,8 @@ function renderAggImports(
   idClass: string,
   sharedVoNames: Set<string>,
   localVoNames: string[],
-  ctxs: FieldCtx[]
+  ctxs: FieldCtx[],
+  composition: CompositionBindings | null
 ): string[] {
   const n = names(definition.name)
   const hasUnique = ctxs.some(c => c.unique)
@@ -347,11 +370,15 @@ function renderAggImports(
     `${n.className}PrimitiveProps`,
     ...(hasUnique ? [`${n.className}UniquenessUpdateProps`] : []),
     `${n.className}UpdateProps`,
-    `Register${n.className}Props`
+    `Register${n.className}Props`,
+    ...(composition?.parentExtraTypeNames ?? [])
   ].sort()
   lines.push(`import {\n  ${typeNames.join(',\n  ')}\n} from './${n.fileName}-types'`)
   for (const vo of [...localVoNames].sort()) {
     lines.push(`import { ${vo} } from './value-objects/${names(vo).fileName}.vo'`)
+  }
+  if (composition) {
+    lines.push(...composition.parentExtraImports)
   }
   return lines
 }
@@ -361,7 +388,8 @@ function renderTypesImports(
   idClass: string,
   sharedVoNames: Set<string>,
   localVoNames: string[],
-  ctxs: FieldCtx[]
+  ctxs: FieldCtx[],
+  composition: CompositionBindings | null
 ): string[] {
   const n = names(definition.name)
   const period = definition.period
@@ -390,6 +418,9 @@ function renderTypesImports(
     if (used.has(vo)) {
       lines.push(`import { ${vo} } from './value-objects/${names(vo).fileName}.vo'`)
     }
+  }
+  if (composition) {
+    lines.push(...composition.typesExtraImports.filter(l => !lines.includes(l)))
   }
   return lines
 }

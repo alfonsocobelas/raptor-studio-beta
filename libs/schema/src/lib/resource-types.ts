@@ -21,6 +21,8 @@ export interface VoDefinition {
   lengthRule?: 'max' | 'exact'
   /** Also emit the string MIN-length check against the constraints key */
   minLength?: boolean
+  /** Email format check (regex) after the length rule */
+  email?: boolean
   /** Custom message for the exact-length rule (e.g. '…must be a N-letter ISO code') */
   lengthMessage?: string
   /** Key inside <CONST>_CONSTRAINTS; defaults to the SNAKE_CASE field name */
@@ -157,6 +159,8 @@ export interface FieldDefinition {
   relation?: FieldRelation
   /** Field is optional in domain primitives (late additions): mapper emits ?? <default|null> */
   optionalPrimitive?: boolean
+  /** optionalPrimitive fields default to non-updatable (sync-populated); set true for user-editable ones */
+  updatable?: boolean
   query?: FieldQuery
   table?: FieldTable
   form?: FieldForm
@@ -243,6 +247,19 @@ export interface ResourceDefinition {
   formGroupValidators?: { kind: 'dateRange'; startField: string; endField: string }[]
   /** Aggregate composes these two date fields into a shared Period VO */
   period?: { start: string; end: string }
+  /**
+   * Child entity composition (B3): owned children with cascade inside the aggregate.
+   * parentField is the child's FK to the aggregate; maxConst caps children via the
+   * constraints table; primaryFlag derives the one-primary-among-children semantics.
+   */
+  composition?: {
+    name: string
+    plural: string
+    parentField: string
+    maxConst?: string
+    primaryFlag?: string
+    fields: Record<string, FieldDefinition>
+  }
   /** Labels module imported by the dialog (<fileName>-labels); when set, label consts are not inlined */
   labelsModule?: boolean
   labels?: ResourceLabels

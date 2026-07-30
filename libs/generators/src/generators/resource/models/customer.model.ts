@@ -37,7 +37,15 @@ export const customer = defineResource({
     sapId: {
       type: 'string',
       unique: true,
-      vo: 'SapId',
+      vo: {
+        name: 'SapId',
+        fieldName: 'SAP ID',
+        ensure: 'string',
+        noInnerWhitespace: true,
+        minLength: true,
+        lengthRule: 'max',
+        constraintKey: 'SAP_ID'
+      },
       required: true,
       form: { control: 'text', label: 'ID SAP', section: 'general', order: 1 },
       query: { filterable: 2, sortable: 2 },
@@ -45,7 +53,7 @@ export const customer = defineResource({
     },
     name: {
       type: 'string',
-      vo: 'CustomerName',
+      voShared: { name: 'CustomerName' },
       required: true,
       form: { control: 'text', label: 'Nombre', section: 'general', order: 2 },
       query: { filterable: 3, sortable: 1, searchable: 1 },
@@ -55,7 +63,7 @@ export const customer = defineResource({
     taxId: {
       type: 'string',
       unique: true,
-      vo: 'TaxId',
+      vo: { name: 'TaxId', fieldName: 'Tax ID', noInnerWhitespace: true, lengthRule: 'max', constraintKey: 'TAX_ID' },
       form: { control: 'text', label: 'CIF / NIF', section: 'general', order: 3 },
       query: { filterable: 4, sortable: 3, searchable: 3 },
       table: { show: true, order: 5, label: 'CIF / NIF', filterable: true, minWidth: 130 },
@@ -63,6 +71,7 @@ export const customer = defineResource({
     },
     industry: {
       type: 'string',
+      vo: { name: 'CustomerIndustry', fieldName: 'Customer industry', lengthRule: 'max', constraintKey: 'INDUSTRY' },
       form: { control: 'text', label: 'Industria', section: 'general', order: 4 },
       query: { filterable: 5, sortable: 4, searchable: 2 },
       table: { show: true, order: 4, label: 'Industria', filterable: true, minWidth: 180 },
@@ -70,6 +79,7 @@ export const customer = defineResource({
     },
     address: {
       type: 'string',
+      vo: { name: 'CustomerAddress', fieldName: 'Customer address', lengthRule: 'max', constraintKey: 'ADDRESS' },
       form: { control: 'text', label: 'Dirección', section: 'general', order: 6 },
       query: { searchable: 4 },
       table: { show: true, order: 8, label: 'Dirección', sortable: false, minWidth: 250 },
@@ -77,6 +87,7 @@ export const customer = defineResource({
     },
     phone: {
       type: 'string',
+      voShared: { name: 'Phone' },
       form: { control: 'text', label: 'Teléfono', section: 'general', order: 7 },
       query: { searchable: 5 },
       table: { show: true, order: 9, label: 'Teléfono', sortable: false, minWidth: 150 },
@@ -84,17 +95,24 @@ export const customer = defineResource({
     },
     notes: {
       type: 'string',
+      vo: { name: 'CustomerNotes', fieldName: 'Customer notes', lengthRule: 'max', constraintKey: 'NOTES' },
       form: { control: 'textarea', label: 'Notas internas', section: 'notes', order: 8, rows: 3 },
       column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
     },
     city: {
       type: 'string',
+      optionalPrimitive: true,
+      updatable: true,
+      vo: { name: 'CustomerCity', fieldName: 'Customer city', lengthRule: 'max', constraintKey: 'CITY' },
       query: { sortable: 5, searchable: 6 },
       table: { show: true, order: 6, label: 'Localidad', minWidth: 150 },
       column: { type: 'varchar', lengthConst: 'CITY.MAX', default: '' }
     },
     country: {
       type: 'string',
+      optionalPrimitive: true,
+      updatable: true,
+      vo: { name: 'CustomerCountry', fieldName: 'Customer country', lengthRule: 'max', constraintKey: 'COUNTRY' },
       query: { sortable: 6, searchable: 7 },
       table: { show: true, order: 7, label: 'País', minWidth: 150 },
       column: { type: 'varchar', lengthConst: 'COUNTRY.MAX', default: '' }
@@ -102,6 +120,7 @@ export const customer = defineResource({
     customerType: {
       type: 'string',
       required: true,
+      vo: { name: 'CustomerType', fieldName: 'Customer type', values: ['cloud', 'onprem', 'hybrid'] },
       form: {
         control: 'select',
         label: 'Tipo',
@@ -133,6 +152,8 @@ export const customer = defineResource({
     },
     status: {
       type: 'string',
+      syncManaged: true,
+      vo: { name: 'CustomerStatus', fieldName: 'Customer status', values: ['active', 'archived'] },
       table: {
         show: true,
         order: 2,
@@ -147,7 +168,47 @@ export const customer = defineResource({
       },
       column: { type: 'varchar', length: 20, default: 'active' }
     },
-    archivedAt: { type: 'timestamptz', nullable: true, column: { type: 'timestamptz', tsType: 'Nullable<Date>' } },
-    lastSeenInSyncAt: { type: 'timestamptz', nullable: true, column: { type: 'timestamptz', tsType: 'Nullable<Date>' } }
+    archivedAt: {
+      type: 'timestamptz',
+      nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
+      column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
+    },
+    lastSeenInSyncAt: {
+      type: 'timestamptz',
+      nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
+      column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
+    }
+  },
+  composition: {
+    name: 'contact',
+    plural: 'contacts',
+    parentField: 'customerId',
+    maxConst: 'MAX_CONTACTS',
+    primaryFlag: 'isPrimary',
+    fields: {
+      id: { type: 'uuid', vo: { name: 'ContactId', fieldName: 'Contact ID' } },
+      name: {
+        type: 'string',
+        vo: {
+          name: 'ContactName',
+          fieldName: 'Contact name',
+          ensure: 'string',
+          minLength: true,
+          lengthRule: 'max',
+          constraintKey: 'CONTACT.NAME'
+        }
+      },
+      role: { type: 'string', vo: { name: 'ContactRole', fieldName: 'Contact role', lengthRule: 'max', constraintKey: 'CONTACT.ROLE' } },
+      email: {
+        type: 'string',
+        vo: { name: 'ContactEmail', fieldName: 'Contact email', lengthRule: 'max', email: true, constraintKey: 'CONTACT.EMAIL' }
+      },
+      phone: { type: 'string', voShared: { name: 'Phone' } },
+      isPrimary: { type: 'boolean', vo: { name: 'IsPrimary', fieldName: 'Is primary' } }
+    }
   }
 })
