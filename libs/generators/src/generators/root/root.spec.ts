@@ -20,7 +20,7 @@ describe('root generator', () => {
   it('wires one module per registered resource model', () => {
     const content = tree.read('tmp/generated/root/root.module.ts', 'utf-8') ?? ''
     for (const module of ['ContractsModule', 'CustomersModule', 'LicensesModule', 'ProjectsModule']) {
-      expect(content).toContain(`${module},`)
+      expect(content).toMatch(new RegExp(`^    ${module},?$`, 'm'))
       expect(content).toContain(`import { ${module} }`)
     }
   })
