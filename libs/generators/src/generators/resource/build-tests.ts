@@ -16,6 +16,15 @@ export interface DomainTestBindings {
   builderCreateArgs: string[]
   randomHelpers: string[]
   motherUniqueShortcuts: { cap: string; name: string }[]
+  voTests: {
+    enums: { voName: string; valuesList: string; comment?: string }[]
+    numbers: { voName: string; integer: boolean; unset: boolean; minKey: string }[]
+    texts: { voName: string; maxKey: string }[]
+    exacts: { voName: string; lengthKey: string }[]
+    arrays: { voName: string }[]
+    booleans: { voName: string }[]
+    sanitizations: { voName: string; inner: boolean }[]
+  }
 }
 
 interface Ctx {
@@ -58,7 +67,8 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
       builderWiths: [],
       builderCreateArgs: [],
       randomHelpers: [],
-      motherUniqueShortcuts: []
+      motherUniqueShortcuts: [],
+      voTests: { enums: [], numbers: [], texts: [], exacts: [], arrays: [], booleans: [], sanitizations: [] }
     }
   }
 
@@ -104,7 +114,37 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
       .map(
         c => `const random${cap(c.name)} = (): string => String(Math.floor(1000000000 + Math.random() * 9000000000))`
       ),
-    motherUniqueShortcuts: uniques.map(c => ({ cap: cap(c.name), name: c.name }))
+    motherUniqueShortcuts: uniques.map(c => ({ cap: cap(c.name), name: c.name })),
+    voTests: renderVoTests(definition, ctxs)
+  }
+}
+
+function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestBindings['voTests'] {
+  const owned = ctxs.filter(c => typeof c.field.vo === 'object')
+  const voOf = (c: Ctx) => c.field.vo as Exclude<FieldDefinition['vo'], string | undefined>
+  const key = (c: Ctx) => voOf(c).constraintKey ?? c.name.replace(/([A-Z])/g, '_$1').toUpperCase()
+
+  return {
+    enums: owned
+      .filter(c => voOf(c).values?.length)
+      .map(c => ({ voName: c.voName, valuesList: (voOf(c).values ?? []).map(v => `'${v}'`).join(', ') })),
+    numbers: owned
+      .filter(c => (c.field.type === 'number' || c.field.type === 'integer') && voOf(c).min)
+      .map(c => ({
+        voName: c.voName,
+        integer: c.field.type === 'integer',
+        unset: voOf(c).unset === true,
+        minKey: key(c)
+      })),
+    texts: owned
+      .filter(c => c.field.type === 'string' && voOf(c).lengthRule === 'max' && !voOf(c).values?.length)
+      .map(c => ({ voName: c.voName, maxKey: key(c) })),
+    exacts: owned.filter(c => voOf(c).lengthRule === 'exact').map(c => ({ voName: c.voName, lengthKey: key(c) })),
+    arrays: owned.filter(c => c.field.column?.array).map(c => ({ voName: c.voName })),
+    booleans: owned.filter(c => c.field.type === 'boolean').map(c => ({ voName: c.voName })),
+    sanitizations: owned
+      .filter(c => c.field.type === 'string' && !voOf(c).values?.length)
+      .map(c => ({ voName: c.voName, inner: voOf(c).noInnerWhitespace === true }))
   }
 }
 

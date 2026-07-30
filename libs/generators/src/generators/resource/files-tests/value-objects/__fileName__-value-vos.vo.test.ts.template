@@ -1,0 +1,145 @@
+<%_ const vt = domainTests.voTests _%>
+<%_ if (vt.numbers.length || vt.texts.length || vt.exacts.length || vt.arrays.length || vt.booleans.length) { _%>
+import fc from 'fast-check'
+import { InvalidArgumentError } from '../../../../../src/contexts/shared/domain/errors'
+import { <%- constantName %>_CONSTRAINTS } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-constants'
+import { <%- className %>Error } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-errors'
+<%_ const kebab = name => name.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()) _%>
+<%_ const allVos = [...vt.numbers, ...vt.texts, ...vt.exacts, ...vt.arrays, ...vt.booleans].map(v => v.voName).sort() _%>
+<%_ allVos.forEach(voName => { _%>
+import { <%- voName %> } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/value-objects/<%- kebab(voName) %>.vo'
+<%_ }) _%>
+<%_ vt.numbers.forEach(v => { _%>
+
+describe('<%- v.voName %>', () => {
+  it('should throw for a non-number', () => {
+    expect(() => <%- v.voName %>.create(NaN)).toThrow(InvalidArgumentError)
+    expect(() => <%- v.voName %>.create('10' as unknown as number)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw below the minimum', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: -1_000_000, max: <%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN - 1 }), value => {
+        expect(() => <%- v.voName %>.create(value)).toThrow(<%- className %>Error)
+      })
+    )
+  })
+
+  it('should accept the minimum and above', () => {
+    expect(<%- v.voName %>.create(<%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN).value).toBe(<%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN)
+    expect(<%- v.voName %>.create(<%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN + 100).value).toBe(<%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN + 100)
+  })
+<%_ if (v.unset) { _%>
+
+  it('unset() should return null', () => {
+    expect(<%- v.voName %>.unset()).toBeNull()
+  })
+<%_ } _%>
+})
+<%_ }) _%>
+<%_ vt.exacts.forEach(v => { _%>
+
+describe('<%- v.voName %>', () => {
+  it('should throw for empty string', () => {
+    expect(() => <%- v.voName %>.create('')).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when not exactly the required length', () => {
+    expect(() => <%- v.voName %>.create('A'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.lengthKey %>.LENGTH - 1))).toThrow(<%- className %>Error)
+    expect(() => <%- v.voName %>.create('A'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.lengthKey %>.LENGTH + 1))).toThrow(<%- className %>Error)
+  })
+
+  it('should preserve a valid value', () => {
+    const valid = 'A'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.lengthKey %>.LENGTH)
+    expect(<%- v.voName %>.create(valid).value).toBe(valid)
+  })
+})
+<%_ }) _%>
+<%_ if (vt.texts.length) { _%>
+
+describe.each([
+<%_ vt.texts.forEach((v, i) => { _%>
+  { name: '<%- v.voName %>', Vo: <%- v.voName %>, max: <%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX }<%- i < vt.texts.length - 1 ? ',' : '' %>
+<%_ }) _%>
+])('$name (optional text)', ({ Vo, max }) => {
+  it('should accept an empty string', () => {
+    expect(Vo.create('').value).toBe('')
+  })
+
+  it('should throw for null/undefined', () => {
+    expect(() => Vo.create(null as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => Vo.create('x'.repeat(max + 1))).toThrow(<%- className %>Error)
+  })
+
+  it('should accept any string up to the max', () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 0, maxLength: max }).map(v => v.trim()), value => {
+        expect(Vo.create(value).value).toBe(value)
+      }),
+      { numRuns: 100 }
+    )
+  })
+})
+<%_ } _%>
+<%_ vt.arrays.forEach(v => { _%>
+
+describe('<%- v.voName %>', () => {
+  it('should throw for a non-array', () => {
+    expect(() => <%- v.voName %>.create('Sample' as unknown as string[])).toThrow(<%- className %>Error)
+  })
+
+  it('should accept an empty array', () => {
+    expect(<%- v.voName %>.create([]).value).toEqual([])
+  })
+
+  it('should preserve a list of values', () => {
+    const values = ['Sample A', 'Sample B']
+    expect(<%- v.voName %>.create(values).value).toEqual(values)
+  })
+})
+<%_ }) _%>
+<%_ vt.booleans.forEach(v => { _%>
+
+describe('<%- v.voName %>', () => {
+  it('should throw InvalidArgumentError for any non-boolean value', () => {
+    fc.assert(
+      fc.property(fc.oneof(fc.string(), fc.integer(), fc.object()), value => {
+        expect(() => <%- v.voName %>.create(value as unknown as boolean)).toThrow(InvalidArgumentError)
+      }),
+      { numRuns: 100 }
+    )
+  })
+
+  it('should create for true and false', () => {
+    expect(<%- v.voName %>.create(true).value).toBe(true)
+    expect(<%- v.voName %>.create(false).value).toBe(false)
+  })
+
+  it('equals should compare by value', () => {
+    expect(<%- v.voName %>.create(true).equals(<%- v.voName %>.create(true))).toBe(true)
+    expect(<%- v.voName %>.create(true).equals(<%- v.voName %>.create(false))).toBe(false)
+  })
+})
+<%_ }) _%>
+<%_ vt.sanitizations.forEach(v => { _%>
+
+describe('<%- v.voName %> — sanitization', () => {
+<%_ if (v.inner) { _%>
+  it('should trim leading and trailing whitespace', () => {
+    expect(<%- v.voName %>.create('  12345  ').value).toBe('12345')
+  })
+
+  it('should throw for inner whitespace (code field)', () => {
+    expect(() => <%- v.voName %>.create('12 345')).toThrow(InvalidArgumentError)
+  })
+<%_ } else { _%>
+  it('should trim edges and keep inner whitespace (free text)', () => {
+    expect(<%- v.voName %>.create('  Sample text  ').value).toBe('Sample text')
+  })
+<%_ } _%>
+})
+<%_ }) _%>
+<%_ } _%>
