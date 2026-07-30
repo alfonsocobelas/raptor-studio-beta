@@ -1,7 +1,7 @@
 {
   "name": "@acc/infra-config-azure",
   "version": "0.0.1",
-  "private": true,
+  "private": false,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -10,5 +10,9 @@
     "@azure/keyvault-secrets": "4.11.2",
     "@azure/identity": "4.13.1",
     "@acc/infra-ports": "0.0.1"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@acc/infra-observability-azure",
   "version": "0.0.1",
-  "private": true,
+  "private": false,
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -11,5 +11,9 @@
     "@opentelemetry/winston-transport": "0.31.0",
     "@acc/infra-ports": "0.0.1",
     "@azure/monitor-opentelemetry": "1.19.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   }
 }

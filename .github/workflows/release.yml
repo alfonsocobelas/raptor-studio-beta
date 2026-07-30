@@ -1,0 +1,42 @@
+# Publica los paquetes @acc/* en GitHub Packages con nx release.
+# Requisitos previos (una sola vez, lado humano — ver docs/PUBLISHING.md):
+#   1. Repo subido a GitHub bajo la organización cuyo nombre coincide con el scope npm.
+#   2. El scope de los paquetes debe coincidir con el owner del repo (regla de GitHub Packages).
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      specifier:
+        description: 'Version specifier (patch | minor | major | x.y.z)'
+        required: true
+        default: 'patch'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+
+      - run: npm ci
+
+      - name: Gate (lint + test + build + golden diff)
+        run: |
+          npx nx run-many -t lint test build
+          npm run golden:diff
+
+      - name: Version, changelog and publish
+        run: npx nx release ${{ github.event.inputs.specifier }} --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
