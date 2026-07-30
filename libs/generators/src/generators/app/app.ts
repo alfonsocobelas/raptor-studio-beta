@@ -66,6 +66,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const appName = names(options.name).fileName
   const root = options.directory ?? path.join('apps', appName)
   const models = selectModels(options.models)
+  const ui = options.ui ?? 'spartan'
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')
@@ -87,7 +88,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 2. DTOs compartidos + kernel Angular
   await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: options.models })
-  await frontendKernelGenerator(tree, { directory: frontendSrc, sharedDomainAlias: SHARED_DOMAIN_ALIAS })
+  await frontendKernelGenerator(tree, { directory: frontendSrc, sharedDomainAlias: SHARED_DOMAIN_ALIAS, ui })
 
   // 3. un módulo por recurso, repartido al layout canónico
   for (const model of models) {

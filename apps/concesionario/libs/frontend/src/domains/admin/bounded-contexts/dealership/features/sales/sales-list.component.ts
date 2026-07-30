@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
 import { provideIcons } from '@ng-icons/core'
 import { lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
-import { toast } from '@spartan-ng/brain/sonner'
-import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { SaleDto, ExportFormat } from '@app/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { SaleService, OffsetPaginatedOutput } from '../../../../../../core/services/sale.service'
@@ -22,7 +21,7 @@ import { SaleDialogComponent, SaleFormValue } from './sale-dialog.component'
 
 @Component({
   selector: 'app-sales-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, HlmAlertDialogImports, SaleDialogComponent],
+  imports: [DataTable, AppDialog, AppConfirmDialog, SaleDialogComponent],
   providers: [provideIcons({ lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -66,32 +65,25 @@ import { SaleDialogComponent, SaleFormValue } from './sale-dialog.component'
       }
     </div>
 
-    <hlm-dialog [state]="dialogOpen() ? 'open' : 'closed'" (closed)="dialogOpen.set(false)">
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
         <app-sale-dialog [sale]="editingSale()" (saved)="onSave($event)" />
       }
-    </hlm-dialog>
+    </app-dialog>
 
-    <hlm-alert-dialog [state]="deleteDialogOpen() ? 'open' : 'closed'" (closed)="deleteDialogOpen.set(false)">
-      <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-        <hlm-alert-dialog-header>
-          <h2 hlmAlertDialogTitle>Eliminar venta</h2>
-          <p hlmAlertDialogDescription>
-            Se eliminará permanentemente la venta "{{ deletingSale()?.reference }}" y todos sus datos asociados. Esta
-            acción no se puede deshacer.
-          </p>
-        </hlm-alert-dialog-header>
-        <hlm-alert-dialog-footer>
-          <button hlmAlertDialogCancel (click)="ctx.close()">Cancelar</button>
-          <button hlmAlertDialogAction (click)="confirmDelete(); ctx.close()">Eliminar</button>
-        </hlm-alert-dialog-footer>
-      </hlm-alert-dialog-content>
-    </hlm-alert-dialog>
+    <app-confirm-dialog
+      [open]="deleteDialogOpen()"
+      title="Eliminar venta"
+      [description]="deleteDescription()"
+      (confirmed)="confirmDelete()"
+      (closed)="deleteDialogOpen.set(false)"
+    />
   `
 })
 export class SalesListComponent {
   private readonly _service = inject(SaleService)
   protected readonly canWrite = inject(AuthService).canWrite
+  private readonly _notify = inject(NotificationService)
 
   constructor() {
     // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
@@ -130,6 +122,10 @@ export class SalesListComponent {
   readonly editingSale = signal<SaleDto | null>(null)
   readonly deletingSale = signal<SaleDto | null>(null)
   readonly deleteDialogOpen = signal(false)
+  readonly deleteDescription = computed(
+    () =>
+      `Se eliminará permanentemente la venta "${this.deletingSale()?.reference ?? ''}" y todos sus datos asociados. Esta acción no se puede deshacer.`
+  )
 
   readonly columns: ColumnDef[] = [
     { key: 'reference', label: 'Referencia', minWidth: 120 },
@@ -223,9 +219,9 @@ export class SalesListComponent {
     }
     try {
       await this._service.remove(sale.id)
-      toast.success('Venta eliminada')
+      this._notify.success('Venta eliminada')
     } catch {
-      toast.error('No se pudo eliminar la venta')
+      this._notify.error('No se pudo eliminar la venta')
     }
   }
 
@@ -235,13 +231,13 @@ export class SalesListComponent {
     try {
       if (editing) {
         await this._service.update(editing.id, value)
-        toast.success('Venta actualizada correctamente')
+        this._notify.success('Venta actualizada correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })
-        toast.success('Venta creada correctamente')
+        this._notify.success('Venta creada correctamente')
       }
     } catch {
-      toast.error(editing ? 'No se pudo actualizar la venta' : 'No se pudo crear la venta')
+      this._notify.error(editing ? 'No se pudo actualizar la venta' : 'No se pudo crear la venta')
     }
   }
 

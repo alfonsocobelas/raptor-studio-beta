@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, sig
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil } from '@ng-icons/lucide'
-import { toast } from '@spartan-ng/brain/sonner'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { ContractDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { ContractService, OffsetPaginatedOutput } from '../../../../../../core/services/contract.service'
@@ -23,7 +22,7 @@ import { ContractDialogComponent, ContractFormValue } from './contract-dialog.co
 
 @Component({
   selector: 'app-contracts-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, ContractDialogComponent],
+  imports: [DataTable, AppDialog, ContractDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -67,17 +66,18 @@ import { ContractDialogComponent, ContractFormValue } from './contract-dialog.co
       }
     </div>
 
-    <hlm-dialog [state]="dialogOpen() ? 'open' : 'closed'" (closed)="dialogOpen.set(false)">
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
         <app-contract-dialog [contract]="editingContract()" (saved)="onSave($event)" />
       }
-    </hlm-dialog>
+    </app-dialog>
   `
 })
 export class ContractsListComponent {
   private readonly _service = inject(ContractService)
   private readonly _router = inject(Router)
   protected readonly canWrite = inject(AuthService).canWrite
+  private readonly _notify = inject(NotificationService)
 
   constructor() {
     // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
@@ -210,13 +210,13 @@ export class ContractsListComponent {
     try {
       if (editing) {
         await this._service.update(editing.id, value)
-        toast.success('Contrato actualizado correctamente')
+        this._notify.success('Contrato actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })
-        toast.success('Contrato creado correctamente')
+        this._notify.success('Contrato creado correctamente')
       }
     } catch {
-      toast.error(editing ? 'No se pudo actualizar el contrato' : 'No se pudo crear el contrato')
+      this._notify.error(editing ? 'No se pudo actualizar el contrato' : 'No se pudo crear el contrato')
     }
   }
 

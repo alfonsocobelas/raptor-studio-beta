@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, sig
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil } from '@ng-icons/lucide'
-import { toast } from '@spartan-ng/brain/sonner'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { CustomerDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { CustomerService, OffsetPaginatedOutput } from '../../../../../../core/services/customer.service'
@@ -22,7 +21,7 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
 
 @Component({
   selector: 'app-customers-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, CustomerDialogComponent],
+  imports: [DataTable, AppDialog, CustomerDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -66,17 +65,18 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
       }
     </div>
 
-    <hlm-dialog [state]="dialogOpen() ? 'open' : 'closed'" (closed)="dialogOpen.set(false)">
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
         <app-customer-dialog [customer]="editingCustomer()" (saved)="onSave($event)" />
       }
-    </hlm-dialog>
+    </app-dialog>
   `
 })
 export class CustomersListComponent {
   private readonly _service = inject(CustomerService)
   private readonly _router = inject(Router)
   protected readonly canWrite = inject(AuthService).canWrite
+  private readonly _notify = inject(NotificationService)
 
   constructor() {
     // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
@@ -199,13 +199,13 @@ export class CustomersListComponent {
     try {
       if (editing) {
         await this._service.update(editing.id, value)
-        toast.success('Cliente actualizado correctamente')
+        this._notify.success('Cliente actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })
-        toast.success('Cliente creado correctamente')
+        this._notify.success('Cliente creado correctamente')
       }
     } catch {
-      toast.error(editing ? 'No se pudo actualizar el cliente' : 'No se pudo crear el cliente')
+      this._notify.error(editing ? 'No se pudo actualizar el cliente' : 'No se pudo crear el cliente')
     }
   }
 

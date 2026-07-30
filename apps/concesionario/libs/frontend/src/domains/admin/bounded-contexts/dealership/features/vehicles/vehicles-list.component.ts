@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
 import { provideIcons } from '@ng-icons/core'
 import { lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
-import { toast } from '@spartan-ng/brain/sonner'
-import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { VehicleDto, ExportFormat } from '@app/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { VehicleService, OffsetPaginatedOutput } from '../../../../../../core/services/vehicle.service'
@@ -22,7 +21,7 @@ import { VehicleDialogComponent, VehicleFormValue } from './vehicle-dialog.compo
 
 @Component({
   selector: 'app-vehicles-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, HlmAlertDialogImports, VehicleDialogComponent],
+  imports: [DataTable, AppDialog, AppConfirmDialog, VehicleDialogComponent],
   providers: [provideIcons({ lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -66,32 +65,25 @@ import { VehicleDialogComponent, VehicleFormValue } from './vehicle-dialog.compo
       }
     </div>
 
-    <hlm-dialog [state]="dialogOpen() ? 'open' : 'closed'" (closed)="dialogOpen.set(false)">
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
         <app-vehicle-dialog [vehicle]="editingVehicle()" (saved)="onSave($event)" />
       }
-    </hlm-dialog>
+    </app-dialog>
 
-    <hlm-alert-dialog [state]="deleteDialogOpen() ? 'open' : 'closed'" (closed)="deleteDialogOpen.set(false)">
-      <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-        <hlm-alert-dialog-header>
-          <h2 hlmAlertDialogTitle>Eliminar vehículo</h2>
-          <p hlmAlertDialogDescription>
-            Se eliminará permanentemente el vehículo "{{ deletingVehicle()?.plate }}" y todos sus datos asociados. Esta
-            acción no se puede deshacer.
-          </p>
-        </hlm-alert-dialog-header>
-        <hlm-alert-dialog-footer>
-          <button hlmAlertDialogCancel (click)="ctx.close()">Cancelar</button>
-          <button hlmAlertDialogAction (click)="confirmDelete(); ctx.close()">Eliminar</button>
-        </hlm-alert-dialog-footer>
-      </hlm-alert-dialog-content>
-    </hlm-alert-dialog>
+    <app-confirm-dialog
+      [open]="deleteDialogOpen()"
+      title="Eliminar vehículo"
+      [description]="deleteDescription()"
+      (confirmed)="confirmDelete()"
+      (closed)="deleteDialogOpen.set(false)"
+    />
   `
 })
 export class VehiclesListComponent {
   private readonly _service = inject(VehicleService)
   protected readonly canWrite = inject(AuthService).canWrite
+  private readonly _notify = inject(NotificationService)
 
   constructor() {
     // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
@@ -130,6 +122,10 @@ export class VehiclesListComponent {
   readonly editingVehicle = signal<VehicleDto | null>(null)
   readonly deletingVehicle = signal<VehicleDto | null>(null)
   readonly deleteDialogOpen = signal(false)
+  readonly deleteDescription = computed(
+    () =>
+      `Se eliminará permanentemente el vehículo "${this.deletingVehicle()?.plate ?? ''}" y todos sus datos asociados. Esta acción no se puede deshacer.`
+  )
 
   readonly columns: ColumnDef[] = [
     { key: 'brand', label: 'Marca', filterable: true, minWidth: 140 },
@@ -227,9 +223,9 @@ export class VehiclesListComponent {
     }
     try {
       await this._service.remove(vehicle.id)
-      toast.success('Vehículo eliminado')
+      this._notify.success('Vehículo eliminado')
     } catch {
-      toast.error('No se pudo eliminar el vehículo')
+      this._notify.error('No se pudo eliminar el vehículo')
     }
   }
 
@@ -239,13 +235,13 @@ export class VehiclesListComponent {
     try {
       if (editing) {
         await this._service.update(editing.id, value)
-        toast.success('Vehículo actualizado correctamente')
+        this._notify.success('Vehículo actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })
-        toast.success('Vehículo creado correctamente')
+        this._notify.success('Vehículo creado correctamente')
       }
     } catch {
-      toast.error(editing ? 'No se pudo actualizar el vehículo' : 'No se pudo crear el vehículo')
+      this._notify.error(editing ? 'No se pudo actualizar el vehículo' : 'No se pudo crear el vehículo')
     }
   }
 

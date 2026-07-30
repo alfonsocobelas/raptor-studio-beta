@@ -1,0 +1,27 @@
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core'
+
+/**
+ * Contenedor modal (piel Material). Misma API pública que la implementación Spartan:
+ * las features no cambian al cambiar de librería (ADR-003, nivel 1).
+ *
+ * MatDialog es imperativo (se abre por servicio con un componente), así que aquí el
+ * overlay se resuelve con el diálogo nativo del navegador, que sí admite contenido
+ * proyectado y estado declarativo.
+ */
+@Component({
+  selector: 'app-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    @if (open()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closed.emit()">
+        <div class="mat-elevation-z8 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6" (click)="$event.stopPropagation()">
+          <ng-content />
+        </div>
+      </div>
+    }
+  `
+})
+export class AppDialog {
+  readonly open = input(false)
+  readonly closed = output<void>()
+}

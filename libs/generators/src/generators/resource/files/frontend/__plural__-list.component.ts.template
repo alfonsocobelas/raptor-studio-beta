@@ -5,14 +5,13 @@ import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { <%- icons.join(', ') %> } from '@ng-icons/lucide'
 <%_ if (features.edit || features.delete) { _%>
-import { toast } from '@spartan-ng/brain/sonner'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 <%_ } _%>
 <%_ if (features.delete) { _%>
-import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
+import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
 <%_ } _%>
 <%_ if (features.edit) { _%>
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 <%_ } _%>
 import { <%- dtoName %>, ExportFormat } from '<%- sharedDomainAlias %>'
 <%_ if (features.edit || features.delete) { _%>
@@ -40,7 +39,7 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 
 @Component({
   selector: 'app-<%- plural %>-list',
-  imports: [DataTable<%- features.edit ? ', HlmDialogImports, HlmButtonImports' : '' %><%- features.delete ? ', HlmAlertDialogImports' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %>],
+  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %>],
   providers: [provideIcons({ <%- icons.join(', ') %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -92,29 +91,21 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
     </div>
 <%_ if (features.edit) { _%>
 
-    <hlm-dialog [state]="dialogOpen() ? 'open' : 'closed'" (closed)="dialogOpen.set(false)">
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
         <app-<%- fileName %>-dialog [<%- propertyName %>]="editing<%- className %>()" (saved)="onSave($event)" />
       }
-    </hlm-dialog>
+    </app-dialog>
 <%_ } _%>
 <%_ if (features.delete) { _%>
 
-    <hlm-alert-dialog [state]="deleteDialogOpen() ? 'open' : 'closed'" (closed)="deleteDialogOpen.set(false)">
-      <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-        <hlm-alert-dialog-header>
-          <h2 hlmAlertDialogTitle><%- ui.deleteTitle %></h2>
-          <p hlmAlertDialogDescription>
-            Se eliminará permanentemente <%- ui.deleteDescriptionSubject %> "{{ deleting<%- className %>()?.<%- deleteLabelField %> }}" y todos sus datos asociados. Esta
-            acción no se puede deshacer.
-          </p>
-        </hlm-alert-dialog-header>
-        <hlm-alert-dialog-footer>
-          <button hlmAlertDialogCancel (click)="ctx.close()">Cancelar</button>
-          <button hlmAlertDialogAction (click)="confirmDelete(); ctx.close()">Eliminar</button>
-        </hlm-alert-dialog-footer>
-      </hlm-alert-dialog-content>
-    </hlm-alert-dialog>
+    <app-confirm-dialog
+      [open]="deleteDialogOpen()"
+      title="<%- ui.deleteTitle %>"
+      [description]="deleteDescription()"
+      (confirmed)="confirmDelete()"
+      (closed)="deleteDialogOpen.set(false)"
+    />
 <%_ } _%>
   `
 })
@@ -125,6 +116,7 @@ export class <%- className %>sListComponent {
 <%_ } _%>
 <%_ if (features.edit || features.delete) { _%>
   protected readonly canWrite = inject(AuthService).canWrite
+  private readonly _notify = inject(NotificationService)
 <%_ } _%>
 
   constructor() {
@@ -167,6 +159,10 @@ export class <%- className %>sListComponent {
 <%_ if (features.delete) { _%>
   readonly deleting<%- className %> = signal<<%- dtoName %> | null>(null)
   readonly deleteDialogOpen = signal(false)
+  readonly deleteDescription = computed(
+    () =>
+      `Se eliminará permanentemente <%- ui.deleteDescriptionSubject %> "${this.deleting<%- className %>()?.<%- deleteLabelField %> ?? ''}" y todos sus datos asociados. Esta acción no se puede deshacer.`
+  )
 <%_ } _%>
 
   readonly columns: ColumnDef[] = [
@@ -268,9 +264,9 @@ export class <%- className %>sListComponent {
     }
     try {
       await this._service.remove(<%- propertyName %>.id)
-      toast.success('<%- ui.toastDeleted %>')
+      this._notify.success('<%- ui.toastDeleted %>')
     } catch {
-      toast.error('<%- ui.toastDeleteError %>')
+      this._notify.error('<%- ui.toastDeleteError %>')
     }
   }
 <%_ } _%>
@@ -282,13 +278,13 @@ export class <%- className %>sListComponent {
     try {
       if (editing) {
         await this._service.update(editing.id, value)
-        toast.success('<%- ui.toastUpdated %>')
+        this._notify.success('<%- ui.toastUpdated %>')
       } else {
         await this._service.create({ id: generateId(), ...value })
-        toast.success('<%- ui.toastCreated %>')
+        this._notify.success('<%- ui.toastCreated %>')
       }
     } catch {
-      toast.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+      this._notify.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
     }
   }
 <%_ } _%>
