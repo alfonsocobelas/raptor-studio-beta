@@ -23,7 +23,10 @@
       "@acc/infra/observability-azure": ["./libs/infra/observability-azure/src/index.ts"],
       "@acc/infra/config-azure": ["./libs/infra/config-azure/src/index.ts"],
       "@acc/infra/auth": ["./libs/infra/auth/src/index.ts"],
-      "@acc/infra/session-redis": ["./libs/infra/session-redis/src/index.ts"]
+      "@acc/infra/session-redis": ["./libs/infra/session-redis/src/index.ts"],
+      "@acc/infra/storage-s3": ["./libs/infra/storage-s3/src/index.ts"],
+      "@acc/infra/secrets": ["./libs/infra/secrets/src/index.ts"],
+      "@acc/infra/metrics-prometheus": ["./libs/infra/metrics-prometheus/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist", "docs/referencia"]

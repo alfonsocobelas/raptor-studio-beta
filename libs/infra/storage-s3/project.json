@@ -1,0 +1,26 @@
+{
+  "name": "infra-storage-s3",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/infra/storage-s3/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/infra/storage-s3",
+        "main": "libs/infra/storage-s3/src/index.ts",
+        "tsConfig": "libs/infra/storage-s3/tsconfig.lib.json",
+        "assets": ["libs/infra/storage-s3/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/infra/storage-s3/jest.config.cts"
+      }
+    }
+  }
+}
