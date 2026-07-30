@@ -19,7 +19,7 @@
 
 ## Cierre
 
-- [ ] **TASK-05**: Gate final — diff de oro de contract VACÍO tras la migración + suite completa (lint, test, format:check) + marcar spec completa
+- [x] **TASK-05**: Gate final — diff de oro de contract VACÍO tras la migración + suite completa (lint, test, format:check) + marcar spec completa
 
 ---
 

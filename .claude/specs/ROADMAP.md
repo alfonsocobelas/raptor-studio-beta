@@ -8,8 +8,8 @@
 
 | Nº  | Spec                     | Objetivo                                                                                                      | Estado     |
 | --- | ------------------------ | ------------------------------------------------------------------------------------------------------------- | ---------- |
-| 00  | `generador-recurso`      | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | **Activa** |
-| 01  | `schema-lib`             | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5)                  | Pendiente  |
+| 00  | `generador-recurso` [DONE]      | Workspace Nx + plugin `@acc/generators` + primera plantilla (entidad TypeORM de `contract`) validada por diff | ✅ Completada |
+| 01  | `schema-lib` [DONE]             | `libs/schema`: `defineResource`, tipos, validación del modelo (cerrando las 5 decisiones §5)                  | Pendiente  |
 | 02  | `golden-fixtures`        | Congelar los 4 módulos de oro desde `docs/referencia` + comando/target de diff                                | Pendiente  |
 | 03  | `plantillas-backend`     | Módulo backend completo (domain + application + infrastructure) con diff vacío para `contract`                | Pendiente  |
 | 04  | `plantillas-frontend`    | Vista completa (list + dialog + detail + service + rutas) con diff vacío                                      | Pendiente  |
