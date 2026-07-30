@@ -49,7 +49,7 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 
 ## Pendientes conocidos (no bloquean la spec 00)
 
-Del README del starter (2026-07-12): ADR-008 distribución del kernel (B1), selección de adapter en
+Del README del starter (2026-07-12): ~~ADR-008 distribución del kernel (B1)~~ → **RESUELTO 2026-07-30** (docs/ADR-008: paquetes npm @acc/*, instalabilidad verificada por smoke; pipeline de publicación pendiente), selección de adapter en
 generación (A3), propagación de denormalización (B2), scoping en Criteria (B4), constante compartida
 de campos (C1), uniformización de los 4 módulos de oro (C2), anotar ADR-001 (A1).
 

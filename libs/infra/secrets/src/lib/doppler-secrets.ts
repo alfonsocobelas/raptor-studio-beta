@@ -1,4 +1,4 @@
-import { SecretsPort } from '@acc/infra/ports'
+import { SecretsPort } from '@acc/infra-ports'
 
 /** Structural fetch contract so tests inject a fake without hitting the network. */
 export type FetchLike = (

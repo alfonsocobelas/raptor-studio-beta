@@ -1,5 +1,5 @@
 {
-  "name": "@acc/infra/storage-azure",
+  "name": "@acc/infra-storage-azure",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
@@ -8,6 +8,6 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@azure/storage-blob": "12.33.0",
-    "@acc/infra/ports": "0.0.1"
+    "@acc/infra-ports": "0.0.1"
   }
 }

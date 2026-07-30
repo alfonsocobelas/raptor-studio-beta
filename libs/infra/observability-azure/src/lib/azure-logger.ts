@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as winston from 'winston'
 import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport'
-import { AppLogger, LOG_LEVEL_PRIORITY, LogLevel, LoggerSanitizer } from '@acc/infra/ports'
+import { AppLogger, LOG_LEVEL_PRIORITY, LogLevel, LoggerSanitizer } from '@acc/infra-ports'
 
 // Deployed environments ship to Azure Monitor (see telemetry/init-telemetry.ts) and get
 // machine-parseable JSON + the OpenTelemetry transport. Everywhere else (local/test/qa)

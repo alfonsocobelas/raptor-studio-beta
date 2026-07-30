@@ -1,5 +1,5 @@
 {
-  "name": "@acc/infra/observability-azure",
+  "name": "@acc/infra-observability-azure",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
@@ -9,7 +9,7 @@
     "tslib": "^2.3.0",
     "winston": "3.19.0",
     "@opentelemetry/winston-transport": "0.31.0",
-    "@acc/infra/ports": "0.0.1",
+    "@acc/infra-ports": "0.0.1",
     "@azure/monitor-opentelemetry": "1.19.0"
   }
 }

@@ -1,5 +1,5 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3'
-import { FileStoragePort } from '@acc/infra/ports'
+import { FileStoragePort } from '@acc/infra-ports'
 
 export interface S3FileStorageOptions {
   bucket: string

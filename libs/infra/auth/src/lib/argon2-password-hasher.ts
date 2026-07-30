@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2'
-import { PasswordHasher } from '@acc/infra/ports'
+import { PasswordHasher } from '@acc/infra-ports'
 
 // Extracted from the reference auth module. argon2id is the OWASP-recommended variant.
 export class Argon2PasswordHasher extends PasswordHasher {

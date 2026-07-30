@@ -1,5 +1,5 @@
 import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3'
-import { describeFileStorageConformance } from '@acc/infra/ports'
+import { describeFileStorageConformance } from '@acc/infra-ports'
 import { S3FileStorage } from './s3-file-storage'
 
 // Conformidad contra MinIO real (make docker-local-start). Activar con INTEGRATION=1.

@@ -1,5 +1,5 @@
 {
-  "name": "@acc/infra/storage-gcs",
+  "name": "@acc/infra-storage-gcs",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
@@ -8,6 +8,6 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@google-cloud/storage": "7.21.0",
-    "@acc/infra/ports": "0.0.1"
+    "@acc/infra-ports": "0.0.1"
   }
 }
