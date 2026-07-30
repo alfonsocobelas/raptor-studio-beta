@@ -1,0 +1,22 @@
+import { <%- className %> } from '../../../domain/<%- fileName %>'
+import { TypeOrm<%- className %>Entity } from './typeorm-<%- fileName %>.entity'
+
+export class <%- className %>Mapper {
+  static toDomain(entity: TypeOrm<%- className %>Entity): <%- className %> {
+    return <%- className %>.fromPrimitives({
+<%_ toDomainProps.forEach(line => { _%>
+      <%- line %>,
+<%_ }) _%>
+    })
+  }
+
+  static toPersistence(domain: <%- className %>): TypeOrm<%- className %>Entity {
+    const primitives = domain.toPrimitives()
+    const entity = new TypeOrm<%- className %>Entity()
+<%_ toPersistenceLines.forEach(line => { _%>
+    <%- line %>
+<%_ }) _%>
+
+    return entity
+  }
+}

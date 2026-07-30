@@ -1,0 +1,9 @@
+<%_ if (hasSharedConstraints) { _%>
+import { SHARED_CONSTRAINTS } from '../../../shared/domain/constants'
+
+<%_ } _%>
+export const <%- constantName %>_CONSTRAINTS = {
+<%_ constraintEntries.forEach(entry => { _%>
+  <%- entry %>,
+<%_ }) _%>
+} as const

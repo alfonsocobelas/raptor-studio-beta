@@ -1,0 +1,32 @@
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+
+type <%- className %>AllowedField = keyof <%- className %>PrimitiveProps
+
+const <%- constantName %>_ALLOWED_FILTERS: Array<<%- className %>AllowedField> = [
+<%_ allowedFilters.forEach(f => { _%>
+  '<%- f %>',
+<%_ }) _%>
+] as const
+
+const <%- constantName %>_ALLOWED_ORDERS: Array<<%- className %>AllowedField> = [
+<%_ allowedOrders.forEach(f => { _%>
+  '<%- f %>',
+<%_ }) _%>
+] as const
+
+<%_ searchNotes.forEach(line => { _%>
+// <%- line %>
+<%_ }) _%>
+const <%- constantName %>_SEARCHABLE_FIELDS: Array<<%- className %>AllowedField> = [
+<%_ searchableFields.forEach(f => { _%>
+  '<%- f %>',
+<%_ }) _%>
+] as const
+
+const search<%- className %>Config = {
+  allowedFilters: <%- constantName %>_ALLOWED_FILTERS,
+  allowedOrders: <%- constantName %>_ALLOWED_ORDERS,
+  searchableFields: <%- constantName %>_SEARCHABLE_FIELDS
+} as const
+
+export default search<%- className %>Config
