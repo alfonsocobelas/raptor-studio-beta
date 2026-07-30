@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http'
-import { Injectable, computed, inject, resource, signal } from '@angular/core'
-import { ExportFormat, RegisterCustomerDto, UpdateCustomerDto } from '@sap-licenses/shared/domain'
-import { CustomerDto } from '@sap-licenses/shared/domain'
+import { Injectable, inject, resource, signal } from '@angular/core'
+import { CustomerDto, ExportFormat, RegisterCustomerDto, UpdateCustomerDto } from '@sap-licenses/shared/domain'
 import { firstValueFrom } from 'rxjs'
 import { ColumnFilter, SortOrder } from '../../shared/components/data-table'
 import { parseContentDispositionFilename } from './export-filename'
@@ -20,8 +19,6 @@ export interface CustomerRequest {
   search?: string
   filters?: ColumnFilter[]
   orders?: SortOrder[]
-  // spec 32: por defecto la lista solo muestra activos; el toggle lo activa
-  includeArchived?: boolean
 }
 
 const defaultRequest = (): CustomerRequest => ({ page: 1, pageSize: 10 })
@@ -38,45 +35,27 @@ export class CustomerService {
 
   readonly customers = resource<OffsetPaginatedOutput<CustomerDto>, CustomerRequest>({
     params: () => this.request(),
-    loader: ({ params: req }) => {
-      const params: Record<string, string> = {
-        page: String(req.page),
-        pageSize: String(req.pageSize),
-        ...this.criteriaParams(req)
-      }
-      return firstValueFrom(this._http.get<OffsetPaginatedOutput<CustomerDto>>('/api/v1/customers', { params }))
-    }
+    loader: ({ params: req }) =>
+      firstValueFrom(
+        this._http.get<OffsetPaginatedOutput<CustomerDto>>('/api/v1/customers', {
+          params: this.buildParams(req)
+        })
+      )
   })
 
-  // Conteo de archivados para el toggle "Incluir archivados" (spec 40): one-shot, sin params → carga una vez.
-  private readonly _archivedCount = resource({
-    loader: () => firstValueFrom(this._http.get<{ count: number }>('/api/v1/customers/archived-count'))
-  })
-  readonly archivedCount = computed(() => this._archivedCount.value()?.count ?? 0)
-
-  // Search, filters and orders shared by the list query and the export (everything except pagination).
-  private criteriaParams(req: CustomerRequest): Record<string, string> {
-    const params: Record<string, string> = {}
-    if (req.search) {
-      params['search'] = req.search
-    }
-    // The DataTable already emits operators in backend vocabulary (eq/starts_with/…), so no mapping:
-    // just drop the display-only columnLabel and rename column → field.
-    const filters = (req.filters ?? []).map(f => ({ field: f.column, operator: f.operator, value: f.value }))
-    if (filters.length) {
-      params['filters'] = JSON.stringify(filters)
-    }
-    if (req.orders?.length) {
-      params['orders'] = JSON.stringify(req.orders)
-    }
-    // Compartido por lista y export: el export refleja la misma vista (con o sin archivados)
-    if (req.includeArchived) {
-      params['includeArchived'] = 'true'
-    }
-    return params
+  create(dto: RegisterCustomerDto): Promise<void> {
+    return firstValueFrom(this._http.post<void>('/api/v1/customers', dto)).then(() => {
+      this.customers.reload()
+    })
   }
 
-  // Downloads the full filtered customer set from the backend, matching the current search and order.
+  update(id: string, dto: UpdateCustomerDto): Promise<void> {
+    return firstValueFrom(this._http.put<void>(`/api/v1/customers/${id}`, dto)).then(() => {
+      this.customers.reload()
+    })
+  }
+
+  // Downloads the full filtered customer set from the backend, matching the current filters and order.
   async export(format: ExportFormat): Promise<{ blob: Blob; filename: string }> {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }
 
@@ -89,15 +68,34 @@ export class CustomerService {
     return { blob, filename }
   }
 
-  create(dto: RegisterCustomerDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/customers', dto)).then(() => {
-      this.customers.reload()
-    })
+  private buildParams(req: CustomerRequest): Record<string, string> {
+    return {
+      page: String(req.page),
+      pageSize: String(req.pageSize),
+      ...this.criteriaParams(req)
+    }
   }
 
-  update(id: string, dto: UpdateCustomerDto): Promise<void> {
-    return firstValueFrom(this._http.put<void>(`/api/v1/customers/${id}`, dto)).then(() => {
-      this.customers.reload()
-    })
+  // Filters and orders shared by the list query and the export (everything except pagination).
+  private criteriaParams(req: CustomerRequest): Record<string, string> {
+    const params: Record<string, string> = {}
+
+    // The DataTable already emits operators in backend vocabulary (eq/starts_with/…), so no mapping:
+    // just drop the display-only columnLabel and rename column → field.
+    const filters = (req.filters ?? []).map(f => ({ field: f.column, operator: f.operator, value: f.value }))
+
+    if (req.search) {
+      params['search'] = req.search
+    }
+
+    if (filters.length) {
+      params['filters'] = JSON.stringify(filters)
+    }
+
+    if (req.orders?.length) {
+      params['orders'] = JSON.stringify(req.orders)
+    }
+
+    return params
   }
 }

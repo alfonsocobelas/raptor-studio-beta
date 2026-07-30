@@ -63,6 +63,8 @@ export interface ResourceSubstitutions {
   icons: string[]
   deleteLabelField: string
   dtoName: string
+  api: string
+  serviceSharedImports: string
   angularCoreImports: string
   /** Dialog bindings */
   formSections: FormSectionSubstitution[]
@@ -210,6 +212,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     icons: renderIcons(resolveFeatures(definition)),
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
+    api: definition.api ?? `/api/v1/${definition.plural}`,
+    serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
     ...renderForm(definition, n.fileName)
   }
@@ -427,6 +431,15 @@ function renderFormPatchLine(field: FormFieldSubstitution, propertyName: string,
   if (field.control === 'select') return `${field.name}: ${propertyName}.${field.name}`
   if (definition.required && !definition.nullable) return `${field.name}: ${propertyName}.${field.name}`
   return `${field.name}: ${propertyName}.${field.name} ?? ''`
+}
+
+function renderServiceSharedImports(definition: ResourceDefinition, className: string): string {
+  const dtoName = definition.dtoName ?? `${className}Dto`
+  const edit = definition.list?.features?.edit ?? true
+  const types = edit
+    ? [dtoName, 'ExportFormat', `Register${className}Dto`, `Update${className}Dto`]
+    : [dtoName, 'ExportFormat']
+  return types.sort().join(', ')
 }
 
 function renderAngularCoreImports(features: { edit: boolean; delete: boolean }): string {

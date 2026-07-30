@@ -86,13 +86,13 @@ export class ProjectService {
   private criteriaParams(req: ProjectRequest): Record<string, string> {
     const params: Record<string, string> = {}
 
-    if (req.search) {
-      params['search'] = req.search
-    }
-
     // The DataTable already emits operators in backend vocabulary (eq/starts_with/…), so no mapping:
     // just drop the display-only columnLabel and rename column → field.
     const filters = (req.filters ?? []).map(f => ({ field: f.column, operator: f.operator, value: f.value }))
+
+    if (req.search) {
+      params['search'] = req.search
+    }
 
     if (filters.length) {
       params['filters'] = JSON.stringify(filters)
