@@ -1,0 +1,15 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: postgres-test
+    environment:
+      - POSTGRES_USER=sheriff
+      - POSTGRES_PASSWORD=sup3rs3cr3t
+      - POSTGRES_DB=acelerador_test
+    ports:
+      - '5434:5432'
+    volumes:
+      - acelerador-postgres-test-data:/var/lib/postgresql/data
+
+volumes:
+  acelerador-postgres-test-data:

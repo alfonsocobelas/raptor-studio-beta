@@ -1,0 +1,25 @@
+services:
+  postgres-local:
+    image: postgres:16-alpine
+    container_name: postgres-local
+    environment:
+      - POSTGRES_USER=sheriff
+      - POSTGRES_PASSWORD=sup3rs3cr3t
+      - POSTGRES_DB=acelerador_local
+    ports:
+      - '5433:5432'
+    volumes:
+      - acelerador-postgres-local-data:/var/lib/postgresql/data
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azure-local
+    command: 'azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck'
+    ports:
+      - '10000:10000'
+    volumes:
+      - acelerador-azurite-data:/data
+
+volumes:
+  acelerador-postgres-local-data:
+  acelerador-azurite-data:
