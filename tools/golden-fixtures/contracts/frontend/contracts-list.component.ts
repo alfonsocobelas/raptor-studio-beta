@@ -9,6 +9,8 @@ import { ContractDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { ContractService, OffsetPaginatedOutput } from '../../../../../../core/services/contract.service'
 import { BILLING_FREQUENCY_LABELS } from './contract-labels'
+import { generateId } from '../../../../../../shared/utils/uuid'
+import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 import {
   ColumnDef,
   ColumnFilter,
@@ -17,19 +19,11 @@ import {
   TableAction
 } from '../../../../../../shared/components/data-table'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
-import { generateId } from '../../../../../../shared/utils/uuid'
-import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 import { ContractDialogComponent, ContractFormValue } from './contract-dialog.component'
-
-const CURRENCY_FMT = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 0
-})
 
 @Component({
   selector: 'app-contracts-list',
-  imports: [DataTable, HlmButtonImports, HlmDialogImports, ContractDialogComponent],
+  imports: [DataTable, HlmDialogImports, HlmButtonImports, ContractDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -66,8 +60,8 @@ const CURRENCY_FMT = new Intl.NumberFormat('es-ES', {
           (pageChange)="onPage($event)"
           (pageSizeChange)="onPageSize($event)"
           (sortChange)="onSort($event)"
-          (filtersChange)="onFilters($event)"
           (searchChange)="onSearch($event)"
+          (filtersChange)="onFilters($event)"
           (exportRequested)="onExport($event)"
         />
       }
@@ -106,26 +100,17 @@ export class ContractsListComponent {
     computation: (value, previous) => value ?? previous?.value
   })
 
-  readonly rows = computed(() =>
-    (this._loaded()?.items ?? []).map(
-      contract =>
-        ({
-          ...contract,
-          // null (contrato sin licencias) → "—"; distingue de "0 €"
-          totalValue: contract.totalValue === null ? '—' : CURRENCY_FMT.format(contract.totalValue)
-        }) as unknown as Record<string, unknown>
-    )
-  )
+  readonly rows = computed(() => (this._loaded()?.items ?? []) as unknown as Record<string, unknown>[])
   readonly total = computed(() => this._loaded()?.total ?? 0)
   readonly hasData = computed(() => this._loaded() !== undefined)
   readonly currentPage = computed(() => this._service.request().page)
   readonly pageSize = computed(() => this._service.request().pageSize)
   readonly sortColumn = computed(() => this._service.request().orders?.[0]?.orderBy ?? '')
   readonly sortDirection = computed(() => this._service.request().orders?.[0]?.orderType ?? 'asc')
-  // When a filter or search yields zero rows we must keep the table (and its controls) mounted, otherwise
-  // the full-replacement empty message would hide them and trap the user with an unclearable filter/term.
-  readonly hasActiveFilters = computed(() => (this._service.request().filters?.length ?? 0) > 0)
+  // With an active search, zero results must keep the table (and the search box) mounted.
   readonly search = computed(() => this._service.request().search ?? '')
+  // Same for an active column filter: hiding the table would trap the user with an unclearable filter.
+  readonly hasActiveFilters = computed(() => (this._service.request().filters?.length ?? 0) > 0)
 
   readonly dialogOpen = signal(false)
   readonly editingContract = signal<ContractDto | null>(null)
@@ -136,15 +121,14 @@ export class ContractsListComponent {
     {
       key: 'contractType',
       label: 'Tipo',
-      type: 'badge',
       filterable: true,
       sortable: false,
       minWidth: 110,
+      type: 'badge',
       badgeMap: {
         cloud: { label: 'Cloud', variant: 'default' },
         onprem: { label: 'On-premise', variant: 'secondary' },
         mixed: { label: 'Mixto', variant: 'outline' },
-        // Sync-only (spec 44): nunca se crea/edita a mano, el diálogo no ofrece este tipo.
         maintenance: { label: 'Mantenimiento', variant: 'outline' }
       }
     },
@@ -153,9 +137,9 @@ export class ContractsListComponent {
     {
       key: 'status',
       label: 'Estado',
-      type: 'badge',
       filterable: true,
       minWidth: 120,
+      type: 'badge',
       badgeMap: {
         active: { label: 'Activo', variant: 'default' },
         expiring: { label: 'Por expirar', variant: 'outline' },
@@ -165,19 +149,6 @@ export class ContractsListComponent {
     },
     { key: 'totalValue', label: 'Valor total', type: 'number', minWidth: 140 },
     {
-      key: 'source',
-      label: 'Origen',
-      type: 'badge',
-      filterable: true,
-      sortable: false,
-      // Desviación deliberada del prototipo (150): el badge es corto y el hueco ante Facturación se leía como error
-      minWidth: 120,
-      badgeMap: {
-        AVVALE_SOLD: { label: 'Avvale', variant: 'default' },
-        CUSTOMER_OWNED: { label: 'Cliente', variant: 'secondary' }
-      }
-    },
-    {
       key: 'billingFrequency',
       label: 'Facturación',
       sortable: false,
@@ -186,7 +157,8 @@ export class ContractsListComponent {
     }
   ]
 
-  // Sin acción de borrado: los contratos los gobierna el sync (spec 32), no se eliminan a mano.
+  // Editar solo para quien puede escribir: el backend responde 403 al viewer, así que ofrecer la
+  // acción solo llevaría a un error.
   readonly actions = computed<TableAction[]>(() => [
     { icon: 'lucideEye', label: 'Ver detalle', action: 'view' },
     ...(this.canWrite() ? [{ icon: 'lucidePencil', label: 'Editar', action: 'edit' } as TableAction] : [])

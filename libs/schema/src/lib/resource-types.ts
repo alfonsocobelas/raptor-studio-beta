@@ -44,8 +44,10 @@ export interface FieldTable {
   /** UI truth of the DataTable (independent of backend query flags, as in the golden modules) */
   filterable?: boolean
   sortable?: false
-  type?: 'badge'
+  type?: 'badge' | 'date' | 'number'
   badgeMap?: Record<string, BadgeEntry>
+  /** Name of a labels const (from <name>-labels.ts) rendered as valueMap */
+  valueMapConst?: string
 }
 
 export interface FieldForm {
@@ -107,6 +109,8 @@ export interface ListAction {
 }
 
 export interface ListDefinition {
+  /** Label of the view action; defaults to 'Ver ficha' */
+  viewLabel?: string
   defaultSort?: { field: string; dir: 'asc' | 'desc' }
   pageSize?: number
   features?: { create?: boolean; export?: ('csv' | 'xlsx')[]; search?: boolean }

@@ -10,9 +10,12 @@ export const contract = defineResource({
   plural: 'contracts',
   context: 'sap-licensing',
   schemaName: 'sap_licensing',
+  route: '/sap-licensing/contracts',
+  sharedDomainAlias: '@sap-licenses/shared/domain',
+  labels: { singular: 'Contrato', plural: 'Contratos', subtitle: 'Gestión de contratos SAP y acuerdos de licenciamiento', gender: 'm' },
+  list: { viewLabel: 'Ver detalle' },
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
-  skipEmit: ['frontendList'],
   auditComment: true,
   searchNotes: [
     'Free-text columns only: badge/enum columns (status, source…) store values that differ from their',
@@ -31,11 +34,31 @@ export const contract = defineResource({
   },
   fields: {
     id: { type: 'uuid', pk: true, query: { filterable: 1 } },
-    contractType: { type: 'string', query: { filterable: 2 }, column: { type: 'varchar', length: 20 } },
+    contractType: {
+      type: 'string',
+      query: { filterable: 2 },
+      table: {
+        show: true,
+        order: 3,
+        label: 'Tipo',
+        filterable: true,
+        sortable: false,
+        minWidth: 110,
+        type: 'badge',
+        badgeMap: {
+          cloud: { label: 'Cloud', variant: 'default' },
+          onprem: { label: 'On-premise', variant: 'secondary' },
+          mixed: { label: 'Mixto', variant: 'outline' },
+          maintenance: { label: 'Mantenimiento', variant: 'outline' }
+        }
+      },
+      column: { type: 'varchar', length: 20 }
+    },
     contractNumber: {
       type: 'string',
       nullable: true,
       query: { filterable: 7, sortable: 1, searchable: 1 },
+      table: { show: true, order: 1, label: 'Nº Contrato', filterable: true, minWidth: 180 },
       comment: [
         'nullable a nivel de tipo desde spec 44 (maintenance: 36% de ISMaintenances sin ContractID);',
         'la columna física sigue NOT NULL hasta que la migración de la spec 44 la altere.'
@@ -46,6 +69,7 @@ export const contract = defineResource({
     customerName: {
       type: 'string',
       query: { filterable: 6, sortable: 2, searchable: 2 },
+      table: { show: true, order: 2, label: 'Cliente', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
     },
     cmsCaseId: {
@@ -63,6 +87,20 @@ export const contract = defineResource({
     status: {
       type: 'string',
       query: { filterable: 3, sortable: 6 },
+      table: {
+        show: true,
+        order: 6,
+        label: 'Estado',
+        filterable: true,
+        minWidth: 120,
+        type: 'badge',
+        badgeMap: {
+          active: { label: 'Activo', variant: 'default' },
+          expiring: { label: 'Por expirar', variant: 'outline' },
+          expired: { label: 'Expirado', variant: 'secondary' },
+          terminated: { label: 'Terminado', variant: 'destructive' }
+        }
+      },
       column: { type: 'varchar', length: 20, default: 'active' }
     },
     source: {
@@ -74,21 +112,28 @@ export const contract = defineResource({
       type: 'date',
       nullable: true,
       query: { sortable: 3 },
+      table: { show: true, order: 4, label: 'Inicio', type: 'date', minWidth: 120 },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     endDate: {
       type: 'date',
       nullable: true,
       query: { sortable: 4 },
+      table: { show: true, order: 5, label: 'Fin', type: 'date', minWidth: 120 },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     totalValue: {
       type: 'number',
       query: { sortable: 5 },
+      table: { show: true, order: 7, label: 'Valor total', type: 'number', minWidth: 140 },
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
     },
     currency: { type: 'string', column: { type: 'varchar', lengthConst: 'CURRENCY.LENGTH', default: 'EUR' } },
-    billingFrequency: { type: 'string', column: { type: 'varchar', length: 20, default: 'yearly' } },
+    billingFrequency: {
+      type: 'string',
+      table: { show: true, order: 9, label: 'Facturación', sortable: false, minWidth: 120, valueMapConst: 'BILLING_FREQUENCY_LABELS' },
+      column: { type: 'varchar', length: 20, default: 'yearly' }
+    },
     renewalType: { type: 'string', column: { type: 'varchar', length: 20, default: 'manual' } },
     notes: { type: 'string', column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' } },
     origin: {

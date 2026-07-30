@@ -56,6 +56,8 @@ export interface ResourceSubstitutions {
   ui: UiStrings
   /** Pre-rendered ColumnDef entries (badge columns expanded multiline, prettier preserves it) */
   frontendColumns: string[]
+  /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
+  valueMapImports: string[]
 }
 
 export interface UiStrings {
@@ -70,6 +72,7 @@ export interface UiStrings {
   toastUpdated: string
   toastCreateError: string
   toastUpdateError: string
+  viewLabel: string
 }
 
 // Defaults derived from the schema field type; column.type / column.tsType override them.
@@ -142,7 +145,14 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     frontendColumns: fields
       .filter(([, f]) => f.table?.show)
       .sort(([, a], [, b]) => (a.table?.order ?? Number.MAX_SAFE_INTEGER) - (b.table?.order ?? Number.MAX_SAFE_INTEGER))
-      .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable))
+      .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable)),
+    valueMapImports: [
+      ...new Set(
+        fields
+          .map(([, f]) => f.table?.valueMapConst)
+          .filter((c): c is string => c !== undefined)
+      )
+    ]
   }
 }
 
@@ -167,7 +177,8 @@ function renderUiStrings(definition: ResourceDefinition): UiStrings {
     toastCreated: `${singular} cread${suffix} correctamente`,
     toastUpdated: `${singular} actualizad${suffix} correctamente`,
     toastCreateError: `No se pudo crear ${article} ${lowerSingular}`,
-    toastUpdateError: `No se pudo actualizar ${article} ${lowerSingular}`
+    toastUpdateError: `No se pudo actualizar ${article} ${lowerSingular}`,
+    viewLabel: definition.list?.viewLabel ?? 'Ver ficha'
   }
 }
 
@@ -175,7 +186,9 @@ function renderFrontendColumn(name: string, table: FieldTable): string {
   const parts = [`key: '${name}'`, `label: '${table.label}'`]
   if (table.filterable) parts.push('filterable: true')
   if (table.sortable === false) parts.push('sortable: false')
+  if (table.type === 'date' || table.type === 'number') parts.push(`type: '${table.type}'`)
   if (table.minWidth !== undefined) parts.push(`minWidth: ${table.minWidth}`)
+  if (table.valueMapConst) parts.push(`valueMap: ${table.valueMapConst}`)
   if (table.type === 'badge' && table.badgeMap) {
     parts.push(`type: 'badge'`)
     const entries = Object.entries(table.badgeMap)

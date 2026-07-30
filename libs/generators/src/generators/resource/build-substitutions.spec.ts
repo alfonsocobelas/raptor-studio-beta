@@ -289,7 +289,8 @@ describe('buildSubstitutions — frontend bindings', () => {
       toastCreated: 'Cliente creado correctamente',
       toastUpdated: 'Cliente actualizado correctamente',
       toastCreateError: 'No se pudo crear el cliente',
-      toastUpdateError: 'No se pudo actualizar el cliente'
+      toastUpdateError: 'No se pudo actualizar el cliente',
+      viewLabel: 'Ver ficha'
     })
   })
 
