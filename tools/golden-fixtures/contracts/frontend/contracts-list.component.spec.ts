@@ -309,8 +309,7 @@ describe('ContractsListComponent', () => {
     const cmp = fixture.componentInstance
     const dialog = () =>
       fixture.debugElement.query(By.directive(ContractDialogComponent))?.componentInstance as
-        | ContractDialogComponent
-        | undefined
+        ContractDialogComponent | undefined
 
     // Open "Nuevo contrato" and dirty a field.
     cmp.openCreate()

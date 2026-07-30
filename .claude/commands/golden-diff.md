@@ -13,12 +13,10 @@ cambios en `libs/generators/**` o `libs/schema/**`.
 
 1. **Lee la skill `golden-diff`** para el procedimiento y el criterio de veredicto.
 
-2. **Para cada entidad de oro** (customer, contract, license, project) que ya tenga `*.model.ts` y fixture:
-   - Regenera a una carpeta temporal (dentro del scratchpad, nunca sobre `tools/golden-fixtures/`):
-     `nx generate @acc/generators:resource {entidad} --output {tmp}` (o el mecanismo vigente).
-   - `diff -ru {tmp}/{entidad} tools/golden-fixtures/{entidad}`
+2. **Ejecuta el gate**: `npm run golden:diff` (regenera cada modelo registrado en
+   `tools/golden-diff.sh` y compara cada fichero generado contra su fixture).
 
-3. **Si una entidad aún no tiene fixture o modelo**, márcala como `N/A (pendiente)` — no es un fallo.
+3. **Si una entidad aún no tiene fixture o modelo registrado**, no aparece en el gate — no es un fallo.
 
 4. **Reporta**:
 

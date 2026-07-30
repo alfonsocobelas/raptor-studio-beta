@@ -2,7 +2,7 @@
   "name": "acelerador",
   "version": "0.1.0",
   "private": true,
-  "description": "Acelerador de dashboards: generador Nx determinista (resource-schema → módulo completo) + catálogo de adapters de infra",
+  "description": "Acelerador de dashboards: generador Nx determinista (resource-schema \u2192 m\u00f3dulo completo) + cat\u00e1logo de adapters de infra",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24",
@@ -10,7 +10,8 @@
   },
   "scripts": {
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "golden:diff": "bash tools/golden-diff.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
