@@ -50,11 +50,27 @@ export interface FieldTable {
   valueMapConst?: string
 }
 
+export interface SelectOption {
+  value: string
+  label: string
+}
+
 export interface FieldForm {
   /** Decision 4: 'none' means the generator omits the control (e.g. relation without lookup endpoint). */
   control: FormControl
   label?: string
   rows?: number
+  /** Position inside its form section (form order differs from field order in the golden modules) */
+  order?: number
+  /** Section id (declared in resource.formSections) */
+  section?: string
+  /** DOM id of the control; defaults to the field name (golden modules use short hand-picked ids) */
+  id?: string
+  /** Select choices */
+  options?: SelectOption[]
+  /** Shared-domain type of the select value (e.g. 'CustomerClassification'); imported and used in the FormValue */
+  optionsType?: string
+  placeholder?: string
 }
 
 /** Persistence-level detail required for golden-diff fidelity (proven in spec 00). */
@@ -170,6 +186,8 @@ export interface ResourceDefinition {
   sharedDomainAlias?: string
   /** DTO type name in emitted frontend code; defaults to <ClassName>Dto */
   dtoName?: string
+  /** Dialog form sections, in emission order */
+  formSections?: { id: string; title: string }[]
   labels?: ResourceLabels
   /** Domain constraints constant imported as LIMITS (e.g. 'CONTRACT_CONSTRAINTS') */
   constraintsConst?: string

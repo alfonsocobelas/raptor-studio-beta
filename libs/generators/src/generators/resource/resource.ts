@@ -37,6 +37,10 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   for (const skip of model.skipEmit ?? []) {
     tree.delete(path.join(outputDir, skipPaths[skip]))
   }
+  // el diálogo solo se emite cuando el modelo declara su formulario
+  if (!model.formSections?.length) {
+    tree.delete(path.join(outputDir, 'frontend', `${substitutions.fileName}-dialog.component.ts`))
+  }
 
   await formatFiles(tree)
 }

@@ -64,6 +64,32 @@ export interface ResourceSubstitutions {
   deleteLabelField: string
   dtoName: string
   angularCoreImports: string
+  /** Dialog bindings */
+  formSections: FormSectionSubstitution[]
+  formValueLines: string[]
+  formGroupLines: string[]
+  formPatchLines: string[]
+  dialogSharedImports: string
+  needsSelect: boolean
+  savedEmitSrc: string
+}
+
+export interface FormFieldSubstitution {
+  name: string
+  id: string
+  label: string
+  control: 'text' | 'textarea' | 'select'
+  rows?: number
+  required: boolean
+  options: { value: string; label: string }[]
+  optionsType?: string
+  placeholder?: string
+}
+
+export interface FormSectionSubstitution {
+  title: string
+  grid: boolean
+  fields: FormFieldSubstitution[]
 }
 
 export interface UiStrings {
@@ -79,6 +105,9 @@ export interface UiStrings {
   toastCreateError: string
   toastUpdateError: string
   viewLabel: string
+  dialogEditTitle: string
+  dialogEditDescription: string
+  dialogCreateDescription: string
   deleteTitle: string
   deleteDescriptionSubject: string
   toastDeleted: string
@@ -165,8 +194,88 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     icons: renderIcons(resolveFeatures(definition)),
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
-    angularCoreImports: renderAngularCoreImports(resolveFeatures(definition))
+    angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
+    ...renderForm(definition, n.fileName)
   }
+}
+
+type FormBindings = Pick<
+  ResourceSubstitutions,
+  | 'formSections'
+  | 'formValueLines'
+  | 'formGroupLines'
+  | 'formPatchLines'
+  | 'dialogSharedImports'
+  | 'needsSelect'
+  | 'savedEmitSrc'
+>
+
+function renderForm(definition: ResourceDefinition, fileName: string): FormBindings {
+  const idPrefix = fileName.charAt(0)
+  const propertyName = names(definition.name).propertyName
+  const formFields = Object.entries(definition.fields)
+    .filter(([, f]) => f.form && f.form.control !== 'none')
+    .map(([name, f]) => renderFormField(name, f, idPrefix))
+
+  const sections: FormSectionSubstitution[] = (definition.formSections ?? []).map(section => {
+    const fields = formFields
+      .filter(field => definition.fields[field.name].form?.section === section.id)
+      .sort(
+        (a, b) =>
+          (definition.fields[a.name].form?.order ?? Number.MAX_SAFE_INTEGER) -
+          (definition.fields[b.name].form?.order ?? Number.MAX_SAFE_INTEGER)
+      )
+    return { title: section.title, grid: fields.length > 1, fields }
+  })
+
+  const typedSelects = formFields.filter(f => f.optionsType)
+  const sharedTypes = [
+    ...new Set([
+      definition.dtoName ?? `${names(definition.name).className}Dto`,
+      ...typedSelects.map(f => f.optionsType as string)
+    ])
+  ].sort()
+
+  return {
+    formSections: sections,
+    formValueLines: formFields.map(f => `${f.name}: ${f.optionsType ?? 'string'}`),
+    formGroupLines: formFields.map(renderFormGroupLine),
+    formPatchLines: formFields.map(f => renderFormPatchLine(f, propertyName, definition.fields[f.name])),
+    dialogSharedImports: sharedTypes.join(', '),
+    needsSelect: formFields.some(f => f.control === 'select'),
+    savedEmitSrc: typedSelects.length
+      ? `this.saved.emit({ ...raw, ${typedSelects.map(f => `${f.name}: raw.${f.name} as ${f.optionsType}`).join(', ')} })`
+      : 'this.saved.emit(raw)'
+  }
+}
+
+function renderFormField(name: string, field: FieldDefinition, idPrefix: string): FormFieldSubstitution {
+  const form = field.form as NonNullable<FieldDefinition['form']>
+  return {
+    name,
+    id: `${idPrefix}${form.id ?? name}`,
+    label: form.label ?? name,
+    control: form.control as 'text' | 'textarea' | 'select',
+    rows: form.rows,
+    required: field.required ?? false,
+    options: form.options ?? [],
+    optionsType: form.optionsType,
+    placeholder: form.placeholder
+  }
+}
+
+function renderFormGroupLine(field: FormFieldSubstitution): string {
+  if (field.control === 'select') {
+    const comment = "// null (no ''): hlm-select solo muestra el placeholder cuando el valor es null."
+    return `${comment}\n    ${field.name}: this._fb.control<string | null>(null${field.required ? ', Validators.required' : ''})`
+  }
+  return field.required ? `${field.name}: ['', Validators.required]` : `${field.name}: ['']`
+}
+
+function renderFormPatchLine(field: FormFieldSubstitution, propertyName: string, definition: FieldDefinition): string {
+  if (field.control === 'select') return `${field.name}: ${propertyName}.${field.name} ?? null`
+  if (definition.required) return `${field.name}: ${propertyName}.${field.name}`
+  return `${field.name}: ${propertyName}.${field.name} ?? ''`
 }
 
 function renderAngularCoreImports(features: { edit: boolean; delete: boolean }): string {
@@ -214,6 +323,9 @@ function renderUiStrings(definition: ResourceDefinition): UiStrings {
     toastCreateError: `No se pudo crear ${article} ${lowerSingular}`,
     toastUpdateError: `No se pudo actualizar ${article} ${lowerSingular}`,
     viewLabel: definition.list?.viewLabel ?? 'Ver ficha',
+    dialogEditTitle: `Editar ${lowerSingular}`,
+    dialogEditDescription: `Modifica los datos ${feminine ? 'de la' : 'del'} ${lowerSingular}`,
+    dialogCreateDescription: `Introduce los datos ${feminine ? 'de la nueva' : 'del nuevo'} ${lowerSingular}`,
     deleteTitle: `Eliminar ${lowerSingular}`,
     deleteDescriptionSubject: `${article} ${lowerSingular}`,
     toastDeleted: `${singular} eliminad${suffix}`,

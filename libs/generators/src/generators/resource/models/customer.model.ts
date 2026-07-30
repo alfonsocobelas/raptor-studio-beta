@@ -12,6 +12,10 @@ export const customer = defineResource({
   route: '/sap-licensing/customers',
   sharedDomainAlias: '@sap-licenses/shared/domain',
   labels: { singular: 'Cliente', plural: 'Clientes', subtitle: 'Gestión de clientes SAP', gender: 'm' },
+  formSections: [
+    { id: 'general', title: 'Datos generales' },
+    { id: 'notes', title: 'Notas' }
+  ],
   constraintsConst: 'CUSTOMER_CONSTRAINTS',
   audit: true,
   skipEmit: ['mapper'],
@@ -34,12 +38,16 @@ export const customer = defineResource({
       type: 'string',
       unique: true,
       vo: 'SapId',
+      required: true,
+      form: { control: 'text', label: 'ID SAP', section: 'general', order: 1 },
       query: { filterable: 2, sortable: 2 },
       column: { type: 'varchar', lengthConst: 'SAP_ID.MAX' }
     },
     name: {
       type: 'string',
       vo: 'CustomerName',
+      required: true,
+      form: { control: 'text', label: 'Nombre', section: 'general', order: 2 },
       query: { filterable: 3, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Nombre', filterable: true, minWidth: 220 },
       column: { type: 'varchar', lengthConst: 'NAME.MAX' }
@@ -48,29 +56,37 @@ export const customer = defineResource({
       type: 'string',
       unique: true,
       vo: 'TaxId',
+      form: { control: 'text', label: 'CIF / NIF', section: 'general', order: 3 },
       query: { filterable: 4, sortable: 3, searchable: 3 },
       table: { show: true, order: 5, label: 'CIF / NIF', filterable: true, minWidth: 130 },
       column: { type: 'varchar', lengthConst: 'TAX_ID.MAX', default: '' }
     },
     industry: {
       type: 'string',
+      form: { control: 'text', label: 'Industria', section: 'general', order: 4 },
       query: { filterable: 5, sortable: 4, searchable: 2 },
       table: { show: true, order: 4, label: 'Industria', filterable: true, minWidth: 180 },
       column: { type: 'varchar', lengthConst: 'INDUSTRY.MAX', default: '' }
     },
     address: {
       type: 'string',
+      form: { control: 'text', label: 'Dirección', section: 'general', order: 6 },
       query: { searchable: 4 },
       table: { show: true, order: 8, label: 'Dirección', sortable: false, minWidth: 250 },
       column: { type: 'varchar', lengthConst: 'ADDRESS.MAX', default: '' }
     },
     phone: {
       type: 'string',
+      form: { control: 'text', label: 'Teléfono', section: 'general', order: 7 },
       query: { searchable: 5 },
       table: { show: true, order: 9, label: 'Teléfono', sortable: false, minWidth: 150 },
       column: { type: 'varchar', lengthConst: 'PHONE.MAX', default: '' }
     },
-    notes: { type: 'string', column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' } },
+    notes: {
+      type: 'string',
+      form: { control: 'textarea', label: 'Notas internas', section: 'notes', order: 8, rows: 3 },
+      column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
+    },
     city: {
       type: 'string',
       query: { sortable: 5, searchable: 6 },
@@ -85,6 +101,21 @@ export const customer = defineResource({
     },
     customerType: {
       type: 'string',
+      required: true,
+      form: {
+        control: 'select',
+        label: 'Tipo',
+        id: 'type',
+        section: 'general',
+        order: 5,
+        placeholder: 'Seleccionar tipo',
+        optionsType: 'CustomerClassification',
+        options: [
+          { value: 'cloud', label: 'Cloud' },
+          { value: 'onprem', label: 'On-prem' },
+          { value: 'hybrid', label: 'Hybrid' }
+        ]
+      },
       query: { filterable: 6, sortable: 7 },
       table: {
         show: true,

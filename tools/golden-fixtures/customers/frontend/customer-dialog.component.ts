@@ -72,7 +72,7 @@ export interface CustomerFormValue {
             <hlm-field>
               <label hlmFieldLabel for="ctype"> Tipo </label>
               <!-- itemToString: con el popover cerrado los items no están instanciados y el trigger
-                   mostraría el valor crudo ('hybrid') en modo edición en vez de la etiqueta. -->
+                   mostraría el valor crudo en modo edición en vez de la etiqueta. -->
               <hlm-select formControlName="customerType" [itemToString]="customerTypeToLabel">
                 <hlm-select-trigger buttonId="ctype">
                   <hlm-select-value placeholder="Seleccionar tipo" />
@@ -130,7 +130,6 @@ export class CustomerDialogComponent {
     address: [''],
     phone: [''],
     notes: [''],
-    // Ventana transitoria (spec 43): sin valor por defecto — el select fuerza a elegir uno.
     // null (no ''): hlm-select solo muestra el placeholder cuando el valor es null.
     customerType: this._fb.control<string | null>(null, Validators.required)
   })
