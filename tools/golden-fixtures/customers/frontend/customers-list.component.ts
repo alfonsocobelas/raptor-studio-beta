@@ -5,8 +5,6 @@ import { lucideEye, lucidePencil } from '@ng-icons/lucide'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmButtonImports } from '@spartan-ng/helm/button'
 import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmSwitchImports } from '@spartan-ng/helm/switch'
-import { HlmLabelImports } from '@spartan-ng/helm/label'
 import { CustomerDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { CustomerService, OffsetPaginatedOutput } from '../../../../../../core/services/customer.service'
@@ -24,7 +22,7 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
 
 @Component({
   selector: 'app-customers-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, HlmSwitchImports, HlmLabelImports, CustomerDialogComponent],
+  imports: [DataTable, HlmDialogImports, HlmButtonImports, CustomerDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -38,8 +36,7 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
         <p class="text-muted-foreground py-12 text-center text-sm">Cargando clientes…</p>
       } @else if (error()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los clientes</p>
-      } @else if (total() === 0 && !hasActiveFilters() && !search() && archivedCount() === 0) {
-        <!-- Solo vacío absoluto: si hay archivados, la tabla sigue montada para que el toggle sea alcanzable -->
+      } @else if (total() === 0 && !hasActiveFilters() && !search()) {
         <p class="text-muted-foreground py-12 text-center text-sm">No hay clientes registrados</p>
       } @else {
         <app-data-table
@@ -65,23 +62,7 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
           (searchChange)="onSearch($event)"
           (filtersChange)="onFilters($event)"
           (exportRequested)="onExport($event)"
-        >
-          <!-- Proyectado en la toolbar de la tabla, junto al buscador; con marco para que no pase desapercibido -->
-          <label
-            class="flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 whitespace-nowrap"
-            toolbar
-            hlmLabel
-            [class.opacity-50]="archivedCount() === 0"
-            [title]="archivedCount() === 0 ? 'No hay clientes archivados' : ''"
-          >
-            <hlm-switch
-              [checked]="includeArchived()"
-              [disabled]="archivedCount() === 0"
-              (checkedChange)="onToggleArchived($event)"
-            />
-            Incluir archivados ({{ archivedCount() }})
-          </label>
-        </app-data-table>
+        />
       }
     </div>
 
@@ -132,8 +113,6 @@ export class CustomersListComponent {
 
   readonly dialogOpen = signal(false)
   readonly editingCustomer = signal<CustomerDto | null>(null)
-  readonly includeArchived = computed(() => this._service.request().includeArchived ?? false)
-  readonly archivedCount = this._service.archivedCount
 
   readonly columns: ColumnDef[] = [
     { key: 'name', label: 'Nombre', filterable: true, minWidth: 220 },
@@ -197,10 +176,6 @@ export class CustomersListComponent {
 
   onFilters(filters: ColumnFilter[]): void {
     this._service.request.update(r => ({ ...r, filters, page: 1 }))
-  }
-
-  onToggleArchived(includeArchived: boolean): void {
-    this._service.request.update(r => ({ ...r, includeArchived, page: 1 }))
   }
 
   openCreate(): void {
