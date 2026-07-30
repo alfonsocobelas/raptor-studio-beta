@@ -1,0 +1,70 @@
+<%_ if (aggregate.emitAggregate) { _%>
+import { Injectable } from '@nestjs/common'
+import { Nullable } from '../../../../../../shared/domain/types'
+import { Criteria } from '../../../../../../shared/domain/query/criteria'
+import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { TypeOrmCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-criteria-converter'
+import { TypeOrmRepository } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm.repository'
+import { TypeOrmTransactionManager } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-transaction-manager'
+import { <%- className %> } from '../../../domain/<%- fileName %>'
+import { <%- className %>Repository } from '../../../domain/<%- fileName %>-repository'
+<%_ app.uniqueSpecs.forEach(spec => { _%>
+<%_ if (spec.voLocal) { _%>
+import { <%- spec.voName %> } from '../../../domain/value-objects/<%- spec.voFileName %>.vo'
+<%_ } else { _%>
+import { <%- spec.voName %> } from '../../../../../shared/domain/value-objects/<%- spec.voFileName %>.vo'
+<%_ } _%>
+<%_ }) _%>
+import { <%- className %>Mapper } from './<%- fileName %>.mapper'
+import { TypeOrm<%- className %>Entity } from './typeorm-<%- fileName %>.entity'
+
+@Injectable()
+export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm<%- className %>Entity> implements <%- className %>Repository {
+  constructor(transactionManager: TypeOrmTransactionManager, criteriaConverter: TypeOrmCriteriaConverter) {
+    super(transactionManager, criteriaConverter)
+  }
+
+  protected entityTarget() {
+    return TypeOrm<%- className %>Entity
+  }
+
+  async register(<%- propertyName %>: <%- className %>): Promise<void> {
+    await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
+  }
+
+  async save(<%- propertyName %>: <%- className %>): Promise<void> {
+    await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
+  }
+<%_ if (app.removes) { _%>
+
+  async remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
+    await this.repository().<%- softDelete ? 'softDelete' : 'delete' %>({ id: <%- propertyName %>Id.value })
+  }
+<%_ } _%>
+
+  async get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
+    const entity = await this.repository().findOneBy({ id: <%- propertyName %>Id.value })
+    return entity ? <%- className %>Mapper.toDomain(entity) : null
+  }
+
+  async matching(criteria: Criteria): Promise<<%- className %>[]> {
+    const entities = await this.searchByCriteria(criteria)
+    return entities.map(<%- className %>Mapper.toDomain)
+  }
+<%_ app.uniqueSpecs.forEach(spec => { _%>
+
+  async findBy<%- spec.field.charAt(0).toUpperCase() + spec.field.slice(1) %>(<%- spec.field %>: <%- spec.voName %>): Promise<Nullable<<%- className %>>> {
+    const entity = await this.repository().findOneBy({ <%- spec.field %>: <%- spec.field %>.value })
+    return entity ? <%- className %>Mapper.toDomain(entity) : null
+  }
+<%_ }) _%>
+
+  async exists(criteria: Criteria): Promise<boolean> {
+    return this.existsByCriteria(criteria)
+  }
+
+  async count(criteria: Criteria): Promise<number> {
+    return this.countByCriteria(criteria)
+  }
+}
+<%_ } _%>

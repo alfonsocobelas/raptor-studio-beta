@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
+import { ContractId } from '../../../../../../shared/domain/value-objects/contracts/contract-id.vo'
 import { TypeOrmCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-criteria-converter'
 import { TypeOrmRepository } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm.repository'
 import { TypeOrmTransactionManager } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-transaction-manager'
-import { ContractId } from '../../../../../../shared/domain/value-objects/contracts/contract-id.vo'
-import { ContractNumber } from '../../../../../shared/domain/value-objects/contract-number.vo'
 import { Contract } from '../../../domain/contract'
 import { ContractRepository } from '../../../domain/contract-repository'
-import { CmsCaseId } from '../../../domain/value-objects/cms-case-id.vo'
+import { ContractNumber } from '../../../../../shared/domain/value-objects/contract-number.vo'
 import { ContractMapper } from './contract.mapper'
 import { TypeOrmContractEntity } from './typeorm-contract.entity'
 
@@ -35,19 +34,14 @@ export class TypeOrmContractRepository extends TypeOrmRepository<TypeOrmContract
     return entity ? ContractMapper.toDomain(entity) : null
   }
 
-  async findByContractNumber(contractNumber: ContractNumber): Promise<Nullable<Contract>> {
-    const entity = await this.repository().findOneBy({ contractNumber: contractNumber.value })
-    return entity ? ContractMapper.toDomain(entity) : null
-  }
-
-  async findMaintenanceByCaseId(cmsCaseId: CmsCaseId): Promise<Nullable<Contract>> {
-    const entity = await this.repository().findOneBy({ contractType: 'maintenance', cmsCaseId: cmsCaseId.value })
-    return entity ? ContractMapper.toDomain(entity) : null
-  }
-
   async matching(criteria: Criteria): Promise<Contract[]> {
     const entities = await this.searchByCriteria(criteria)
     return entities.map(ContractMapper.toDomain)
+  }
+
+  async findByContractNumber(contractNumber: ContractNumber): Promise<Nullable<Contract>> {
+    const entity = await this.repository().findOneBy({ contractNumber: contractNumber.value })
+    return entity ? ContractMapper.toDomain(entity) : null
   }
 
   async exists(criteria: Criteria): Promise<boolean> {

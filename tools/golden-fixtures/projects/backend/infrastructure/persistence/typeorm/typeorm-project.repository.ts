@@ -7,7 +7,7 @@ import { TypeOrmRepository } from '../../../../../../shared/infrastructure/persi
 import { TypeOrmTransactionManager } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-transaction-manager'
 import { Project } from '../../../domain/project'
 import { ProjectRepository } from '../../../domain/project-repository'
-import { SapProjectId } from '../../../domain/value-objects/sap-project-id.vo'
+import { ProjectName } from '../../../domain/value-objects/project-name.vo'
 import { ProjectMapper } from './project.mapper'
 import { TypeOrmProjectEntity } from './typeorm-project.entity'
 
@@ -43,8 +43,8 @@ export class TypeOrmProjectRepository extends TypeOrmRepository<TypeOrmProjectEn
     return entities.map(ProjectMapper.toDomain)
   }
 
-  async findBySapProjectId(sapProjectId: SapProjectId): Promise<Nullable<Project>> {
-    const entity = await this.repository().findOneBy({ sapProjectId: sapProjectId.value })
+  async findByName(name: ProjectName): Promise<Nullable<Project>> {
+    const entity = await this.repository().findOneBy({ name: name.value })
     return entity ? ProjectMapper.toDomain(entity) : null
   }
 

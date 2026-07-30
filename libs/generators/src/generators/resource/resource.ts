@@ -129,6 +129,9 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-types.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-repository.ts`))
+    tree.delete(
+      path.join(outputDir, 'backend/infrastructure/persistence/typeorm', `typeorm-${substitutions.fileName}.repository.ts`)
+    )
   } else {
     // artefactos de test de dominio (mother, builder, repository mock)
     generateFiles(
