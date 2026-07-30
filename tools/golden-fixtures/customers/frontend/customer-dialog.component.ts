@@ -118,7 +118,8 @@ export class CustomerDialogComponent {
   readonly customer = input<CustomerDto | null>(null)
   readonly saved = output<CustomerFormValue>()
 
-  protected readonly customerTypeToLabel = (value: unknown): string => CUSTOMER_TYPE_LABELS[value as CustomerClassification] ?? ''
+  protected readonly customerTypeToLabel = (value: unknown): string =>
+    CUSTOMER_TYPE_LABELS[value as CustomerClassification] ?? ''
 
   readonly form = this._fb.nonNullable.group({
     sapId: ['', Validators.required],
@@ -129,8 +130,8 @@ export class CustomerDialogComponent {
     phone: [''],
     notes: [''],
     // null (no ''): hlm-select solo muestra el placeholder cuando el valor es null.
-    customerType: this._fb.control<string | null>(null, Validators.required),
-  )
+    customerType: this._fb.control<string | null>(null, Validators.required)
+  })
 
   constructor() {
     effect(() => {
@@ -144,7 +145,7 @@ export class CustomerDialogComponent {
           address: customer.address ?? '',
           phone: customer.phone ?? '',
           notes: customer.notes ?? '',
-          customerType: customer.customerType ?? null,
+          customerType: customer.customerType ?? null
         })
       }
     })
@@ -157,7 +158,7 @@ export class CustomerDialogComponent {
     const raw = this.form.getRawValue()
     this.saved.emit({
       ...raw,
-      customerType: raw.customerType as CustomerClassification,
+      customerType: raw.customerType as CustomerClassification
     })
     ctx.close()
   }

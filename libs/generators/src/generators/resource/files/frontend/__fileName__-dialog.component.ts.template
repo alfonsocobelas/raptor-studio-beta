@@ -128,7 +128,7 @@ export interface <%- className %>FormValue {
 <%_ } else { _%>
 <%- pad %><%- fieldOpen %>
 <%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <input id="<%- f.id %>" hlmInput formControlName="<%- f.name %>" />
+<%- pad %>  <input id="<%- f.id %>"<%- f.control === 'number' ? ' type="number"' : '' %> hlmInput formControlName="<%- f.name %>" />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
 <%- pad %>    <hlm-field-error>Obligatorio</hlm-field-error>
@@ -178,7 +178,7 @@ export class <%- className %>DialogComponent {
 <%_ formGroupLines.forEach(line => { _%>
     <%- line %>,
 <%_ }) _%>
-<%- groupValidatorOption ? '    }' + groupValidatorOption : '  ' %>)
+<%- groupValidatorOption ? '    }' + groupValidatorOption : '  }' %>)
 
   constructor() {
     effect(() => {

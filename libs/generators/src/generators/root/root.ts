@@ -1,17 +1,13 @@
 import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import { contract } from '../resource/models/contract.model'
-import { customer } from '../resource/models/customer.model'
-import { license } from '../resource/models/license.model'
-import { project } from '../resource/models/project.model'
-import { ResourceDefinition } from '@acc/schema'
+import { selectModels } from '../resource/models/registry'
 
 export interface RootGeneratorSchema {
+  /** Comma-separated model names to include; defaults to the whole registry */
+  models?: string
   directory?: string
 }
 
-// El mismo registro estático que el generador de recursos: el root se deriva de él.
-const MODELS: ResourceDefinition[] = [contract, customer, license, project]
 
 /**
  * Composition root del backend: root.module.ts (core + un módulo por recurso
@@ -19,9 +15,10 @@ const MODELS: ResourceDefinition[] = [contract, customer, license, project]
  * (JSON bundle-safe con marcadores vault.* — nunca secretos en claro).
  */
 export async function rootGenerator(tree: Tree, options: RootGeneratorSchema) {
+  const MODEL_LIST = selectModels(options.models)
   const outputDir = options.directory ?? path.join('tmp', 'generated', 'root')
 
-  const resourceModules = MODELS.map(model => {
+  const resourceModules = MODEL_LIST.map(model => {
     const pluralClass = names(model.plural).className
     return {
       className: `${pluralClass}Module`,
@@ -29,7 +26,7 @@ export async function rootGenerator(tree: Tree, options: RootGeneratorSchema) {
     }
   })
 
-  const schemas = [...new Set(MODELS.map(m => m.schemaName))]
+  const schemas = [...new Set(MODEL_LIST.map(m => m.schemaName))]
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, {
     resourceModules,

@@ -1,16 +1,14 @@
 import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import { contract } from '../resource/models/contract.model'
-import { customer } from '../resource/models/customer.model'
-import { license } from '../resource/models/license.model'
-import { project } from '../resource/models/project.model'
+import { selectModels } from '../resource/models/registry'
 import { FieldDefinition, ResourceDefinition } from '@acc/schema'
 
 export interface SharedDomainGeneratorSchema {
+  /** Comma-separated model names to include; defaults to the whole registry */
+  models?: string
   directory?: string
 }
 
-const MODELS: ResourceDefinition[] = [contract, customer, license, project]
 
 interface DtoLine {
   line: string
@@ -23,10 +21,11 @@ interface DtoLine {
  * everything under the sharedDomainAlias the emitted code imports.
  */
 export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGeneratorSchema) {
+  const MODEL_LIST = selectModels(options.models)
   const outputDir = options.directory ?? path.join('tmp', 'generated', 'shared-domain')
   const exportLines: string[] = []
 
-  for (const model of MODELS) {
+  for (const model of MODEL_LIST) {
     const n = names(model.name)
     const bindings = renderDtoBindings(model)
 

@@ -163,6 +163,22 @@ function seedUuid(plural: string, n: number): string {
   return `019eb800-${category.toString(16).padStart(4, '0')}-7000-8000-${n.toString().padStart(12, '0')}`
 }
 
+/**
+ * MIN declarado para un campo numérico en las constraints del recurso. Sin él las filas
+ * derivadas (1, 2) violarían el invariante del VO y el seed abortaría en el primer insert.
+ */
+function seedMin(definition: ResourceDefinition, fieldName: string, vo?: { constraintKey?: string; min?: boolean }): number {
+  if (!vo?.min) {
+    return 0
+  }
+  const key = vo.constraintKey ?? names(fieldName).constantName
+  const entry = key.split('.').reduce<unknown>((acc, part) => {
+    return acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined
+  }, definition.constraints)
+  const min = entry && typeof entry === 'object' ? (entry as Record<string, unknown>)['MIN'] : undefined
+  return typeof min === 'number' ? min : 0
+}
+
 function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number): string[] {
   const lines = [`id: '${seedUuid(definition.plural, i)}'`]
 
@@ -181,7 +197,8 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
     if (!c.required) continue
 
     if (c.field.type === 'boolean') lines.push(`${c.name}: false`)
-    else if (c.field.type === 'number' || c.field.type === 'integer') lines.push(`${c.name}: ${i}`)
+    else if (c.field.type === 'number' || c.field.type === 'integer')
+      lines.push(`${c.name}: ${Math.max(i, seedMin(definition, c.name, vo))}`)
     else if (c.field.type === 'date' || c.field.type === 'timestamptz') lines.push(`${c.name}: '2026-01-0${i}'`)
     else if (vo?.noInnerWhitespace) lines.push(`${c.name}: 'SEED-${names(definition.name).constantName}-${i}'`)
     else lines.push(`${c.name}: '${label} seed ${i}'`)

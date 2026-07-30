@@ -24,6 +24,11 @@
       "factory": "./src/generators/frontend-kernel/frontend-kernel",
       "schema": "./src/generators/frontend-kernel/schema.json",
       "description": "Scaffolds the Angular shared kernel (copy-once) the emitted components import"
+    },
+    "app": {
+      "factory": "./src/generators/app/app",
+      "schema": "./src/generators/app/schema.json",
+      "description": "Generates a runnable backend project from the registered resource models"
     }
   }
 }

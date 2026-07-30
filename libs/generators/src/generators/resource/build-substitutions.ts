@@ -384,12 +384,8 @@ function renderMockItem(definition: ResourceDefinition, id: string, index: numbe
   const lines = Object.entries(definition.fields)
     .filter(([name]) => name !== 'id')
     .map(([name, f]) => `    ${name}: ${f.nullable && index === 1 ? 'null' : sampleScalar(name, f, index)}`)
-  if (definition.audit) {
-    lines.push(
-      `    createdAt: '2026-01-0${index + 1}T09:00:00.000Z'`,
-      `    updatedAt: '2026-01-0${index + 1}T09:00:00.000Z'`
-    )
-  }
+  // Sin campos de auditoría: no están en el DTO ni los devuelve la API, y añadirlos
+  // rompía la compilación del mock (la referencia tampoco los emite).
   return `  {\n    id: '${id}',\n${lines.join(',\n')}\n  }`
 }
 
@@ -437,7 +433,9 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
   })
 
   const selects = formFields.filter(f => f.control === 'select')
-  const enumSelects = selects.filter(f => f.optionsType)
+  // La plantilla emite [itemToString]="<campo>ToLabel" en TODO select, así que el helper
+  // (y su constante de etiquetas) debe existir tanto si el campo declara optionsType como si no.
+  const enumSelects = selects.filter(f => f.optionsType || f.options.length)
   const lookups = formFields.filter(f => f.lookup)
   const denorms = lookups.map(f => f.lookup?.denormalizes).filter((d): d is string => d !== undefined)
 
@@ -501,6 +499,7 @@ function constName(name: string): string {
 function valueType(field: FormFieldSubstitution): string {
   if (field.optionsType) return field.optionsType
   if (field.control === 'checkbox') return 'boolean'
+  if (field.control === 'number') return field.required ? 'number' : 'number | undefined'
   if (field.control === 'date') return field.required ? 'string' : 'string | null'
   return 'string'
 }
@@ -513,8 +512,9 @@ function renderHelpers(
   const lines: string[] = []
   for (const f of [...inlineLabelFields, ...importedLabelFields]) {
     const labelConst = f.labelsConst ?? `${constName(f.name)}_LABELS`
-    const cast = f.optionsType ? ` as ${f.optionsType}` : ''
-    lines.push(`protected readonly ${f.name}ToLabel = (value: unknown): string => ${labelConst}[value${cast}] ?? ''`)
+    // Sin optionsType no hay tipo al que castear: String(value) evita indexar con unknown.
+    const key = f.optionsType ? `value as ${f.optionsType}` : 'String(value)'
+    lines.push(`protected readonly ${f.name}ToLabel = (value: unknown): string => ${labelConst}[${key}] ?? ''`)
   }
   for (const f of lookups) {
     const resource = f.lookup?.resource ?? ''
@@ -530,6 +530,19 @@ function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormField
   const casts = formFields
     .filter(f => f.optionsType && !f.default)
     .map(f => `${f.name}: raw.${f.name} as ${f.optionsType}`)
+  // Select propio (sin optionsType ni lookup): el control es string | null por el placeholder.
+  const selectCasts = formFields
+    .filter(f => f.control === 'select' && !f.optionsType && !f.lookup && !f.default)
+    .map(f => `${f.name}: raw.${f.name} as string`)
+  // Numérico requerido: el control es number | null porque el input vacío no es 0.
+  const numberCasts = formFields
+    .filter(f => f.control === 'number')
+    .map(f =>
+      f.required
+        ? `${f.name}: raw.${f.name} as number`
+        : // el DTO declara `campo?: number`: un input vacío es undefined, nunca null
+          `${f.name}: raw.${f.name} ?? undefined`
+    )
   const lookupFixes = lookups.map(f => `${f.name}: raw.${f.name} ?? ''`)
   const denormLines = lookups
     .filter(f => f.lookup?.denormalizes)
@@ -540,7 +553,7 @@ function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormField
   const dateNulls = formFields
     .filter(f => f.control === 'date' && !f.required)
     .map(f => `${f.name}: raw.${f.name} || null`)
-  const extras = [...casts, ...lookupFixes, ...denormLines, ...dateNulls]
+  const extras = [...casts, ...selectCasts, ...numberCasts, ...lookupFixes, ...denormLines, ...dateNulls]
   if (!extras.length) return ['this.saved.emit(raw)']
   return ['this.saved.emit({', `  ...raw,`, ...extras.map(e => `  ${e},`), '})']
 }
@@ -589,6 +602,11 @@ function renderFormGroupLine(field: FormFieldSubstitution): string {
     if (field.default) return `${field.name}: [${field.default}]`
     const comment = "// null (no ''): hlm-select solo muestra el placeholder cuando el valor es null."
     return `${comment}\n    ${field.name}: this._fb.control<string | null>(null${field.required ? ', Validators.required' : ''})`
+  }
+  if (field.control === 'number') {
+    // number | null: el input vacío no es '' sino null, y el DTO espera un número.
+    const validators = field.required ? ', Validators.required' : ''
+    return `${field.name}: this._fb.control<number | null>(${field.default ?? 'null'}${validators})`
   }
   if (field.default) return `${field.name}: [${field.default}]`
   if (field.required && field.maxLength) {

@@ -8,6 +8,10 @@
     "directory": {
       "type": "string",
       "description": "Output directory; defaults to tmp/generated/shared-domain"
+    },
+    "models": {
+      "type": "string",
+      "description": "Comma-separated model names to include (defaults to all registered models)"
     }
   }
 }

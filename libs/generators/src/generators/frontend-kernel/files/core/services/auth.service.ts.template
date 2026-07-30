@@ -45,6 +45,12 @@ export class AuthService {
   })
 
   /** Resolves the current user from the session cookie. Called once at app bootstrap. */
+  /** Punto de extensión: permite a un AuthService alternativo fijar el usuario. */
+  protected setCurrentUser(user: CurrentUserDto | null): void {
+    this._currentUser.set(user)
+    this._loaded.set(true)
+  }
+
   async loadCurrentUser(): Promise<CurrentUserDto | null> {
     const user = await firstValueFrom(
       this._http.get<CurrentUserDto>('/api/v1/auth/me').pipe(catchError(() => of(null)))

@@ -1,0 +1,35 @@
+import 'reflect-metadata'
+import { Module } from '@nestjs/common'
+import { NestFactory } from '@nestjs/core'
+import { CoreConfigModule } from './contexts/shared/infrastructure/config/config.module'
+import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.module'
+import { SharedPersistenceModule } from './contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
+<%- seedImports %>
+
+@Module({
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, <%- seedModules %>]
+})
+class SeedModule {}
+
+/**
+ * Siembra local de todos los recursos de la app. Idempotente: los duplicados se
+ * saltan por los checks de unicidad de cada Register use case.
+ */
+async function bootstrap(): Promise<void> {
+  const env = process.env['NODE_ENV']
+  if (env !== 'local') {
+    throw new Error(`Local seed can only run with NODE_ENV=local (got: ${env ?? 'undefined'})`)
+  }
+
+  const context = await NestFactory.createApplicationContext(SeedModule, { logger: ['error', 'warn'] })
+  try {
+<%- seedRuns %>
+  } finally {
+    await context.close()
+  }
+}
+
+bootstrap().catch((error: unknown) => {
+  console.error('[seed] failed:', error)
+  process.exit(1)
+})

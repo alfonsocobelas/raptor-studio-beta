@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "module": "commonjs", "moduleResolution": "node", "noEmit": true },
+  "include": ["libs/backend/src/**/*.ts", "libs/shared/**/*.ts", "apps/backend-api/**/*.ts"],
+  "//": "libs/backend/tests queda fuera: los artefactos de test necesitan un kernel de test que el acelerador aún no emite"
+}

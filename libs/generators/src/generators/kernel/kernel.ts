@@ -1,17 +1,14 @@
 import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import { contract } from '../resource/models/contract.model'
-import { customer } from '../resource/models/customer.model'
-import { license } from '../resource/models/license.model'
-import { project } from '../resource/models/project.model'
-import { ResourceDefinition } from '@acc/schema'
+import { selectModels } from '../resource/models/registry'
 
 export interface KernelGeneratorSchema {
+  /** Comma-separated model names to include; defaults to the whole registry */
+  models?: string
   directory?: string
   sharedDomainAlias?: string
 }
 
-const MODELS: ResourceDefinition[] = [contract, customer, license, project]
 
 /**
  * Shared kernel scaffold (copy-once): the ~80-file base the generated modules
@@ -22,9 +19,10 @@ const MODELS: ResourceDefinition[] = [contract, customer, license, project]
  * persistence module derives its entity list from the model registry.
  */
 export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema) {
+  const MODEL_LIST = selectModels(options.models)
   const outputDir = options.directory ?? path.join('tmp', 'generated', 'kernel')
 
-  const entities = MODELS.flatMap(model => {
+  const entities = MODEL_LIST.flatMap(model => {
     const n = names(model.name)
     const base = `../../../../${model.context}/modules/${model.plural}/infrastructure/persistence/typeorm`
     const list = [{ className: `TypeOrm${n.className}Entity`, importPath: `${base}/typeorm-${n.fileName}.entity` }]
@@ -37,9 +35,21 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, {
     sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
-    databaseName: [...new Set(MODELS.map(m => m.schemaName))][0] ?? 'app',
+    databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
     entities
   })
+
+  // Un id-VO por recurso registrado: el kernel no puede conocer de antemano las
+  // entidades de cada cliente, así que se derivan del registro en vez de hardcodearse.
+  for (const model of MODEL_LIST) {
+    const n = names(model.name)
+    generateFiles(
+      tree,
+      path.join(__dirname, 'files-id-vo'),
+      path.join(outputDir, 'contexts/shared/domain/value-objects', model.plural),
+      { idClassName: n.className, idFileName: n.fileName }
+    )
+  }
 
   await formatFiles(tree)
 }

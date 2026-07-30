@@ -1,0 +1,14 @@
+import { UuidV7ValueObject } from '../uuidv7-value-object'
+
+export class <%- idClassName %>Id extends UuidV7ValueObject {
+  protected static override fieldName = '<%- idClassName %> ID'
+
+  private constructor(value: string) {
+    super(value)
+  }
+
+  static create(value: string): <%- idClassName %>Id {
+    this.ensureIsValidUuidV7(value)
+    return new <%- idClassName %>Id(value)
+  }
+}

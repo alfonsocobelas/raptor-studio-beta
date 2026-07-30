@@ -17,7 +17,13 @@
     "directory": {
       "type": "string",
       "description": "Output directory; defaults to tmp/generated/<plural>"
+    },
+    "sharedDomainAlias": {
+      "type": "string",
+      "description": "Overrides the model's shared-domain import alias"
     }
   },
-  "required": ["name"]
+  "required": [
+    "name"
+  ]
 }

@@ -18,9 +18,7 @@ export const MOCK_CUSTOMERS: CustomerDto[] = [
     customerType: CustomerClassification.CLOUD,
     status: 'Status 1',
     archivedAt: '2026-01-15T10:00:00.000Z',
-    lastSeenInSyncAt: '2026-01-15T10:00:00.000Z',
-    createdAt: '2026-01-01T09:00:00.000Z',
-    updatedAt: '2026-01-01T09:00:00.000Z'
+    lastSeenInSyncAt: '2026-01-15T10:00:00.000Z'
   },
   {
     id: '019eb713-19bb-7000-8000-000000000002',
@@ -36,9 +34,7 @@ export const MOCK_CUSTOMERS: CustomerDto[] = [
     customerType: CustomerClassification.ONPREM,
     status: 'Status 2',
     archivedAt: null,
-    lastSeenInSyncAt: null,
-    createdAt: '2026-01-02T09:00:00.000Z',
-    updatedAt: '2026-01-02T09:00:00.000Z'
+    lastSeenInSyncAt: null
   }
 ]
 

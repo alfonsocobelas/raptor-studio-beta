@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http'
 import { Injectable, inject, resource, signal } from '@angular/core'
 import { InviteUserDto, UserDto, UserRoleEnum, UserStatusEnum } from '<%- sharedDomainAlias %>'
 import { firstValueFrom } from 'rxjs'
-import { OffsetPaginatedOutput } from './contract.service'
+import { OffsetPaginatedOutput } from './pagination.types'
 
-export type { OffsetPaginatedOutput } from './contract.service'
+export type { OffsetPaginatedOutput } from './pagination.types'
 
 export interface UserRequest {
   page: number
