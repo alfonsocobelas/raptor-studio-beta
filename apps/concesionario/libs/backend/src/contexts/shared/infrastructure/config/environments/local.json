@@ -16,7 +16,7 @@
     "port": 5432,
     "username": "alfonso.dominguez",
     "password": "",
-    "database": "dealership_local",
+    "database": "migtest",
     "ssl": false,
     "autoLoadEntities": true,
     "synchronize": false,

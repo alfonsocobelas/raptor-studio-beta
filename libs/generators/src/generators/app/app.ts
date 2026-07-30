@@ -8,6 +8,8 @@ import rootGenerator from '../root/root'
 import sharedDomainGenerator from '../shared-domain/shared-domain'
 import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
+import { selectPlugins } from './plugins/registry'
+import type { AppPlugin, PluginContext } from './plugins/plugin'
 
 export interface AppGeneratorSchema {
   name: string
@@ -15,6 +17,10 @@ export interface AppGeneratorSchema {
   models?: string
   /** Output directory; defaults to apps/<name> */
   directory?: string
+  /** Component library the emitted frontend is built on */
+  ui?: 'spartan' | 'material'
+  /** Comma-separated plugins to assemble (migrations, auth) */
+  plugins?: string
   /** Skip npm install and the Spartan UI materialisation (offline / CI) */
   skipInstall?: boolean
 }
@@ -74,6 +80,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // el arranque vive en apps/backend-api; la config por entorno la emite el kernel
   tree.delete(path.join(backendSrc, 'main.ts'))
   tree.delete(path.join(backendSrc, 'environments'))
+
+  // la config local debe apuntar al Postgres que levanta el compose emitido,
+  // o `make local-setup` arrancaría contra una base que no existe
+  alignLocalDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/local.json'), appName)
 
   // 2. DTOs compartidos + kernel Angular
   await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: options.models })
@@ -153,9 +163,20 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     tmpl: ''
   })
 
+  // 6. plugins elegidos en el formulario (migraciones, auth…)
+  const plugins = selectPlugins(options.plugins)
+  const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE }
+  for (const plugin of plugins) {
+    if (plugin.assets) {
+      copyVerbatim(tree, path.join(__dirname, 'plugins', plugin.assets), root)
+    }
+    plugin.apply?.(tree, pluginContext)
+  }
+  applyPluginManifests(tree, root, plugins)
+
   await formatFiles(tree)
 
-  // 6. tras volcar el árbol: dependencias y componentes Spartan (son un plugin, se
+  // 7. tras volcar el árbol: dependencias y componentes Spartan (son un plugin, se
   //    descargan al crear la app en vez de vivir vendorizados en el acelerador)
   return () => {
     if (options.skipInstall) {
@@ -169,6 +190,62 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     }
     console.log(`\nListo: cd ${root} && make local-setup`)
   }
+}
+
+/** Vuelca en package.json y Makefile lo que cada plugin declara en su manifiesto. */
+function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugin[]): void {
+  if (!plugins.length) {
+    return
+  }
+
+  const packagePath = path.join(root, 'package.json')
+  const pkg = JSON.parse(tree.read(packagePath, 'utf-8') ?? '{}') as {
+    scripts?: Record<string, string>
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+  }
+  for (const plugin of plugins) {
+    pkg.scripts = { ...pkg.scripts, ...plugin.scripts }
+    pkg.dependencies = sortKeys({ ...pkg.dependencies, ...plugin.dependencies })
+    pkg.devDependencies = sortKeys({ ...pkg.devDependencies, ...plugin.devDependencies })
+  }
+  tree.write(packagePath, `${JSON.stringify(pkg, null, 2)}\n`)
+
+  const targets = plugins.flatMap(p => Object.entries(p.makeTargets ?? {}))
+  if (!targets.length) {
+    return
+  }
+  const makefilePath = path.join(root, 'Makefile')
+  let makefile = tree.read(makefilePath, 'utf-8') ?? ''
+  makefile = makefile.replace(
+    /^\.PHONY: (.*)$/m,
+    (_match, existing: string) => `.PHONY: ${existing} ${targets.map(([name]) => name).join(' ')}`
+  )
+  makefile += `\n# --- plugins ---\n${targets.map(([name, body]) => `${name}:\n${body}`).join('\n\n')}\n`
+  tree.write(makefilePath, makefile)
+}
+
+function sortKeys(record: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)))
+}
+
+/** Deja local.json coherente con docker/docker-compose.local.yml. */
+function alignLocalDatabase(tree: Tree, configPath: string, appName: string): void {
+  const raw = tree.read(configPath, 'utf-8')
+  if (!raw) {
+    return
+  }
+  const config = JSON.parse(raw) as { typeorm: Record<string, unknown> }
+  config.typeorm = {
+    ...config.typeorm,
+    port: 5433,
+    username: 'app',
+    password: 'local_only_not_a_secret',
+    database: `${appName}_local`,
+    // sin el plugin de migraciones, el esquema local lo materializa TypeORM al arrancar
+    synchronize: true
+  }
+  tree.write(configPath, `${JSON.stringify(config, null, 2)}\n`)
 }
 
 function run(command: string, cwd: string): void {

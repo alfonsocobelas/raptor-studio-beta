@@ -1,4 +1,4 @@
-.PHONY: help up down test-up test-down seed api web typecheck local-setup
+.PHONY: help up down test-up test-down seed api web typecheck local-setup migrate migrate-rollback
 
 help:
 	@grep -E '^[a-zA-Z-]+:' Makefile | sed 's/:.*//'
@@ -33,3 +33,10 @@ local-setup: up
 	sleep 6
 	$(MAKE) seed
 	@echo "Listo. 'make api' (http://localhost:3000/api/v1) y 'make web' (http://localhost:4200)"
+
+# --- plugins ---
+migrate:
+	NODE_ENV=local npm run migration:run
+
+migrate-rollback:
+	NODE_ENV=local npm run migration:revert

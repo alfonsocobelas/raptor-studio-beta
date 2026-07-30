@@ -136,7 +136,7 @@ export interface FormFieldSubstitution {
   name: string
   id: string
   label: string
-  control: 'text' | 'textarea' | 'select' | 'date' | 'checkbox'
+  control: 'text' | 'textarea' | 'select' | 'date' | 'checkbox' | 'number'
   rows?: number
   required: boolean
   options: { value: string; label: string }[]

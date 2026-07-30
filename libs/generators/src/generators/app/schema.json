@@ -12,11 +12,12 @@
         "$source": "argv",
         "index": 0
       },
-      "x-prompt": "How should the app be named?"
+      "x-prompt": "\u00bfC\u00f3mo se llama la aplicaci\u00f3n?"
     },
     "models": {
       "type": "string",
-      "description": "Comma-separated model names (defaults to all registered models)"
+      "description": "Comma-separated model names (defaults to all registered models)",
+      "x-prompt": "\u00bfQu\u00e9 modelos incluye? (separados por comas; vac\u00edo = todos)"
     },
     "directory": {
       "type": "string",
@@ -26,6 +27,31 @@
       "type": "boolean",
       "description": "Skip npm install and the Spartan UI materialisation",
       "default": false
+    },
+    "ui": {
+      "type": "string",
+      "default": "spartan",
+      "description": "Component library used by the emitted frontend",
+      "x-prompt": {
+        "message": "\u00bfQu\u00e9 librer\u00eda de componentes?",
+        "type": "list",
+        "items": [
+          {
+            "value": "spartan",
+            "label": "Spartan NG (shadcn para Angular)"
+          },
+          {
+            "value": "material",
+            "label": "Angular Material"
+          }
+        ]
+      }
+    },
+    "plugins": {
+      "type": "string",
+      "default": "migrations",
+      "description": "Comma-separated plugins to assemble (migrations, auth)",
+      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (migrations, auth \u2014 separados por comas; 'none' para ninguno)"
     }
   },
   "required": [
