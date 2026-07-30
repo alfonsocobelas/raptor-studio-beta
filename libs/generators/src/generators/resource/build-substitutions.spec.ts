@@ -210,3 +210,27 @@ describe('buildSubstitutions — spec 03 derivations', () => {
     })
   })
 })
+
+describe('buildSubstitutions — constraints extended forms', () => {
+  it('renders aliased shared refs, scalars and nested groups', () => {
+    const model: ResourceDefinition = {
+      schemaVersion: 1,
+      name: 'thing',
+      plural: 'things',
+      context: 'demo',
+      schemaName: 'demo',
+      constraints: {
+        NAME: { shared: 'CUSTOMER_NAME' },
+        MAX_CONTACTS: 20,
+        CONTACT: { NAME: { MIN: 2, MAX: 200 }, ROLE: { MAX: 100 } }
+      },
+      fields: { id: { type: 'uuid', pk: true } }
+    }
+
+    expect(buildSubstitutions(model).constraintEntries).toEqual([
+      'NAME: SHARED_CONSTRAINTS.CUSTOMER_NAME',
+      'MAX_CONTACTS: 20',
+      'CONTACT: {\n    NAME: { MIN: 2, MAX: 200 },\n    ROLE: { MAX: 100 }\n  }'
+    ])
+  })
+})

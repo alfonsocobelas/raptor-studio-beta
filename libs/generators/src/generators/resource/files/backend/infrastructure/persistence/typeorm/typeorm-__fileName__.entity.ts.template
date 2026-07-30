@@ -35,7 +35,9 @@ export class TypeOrm<%- className %>Entity {
 <%_ }) _%>
 <%_ if (audit) { _%>
 
+<%_ if (auditComment) { _%>
   // --- AUDIT FIELDS --- //
+<%_ } _%>
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date
 

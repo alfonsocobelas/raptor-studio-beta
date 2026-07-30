@@ -113,6 +113,8 @@ export interface DetailDefinition {
   sections: string[]
 }
 
+export type ConstraintValue = { shared: true | string } | number | { [key: string]: number | Record<string, number> }
+
 export interface ResourceLabels {
   singular: string
   plural: string
@@ -135,10 +137,18 @@ export interface ResourceDefinition {
   constraintsConst?: string
   /** Emit createdAt/updatedAt audit columns */
   audit?: boolean
+  /** Emit the '// --- AUDIT FIELDS --- //' marker above the audit columns (C2: not uniform across golden modules) */
+  auditComment?: boolean
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
-  /** Feeds <name>-constants.ts: { shared: true } references SHARED_CONSTRAINTS.<KEY> */
-  constraints?: Record<string, { shared: true } | Record<string, number>>
+  /** Mapper emission style; omit when the golden module's mapper is not the canonical primitives style (C2) */
+  mapperStyle?: 'primitives'
+  /**
+   * Feeds <name>-constants.ts. Values: { shared: true } references SHARED_CONSTRAINTS.<KEY>,
+   * { shared: '<OTHER_KEY>' } references a differently-named shared entry, a number emits a
+   * scalar, and plain objects emit (possibly nested) literal groups.
+   */
+  constraints?: Record<string, ConstraintValue>
   /** Keyed by field name (decision A4); key insertion order is the emission order */
   fields: Record<string, FieldDefinition>
   list?: ListDefinition

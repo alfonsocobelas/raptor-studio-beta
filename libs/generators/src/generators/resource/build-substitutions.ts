@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import { ColumnDefinition, FieldDefinition, FieldType, ResourceDefinition } from '@acc/schema'
+import { ColumnDefinition, ConstraintValue, FieldDefinition, FieldType, ResourceDefinition } from '@acc/schema'
 
 export interface ColumnSubstitution {
   name: string
@@ -19,6 +19,7 @@ export interface ResourceSubstitutions {
   schemaName: string
   constraintsConst?: string
   audit: boolean
+  auditComment: boolean
   needsNullable: boolean
   needsNumericTransformer: boolean
   needsNullableNumericTransformer: boolean
@@ -76,6 +77,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     schemaName: definition.schemaName,
     constraintsConst: definition.constraintsConst,
     audit: definition.audit ?? false,
+    auditComment: definition.auditComment ?? false,
     needsNullable: columns.some(c => c.tsType.includes('Nullable<')),
     needsNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'numeric'),
     needsNullableNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'nullableNumeric'),
@@ -86,7 +88,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     searchableFields: orderedQueryList(fields, 'searchable'),
     searchNotes: definition.searchNotes ?? [],
     constraintEntries: renderConstraints(definition),
-    hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => 'shared' in v),
+    hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => typeof v === 'object' && 'shared' in v),
     toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
     toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f))
   }
@@ -108,13 +110,21 @@ function orderedQueryList(fields: [string, FieldDefinition][], flag: QueryFlag):
 }
 
 function renderConstraints(definition: ResourceDefinition): string[] {
-  return Object.entries(definition.constraints ?? {}).map(([key, value]) => {
-    if ('shared' in value) return `${key}: SHARED_CONSTRAINTS.${key}`
-    const entries = Object.entries(value)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(', ')
-    return `${key}: { ${entries} }`
-  })
+  return Object.entries(definition.constraints ?? {}).map(
+    ([key, value]) => `${key}: ${renderConstraintValue(key, value)}`
+  )
+}
+
+function renderConstraintValue(key: string, value: ConstraintValue): string {
+  if (typeof value === 'number') return String(value)
+  if ('shared' in value) return `SHARED_CONSTRAINTS.${value.shared === true ? key : value.shared}`
+  const entries = Object.entries(value).map(
+    ([k, v]) => `${k}: ${typeof v === 'number' ? v : renderConstraintValue(k, v)}`
+  )
+  const hasNestedGroups = Object.values(value).some(v => typeof v === 'object')
+  // prettier preserva la expansión multilinea de objetos: los grupos anidados se emiten expandidos como en el canon
+  if (hasNestedGroups) return `{\n    ${entries.join(',\n    ')}\n  }`
+  return `{ ${entries.join(', ')} }`
 }
 
 function isNullableDate(field: FieldDefinition): boolean {
