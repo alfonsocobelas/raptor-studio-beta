@@ -1,8 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+<%_ if (features.view) { _%>
 import { Router } from '@angular/router'
+<%_ } _%>
 import { provideIcons } from '@ng-icons/core'
-import { lucideEye, lucidePencil } from '@ng-icons/lucide'
+import { <%- icons.join(', ') %> } from '@ng-icons/lucide'
 import { toast } from '@spartan-ng/brain/sonner'
+<%_ if (features.delete) { _%>
+import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
+<%_ } _%>
 import { HlmButtonImports } from '@spartan-ng/helm/button'
 import { HlmDialogImports } from '@spartan-ng/helm/dialog'
 import { <%- className %>Dto, ExportFormat } from '<%- sharedDomainAlias %>'
@@ -25,8 +30,8 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 
 @Component({
   selector: 'app-<%- plural %>-list',
-  imports: [DataTable, HlmDialogImports, HlmButtonImports, <%- className %>DialogComponent],
-  providers: [provideIcons({ lucideEye, lucidePencil })],
+  imports: [DataTable, HlmDialogImports, HlmButtonImports<%- features.delete ? ', HlmAlertDialogImports' : '' %>, <%- className %>DialogComponent],
+  providers: [provideIcons({ <%- icons.join(', ') %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -74,11 +79,31 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
         <app-<%- fileName %>-dialog [<%- propertyName %>]="editing<%- className %>()" (saved)="onSave($event)" />
       }
     </hlm-dialog>
+<%_ if (features.delete) { _%>
+
+    <hlm-alert-dialog [state]="deleteDialogOpen() ? 'open' : 'closed'" (closed)="deleteDialogOpen.set(false)">
+      <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
+        <hlm-alert-dialog-header>
+          <h2 hlmAlertDialogTitle><%- ui.deleteTitle %></h2>
+          <p hlmAlertDialogDescription>
+            Se eliminará permanentemente <%- ui.deleteDescriptionSubject %> "{{ deleting<%- className %>()?.<%- deleteLabelField %> }}" y todos sus datos asociados. Esta
+            acción no se puede deshacer.
+          </p>
+        </hlm-alert-dialog-header>
+        <hlm-alert-dialog-footer>
+          <button hlmAlertDialogCancel (click)="ctx.close()">Cancelar</button>
+          <button hlmAlertDialogAction (click)="confirmDelete(); ctx.close()">Eliminar</button>
+        </hlm-alert-dialog-footer>
+      </hlm-alert-dialog-content>
+    </hlm-alert-dialog>
+<%_ } _%>
   `
 })
 export class <%- className %>sListComponent {
   private readonly _service = inject(<%- className %>Service)
+<%_ if (features.view) { _%>
   private readonly _router = inject(Router)
+<%_ } _%>
   protected readonly canWrite = inject(AuthService).canWrite
 
   constructor() {
@@ -116,6 +141,10 @@ export class <%- className %>sListComponent {
 
   readonly dialogOpen = signal(false)
   readonly editing<%- className %> = signal<<%- className %>Dto | null>(null)
+<%_ if (features.delete) { _%>
+  readonly deleting<%- className %> = signal<<%- className %>Dto | null>(null)
+  readonly deleteDialogOpen = signal(false)
+<%_ } _%>
 
   readonly columns: ColumnDef[] = [
 <%_ frontendColumns.forEach(col => { _%>
@@ -123,12 +152,26 @@ export class <%- className %>sListComponent {
 <%_ }) _%>
   ]
 
+<%_ if (features.view) { _%>
   // Editar solo para quien puede escribir: el backend responde 403 al viewer, así que ofrecer la
   // acción solo llevaría a un error.
   readonly actions = computed<TableAction[]>(() => [
     { icon: 'lucideEye', label: '<%- ui.viewLabel %>', action: 'view' },
     ...(this.canWrite() ? [{ icon: 'lucidePencil', label: 'Editar', action: 'edit' } as TableAction] : [])
   ])
+<%_ } else { _%>
+  // Un viewer no ve ninguna: son escrituras que el backend rechazaría con 403.
+  readonly actions = computed<TableAction[]>(() =>
+    this.canWrite()
+      ? [
+          { icon: 'lucidePencil', label: 'Editar', action: 'edit' },
+<%_ if (features.delete) { _%>
+          { icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }
+<%_ } _%>
+        ]
+      : []
+  )
+<%_ } _%>
 
   onPage(page: number): void {
     this._service.request.update(r => ({ ...r, page }))
@@ -162,13 +205,38 @@ export class <%- className %>sListComponent {
 
   onAction(event: { action: string; row: Record<string, unknown> }): void {
     const <%- propertyName %> = event.row as unknown as <%- className %>Dto
+<%_ if (features.view) { _%>
     if (event.action === 'view') {
       this._router.navigate(['<%- route %>', <%- propertyName %>.id])
     } else if (event.action === 'edit') {
+<%_ } else { _%>
+    if (event.action === 'edit') {
+<%_ } _%>
       this.editing<%- className %>.set(<%- propertyName %>)
       this.dialogOpen.set(true)
+<%_ if (features.delete) { _%>
+    } else if (event.action === 'delete') {
+      this.deleting<%- className %>.set(<%- propertyName %>)
+      this.deleteDialogOpen.set(true)
+<%_ } _%>
     }
   }
+<%_ if (features.delete) { _%>
+
+  async confirmDelete(): Promise<void> {
+    const <%- propertyName %> = this.deleting<%- className %>()
+    this.deleteDialogOpen.set(false)
+    if (!<%- propertyName %>) {
+      return
+    }
+    try {
+      await this._service.remove(<%- propertyName %>.id)
+      toast.success('<%- ui.toastDeleted %>')
+    } catch {
+      toast.error('<%- ui.toastDeleteError %>')
+    }
+  }
+<%_ } _%>
 
   async onSave(value: <%- className %>FormValue): Promise<void> {
     const editing = this.editing<%- className %>()

@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
-import { ExportFormat, ProjectDto } from '@sap-licenses/shared/domain'
 import { provideIcons } from '@ng-icons/core'
 import { lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
 import { HlmButtonImports } from '@spartan-ng/helm/button'
 import { HlmDialogImports } from '@spartan-ng/helm/dialog'
+import { ProjectDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { AuthService } from '../../../../../../core/services/auth.service'
-import { OffsetPaginatedOutput, ProjectService } from '../../../../../../core/services/project.service'
+import { ProjectService, OffsetPaginatedOutput } from '../../../../../../core/services/project.service'
+import { generateId } from '../../../../../../shared/utils/uuid'
+import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 import {
   ColumnDef,
   ColumnFilter,
@@ -16,13 +18,11 @@ import {
   TableAction
 } from '../../../../../../shared/components/data-table'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
-import { generateId } from '../../../../../../shared/utils/uuid'
-import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
 
 @Component({
   selector: 'app-projects-list',
-  imports: [DataTable, HlmButtonImports, HlmDialogImports, HlmAlertDialogImports, ProjectDialogComponent],
+  imports: [DataTable, HlmDialogImports, HlmButtonImports, HlmAlertDialogImports, ProjectDialogComponent],
   providers: [provideIcons({ lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -52,8 +52,8 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
           [loading]="isLoading()"
           [showCreate]="canWrite()"
           createLabel="Nuevo proyecto"
-          [actions]="actions()"
           exportFilename="proyectos"
+          [actions]="actions()"
           (create)="openCreate()"
           (actionClick)="onAction($event)"
           (pageChange)="onPage($event)"
@@ -95,7 +95,7 @@ export class ProjectsListComponent {
 
   constructor() {
     // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
-    // al volver del propio módulo y se resetea al entrar desde fuera.
+    // al volver del propio módulo (p.ej. del detalle) y se resetea al entrar desde fuera.
     if (!navigationCameFrom('/sap-licensing/projects')) {
       this._service.resetRequest()
     }
@@ -126,8 +126,8 @@ export class ProjectsListComponent {
   // Same for an active column filter: hiding the table would trap the user with an unclearable filter.
   readonly hasActiveFilters = computed(() => (this._service.request().filters?.length ?? 0) > 0)
 
-  readonly editingProject = signal<ProjectDto | null>(null)
   readonly dialogOpen = signal(false)
+  readonly editingProject = signal<ProjectDto | null>(null)
   readonly deletingProject = signal<ProjectDto | null>(null)
   readonly deleteDialogOpen = signal(false)
 
@@ -137,9 +137,9 @@ export class ProjectsListComponent {
     {
       key: 'origin',
       label: 'Origen',
-      type: 'badge',
       filterable: true,
       minWidth: 100,
+      type: 'badge',
       badgeMap: {
         MANUAL: { label: 'Manual', variant: 'secondary' },
         ME_SAP: { label: 'SAP', variant: 'outline' }
@@ -150,9 +150,9 @@ export class ProjectsListComponent {
     {
       key: 'status',
       label: 'Estado',
-      type: 'badge',
       filterable: true,
       minWidth: 120,
+      type: 'badge',
       badgeMap: {
         planning: { label: 'Planificación', variant: 'outline' },
         active: { label: 'Activo', variant: 'default' },
@@ -163,9 +163,9 @@ export class ProjectsListComponent {
     {
       key: 'implementer',
       label: 'Implementador',
-      type: 'badge',
       filterable: true,
       minWidth: 130,
+      type: 'badge',
       badgeMap: {
         AVVALE: { label: 'AVVALE', variant: 'default' },
         THIRD_PARTY: { label: 'Tercero', variant: 'secondary' }
@@ -173,71 +173,15 @@ export class ProjectsListComponent {
     }
   ]
 
-  // Un viewer no ve ninguna: ambas son escrituras que el backend rechazaría con 403.
+  // Un viewer no ve ninguna: son escrituras que el backend rechazaría con 403.
   readonly actions = computed<TableAction[]>(() =>
     this.canWrite()
       ? [
           { icon: 'lucidePencil', label: 'Editar', action: 'edit' },
-          {
-            icon: 'lucideTrash2',
-            label: 'Eliminar',
-            action: 'delete',
-            variant: 'ghost',
-            // Un ME_SAP borrado resucitaría en el siguiente sync: su ciclo de vida es el archivado (spec 46).
-            hidden: row => row['origin'] === 'ME_SAP'
-          }
+          { icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }
         ]
       : []
   )
-
-  onAction(event: { action: string; row: Record<string, unknown> }): void {
-    const project = event.row as unknown as ProjectDto
-    if (event.action === 'edit') {
-      this.editingProject.set(project)
-      this.dialogOpen.set(true)
-    } else if (event.action === 'delete') {
-      this.deletingProject.set(project)
-      this.deleteDialogOpen.set(true)
-    }
-  }
-
-  openCreate(): void {
-    this.editingProject.set(null)
-    this.dialogOpen.set(true)
-  }
-
-  async confirmDelete(): Promise<void> {
-    const project = this.deletingProject()
-    this.deleteDialogOpen.set(false)
-    if (!project) {
-      return
-    }
-    try {
-      await this._service.remove(project.id)
-      toast.success('Proyecto eliminado')
-    } catch {
-      toast.error('No se pudo eliminar el proyecto')
-    }
-  }
-
-  async onSave(value: ProjectFormValue): Promise<void> {
-    const editing = this.editingProject()
-    this.dialogOpen.set(false)
-    try {
-      if (editing) {
-        // ME_SAP: solo los campos manuales viajan — el backend rechaza los sync-gobernados con 422.
-        const payload =
-          editing.origin === 'ME_SAP' ? { description: value.description, implementer: value.implementer } : value
-        await this._service.update(editing.id, payload)
-        toast.success('Proyecto actualizado correctamente')
-      } else {
-        await this._service.create({ id: generateId(), ...value })
-        toast.success('Proyecto creado correctamente')
-      }
-    } catch {
-      toast.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
-    }
-  }
 
   onPage(page: number): void {
     this._service.request.update(r => ({ ...r, page }))
@@ -262,5 +206,51 @@ export class ProjectsListComponent {
 
   onFilters(filters: ColumnFilter[]): void {
     this._service.request.update(r => ({ ...r, filters, page: 1 }))
+  }
+
+  openCreate(): void {
+    this.editingProject.set(null)
+    this.dialogOpen.set(true)
+  }
+
+  onAction(event: { action: string; row: Record<string, unknown> }): void {
+    const project = event.row as unknown as ProjectDto
+    if (event.action === 'edit') {
+      this.editingProject.set(project)
+      this.dialogOpen.set(true)
+    } else if (event.action === 'delete') {
+      this.deletingProject.set(project)
+      this.deleteDialogOpen.set(true)
+    }
+  }
+
+  async confirmDelete(): Promise<void> {
+    const project = this.deletingProject()
+    this.deleteDialogOpen.set(false)
+    if (!project) {
+      return
+    }
+    try {
+      await this._service.remove(project.id)
+      toast.success('Proyecto eliminado')
+    } catch {
+      toast.error('No se pudo eliminar el proyecto')
+    }
+  }
+
+  async onSave(value: ProjectFormValue): Promise<void> {
+    const editing = this.editingProject()
+    this.dialogOpen.set(false)
+    try {
+      if (editing) {
+        await this._service.update(editing.id, value)
+        toast.success('Proyecto actualizado correctamente')
+      } else {
+        await this._service.create({ id: generateId(), ...value })
+        toast.success('Proyecto creado correctamente')
+      }
+    } catch {
+      toast.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+    }
   }
 }

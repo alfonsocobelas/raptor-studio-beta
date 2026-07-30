@@ -111,9 +111,19 @@ export interface ListAction {
 export interface ListDefinition {
   /** Label of the view action; defaults to 'Ver ficha' */
   viewLabel?: string
+  /** Field shown in the delete confirmation text; defaults to 'name' */
+  deleteLabelField?: string
   defaultSort?: { field: string; dir: 'asc' | 'desc' }
   pageSize?: number
-  features?: { create?: boolean; export?: ('csv' | 'xlsx')[]; search?: boolean }
+  features?: {
+    create?: boolean
+    export?: ('csv' | 'xlsx')[]
+    search?: boolean
+    /** Row action navigating to the detail route (default true; Router only imported when true) */
+    view?: boolean
+    /** Delete flow with confirmation alert-dialog (default false) */
+    delete?: boolean
+  }
   actions?: ListAction[]
 }
 

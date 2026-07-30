@@ -58,6 +58,10 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
+  features: { view: boolean; delete: boolean }
+  /** lucide icons required by the enabled actions */
+  icons: string[]
+  deleteLabelField: string
 }
 
 export interface UiStrings {
@@ -73,6 +77,10 @@ export interface UiStrings {
   toastCreateError: string
   toastUpdateError: string
   viewLabel: string
+  deleteTitle: string
+  deleteDescriptionSubject: string
+  toastDeleted: string
+  toastDeleteError: string
 }
 
 // Defaults derived from the schema field type; column.type / column.tsType override them.
@@ -148,8 +156,26 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
       .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable)),
     valueMapImports: [
       ...new Set(fields.map(([, f]) => f.table?.valueMapConst).filter((c): c is string => c !== undefined))
-    ]
+    ],
+    features: resolveFeatures(definition),
+    icons: renderIcons(resolveFeatures(definition)),
+    deleteLabelField: definition.list?.deleteLabelField ?? 'name'
   }
+}
+
+function resolveFeatures(definition: ResourceDefinition): { view: boolean; delete: boolean } {
+  return {
+    view: definition.list?.features?.view ?? true,
+    delete: definition.list?.features?.delete ?? false
+  }
+}
+
+function renderIcons(features: { view: boolean; delete: boolean }): string[] {
+  const icons: string[] = []
+  if (features.view) icons.push('lucideEye')
+  icons.push('lucidePencil')
+  if (features.delete) icons.push('lucideTrash2')
+  return icons
 }
 
 function renderUiStrings(definition: ResourceDefinition): UiStrings {
@@ -174,7 +200,11 @@ function renderUiStrings(definition: ResourceDefinition): UiStrings {
     toastUpdated: `${singular} actualizad${suffix} correctamente`,
     toastCreateError: `No se pudo crear ${article} ${lowerSingular}`,
     toastUpdateError: `No se pudo actualizar ${article} ${lowerSingular}`,
-    viewLabel: definition.list?.viewLabel ?? 'Ver ficha'
+    viewLabel: definition.list?.viewLabel ?? 'Ver ficha',
+    deleteTitle: `Eliminar ${lowerSingular}`,
+    deleteDescriptionSubject: `${article} ${lowerSingular}`,
+    toastDeleted: `${singular} eliminad${suffix}`,
+    toastDeleteError: `No se pudo eliminar ${article} ${lowerSingular}`
   }
 }
 
