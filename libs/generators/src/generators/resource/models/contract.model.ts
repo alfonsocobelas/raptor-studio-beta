@@ -12,7 +12,12 @@ export const contract = defineResource({
   schemaName: 'sap_licensing',
   route: '/sap-licensing/contracts',
   sharedDomainAlias: '@sap-licenses/shared/domain',
-  labels: { singular: 'Contrato', plural: 'Contratos', subtitle: 'Gestión de contratos SAP y acuerdos de licenciamiento', gender: 'm' },
+  labels: {
+    singular: 'Contrato',
+    plural: 'Contratos',
+    subtitle: 'Gestión de contratos SAP y acuerdos de licenciamiento',
+    gender: 'm'
+  },
   list: { viewLabel: 'Ver detalle' },
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
@@ -131,7 +136,14 @@ export const contract = defineResource({
     currency: { type: 'string', column: { type: 'varchar', lengthConst: 'CURRENCY.LENGTH', default: 'EUR' } },
     billingFrequency: {
       type: 'string',
-      table: { show: true, order: 9, label: 'Facturación', sortable: false, minWidth: 120, valueMapConst: 'BILLING_FREQUENCY_LABELS' },
+      table: {
+        show: true,
+        order: 9,
+        label: 'Facturación',
+        sortable: false,
+        minWidth: 120,
+        valueMapConst: 'BILLING_FREQUENCY_LABELS'
+      },
       column: { type: 'varchar', length: 20, default: 'yearly' }
     },
     renewalType: { type: 'string', column: { type: 'varchar', length: 20, default: 'manual' } },

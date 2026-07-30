@@ -147,11 +147,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
       .sort(([, a], [, b]) => (a.table?.order ?? Number.MAX_SAFE_INTEGER) - (b.table?.order ?? Number.MAX_SAFE_INTEGER))
       .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable)),
     valueMapImports: [
-      ...new Set(
-        fields
-          .map(([, f]) => f.table?.valueMapConst)
-          .filter((c): c is string => c !== undefined)
-      )
+      ...new Set(fields.map(([, f]) => f.table?.valueMapConst).filter((c): c is string => c !== undefined))
     ]
   }
 }
