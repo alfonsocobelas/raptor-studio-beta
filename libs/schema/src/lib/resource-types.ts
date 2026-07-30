@@ -19,6 +19,8 @@ export interface VoDefinition {
   noInnerWhitespace?: boolean
   /** Length rule against the constraints key: 'max' (…must be at most N characters) or 'exact' */
   lengthRule?: 'max' | 'exact'
+  /** Also emit the string MIN-length check against the constraints key */
+  minLength?: boolean
   /** Custom message for the exact-length rule (e.g. '…must be a N-letter ISO code') */
   lengthMessage?: string
   /** Key inside <CONST>_CONSTRAINTS; defaults to the SNAKE_CASE field name */

@@ -106,6 +106,7 @@ export interface VoSubstitution {
   constraintKey: string
   ensure: 'defined' | 'string'
   noInnerWhitespace: boolean
+  minLength: boolean
   lengthRule?: 'max' | 'exact'
   lengthMessage: string
   min: boolean
@@ -281,6 +282,7 @@ function renderVos(definition: ResourceDefinition, className: string): VoSubstit
         constraintKey,
         ensure: vo.ensure ?? 'defined',
         noInnerWhitespace: vo.noInnerWhitespace ?? false,
+        minLength: vo.minLength ?? false,
         lengthRule: vo.lengthRule,
         lengthMessage:
           vo.lengthRule === 'exact'
@@ -721,7 +723,7 @@ function renderToPersistenceLine(name: string, field: FieldDefinition): string {
   if (isNullableDate(field)) {
     return `entity.${name} = primitives.${name} ? new Date(primitives.${name}) : null`
   }
-  if (field.optionalPrimitive) {
+  if (field.optionalPrimitive || field.syncManaged) {
     const fallback = field.column?.default !== undefined ? renderLiteral(field.column.default) : 'null'
     return `entity.${name} = primitives.${name} ?? ${fallback}`
   }

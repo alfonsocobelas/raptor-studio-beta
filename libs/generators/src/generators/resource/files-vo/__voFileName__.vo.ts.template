@@ -105,6 +105,12 @@ export class <%- vo.voClassName %> extends StringValueObject {
 <%_ if (vo.noInnerWhitespace) { _%>
     this.ensureHasNoInnerWhitespace(value)
 <%_ } _%>
+<%_ if (vo.minLength) { _%>
+
+    if (value.length < <%- vo.constraintsConst %>.<%- vo.constraintKey %>.MIN) {
+      throw new <%- vo.errorClass %>(`<%- vo.fieldName %> must be at least ${<%- vo.constraintsConst %>.<%- vo.constraintKey %>.MIN} characters`)
+    }
+<%_ } _%>
 <%_ if (vo.lengthRule === 'max') { _%>
 
     if (value.length > <%- vo.constraintsConst %>.<%- vo.constraintKey %>.MAX) {

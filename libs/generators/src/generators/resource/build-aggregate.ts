@@ -228,17 +228,18 @@ function registerArg(c: FieldCtx): string {
 }
 
 function fromPrimitivesArg(c: FieldCtx): string {
-  if (!c.voName) return `props.${c.name}`
+  if (!c.voName) return c.maint ? `props.${c.name} ?? null` : `props.${c.name}`
   if (c.sync && isTimestamp(c)) {
     return `props.${c.name} ? SyncTimestamp.fromISOString(props.${c.name}) : null`
   }
   if (c.sync) return `props.${c.name} ? ${c.voName}.create(props.${c.name}) : ${c.voName}.create(${defaultLiteral(c)})`
   if (c.maint && isDateShared(c)) {
-    return `props.${c.name} ? ContractDate.create(new Date(props.${c.name})) : ContractDate.unset()`
+    return `props.${c.name} ? ContractDate.create(new Date(props.${c.name})) : ContractDate.${c.unset ? 'unset()' : 'unset()'}`
   }
   if (c.maint && c.unset) {
     return `props.${c.name} != null ? ${c.voName}.create(props.${c.name}) : ${c.voName}.unset()`
   }
+  if (c.maint && c.nullable) return `props.${c.name} ? ${c.voName}.create(props.${c.name}) : null`
   if (c.maint) return `${c.voName}.create(props.${c.name} ?? ${defaultLiteral(c)})`
   if (c.nullable) return `props.${c.name} === null ? null : ${c.voName}.create(props.${c.name})`
   return `${c.voName}.create(props.${c.name})`

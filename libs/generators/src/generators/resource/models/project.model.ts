@@ -17,6 +17,7 @@ export const project = defineResource({
     gender: 'm'
   },
   list: { features: { view: false, delete: true } },
+  period: { start: 'startDate', end: 'endDate' },
   formSections: [{ id: 'general', title: 'Datos generales' }],
   formGroupValidators: [{ kind: 'dateRange', startField: 'startDate', endField: 'endDate' }],
   constraintsConst: 'PROJECT_CONSTRAINTS',
@@ -48,12 +49,23 @@ export const project = defineResource({
     },
     customerName: {
       type: 'string',
+      required: true,
+      voShared: { name: 'CustomerName' },
       query: { filterable: 5, sortable: 2, searchable: 2 },
       table: { show: true, order: 2, label: 'Cliente', filterable: true, minWidth: 200 },
       column: { type: 'varchar', length: 200 }
     },
     name: {
       type: 'string',
+      unique: true,
+      vo: {
+        name: 'ProjectName',
+        fieldName: 'Project name',
+        ensure: 'string',
+        minLength: true,
+        lengthRule: 'max',
+        constraintKey: 'NAME'
+      },
       query: { filterable: 6, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Nombre', filterable: true, minWidth: 250 },
       required: true,
@@ -62,6 +74,12 @@ export const project = defineResource({
     },
     description: {
       type: 'string',
+      vo: {
+        name: 'ProjectDescription',
+        fieldName: 'Project description',
+        lengthRule: 'max',
+        constraintKey: 'DESCRIPTION'
+      },
       form: {
         control: 'textarea',
         label: 'Descripción',
@@ -76,6 +94,7 @@ export const project = defineResource({
     startDate: {
       type: 'date',
       nullable: true,
+      voShared: { name: 'ContractDate' },
       query: { sortable: 3 },
       table: { show: true, order: 4, label: 'Fecha inicio', type: 'date', minWidth: 120 },
       required: true,
@@ -85,6 +104,7 @@ export const project = defineResource({
     endDate: {
       type: 'date',
       nullable: true,
+      voShared: { name: 'ContractDate' },
       query: { sortable: 4 },
       table: { show: true, order: 5, label: 'Fecha fin', type: 'date', minWidth: 120 },
       form: {
@@ -99,6 +119,7 @@ export const project = defineResource({
     },
     status: {
       type: 'string',
+      vo: { name: 'ProjectStatus', fieldName: 'Project status', values: ['planning', 'active', 'onhold', 'closed'] },
       query: { filterable: 2, sortable: 5 },
       table: {
         show: true,
@@ -133,6 +154,7 @@ export const project = defineResource({
     },
     implementer: {
       type: 'string',
+      vo: { name: 'ProjectImplementer', fieldName: 'Project implementer', values: ['AVVALE', 'THIRD_PARTY'] },
       query: { filterable: 3 },
       table: {
         show: true,
@@ -163,7 +185,8 @@ export const project = defineResource({
     },
     origin: {
       type: 'string',
-      optionalPrimitive: true,
+      syncManaged: true,
+      vo: { name: 'ProjectOrigin', fieldName: 'Project origin', values: ['MANUAL', 'ME_SAP'] },
       query: { filterable: 7 },
       table: {
         show: true,
@@ -185,19 +208,36 @@ export const project = defineResource({
     },
     lifecycleStatus: {
       type: 'string',
-      optionalPrimitive: true,
+      syncManaged: true,
+      vo: { name: 'ProjectLifecycleStatus', fieldName: 'Project lifecycle status', values: ['active', 'archived'] },
       column: { type: 'varchar', length: 20, default: 'active' }
     },
-    archivedAt: { type: 'timestamptz', nullable: true, column: { type: 'timestamptz', tsType: 'Nullable<Date>' } },
+    archivedAt: {
+      type: 'timestamptz',
+      nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
+      column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
+    },
     lastSeenInSyncAt: {
       type: 'timestamptz',
       nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
       column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
     },
     sapProjectId: {
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      vo: {
+        name: 'SapProjectId',
+        fieldName: 'SAP project ID',
+        ensure: 'string',
+        noInnerWhitespace: true,
+        lengthRule: 'max',
+        constraintKey: 'SAP_PROJECT_ID'
+      },
       comment: ['Campos SAP (spec 46): identidad de upsert + crudo del feed, sin invariante propia.'],
       column: { type: 'varchar', lengthConst: 'SAP_PROJECT_ID.MAX', tsType: 'Nullable<string>' }
     },
@@ -235,6 +275,7 @@ export const project = defineResource({
       type: 'date',
       nullable: true,
       optionalPrimitive: true,
+      voShared: { name: 'ContractDate' },
       column: { type: 'date', tsType: 'Nullable<string>' }
     }
   }
