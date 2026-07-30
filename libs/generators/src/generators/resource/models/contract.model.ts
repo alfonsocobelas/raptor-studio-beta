@@ -25,6 +25,7 @@ export const contract = defineResource({
     { id: 'notes', title: 'Notas' }
   ],
   formGroupValidators: [{ kind: 'dateRange', startField: 'startDate', endField: 'endDate' }],
+  period: { start: 'startDate', end: 'endDate' },
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
   auditComment: true,
@@ -46,6 +47,7 @@ export const contract = defineResource({
   fields: {
     id: { type: 'uuid', pk: true, query: { filterable: 1 } },
     contractType: {
+      required: true,
       vo: { name: 'ContractType', fieldName: 'Contract type', values: ['cloud', 'onprem', 'mixed', 'maintenance'] },
       type: 'string',
       query: { filterable: 2 },
@@ -83,6 +85,8 @@ export const contract = defineResource({
     contractNumber: {
       type: 'string',
       nullable: true,
+      voShared: { name: 'ContractNumber' },
+      unique: true,
       query: { filterable: 7, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Nº Contrato', filterable: true, minWidth: 180 },
       required: true,
@@ -110,6 +114,8 @@ export const contract = defineResource({
     },
     customerName: {
       type: 'string',
+      required: true,
+      voShared: { name: 'CustomerName' },
       query: { filterable: 6, sortable: 2, searchable: 2 },
       table: { show: true, order: 2, label: 'Cliente', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
@@ -204,6 +210,7 @@ export const contract = defineResource({
     startDate: {
       type: 'date',
       nullable: true,
+      voShared: { name: 'ContractDate' },
       query: { sortable: 3 },
       table: { show: true, order: 4, label: 'Inicio', type: 'date', minWidth: 120 },
       required: true,
@@ -213,6 +220,7 @@ export const contract = defineResource({
     endDate: {
       type: 'date',
       nullable: true,
+      voShared: { name: 'ContractDate' },
       query: { sortable: 4 },
       table: { show: true, order: 5, label: 'Fin', type: 'date', minWidth: 120 },
       form: {
@@ -306,6 +314,7 @@ export const contract = defineResource({
       column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
     },
     origin: {
+      syncManaged: true,
       vo: { name: 'ContractOrigin', fieldName: 'Contract origin', values: ['ME_SAP', 'MANUAL'] },
       type: 'string',
       optionalPrimitive: true,
@@ -316,15 +325,24 @@ export const contract = defineResource({
       column: { type: 'varchar', length: 20, default: 'MANUAL' }
     },
     lifecycleStatus: {
+      syncManaged: true,
       vo: { name: 'ContractLifecycleStatus', fieldName: 'Contract lifecycle status', values: ['active', 'archived'] },
       type: 'string',
       optionalPrimitive: true,
       column: { type: 'varchar', length: 20, default: 'active' }
     },
-    archivedAt: { type: 'timestamptz', nullable: true, column: { type: 'timestamptz', tsType: 'Nullable<Date>' } },
+    archivedAt: {
+      type: 'timestamptz',
+      nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
+      column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
+    },
     lastSeenInSyncAt: {
       type: 'timestamptz',
       nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
       column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
     },
     supportModel: {
@@ -338,12 +356,14 @@ export const contract = defineResource({
       type: 'date',
       nullable: true,
       optionalPrimitive: true,
+      voShared: { name: 'ContractDate', unset: true },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     upcomingMaintenanceFee: {
       type: 'number',
       nullable: true,
       optionalPrimitive: true,
+      voRef: { name: 'ContractValue', unset: true },
       column: { type: 'numeric', precision: 15, scale: 2, transformer: 'nullableNumeric', tsType: 'Nullable<number>' }
     }
   }

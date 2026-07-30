@@ -144,6 +144,12 @@ export interface FieldDefinition {
   unique?: boolean
   /** Decision 5: VO names are explicit, never derived. Object form drives VO file emission. */
   vo?: string | VoDefinition
+  /** VO shared across the context (not emitted): { name: 'CustomerName' } imported from context-shared */
+  voShared?: { name: string; unset?: boolean }
+  /** Reuse another field's module VO by name (type-only reference, no emission) */
+  voRef?: { name: string; unset?: boolean }
+  /** Lifecycle field governed by the sync: optional in primitives, excluded from update/register */
+  syncManaged?: boolean
   min?: number
   max?: number
   relation?: FieldRelation
@@ -233,6 +239,8 @@ export interface ResourceDefinition {
   formSections?: { id: string; title: string }[]
   /** Group-level validators the dialog attaches (known set: 'dateRange') */
   formGroupValidators?: { kind: 'dateRange'; startField: string; endField: string }[]
+  /** Aggregate composes these two date fields into a shared Period VO */
+  period?: { start: string; end: string }
   /** Labels module imported by the dialog (<fileName>-labels); when set, label consts are not inlined */
   labelsModule?: boolean
   labels?: ResourceLabels

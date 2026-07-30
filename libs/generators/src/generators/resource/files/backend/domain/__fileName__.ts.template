@@ -1,0 +1,70 @@
+<%_ if (aggregate.emitAggregate) { _%>
+<%_ aggregate.aggImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+
+export class <%- className %> extends AggregateRoot {
+  private constructor(
+<%_ aggregate.ctorParams.forEach((param, i) => { _%>
+    <%- param %><%- i < aggregate.ctorParams.length - 1 ? ',' : '' %>
+<%_ }) _%>
+  ) {
+    super()
+  }
+
+  //#region ...Getters...
+<%_ aggregate.getterBlocks.forEach(block => { _%>
+<%- block %>
+<%_ }) _%>
+  //#endregion
+
+  static create(props: <%- className %>AggregateProps): <%- className %> {
+    return new <%- className %>(
+<%_ aggregate.createArgs.forEach((arg, i) => { _%>
+      <%- arg %><%- i < aggregate.createArgs.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    )
+  }
+
+  static register(props: Register<%- className %>Props): <%- className %> {
+    return <%- className %>.create({
+<%_ aggregate.registerArgs.forEach((arg, i) => { _%>
+      <%- arg %><%- i < aggregate.registerArgs.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    })
+  }
+
+  static fromPrimitives(props: <%- className %>PrimitiveProps): <%- className %> {
+    return new <%- className %>(
+<%_ aggregate.fromPrimitivesArgs.forEach((arg, i) => { _%>
+      <%- arg %><%- i < aggregate.fromPrimitivesArgs.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    )
+  }
+
+  toPrimitives(): <%- className %>PrimitiveProps {
+    return {
+<%_ aggregate.toPrimitivesLines.forEach((line, i) => { _%>
+      <%- line %><%- i < aggregate.toPrimitivesLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    }
+  }
+
+  updateDetails(updates: <%- className %>UpdateProps): void {
+<%_ aggregate.updateGuardBlocks.forEach(block => { _%>
+<%- block %>
+<%_ }) _%>
+  }
+
+  equals(other: AggregateRoot): boolean {
+    if (!(other instanceof <%- className %>)) {
+      return false
+    }
+    return this._id.equals(other._id)
+  }
+<%_ aggregate.uniquenessMethods.forEach(method => { _%>
+
+<%- method %>
+<%_ }) _%>
+}
+<%_ } _%>

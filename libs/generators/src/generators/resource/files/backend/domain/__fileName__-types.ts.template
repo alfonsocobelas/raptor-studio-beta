@@ -1,0 +1,36 @@
+<%_ if (aggregate.emitAggregate) { _%>
+<%_ aggregate.typesImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+
+export interface <%- className %>AggregateProps {
+<%_ aggregate.aggregatePropsLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+
+export interface <%- className %>PrimitiveProps {
+<%_ aggregate.primitivePropsLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+
+export type <%- className %>UpdateProps = Partial<
+  Omit<
+    <%- className %>PrimitiveProps,
+<%_ aggregate.updateOmitKeys.forEach((key, i) => { _%>
+    | '<%- key %>'
+<%_ }) _%>
+  >
+>
+<%_ if (aggregate.uniquenessPickKeys.length) { _%>
+
+export type <%- className %>UniquenessUpdateProps = Pick<<%- className %>UpdateProps, <%- aggregate.uniquenessPickKeys.map(k => "'" + k + "'").join(' | ') %>>
+<%_ } _%>
+
+export interface Register<%- className %>Props {
+<%_ aggregate.registerPropsLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+}
+<%_ } _%>

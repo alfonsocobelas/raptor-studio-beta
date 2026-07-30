@@ -10,7 +10,6 @@ import { BusinessModel } from './value-objects/business-model.vo'
 import { CmsCaseId } from './value-objects/cms-case-id.vo'
 import { ContractCurrency } from './value-objects/contract-currency.vo'
 import { ContractNotes } from './value-objects/contract-notes.vo'
-import { ContractOrigin } from './value-objects/contract-origin.vo'
 import { ContractSource } from './value-objects/contract-source.vo'
 import { ContractStatus } from './value-objects/contract-status.vo'
 import { ContractType } from './value-objects/contract-type.vo'
@@ -34,8 +33,6 @@ export interface ContractAggregateProps {
   isFavorite: IsFavorite
   status: ContractStatus
   source: ContractSource
-  origin: ContractOrigin
-  period: Period
   totalValue: ContractValue
   currency: ContractCurrency
   billingFrequency: BillingFrequency
@@ -44,6 +41,7 @@ export interface ContractAggregateProps {
   supportModel: SupportModel
   upcomingMaintenanceEnd: Nullable<ContractDate>
   upcomingMaintenanceFee: Nullable<ContractValue>
+  period: Period
 }
 
 export interface ContractPrimitiveProps {
@@ -75,10 +73,6 @@ export interface ContractPrimitiveProps {
   upcomingMaintenanceFee?: Nullable<number>
 }
 
-// Vista de lectura del contrato (spec 40): totalValue se deriva de la suma del annualValue de sus
-// licencias, no de la columna persistida (vestigial); null cuando el contrato no tiene licencias.
-export type ContractView = Omit<ContractPrimitiveProps, 'totalValue'> & { totalValue: number | null }
-
 export type ContractUpdateProps = Partial<
   Omit<
     ContractPrimitiveProps,
@@ -101,7 +95,6 @@ export interface RegisterContractProps {
   contractNumber: Nullable<string>
   customerId: string
   customerName: string
-  startDate: Nullable<string>
   cmsCaseId?: string
   businessModel?: string
   subSolutionAreas?: string[]
@@ -109,20 +102,13 @@ export interface RegisterContractProps {
   isFavorite?: boolean
   status?: string
   source?: string
+  startDate: Nullable<string>
   endDate?: string | null
   totalValue?: number
   currency?: string
   billingFrequency?: string
   renewalType?: string
   notes?: string
-  supportModel?: string
-  upcomingMaintenanceEnd?: string | null
-  upcomingMaintenanceFee?: number | null
-}
-
-// Campos de mantenimiento (spec 44): los gobierna el sync, nunca la edición manual —
-// por eso NO forman parte de ContractUpdateProps y mutan por updateMaintenanceFields.
-export interface ContractMaintenanceSyncProps {
   supportModel?: string
   upcomingMaintenanceEnd?: string | null
   upcomingMaintenanceFee?: number | null

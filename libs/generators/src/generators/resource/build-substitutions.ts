@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { AggregateBindings, renderAggregate } from './build-aggregate'
 import {
   ColumnDefinition,
   ConstraintValue,
@@ -89,6 +90,7 @@ export interface ResourceSubstitutions {
   test: TestBindings
   /** Value objects to emit (fields whose vo is declared in object form) */
   vos: VoSubstitution[]
+  aggregate: AggregateBindings
 }
 
 export interface VoSubstitution {
@@ -251,7 +253,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
     ...renderForm(definition, n.fileName),
     test: renderTestBindings(definition),
-    vos: renderVos(definition, n.className)
+    vos: renderVos(definition, n.className),
+    aggregate: renderAggregate(definition)
   }
 }
 
