@@ -1,5 +1,12 @@
 <%_ if (aggregate.emitAggregate) { _%>
+<%_ const comp = aggregate.composition _%>
+<%_ const Child = comp ? comp.childClass : '' _%>
+<%_ const kids = comp ? comp.childrenProp : '' _%>
+<%_ const KidsCap = comp ? kids.charAt(0).toUpperCase() + kids.slice(1) : '' _%>
 import { Injectable } from '@nestjs/common'
+<%_ if (comp) { _%>
+import { FindOptionsWhere, In, Not } from 'typeorm'
+<%_ } _%>
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
@@ -16,6 +23,9 @@ import { <%- spec.voName %> } from '../../../../../shared/domain/value-objects/<
 <%_ } _%>
 <%_ }) _%>
 import { <%- className %>Mapper } from './<%- fileName %>.mapper'
+<%_ if (comp) { _%>
+import { TypeOrm<%- Child %>Entity } from './typeorm-<%- comp.childFileName %>.entity'
+<%_ } _%>
 import { TypeOrm<%- className %>Entity } from './typeorm-<%- fileName %>.entity'
 
 @Injectable()
@@ -31,10 +41,31 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   async register(<%- propertyName %>: <%- className %>): Promise<void> {
     await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
   }
+<%_ if (comp) { _%>
+
+  // Persiste el agregado completo: <%- propertyName %> + upsert de <%- kids %> + soft-delete de los que
+  // ya no viven en el agregado (materializa remove<%- Child %>). Usa this.client(), así que se une a la
+  // transacción que abra el use case (el boundary transaccional vive en la aplicación, no aquí).
+  // El agregado siempre llega hidratado, así que el diff nunca borra <%- kids %> por hidratación parcial.
+  async save(<%- propertyName %>: <%- className %>): Promise<void> {
+    await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
+
+    const <%- comp.childProp %>Repository = this.client().getRepository(TypeOrm<%- Child %>Entity)
+    const <%- comp.childProp %>Entities = <%- className %>Mapper.<%- kids %>ToPersistence(<%- propertyName %>)
+
+    if (<%- comp.childProp %>Entities.length) {
+      await <%- comp.childProp %>Repository.save(<%- comp.childProp %>Entities)
+    }
+
+    const keptIds = <%- comp.childProp %>Entities.map(<%- comp.childProp %> => <%- comp.childProp %>.id)
+    await <%- comp.childProp %>Repository.softDelete(this.orphaned<%- KidsCap %>Where(<%- propertyName %>.id.value, keptIds))
+  }
+<%_ } else { _%>
 
   async save(<%- propertyName %>: <%- className %>): Promise<void> {
     await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
   }
+<%_ } _%>
 <%_ if (app.removes) { _%>
 
   async remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
@@ -44,18 +75,22 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
 
   async get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
     const entity = await this.repository().findOneBy({ id: <%- propertyName %>Id.value })
-    return entity ? <%- className %>Mapper.toDomain(entity) : null
+    return entity ? <%- comp ? 'this.hydrateOne(entity)' : `${className}Mapper.toDomain(entity)` %> : null
   }
 
   async matching(criteria: Criteria): Promise<<%- className %>[]> {
+<%_ if (comp) { _%>
+    return this.hydrate(await this.searchByCriteria(criteria))
+<%_ } else { _%>
     const entities = await this.searchByCriteria(criteria)
     return entities.map(<%- className %>Mapper.toDomain)
+<%_ } _%>
   }
 <%_ app.uniqueSpecs.forEach(spec => { _%>
 
   async findBy<%- spec.field.charAt(0).toUpperCase() + spec.field.slice(1) %>(<%- spec.field %>: <%- spec.voName %>): Promise<Nullable<<%- className %>>> {
     const entity = await this.repository().findOneBy({ <%- spec.field %>: <%- spec.field %>.value })
-    return entity ? <%- className %>Mapper.toDomain(entity) : null
+    return entity ? <%- comp ? 'this.hydrateOne(entity)' : `${className}Mapper.toDomain(entity)` %> : null
   }
 <%_ }) _%>
 
@@ -66,5 +101,43 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
   }
+<%_ if (comp) { _%>
+
+  // <%- KidsCap %> que ya no viven en el agregado y hay que soft-borrar (diff contra la BD).
+  // Guard: In([]) genera `NOT IN ()`, SQL inválido. Sin supervivientes = todos los del padre son huérfanos.
+  private orphaned<%- KidsCap %>Where(<%- comp.parentField %>: string, keptIds: string[]): FindOptionsWhere<TypeOrm<%- Child %>Entity> {
+    if (!keptIds.length) {
+      return { <%- comp.parentField %> }
+    }
+
+    return { <%- comp.parentField %>, id: Not(In(keptIds)) }
+  }
+
+  private async hydrateOne(entity: TypeOrm<%- className %>Entity): Promise<<%- className %>> {
+    return (await this.hydrate([entity]))[0]
+  }
+
+  private async hydrate(entities: TypeOrm<%- className %>Entity[]): Promise<<%- className %>[]> {
+    if (!entities.length) {
+      return []
+    }
+
+    const parentIds = entities.map(entity => entity.id)
+
+    const <%- comp.childProp %>Entities = await this.client()
+      .getRepository(TypeOrm<%- Child %>Entity)
+      .find({ where: { <%- comp.parentField %>: In(parentIds) }, order: { id: 'ASC' } })
+
+    const <%- kids %>ByParent = new Map<string, TypeOrm<%- Child %>Entity[]>()
+
+    for (const <%- comp.childProp %> of <%- comp.childProp %>Entities) {
+      const group = <%- kids %>ByParent.get(<%- comp.childProp %>.<%- comp.parentField %>) ?? []
+      group.push(<%- comp.childProp %>)
+      <%- kids %>ByParent.set(<%- comp.childProp %>.<%- comp.parentField %>, group)
+    }
+
+    return entities.map(entity => <%- className %>Mapper.toDomain(entity, <%- kids %>ByParent.get(entity.id)))
+  }
+<%_ } _%>
 }
 <%_ } _%>

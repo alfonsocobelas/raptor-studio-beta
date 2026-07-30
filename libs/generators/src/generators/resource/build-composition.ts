@@ -35,6 +35,7 @@ export interface CompositionBindings {
   childPrimitivePropsLines: string[]
   typeAliasLines: string[]
   typesExtraImports: string[]
+  childEntityColumns: { decorator: string; declaration: string }[]
 }
 
 interface ChildField {
@@ -239,6 +240,12 @@ export function renderComposition(definition: ResourceDefinition, parentClass: s
       `export type New${childClass}Props = Omit<${childClass}PrimitiveProps, '${comp.parentField}'>`,
       `export type ${parentClass}${childClass}UpdateProps = Partial<Omit<${childClass}PrimitiveProps, 'id' | '${comp.parentField}'>>`
     ],
+    childEntityColumns: [
+      { decorator: "@PrimaryColumn('uuid')", declaration: 'id!: string' },
+      { decorator: "@Column('uuid')", declaration: `${comp.parentField}!: string` },
+      ...fields.map(f => childEntityColumn(f, constraintsConst)),
+      { decorator: "@DeleteDateColumn({ type: 'timestamptz', nullable: true })", declaration: 'deletedAt?: Date' }
+    ],
     typesExtraImports: [
       ...[...new Set([childIdClass, ...localVos])].map(
         vo => `import { ${vo} } from './value-objects/${names(vo).fileName}.vo'`
@@ -247,6 +254,20 @@ export function renderComposition(definition: ResourceDefinition, parentClass: s
         vo => `import { ${vo} } from '../../../shared/domain/value-objects/${names(vo).fileName}.vo'`
       )
     ]
+  }
+}
+
+function childEntityColumn(f: ChildField, constraintsConst: string): { decorator: string; declaration: string } {
+  if (f.field.type === 'boolean') {
+    return { decorator: "@Column('boolean', { default: false })", declaration: `${f.name}!: boolean` }
+  }
+  const vo = typeof f.field.vo === 'object' ? f.field.vo : undefined
+  const key = vo?.constraintKey ?? names(f.name).constantName
+  const length = `${constraintsConst.endsWith('_CONSTRAINTS') ? 'LIMITS' : 'LIMITS'}.${key}.MAX`
+  const withDefault = f.field.required ? '' : ", default: ''"
+  return {
+    decorator: `@Column('varchar', { length: ${length}${withDefault} })`,
+    declaration: `${f.name}!: string`
   }
 }
 

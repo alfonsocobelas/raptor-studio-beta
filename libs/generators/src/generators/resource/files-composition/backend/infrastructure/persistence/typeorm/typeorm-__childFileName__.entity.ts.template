@@ -1,0 +1,13 @@
+import { Column, DeleteDateColumn, Entity, PrimaryColumn } from 'typeorm'
+import { <%- constraintsConst %> as LIMITS } from '../../../domain/<%- fileName %>-constants'
+
+@Entity({ name: '<%- aggregate.composition.childrenProp %>', schema: '<%- schemaName %>' })
+export class TypeOrm<%- aggregate.composition.childClass %>Entity {
+<%_ aggregate.composition.childEntityColumns.forEach((col, i) => { _%>
+  <%- col.decorator %>
+  <%- col.declaration %>
+<%_ if (i < aggregate.composition.childEntityColumns.length - 1) { _%>
+
+<%_ } _%>
+<%_ }) _%>
+}

@@ -1,13 +1,27 @@
+<%_ const comp = aggregate.composition _%>
+<%_ if (comp) { _%>
+import { <%- comp.childClass %> } from '../../../domain/<%- comp.childFileName %>'
+<%_ } _%>
 import { <%- className %> } from '../../../domain/<%- fileName %>'
+<%_ if (comp) { _%>
+import { TypeOrm<%- comp.childClass %>Entity } from './typeorm-<%- comp.childFileName %>.entity'
+<%_ } _%>
 import { TypeOrm<%- className %>Entity } from './typeorm-<%- fileName %>.entity'
 
 export class <%- className %>Mapper {
-  static toDomain(entity: TypeOrm<%- className %>Entity): <%- className %> {
-    return <%- className %>.fromPrimitives({
+  static toDomain(entity: TypeOrm<%- className %>Entity<% if (comp) { %>, <%- comp.childrenProp %>Entities: TypeOrm<%- comp.childClass %>Entity[] = []<% } %>): <%- className %> {
+    return <%- className %>.fromPrimitives(
+      {
 <%_ toDomainProps.forEach(line => { _%>
-      <%- line %>,
+        <%- line %>,
 <%_ }) _%>
-    })
+      }<% if (comp) { %>,
+      <%- comp.childrenProp %>Entities.map(<%- comp.childProp %>Entity => ({
+<%_ comp.childToPrimitivesLines.forEach((line, i) => { _%>
+        <%- line.split(':')[0] %>: <%- comp.childProp %>Entity.<%- line.split(':')[0] %><%- i < comp.childToPrimitivesLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+      }))<% } %>
+    )
   }
 
   static toPersistence(domain: <%- className %>): TypeOrm<%- className %>Entity {
@@ -19,4 +33,20 @@ export class <%- className %>Mapper {
 
     return entity
   }
+<%_ if (comp) { _%>
+
+  static <%- comp.childrenProp %>ToPersistence(domain: <%- className %>): TypeOrm<%- comp.childClass %>Entity[] {
+    return domain.<%- comp.childrenProp %>.map(<%- className %>Mapper.<%- comp.childProp %>ToPersistence)
+  }
+
+  static <%- comp.childProp %>ToPersistence(<%- comp.childProp %>: <%- comp.childClass %>): TypeOrm<%- comp.childClass %>Entity {
+    const primitives = <%- comp.childProp %>.toPrimitives()
+    const entity = new TypeOrm<%- comp.childClass %>Entity()
+<%_ comp.childToPrimitivesLines.forEach(line => { _%>
+    entity.<%- line.split(':')[0] %> = primitives.<%- line.split(':')[0] %>
+<%_ }) _%>
+
+    return entity
+  }
+<%_ } _%>
 }

@@ -9,13 +9,13 @@ export class TypeOrmContactEntity {
   @Column('uuid')
   customerId!: string
 
-  @Column('varchar', { length: LIMITS.NAME.MAX })
+  @Column('varchar', { length: LIMITS.CONTACT.NAME.MAX })
   name!: string
 
-  @Column('varchar', { length: 100, default: '' })
+  @Column('varchar', { length: LIMITS.CONTACT.ROLE.MAX, default: '' })
   role!: string
 
-  @Column('varchar', { length: 200, default: '' })
+  @Column('varchar', { length: LIMITS.CONTACT.EMAIL.MAX, default: '' })
   email!: string
 
   @Column('varchar', { length: LIMITS.PHONE.MAX, default: '' })
