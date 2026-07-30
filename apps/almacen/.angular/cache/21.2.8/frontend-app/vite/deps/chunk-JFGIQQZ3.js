@@ -18,11 +18,11 @@ import {
   _CdkPrivateStyleLoader
 } from "./chunk-VZXHQ2DV.js";
 import {
-  Platform
-} from "./chunk-Q5ZTVR5D.js";
-import {
   BidiModule
 } from "./chunk-ZF46EDWW.js";
+import {
+  Platform
+} from "./chunk-Q5ZTVR5D.js";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -794,4 +794,4 @@ export {
   MatMiniFabAnchor,
   MatButtonModule
 };
-//# sourceMappingURL=chunk-CM6DR7MR.js.map
+//# sourceMappingURL=chunk-JFGIQQZ3.js.map

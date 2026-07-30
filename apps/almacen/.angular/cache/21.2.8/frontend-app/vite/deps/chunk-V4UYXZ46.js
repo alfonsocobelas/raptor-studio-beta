@@ -7,12 +7,12 @@ import {
   _animationsDisabled
 } from "./chunk-CBDQDAS7.js";
 import {
-  Platform
-} from "./chunk-Q5ZTVR5D.js";
-import {
   BidiModule,
   Directionality
 } from "./chunk-ZF46EDWW.js";
+import {
+  Platform
+} from "./chunk-Q5ZTVR5D.js";
 import {
   NgTemplateOutlet
 } from "./chunk-EF6XZAAA.js";
@@ -1535,4 +1535,4 @@ export {
   MatFormField,
   MatFormFieldModule
 };
-//# sourceMappingURL=chunk-UN7NTKIH.js.map
+//# sourceMappingURL=chunk-V4UYXZ46.js.map

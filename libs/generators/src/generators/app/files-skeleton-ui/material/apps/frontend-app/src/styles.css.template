@@ -6,6 +6,11 @@
 /* Tema prefabricado de Angular Material: evita tener que compilar SCSS en el proyecto. */
 @import '@angular/material/prebuilt-themes/azure-blue.css';
 
+/* Roboto auto-hospedado: el tema lo pide sin fallback y sin esto el navegador cae a serif. */
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import '@fontsource/roboto/700.css';
+
 html,
 body {
   height: 100%;
