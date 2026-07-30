@@ -26,6 +26,8 @@ export interface FieldQuery {
   sortable?: boolean | number
   filterable?: boolean | number
   searchable?: boolean | number
+  /** Comment lines emitted above this entry in the ALLOWED_FILTERS list */
+  filterNote?: string[]
 }
 
 export interface FieldTable {
@@ -141,8 +143,14 @@ export interface ResourceDefinition {
   auditComment?: boolean
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
-  /** Mapper emission style; omit when the golden module's mapper is not the canonical primitives style (C2) */
-  mapperStyle?: 'primitives'
+  /** Files NOT to emit for this resource (C2: golden modules carry hand extensions the canon does not cover) */
+  skipEmit?: ('mapper' | 'constants')[]
+  /** Emit a DeleteDateColumn soft-delete column (deletedAt) */
+  softDelete?: boolean
+  /** Comment lines emitted above ALLOWED_ORDERS in the search-config */
+  ordersNotes?: string[]
+  /** Additional exported constant groups in <name>-constants.ts (e.g. OBSERVABILITY_THRESHOLDS) */
+  extraConstants?: Record<string, Record<string, number>>
   /**
    * Feeds <name>-constants.ts. Values: { shared: true } references SHARED_CONSTRAINTS.<KEY>,
    * { shared: '<OTHER_KEY>' } references a differently-named shared entry, a number emits a

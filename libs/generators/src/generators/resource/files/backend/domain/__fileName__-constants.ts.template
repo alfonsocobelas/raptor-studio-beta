@@ -7,3 +7,9 @@ export const <%- constantName %>_CONSTRAINTS = {
   <%- entry %>,
 <%_ }) _%>
 } as const
+<%_ extraConstantBlocks.forEach(block => { _%>
+
+export const <%- block.split(':')[0] %> = {
+  <%- block.slice(block.indexOf('{') + 2, block.lastIndexOf('}') - 1) %>
+} as const
+<%_ }) _%>

@@ -234,3 +234,41 @@ describe('buildSubstitutions — constraints extended forms', () => {
     ])
   })
 })
+
+describe('buildSubstitutions — license-style bindings', () => {
+  const model: ResourceDefinition = {
+    schemaVersion: 1,
+    name: 'thing',
+    plural: 'things',
+    context: 'demo',
+    schemaName: 'demo',
+    audit: true,
+    softDelete: true,
+    ordersNotes: ['nota de orders'],
+    extraConstants: { OBSERVABILITY_THRESHOLDS: { UNDERUSED_PCT: 40, OVERUSED_PCT: 95 } },
+    fields: {
+      id: { type: 'uuid', pk: true, query: { filterable: 1 } },
+      consumptionPct: { type: 'number', query: { filterable: 2, filterNote: ['nota del filtro'] } }
+    }
+  }
+  const subs = buildSubstitutions(model)
+
+  it('imports DeleteDateColumn and flags softDelete', () => {
+    expect(subs.softDelete).toBe(true)
+    expect(subs.typeormImports).toBe(
+      'Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryColumn, UpdateDateColumn'
+    )
+  })
+
+  it('carries per-entry filter notes and orders notes', () => {
+    expect(subs.filterEntries).toEqual([
+      { name: 'id', comment: [] },
+      { name: 'consumptionPct', comment: ['nota del filtro'] }
+    ])
+    expect(subs.ordersNotes).toEqual(['nota de orders'])
+  })
+
+  it('renders extra constant groups', () => {
+    expect(subs.extraConstantBlocks).toEqual(['OBSERVABILITY_THRESHOLDS: { UNDERUSED_PCT: 40, OVERUSED_PCT: 95 }'])
+  })
+})

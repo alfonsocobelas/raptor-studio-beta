@@ -3,11 +3,17 @@ import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-typ
 type <%- className %>AllowedField = keyof <%- className %>PrimitiveProps
 
 const <%- constantName %>_ALLOWED_FILTERS: Array<<%- className %>AllowedField> = [
-<%_ allowedFilters.forEach(f => { _%>
-  '<%- f %>',
+<%_ filterEntries.forEach(e => { _%>
+<%_ e.comment.forEach(line => { _%>
+  // <%- line %>
+<%_ }) _%>
+  '<%- e.name %>',
 <%_ }) _%>
 ] as const
 
+<%_ ordersNotes.forEach(line => { _%>
+// <%- line %>
+<%_ }) _%>
 const <%- constantName %>_ALLOWED_ORDERS: Array<<%- className %>AllowedField> = [
 <%_ allowedOrders.forEach(f => { _%>
   '<%- f %>',

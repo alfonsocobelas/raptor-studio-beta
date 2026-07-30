@@ -44,4 +44,9 @@ export class TypeOrm<%- className %>Entity {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date
 <%_ } _%>
+<%_ if (softDelete) { _%>
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt?: Date
+<%_ } _%>
 }

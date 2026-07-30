@@ -13,7 +13,6 @@ export const contract = defineResource({
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
   auditComment: true,
-  mapperStyle: 'primitives',
   searchNotes: [
     'Free-text columns only: badge/enum columns (status, source…) store values that differ from their',
     'rendered labels, and numeric/date columns match inconsistently against what the user sees.'

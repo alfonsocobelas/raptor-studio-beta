@@ -2,7 +2,7 @@ import { defineResource } from '@acc/schema'
 
 // Faithful transcription of the golden reference module `customers`.
 // Note (C2): its mapper uses a different style (VO .value reads + contacts composition),
-// so mapperStyle is omitted and the mapper is not generated for this resource.
+// so the mapper is skipped for this resource.
 export const customer = defineResource({
   schemaVersion: 1,
   name: 'customer',
@@ -11,6 +11,7 @@ export const customer = defineResource({
   schemaName: 'sap_licensing',
   constraintsConst: 'CUSTOMER_CONSTRAINTS',
   audit: true,
+  skipEmit: ['mapper'],
   constraints: {
     SAP_ID: { MIN: 3, MAX: 20 },
     NAME: { shared: 'CUSTOMER_NAME' },

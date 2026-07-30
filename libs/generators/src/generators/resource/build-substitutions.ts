@@ -20,6 +20,7 @@ export interface ResourceSubstitutions {
   constraintsConst?: string
   audit: boolean
   auditComment: boolean
+  softDelete: boolean
   needsNullable: boolean
   needsNumericTransformer: boolean
   needsNullableNumericTransformer: boolean
@@ -30,9 +31,14 @@ export interface ResourceSubstitutions {
   allowedFilters: string[]
   allowedOrders: string[]
   searchableFields: string[]
+  /** ALLOWED_FILTERS entries with their optional comment lines */
+  filterEntries: { name: string; comment: string[] }[]
   searchNotes: string[]
+  ordersNotes: string[]
   /** Pre-rendered lines for <name>-constants.ts, e.g. "CMS_CASE_ID: { MAX: 30 }" */
   constraintEntries: string[]
+  /** Pre-rendered extra exported groups, e.g. "OBSERVABILITY_THRESHOLDS: { UNDERUSED_PCT: 40 }" */
+  extraConstantBlocks: string[]
   hasSharedConstraints: boolean
   /** Pre-rendered mapper lines */
   toDomainProps: string[]
@@ -78,6 +84,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     constraintsConst: definition.constraintsConst,
     audit: definition.audit ?? false,
     auditComment: definition.auditComment ?? false,
+    softDelete: definition.softDelete ?? false,
     needsNullable: columns.some(c => c.tsType.includes('Nullable<')),
     needsNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'numeric'),
     needsNullableNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'nullableNumeric'),
@@ -86,8 +93,19 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     allowedFilters: orderedQueryList(fields, 'filterable'),
     allowedOrders: orderedQueryList(fields, 'sortable'),
     searchableFields: orderedQueryList(fields, 'searchable'),
+    filterEntries: orderedQueryList(fields, 'filterable').map(name => ({
+      name,
+      comment: definition.fields[name].query?.filterNote ?? []
+    })),
     searchNotes: definition.searchNotes ?? [],
+    ordersNotes: definition.ordersNotes ?? [],
     constraintEntries: renderConstraints(definition),
+    extraConstantBlocks: Object.entries(definition.extraConstants ?? {}).map(
+      ([key, group]) =>
+        `${key}: { ${Object.entries(group)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ')} }`
+    ),
     hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => typeof v === 'object' && 'shared' in v),
     toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
     toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f))
@@ -153,6 +171,7 @@ function renderTypeormImports(definition: ResourceDefinition): string {
   if (fields.some(f => f.pk)) imports.push('PrimaryColumn')
   if (fields.some(f => !f.pk)) imports.push('Column')
   if (definition.audit) imports.push('CreateDateColumn', 'UpdateDateColumn')
+  if (definition.softDelete) imports.push('DeleteDateColumn')
   return imports.sort().join(', ')
 }
 
