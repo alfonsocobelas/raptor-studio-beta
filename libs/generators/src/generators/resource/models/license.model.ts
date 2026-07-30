@@ -68,49 +68,92 @@ export const license = defineResource({
     customerId: { type: 'uuid', query: { filterable: 3 }, relation: { to: 'customer', kind: 'reference' } },
     customerName: {
       type: 'string',
+      required: true,
+      voShared: { name: 'CustomerName' },
       query: { filterable: 4, sortable: 1, searchable: 1 },
       table: { show: true, order: 1, label: 'Cliente', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
     },
     contractNumber: {
       type: 'string',
+      voShared: { name: 'ContractNumber' },
       table: { show: true, order: 3, label: 'Contrato', sortable: false, minWidth: 180 },
       column: { type: 'varchar', lengthConst: 'CONTRACT_NUMBER.MAX' }
     },
     contractEndDate: {
       type: 'date',
       nullable: true,
+      voShared: { name: 'ContractDate' },
       query: { sortable: 8 },
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
-    metricId: { type: 'string', column: { type: 'varchar', lengthConst: 'METRIC_ID.MAX', default: '' } },
-    metricName: { type: 'string', column: { type: 'varchar', lengthConst: 'METRIC_NAME.MAX' } },
+    metricId: {
+      type: 'string',
+      vo: {
+        name: 'MetricId',
+        fieldName: 'Metric ID',
+        noInnerWhitespace: true,
+        lengthRule: 'max',
+        constraintKey: 'METRIC_ID'
+      },
+      column: { type: 'varchar', lengthConst: 'METRIC_ID.MAX', default: '' }
+    },
+    metricName: {
+      type: 'string',
+      vo: {
+        name: 'MetricName',
+        fieldName: 'Metric name',
+        ensure: 'string',
+        lengthRule: 'max',
+        constraintKey: 'METRIC_NAME'
+      },
+      column: { type: 'varchar', lengthConst: 'METRIC_NAME.MAX' }
+    },
     subSolutionAreaName: {
       type: 'string',
+      vo: {
+        name: 'SubSolutionAreaName',
+        fieldName: 'Sub solution area name',
+        lengthRule: 'max',
+        constraintKey: 'SUB_SOLUTION_AREA_NAME'
+      },
       query: { filterable: 7, sortable: 2, searchable: 2 },
       table: { show: true, order: 2, label: 'Solución', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'SUB_SOLUTION_AREA_NAME.MAX', default: '' }
     },
     metric: {
       type: 'string',
+      vo: {
+        name: 'LicenseMetric',
+        fieldName: 'License metric',
+        values: ['FUE', 'user', 'document', 'transaction', 'custom']
+      },
       query: { filterable: 6, searchable: 3 },
       table: { show: true, order: 4, label: 'Métrica', filterable: true, sortable: false, minWidth: 100 },
       column: { type: 'varchar', length: 20 }
     },
     licensedUnits: {
       type: 'integer',
+      vo: { name: 'LicensedUnits', fieldName: 'Licensed units', min: true, constraintKey: 'LICENSED_UNITS' },
       query: { sortable: 3 },
       table: { show: true, order: 5, label: 'Licenciadas', type: 'number', minWidth: 120 },
       column: { type: 'int' }
     },
     pricePerUnit: {
       type: 'number',
+      vo: { name: 'PricePerUnit', fieldName: 'Price per unit', min: true, constraintKey: 'PRICE_PER_UNIT' },
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
     },
-    status: { type: 'string', query: { filterable: 5 }, column: { type: 'varchar', length: 20, default: 'active' } },
+    status: {
+      type: 'string',
+      vo: { name: 'LicenseStatus', fieldName: 'License status', values: ['active', 'suspended', 'expired'] },
+      query: { filterable: 5 },
+      column: { type: 'varchar', length: 20, default: 'active' }
+    },
     source: {
       type: 'string',
-      optionalPrimitive: true,
+      syncManaged: true,
+      vo: { name: 'LicenseSource', fieldName: 'License source', values: ['ME_SAP', 'MANUAL'] },
       comment: [
         'Origen y lifecycle SAP (spec 33): source distingue ME_SAP (gobernadas por el sync) de MANUAL;',
         'lifecycleStatus/archivedAt/lastSeenInSyncAt son el eje de archivado por ausencia del material.'
@@ -120,13 +163,22 @@ export const license = defineResource({
     materialId: { type: 'string', optionalPrimitive: true, column: { type: 'varchar', length: 40, default: '' } },
     lifecycleStatus: {
       type: 'string',
-      optionalPrimitive: true,
+      syncManaged: true,
+      vo: { name: 'LicenseLifecycleStatus', fieldName: 'License lifecycle status', values: ['active', 'archived'] },
       column: { type: 'varchar', length: 20, default: 'active' }
     },
-    archivedAt: { type: 'timestamptz', nullable: true, column: { type: 'timestamptz', tsType: 'Nullable<Date>' } },
+    archivedAt: {
+      type: 'timestamptz',
+      nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
+      column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
+    },
     lastSeenInSyncAt: {
       type: 'timestamptz',
       nullable: true,
+      syncManaged: true,
+      voShared: { name: 'SyncTimestamp' },
       column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
     },
     currentUnits: {
@@ -155,6 +207,7 @@ export const license = defineResource({
     },
     annualValue: {
       type: 'number',
+      vo: { name: 'AnnualValue', fieldName: 'Annual value', min: true, constraintKey: 'ANNUAL_VALUE' },
       query: { sortable: 6 },
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
     }

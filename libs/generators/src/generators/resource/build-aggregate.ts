@@ -228,7 +228,7 @@ function registerArg(c: FieldCtx): string {
 }
 
 function fromPrimitivesArg(c: FieldCtx): string {
-  if (!c.voName) return c.maint ? `props.${c.name} ?? null` : `props.${c.name}`
+  if (!c.voName) return c.maint ? `props.${c.name} ?? ${c.nullable ? 'null' : defaultLiteral(c)}` : `props.${c.name}`
   if (c.sync && isTimestamp(c)) {
     return `props.${c.name} ? SyncTimestamp.fromISOString(props.${c.name}) : null`
   }

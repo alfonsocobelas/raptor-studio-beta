@@ -14,12 +14,4 @@ export class LicenseSource extends EnumValueObject<LicenseSourceValue> {
     this.ensureIsValidEnum(value as LicenseSourceValue, this.VALUES)
     return new LicenseSource(value as LicenseSourceValue)
   }
-
-  static manual(): LicenseSource {
-    return new LicenseSource('MANUAL')
-  }
-
-  isManual(): boolean {
-    return this.value === 'MANUAL'
-  }
 }

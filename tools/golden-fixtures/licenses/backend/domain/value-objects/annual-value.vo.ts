@@ -2,8 +2,6 @@ import { NumberValueObject } from '../../../../../shared/domain/value-objects/nu
 import { LICENSE_CONSTRAINTS } from '../license-constants'
 import { LicenseError } from '../license-errors'
 
-// Valor anual de la licencia = "Tasa anual" autoritativa de SAP (AnnualFee) para ME_SAP, o units×price
-// para MANUAL. Dato de precio, no de consumo: vive fuera del snapshot. Admite decimales (céntimos).
 export class AnnualValue extends NumberValueObject {
   protected static override fieldName = 'Annual value'
 
