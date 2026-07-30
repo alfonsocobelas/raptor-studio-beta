@@ -19,6 +19,11 @@
       "factory": "./src/generators/shared-domain/shared-domain",
       "schema": "./src/generators/shared-domain/schema.json",
       "description": "Generates the frontend/backend shared DTO lib from the model registry"
+    },
+    "frontend-kernel": {
+      "factory": "./src/generators/frontend-kernel/frontend-kernel",
+      "schema": "./src/generators/frontend-kernel/schema.json",
+      "description": "Scaffolds the Angular shared kernel (copy-once) the emitted components import"
     }
   }
 }

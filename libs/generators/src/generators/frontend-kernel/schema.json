@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "FrontendKernel",
+  "title": "Frontend kernel generator",
+  "description": "Scaffolds the Angular shared kernel (DataTable, utils, http interceptors, auth guard/services) the emitted components import — copy-once",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Output directory; defaults to tmp/generated/frontend-kernel"
+    },
+    "sharedDomainAlias": {
+      "type": "string",
+      "description": "Import alias of the shared DTO lib (default '@acc/shared/domain')"
+    }
+  }
+}
