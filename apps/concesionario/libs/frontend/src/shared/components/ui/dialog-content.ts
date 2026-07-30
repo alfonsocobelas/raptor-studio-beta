@@ -6,9 +6,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-h-[80vh] overflow-y-auto">
-      <h3 class="mat-headline-small">{{ title() }}</h3>
+      <h3 class="text-lg font-semibold">{{ title() }}</h3>
       @if (description()) {
-        <p class="mat-body-medium opacity-70 mt-1">{{ description() }}</p>
+        <p class="text-muted-foreground text-sm mt-1">{{ description() }}</p>
       }
       <ng-content />
     </div>

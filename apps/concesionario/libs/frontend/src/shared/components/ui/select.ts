@@ -1,27 +1,29 @@
 import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core'
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
-import { MatFormFieldModule } from '@angular/material/form-field'
-import { MatSelectModule } from '@angular/material/select'
+import { HlmSelectImports } from '@spartan-ng/helm/select'
 
 export interface AppSelectOption {
   value: string
   label: string
 }
 
-/** Desplegable (piel Material). Misma API que la implementación Spartan. */
+/** Desplegable enchufado a formularios reactivos. Contrato del acelerador. */
 @Component({
   selector: 'app-select',
-  imports: [MatFormFieldModule, MatSelectModule],
+  imports: [HlmSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppSelect), multi: true }],
   template: `
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-      <mat-select [id]="controlId()" [value]="value()" [placeholder]="placeholder()" (valueChange)="onSelect($event)">
+    <hlm-select [value]="value()" (valueChange)="onSelect($event)" [itemToString]="toLabel">
+      <hlm-select-trigger [buttonId]="controlId()">
+        <hlm-select-value [placeholder]="placeholder()" />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
         @for (option of options(); track option.value) {
-          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
         }
-      </mat-select>
-    </mat-form-field>
+      </hlm-select-content>
+    </hlm-select>
   `
 })
 export class AppSelect implements ControlValueAccessor {
@@ -32,6 +34,11 @@ export class AppSelect implements ControlValueAccessor {
   protected readonly value = signal<string | null>(null)
   private _onChange: (value: string | null) => void = () => undefined
   private _onTouched: () => void = () => undefined
+
+  // itemToString: con el popover cerrado los items no están instanciados, así que el
+  // trigger mostraría el valor crudo en vez de su etiqueta.
+  protected readonly toLabel = (value: unknown): string =>
+    this.options().find(option => option.value === String(value))?.label ?? ''
 
   writeValue(value: string | null): void {
     this.value.set(value)
@@ -45,9 +52,11 @@ export class AppSelect implements ControlValueAccessor {
     this._onTouched = fn
   }
 
-  protected onSelect(value: string | null): void {
-    this.value.set(value)
-    this._onChange(value)
+  // hlm-select puede emitir undefined al limpiar: el contrato normaliza a null.
+  protected onSelect(value: string | null | undefined): void {
+    const normalized = value ?? null
+    this.value.set(normalized)
+    this._onChange(normalized)
     this._onTouched()
   }
 }

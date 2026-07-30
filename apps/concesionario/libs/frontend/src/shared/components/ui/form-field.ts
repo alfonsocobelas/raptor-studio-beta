@@ -1,23 +1,26 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core'
+import { HlmFieldImports } from '@spartan-ng/helm/field'
 
-/** Campo de formulario (piel Material). Misma API que la implementación Spartan. */
+/** Campo de formulario: etiqueta, control proyectado y error. Contrato del acelerador. */
 @Component({
   selector: 'app-form-field',
+  imports: [HlmFieldImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-col gap-1">
+    <hlm-field>
       @if (label()) {
-        <label class="mat-body-small opacity-70" [attr.for]="for()">{{ label() }}</label>
+        <label hlmFieldLabel [for]="for()">{{ label() }}</label>
       }
       <ng-content />
       @if (error()) {
-        <span class="text-destructive text-sm">{{ error() }}</span>
+        <hlm-field-error forceShow>{{ error() }}</hlm-field-error>
       }
-    </div>
+    </hlm-field>
   `
 })
 export class AppFormField {
   readonly label = input('')
   readonly for = input('')
+  /** Mensaje a mostrar; vacío = sin error */
   readonly error = input('')
 }

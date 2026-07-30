@@ -16,7 +16,7 @@
     "port": 5432,
     "username": "alfonso.dominguez",
     "password": "",
-    "database": "migtest",
+    "database": "authtest",
     "ssl": false,
     "autoLoadEntities": true,
     "synchronize": false,

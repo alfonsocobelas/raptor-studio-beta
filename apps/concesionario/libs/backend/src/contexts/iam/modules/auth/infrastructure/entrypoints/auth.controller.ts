@@ -1,0 +1,98 @@
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
+import type { Request, Response } from 'express'
+import { CurrentUserDto, UserRoleEnum } from '@app/shared/domain'
+import { AcceptInvitationHandler } from '../../application/handlers/accept-invitation.handler'
+import { ForgotPasswordHandler } from '../../application/handlers/forgot-password.handler'
+import { InviteUserHandler } from '../../application/handlers/invite-user.handler'
+import { LoginHandler } from '../../application/handlers/login.handler'
+import { LogoutHandler } from '../../application/handlers/logout.handler'
+import { ResetPasswordHandler } from '../../application/handlers/reset-password.handler'
+import { AuthenticatedUser } from '../../application/dtos/authenticated-user'
+import { SESSION_COOKIE_NAME } from '../auth.constants'
+import { CurrentUser } from '../../../../../shared/infrastructure/auth/current-user.decorator'
+import { Public } from '../../../../../shared/infrastructure/auth/public.decorator'
+import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
+import { AUTH_POLICY } from '../../domain/auth-constants'
+import {
+  AcceptInvitationHttpDto,
+  ForgotPasswordHttpDto,
+  InviteUserHttpDto,
+  LoginHttpDto,
+  ResetPasswordHttpDto
+} from './dtos/auth-request.dtos'
+
+const SESSION_MAX_AGE_MS = AUTH_POLICY.SESSION_ABSOLUTE_MAX_DAYS * 24 * 60 * 60 * 1000
+
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/'
+})
+
+@Controller('auth')
+export class AuthController {
+  constructor(
+    private readonly loginHandler: LoginHandler,
+    private readonly logoutHandler: LogoutHandler,
+    private readonly acceptInvitationHandler: AcceptInvitationHandler,
+    private readonly forgotPasswordHandler: ForgotPasswordHandler,
+    private readonly resetPasswordHandler: ResetPasswordHandler,
+    private readonly inviteUserHandler: InviteUserHandler
+  ) {}
+
+  @Public()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() body: LoginHttpDto, @Res({ passthrough: true }) res: Response): Promise<CurrentUserDto> {
+    const result = await this.loginHandler.handle(body)
+    res.cookie(SESSION_COOKIE_NAME, result.sessionToken, { ...cookieOptions(), maxAge: SESSION_MAX_AGE_MS })
+    return this.toCurrentUser(result.user)
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
+    const token = (req.cookies as Record<string, string> | undefined)?.[SESSION_COOKIE_NAME]
+    if (token) {
+      await this.logoutHandler.handle({ sessionToken: token })
+    }
+    res.clearCookie(SESSION_COOKIE_NAME, cookieOptions())
+  }
+
+  @Get('me')
+  me(@CurrentUser() user: AuthenticatedUser): CurrentUserDto {
+    return this.toCurrentUser(user)
+  }
+
+  @Public()
+  @Post('accept-invitation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  acceptInvitation(@Body() body: AcceptInvitationHttpDto): Promise<void> {
+    return this.acceptInvitationHandler.handle(body)
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  forgotPassword(@Body() body: ForgotPasswordHttpDto): Promise<void> {
+    return this.forgotPasswordHandler.handle(body)
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  resetPassword(@Body() body: ResetPasswordHttpDto): Promise<void> {
+    return this.resetPasswordHandler.handle(body)
+  }
+
+  @Roles(UserRoleEnum.ADMIN)
+  @Post('invitations')
+  invite(@Body() body: InviteUserHttpDto): Promise<void> {
+    return this.inviteUserHandler.handle(body)
+  }
+
+  private toCurrentUser(user: AuthenticatedUser): CurrentUserDto {
+    return { id: user.id, email: user.email, name: user.name, role: user.role as UserRoleEnum }
+  }
+}

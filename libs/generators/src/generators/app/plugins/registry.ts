@@ -1,3 +1,4 @@
+import { authPlugin } from './auth.plugin'
 import { migrationsPlugin } from './migrations.plugin'
 import type { AppPlugin } from './plugin'
 
@@ -6,7 +7,8 @@ import type { AppPlugin } from './plugin'
  * del generador y se pueda ensamblar en la app.
  */
 export const PLUGINS: Record<string, AppPlugin> = {
-  migrations: migrationsPlugin
+  migrations: migrationsPlugin,
+  auth: authPlugin
 }
 
 export function selectPlugins(names: string | undefined): AppPlugin[] {

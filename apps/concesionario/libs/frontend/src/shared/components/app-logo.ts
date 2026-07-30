@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core'
 
 /**
- * Marca de la aplicacion: cuadrado azul SAP con el wordmark en blanco.
+ * Marca de la aplicación: placeholder neutro; sustituir por el logo del cliente.
  * El ancho del texto se fija con textLength para que no dependa de la fuente del sistema.
  */
 @Component({
@@ -23,7 +23,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core'
         font-weight="700"
         fill="#ffffff"
       >
-        SAP
+        APP
       </text>
     </svg>
   `

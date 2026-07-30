@@ -1,4 +1,4 @@
-.PHONY: help up down test-up test-down seed api web typecheck local-setup migrate migrate-rollback
+.PHONY: help up down test-up test-down seed api web typecheck local-setup migrate migrate-rollback seed-auth
 
 help:
 	@grep -E '^[a-zA-Z-]+:' Makefile | sed 's/:.*//'
@@ -40,3 +40,6 @@ migrate:
 
 migrate-rollback:
 	NODE_ENV=local npm run migration:revert
+
+seed-auth:
+	NODE_ENV=local npm run seed:auth

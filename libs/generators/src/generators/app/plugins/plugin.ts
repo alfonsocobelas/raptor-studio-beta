@@ -33,6 +33,8 @@ export interface AppPlugin {
   scripts?: Record<string, string>
   /** Targets que el plugin añade al Makefile (nombre → cuerpo) */
   makeTargets?: Record<string, string>
+  /** Schemas de PostgreSQL que el plugin necesita */
+  schemas?: string[]
   /** Carpeta de assets copiada literalmente (relativa al directorio del plugin) */
   assets?: string
   /** Cableado libre sobre el árbol: ficheros derivados de los modelos, parches de config… */

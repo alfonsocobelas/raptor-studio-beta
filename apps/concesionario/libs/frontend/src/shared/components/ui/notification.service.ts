@@ -1,16 +1,14 @@
-import { inject, Injectable } from '@angular/core'
-import { MatSnackBar } from '@angular/material/snack-bar'
+import { Injectable } from '@angular/core'
+import { toast } from '@spartan-ng/brain/sonner'
 
-/** Avisos al usuario (piel Material). Misma API que la implementación Spartan. */
+/** Avisos al usuario. Las features no conocen la librería de toasts. */
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly _snackBar = inject(MatSnackBar)
-
   success(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 4000 })
+    toast.success(message)
   }
 
   error(message: string): void {
-    this._snackBar.open(message, 'Cerrar', { duration: 6000, panelClass: 'app-snackbar-error' })
+    toast.error(message)
   }
 }

@@ -6,6 +6,7 @@ import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.mod
 import { LoggerInterceptor } from './contexts/shared/infrastructure/interceptors/logger.interceptor'
 import { GlobalExceptionFilter } from './contexts/shared/infrastructure/filters/global-exception.filter'
 import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
+import { AuthModule } from './contexts/iam/modules/auth/auth.module'
 import { VehiclesModule } from './contexts/dealership/modules/vehicles/vehicles.module'
 import { ClientsModule } from './contexts/dealership/modules/clients/clients.module'
 import { SalesModule } from './contexts/dealership/modules/sales/sales.module'
@@ -16,6 +17,7 @@ import { SalesModule } from './contexts/dealership/modules/sales/sales.module'
     LoggerModule,
     SharedPersistenceModule,
     HealthModule,
+    AuthModule,
     VehiclesModule,
     ClientsModule,
     SalesModule
