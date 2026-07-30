@@ -1,0 +1,115 @@
+import { Nullable } from '../../../../src/contexts/shared/domain/types'
+import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
+import { <%- className %> } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>'
+import { <%- className %>Repository } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-repository'
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+import { <%- f.voName %> } from '../../../../src/contexts/<%- context %>/shared/domain/value-objects/<%- f.voName.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()) %>.vo'
+<%_ }) _%>
+import { <%- className %>Id } from '../../../../src/contexts/shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { MockRepository } from '../../shared/mocks/mock-repository'
+
+export class <%- className %>RepositoryMock extends MockRepository<<%- className %>> implements <%- className %>Repository {
+  register(<%- propertyName %>: <%- className %>): Promise<void> {
+    return this.getMock('register')(<%- propertyName %>)
+  }
+
+  save(<%- propertyName %>: <%- className %>): Promise<void> {
+    return this.getMock('save')(<%- propertyName %>)
+  }
+
+  get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
+    return this.getMock('get')(<%- propertyName %>Id)
+  }
+
+  matching(criteria: Criteria): Promise<<%- className %>[]> {
+    return this.getMock('matching')(criteria)
+  }
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+
+  <%- f.method %>(<%- f.param %>: <%- f.voName %>): Promise<Nullable<<%- className %>>> {
+    return this.getMock('<%- f.method %>')(<%- f.param %>)
+  }
+<%_ }) _%>
+
+  exists(criteria: Criteria): Promise<boolean> {
+    return this.getMock('exists')(criteria)
+  }
+
+  count(criteria: Criteria): Promise<number> {
+    return this.getMock('count')(criteria)
+  }
+
+  // helpers
+  givenFound(<%- propertyName %>: <%- className %>): void {
+    this.setMockResult('get', <%- propertyName %>)
+  }
+
+  givenNotFound(): void {
+    this.setMockResult('get', null)
+  }
+
+  givenMatching(<%- plural %>: <%- className %>[]): void {
+    this.setMockResult('matching', <%- plural %>)
+  }
+
+  givenMatchingSequence(...results: <%- className %>[][]): void {
+    const mock = this.getMock('matching')
+    mock.mockReset()
+    results.forEach(result => mock.mockResolvedValueOnce(result))
+  }
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+
+  <%- f.givenName %>(<%- propertyName %>: Nullable<<%- className %>>): void {
+    this.setMockResult('<%- f.method %>', <%- propertyName %>)
+  }
+<%_ }) _%>
+
+  givenAlreadyExists(): void {
+    this.setMockResult('exists', true)
+  }
+
+  givenDoesNotExist(): void {
+    this.setMockResult('exists', false)
+  }
+
+  givenExistsSequence(...results: boolean[]): void {
+    const mock = this.getMock('exists')
+    mock.mockReset()
+    results.forEach(result => mock.mockResolvedValueOnce(result))
+  }
+
+  givenCount(count: number): void {
+    this.setMockResult('count', count)
+  }
+
+  whenRegisterSuccess(): void {
+    this.setMockResult('register', undefined)
+  }
+
+  whenSaveSuccess(): void {
+    this.setMockResult('save', undefined)
+  }
+
+  whenRegisterFailsOnce(error: Error): void {
+    this.getMock('register').mockRejectedValueOnce(error)
+  }
+
+  matchingCriteria(): Criteria {
+    const calls = this.getMock('matching').mock.calls
+    return calls[calls.length - 1][0] as Criteria
+  }
+
+  countCriteria(): Criteria {
+    const calls = this.getMock('count').mock.calls
+    return calls[calls.length - 1][0] as Criteria
+  }
+
+  registered<%- className %>(): <%- className %> {
+    return this.getMock('register').mock.calls[0][0] as <%- className %>
+  }
+
+  saved<%- className %>(): <%- className %> {
+    const calls = this.getMock('save').mock.calls
+    return calls[calls.length - 1][0] as <%- className %>
+  }
+}

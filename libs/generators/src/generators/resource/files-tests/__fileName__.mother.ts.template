@@ -1,0 +1,31 @@
+import { <%- className %> } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>'
+import { <%- className %>PrimitiveProps } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-types'
+import { <%- className %>Builder } from './<%- fileName %>.builder'
+
+export class <%- className %>Mother {
+  static random(): <%- className %> {
+    return <%- className %>Builder.a<%- className %>().build()
+  }
+
+  static randomList(count: number = 5): <%- className %>[] {
+    return Array.from({ length: count }, () => this.random())
+  }
+
+  static register(overrides?: Partial<<%- className %>PrimitiveProps>): <%- className %> {
+    return <%- className %>Builder.a<%- className %>().withProps(overrides).create()
+  }
+
+  static reconstruct(overrides?: Partial<<%- className %>PrimitiveProps>): <%- className %> {
+    return <%- className %>Builder.a<%- className %>().withProps(overrides).build()
+  }
+<%_ domainTests.motherUniqueShortcuts.forEach(u => { _%>
+
+  static with<%- u.cap %>(<%- u.name %>: string): <%- className %> {
+    return <%- className %>Builder.a<%- className %>().with<%- u.cap %>(<%- u.name %>).build()
+  }
+<%_ }) _%>
+
+  static primitives(overrides?: Partial<<%- className %>PrimitiveProps>): <%- className %>PrimitiveProps {
+    return <%- className %>Builder.a<%- className %>().withProps(overrides).build().toPrimitives()
+  }
+}

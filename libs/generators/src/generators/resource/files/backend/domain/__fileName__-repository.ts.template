@@ -1,0 +1,17 @@
+<%_ if (domainTests.emit) { _%>
+<%_ domainTests.portImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+
+export abstract class <%- className %>Repository {
+  abstract register(<%- propertyName %>: <%- className %>): Promise<void>
+  abstract save(<%- propertyName %>: <%- className %>): Promise<void>
+  abstract get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>>
+  abstract matching(criteria: Criteria): Promise<<%- className %>[]>
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+  abstract <%- f.method %>(<%- f.param %>: <%- f.voName %>): Promise<Nullable<<%- className %>>>
+<%_ }) _%>
+  abstract exists(criteria: Criteria): Promise<boolean>
+  abstract count(criteria: Criteria): Promise<number>
+}
+<%_ } _%>

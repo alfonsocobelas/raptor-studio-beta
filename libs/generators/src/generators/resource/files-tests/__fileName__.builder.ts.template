@@ -1,0 +1,49 @@
+<%_ domainTests.builderImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+<%_ domainTests.randomHelpers.forEach(helper => { _%>
+
+<%- helper %>
+<%_ }) _%>
+
+export class <%- className %>Builder {
+  private props: <%- className %>PrimitiveProps = {
+    id: uuidv7(),
+<%_ domainTests.builderDefaultLines.forEach((line, i) => { _%>
+    <%- line %><%- i < domainTests.builderDefaultLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+  }
+
+  static a<%- className %>(): <%- className %>Builder {
+    return new <%- className %>Builder()
+  }
+
+  withId(id: string): <%- className %>Builder {
+    this.props.id = id
+    return this
+  }
+<%_ domainTests.builderWiths.forEach(w => { _%>
+
+  with<%- w.cap %>(<%- w.name %>: <%- w.tsType %>): <%- className %>Builder {
+    this.props.<%- w.name %> = <%- w.name %>
+    return this
+  }
+<%_ }) _%>
+
+  withProps(overrides?: Partial<<%- className %>PrimitiveProps>): <%- className %>Builder {
+    this.props = { ...this.props, ...overrides }
+    return this
+  }
+
+  create(): <%- className %> {
+    return <%- className %>.create({
+<%_ domainTests.builderCreateArgs.forEach((arg, i) => { _%>
+      <%- arg %><%- i < domainTests.builderCreateArgs.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    })
+  }
+
+  build(): <%- className %> {
+    return <%- className %>.fromPrimitives(this.props)
+  }
+}

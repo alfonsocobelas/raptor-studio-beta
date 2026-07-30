@@ -1,5 +1,6 @@
 import { names } from '@nx/devkit'
 import { AggregateBindings, renderAggregate } from './build-aggregate'
+import { DomainTestBindings, renderDomainTests } from './build-tests'
 import {
   ColumnDefinition,
   ConstraintValue,
@@ -25,6 +26,7 @@ export interface ResourceSubstitutions {
   fileName: string
   constantName: string
   plural: string
+  context: string
   schemaName: string
   constraintsConst?: string
   audit: boolean
@@ -91,6 +93,7 @@ export interface ResourceSubstitutions {
   /** Value objects to emit (fields whose vo is declared in object form) */
   vos: VoSubstitution[]
   aggregate: AggregateBindings
+  domainTests: DomainTestBindings
 }
 
 export interface VoSubstitution {
@@ -203,6 +206,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     fileName: n.fileName,
     constantName: n.constantName,
     plural: definition.plural,
+    context: definition.context,
     schemaName: definition.schemaName,
     constraintsConst: definition.constraintsConst,
     audit: definition.audit ?? false,
@@ -254,7 +258,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     ...renderForm(definition, n.fileName),
     test: renderTestBindings(definition),
     vos: renderVos(definition, n.className),
-    aggregate: renderAggregate(definition)
+    aggregate: renderAggregate(definition),
+    domainTests: renderDomainTests(definition)
   }
 }
 

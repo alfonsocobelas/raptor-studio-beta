@@ -56,10 +56,19 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     tree.delete(path.join(outputDir, 'frontend', `${substitutions.fileName}-dialog.component.ts`))
   }
 
-  // agregado + types: solo cuando el modelo declara VOs (síntesis canónica)
+  // agregado + types + puerto: solo cuando el modelo declara VOs (síntesis canónica)
   if (!substitutions.aggregate.emitAggregate) {
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-types.ts`))
+    tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-repository.ts`))
+  } else {
+    // artefactos de test de dominio (mother, builder, repository mock)
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-tests'),
+      path.join(outputDir, 'backend-tests'),
+      substitutions
+    )
   }
 
   await formatFiles(tree)
