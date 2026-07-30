@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+import { Remove<%- aggregate.composition.childClass %>Input } from '../dtos/remove-<%- aggregate.composition.childFileName %>-input.dto'
+import { Remove<%- aggregate.composition.childClass %>UseCase } from '../use-cases/remove-<%- aggregate.composition.childFileName %>-usecase.service'
+
+@Injectable()
+export class Remove<%- aggregate.composition.childClass %>Handler {
+  constructor(private readonly useCase: Remove<%- aggregate.composition.childClass %>UseCase) {}
+
+  async handle(input: Remove<%- aggregate.composition.childClass %>Input): Promise<void> {
+    return this.useCase.invoke(input)
+  }
+}

@@ -1,0 +1,4 @@
+export interface Remove<%- aggregate.composition.childClass %>Input {
+  <%- aggregate.composition.parentField %>: string
+  <%- aggregate.composition.childProp %>Id: string
+}

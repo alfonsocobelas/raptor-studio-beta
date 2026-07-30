@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+import { Update<%- aggregate.composition.childClass %>Input } from '../dtos/update-<%- aggregate.composition.childFileName %>-input.dto'
+import { Update<%- aggregate.composition.childClass %>UseCase } from '../use-cases/update-<%- aggregate.composition.childFileName %>-usecase.service'
+
+@Injectable()
+export class Update<%- aggregate.composition.childClass %>Handler {
+  constructor(private readonly useCase: Update<%- aggregate.composition.childClass %>UseCase) {}
+
+  async handle(input: Update<%- aggregate.composition.childClass %>Input): Promise<void> {
+    return this.useCase.invoke(input)
+  }
+}

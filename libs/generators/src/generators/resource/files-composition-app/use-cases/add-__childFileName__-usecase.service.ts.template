@@ -1,0 +1,34 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { Add<%- aggregate.composition.childClass %>Input } from '../dtos/add-<%- aggregate.composition.childFileName %>-input.dto'
+
+@Injectable()
+export class Add<%- aggregate.composition.childClass %>UseCase {
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+    private readonly txManager: TransactionManager
+  ) {}
+
+  async invoke(input: Add<%- aggregate.composition.childClass %>Input): Promise<void> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.<%- aggregate.composition.parentField %>)
+
+    await this.txManager.runInTransaction(async () => {
+      const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+      if (!<%- propertyName %>) {
+        throw new EntityNotFoundError('<%- className %>', input.<%- aggregate.composition.parentField %>)
+      }
+
+      <%- propertyName %>.add<%- aggregate.composition.childClass %>({
+<%_ entry.childAddLines.forEach((line, i) => { _%>
+        <%- line %><%- i < entry.childAddLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+      })
+
+      await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+    })
+  }
+}

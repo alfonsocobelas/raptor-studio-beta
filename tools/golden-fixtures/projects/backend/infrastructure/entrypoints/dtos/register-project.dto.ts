@@ -16,7 +16,6 @@ export class RegisterProjectDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(200)
   customerName!: string
 
   @IsString()

@@ -1,6 +1,11 @@
-import { AddContactDto } from '@sap-licenses/shared/domain'
-
 export interface AddContactInput {
   customerId: string
-  contact: AddContactDto
+  contact: {
+    id: string
+    name: string
+    role?: string
+    email?: string
+    phone?: string
+    isPrimary?: boolean
+  }
 }

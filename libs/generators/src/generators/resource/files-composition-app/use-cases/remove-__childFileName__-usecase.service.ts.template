@@ -1,0 +1,31 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { <%- aggregate.composition.childClass %>Id } from '../../domain/value-objects/<%- aggregate.composition.childFileName %>-id.vo'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { Remove<%- aggregate.composition.childClass %>Input } from '../dtos/remove-<%- aggregate.composition.childFileName %>-input.dto'
+
+@Injectable()
+export class Remove<%- aggregate.composition.childClass %>UseCase {
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+    private readonly txManager: TransactionManager
+  ) {}
+
+  async invoke(input: Remove<%- aggregate.composition.childClass %>Input): Promise<void> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.<%- aggregate.composition.parentField %>)
+    const <%- aggregate.composition.childProp %>Id = <%- aggregate.composition.childClass %>Id.create(input.<%- aggregate.composition.childProp %>Id)
+
+    await this.txManager.runInTransaction(async () => {
+      const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+      if (!<%- propertyName %>) {
+        throw new EntityNotFoundError('<%- className %>', input.<%- aggregate.composition.parentField %>)
+      }
+
+      <%- propertyName %>.remove<%- aggregate.composition.childClass %>(<%- aggregate.composition.childProp %>Id)
+      await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+    })
+  }
+}

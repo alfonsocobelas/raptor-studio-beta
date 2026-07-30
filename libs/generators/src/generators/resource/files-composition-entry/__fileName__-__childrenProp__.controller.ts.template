@@ -1,0 +1,45 @@
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common'
+import { UserRoleEnum } from '<%- sharedDomainAlias %>'
+import { ParseUUIDv7Pipe } from '../../../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
+import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
+import { Add<%- aggregate.composition.childClass %>Handler } from '../../application/handlers/add-<%- aggregate.composition.childFileName %>.handler'
+import { Update<%- aggregate.composition.childClass %>Handler } from '../../application/handlers/update-<%- aggregate.composition.childFileName %>.handler'
+import { Remove<%- aggregate.composition.childClass %>Handler } from '../../application/handlers/remove-<%- aggregate.composition.childFileName %>.handler'
+import { Add<%- aggregate.composition.childClass %>Dto } from './dtos/add-<%- aggregate.composition.childFileName %>.dto'
+import { Update<%- aggregate.composition.childClass %>Dto } from './dtos/update-<%- aggregate.composition.childFileName %>.dto'
+
+@Controller('<%- plural %>')
+export class <%- entry.childControllerClass %> {
+  constructor(
+    private readonly add<%- aggregate.composition.childClass %>Handler: Add<%- aggregate.composition.childClass %>Handler,
+    private readonly update<%- aggregate.composition.childClass %>Handler: Update<%- aggregate.composition.childClass %>Handler,
+    private readonly remove<%- aggregate.composition.childClass %>Handler: Remove<%- aggregate.composition.childClass %>Handler
+  ) {}
+
+  @Post(':id/<%- aggregate.composition.childrenProp %>')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  add(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Add<%- aggregate.composition.childClass %>Dto): Promise<void> {
+    return this.add<%- aggregate.composition.childClass %>Handler.handle({ <%- aggregate.composition.parentField %>: id, <%- aggregate.composition.childProp %>: body })
+  }
+
+  @Put(':id/<%- aggregate.composition.childrenProp %>/:<%- aggregate.composition.childProp %>Id')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  update(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('<%- aggregate.composition.childProp %>Id', ParseUUIDv7Pipe) <%- aggregate.composition.childProp %>Id: string,
+    @Body() body: Update<%- aggregate.composition.childClass %>Dto
+  ): Promise<void> {
+    return this.update<%- aggregate.composition.childClass %>Handler.handle({ <%- aggregate.composition.parentField %>: id, <%- aggregate.composition.childProp %>Id, updates: body })
+  }
+
+  @Delete(':id/<%- aggregate.composition.childrenProp %>/:<%- aggregate.composition.childProp %>Id')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @Param('id', ParseUUIDv7Pipe) id: string,
+    @Param('<%- aggregate.composition.childProp %>Id', ParseUUIDv7Pipe) <%- aggregate.composition.childProp %>Id: string
+  ): Promise<void> {
+    return this.remove<%- aggregate.composition.childClass %>Handler.handle({ <%- aggregate.composition.parentField %>: id, <%- aggregate.composition.childProp %>Id })
+  }
+}

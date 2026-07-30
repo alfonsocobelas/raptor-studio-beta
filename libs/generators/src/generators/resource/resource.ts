@@ -73,12 +73,41 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     }
   }
 
+  // entrypoints REST + module wiring
+  if (substitutions.entry.emit) {
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-entrypoints'),
+      path.join(outputDir, 'backend/infrastructure/entrypoints'),
+      substitutions
+    )
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-module'), path.join(outputDir, 'backend'), substitutions)
+    const entry = path.join(outputDir, 'backend/infrastructure/entrypoints')
+    if (!substitutions.app.writes) {
+      tree.delete(path.join(entry, 'dtos', `register-${substitutions.fileName}.dto.ts`))
+      tree.delete(path.join(entry, 'dtos', `update-${substitutions.fileName}.dto.ts`))
+    }
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
+    const comp = substitutions.aggregate.composition
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-composition'), outputDir, {
       ...substitutions,
-      childFileName: substitutions.aggregate.composition.childFileName
+      childFileName: comp.childFileName
     })
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-composition-app'),
+      path.join(outputDir, 'backend/application'),
+      { ...substitutions, childFileName: comp.childFileName }
+    )
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-composition-entry'),
+      path.join(outputDir, 'backend/infrastructure/entrypoints'),
+      { ...substitutions, childFileName: comp.childFileName, childrenProp: comp.childrenProp }
+    )
   }
 
   // C2: los módulos de oro llevan extensiones a mano que el canon no cubre; se omiten por dato

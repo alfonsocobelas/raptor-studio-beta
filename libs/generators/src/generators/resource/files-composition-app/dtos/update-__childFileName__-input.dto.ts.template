@@ -1,0 +1,7 @@
+import { <%- className %><%- aggregate.composition.childClass %>UpdateProps } from '../../domain/<%- fileName %>-types'
+
+export interface Update<%- aggregate.composition.childClass %>Input {
+  <%- aggregate.composition.parentField %>: string
+  <%- aggregate.composition.childProp %>Id: string
+  updates: <%- className %><%- aggregate.composition.childClass %>UpdateProps
+}

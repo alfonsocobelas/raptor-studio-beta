@@ -3,8 +3,10 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   Min,
   MinLength,
@@ -24,13 +26,16 @@ export class UpdateContractDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(LIMITS.CONTRACT_NUMBER.MIN)
   @MaxLength(LIMITS.CONTRACT_NUMBER.MAX)
   contractNumber?: string
 
   @IsOptional()
   @IsString()
-  @MinLength(LIMITS.CUSTOMER_NAME.MIN)
+  @IsUUID('7')
+  customerId?: string
+
+  @IsOptional()
+  @IsString()
   @MaxLength(LIMITS.CUSTOMER_NAME.MAX)
   customerName?: string
 
@@ -74,6 +79,11 @@ export class UpdateContractDto {
   @ValidateIf((_obj, value) => value !== null)
   @IsString()
   endDate?: string | null
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  totalValue?: number
 
   @IsOptional()
   @IsString()

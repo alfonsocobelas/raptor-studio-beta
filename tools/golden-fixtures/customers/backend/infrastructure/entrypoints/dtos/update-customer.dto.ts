@@ -11,7 +11,6 @@ export class UpdateCustomerDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(LIMITS.NAME.MIN)
   @MaxLength(LIMITS.NAME.MAX)
   name?: string
 
@@ -39,6 +38,16 @@ export class UpdateCustomerDto {
   @IsString()
   @MaxLength(LIMITS.NOTES.MAX)
   notes?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LIMITS.CITY.MAX)
+  city?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LIMITS.COUNTRY.MAX)
+  country?: string
 
   @IsOptional()
   @IsIn([...CustomerType.VALUES])

@@ -1,0 +1,25 @@
+import { Module } from '@nestjs/common'
+<%_ entry.moduleHandlerImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+<%_ entry.moduleUseCaseImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+import { <%- className %>Repository } from './domain/<%- fileName %>-repository'
+import { <%- pluralClassName %>Controller } from './infrastructure/entrypoints/<%- plural %>.controller'
+<%_ if (aggregate.composition) { _%>
+import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/<%- entry.childControllerFile %>.controller'
+<%_ } _%>
+import { TypeOrm<%- className %>Repository } from './infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
+
+@Module({
+  controllers: [<%- pluralClassName %>Controller<% if (aggregate.composition) { %>, <%- entry.childControllerClass %><% } %>],
+  providers: [
+<%_ entry.moduleProviderNames.forEach(name => { _%>
+    <%- name %>,
+<%_ }) _%>
+    { provide: <%- className %>Repository, useClass: TypeOrm<%- className %>Repository }
+  ],
+  exports: [<%- className %>Repository]
+})
+export class <%- pluralClassName %>Module {}

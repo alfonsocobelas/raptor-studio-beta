@@ -1,0 +1,19 @@
+import { <%- entry.childUpdateValidatorImports.join(', ') %> } from 'class-validator'
+<%_ if (entry.childUsesLimits) { _%>
+import { <%- constraintsConst %> as LIMITS } from '../../../domain/<%- fileName %>-constants'
+<%_ } _%>
+<%_ entry.childDtoVoImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+
+export class Update<%- aggregate.composition.childClass %>Dto {
+<%_ entry.childUpdateDtoFields.forEach((f, i) => { _%>
+<%_ f.decorators.forEach(d => { _%>
+  <%- d %>
+<%_ }) _%>
+  <%- f.declaration %>
+<%_ if (i < entry.childUpdateDtoFields.length - 1) { _%>
+
+<%_ } _%>
+<%_ }) _%>
+}

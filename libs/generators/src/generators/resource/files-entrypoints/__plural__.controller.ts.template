@@ -1,0 +1,104 @@
+<%_
+const nest = ['Controller', 'Get', 'Param', 'Query', 'StreamableFile']
+if (app.writes) nest.push('Body', 'Post', 'Put', 'HttpCode', 'HttpStatus')
+if (app.removes) nest.push('Delete', 'HttpCode', 'HttpStatus')
+const nestList = [...new Set(nest)].sort()
+_%>
+import { <%- nestList.join(', ') %> } from '@nestjs/common'
+import { UserRoleEnum } from '<%- sharedDomainAlias %>'
+import { OffsetPaginatedOutput } from '../../../../../shared/application/dtos/search-output.dto'
+import { buildExportFile } from '../../../../../shared/infrastructure/export/build-export-file'
+import { PaginateOffsetDto } from '../../../../../shared/infrastructure/dtos/paginate-offset.dto'
+import { ParseCriteriaPipe } from '../../../../../shared/infrastructure/pipes/parse-criteria.pipe'
+import { ParseUUIDv7Pipe } from '../../../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
+import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
+import { Export<%- pluralClassName %>Handler } from '../../application/handlers/export-<%- plural %>.handler'
+import { Get<%- className %>Handler } from '../../application/handlers/get-<%- fileName %>.handler'
+<%_ if (app.writes) { _%>
+import { Register<%- className %>Handler } from '../../application/handlers/register-<%- fileName %>.handler'
+<%_ } _%>
+<%_ if (app.removes) { _%>
+import { Remove<%- className %>Handler } from '../../application/handlers/remove-<%- fileName %>.handler'
+<%_ } _%>
+import { Search<%- pluralClassName %>Handler } from '../../application/handlers/search-<%- plural %>.handler'
+<%_ if (app.writes) { _%>
+import { Update<%- className %>Handler } from '../../application/handlers/update-<%- fileName %>.handler'
+<%_ } _%>
+<%_ if (aggregate.composition) { _%>
+import { <%- className %>DetailOutput } from '../../application/use-cases/get-<%- fileName %>-usecase.service'
+import { <%- className %>PrimitiveProps<% if (app.writes) { %>, <%- className %>UpdateProps<% } %> } from '../../domain/<%- fileName %>-types'
+<%_ } else { _%>
+import { <%- className %>PrimitiveProps<% if (app.writes) { %>, <%- className %>UpdateProps<% } %> } from '../../domain/<%- fileName %>-types'
+<%_ } _%>
+import { Export<%- pluralClassName %>QueryDto } from './dtos/export-<%- plural %>-query.dto'
+import { <%- constantName %>_EXPORT_COLUMNS } from './<%- plural %>-export-columns'
+<%_ if (app.writes) { _%>
+import { Register<%- className %>Dto } from './dtos/register-<%- fileName %>.dto'
+import { Update<%- className %>Dto } from './dtos/update-<%- fileName %>.dto'
+<%_ } _%>
+
+@Controller('<%- plural %>')
+export class <%- pluralClassName %>Controller {
+  constructor(
+<%_ if (app.writes) { _%>
+    private readonly register<%- className %>Handler: Register<%- className %>Handler,
+<%_ } _%>
+    private readonly search<%- pluralClassName %>Handler: Search<%- pluralClassName %>Handler,
+    private readonly get<%- className %>Handler: Get<%- className %>Handler,
+<%_ if (app.writes) { _%>
+    private readonly update<%- className %>Handler: Update<%- className %>Handler,
+<%_ } _%>
+<%_ if (app.removes) { _%>
+    private readonly remove<%- className %>Handler: Remove<%- className %>Handler,
+<%_ } _%>
+    private readonly export<%- pluralClassName %>Handler: Export<%- pluralClassName %>Handler
+  ) {}
+<%_ if (app.writes) { _%>
+
+  @Post()
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  register(@Body() body: Register<%- className %>Dto): Promise<void> {
+    return this.register<%- className %>Handler.handle(body)
+  }
+<%_ } _%>
+
+  @Get()
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  search(
+    @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
+  ): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
+    return this.search<%- pluralClassName %>Handler.handle(query)
+  }
+
+  // Exports the full filtered <%- fileName %> set (no pagination) as CSV/XLSX. Declared before `:id`.
+  @Get('export')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  async export(@Query(new ParseCriteriaPipe()) query: Export<%- pluralClassName %>QueryDto): Promise<StreamableFile> {
+    const rows = await this.export<%- pluralClassName %>Handler.handle(query)
+    return buildExportFile(rows, <%- constantName %>_EXPORT_COLUMNS, query.format, '<%- entry.exportFileName %>')
+  }
+
+  @Get(':id')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<<%- className %><%- aggregate.composition ? 'DetailOutput' : 'PrimitiveProps' %>> {
+    return this.get<%- className %>Handler.handle({ id })
+  }
+<%_ if (app.writes) { _%>
+
+  @Put(':id')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Update<%- className %>Dto): Promise<void> {
+    return this.update<%- className %>Handler.handle({ id, updates: body as <%- className %>UpdateProps })
+  }
+<%_ } _%>
+<%_ if (app.removes) { _%>
+
+  @Delete(':id')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.remove<%- className %>Handler.handle({ id })
+  }
+<%_ } _%>
+}

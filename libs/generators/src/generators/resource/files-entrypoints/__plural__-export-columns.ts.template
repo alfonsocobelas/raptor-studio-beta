@@ -1,0 +1,17 @@
+import { ExportColumn } from '../../../../../shared/infrastructure/export/export-column'
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+<%_ if (entry.needsLabelHelper) { _%>
+
+<%_ entry.labelMaps.forEach(map => { _%>
+const <%- map.constName %>: Record<string, string> = { <%- map.entries %> }
+<%_ }) _%>
+
+const label = (map: Record<string, string>, value: unknown): string => map[value as string] ?? String(value)
+<%_ } _%>
+
+// Canonical export set: mirrors the <%- plural %> table columns and labels, so the file matches the screen.
+export const <%- constantName %>_EXPORT_COLUMNS: ExportColumn<<%- className %>PrimitiveProps>[] = [
+<%_ entry.exportColumnLines.forEach((line, i) => { _%>
+  <%- line %><%- i < entry.exportColumnLines.length - 1 ? ',' : '' %>
+<%_ }) _%>
+]

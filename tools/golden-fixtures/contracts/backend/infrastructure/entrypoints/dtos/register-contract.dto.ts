@@ -4,6 +4,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -30,7 +31,6 @@ export class RegisterContractDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(LIMITS.CONTRACT_NUMBER.MIN)
   @MaxLength(LIMITS.CONTRACT_NUMBER.MAX)
   contractNumber!: string
 
@@ -41,7 +41,6 @@ export class RegisterContractDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(LIMITS.CUSTOMER_NAME.MIN)
   @MaxLength(LIMITS.CUSTOMER_NAME.MAX)
   customerName!: string
 
@@ -85,6 +84,11 @@ export class RegisterContractDto {
   @ValidateIf((_obj, value) => value !== null)
   @IsString()
   endDate?: string | null
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  totalValue?: number
 
   @IsOptional()
   @IsString()

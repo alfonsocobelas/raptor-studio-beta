@@ -16,7 +16,6 @@ export class RegisterCustomerDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(LIMITS.NAME.MIN)
   @MaxLength(LIMITS.NAME.MAX)
   name!: string
 
@@ -44,6 +43,16 @@ export class RegisterCustomerDto {
   @IsString()
   @MaxLength(LIMITS.NOTES.MAX)
   notes?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LIMITS.CITY.MAX)
+  city?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LIMITS.COUNTRY.MAX)
+  country?: string
 
   @IsIn([...CustomerType.VALUES])
   customerType!: string

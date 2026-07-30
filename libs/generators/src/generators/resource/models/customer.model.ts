@@ -193,6 +193,7 @@ export const customer = defineResource({
       id: { type: 'uuid', vo: { name: 'ContactId', fieldName: 'Contact ID' } },
       name: {
         type: 'string',
+        required: true,
         vo: {
           name: 'ContactName',
           fieldName: 'Contact name',

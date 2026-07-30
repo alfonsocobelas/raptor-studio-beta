@@ -1,0 +1,8 @@
+export interface Add<%- aggregate.composition.childClass %>Input {
+  <%- aggregate.composition.parentField %>: string
+  <%- aggregate.composition.childProp %>: {
+<%_ entry.childDtoFields.forEach(f => { _%>
+    <%- f.declaration.replace('!', '') %>
+<%_ }) _%>
+  }
+}

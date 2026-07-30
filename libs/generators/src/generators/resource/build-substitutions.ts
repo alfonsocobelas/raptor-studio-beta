@@ -1,6 +1,7 @@
 import { names } from '@nx/devkit'
 import { AggregateBindings, renderAggregate } from './build-aggregate'
 import { ApplicationBindings, renderApplication } from './build-application'
+import { EntrypointBindings, renderEntrypoints } from './build-entrypoints'
 import { DomainTestBindings, renderDomainTests } from './build-tests'
 import {
   ColumnDefinition,
@@ -96,6 +97,7 @@ export interface ResourceSubstitutions {
   vos: VoSubstitution[]
   aggregate: AggregateBindings
   app: ApplicationBindings
+  entry: EntrypointBindings
   domainTests: DomainTestBindings
 }
 
@@ -267,6 +269,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     vos: renderVos(definition, n.className),
     aggregate,
     app: renderApplication(definition, aggregate.emitAggregate),
+    entry: renderEntrypoints(definition, aggregate.emitAggregate),
     domainTests: renderDomainTests(definition)
   }
 }

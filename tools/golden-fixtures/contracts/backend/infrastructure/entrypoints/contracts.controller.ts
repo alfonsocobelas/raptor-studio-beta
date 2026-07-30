@@ -11,9 +11,9 @@ import { GetContractHandler } from '../../application/handlers/get-contract.hand
 import { RegisterContractHandler } from '../../application/handlers/register-contract.handler'
 import { SearchContractsHandler } from '../../application/handlers/search-contracts.handler'
 import { UpdateContractHandler } from '../../application/handlers/update-contract.handler'
-import { ContractUpdateProps, ContractView } from '../../domain/contract-types'
-import { CONTRACT_EXPORT_COLUMNS } from './contracts-export-columns'
+import { ContractPrimitiveProps, ContractUpdateProps } from '../../domain/contract-types'
 import { ExportContractsQueryDto } from './dtos/export-contracts-query.dto'
+import { CONTRACT_EXPORT_COLUMNS } from './contracts-export-columns'
 import { RegisterContractDto } from './dtos/register-contract.dto'
 import { UpdateContractDto } from './dtos/update-contract.dto'
 
@@ -35,7 +35,9 @@ export class ContractsController {
 
   @Get()
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
-  search(@Query(new ParseCriteriaPipe()) query: PaginateOffsetDto): Promise<OffsetPaginatedOutput<ContractView>> {
+  search(
+    @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
+  ): Promise<OffsetPaginatedOutput<ContractPrimitiveProps>> {
     return this.searchContractsHandler.handle(query)
   }
 
@@ -49,7 +51,7 @@ export class ContractsController {
 
   @Get(':id')
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
-  getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<ContractView> {
+  getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<ContractPrimitiveProps> {
     return this.getContractHandler.handle({ id })
   }
 
