@@ -101,3 +101,43 @@ describe('AwsSecretsManagerSecrets', () => {
     await expect(broken.get('x')).rejects.toThrow('boom')
   })
 })
+
+import { GcpSecretManagerSecrets } from './gcp-secret-manager-secrets'
+
+describe('GcpSecretManagerSecrets', () => {
+  it('reads the latest version scoped to the project', async () => {
+    const client = {
+      accessSecretVersion: jest.fn(
+        async () => [{ payload: { data: Buffer.from('gcp-value') } }] as [{ payload: { data: Uint8Array } }]
+      )
+    }
+    const secrets = new GcpSecretManagerSecrets({ projectId: 'acc-project' }, client)
+
+    expect(await secrets.get('typeorm-host')).toBe('gcp-value')
+    expect(client.accessSecretVersion).toHaveBeenCalledWith({
+      name: 'projects/acc-project/secrets/typeorm-host/versions/latest'
+    })
+  })
+
+  it('maps gRPC NOT_FOUND to null and rethrows other errors', async () => {
+    const missing = new GcpSecretManagerSecrets(
+      { projectId: 'p' },
+      {
+        accessSecretVersion: jest.fn(async () => {
+          throw Object.assign(new Error('nf'), { code: 5 })
+        })
+      }
+    )
+    const broken = new GcpSecretManagerSecrets(
+      { projectId: 'p' },
+      {
+        accessSecretVersion: jest.fn(async () => {
+          throw Object.assign(new Error('denied'), { code: 7 })
+        })
+      }
+    )
+
+    expect(await missing.get('nope')).toBeNull()
+    await expect(broken.get('x')).rejects.toThrow('denied')
+  })
+})

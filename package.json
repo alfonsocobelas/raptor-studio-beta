@@ -21,6 +21,7 @@
     "@azure/monitor-opentelemetry": "1.19.0",
     "@azure/storage-blob": "12.33.0",
     "@eslint/js": "^9.8.0",
+    "@google-cloud/secret-manager": "6.3.0",
     "@google-cloud/storage": "7.21.0",
     "@nx/eslint": "23.1.0",
     "@nx/eslint-plugin": "23.1.0",
