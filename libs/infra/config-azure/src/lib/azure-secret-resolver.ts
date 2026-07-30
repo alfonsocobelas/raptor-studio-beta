@@ -1,7 +1,8 @@
 import { SecretClient } from '@azure/keyvault-secrets'
 import { DefaultAzureCredential } from '@azure/identity'
+import { containsVaultReferences, resolvePlaceholders } from '@acc/infra/ports'
 
-const VAULT_PREFIX = 'vault.'
+export { containsVaultReferences }
 
 export class AzureKeyVaultError extends Error {
   constructor(
@@ -22,48 +23,12 @@ export interface SecretReader {
   getSecret(name: string): Promise<{ value?: string }>
 }
 
-/** True when any (possibly nested) value is a `vault.*` placeholder. */
-export function containsVaultReferences(value: unknown): boolean {
-  if (typeof value === 'string') {
-    return value.startsWith(VAULT_PREFIX)
-  }
-
-  if (Array.isArray(value)) {
-    return value.some(containsVaultReferences)
-  }
-
-  if (value !== null && typeof value === 'object') {
-    return Object.values(value).some(containsVaultReferences)
-  }
-
-  return false
-}
-
 /**
  * Deep-clones `config`, replacing every `vault.*` string with its Key Vault
- * secret value. Non-vault values are returned untouched. Naming convention:
- * `vault.typeorm.host` → secret `typeorm-host` (prefix stripped, dots → dashes).
+ * secret value (shared walker in @acc/infra/ports; naming: dots → dashes).
  */
 export async function resolveSecrets<T>(config: T, client: SecretReader): Promise<T> {
-  if (typeof config === 'string' && config.startsWith(VAULT_PREFIX)) {
-    return (await getSecretValue(config, client)) as unknown as T
-  }
-
-  if (Array.isArray(config)) {
-    return (await Promise.all(config.map(item => resolveSecrets(item, client)))) as unknown as T
-  }
-
-  if (config !== null && typeof config === 'object') {
-    const resolved: Record<string, unknown> = {}
-
-    for (const [key, value] of Object.entries(config)) {
-      resolved[key] = await resolveSecrets(value, client)
-    }
-
-    return resolved as T
-  }
-
-  return config
+  return resolvePlaceholders(config, name => getSecretValue(name, client))
 }
 
 /** Builds the real Key Vault client from `AZURE_KEYVAULT_URL` (DefaultAzureCredential → Managed Identity). */
@@ -77,9 +42,7 @@ export function createSecretClient(): SecretClient {
   return new SecretClient(keyVaultUrl, new DefaultAzureCredential())
 }
 
-async function getSecretValue(reference: string, client: SecretReader): Promise<string | undefined> {
-  const secretName = reference.slice(VAULT_PREFIX.length).replace(/\./g, '-')
-
+async function getSecretValue(secretName: string, client: SecretReader): Promise<string | undefined> {
   try {
     const secret = await client.getSecret(secretName)
     return secret.value

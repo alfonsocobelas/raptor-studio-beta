@@ -72,3 +72,32 @@ describe('InfisicalSecrets', () => {
     expect(await secrets.get('nope')).toBeNull()
   })
 })
+
+import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
+import { AwsSecretsManagerSecrets } from './aws-secrets-manager-secrets'
+
+describe('AwsSecretsManagerSecrets', () => {
+  it('returns the secret string', async () => {
+    const secrets = new AwsSecretsManagerSecrets({
+      send: jest.fn(async (c: GetSecretValueCommand) => ({ SecretString: `v:${c.input.SecretId}` }))
+    })
+
+    expect(await secrets.get('typeorm-host')).toBe('v:typeorm-host')
+  })
+
+  it('maps ResourceNotFoundException to null and rethrows other errors', async () => {
+    const missing = new AwsSecretsManagerSecrets({
+      send: jest.fn(async () => {
+        throw Object.assign(new Error('nope'), { name: 'ResourceNotFoundException' })
+      })
+    })
+    const broken = new AwsSecretsManagerSecrets({
+      send: jest.fn(async () => {
+        throw Object.assign(new Error('boom'), { name: 'AccessDeniedException' })
+      })
+    })
+
+    expect(await missing.get('nope')).toBeNull()
+    await expect(broken.get('x')).rejects.toThrow('boom')
+  })
+})

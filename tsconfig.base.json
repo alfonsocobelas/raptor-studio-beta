@@ -28,7 +28,8 @@
       "@acc/infra/secrets": ["./libs/infra/secrets/src/index.ts"],
       "@acc/infra/metrics-prometheus": ["./libs/infra/metrics-prometheus/src/index.ts"],
       "@acc/infra/storage-gcs": ["./libs/infra/storage-gcs/src/index.ts"],
-      "@acc/infra/observability-sentry": ["./libs/infra/observability-sentry/src/index.ts"]
+      "@acc/infra/observability-sentry": ["./libs/infra/observability-sentry/src/index.ts"],
+      "@acc/infra/config-aws": ["./libs/infra/config-aws/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist", "docs/referencia"]

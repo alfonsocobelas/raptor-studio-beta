@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@azure/keyvault-secrets": "4.11.2",
-    "@azure/identity": "4.13.1"
+    "@azure/identity": "4.13.1",
+    "@acc/infra/ports": "0.0.1"
   }
 }
