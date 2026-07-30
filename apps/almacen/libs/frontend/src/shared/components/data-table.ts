@@ -106,7 +106,9 @@ const OPERATOR_LABELS: Record<string, string> = {
           <button matButton="filled" (click)="create.emit()">{{ createLabel() }}</button>
         }
 
-        <button matButton [matMenuTriggerFor]="filterMenu"><ng-icon name="lucideFunnel" size="16" /> Filtros</button>
+        <button matButton="outlined" [matMenuTriggerFor]="filterMenu">
+          <ng-icon name="lucideFunnel" size="16" /> Filtros
+        </button>
         <mat-menu #filterMenu="matMenu" class="p-2">
           <div class="flex w-80 flex-col gap-2 p-3" (click)="$event.stopPropagation()">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -135,7 +137,7 @@ const OPERATOR_LABELS: Record<string, string> = {
           </div>
         </mat-menu>
 
-        <button matButton [matMenuTriggerFor]="columnMenu">Columnas</button>
+        <button matButton="outlined" [matMenuTriggerFor]="columnMenu">Columnas</button>
         <mat-menu #columnMenu="matMenu">
           <div class="flex flex-col p-2" (click)="$event.stopPropagation()">
             @for (column of columns(); track column.key) {
@@ -146,7 +148,7 @@ const OPERATOR_LABELS: Record<string, string> = {
           </div>
         </mat-menu>
 
-        <button matButton [matMenuTriggerFor]="exportMenu">Exportar</button>
+        <button matButton="outlined" [matMenuTriggerFor]="exportMenu">Exportar</button>
         <mat-menu #exportMenu="matMenu">
           <button mat-menu-item (click)="exportAs('csv')">CSV</button>
           <button mat-menu-item (click)="exportAs('xlsx')">Excel</button>
@@ -166,7 +168,7 @@ const OPERATOR_LABELS: Record<string, string> = {
         </div>
       }
 
-      <div class="overflow-x-auto rounded-lg border">
+      <div class="overflow-x-auto rounded-xl border">
         <table mat-table [dataSource]="rows()" matSort (matSortChange)="onSort($event)" class="w-full">
           @if (showActions()) {
             <ng-container matColumnDef="__actions">
@@ -174,14 +176,15 @@ const OPERATOR_LABELS: Record<string, string> = {
               <td mat-cell *matCellDef="let row">
                 <div class="flex items-center gap-1">
                   @for (action of resolvedActions(); track action.action) {
-                    @if (!action.hidden || !action.hidden(row)) {
-                      <button
-                        matIconButton
-                        [matTooltip]="action.label"
-                        [attr.aria-label]="action.label"
-                        (click)="actionClick.emit({ action: action.action, row })"
-                      >
-                        <ng-icon [name]="action.icon" size="16" />
+                  @if (!action.hidden || !action.hidden(row)) {
+                    <button
+                      matIconButton
+                      class="text-muted-foreground"
+                      [matTooltip]="action.label"
+                      [attr.aria-label]="action.label"
+                      (click)="actionClick.emit({ action: action.action, row })"
+                    >
+                      <ng-icon [name]="action.icon" size="16" />
                       </button>
                     }
                   }
@@ -192,24 +195,19 @@ const OPERATOR_LABELS: Record<string, string> = {
 
           @for (column of visibleColumns(); track column.key) {
             <ng-container [matColumnDef]="column.key">
-              <th
-                mat-header-cell
-                *matHeaderCellDef
-                [mat-sort-header]="column.key"
-                [disabled]="column.sortable === false"
-              >
+              <th mat-header-cell *matHeaderCellDef [mat-sort-header]="column.key" [disabled]="column.sortable === false">
                 {{ column.label }}
               </th>
               <td mat-cell *matCellDef="let row" [style.min-width.px]="column.minWidth">
                 @switch (column.type) {
                   @case ('badge') {
-                    <span class="rounded-full border px-2 py-0.5 text-xs font-medium">{{
-                      badgeLabel(column, row)
-                    }}</span>
+                    <span class="rounded-full border px-2.5 py-1 text-xs font-medium" [class]="badgeClass(column, row)">
+                      {{ badgeLabel(column, row) }}
+                    </span>
                   }
                   @case ('badges') {
                     @for (item of badgeList(column, row); track item) {
-                      <span class="mr-1 rounded-full border px-2 py-0.5 text-xs font-medium">{{ item }}</span>
+                      <span class="bg-muted text-muted-foreground mr-1 rounded-full border border-transparent px-2.5 py-1 text-xs font-medium">{{ item }}</span>
                     }
                   }
                   @default {
@@ -383,13 +381,9 @@ export class DataTable implements OnDestroy {
     if (this.serverSide()) {
       return void this.exportRequested.emit(format)
     }
-    const header = this.visibleColumns()
-      .map(column => `"${column.label}"`)
-      .join(';')
+    const header = this.visibleColumns().map(column => `"${column.label}"`).join(';')
     const body = this.rows().map(row =>
-      this.visibleColumns()
-        .map(column => `"${this.cellText(column, row)}"`)
-        .join(';')
+      this.visibleColumns().map(column => `"${this.cellText(column, row)}"`).join(';')
     )
     const blob = new Blob([`﻿${[header, ...body].join('\n')}`], { type: 'text/csv;charset=utf-8' })
     downloadBlob(blob, `${this.exportFilename()}.csv`)
@@ -407,6 +401,19 @@ export class DataTable implements OnDestroy {
       return column.valueMap[String(value)] ?? String(value)
     }
     return String(value)
+  }
+
+  /** La variante del modelo (default/secondary/outline) se pinta con los tonos del tema. */
+  protected badgeClass(column: ColumnDef, row: Record<string, unknown>): string {
+    const value = String(this.cellValue(column.key, row))
+    const variant = column.badgeMap?.[value]?.variant ?? 'outline'
+    if (variant === 'default') {
+      return 'bg-accent text-accent-foreground border-transparent'
+    }
+    if (variant === 'secondary') {
+      return 'bg-muted text-muted-foreground border-transparent'
+    }
+    return 'text-muted-foreground'
   }
 
   protected badgeLabel(column: ColumnDef, row: Record<string, unknown>): string {

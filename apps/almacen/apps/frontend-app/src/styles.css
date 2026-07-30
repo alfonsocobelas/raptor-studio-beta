@@ -11,27 +11,57 @@
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/roboto/700.css';
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+/*
+ * Puente Tailwind ↔ Material: las utilidades de color que usan el shell y los
+ * componentes emitidos (bg-card, border, text-muted-foreground…) se resuelven
+ * contra los tokens del tema, igual que hace el preset de Spartan con los suyos.
+ */
+@theme {
+  --color-background: var(--mat-sys-surface);
+  --color-foreground: var(--mat-sys-on-surface);
+  --color-card: var(--mat-sys-surface);
+  --color-card-foreground: var(--mat-sys-on-surface);
+  --color-border: var(--mat-sys-outline-variant);
+  --color-input: var(--mat-sys-outline);
+  --color-primary: var(--mat-sys-primary);
+  --color-primary-foreground: var(--mat-sys-on-primary);
+  --color-accent: var(--mat-sys-secondary-container);
+  --color-accent-foreground: var(--mat-sys-on-secondary-container);
+  --color-muted: var(--mat-sys-surface-variant);
+  --color-muted-foreground: var(--mat-sys-on-surface-variant);
+  --color-destructive: var(--mat-sys-error);
+  --color-destructive-foreground: var(--mat-sys-on-error);
+  --color-surface-variant: var(--mat-sys-surface-variant);
 }
 
-/* Tokens mínimos que usan las clases de utilidad de los componentes emitidos. */
-:root {
-  --mat-sys-surface: #ffffff;
+@layer base {
+  /* Tailwind v4 deja el color de borde en currentColor: sin esto todo borde sale negro. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--mat-sys-outline-variant, #c4c6d0);
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    background: var(--mat-sys-surface);
+    color: var(--mat-sys-on-surface);
+    font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
 }
 
-.bg-card,
-.bg-background {
-  background: var(--mat-sys-surface, #fff);
+/* Afinado de la tabla: divisores suaves, cabecera discreta y hover de fila. */
+html {
+  --mat-table-row-item-outline-color: var(--mat-sys-outline-variant);
 }
 
-.text-destructive {
-  color: var(--mat-sys-error, #b3261e);
+th.mat-mdc-header-cell {
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 500;
 }
 
-.bg-surface-variant {
-  background: var(--mat-sys-surface-variant, #e7e0ec);
+.mat-mdc-row:hover {
+  background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
 }
