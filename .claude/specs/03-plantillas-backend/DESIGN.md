@@ -2,12 +2,12 @@
 
 ## Clasificación de los 67 ficheros de la fixture (auditoría 2026-07-30)
 
-| Categoría | Ficheros | Decisión |
-| --- | --- | --- |
-| Canónicos derivables | entity, mapper, search-config, constants, with-id specification | **Generar (esta spec)** |
+| Categoría                            | Ficheros                                                                          | Decisión                                                  |
+| ------------------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Canónicos derivables                 | entity, mapper, search-config, constants, with-id specification                   | **Generar (esta spec)**                                   |
 | Canónicos con extras idiosincráticos | repository port y TypeOrm repository (finders de sync), specifications de negocio | Posponer: exigen modelar finders; candidato a spec futura |
-| Protocolo + binding denso | agregado (`contract.ts`), VOs (16), types, errors | Spec futura (requiere modelar VOs con jerarquía de bases) |
-| No canónicos (sap-licenses) | phases, sync services, maintenance mapper, license-value reader, seeds | **Nunca generar**: código a mano |
+| Protocolo + binding denso            | agregado (`contract.ts`), VOs (16), types, errors                                 | Spec futura (requiere modelar VOs con jerarquía de bases) |
+| No canónicos (sap-licenses)          | phases, sync services, maintenance mapper, license-value reader, seeds            | **Nunca generar**: código a mano                          |
 
 ## Ampliaciones del schema (binding nuevo)
 

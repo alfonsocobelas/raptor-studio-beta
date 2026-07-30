@@ -18,10 +18,14 @@ export interface FieldRelation {
   kind: RelationKind
 }
 
+/**
+ * Query flags. A number fixes the position in the emitted ALLOWED_* lists
+ * (golden modules do not follow field order); `true` appends in field order.
+ */
 export interface FieldQuery {
-  sortable?: boolean
-  filterable?: boolean
-  searchable?: boolean
+  sortable?: boolean | number
+  filterable?: boolean | number
+  searchable?: boolean | number
 }
 
 export interface FieldTable {
@@ -68,6 +72,8 @@ export interface FieldDefinition {
   min?: number
   max?: number
   relation?: FieldRelation
+  /** Field is optional in domain primitives (late additions): mapper emits ?? <default|null> */
+  optionalPrimitive?: boolean
   query?: FieldQuery
   table?: FieldTable
   form?: FieldForm
@@ -129,6 +135,10 @@ export interface ResourceDefinition {
   constraintsConst?: string
   /** Emit createdAt/updatedAt audit columns */
   audit?: boolean
+  /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
+  searchNotes?: string[]
+  /** Feeds <name>-constants.ts: { shared: true } references SHARED_CONSTRAINTS.<KEY> */
+  constraints?: Record<string, { shared: true } | Record<string, number>>
   /** Keyed by field name (decision A4); key insertion order is the emission order */
   fields: Record<string, FieldDefinition>
   list?: ListDefinition
