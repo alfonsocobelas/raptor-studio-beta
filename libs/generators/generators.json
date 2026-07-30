@@ -4,6 +4,11 @@
       "factory": "./src/generators/resource/resource",
       "schema": "./src/generators/resource/schema.json",
       "description": "Generates a full resource module from a resource-schema model"
+    },
+    "root": {
+      "factory": "./src/generators/root/root",
+      "schema": "./src/generators/root/schema.json",
+      "description": "Generates the backend composition root (root module, bootstrap, environment templates)"
     }
   }
 }

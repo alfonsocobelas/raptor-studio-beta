@@ -1,0 +1,19 @@
+// Telemetry must initialize before any other import so the APM SDK patches modules early.
+// Descomentar al conectar el plugin de observabilidad (@acc/infra-observability-azure):
+// import './contexts/shared/infrastructure/telemetry/instrument'
+import { NestFactory } from '@nestjs/core'
+import { RootModule } from './root.module'
+import { setupApp } from './contexts/shared/infrastructure/http/setup-app'
+
+async function bootstrap(): Promise<void> {
+  // bufferLogs retiene los logs del arranque hasta que setupApp cablea useLogger,
+  // para que también salgan por el logger estructurado en vez del logger por defecto.
+  const app = await NestFactory.create(RootModule, { bufferLogs: true })
+  setupApp(app)
+  // Al recibir SIGTERM/SIGINT, dispara los hooks de ciclo de vida de Nest; en particular
+  // TypeORM drena el pool de Postgres en vez de cortar las conexiones de golpe.
+  app.enableShutdownHooks()
+  await app.listen(process.env['PORT'] ?? 3000)
+}
+
+bootstrap()

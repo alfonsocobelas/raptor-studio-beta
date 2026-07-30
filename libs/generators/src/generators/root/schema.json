@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "Root",
+  "title": "Root generator",
+  "description": "Generates the backend composition root (root module + bootstrap + environment config templates) wiring every registered resource model",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Output directory; defaults to tmp/generated/root"
+    }
+  }
+}

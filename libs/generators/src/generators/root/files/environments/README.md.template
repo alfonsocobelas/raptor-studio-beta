@@ -1,0 +1,15 @@
+# Configuración por entorno (esquemas: <%- schemaList %>)
+
+Config JSON por entorno, bundle-safe (imports estáticos, patrón `config-sources.ts`).
+Los valores `vault.*` son **marcadores**: los resuelve en arranque el loader del
+proveedor elegido contra su gestor de secretos:
+
+- Azure Key Vault → `@acc/infra-config-azure` (`resolveAzureConfig`)
+- AWS Secrets Manager → `@acc/infra-config-aws` (`resolveAwsConfig`)
+
+Reglas:
+
+- **Nunca** commitear secretos en claro: en local usa valores de desarrollo;
+  en dev/qa/prod siempre `vault.<NOMBRE-DEL-SECRETO>`.
+- `NODE_ENV` selecciona el fichero (`local`, `dev`, `qa`, `prod`, `test`);
+  un `NODE_ENV` desconocido debe romper el arranque, nunca degradar a otro entorno.
