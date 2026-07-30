@@ -136,3 +136,77 @@ describe('buildSubstitutions', () => {
     })
   })
 })
+
+describe('buildSubstitutions — spec 03 derivations', () => {
+  const subs = buildSubstitutions(contract)
+
+  describe('ordered query lists', () => {
+    it('orders ALLOWED_FILTERS by the numeric flag, not by field order', () => {
+      expect(subs.allowedFilters).toEqual([
+        'id',
+        'contractType',
+        'status',
+        'source',
+        'customerId',
+        'customerName',
+        'contractNumber'
+      ])
+    })
+
+    it('orders ALLOWED_ORDERS by the numeric flag', () => {
+      expect(subs.allowedOrders).toEqual([
+        'contractNumber',
+        'customerName',
+        'startDate',
+        'endDate',
+        'totalValue',
+        'status'
+      ])
+    })
+
+    it('orders SEARCHABLE_FIELDS and carries the search notes', () => {
+      expect(subs.searchableFields).toEqual(['contractNumber', 'customerName', 'cmsCaseId'])
+      expect(subs.searchNotes).toHaveLength(2)
+    })
+  })
+
+  describe('constants entries', () => {
+    it('renders shared refs and literal groups preserving declaration order', () => {
+      expect(subs.constraintEntries.slice(0, 3)).toEqual([
+        'CONTRACT_NUMBER: SHARED_CONSTRAINTS.CONTRACT_NUMBER',
+        'CUSTOMER_NAME: SHARED_CONSTRAINTS.CUSTOMER_NAME',
+        'CMS_CASE_ID: { MAX: 30 }'
+      ])
+      expect(subs.constraintEntries).toContain('CURRENCY: { LENGTH: 3 }')
+      expect(subs.hasSharedConstraints).toBe(true)
+    })
+  })
+
+  describe('mapper lines', () => {
+    it('emits plain toDomain lines for regular fields', () => {
+      expect(subs.toDomainProps).toContain('contractNumber: entity.contractNumber')
+    })
+
+    it('converts Nullable<Date> columns to ISO strings in toDomain', () => {
+      expect(subs.toDomainProps).toContain('archivedAt: entity.archivedAt?.toISOString() ?? null')
+    })
+
+    it('converts Nullable<Date> back with a ternary in toPersistence', () => {
+      expect(subs.toPersistenceLines).toContain(
+        'entity.archivedAt = primitives.archivedAt ? new Date(primitives.archivedAt) : null'
+      )
+    })
+
+    it('falls back to the column default (or null) for optional primitives', () => {
+      expect(subs.toPersistenceLines).toContain("entity.origin = primitives.origin ?? 'MANUAL'")
+      expect(subs.toPersistenceLines).toContain("entity.supportModel = primitives.supportModel ?? ''")
+      expect(subs.toPersistenceLines).toContain(
+        'entity.upcomingMaintenanceFee = primitives.upcomingMaintenanceFee ?? null'
+      )
+    })
+
+    it('keeps audit columns out of the mapper', () => {
+      expect(subs.toDomainProps.join()).not.toContain('createdAt')
+    })
+  })
+})

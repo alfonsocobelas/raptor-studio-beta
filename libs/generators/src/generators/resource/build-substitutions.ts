@@ -25,6 +25,17 @@ export interface ResourceSubstitutions {
   /** Pre-rendered typeorm import list, e.g. "Column, Entity, PrimaryColumn" */
   typeormImports: string
   columns: ColumnSubstitution[]
+  /** Ordered field-name lists for the search-config (numeric flags first, then booleans in field order) */
+  allowedFilters: string[]
+  allowedOrders: string[]
+  searchableFields: string[]
+  searchNotes: string[]
+  /** Pre-rendered lines for <name>-constants.ts, e.g. "CMS_CASE_ID: { MAX: 30 }" */
+  constraintEntries: string[]
+  hasSharedConstraints: boolean
+  /** Pre-rendered mapper lines */
+  toDomainProps: string[]
+  toPersistenceLines: string[]
 }
 
 // Defaults derived from the schema field type; column.type / column.tsType override them.
@@ -69,8 +80,61 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     needsNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'numeric'),
     needsNullableNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'nullableNumeric'),
     typeormImports: renderTypeormImports(definition),
-    columns
+    columns,
+    allowedFilters: orderedQueryList(fields, 'filterable'),
+    allowedOrders: orderedQueryList(fields, 'sortable'),
+    searchableFields: orderedQueryList(fields, 'searchable'),
+    searchNotes: definition.searchNotes ?? [],
+    constraintEntries: renderConstraints(definition),
+    hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => 'shared' in v),
+    toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
+    toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f))
   }
+}
+
+type QueryFlag = 'filterable' | 'sortable' | 'searchable'
+
+function orderedQueryList(fields: [string, FieldDefinition][], flag: QueryFlag): string[] {
+  const flagged = fields
+    .map(([name, f], index) => ({ name, value: f.query?.[flag], index }))
+    .filter(e => e.value !== undefined && e.value !== false)
+  return flagged
+    .sort((a, b) => {
+      const av = typeof a.value === 'number' ? a.value : Number.MAX_SAFE_INTEGER + a.index
+      const bv = typeof b.value === 'number' ? b.value : Number.MAX_SAFE_INTEGER + b.index
+      return av - bv
+    })
+    .map(e => e.name)
+}
+
+function renderConstraints(definition: ResourceDefinition): string[] {
+  return Object.entries(definition.constraints ?? {}).map(([key, value]) => {
+    if ('shared' in value) return `${key}: SHARED_CONSTRAINTS.${key}`
+    const entries = Object.entries(value)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(', ')
+    return `${key}: { ${entries} }`
+  })
+}
+
+function isNullableDate(field: FieldDefinition): boolean {
+  return field.column?.tsType === 'Nullable<Date>'
+}
+
+function renderToDomainProp(name: string, field: FieldDefinition): string {
+  if (isNullableDate(field)) return `${name}: entity.${name}?.toISOString() ?? null`
+  return `${name}: entity.${name}`
+}
+
+function renderToPersistenceLine(name: string, field: FieldDefinition): string {
+  if (isNullableDate(field)) {
+    return `entity.${name} = primitives.${name} ? new Date(primitives.${name}) : null`
+  }
+  if (field.optionalPrimitive) {
+    const fallback = field.column?.default !== undefined ? renderLiteral(field.column.default) : 'null'
+    return `entity.${name} = primitives.${name} ?? ${fallback}`
+  }
+  return `entity.${name} = primitives.${name}`
 }
 
 function renderTypeormImports(definition: ResourceDefinition): string {
