@@ -6,6 +6,9 @@ import { project } from './project.model'
 import { vehicle } from './vehicle.model'
 import { client } from './client.model'
 import { sale } from './sale.model'
+import { garment } from './garment.model'
+import { supplier } from './supplier.model'
+import { movement } from './movement.model'
 
 /**
  * Single model registry — the one place a resource is declared.
@@ -23,7 +26,10 @@ export const MODELS: Record<string, ResourceDefinition> = {
   project,
   vehicle,
   client,
-  sale
+  sale,
+  garment,
+  supplier,
+  movement
 }
 
 export const MODEL_LIST: ResourceDefinition[] = Object.values(MODELS)

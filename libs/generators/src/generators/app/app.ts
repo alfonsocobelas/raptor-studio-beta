@@ -188,8 +188,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     }
     const cwd = path.resolve(root)
     run('npm install --no-audit --no-fund', cwd)
-    for (const component of SPARTAN_COMPONENTS) {
-      run(`npx nx g @spartan-ng/cli:ui ${component} --no-interactive`, cwd)
+    // los helm solo existen como fuente materializada; Material son paquetes npm normales
+    if (ui === 'spartan') {
+      for (const component of SPARTAN_COMPONENTS) {
+        run(`npx nx g @spartan-ng/cli:ui ${component} --no-interactive`, cwd)
+      }
     }
     console.log(`\nListo: cd ${root} && make local-setup`)
   }

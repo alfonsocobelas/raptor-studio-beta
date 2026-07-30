@@ -1,4 +1,5 @@
 import { authPlugin } from './auth.plugin'
+import { emailPlugin } from './email.plugin'
 import { migrationsPlugin } from './migrations.plugin'
 import type { AppPlugin } from './plugin'
 
@@ -8,7 +9,8 @@ import type { AppPlugin } from './plugin'
  */
 export const PLUGINS: Record<string, AppPlugin> = {
   migrations: migrationsPlugin,
-  auth: authPlugin
+  auth: authPlugin,
+  email: emailPlugin
 }
 
 export function selectPlugins(names: string | undefined): AppPlugin[] {
