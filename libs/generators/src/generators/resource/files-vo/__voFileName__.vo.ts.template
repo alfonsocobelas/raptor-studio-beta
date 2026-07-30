@@ -1,0 +1,123 @@
+<%_ if (vo.kind === 'enum') { _%>
+import { EnumValueObject } from '../../../../../shared/domain/value-objects/enum-value-object'
+
+export type <%- vo.valueTypeName %> = <%- vo.valuesUnion %>
+
+export class <%- vo.voClassName %> extends EnumValueObject<<%- vo.valueTypeName %>> {
+  protected static override fieldName = '<%- vo.fieldName %>'
+  static readonly VALUES: readonly <%- vo.valueTypeName %>[] = [<%- vo.valuesList %>]
+
+  private constructor(value: <%- vo.valueTypeName %>) {
+    super(value)
+  }
+
+  static create(value: string): <%- vo.voClassName %> {
+    this.ensureIsValidEnum(value as <%- vo.valueTypeName %>, this.VALUES)
+    return new <%- vo.voClassName %>(value as <%- vo.valueTypeName %>)
+  }
+}
+<%_ } else if (vo.kind === 'boolean') { _%>
+import { BooleanValueObject } from '../../../../../shared/domain/value-objects/boolean-value-object'
+
+export class <%- vo.voClassName %> extends BooleanValueObject {
+  protected static override fieldName = '<%- vo.fieldName %>'
+
+  private constructor(value: boolean) {
+    super(value)
+  }
+
+  static create(value: boolean): <%- vo.voClassName %> {
+    this.ensureIsBoolean(value)
+    return new <%- vo.voClassName %>(value)
+  }
+}
+<%_ } else if (vo.kind === 'number' || vo.kind === 'integer') { _%>
+<%_ if (vo.unset) { _%>
+import { Nullable } from '../../../../../shared/domain/types'
+<%_ } _%>
+import { <%- vo.kind === 'integer' ? 'IntegerValueObject' : 'NumberValueObject' %> } from '../../../../../shared/domain/value-objects/<%- vo.kind === 'integer' ? 'integer-value-object' : 'number-value-object' %>'
+<%_ if (vo.min) { _%>
+import { <%- vo.constraintsConst %> } from '../<%- fileName %>-constants'
+<%_ } _%>
+import { <%- vo.errorClass %> } from '../<%- fileName %>-errors'
+
+export class <%- vo.voClassName %> extends <%- vo.kind === 'integer' ? 'IntegerValueObject' : 'NumberValueObject' %> {
+  protected static override fieldName = '<%- vo.fieldName %>'
+
+  private constructor(value: number) {
+    super(value)
+  }
+
+  static create(value: number): <%- vo.voClassName %> {
+    this.<%- vo.kind === 'integer' ? 'ensureIsInteger' : 'ensureIsNumber' %>(value)
+<%_ if (vo.min) { _%>
+
+    if (value < <%- vo.constraintsConst %>.<%- vo.constraintKey %>.MIN) {
+      throw new <%- vo.errorClass %>(`<%- vo.fieldName %> must be at least ${<%- vo.constraintsConst %>.<%- vo.constraintKey %>.MIN}`)
+    }
+<%_ } _%>
+
+    return new <%- vo.voClassName %>(value)
+  }
+<%_ if (vo.unset) { _%>
+
+  static unset(): Nullable<<%- vo.voClassName %>> {
+    return null
+  }
+<%_ } _%>
+}
+<%_ } else if (vo.kind === 'stringArray') { _%>
+import { ValueObject } from '../../../../../shared/domain/value-objects/value-object'
+import { <%- vo.errorClass %> } from '../<%- fileName %>-errors'
+
+export class <%- vo.voClassName %> extends ValueObject<string[]> {
+  protected static override fieldName = '<%- vo.fieldName %>'
+
+  private constructor(value: string[]) {
+    super(value)
+  }
+
+  static create(value: string[]): <%- vo.voClassName %> {
+    if (!Array.isArray(value) || value.some(area => typeof area !== 'string')) {
+      throw new <%- vo.errorClass %>('<%- vo.fieldName %> must be an array of strings')
+    }
+
+    return new <%- vo.voClassName %>(value)
+  }
+}
+<%_ } else { _%>
+import { StringValueObject } from '../../../../../shared/domain/value-objects/string-value-object'
+<%_ if (vo.lengthRule) { _%>
+import { <%- vo.constraintsConst %> } from '../<%- fileName %>-constants'
+<%_ } _%>
+import { <%- vo.errorClass %> } from '../<%- fileName %>-errors'
+
+export class <%- vo.voClassName %> extends StringValueObject {
+  protected static override fieldName = '<%- vo.fieldName %>'
+
+  private constructor(value: string) {
+    super(value)
+  }
+
+  static create(value: string): <%- vo.voClassName %> {
+    this.<%- vo.ensure === 'string' ? 'ensureIsString' : 'ensureIsDefined' %>(value)
+    value = this.normalize(value)
+<%_ if (vo.noInnerWhitespace) { _%>
+    this.ensureHasNoInnerWhitespace(value)
+<%_ } _%>
+<%_ if (vo.lengthRule === 'max') { _%>
+
+    if (value.length > <%- vo.constraintsConst %>.<%- vo.constraintKey %>.MAX) {
+      throw new <%- vo.errorClass %>(`<%- vo.lengthMessage %>`)
+    }
+<%_ } else if (vo.lengthRule === 'exact') { _%>
+
+    if (value.length !== <%- vo.constraintsConst %>.<%- vo.constraintKey %>.LENGTH) {
+      throw new <%- vo.errorClass %>(`<%- vo.lengthMessage %>`)
+    }
+<%_ } _%>
+
+    return new <%- vo.voClassName %>(value)
+  }
+}
+<%_ } _%>

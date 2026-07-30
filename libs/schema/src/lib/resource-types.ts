@@ -9,6 +9,28 @@ export type FieldOrigin = 'auto' | 'sap' | 'manual'
 
 export type FormControl = 'text' | 'textarea' | 'number' | 'checkbox' | 'date' | 'select' | 'none'
 
+export interface VoDefinition {
+  /** Class name (decision 5: explicit) */
+  name: string
+  /** Human field name used in messages and fieldName ('CMS case ID') */
+  fieldName: string
+  /** String base guard: ensureIsDefined (default) or ensureIsString */
+  ensure?: 'defined' | 'string'
+  noInnerWhitespace?: boolean
+  /** Length rule against the constraints key: 'max' (…must be at most N characters) or 'exact' */
+  lengthRule?: 'max' | 'exact'
+  /** Custom message for the exact-length rule (e.g. '…must be a N-letter ISO code') */
+  lengthMessage?: string
+  /** Key inside <CONST>_CONSTRAINTS; defaults to the SNAKE_CASE field name */
+  constraintKey?: string
+  /** Numeric/integer: emit the MIN check against the constraints key */
+  min?: boolean
+  /** Emit `static unset(): Nullable<X> { return null }` */
+  unset?: boolean
+  /** Enum kind: allowed values (emits <Name>Value union + VALUES) */
+  values?: string[]
+}
+
 export interface FieldLookup {
   /** Resource whose service provides the options (e.g. 'customer' → CustomerService) */
   resource: string
@@ -120,8 +142,8 @@ export interface FieldDefinition {
   nullable?: boolean
   /** Decision 1: on optional fields uniqueness applies only when a value is present (ifPresent). */
   unique?: boolean
-  /** Decision 5: VO names are explicit, never derived. */
-  vo?: string
+  /** Decision 5: VO names are explicit, never derived. Object form drives VO file emission. */
+  vo?: string | VoDefinition
   min?: number
   max?: number
   relation?: FieldRelation

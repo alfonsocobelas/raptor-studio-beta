@@ -2,8 +2,6 @@ import { StringValueObject } from '../../../../../shared/domain/value-objects/st
 import { CONTRACT_CONSTRAINTS } from '../contract-constants'
 import { ContractError } from '../contract-errors'
 
-// Texto libre, no enum (spec 44): las capturas solo muestran "Enterprise"/"Standard support",
-// pero es un campo gobernado por el sync — no debe romper si SAP añade un valor no visto.
 export class SupportModel extends StringValueObject {
   protected static override fieldName = 'Support model'
 

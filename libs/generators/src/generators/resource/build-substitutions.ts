@@ -5,7 +5,8 @@ import {
   FieldDefinition,
   FieldTable,
   FieldType,
-  ResourceDefinition
+  ResourceDefinition,
+  VoDefinition
 } from '@acc/schema'
 
 export interface ColumnSubstitution {
@@ -86,6 +87,27 @@ export interface ResourceSubstitutions {
   inlineLabelConsts: string[]
   /** Test bindings (service spec + mock, derived from the schema) */
   test: TestBindings
+  /** Value objects to emit (fields whose vo is declared in object form) */
+  vos: VoSubstitution[]
+}
+
+export interface VoSubstitution {
+  voClassName: string
+  voFileName: string
+  kind: 'string' | 'enum' | 'number' | 'integer' | 'boolean' | 'stringArray'
+  fieldName: string
+  errorClass: string
+  constraintsConst: string
+  constraintKey: string
+  ensure: 'defined' | 'string'
+  noInnerWhitespace: boolean
+  lengthRule?: 'max' | 'exact'
+  lengthMessage: string
+  min: boolean
+  unset: boolean
+  valuesUnion: string
+  valuesList: string
+  valueTypeName: string
 }
 
 export interface TestBindings {
@@ -228,8 +250,50 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
     ...renderForm(definition, n.fileName),
-    test: renderTestBindings(definition)
+    test: renderTestBindings(definition),
+    vos: renderVos(definition, n.className)
   }
+}
+
+function renderVos(definition: ResourceDefinition, className: string): VoSubstitution[] {
+  return Object.entries(definition.fields)
+    .filter((entry): entry is [string, FieldDefinition & { vo: VoDefinition }] => typeof entry[1].vo === 'object')
+    .map(([name, field]) => {
+      const vo = field.vo
+      const constraintKey = vo.constraintKey ?? constName(name)
+      const kind = voKind(field, vo)
+      const lengthN = `${definition.constraintsConst ?? `${constName(className)}_CONSTRAINTS`}.${constraintKey}`
+      return {
+        voClassName: vo.name,
+        voFileName: names(vo.name).fileName,
+        kind,
+        fieldName: vo.fieldName,
+        errorClass: `${className}Error`,
+        constraintsConst: definition.constraintsConst ?? `${constName(className)}_CONSTRAINTS`,
+        constraintKey,
+        ensure: vo.ensure ?? 'defined',
+        noInnerWhitespace: vo.noInnerWhitespace ?? false,
+        lengthRule: vo.lengthRule,
+        lengthMessage:
+          vo.lengthRule === 'exact'
+            ? (vo.lengthMessage ?? `${vo.fieldName} must be exactly \${${lengthN}.LENGTH} characters`)
+            : `${vo.fieldName} must be at most \${${lengthN}.MAX} characters`,
+        min: vo.min ?? false,
+        unset: vo.unset ?? false,
+        valuesUnion: (vo.values ?? []).map(v => `'${v}'`).join(' | '),
+        valuesList: (vo.values ?? []).map(v => `'${v}'`).join(', '),
+        valueTypeName: `${vo.name}Value`
+      }
+    })
+}
+
+function voKind(field: FieldDefinition, vo: VoDefinition): VoSubstitution['kind'] {
+  if (vo.values?.length) return 'enum'
+  if (field.type === 'boolean') return 'boolean'
+  if (field.type === 'integer') return 'integer'
+  if (field.type === 'number') return 'number'
+  if (field.column?.array) return 'stringArray'
+  return 'string'
 }
 
 const SAMPLE_UUIDS = ['019eb713-19bb-7000-8000-000000000001', '019eb713-19bb-7000-8000-000000000002']

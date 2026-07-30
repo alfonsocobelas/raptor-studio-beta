@@ -46,6 +46,7 @@ export const contract = defineResource({
   fields: {
     id: { type: 'uuid', pk: true, query: { filterable: 1 } },
     contractType: {
+      vo: { name: 'ContractType', fieldName: 'Contract type', values: ['cloud', 'onprem', 'mixed', 'maintenance'] },
       type: 'string',
       query: { filterable: 2 },
       table: {
@@ -114,22 +115,38 @@ export const contract = defineResource({
       column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
     },
     cmsCaseId: {
+      vo: { name: 'CmsCaseId', fieldName: 'CMS case ID', noInnerWhitespace: true, lengthRule: 'max' },
       type: 'string',
       query: { searchable: 3 },
       column: { type: 'varchar', lengthConst: 'CMS_CASE_ID.MAX', default: '' }
     },
-    businessModel: { type: 'string', column: { type: 'varchar', lengthConst: 'BUSINESS_MODEL.MAX', default: '' } },
+    businessModel: {
+      vo: { name: 'BusinessModel', fieldName: 'Business model', lengthRule: 'max' },
+      type: 'string',
+      column: { type: 'varchar', lengthConst: 'BUSINESS_MODEL.MAX', default: '' }
+    },
     subSolutionAreas: {
+      vo: { name: 'SubSolutionAreas', fieldName: 'Sub solution areas' },
       type: 'text',
       column: { type: 'text', array: true, defaultRaw: '"\'{}\'"', tsType: 'string[]' }
     },
-    nbrOfContracts: { type: 'integer', column: { type: 'int', default: 1 } },
+    nbrOfContracts: {
+      vo: { name: 'NumberOfContracts', fieldName: 'Number of contracts', min: true, constraintKey: 'NBR_OF_CONTRACTS' },
+      type: 'integer',
+      column: { type: 'int', default: 1 }
+    },
     isFavorite: {
+      vo: { name: 'IsFavorite', fieldName: 'Is favorite' },
       type: 'boolean',
       form: { control: 'checkbox', label: 'Marcar como favorito', section: 'contract', order: 12 },
       column: { type: 'boolean', default: false }
     },
     status: {
+      vo: {
+        name: 'ContractStatus',
+        fieldName: 'Contract status',
+        values: ['active', 'expiring', 'expired', 'terminated']
+      },
       type: 'string',
       query: { filterable: 3, sortable: 6 },
       table: {
@@ -165,6 +182,7 @@ export const contract = defineResource({
       column: { type: 'varchar', length: 20, default: 'active' }
     },
     source: {
+      vo: { name: 'ContractSource', fieldName: 'Contract source', values: ['AVVALE_SOLD', 'CUSTOMER_OWNED'] },
       type: 'string',
       query: { filterable: 4 },
       form: {
@@ -208,17 +226,32 @@ export const contract = defineResource({
       column: { type: 'date', tsType: 'Nullable<string>' }
     },
     totalValue: {
+      vo: { name: 'ContractValue', fieldName: 'Contract value', min: true, constraintKey: 'TOTAL_VALUE', unset: true },
       type: 'number',
       query: { sortable: 5 },
       table: { show: true, order: 7, label: 'Valor total', type: 'number', minWidth: 140 },
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
     },
     currency: {
+      vo: {
+        name: 'ContractCurrency',
+        fieldName: 'Contract currency',
+        ensure: 'string',
+        noInnerWhitespace: true,
+        lengthRule: 'exact',
+        lengthMessage: 'Contract currency must be a ${CONTRACT_CONSTRAINTS.CURRENCY.LENGTH}-letter ISO code',
+        constraintKey: 'CURRENCY'
+      },
       type: 'string',
       form: { control: 'text', label: 'Moneda', id: 'currency', section: 'contract', order: 8, default: "'EUR'" },
       column: { type: 'varchar', lengthConst: 'CURRENCY.LENGTH', default: 'EUR' }
     },
     billingFrequency: {
+      vo: {
+        name: 'BillingFrequency',
+        fieldName: 'Billing frequency',
+        values: ['monthly', 'quarterly', 'semiannual', 'yearly']
+      },
       type: 'string',
       table: {
         show: true,
@@ -247,6 +280,7 @@ export const contract = defineResource({
       column: { type: 'varchar', length: 20, default: 'yearly' }
     },
     renewalType: {
+      vo: { name: 'RenewalType', fieldName: 'Renewal type', values: ['auto', 'manual', 'none'] },
       type: 'string',
       form: {
         control: 'select',
@@ -266,11 +300,13 @@ export const contract = defineResource({
       column: { type: 'varchar', length: 20, default: 'manual' }
     },
     notes: {
+      vo: { name: 'ContractNotes', fieldName: 'Contract notes', lengthRule: 'max', constraintKey: 'NOTES' },
       type: 'string',
       form: { control: 'textarea', label: 'Notas internas', id: 'notes', section: 'notes', order: 13, rows: 3 },
       column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
     },
     origin: {
+      vo: { name: 'ContractOrigin', fieldName: 'Contract origin', values: ['ME_SAP', 'MANUAL'] },
       type: 'string',
       optionalPrimitive: true,
       comment: [
@@ -280,6 +316,7 @@ export const contract = defineResource({
       column: { type: 'varchar', length: 20, default: 'MANUAL' }
     },
     lifecycleStatus: {
+      vo: { name: 'ContractLifecycleStatus', fieldName: 'Contract lifecycle status', values: ['active', 'archived'] },
       type: 'string',
       optionalPrimitive: true,
       column: { type: 'varchar', length: 20, default: 'active' }
@@ -291,6 +328,7 @@ export const contract = defineResource({
       column: { type: 'timestamptz', tsType: 'Nullable<Date>' }
     },
     supportModel: {
+      vo: { name: 'SupportModel', fieldName: 'Support model', lengthRule: 'max' },
       type: 'string',
       optionalPrimitive: true,
       comment: ['Campos maintenance (spec 44), solo poblados por el sync de ISMaintenances'],

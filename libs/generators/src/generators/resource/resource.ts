@@ -28,6 +28,20 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
+  // VOs: un fichero por campo con vo en forma objeto (plantilla única con ramas por kind)
+  for (const vo of substitutions.vos) {
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-vo'),
+      path.join(outputDir, 'backend/domain/value-objects'),
+      {
+        ...substitutions,
+        vo,
+        voFileName: vo.voFileName
+      }
+    )
+  }
+
   // C2: los módulos de oro llevan extensiones a mano que el canon no cubre; se omiten por dato
   const skipPaths: Record<string, string> = {
     mapper: path.join('backend/infrastructure/persistence/typeorm', `${substitutions.fileName}.mapper.ts`),

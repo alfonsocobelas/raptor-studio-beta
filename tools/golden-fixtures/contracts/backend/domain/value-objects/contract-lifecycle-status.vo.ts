@@ -14,20 +14,4 @@ export class ContractLifecycleStatus extends EnumValueObject<ContractLifecycleSt
     this.ensureIsValidEnum(value as ContractLifecycleStatusValue, this.VALUES)
     return new ContractLifecycleStatus(value as ContractLifecycleStatusValue)
   }
-
-  static active(): ContractLifecycleStatus {
-    return new ContractLifecycleStatus('active')
-  }
-
-  static archived(): ContractLifecycleStatus {
-    return new ContractLifecycleStatus('archived')
-  }
-
-  isActive(): boolean {
-    return this.value === 'active'
-  }
-
-  isArchived(): boolean {
-    return this.value === 'archived'
-  }
 }
