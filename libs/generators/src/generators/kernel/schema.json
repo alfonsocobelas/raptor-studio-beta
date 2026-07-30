@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "Kernel",
+  "title": "Kernel generator",
+  "description": "Scaffolds the backend shared kernel (Criteria, VO bases, TypeORM base repository, pipes, filters, config loaders) the generated modules build upon — copy-once, then owned by the consuming app",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Output directory; defaults to tmp/generated/kernel"
+    },
+    "sharedDomainAlias": {
+      "type": "string",
+      "description": "Import alias of the frontend/backend shared DTO lib (default '@acc/shared/domain')"
+    }
+  }
+}

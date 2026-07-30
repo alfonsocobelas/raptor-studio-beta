@@ -9,6 +9,11 @@
       "factory": "./src/generators/root/root",
       "schema": "./src/generators/root/schema.json",
       "description": "Generates the backend composition root (root module, bootstrap, environment templates)"
+    },
+    "kernel": {
+      "factory": "./src/generators/kernel/kernel",
+      "schema": "./src/generators/kernel/schema.json",
+      "description": "Scaffolds the backend shared kernel (copy-once) the generated modules build upon"
     }
   }
 }

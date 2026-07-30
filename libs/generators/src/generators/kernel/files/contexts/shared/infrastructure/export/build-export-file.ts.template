@@ -1,0 +1,32 @@
+import { StreamableFile } from '@nestjs/common'
+import { ExportFormat } from '<%- sharedDomainAlias %>'
+import type { ExportColumn } from './export-column'
+import { toCsv } from './csv-exporter'
+import { toXlsx } from './xlsx-exporter'
+
+const MIME_TYPES: Record<ExportFormat, string> = {
+  csv: 'text/csv; charset=utf-8',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+}
+
+const datestamp = (): string => {
+  const now = new Date()
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
+}
+
+// Serializes the rows and wraps them in a downloadable StreamableFile with the right MIME type and a
+// dated attachment filename. Shared by every resource export endpoint so controllers stay a one-liner.
+export async function buildExportFile<T>(
+  rows: T[],
+  columns: ExportColumn<T>[],
+  format: ExportFormat,
+  baseName: string
+): Promise<StreamableFile> {
+  const buffer = format === 'xlsx' ? await toXlsx(rows, columns) : toCsv(rows, columns)
+  const filename = `${baseName}-${datestamp()}.${format}`
+  return new StreamableFile(buffer, {
+    type: MIME_TYPES[format],
+    disposition: `attachment; filename="${filename}"`
+  })
+}

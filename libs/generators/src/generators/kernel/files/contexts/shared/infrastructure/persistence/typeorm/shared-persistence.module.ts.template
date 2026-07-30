@@ -1,0 +1,37 @@
+import { Global, Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { join } from 'path'
+<%_ entities.forEach(e => { _%>
+import { <%- e.className %> } from '<%- e.importPath %>'
+<%_ }) _%>
+import { TransactionManager } from '../../../domain/persistence/transaction-manager'
+import { TypeOrmCriteriaConverter } from './typeorm-criteria-converter'
+import { TypeOrmTransactionManager } from './typeorm-transaction-manager'
+import { SnakeNamingStrategy } from './snake-naming.strategy'
+
+@Global()
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        ...config.get('typeorm'),
+        namingStrategy: new SnakeNamingStrategy(),
+        entities: [
+<%_ entities.forEach((e, i) => { _%>
+          <%- e.className %><%- i < entities.length - 1 ? ',' : '' %>
+<%_ }) _%>
+        ],
+        migrations: [join(__dirname, './migrations/*.{ts,js}')]
+      })
+    })
+  ],
+  providers: [
+    TypeOrmCriteriaConverter,
+    TypeOrmTransactionManager,
+    { provide: TransactionManager, useExisting: TypeOrmTransactionManager }
+  ],
+  exports: [TypeOrmModule, TypeOrmCriteriaConverter, TypeOrmTransactionManager, TransactionManager]
+})
+export class SharedPersistenceModule {}
