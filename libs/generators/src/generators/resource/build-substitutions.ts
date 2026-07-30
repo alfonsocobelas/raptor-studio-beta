@@ -58,10 +58,12 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
-  features: { view: boolean; delete: boolean }
+  features: { view: boolean; delete: boolean; edit: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
   deleteLabelField: string
+  dtoName: string
+  angularCoreImports: string
 }
 
 export interface UiStrings {
@@ -150,30 +152,41 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     route: definition.route ?? `/${definition.context}/${definition.plural}`,
     sharedDomainAlias: definition.sharedDomainAlias ?? '@acc/shared/domain',
     ui: renderUiStrings(definition),
-    frontendColumns: fields
-      .filter(([, f]) => f.table?.show)
-      .sort(([, a], [, b]) => (a.table?.order ?? Number.MAX_SAFE_INTEGER) - (b.table?.order ?? Number.MAX_SAFE_INTEGER))
-      .map(([name, f]) => renderFrontendColumn(name, f.table as FieldTable)),
+    frontendColumns: [
+      ...fields.filter(([, f]) => f.table?.show).map(([name, f]) => [name, f.table as FieldTable] as const),
+      ...Object.entries(definition.list?.virtualColumns ?? {})
+    ]
+      .sort(([, a], [, b]) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
+      .map(([name, table]) => renderFrontendColumn(name, table)),
     valueMapImports: [
       ...new Set(fields.map(([, f]) => f.table?.valueMapConst).filter((c): c is string => c !== undefined))
     ],
     features: resolveFeatures(definition),
     icons: renderIcons(resolveFeatures(definition)),
-    deleteLabelField: definition.list?.deleteLabelField ?? 'name'
+    deleteLabelField: definition.list?.deleteLabelField ?? 'name',
+    dtoName: definition.dtoName ?? `${n.className}Dto`,
+    angularCoreImports: renderAngularCoreImports(resolveFeatures(definition))
   }
 }
 
-function resolveFeatures(definition: ResourceDefinition): { view: boolean; delete: boolean } {
+function renderAngularCoreImports(features: { edit: boolean; delete: boolean }): string {
+  const base = ['ChangeDetectionStrategy', 'Component', 'computed', 'inject', 'linkedSignal']
+  if (features.edit || features.delete) base.push('signal')
+  return base.join(', ')
+}
+
+function resolveFeatures(definition: ResourceDefinition): { view: boolean; delete: boolean; edit: boolean } {
   return {
     view: definition.list?.features?.view ?? true,
-    delete: definition.list?.features?.delete ?? false
+    delete: definition.list?.features?.delete ?? false,
+    edit: definition.list?.features?.edit ?? true
   }
 }
 
-function renderIcons(features: { view: boolean; delete: boolean }): string[] {
+function renderIcons(features: { view: boolean; delete: boolean; edit: boolean }): string[] {
   const icons: string[] = []
   if (features.view) icons.push('lucideEye')
-  icons.push('lucidePencil')
+  if (features.edit) icons.push('lucidePencil')
   if (features.delete) icons.push('lucideTrash2')
   return icons
 }

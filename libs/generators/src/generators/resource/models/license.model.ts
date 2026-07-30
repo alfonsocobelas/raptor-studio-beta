@@ -9,10 +9,40 @@ export const license = defineResource({
   plural: 'licenses',
   context: 'sap-licensing',
   schemaName: 'sap_licensing',
+  route: '/sap-licensing/licenses',
+  sharedDomainAlias: '@sap-licenses/shared/domain',
+  dtoName: 'LicenseWithConsumptionDto',
+  labels: {
+    singular: 'Licencia',
+    plural: 'Licencias',
+    subtitle: 'Observabilidad del parque de licencias SAP',
+    gender: 'f'
+  },
+  list: {
+    viewLabel: 'Ver detalle',
+    features: { edit: false },
+    virtualColumns: {
+      consumptionPctFmt: { show: true, order: 7, label: '% Consumo', sortable: false, minWidth: 110 },
+      healthStatus: {
+        show: true,
+        order: 8,
+        label: 'Estado salud',
+        sortable: false,
+        minWidth: 150,
+        type: 'badge',
+        badgeMap: {
+          healthy: { label: 'Saludable', variant: 'default' },
+          underused: { label: 'Infrautilizada', variant: 'outline' },
+          overused: { label: 'Sobreuso', variant: 'secondary' },
+          contractual_breach: { label: 'Infracción', variant: 'destructive' }
+        }
+      }
+    }
+  },
   constraintsConst: 'LICENSE_CONSTRAINTS',
   audit: true,
   softDelete: true,
-  skipEmit: ['mapper', 'frontendList'],
+  skipEmit: ['mapper'],
   ordersNotes: ['Allowlist única (spec 26): con el snapshot en columnas, todas las vistas ordenan en SQL.'],
   searchNotes: [
     'Free-text columns shown in the table (spec 25). The SQL path ORs them with ILIKE; the health',
@@ -39,9 +69,14 @@ export const license = defineResource({
     customerName: {
       type: 'string',
       query: { filterable: 4, sortable: 1, searchable: 1 },
+      table: { show: true, order: 1, label: 'Cliente', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
     },
-    contractNumber: { type: 'string', column: { type: 'varchar', lengthConst: 'CONTRACT_NUMBER.MAX' } },
+    contractNumber: {
+      type: 'string',
+      table: { show: true, order: 3, label: 'Contrato', sortable: false, minWidth: 180 },
+      column: { type: 'varchar', lengthConst: 'CONTRACT_NUMBER.MAX' }
+    },
     contractEndDate: {
       type: 'date',
       nullable: true,
@@ -53,10 +88,21 @@ export const license = defineResource({
     subSolutionAreaName: {
       type: 'string',
       query: { filterable: 7, sortable: 2, searchable: 2 },
+      table: { show: true, order: 2, label: 'Solución', filterable: true, minWidth: 200 },
       column: { type: 'varchar', lengthConst: 'SUB_SOLUTION_AREA_NAME.MAX', default: '' }
     },
-    metric: { type: 'string', query: { filterable: 6, searchable: 3 }, column: { type: 'varchar', length: 20 } },
-    licensedUnits: { type: 'integer', query: { sortable: 3 }, column: { type: 'int' } },
+    metric: {
+      type: 'string',
+      query: { filterable: 6, searchable: 3 },
+      table: { show: true, order: 4, label: 'Métrica', filterable: true, sortable: false, minWidth: 100 },
+      column: { type: 'varchar', length: 20 }
+    },
+    licensedUnits: {
+      type: 'integer',
+      query: { sortable: 3 },
+      table: { show: true, order: 5, label: 'Licenciadas', type: 'number', minWidth: 120 },
+      column: { type: 'int' }
+    },
     pricePerUnit: {
       type: 'number',
       column: { type: 'numeric', precision: 15, scale: 2, default: 0, transformer: 'numeric' }
@@ -86,6 +132,7 @@ export const license = defineResource({
     currentUnits: {
       type: 'number',
       query: { sortable: 4 },
+      table: { show: true, order: 6, label: 'Consumo actual', type: 'number', sortable: false, minWidth: 130 },
       comment: [
         'Snapshot de consumo denormalizado (spec 26): lo recalcula recomputeConsumptionSnapshot en cada',
         'escritura de consumos; nunca se escribe desde el dominio.'

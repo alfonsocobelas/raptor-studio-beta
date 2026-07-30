@@ -113,6 +113,8 @@ export interface ListDefinition {
   viewLabel?: string
   /** Field shown in the delete confirmation text; defaults to 'name' */
   deleteLabelField?: string
+  /** Display-only columns whose keys are not entity fields (derived/enriched values) */
+  virtualColumns?: Record<string, FieldTable>
   defaultSort?: { field: string; dir: 'asc' | 'desc' }
   pageSize?: number
   features?: {
@@ -123,6 +125,8 @@ export interface ListDefinition {
     view?: boolean
     /** Delete flow with confirmation alert-dialog (default false) */
     delete?: boolean
+    /** Create/edit dialog machinery (default true; false = read-only list) */
+    edit?: boolean
   }
   actions?: ListAction[]
 }
@@ -164,6 +168,8 @@ export interface ResourceDefinition {
   api?: string
   /** Import alias of the app's shared domain lib in emitted frontend code */
   sharedDomainAlias?: string
+  /** DTO type name in emitted frontend code; defaults to <ClassName>Dto */
+  dtoName?: string
   labels?: ResourceLabels
   /** Domain constraints constant imported as LIMITS (e.g. 'CONTRACT_CONSTRAINTS') */
   constraintsConst?: string

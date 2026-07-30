@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } fr
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye } from '@ng-icons/lucide'
-import { ExportFormat, LicenseWithConsumptionDto } from '@sap-licenses/shared/domain'
+import { LicenseWithConsumptionDto, ExportFormat } from '@sap-licenses/shared/domain'
 import { LicenseService, OffsetPaginatedOutput } from '../../../../../../core/services/license.service'
+import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 import {
   ColumnDef,
   ColumnFilter,
@@ -12,7 +13,6 @@ import {
   TableAction
 } from '../../../../../../shared/components/data-table'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
-import { navigationCameFrom } from '../../../../../../shared/utils/navigation'
 
 @Component({
   selector: 'app-licenses-list',
@@ -83,15 +83,7 @@ export class LicensesListComponent {
     computation: (value, previous) => value ?? previous?.value
   })
 
-  readonly rows = computed(() =>
-    (this._loaded()?.items ?? []).map(
-      license =>
-        ({
-          ...license,
-          consumptionPctFmt: `${license.consumptionPct.toFixed(1)}%`
-        }) as unknown as Record<string, unknown>
-    )
-  )
+  readonly rows = computed(() => (this._loaded()?.items ?? []) as unknown as Record<string, unknown>[])
   readonly total = computed(() => this._loaded()?.total ?? 0)
   readonly hasData = computed(() => this._loaded() !== undefined)
   readonly currentPage = computed(() => this._service.request().page)
@@ -103,22 +95,20 @@ export class LicensesListComponent {
   // Same for an active column filter: hiding the table would trap the user with an unclearable filter.
   readonly hasActiveFilters = computed(() => (this._service.request().filters?.length ?? 0) > 0)
 
-  // Only customerName, subSolutionAreaName and licensedUnits are SQL-sortable (LICENSE_ALLOWED_ORDERS);
-  // the rest are derived (enriched post-query) and cannot be ordered server-side, so sortable: false.
   readonly columns: ColumnDef[] = [
     { key: 'customerName', label: 'Cliente', filterable: true, minWidth: 200 },
     { key: 'subSolutionAreaName', label: 'Solución', filterable: true, minWidth: 200 },
     { key: 'contractNumber', label: 'Contrato', sortable: false, minWidth: 180 },
-    { key: 'metric', label: 'Métrica', sortable: false, filterable: true, minWidth: 100 },
+    { key: 'metric', label: 'Métrica', filterable: true, sortable: false, minWidth: 100 },
     { key: 'licensedUnits', label: 'Licenciadas', type: 'number', minWidth: 120 },
-    { key: 'currentUnits', label: 'Consumo actual', type: 'number', sortable: false, minWidth: 130 },
+    { key: 'currentUnits', label: 'Consumo actual', sortable: false, type: 'number', minWidth: 130 },
     { key: 'consumptionPctFmt', label: '% Consumo', sortable: false, minWidth: 110 },
     {
       key: 'healthStatus',
       label: 'Estado salud',
-      type: 'badge',
       sortable: false,
       minWidth: 150,
+      type: 'badge',
       badgeMap: {
         healthy: { label: 'Saludable', variant: 'default' },
         underused: { label: 'Infrautilizada', variant: 'outline' },
@@ -128,7 +118,6 @@ export class LicensesListComponent {
     }
   ]
 
-  // Licenses are observability-only (per the prototype): the only row action is viewing the detail.
   readonly actions: TableAction[] = [{ icon: 'lucideEye', label: 'Ver detalle', action: 'view' }]
 
   onPage(page: number): void {
@@ -137,6 +126,11 @@ export class LicensesListComponent {
 
   onPageSize(pageSize: number): void {
     this._service.request.update(r => ({ ...r, pageSize, page: 1 }))
+  }
+
+  async onExport(format: ExportFormat): Promise<void> {
+    const { blob, filename } = await this._service.export(format)
+    downloadBlob(blob, filename)
   }
 
   onSort(sort: SortOrder | null): void {
@@ -149,11 +143,6 @@ export class LicensesListComponent {
 
   onFilters(filters: ColumnFilter[]): void {
     this._service.request.update(r => ({ ...r, filters, page: 1 }))
-  }
-
-  async onExport(format: ExportFormat): Promise<void> {
-    const { blob, filename } = await this._service.export(format)
-    downloadBlob(blob, filename)
   }
 
   onAction(event: { action: string; row: Record<string, unknown> }): void {
