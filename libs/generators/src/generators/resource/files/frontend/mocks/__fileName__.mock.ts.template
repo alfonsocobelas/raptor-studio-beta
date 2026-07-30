@@ -1,0 +1,18 @@
+import { <%- dtoName %><%- test.enumImports ? ', ' + test.enumImports : '' %> } from '<%- sharedDomainAlias %>'
+import { OffsetPaginatedOutput } from '../<%- fileName %>.service'
+
+// Datos de prueba derivados del resource-schema (generados): los specs del servicio y del
+// componente los consumen; los valores concretos no importan, la forma sí.
+export const <%- test.mockConst.replace('_PAGINATED', '') %>: <%- dtoName %>[] = [
+<%_ test.mockItemBlocks.forEach((block, i) => { _%>
+<%- block %><%- i < test.mockItemBlocks.length - 1 ? ',' : '' %>
+<%_ }) _%>
+]
+
+export const <%- test.mockConst %>: OffsetPaginatedOutput<<%- dtoName %>> = {
+  total: <%- test.mockItemBlocks.length %>,
+  page: 1,
+  pageSize: 10,
+  totalPages: 1,
+  items: <%- test.mockConst.replace('_PAGINATED', '') %>
+}

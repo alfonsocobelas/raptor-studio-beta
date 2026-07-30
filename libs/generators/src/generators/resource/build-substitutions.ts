@@ -84,6 +84,18 @@ export interface ResourceSubstitutions {
   needsGroupValidatorTypes: boolean
   needsComputed: boolean
   inlineLabelConsts: string[]
+  /** Test bindings (service spec + mock, derived from the schema) */
+  test: TestBindings
+}
+
+export interface TestBindings {
+  mockConst: string
+  sortField: string
+  filterSamples: { field: string; label: string; operator: string; value: string }[]
+  createSampleLines: string[]
+  updateSampleSrc: string
+  enumImports: string
+  mockItemBlocks: string[]
 }
 
 export interface FormFieldSubstitution {
@@ -215,8 +227,83 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     api: definition.api ?? `/api/v1/${definition.plural}`,
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
-    ...renderForm(definition, n.fileName)
+    ...renderForm(definition, n.fileName),
+    test: renderTestBindings(definition)
   }
+}
+
+const SAMPLE_UUIDS = ['019eb713-19bb-7000-8000-000000000001', '019eb713-19bb-7000-8000-000000000002']
+
+function renderTestBindings(definition: ResourceDefinition): TestBindings {
+  const n = names(definition.name)
+  const fields = Object.entries(definition.fields)
+  const sortField = orderedQueryList(fields, 'sortable')[0] ?? 'id'
+  const filterable = orderedQueryList(fields, 'filterable').filter(f => f !== 'id')
+  const filterSamples = filterable.slice(0, 2).map(name => ({
+    field: name,
+    label: definition.fields[name].table?.label ?? definition.fields[name].form?.label ?? name,
+    operator: definition.fields[name].form?.options ? 'eq' : 'starts_with',
+    value: sampleScalar(name, definition.fields[name], 0)
+  }))
+
+  const required = fields.filter(([, f]) => f.required && f.form && f.form.control !== 'none')
+  const createSampleLines = [
+    `id: '${SAMPLE_UUIDS[0]}',`,
+    ...required.map(([name, f], i) => `${name}: ${sampleScalar(name, f, i)},`)
+  ]
+    .map(line => line.replace(/,$/, ''))
+    .map((line, i, arr) => (i < arr.length - 1 ? `${line},` : line))
+
+  const checkbox = fields.find(([, f]) => f.form?.control === 'checkbox')
+  const optionalText = fields.find(([, f]) => f.form?.control === 'text' && !f.required)
+  const updateSampleSrc = checkbox
+    ? `{ ${checkbox[0]}: true }`
+    : optionalText
+      ? `{ ${optionalText[0]}: ${sampleScalar(optionalText[0], optionalText[1], 0)} }`
+      : `{}`
+
+  const enums = [
+    ...new Set(fields.map(([, f]) => f.form?.optionsType).filter((t): t is string => t !== undefined))
+  ].sort()
+
+  return {
+    mockConst: `MOCK_${n.constantName}S_PAGINATED`,
+    sortField,
+    filterSamples,
+    createSampleLines,
+    updateSampleSrc,
+    enumImports: enums.join(', '),
+    mockItemBlocks: SAMPLE_UUIDS.map((id, index) => renderMockItem(definition, id, index))
+  }
+}
+
+function sampleScalar(name: string, field: FieldDefinition, index: number): string {
+  const form = field.form
+  if (form?.optionsType && form.options?.length) {
+    const option = form.options[index % form.options.length]
+    return `${form.optionsType}.${option.value.toUpperCase()}`
+  }
+  if (form?.options?.length) return `'${form.options[index % form.options.length].value}'`
+  if (form?.lookup || field.type === 'uuid') return `'${SAMPLE_UUIDS[1]}'`
+  if (field.column?.array) return `['${names(name).className} ${index + 1}']`
+  if (field.type === 'boolean') return index % 2 === 0 ? 'false' : 'true'
+  if (field.type === 'number' || field.type === 'integer') return String(100 + index)
+  if (field.type === 'date') return `'2026-0${index + 1}-15'`
+  if (field.type === 'timestamptz') return `'2026-0${index + 1}-15T10:00:00.000Z'`
+  return `'${names(name).className} ${index + 1}'`
+}
+
+function renderMockItem(definition: ResourceDefinition, id: string, index: number): string {
+  const lines = Object.entries(definition.fields)
+    .filter(([name]) => name !== 'id')
+    .map(([name, f]) => `    ${name}: ${f.nullable && index === 1 ? 'null' : sampleScalar(name, f, index)}`)
+  if (definition.audit) {
+    lines.push(
+      `    createdAt: '2026-01-0${index + 1}T09:00:00.000Z'`,
+      `    updatedAt: '2026-01-0${index + 1}T09:00:00.000Z'`
+    )
+  }
+  return `  {\n    id: '${id}',\n${lines.join(',\n')}\n  }`
 }
 
 type FormBindings = Pick<
