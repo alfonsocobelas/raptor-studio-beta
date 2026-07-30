@@ -5,6 +5,7 @@ import { ResourceDefinition } from '@acc/schema'
 import { contract } from './models/contract.model'
 import { customer } from './models/customer.model'
 import { license } from './models/license.model'
+import { project } from './models/project.model'
 import type { ResourceGeneratorSchema } from './schema'
 
 // Static registry (bundle-safe, same pattern as the reference's config-sources.ts).
@@ -12,7 +13,8 @@ import type { ResourceGeneratorSchema } from './schema'
 const MODELS: Record<string, ResourceDefinition> = {
   contract,
   customer,
-  license
+  license,
+  project
 }
 
 export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSchema) {

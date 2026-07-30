@@ -4,7 +4,7 @@
 # Cobertura incremental: los ficheros de fixture sin plantilla aún no fallan.
 set -uo pipefail
 
-MODELS=("contract:contracts" "customer:customers" "license:licenses")   # <name>:<plural> — crece con los modelos registrados
+MODELS=("contract:contracts" "customer:customers" "license:licenses" "project:projects")   # <name>:<plural> — crece con los modelos registrados
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/tmp/generated"
 FIX="$ROOT/tools/golden-fixtures"
