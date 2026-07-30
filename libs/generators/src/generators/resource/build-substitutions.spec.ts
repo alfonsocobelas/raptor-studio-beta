@@ -1,6 +1,6 @@
 import { buildSubstitutions } from './build-substitutions'
 import { contract } from './models/contract.model'
-import { ResourceModel } from './models/model-types'
+import { ResourceDefinition } from '@acc/schema'
 
 describe('buildSubstitutions', () => {
   describe('name variants', () => {
@@ -37,12 +37,13 @@ describe('buildSubstitutions', () => {
     })
 
     it('imports only what a minimal model uses', () => {
-      const minimal: ResourceModel = {
+      const minimal: ResourceDefinition = {
+        schemaVersion: 1,
         name: 'thing',
         plural: 'things',
         context: 'demo',
         schemaName: 'demo',
-        fields: [{ name: 'id', tsType: 'string', column: 'uuid', pk: true }]
+        fields: { id: { type: 'uuid', pk: true } }
       }
 
       expect(buildSubstitutions(minimal).typeormImports).toBe('Entity, PrimaryColumn')
@@ -50,12 +51,13 @@ describe('buildSubstitutions', () => {
 
     it('reports no flags for a minimal model', () => {
       // GIVEN
-      const minimal: ResourceModel = {
+      const minimal: ResourceDefinition = {
+        schemaVersion: 1,
         name: 'thing',
         plural: 'things',
         context: 'demo',
         schemaName: 'demo',
-        fields: [{ name: 'id', tsType: 'string', column: 'uuid', pk: true }]
+        fields: { id: { type: 'uuid', pk: true } }
       }
 
       // WHEN
@@ -130,7 +132,7 @@ describe('buildSubstitutions', () => {
     it('keeps model field order (the diff against the golden reference depends on it)', () => {
       const subs = buildSubstitutions(contract)
 
-      expect(subs.columns.map(c => c.name)).toEqual(contract.fields.map(f => f.name))
+      expect(subs.columns.map(c => c.name)).toEqual(Object.keys(contract.fields))
     })
   })
 })

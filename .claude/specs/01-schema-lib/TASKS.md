@@ -15,7 +15,7 @@
 
 ## Migración del generador
 
-- [ ] **TASK-04**: Migrar `libs/generators` a `@acc/schema`: `contract.model.ts` con `defineResource` y fields keyed, `build-substitutions.ts` sobre `ResourceDefinition` (`Object.entries`), adaptar tests existentes, eliminar `model-types.ts`
+- [x] **TASK-04**: Migrar `libs/generators` a `@acc/schema`: `contract.model.ts` con `defineResource` y fields keyed, `build-substitutions.ts` sobre `ResourceDefinition` (`Object.entries`), adaptar tests existentes, eliminar `model-types.ts`
 
 ## Cierre
 

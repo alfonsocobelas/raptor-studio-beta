@@ -11,6 +11,16 @@
       "options": {
         "jestConfig": "libs/schema/jest.config.cts"
       }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/schema",
+        "main": "libs/schema/src/index.ts",
+        "tsConfig": "libs/schema/tsconfig.lib.json",
+        "assets": []
+      }
     }
   }
 }

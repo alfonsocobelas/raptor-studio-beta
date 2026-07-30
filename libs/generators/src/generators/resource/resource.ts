@@ -1,13 +1,13 @@
 import { formatFiles, generateFiles, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { buildSubstitutions } from './build-substitutions'
+import { ResourceDefinition } from '@acc/schema'
 import { contract } from './models/contract.model'
-import { ResourceModel } from './models/model-types'
 import type { ResourceGeneratorSchema } from './schema'
 
 // Static registry (bundle-safe, same pattern as the reference's config-sources.ts).
 // New golden entities (customer, license, project) register here as their models are written.
-const MODELS: Record<string, ResourceModel> = {
+const MODELS: Record<string, ResourceDefinition> = {
   contract
 }
 
