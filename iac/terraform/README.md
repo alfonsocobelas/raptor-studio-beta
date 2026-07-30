@@ -38,12 +38,12 @@ Variables **sin default** (obligatorias en el JSON):
 
 | Variable                  | Ejemplo / nota                                               |
 | ------------------------- | ------------------------------------------------------------ |
-| `resource_group_name`     | `rg-acelerador-dev`                                        |
-| `acr_name`                | `acraceleradordev` — único global, solo alfanumérico        |
-| `key_vault_name`          | `kv-acelerador-dev` — único global                         |
-| `storage_account_name`    | `staceleradordev` — único global (3-24, minúsculas alfanum) |
+| `resource_group_name`     | `rg-acelerador-dev`                                          |
+| `acr_name`                | `acraceleradordev` — único global, solo alfanumérico         |
+| `key_vault_name`          | `kv-acelerador-dev` — único global                           |
+| `storage_account_name`    | `staceleradordev` — único global (3-24, minúsculas alfanum)  |
 | `key_vault_secrets`       | map nombre → valor (ver tabla siguiente)                     |
-| `postgres_server_name`    | `psql-acelerador-dev` — único global (DNS)                 |
+| `postgres_server_name`    | `psql-acelerador-dev` — único global (DNS)                   |
 | `postgres_admin_login`    | login del admin (también usuario de migraciones)             |
 | `postgres_admin_password` | password del admin                                           |
 | `postgres_allowed_ips`    | mapa nombre → `{start, end?}` de IPs autorizadas (DBeaver)   |
