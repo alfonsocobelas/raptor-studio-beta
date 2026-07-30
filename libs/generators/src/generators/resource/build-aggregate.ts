@@ -62,7 +62,8 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
       field.voRef?.unset === true
   }))
 
-  if (!ctxs.some(c => c.voName)) {
+  // síntesis solo cuando el modelo declara VOs propios (forma objeto): sin ellos no hay dominio emitible
+  if (!ctxs.some(c => typeof c.field.vo === 'object')) {
     return emptyBindings()
   }
 

@@ -137,9 +137,10 @@ describe('ContractService — mutaciones', () => {
 
     await service.create({
       id: '019eb713-19bb-7000-8000-000000000001',
-      contractNumber: 'ContractNumber 1',
+      contractType: ContractTypeEnum.CLOUD,
+      contractNumber: 'ContractNumber 2',
       customerId: '019eb713-19bb-7000-8000-000000000002',
-      startDate: '2026-03-15'
+      startDate: '2026-04-15'
     })
 
     expect(httpPost).toHaveBeenCalledOnce()

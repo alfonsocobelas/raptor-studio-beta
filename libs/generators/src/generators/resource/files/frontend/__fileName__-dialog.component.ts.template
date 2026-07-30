@@ -92,7 +92,7 @@ export interface <%- className %>FormValue {
 <%_ }) _%>
 <%- pad %>    </hlm-select-content>
 <%- pad %>  </hlm-select>
-<%_ if (f.required) { _%>
+<%_ if (f.required && !f.default) { _%>
 <%- pad %>  <hlm-field-error>Obligatorio</hlm-field-error>
 <%_ } _%>
 <%- pad %></hlm-field>
