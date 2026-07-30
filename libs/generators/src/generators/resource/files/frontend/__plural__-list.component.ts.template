@@ -93,7 +93,11 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-<%- fileName %>-dialog [<%- propertyName %>]="editing<%- className %>()" (saved)="onSave($event)" />
+        <app-<%- fileName %>-dialog
+          [<%- propertyName %>]="editing<%- className %>()"
+          (saved)="onSave($event)"
+          (close)="dialogOpen.set(false)"
+        />
       }
     </app-dialog>
 <%_ } _%>

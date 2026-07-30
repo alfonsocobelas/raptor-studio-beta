@@ -144,6 +144,8 @@ export interface FormFieldSubstitution {
   default?: string
   placeholder?: string
   labelsConst?: string
+  /** Constante de opciones tipadas para <app-select> */
+  optionsConst?: string
   groupErrorMessage?: string
   maxLength?: number
   fullWidth?: boolean
@@ -461,18 +463,19 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     dialogSharedImports: sharedTypes.join(', '),
     needsSelect: selects.length > 0,
     savedEmitLines: renderSavedEmit(formFields, lookups),
-    formHelperLines: renderHelpers(
-      inlineLabelFields,
-      enumSelects.filter(f => f.labelsConst),
-      lookups
-    ),
+    // la plantilla solo puede leer miembros de la clase: se expone la constante
+    formHelperLines: enumSelects
+      .filter(f => !f.lookup && f.optionsConst)
+      .map(f => `protected readonly ${f.name}Options = ${f.optionsConst}`),
     lookupInjectLines: lookups.map(
       f => `private readonly _${f.lookup?.resource}Service = inject(${cap(f.lookup?.resource ?? '')}Service)`
     ),
-    lookupComputedLines: lookups.map(
-      f =>
-        `readonly ${f.lookup?.resource}s = computed(() => this._${f.lookup?.resource}Service.${f.lookup?.resource}s.value()?.items ?? [])`
-    ),
+    lookupComputedLines: lookups.flatMap(f => [
+      `readonly ${f.lookup?.resource}s = computed(() => this._${f.lookup?.resource}Service.${f.lookup?.resource}s.value()?.items ?? [])`,
+      `protected readonly ${f.name}Options = computed<AppSelectOption[]>(() =>`,
+      `  this.${f.lookup?.resource}s().map(item => ({ value: item.id, label: item.${f.lookup?.labelField} }))`,
+      `)`
+    ]),
     lookupServiceImports: [...new Set(lookups.map(f => f.lookup?.resource ?? ''))],
     labelsModuleImports,
     groupValidatorDefs: groupValidators.map(renderGroupValidatorDef),
@@ -481,10 +484,14 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
       : '',
     needsGroupValidatorTypes: groupValidators.length > 0,
     needsComputed: lookups.length > 0,
-    inlineLabelConsts: inlineLabelFields.map(f => {
-      const entries = f.options.map(o => `  ${o.value}: '${o.label}'`).join(',\n')
-      return `const ${constName(f.name)}_LABELS: Record<string, string> = {\n${entries}\n}`
-    })
+    // app-select recibe las opciones tipadas y resuelve la etiqueta por su cuenta:
+    // ya no hace falta un Record de etiquetas ni un helper itemToString por campo.
+    inlineLabelConsts: enumSelects
+      .filter(f => !f.lookup && f.options.length)
+      .map(f => {
+        const entries = f.options.map(o => `  { value: '${o.value}', label: '${o.label}' }`).join(',\n')
+        return `const ${constName(f.name)}_OPTIONS: AppSelectOption[] = [\n${entries}\n]`
+      })
   }
 }
 
@@ -585,6 +592,11 @@ function renderFormField(name: string, field: FieldDefinition, idPrefix: string)
     default: form.default,
     placeholder: form.placeholder,
     labelsConst: form.labelsConst,
+    // constante con las opciones tipadas que consume <app-select>
+    optionsConst:
+      form.control === 'select' && !form.lookup && (form.options?.length ?? 0) > 0
+        ? `${constName(name)}_OPTIONS`
+        : undefined,
     groupErrorMessage: form.groupErrorMessage,
     maxLength: form.maxLength,
     fullWidth: form.fullWidth,

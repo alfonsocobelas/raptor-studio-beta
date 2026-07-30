@@ -1,0 +1,15 @@
+import { Directive, input } from '@angular/core'
+import { MatButton } from '@angular/material/button'
+
+/** Botón (piel Material). Mismas variantes que la implementación Spartan. */
+@Directive({
+  selector: 'button[appBtn]',
+  hostDirectives: [MatButton],
+  host: { '[attr.matButton]': 'matVariant()', '[class]': 'colorClass()' }
+})
+export class AppButton {
+  readonly variant = input<'default' | 'outline' | 'destructive'>('default')
+
+  protected readonly matVariant = () => (this.variant() === 'outline' ? 'outlined' : 'filled')
+  protected readonly colorClass = () => (this.variant() === 'destructive' ? 'mat-warn' : '')
+}

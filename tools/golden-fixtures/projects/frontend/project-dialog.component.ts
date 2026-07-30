@@ -1,24 +1,24 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { ProjectDto, ProjectImplementerEnum, ProjectStatusEnum } from '@sap-licenses/shared/domain'
 import { CustomerService } from '../../../../../../core/services/customer.service'
 
-const STATUS_LABELS: Record<string, string> = {
-  planning: 'Planificación',
-  active: 'Activo',
-  onhold: 'En pausa',
-  closed: 'Cerrado'
-}
+const STATUS_OPTIONS: AppSelectOption[] = [
+  { value: 'planning', label: 'Planificación' },
+  { value: 'active', label: 'Activo' },
+  { value: 'onhold', label: 'En pausa' },
+  { value: 'closed', label: 'Cerrado' }
+]
 
-const IMPLEMENTER_LABELS: Record<string, string> = {
-  AVVALE: 'AVVALE',
-  THIRD_PARTY: 'Tercero'
-}
+const IMPLEMENTER_OPTIONS: AppSelectOption[] = [
+  { value: 'AVVALE', label: 'AVVALE' },
+  { value: 'THIRD_PARTY', label: 'Tercero' }
+]
 
 export interface ProjectFormValue {
   customerId: string
@@ -39,107 +39,73 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
 
 @Component({
   selector: 'app-project-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ project() ? 'Editar proyecto' : 'Nuevo proyecto' }}</h3>
-        <p hlmDialogDescription>
-          {{ project() ? 'Modifica los datos del proyecto' : 'Introduce los datos del nuevo proyecto' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="project() ? 'Editar proyecto' : 'Nuevo proyecto'"
+      [description]="project() ? 'Modifica los datos del proyecto' : 'Introduce los datos del nuevo proyecto'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos generales</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="pname">Nombre</label>
-              <input id="pname" hlmInput formControlName="name" />
+            <app-form-field label="Nombre" for="pname" class="sm:col-span-2">
+              <input id="pname" appInput formControlName="name" />
               @if (form.controls.name.touched && form.controls.name.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="pdesc">Descripción</label>
-              <textarea id="pdesc" class="resize-none" hlmInput formControlName="description" rows="3"></textarea>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="pcustomer">Cliente</label>
-              <hlm-select formControlName="customerId" [itemToString]="customerIdToLabel">
-                <hlm-select-trigger buttonId="pcustomer">
-                  <hlm-select-value placeholder="Seleccionar cliente" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal showScroll>
-                  @for (item of customers(); track item.id) {
-                    <hlm-select-item [value]="item.id">{{ item.name }}</hlm-select-item>
-                  }
-                </hlm-select-content>
-              </hlm-select>
+            </app-form-field>
+            <app-form-field label="Descripción" for="pdesc" class="sm:col-span-2">
+              <textarea id="pdesc" class="resize-none" appInput formControlName="description" rows="3"></textarea>
+            </app-form-field>
+            <app-form-field label="Cliente" for="pcustomer">
+              <app-select
+                formControlName="customerId"
+                controlId="pcustomer"
+                placeholder="Seleccionar cliente"
+                [options]="customerIdOptions()"
+              />
               @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="pstatus">Estado</label>
-              <hlm-select formControlName="status" [itemToString]="statusToLabel">
-                <hlm-select-trigger buttonId="pstatus">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="planning">Planificación</hlm-select-item>
-                  <hlm-select-item value="active">Activo</hlm-select-item>
-                  <hlm-select-item value="onhold">En pausa</hlm-select-item>
-                  <hlm-select-item value="closed">Cerrado</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="pstart">Fecha inicio</label>
-              <input id="pstart" type="date" hlmInput formControlName="startDate" />
+            </app-form-field>
+            <app-form-field label="Estado" for="pstatus">
+              <app-select formControlName="status" controlId="pstatus" placeholder="" [options]="statusOptions" />
+            </app-form-field>
+            <app-form-field label="Fecha inicio" for="pstart">
+              <input id="pstart" type="date" appInput formControlName="startDate" />
               @if (form.controls.startDate.touched && form.controls.startDate.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="pend">Fecha fin</label>
-              <input id="pend" type="date" hlmInput formControlName="endDate" />
-              <!-- forceShow: dateRange es un error de grupo; sin él, hlm-field-error se oculta porque
-                   el control endDate está válido (solo mira los errores de su propio control). -->
+            </app-form-field>
+            <app-form-field label="Fecha fin" for="pend">
+              <input id="pend" type="date" appInput formControlName="endDate" />
+              <!-- dateRange es un error de grupo: se pinta a mano porque el control
+                   endDate está válido y app-form-field solo mira su propio error. -->
               @if (form.errors?.['dateRange']) {
-                <hlm-field-error forceShow>La fecha fin debe ser posterior a la de inicio</hlm-field-error>
+                <span class="text-destructive text-sm">La fecha fin debe ser posterior a la de inicio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="pimpl">Implementador</label>
-              <hlm-select formControlName="implementer" [itemToString]="implementerToLabel">
-                <hlm-select-trigger buttonId="pimpl">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="AVVALE">AVVALE</hlm-select-item>
-                  <hlm-select-item value="THIRD_PARTY">Tercero</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Implementador" for="pimpl">
+              <app-select
+                formControlName="implementer"
+                controlId="pimpl"
+                placeholder=""
+                [options]="implementerOptions"
+              />
+            </app-form-field>
           </div>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ project() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class ProjectDialogComponent {
@@ -148,14 +114,15 @@ export class ProjectDialogComponent {
 
   readonly project = input<ProjectDto | null>(null)
   readonly saved = output<ProjectFormValue>()
+  readonly close = output<void>()
 
   readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
+  protected readonly customerIdOptions = computed<AppSelectOption[]>(() =>
+    this.customers().map(item => ({ value: item.id, label: item.name }))
+  )
 
-  protected readonly statusToLabel = (value: unknown): string => STATUS_LABELS[value as ProjectStatusEnum] ?? ''
-  protected readonly implementerToLabel = (value: unknown): string =>
-    IMPLEMENTER_LABELS[value as ProjectImplementerEnum] ?? ''
-  protected readonly customerIdToLabel = (value: unknown): string =>
-    this.customers().find(item => item.id === value)?.name ?? ''
+  protected readonly statusOptions = STATUS_OPTIONS
+  protected readonly implementerOptions = IMPLEMENTER_OPTIONS
 
   readonly form = this._fb.nonNullable.group(
     {
@@ -188,7 +155,7 @@ export class ProjectDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -199,6 +166,6 @@ export class ProjectDialogComponent {
       customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
-    ctx.close()
+    this.close.emit()
   }
 }

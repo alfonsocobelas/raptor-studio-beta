@@ -68,7 +68,7 @@ import { ContractDialogComponent, ContractFormValue } from './contract-dialog.co
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-contract-dialog [contract]="editingContract()" (saved)="onSave($event)" />
+        <app-contract-dialog [contract]="editingContract()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
   `

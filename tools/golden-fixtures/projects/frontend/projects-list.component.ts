@@ -67,7 +67,7 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-project-dialog [project]="editingProject()" (saved)="onSave($event)" />
+        <app-project-dialog [project]="editingProject()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
 

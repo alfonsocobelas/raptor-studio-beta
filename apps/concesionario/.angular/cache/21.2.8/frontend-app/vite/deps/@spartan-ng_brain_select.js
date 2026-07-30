@@ -1,30 +1,30 @@
 import {
+  BrnOverlay,
+  BrnPopover
+} from "./chunk-J7CQVLYK.js";
+import {
+  ActiveDescendantKeyManager
+} from "./chunk-AXXKIU6M.js";
+import {
   BrnFieldControl,
   provideBrnLabelable
 } from "./chunk-CORRGEFH.js";
 import {
-  BrnOverlay,
-  BrnPopover
-} from "./chunk-MLCXACJS.js";
-import {
-  ActiveDescendantKeyManager
-} from "./chunk-AXXKIU6M.js";
-import "./chunk-6IE75NIU.js";
-import "./chunk-KM2PCSLL.js";
-import "./chunk-C3FLKRDF.js";
+  NG_VALUE_ACCESSOR
+} from "./chunk-MQAMSBSO.js";
+import "./chunk-OX253WZ7.js";
 import "./chunk-RU4RFFMX.js";
 import {
   injectElementSize,
   stringifyAsLabel
 } from "./chunk-N5WA7HNS.js";
+import "./chunk-6IE75NIU.js";
+import "./chunk-C3FLKRDF.js";
 import {
   takeUntilDestroyed
 } from "./chunk-R4LLFK3G.js";
 import "./chunk-2P2IYF4D.js";
 import "./chunk-HC33ZOIP.js";
-import {
-  NG_VALUE_ACCESSOR
-} from "./chunk-MQAMSBSO.js";
 import {
   isPlatformBrowser
 } from "./chunk-LAHHEQBJ.js";

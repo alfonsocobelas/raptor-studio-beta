@@ -67,7 +67,7 @@ import { CustomerDialogComponent, CustomerFormValue } from './customer-dialog.co
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-customer-dialog [customer]="editingCustomer()" (saved)="onSave($event)" />
+        <app-customer-dialog [customer]="editingCustomer()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
   `

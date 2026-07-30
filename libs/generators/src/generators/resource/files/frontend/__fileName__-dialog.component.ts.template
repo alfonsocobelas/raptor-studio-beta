@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, <% if (needsComputed) { %>computed, <% } %>effect, inject, input, output } from '@angular/core'
 import { <% if (needsGroupValidatorTypes) { %>AbstractControl, <% } %>FormBuilder, ReactiveFormsModule, <% if (needsGroupValidatorTypes) { %>ValidationErrors, <% } %>Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
 <%_ if (needsSelect) { _%>
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 <%_ } _%>
 import { <%- dialogSharedImports %> } from '<%- sharedDomainAlias %>'
 <%_ lookupServiceImports.forEach(r => { _%>
@@ -33,24 +33,21 @@ export interface <%- className %>FormValue {
   selector: 'app-<%- fileName %>-dialog',
   imports: [
     ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports<%- needsSelect ? ',' : '' %>
+    AppDialogContent,
+    AppButton,
+    AppFormField,
+    AppInput<%- needsSelect ? ',' : '' %>
 <%_ if (needsSelect) { _%>
-    HlmSelectImports
+    AppSelect
 <%_ } _%>
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ <%- propertyName %>() ? '<%- ui.dialogEditTitle %>' : '<%- ui.createLabel %>' }}</h3>
-        <p hlmDialogDescription>
-          {{ <%- propertyName %>() ? '<%- ui.dialogEditDescription %>' : '<%- ui.dialogCreateDescription %>' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="<%- propertyName %>() ? '<%- ui.dialogEditTitle %>' : '<%- ui.createLabel %>'"
+      [description]="<%- propertyName %>() ? '<%- ui.dialogEditDescription %>' : '<%- ui.dialogCreateDescription %>'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
 <%_ formSections.forEach(section => { _%>
         <div>
           <h4 class="mb-3 text-sm font-semibold"><%- section.title %></h4>
@@ -59,82 +56,71 @@ export interface <%- className %>FormValue {
 <%_ } _%>
 <%_ section.fields.forEach(f => { _%>
 <%_ const pad = section.grid ? '            ' : '          ' _%>
-<%_ const fieldOpen = '<hlm-field' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
+<%_ const fieldOpen = '<app-form-field label="' + f.label + '" for="' + f.id + '"' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
 <%_ if (f.lookup) { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <hlm-select formControlName="<%- f.name %>" [itemToString]="<%- f.name %>ToLabel">
-<%- pad %>    <hlm-select-trigger buttonId="<%- f.id %>">
-<%- pad %>      <hlm-select-value placeholder="<%- f.placeholder %>" />
-<%- pad %>    </hlm-select-trigger>
-<%- pad %>    <hlm-select-content *hlmSelectPortal showScroll>
-<%- pad %>      @for (item of <%- f.lookup.resource %>s(); track item.id) {
-<%- pad %>        <hlm-select-item [value]="item.id">{{ item.<%- f.lookup.labelField %> }}</hlm-select-item>
-<%- pad %>      }
-<%- pad %>    </hlm-select-content>
-<%- pad %>  </hlm-select>
+<%- pad %>  <app-select
+<%- pad %>    formControlName="<%- f.name %>"
+<%- pad %>    controlId="<%- f.id %>"
+<%- pad %>    placeholder="<%- f.placeholder %>"
+<%- pad %>    [options]="<%- f.name %>Options()"
+<%- pad %>  />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
-<%- pad %>    <hlm-field-error>Obligatorio</hlm-field-error>
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
 <%- pad %>  }
 <%_ } _%>
-<%- pad %></hlm-field>
+<%- pad %></app-form-field>
 <%_ } else if (f.control === 'select') { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <hlm-select formControlName="<%- f.name %>" [itemToString]="<%- f.name %>ToLabel">
-<%- pad %>    <hlm-select-trigger buttonId="<%- f.id %>">
-<%- pad %>      <hlm-select-value<%- f.placeholder ? ' placeholder="' + f.placeholder + '"' : '' %> />
-<%- pad %>    </hlm-select-trigger>
-<%- pad %>    <hlm-select-content *hlmSelectPortal>
-<%_ f.options.forEach(o => { _%>
-<%- pad %>      <hlm-select-item value="<%- o.value %>"><%- o.label %></hlm-select-item>
-<%_ }) _%>
-<%- pad %>    </hlm-select-content>
-<%- pad %>  </hlm-select>
+<%- pad %>  <app-select
+<%- pad %>    formControlName="<%- f.name %>"
+<%- pad %>    controlId="<%- f.id %>"
+<%- pad %>    placeholder="<%- f.placeholder %>"
+<%- pad %>    [options]="<%- f.name %>Options"
+<%- pad %>  />
 <%_ if (f.required && !f.default) { _%>
-<%- pad %>  <hlm-field-error>Obligatorio</hlm-field-error>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
+<%- pad %>  }
 <%_ } _%>
-<%- pad %></hlm-field>
+<%- pad %></app-form-field>
 <%_ } else if (f.control === 'checkbox') { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel class="flex items-center gap-2">
+<%- pad %>  <label class="flex items-center gap-2 text-sm font-medium">
 <%- pad %>    <input type="checkbox" formControlName="<%- f.name %>" />
 <%- pad %>    <%- f.label %>
 <%- pad %>  </label>
-<%- pad %></hlm-field>
+<%- pad %></app-form-field>
 <%_ } else if (f.control === 'textarea') { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <textarea id="<%- f.id %>" class="resize-none" hlmInput formControlName="<%- f.name %>" rows="<%- f.rows %>"></textarea>
-<%- pad %></hlm-field>
+<%- pad %>  <textarea id="<%- f.id %>" class="resize-none" appInput formControlName="<%- f.name %>" rows="<%- f.rows %>"></textarea>
+<%- pad %></app-form-field>
 <%_ } else if (f.control === 'date') { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <input id="<%- f.id %>" type="date" hlmInput formControlName="<%- f.name %>" />
+<%- pad %>  <input id="<%- f.id %>" type="date" appInput formControlName="<%- f.name %>" />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
-<%- pad %>    <hlm-field-error>Obligatorio</hlm-field-error>
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
 <%- pad %>  }
 <%_ } _%>
 <%_ if (f.groupErrorMessage) { _%>
-<%- pad %>  <!-- forceShow: dateRange es un error de grupo; sin él, hlm-field-error se oculta porque
-<%- pad %>       el control <%- f.name %> está válido (solo mira los errores de su propio control). -->
+<%- pad %>  <!-- dateRange es un error de grupo: se pinta a mano porque el control
+<%- pad %>       <%- f.name %> está válido y app-form-field solo mira su propio error. -->
 <%- pad %>  @if (form.errors?.['dateRange']) {
-<%- pad %>    <hlm-field-error forceShow><%- f.groupErrorMessage %></hlm-field-error>
+<%- pad %>    <span class="text-destructive text-sm"><%- f.groupErrorMessage %></span>
 <%- pad %>  }
 <%_ } _%>
-<%- pad %></hlm-field>
+<%- pad %></app-form-field>
 <%_ } else { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <label hlmFieldLabel for="<%- f.id %>"><%- f.label %></label>
-<%- pad %>  <input id="<%- f.id %>"<%- f.control === 'number' ? ' type="number"' : '' %> hlmInput formControlName="<%- f.name %>" />
+<%- pad %>  <input id="<%- f.id %>"<%- f.control === 'number' ? ' type="number"' : '' %> appInput formControlName="<%- f.name %>" />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
-<%- pad %>    <hlm-field-error>Obligatorio</hlm-field-error>
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
 <%- pad %>  }
 <%_ } _%>
-<%- pad %></hlm-field>
+<%- pad %></app-form-field>
 <%_ } _%>
 <%_ }) _%>
 <%_ if (section.grid) { _%>
@@ -143,14 +129,14 @@ export interface <%- className %>FormValue {
         </div>
 
 <%_ }) _%>
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ <%- propertyName %>() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class <%- className %>DialogComponent {
@@ -161,6 +147,7 @@ export class <%- className %>DialogComponent {
 
   readonly <%- propertyName %> = input<<%- dtoName %> | null>(null)
   readonly saved = output<<%- className %>FormValue>()
+  readonly close = output<void>()
 <%_ if (lookupComputedLines.length) { _%>
 
 <%_ lookupComputedLines.forEach(line => { _%>
@@ -193,7 +180,7 @@ export class <%- className %>DialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -201,6 +188,6 @@ export class <%- className %>DialogComponent {
 <%_ savedEmitLines.forEach(line => { _%>
     <%- line %>
 <%_ }) _%>
-    ctx.close()
+    this.close.emit()
   }
 }

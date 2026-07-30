@@ -67,7 +67,7 @@ import { VehicleDialogComponent, VehicleFormValue } from './vehicle-dialog.compo
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-vehicle-dialog [vehicle]="editingVehicle()" (saved)="onSave($event)" />
+        <app-vehicle-dialog [vehicle]="editingVehicle()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
 

@@ -1,8 +1,11 @@
+import "./chunk-AXXKIU6M.js";
 import {
   BrnFieldControl,
   provideBrnLabelable
 } from "./chunk-CORRGEFH.js";
-import "./chunk-AXXKIU6M.js";
+import {
+  NG_VALUE_ACCESSOR
+} from "./chunk-MQAMSBSO.js";
 import {
   FocusMonitor
 } from "./chunk-6IE75NIU.js";
@@ -12,9 +15,6 @@ import {
 } from "./chunk-R4LLFK3G.js";
 import "./chunk-2P2IYF4D.js";
 import "./chunk-HC33ZOIP.js";
-import {
-  NG_VALUE_ACCESSOR
-} from "./chunk-MQAMSBSO.js";
 import {
   isPlatformBrowser
 } from "./chunk-LAHHEQBJ.js";

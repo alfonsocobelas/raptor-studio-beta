@@ -1,23 +1,23 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { SaleDto } from '@app/shared/domain'
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  cash: 'Contado',
-  financing: 'Financiación',
-  leasing: 'Renting / leasing'
-}
+const PAYMENT_METHOD_OPTIONS: AppSelectOption[] = [
+  { value: 'cash', label: 'Contado' },
+  { value: 'financing', label: 'Financiación' },
+  { value: 'leasing', label: 'Renting / leasing' }
+]
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pdte. entrega',
-  delivered: 'Entregada',
-  cancelled: 'Cancelada'
-}
+const STATUS_OPTIONS: AppSelectOption[] = [
+  { value: 'pending', label: 'Pdte. entrega' },
+  { value: 'delivered', label: 'Entregada' },
+  { value: 'cancelled', label: 'Cancelada' }
+]
 
 export interface SaleFormValue {
   reference: string
@@ -33,115 +33,92 @@ export interface SaleFormValue {
 
 @Component({
   selector: 'app-sale-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ sale() ? 'Editar venta' : 'Nueva venta' }}</h3>
-        <p hlmDialogDescription>
-          {{ sale() ? 'Modifica los datos de la venta' : 'Introduce los datos de la nueva venta' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="sale() ? 'Editar venta' : 'Nueva venta'"
+      [description]="sale() ? 'Modifica los datos de la venta' : 'Introduce los datos de la nueva venta'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos de la operación</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="sreference">Referencia</label>
-              <input id="sreference" hlmInput formControlName="reference" />
+            <app-form-field label="Referencia" for="sreference">
+              <input id="sreference" appInput formControlName="reference" />
               @if (form.controls.reference.touched && form.controls.reference.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ssaleDate">Fecha</label>
-              <input id="ssaleDate" type="date" hlmInput formControlName="saleDate" />
+            </app-form-field>
+            <app-form-field label="Fecha" for="ssaleDate">
+              <input id="ssaleDate" type="date" appInput formControlName="saleDate" />
               @if (form.controls.saleDate.touched && form.controls.saleDate.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="svehicleLabel">Vehículo</label>
-              <input id="svehicleLabel" hlmInput formControlName="vehicleLabel" />
+            </app-form-field>
+            <app-form-field label="Vehículo" for="svehicleLabel" class="sm:col-span-2">
+              <input id="svehicleLabel" appInput formControlName="vehicleLabel" />
               @if (form.controls.vehicleLabel.touched && form.controls.vehicleLabel.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="sclientLabel">Cliente</label>
-              <input id="sclientLabel" hlmInput formControlName="clientLabel" />
+            </app-form-field>
+            <app-form-field label="Cliente" for="sclientLabel" class="sm:col-span-2">
+              <input id="sclientLabel" appInput formControlName="clientLabel" />
               @if (form.controls.clientLabel.touched && form.controls.clientLabel.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ssalesperson">Comercial</label>
-              <input id="ssalesperson" hlmInput formControlName="salesperson" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="sstatus">Estado</label>
-              <hlm-select formControlName="status" [itemToString]="statusToLabel">
-                <hlm-select-trigger buttonId="sstatus">
-                  <hlm-select-value placeholder="Seleccionar estado" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="pending">Pdte. entrega</hlm-select-item>
-                  <hlm-select-item value="delivered">Entregada</hlm-select-item>
-                  <hlm-select-item value="cancelled">Cancelada</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Comercial" for="ssalesperson">
+              <input id="ssalesperson" appInput formControlName="salesperson" />
+            </app-form-field>
+            <app-form-field label="Estado" for="sstatus">
+              <app-select
+                formControlName="status"
+                controlId="sstatus"
+                placeholder="Seleccionar estado"
+                [options]="statusOptions"
+              />
+              @if (form.controls.status.touched && form.controls.status.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Importes</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="samount">Importe (€)</label>
-              <input id="samount" type="number" hlmInput formControlName="amount" />
+            <app-form-field label="Importe (€)" for="samount">
+              <input id="samount" type="number" appInput formControlName="amount" />
               @if (form.controls.amount.touched && form.controls.amount.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="sdiscount">Descuento (€)</label>
-              <input id="sdiscount" type="number" hlmInput formControlName="discount" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="spaymentMethod">Forma de pago</label>
-              <hlm-select formControlName="paymentMethod" [itemToString]="paymentMethodToLabel">
-                <hlm-select-trigger buttonId="spaymentMethod">
-                  <hlm-select-value placeholder="Seleccionar forma de pago" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="cash">Contado</hlm-select-item>
-                  <hlm-select-item value="financing">Financiación</hlm-select-item>
-                  <hlm-select-item value="leasing">Renting / leasing</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Descuento (€)" for="sdiscount">
+              <input id="sdiscount" type="number" appInput formControlName="discount" />
+            </app-form-field>
+            <app-form-field label="Forma de pago" for="spaymentMethod">
+              <app-select
+                formControlName="paymentMethod"
+                controlId="spaymentMethod"
+                placeholder="Seleccionar forma de pago"
+                [options]="paymentMethodOptions"
+              />
+              @if (form.controls.paymentMethod.touched && form.controls.paymentMethod.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
           </div>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ sale() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class SaleDialogComponent {
@@ -149,9 +126,10 @@ export class SaleDialogComponent {
 
   readonly sale = input<SaleDto | null>(null)
   readonly saved = output<SaleFormValue>()
+  readonly close = output<void>()
 
-  protected readonly paymentMethodToLabel = (value: unknown): string => PAYMENT_METHOD_LABELS[String(value)] ?? ''
-  protected readonly statusToLabel = (value: unknown): string => STATUS_LABELS[String(value)] ?? ''
+  protected readonly paymentMethodOptions = PAYMENT_METHOD_OPTIONS
+  protected readonly statusOptions = STATUS_OPTIONS
 
   readonly form = this._fb.nonNullable.group({
     reference: ['', Validators.required],
@@ -186,7 +164,7 @@ export class SaleDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -198,6 +176,6 @@ export class SaleDialogComponent {
       amount: raw.amount as number,
       discount: raw.discount ?? undefined
     })
-    ctx.close()
+    this.close.emit()
   }
 }

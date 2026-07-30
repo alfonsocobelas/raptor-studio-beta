@@ -1,10 +1,4 @@
 import {
-  A11yModule,
-  FocusMonitor,
-  FocusTrapFactory,
-  InteractivityChecker
-} from "./chunk-6IE75NIU.js";
-import {
   BasePortalOutlet,
   CdkPortalOutlet,
   ComponentPortal,
@@ -20,14 +14,7 @@ import {
   createBlockScrollStrategy,
   createGlobalPositionStrategy,
   createOverlayRef
-} from "./chunk-KM2PCSLL.js";
-import {
-  ESCAPE,
-  Platform,
-  _IdGenerator,
-  _getFocusedElementPierceShadowDom,
-  hasModifierKey
-} from "./chunk-C3FLKRDF.js";
+} from "./chunk-OX253WZ7.js";
 import {
   Directionality
 } from "./chunk-RU4RFFMX.js";
@@ -38,6 +25,19 @@ import {
   provideExposesStateProviderExisting,
   waitForAnimations
 } from "./chunk-N5WA7HNS.js";
+import {
+  A11yModule,
+  FocusMonitor,
+  FocusTrapFactory,
+  InteractivityChecker
+} from "./chunk-6IE75NIU.js";
+import {
+  ESCAPE,
+  Platform,
+  _IdGenerator,
+  _getFocusedElementPierceShadowDom,
+  hasModifierKey
+} from "./chunk-C3FLKRDF.js";
 import {
   takeUntilDestroyed
 } from "./chunk-R4LLFK3G.js";
@@ -1823,4 +1823,4 @@ export {
   BrnDialogTrigger,
   BrnDialogImports
 };
-//# sourceMappingURL=chunk-FJFBAHDU.js.map
+//# sourceMappingURL=chunk-K5565EXI.js.map

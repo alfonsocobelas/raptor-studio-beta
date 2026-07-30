@@ -1,25 +1,25 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { VehicleDto } from '@app/shared/domain'
 
-const FUEL_LABELS: Record<string, string> = {
-  gasoline: 'Gasolina',
-  diesel: 'Diésel',
-  hybrid: 'Híbrido',
-  electric: 'Eléctrico'
-}
+const FUEL_OPTIONS: AppSelectOption[] = [
+  { value: 'gasoline', label: 'Gasolina' },
+  { value: 'diesel', label: 'Diésel' },
+  { value: 'hybrid', label: 'Híbrido' },
+  { value: 'electric', label: 'Eléctrico' }
+]
 
-const STATUS_LABELS: Record<string, string> = {
-  stock: 'En stock',
-  reserved: 'Reservado',
-  sold: 'Vendido',
-  workshop: 'En taller'
-}
+const STATUS_OPTIONS: AppSelectOption[] = [
+  { value: 'stock', label: 'En stock' },
+  { value: 'reserved', label: 'Reservado' },
+  { value: 'sold', label: 'Vendido' },
+  { value: 'workshop', label: 'En taller' }
+]
 
 export interface VehicleFormValue {
   vin: string
@@ -38,136 +38,108 @@ export interface VehicleFormValue {
 
 @Component({
   selector: 'app-vehicle-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ vehicle() ? 'Editar vehículo' : 'Nuevo vehículo' }}</h3>
-        <p hlmDialogDescription>
-          {{ vehicle() ? 'Modifica los datos del vehículo' : 'Introduce los datos del nuevo vehículo' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="vehicle() ? 'Editar vehículo' : 'Nuevo vehículo'"
+      [description]="vehicle() ? 'Modifica los datos del vehículo' : 'Introduce los datos del nuevo vehículo'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos del vehículo</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="vvin">Bastidor (VIN)</label>
-              <input id="vvin" hlmInput formControlName="vin" />
+            <app-form-field label="Bastidor (VIN)" for="vvin">
+              <input id="vvin" appInput formControlName="vin" />
               @if (form.controls.vin.touched && form.controls.vin.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vbrand">Marca</label>
-              <input id="vbrand" hlmInput formControlName="brand" />
+            </app-form-field>
+            <app-form-field label="Marca" for="vbrand">
+              <input id="vbrand" appInput formControlName="brand" />
               @if (form.controls.brand.touched && form.controls.brand.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vmodel">Modelo</label>
-              <input id="vmodel" hlmInput formControlName="model" />
+            </app-form-field>
+            <app-form-field label="Modelo" for="vmodel">
+              <input id="vmodel" appInput formControlName="model" />
               @if (form.controls.model.touched && form.controls.model.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="vversion">Versión / acabado</label>
-              <input id="vversion" hlmInput formControlName="version" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vplate">Matrícula</label>
-              <input id="vplate" hlmInput formControlName="plate" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vcolor">Color</label>
-              <input id="vcolor" hlmInput formControlName="color" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vfuel">Combustible</label>
-              <hlm-select formControlName="fuel" [itemToString]="fuelToLabel">
-                <hlm-select-trigger buttonId="vfuel">
-                  <hlm-select-value placeholder="Seleccionar combustible" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="gasoline">Gasolina</hlm-select-item>
-                  <hlm-select-item value="diesel">Diésel</hlm-select-item>
-                  <hlm-select-item value="hybrid">Híbrido</hlm-select-item>
-                  <hlm-select-item value="electric">Eléctrico</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Versión / acabado" for="vversion" class="sm:col-span-2">
+              <input id="vversion" appInput formControlName="version" />
+            </app-form-field>
+            <app-form-field label="Matrícula" for="vplate">
+              <input id="vplate" appInput formControlName="plate" />
+            </app-form-field>
+            <app-form-field label="Color" for="vcolor">
+              <input id="vcolor" appInput formControlName="color" />
+            </app-form-field>
+            <app-form-field label="Combustible" for="vfuel">
+              <app-select
+                formControlName="fuel"
+                controlId="vfuel"
+                placeholder="Seleccionar combustible"
+                [options]="fuelOptions"
+              />
+              @if (form.controls.fuel.touched && form.controls.fuel.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos comerciales</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="vyear">Año</label>
-              <input id="vyear" type="number" hlmInput formControlName="year" />
+            <app-form-field label="Año" for="vyear">
+              <input id="vyear" type="number" appInput formControlName="year" />
               @if (form.controls.year.touched && form.controls.year.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vmileage">Kilómetros</label>
-              <input id="vmileage" type="number" hlmInput formControlName="mileage" />
+            </app-form-field>
+            <app-form-field label="Kilómetros" for="vmileage">
+              <input id="vmileage" type="number" appInput formControlName="mileage" />
               @if (form.controls.mileage.touched && form.controls.mileage.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vprice">Precio (€)</label>
-              <input id="vprice" type="number" hlmInput formControlName="price" />
+            </app-form-field>
+            <app-form-field label="Precio (€)" for="vprice">
+              <input id="vprice" type="number" appInput formControlName="price" />
               @if (form.controls.price.touched && form.controls.price.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="vstatus">Estado</label>
-              <hlm-select formControlName="status" [itemToString]="statusToLabel">
-                <hlm-select-trigger buttonId="vstatus">
-                  <hlm-select-value placeholder="Seleccionar estado" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="stock">En stock</hlm-select-item>
-                  <hlm-select-item value="reserved">Reservado</hlm-select-item>
-                  <hlm-select-item value="sold">Vendido</hlm-select-item>
-                  <hlm-select-item value="workshop">En taller</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Estado" for="vstatus">
+              <app-select
+                formControlName="status"
+                controlId="vstatus"
+                placeholder="Seleccionar estado"
+                [options]="statusOptions"
+              />
+              @if (form.controls.status.touched && form.controls.status.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Notas</h4>
-          <hlm-field class="sm:col-span-2">
-            <label hlmFieldLabel for="vnotes">Notas internas</label>
-            <textarea id="vnotes" class="resize-none" hlmInput formControlName="notes" rows="3"></textarea>
-          </hlm-field>
+          <app-form-field label="Notas internas" for="vnotes" class="sm:col-span-2">
+            <textarea id="vnotes" class="resize-none" appInput formControlName="notes" rows="3"></textarea>
+          </app-form-field>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ vehicle() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class VehicleDialogComponent {
@@ -175,9 +147,10 @@ export class VehicleDialogComponent {
 
   readonly vehicle = input<VehicleDto | null>(null)
   readonly saved = output<VehicleFormValue>()
+  readonly close = output<void>()
 
-  protected readonly fuelToLabel = (value: unknown): string => FUEL_LABELS[String(value)] ?? ''
-  protected readonly statusToLabel = (value: unknown): string => STATUS_LABELS[String(value)] ?? ''
+  protected readonly fuelOptions = FUEL_OPTIONS
+  protected readonly statusOptions = STATUS_OPTIONS
 
   readonly form = this._fb.nonNullable.group({
     vin: ['', Validators.required],
@@ -218,7 +191,7 @@ export class VehicleDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -231,6 +204,6 @@ export class VehicleDialogComponent {
       mileage: raw.mileage as number,
       price: raw.price as number
     })
-    ctx.close()
+    this.close.emit()
   }
 }

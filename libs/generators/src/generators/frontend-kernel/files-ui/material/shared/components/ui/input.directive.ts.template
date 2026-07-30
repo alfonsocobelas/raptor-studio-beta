@@ -1,0 +1,9 @@
+import { Directive } from '@angular/core'
+import { MatInput } from '@angular/material/input'
+
+/** Input (piel Material): delega en matInput vía hostDirectives, misma API. */
+@Directive({
+  selector: 'input[appInput], textarea[appInput]',
+  hostDirectives: [MatInput]
+})
+export class AppInput {}

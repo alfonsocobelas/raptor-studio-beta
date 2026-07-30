@@ -1,13 +1,10 @@
 import {
-  InteractivityChecker
-} from "./chunk-6IE75NIU.js";
-import {
   ComponentPortal,
   Overlay,
   OverlayPositionBuilder,
   ScrollStrategyOptions,
   TemplatePortal
-} from "./chunk-KM2PCSLL.js";
+} from "./chunk-OX253WZ7.js";
 import {
   Directionality
 } from "./chunk-RU4RFFMX.js";
@@ -17,6 +14,9 @@ import {
   provideExposesStateProviderExisting,
   waitForAnimations
 } from "./chunk-N5WA7HNS.js";
+import {
+  InteractivityChecker
+} from "./chunk-6IE75NIU.js";
 import {
   takeUntilDestroyed
 } from "./chunk-R4LLFK3G.js";
@@ -1270,4 +1270,4 @@ export {
   BrnPopoverTrigger,
   BrnPopoverImports
 };
-//# sourceMappingURL=chunk-MLCXACJS.js.map
+//# sourceMappingURL=chunk-J7CQVLYK.js.map

@@ -1,4 +1,8 @@
 import {
+  BidiModule,
+  Directionality
+} from "./chunk-RU4RFFMX.js";
+import {
   ESCAPE,
   Platform,
   _CdkPrivateStyleLoader,
@@ -9,10 +13,6 @@ import {
   coerceNumberProperty,
   hasModifierKey
 } from "./chunk-C3FLKRDF.js";
-import {
-  BidiModule,
-  Directionality
-} from "./chunk-RU4RFFMX.js";
 import {
   Location
 } from "./chunk-LAHHEQBJ.js";
@@ -4486,4 +4486,4 @@ export {
   Overlay,
   OverlayModule
 };
-//# sourceMappingURL=chunk-KM2PCSLL.js.map
+//# sourceMappingURL=chunk-OX253WZ7.js.map

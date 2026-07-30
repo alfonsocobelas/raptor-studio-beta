@@ -67,7 +67,7 @@ import { ClientDialogComponent, ClientFormValue } from './client-dialog.componen
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-client-dialog [client]="editingClient()" (saved)="onSave($event)" />
+        <app-client-dialog [client]="editingClient()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
 

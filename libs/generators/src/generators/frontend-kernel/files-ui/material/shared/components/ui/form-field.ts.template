@@ -1,0 +1,25 @@
+import { ChangeDetectionStrategy, Component, input } from '@angular/core'
+import { MatFormFieldModule } from '@angular/material/form-field'
+
+/** Campo de formulario (piel Material). Misma API que la implementación Spartan. */
+@Component({
+  selector: 'app-form-field',
+  imports: [MatFormFieldModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <mat-form-field appearance="outline" class="w-full">
+      @if (label()) {
+        <mat-label [attr.for]="for()">{{ label() }}</mat-label>
+      }
+      <ng-content />
+      @if (error()) {
+        <mat-error>{{ error() }}</mat-error>
+      }
+    </mat-form-field>
+  `
+})
+export class AppFormField {
+  readonly label = input('')
+  readonly for = input('')
+  readonly error = input('')
+}

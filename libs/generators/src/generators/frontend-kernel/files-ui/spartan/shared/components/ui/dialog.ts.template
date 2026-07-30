@@ -1,19 +1,26 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
 
 /**
  * Contenedor modal. Contrato estable del acelerador: las pantallas generadas usan
- * <app-dialog>, nunca el diálogo de la librería. Cambiar de librería = cambiar
- * esta implementación, no las features (ADR-003, nivel 1).
+ * <app-dialog>, nunca el diálogo de la librería (ADR-003, nivel 1).
+ *
+ * Overlay propio en vez del portal de la librería o del <dialog> nativo: el portal
+ * es una directiva estructural y su <ng-content> no sobrevive a dos niveles de
+ * proyección, y el <dialog> nativo se pinta en el top layer, por encima del cual
+ * los desplegables basados en overlays del CDK ya no pueden aparecer.
  */
 @Component({
   selector: 'app-dialog',
-  imports: [HlmDialogImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'open() && closed.emit()' },
   template: `
-    <hlm-dialog [state]="open() ? 'open' : 'closed'" (closed)="closed.emit()">
-      <ng-content />
-    </hlm-dialog>
+    @if (open()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closed.emit()">
+        <div class="bg-background text-foreground rounded-lg border p-6 shadow-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto" (click)="$event.stopPropagation()">
+          <ng-content />
+        </div>
+      </div>
+    }
   `
 })
 export class AppDialog {

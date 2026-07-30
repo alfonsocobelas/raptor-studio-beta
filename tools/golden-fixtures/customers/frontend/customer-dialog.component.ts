@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { CustomerClassification, CustomerDto } from '@sap-licenses/shared/domain'
 
-const CUSTOMER_TYPE_LABELS: Record<string, string> = {
-  cloud: 'Cloud',
-  onprem: 'On-prem',
-  hybrid: 'Hybrid'
-}
+const CUSTOMER_TYPE_OPTIONS: AppSelectOption[] = [
+  { value: 'cloud', label: 'Cloud' },
+  { value: 'onprem', label: 'On-prem' },
+  { value: 'hybrid', label: 'Hybrid' }
+]
 
 export interface CustomerFormValue {
   sapId: string
@@ -26,90 +26,70 @@ export interface CustomerFormValue {
 
 @Component({
   selector: 'app-customer-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ customer() ? 'Editar cliente' : 'Nuevo cliente' }}</h3>
-        <p hlmDialogDescription>
-          {{ customer() ? 'Modifica los datos del cliente' : 'Introduce los datos del nuevo cliente' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="customer() ? 'Editar cliente' : 'Nuevo cliente'"
+      [description]="customer() ? 'Modifica los datos del cliente' : 'Introduce los datos del nuevo cliente'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos generales</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="csapId">ID SAP</label>
-              <input id="csapId" hlmInput formControlName="sapId" />
+            <app-form-field label="ID SAP" for="csapId">
+              <input id="csapId" appInput formControlName="sapId" />
               @if (form.controls.sapId.touched && form.controls.sapId.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cname">Nombre</label>
-              <input id="cname" hlmInput formControlName="name" />
+            </app-form-field>
+            <app-form-field label="Nombre" for="cname">
+              <input id="cname" appInput formControlName="name" />
               @if (form.controls.name.touched && form.controls.name.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ctaxId">CIF / NIF</label>
-              <input id="ctaxId" hlmInput formControlName="taxId" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cindustry">Industria</label>
-              <input id="cindustry" hlmInput formControlName="industry" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ctype">Tipo</label>
-              <hlm-select formControlName="customerType" [itemToString]="customerTypeToLabel">
-                <hlm-select-trigger buttonId="ctype">
-                  <hlm-select-value placeholder="Seleccionar tipo" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="cloud">Cloud</hlm-select-item>
-                  <hlm-select-item value="onprem">On-prem</hlm-select-item>
-                  <hlm-select-item value="hybrid">Hybrid</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="caddress">Dirección</label>
-              <input id="caddress" hlmInput formControlName="address" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cphone">Teléfono</label>
-              <input id="cphone" hlmInput formControlName="phone" />
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="CIF / NIF" for="ctaxId">
+              <input id="ctaxId" appInput formControlName="taxId" />
+            </app-form-field>
+            <app-form-field label="Industria" for="cindustry">
+              <input id="cindustry" appInput formControlName="industry" />
+            </app-form-field>
+            <app-form-field label="Tipo" for="ctype">
+              <app-select
+                formControlName="customerType"
+                controlId="ctype"
+                placeholder="Seleccionar tipo"
+                [options]="customerTypeOptions"
+              />
+              @if (form.controls.customerType.touched && form.controls.customerType.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
+            <app-form-field label="Dirección" for="caddress">
+              <input id="caddress" appInput formControlName="address" />
+            </app-form-field>
+            <app-form-field label="Teléfono" for="cphone">
+              <input id="cphone" appInput formControlName="phone" />
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Notas</h4>
-          <hlm-field>
-            <label hlmFieldLabel for="cnotes">Notas internas</label>
-            <textarea id="cnotes" class="resize-none" hlmInput formControlName="notes" rows="3"></textarea>
-          </hlm-field>
+          <app-form-field label="Notas internas" for="cnotes">
+            <textarea id="cnotes" class="resize-none" appInput formControlName="notes" rows="3"></textarea>
+          </app-form-field>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ customer() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class CustomerDialogComponent {
@@ -117,9 +97,9 @@ export class CustomerDialogComponent {
 
   readonly customer = input<CustomerDto | null>(null)
   readonly saved = output<CustomerFormValue>()
+  readonly close = output<void>()
 
-  protected readonly customerTypeToLabel = (value: unknown): string =>
-    CUSTOMER_TYPE_LABELS[value as CustomerClassification] ?? ''
+  protected readonly customerTypeOptions = CUSTOMER_TYPE_OPTIONS
 
   readonly form = this._fb.nonNullable.group({
     sapId: ['', Validators.required],
@@ -151,7 +131,7 @@ export class CustomerDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -160,6 +140,6 @@ export class CustomerDialogComponent {
       ...raw,
       customerType: raw.customerType as CustomerClassification
     })
-    ctx.close()
+    this.close.emit()
   }
 }

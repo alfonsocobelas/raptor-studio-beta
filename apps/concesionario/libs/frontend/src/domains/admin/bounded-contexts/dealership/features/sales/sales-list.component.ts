@@ -67,7 +67,7 @@ import { SaleDialogComponent, SaleFormValue } from './sale-dialog.component'
 
     <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
       @if (dialogOpen()) {
-        <app-sale-dialog [sale]="editingSale()" (saved)="onSave($event)" />
+        <app-sale-dialog [sale]="editingSale()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
       }
     </app-dialog>
 

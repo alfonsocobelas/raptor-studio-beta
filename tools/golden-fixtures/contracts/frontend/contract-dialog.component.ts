@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import {
   BillingFrequencyEnum,
   ContractDto,
@@ -21,6 +21,36 @@ import {
   CONTRACT_TYPE_LABELS,
   RENEWAL_TYPE_LABELS
 } from './contract-labels'
+
+const CONTRACT_TYPE_OPTIONS: AppSelectOption[] = [
+  { value: 'cloud', label: 'Cloud' },
+  { value: 'onprem', label: 'On-premise' }
+]
+
+const STATUS_OPTIONS: AppSelectOption[] = [
+  { value: 'active', label: 'Activo' },
+  { value: 'expiring', label: 'Por expirar' },
+  { value: 'expired', label: 'Expirado' },
+  { value: 'terminated', label: 'Terminado' }
+]
+
+const SOURCE_OPTIONS: AppSelectOption[] = [
+  { value: 'AVVALE_SOLD', label: 'Vendido por Avvale' },
+  { value: 'CUSTOMER_OWNED', label: 'Propiedad del cliente' }
+]
+
+const BILLING_FREQUENCY_OPTIONS: AppSelectOption[] = [
+  { value: 'monthly', label: 'Mensual' },
+  { value: 'quarterly', label: 'Trimestral' },
+  { value: 'semiannual', label: 'Semestral' },
+  { value: 'yearly', label: 'Anual' }
+]
+
+const RENEWAL_TYPE_OPTIONS: AppSelectOption[] = [
+  { value: 'auto', label: 'Automática' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'none', label: 'Sin renovación' }
+]
 
 export interface ContractFormValue {
   contractType: ContractTypeEnum
@@ -46,160 +76,105 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
 
 @Component({
   selector: 'app-contract-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ contract() ? 'Editar contrato' : 'Nuevo contrato' }}</h3>
-        <p hlmDialogDescription>
-          {{ contract() ? 'Modifica los datos del contrato' : 'Introduce los datos del nuevo contrato' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="contract() ? 'Editar contrato' : 'Nuevo contrato'"
+      [description]="contract() ? 'Modifica los datos del contrato' : 'Introduce los datos del nuevo contrato'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos del contrato</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
-              <label hlmFieldLabel for="cnum">Nº Contrato</label>
-              <input id="cnum" hlmInput formControlName="contractNumber" />
+            <app-form-field label="Nº Contrato" for="cnum">
+              <input id="cnum" appInput formControlName="contractNumber" />
               @if (form.controls.contractNumber.touched && form.controls.contractNumber.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ctype">Tipo</label>
-              <hlm-select formControlName="contractType" [itemToString]="contractTypeToLabel">
-                <hlm-select-trigger buttonId="ctype">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="cloud">Cloud</hlm-select-item>
-                  <hlm-select-item value="onprem">On-premise</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ccust">Cliente</label>
-              <hlm-select formControlName="customerId" [itemToString]="customerIdToLabel">
-                <hlm-select-trigger buttonId="ccust">
-                  <hlm-select-value placeholder="Seleccionar cliente" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal showScroll>
-                  @for (item of customers(); track item.id) {
-                    <hlm-select-item [value]="item.id">{{ item.name }}</hlm-select-item>
-                  }
-                </hlm-select-content>
-              </hlm-select>
+            </app-form-field>
+            <app-form-field label="Tipo" for="ctype">
+              <app-select
+                formControlName="contractType"
+                controlId="ctype"
+                placeholder=""
+                [options]="contractTypeOptions"
+              />
+            </app-form-field>
+            <app-form-field label="Cliente" for="ccust">
+              <app-select
+                formControlName="customerId"
+                controlId="ccust"
+                placeholder="Seleccionar cliente"
+                [options]="customerIdOptions()"
+              />
               @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cstart">Fecha inicio</label>
-              <input id="cstart" type="date" hlmInput formControlName="startDate" />
+            </app-form-field>
+            <app-form-field label="Fecha inicio" for="cstart">
+              <input id="cstart" type="date" appInput formControlName="startDate" />
               @if (form.controls.startDate.touched && form.controls.startDate.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cend">Fecha fin</label>
-              <input id="cend" type="date" hlmInput formControlName="endDate" />
-              <!-- forceShow: dateRange es un error de grupo; sin él, hlm-field-error se oculta porque
-                   el control endDate está válido (solo mira los errores de su propio control). -->
+            </app-form-field>
+            <app-form-field label="Fecha fin" for="cend">
+              <input id="cend" type="date" appInput formControlName="endDate" />
+              <!-- dateRange es un error de grupo: se pinta a mano porque el control
+                   endDate está válido y app-form-field solo mira su propio error. -->
               @if (form.errors?.['dateRange']) {
-                <hlm-field-error forceShow>La fecha fin debe ser posterior a la de inicio</hlm-field-error>
+                <span class="text-destructive text-sm">La fecha fin debe ser posterior a la de inicio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cstatus">Estado</label>
-              <hlm-select formControlName="status" [itemToString]="statusToLabel">
-                <hlm-select-trigger buttonId="cstatus">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="active">Activo</hlm-select-item>
-                  <hlm-select-item value="expiring">Por expirar</hlm-select-item>
-                  <hlm-select-item value="expired">Expirado</hlm-select-item>
-                  <hlm-select-item value="terminated">Terminado</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ccurrency">Moneda</label>
-              <input id="ccurrency" hlmInput formControlName="currency" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cbilling">Facturación</label>
-              <hlm-select formControlName="billingFrequency" [itemToString]="billingFrequencyToLabel">
-                <hlm-select-trigger buttonId="cbilling">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="monthly">Mensual</hlm-select-item>
-                  <hlm-select-item value="quarterly">Trimestral</hlm-select-item>
-                  <hlm-select-item value="semiannual">Semestral</hlm-select-item>
-                  <hlm-select-item value="yearly">Anual</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="crenewal">Renovación</label>
-              <hlm-select formControlName="renewalType" [itemToString]="renewalTypeToLabel">
-                <hlm-select-trigger buttonId="crenewal">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="auto">Automática</hlm-select-item>
-                  <hlm-select-item value="manual">Manual</hlm-select-item>
-                  <hlm-select-item value="none">Sin renovación</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="csource">Origen</label>
-              <hlm-select formControlName="source" [itemToString]="sourceToLabel">
-                <hlm-select-trigger buttonId="csource">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="AVVALE_SOLD">Vendido por Avvale</hlm-select-item>
-                  <hlm-select-item value="CUSTOMER_OWNED">Propiedad del cliente</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel class="flex items-center gap-2">
+            </app-form-field>
+            <app-form-field label="Estado" for="cstatus">
+              <app-select formControlName="status" controlId="cstatus" placeholder="" [options]="statusOptions" />
+            </app-form-field>
+            <app-form-field label="Moneda" for="ccurrency">
+              <input id="ccurrency" appInput formControlName="currency" />
+            </app-form-field>
+            <app-form-field label="Facturación" for="cbilling">
+              <app-select
+                formControlName="billingFrequency"
+                controlId="cbilling"
+                placeholder=""
+                [options]="billingFrequencyOptions"
+              />
+            </app-form-field>
+            <app-form-field label="Renovación" for="crenewal">
+              <app-select
+                formControlName="renewalType"
+                controlId="crenewal"
+                placeholder=""
+                [options]="renewalTypeOptions"
+              />
+            </app-form-field>
+            <app-form-field label="Origen" for="csource">
+              <app-select formControlName="source" controlId="csource" placeholder="" [options]="sourceOptions" />
+            </app-form-field>
+            <app-form-field label="Marcar como favorito" for="cisFavorite">
+              <label class="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" formControlName="isFavorite" />
                 Marcar como favorito
               </label>
-            </hlm-field>
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Notas</h4>
-          <hlm-field>
-            <label hlmFieldLabel for="cnotes">Notas internas</label>
-            <textarea id="cnotes" class="resize-none" hlmInput formControlName="notes" rows="3"></textarea>
-          </hlm-field>
+          <app-form-field label="Notas internas" for="cnotes">
+            <textarea id="cnotes" class="resize-none" appInput formControlName="notes" rows="3"></textarea>
+          </app-form-field>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ contract() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class ContractDialogComponent {
@@ -208,21 +183,18 @@ export class ContractDialogComponent {
 
   readonly contract = input<ContractDto | null>(null)
   readonly saved = output<ContractFormValue>()
+  readonly close = output<void>()
 
   readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
+  protected readonly customerIdOptions = computed<AppSelectOption[]>(() =>
+    this.customers().map(item => ({ value: item.id, label: item.name }))
+  )
 
-  protected readonly contractTypeToLabel = (value: unknown): string =>
-    CONTRACT_TYPE_LABELS[value as ContractTypeEnum] ?? ''
-  protected readonly statusToLabel = (value: unknown): string =>
-    CONTRACT_STATUS_LABELS[value as ContractStatusEnum] ?? ''
-  protected readonly sourceToLabel = (value: unknown): string =>
-    CONTRACT_SOURCE_LABELS[value as ContractSourceEnum] ?? ''
-  protected readonly billingFrequencyToLabel = (value: unknown): string =>
-    BILLING_FREQUENCY_LABELS[value as BillingFrequencyEnum] ?? ''
-  protected readonly renewalTypeToLabel = (value: unknown): string =>
-    RENEWAL_TYPE_LABELS[value as RenewalTypeEnum] ?? ''
-  protected readonly customerIdToLabel = (value: unknown): string =>
-    this.customers().find(item => item.id === value)?.name ?? ''
+  protected readonly contractTypeOptions = CONTRACT_TYPE_OPTIONS
+  protected readonly statusOptions = STATUS_OPTIONS
+  protected readonly sourceOptions = SOURCE_OPTIONS
+  protected readonly billingFrequencyOptions = BILLING_FREQUENCY_OPTIONS
+  protected readonly renewalTypeOptions = RENEWAL_TYPE_OPTIONS
 
   readonly form = this._fb.nonNullable.group(
     {
@@ -265,7 +237,7 @@ export class ContractDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -276,6 +248,6 @@ export class ContractDialogComponent {
       customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
-    ctx.close()
+    this.close.emit()
   }
 }

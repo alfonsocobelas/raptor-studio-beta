@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmDialogImports } from '@spartan-ng/helm/dialog'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputImports } from '@spartan-ng/helm/input'
-import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { ClientDto } from '@app/shared/domain'
 
-const CLIENT_TYPE_LABELS: Record<string, string> = {
-  individual: 'Particular',
-  company: 'Empresa'
-}
+const CLIENT_TYPE_OPTIONS: AppSelectOption[] = [
+  { value: 'individual', label: 'Particular' },
+  { value: 'company', label: 'Empresa' }
+]
 
 export interface ClientFormValue {
   name: string
@@ -25,86 +25,67 @@ export interface ClientFormValue {
 
 @Component({
   selector: 'app-client-dialog',
-  imports: [
-    ReactiveFormsModule,
-    HlmDialogImports,
-    HlmButtonImports,
-    HlmFieldImports,
-    HlmInputImports,
-    HlmSelectImports
-  ],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-      <hlm-dialog-header>
-        <h3 hlmDialogTitle>{{ client() ? 'Editar cliente' : 'Nuevo cliente' }}</h3>
-        <p hlmDialogDescription>
-          {{ client() ? 'Modifica los datos del cliente' : 'Introduce los datos del nuevo cliente' }}
-        </p>
-      </hlm-dialog-header>
-      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save(ctx)">
+    <app-dialog-content
+      [title]="client() ? 'Editar cliente' : 'Nuevo cliente'"
+      [description]="client() ? 'Modifica los datos del cliente' : 'Introduce los datos del nuevo cliente'"
+    >
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <div>
           <h4 class="mb-3 text-sm font-semibold">Datos de contacto</h4>
           <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="cname">Nombre</label>
-              <input id="cname" hlmInput formControlName="name" />
+            <app-form-field label="Nombre" for="cname" class="sm:col-span-2">
+              <input id="cname" appInput formControlName="name" />
               @if (form.controls.name.touched && form.controls.name.invalid) {
-                <hlm-field-error>Obligatorio</hlm-field-error>
+                <span class="text-destructive text-sm">Obligatorio</span>
               }
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ctype">Tipo</label>
-              <hlm-select formControlName="clientType" [itemToString]="clientTypeToLabel">
-                <hlm-select-trigger buttonId="ctype">
-                  <hlm-select-value placeholder="Seleccionar tipo" />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-item value="individual">Particular</hlm-select-item>
-                  <hlm-select-item value="company">Empresa</hlm-select-item>
-                </hlm-select-content>
-              </hlm-select>
-              <hlm-field-error>Obligatorio</hlm-field-error>
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ctaxId">DNI / CIF</label>
-              <input id="ctaxId" hlmInput formControlName="taxId" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cemail">Email</label>
-              <input id="cemail" hlmInput formControlName="email" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="cphone">Teléfono</label>
-              <input id="cphone" hlmInput formControlName="phone" />
-            </hlm-field>
-            <hlm-field>
-              <label hlmFieldLabel for="ccity">Localidad</label>
-              <input id="ccity" hlmInput formControlName="city" />
-            </hlm-field>
-            <hlm-field class="sm:col-span-2">
-              <label hlmFieldLabel for="caddress">Dirección</label>
-              <input id="caddress" hlmInput formControlName="address" />
-            </hlm-field>
+            </app-form-field>
+            <app-form-field label="Tipo" for="ctype">
+              <app-select
+                formControlName="clientType"
+                controlId="ctype"
+                placeholder="Seleccionar tipo"
+                [options]="clientTypeOptions"
+              />
+              @if (form.controls.clientType.touched && form.controls.clientType.invalid) {
+                <span class="text-destructive text-sm">Obligatorio</span>
+              }
+            </app-form-field>
+            <app-form-field label="DNI / CIF" for="ctaxId">
+              <input id="ctaxId" appInput formControlName="taxId" />
+            </app-form-field>
+            <app-form-field label="Email" for="cemail">
+              <input id="cemail" appInput formControlName="email" />
+            </app-form-field>
+            <app-form-field label="Teléfono" for="cphone">
+              <input id="cphone" appInput formControlName="phone" />
+            </app-form-field>
+            <app-form-field label="Localidad" for="ccity">
+              <input id="ccity" appInput formControlName="city" />
+            </app-form-field>
+            <app-form-field label="Dirección" for="caddress" class="sm:col-span-2">
+              <input id="caddress" appInput formControlName="address" />
+            </app-form-field>
           </div>
         </div>
 
         <div>
           <h4 class="mb-3 text-sm font-semibold">Notas</h4>
-          <hlm-field class="sm:col-span-2">
-            <label hlmFieldLabel for="cnotes">Notas internas</label>
-            <textarea id="cnotes" class="resize-none" hlmInput formControlName="notes" rows="3"></textarea>
-          </hlm-field>
+          <app-form-field label="Notas internas" for="cnotes" class="sm:col-span-2">
+            <textarea id="cnotes" class="resize-none" appInput formControlName="notes" rows="3"></textarea>
+          </app-form-field>
         </div>
 
-        <hlm-dialog-footer>
-          <button type="button" hlmBtn variant="outline" (click)="ctx.close()">Cancelar</button>
-          <button type="submit" [disabled]="form.invalid" hlmBtn>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>
             {{ client() ? 'Guardar' : 'Crear' }}
           </button>
-        </hlm-dialog-footer>
+        </div>
       </form>
-    </hlm-dialog-content>
+    </app-dialog-content>
   `
 })
 export class ClientDialogComponent {
@@ -112,8 +93,9 @@ export class ClientDialogComponent {
 
   readonly client = input<ClientDto | null>(null)
   readonly saved = output<ClientFormValue>()
+  readonly close = output<void>()
 
-  protected readonly clientTypeToLabel = (value: unknown): string => CLIENT_TYPE_LABELS[String(value)] ?? ''
+  protected readonly clientTypeOptions = CLIENT_TYPE_OPTIONS
 
   readonly form = this._fb.nonNullable.group({
     name: ['', Validators.required],
@@ -145,7 +127,7 @@ export class ClientDialogComponent {
     })
   }
 
-  save(ctx: { close: () => void }): void {
+  save(): void {
     if (this.form.invalid) {
       return
     }
@@ -154,6 +136,6 @@ export class ClientDialogComponent {
       ...raw,
       clientType: raw.clientType as string
     })
-    ctx.close()
+    this.close.emit()
   }
 }
