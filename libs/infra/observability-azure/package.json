@@ -1,0 +1,15 @@
+{
+  "name": "@acc/infra/observability-azure",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "winston": "3.19.0",
+    "@opentelemetry/winston-transport": "0.31.0",
+    "@acc/infra/ports": "0.0.1",
+    "@azure/monitor-opentelemetry": "1.19.0"
+  }
+}

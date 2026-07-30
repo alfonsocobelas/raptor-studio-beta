@@ -14,6 +14,9 @@
     "golden:diff": "bash tools/golden-diff.sh"
   },
   "devDependencies": {
+    "@azure/identity": "4.13.1",
+    "@azure/keyvault-secrets": "4.11.2",
+    "@azure/monitor-opentelemetry": "1.19.0",
     "@azure/storage-blob": "12.33.0",
     "@eslint/js": "^9.8.0",
     "@nx/eslint": "23.1.0",
@@ -21,6 +24,7 @@
     "@nx/jest": "23.1.0",
     "@nx/js": "23.1.0",
     "@nx/plugin": "23.1.0",
+    "@opentelemetry/winston-transport": "0.31.0",
     "@swc-node/register": "~1.11.1",
     "@swc/cli": "~0.8.1",
     "@swc/core": "~1.15.5",
@@ -39,7 +43,8 @@
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.58.0"
+    "typescript-eslint": "^8.58.0",
+    "winston": "3.19.0"
   },
   "dependencies": {
     "@nx/devkit": "23.1.0"
