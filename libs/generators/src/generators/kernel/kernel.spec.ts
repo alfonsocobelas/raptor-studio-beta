@@ -54,6 +54,30 @@ describe('kernel generator', () => {
     expect(prod).toContain('vault.mongo.uri')
   })
 
+  it('emits the mongoose shared persistence (module, base repo, tx) instead of typeorm when the app targets mongo', async () => {
+    const mongoTree = createTreeWithEmptyWorkspace()
+    await kernelGenerator(mongoTree, { database: 'mongo' })
+
+    const base = 'tmp/generated/kernel/contexts/shared/infrastructure/persistence'
+    for (const file of [
+      `${base}/mongoose/shared-persistence.module.ts`,
+      `${base}/mongoose/mongoose.repository.ts`,
+      `${base}/mongoose/mongoose-transaction-manager.ts`,
+      `${base}/mongoose/mongoose-transaction-context.ts`
+    ]) {
+      expect(mongoTree.exists(file)).toBe(true)
+    }
+    expect(mongoTree.exists(`${base}/typeorm/typeorm.repository.ts`)).toBe(false)
+
+    const module = mongoTree.read(`${base}/mongoose/shared-persistence.module.ts`, 'utf-8') ?? ''
+    // los schemas se derivan del registro de modelos, como las entities en typeorm
+    for (const schema of ['ContractSchema', 'CustomerSchema', 'ProjectSchema']) {
+      expect(module).toContain(schema)
+    }
+    // los hijos de composición van embebidos: no se registran como modelo raíz
+    expect(module).not.toContain("name: 'Contact'")
+  })
+
   it('keeps the postgres config untouched by default', () => {
     const types = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/config-types.ts', 'utf-8') ?? ''
     expect(types).toContain('TypeOrmConfig')

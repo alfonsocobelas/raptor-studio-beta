@@ -1,0 +1,38 @@
+<%_ const last = mongooseModels.length - 1 _%>
+import { Global, Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { MongooseModule } from '@nestjs/mongoose'
+<%_ mongooseModels.forEach(m => { _%>
+import { <%- m.schemaConst %> } from '<%- m.importPath %>'
+<%_ }) _%>
+import { TransactionManager } from '../../../domain/persistence/transaction-manager'
+import { MongooseCriteriaConverter } from './mongoose-criteria-converter'
+import { MongooseTransactionManager } from './mongoose-transaction-manager'
+
+// forFeature global: los schemas se derivan del registro de modelos (los hijos de
+// composición van embebidos en su padre y no se registran como modelo raíz).
+const FEATURES = MongooseModule.forFeature([
+<%_ mongooseModels.forEach((m, i) => { _%>
+  { name: '<%- m.token %>', schema: <%- m.schemaConst %> }<%- i < last ? ',' : '' %>
+<%_ }) _%>
+])
+
+@Global()
+@Module({
+  imports: [
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.get<string>('mongo.uri')
+      })
+    }),
+    FEATURES
+  ],
+  providers: [
+    MongooseCriteriaConverter,
+    MongooseTransactionManager,
+    { provide: TransactionManager, useExisting: MongooseTransactionManager }
+  ],
+  exports: [FEATURES, MongooseCriteriaConverter, MongooseTransactionManager, TransactionManager]
+})
+export class SharedPersistenceModule {}

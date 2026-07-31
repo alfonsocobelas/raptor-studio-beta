@@ -1,0 +1,61 @@
+import { ClientSession, FilterQuery, Model } from 'mongoose'
+import { Criteria } from '../../../domain/query/criteria'
+import { MongooseCriteriaConverter } from './mongoose-criteria-converter'
+import { MongooseTransactionManager } from './mongoose-transaction-manager'
+
+export abstract class MongooseRepository<T> {
+  constructor(
+    private readonly transactionManager: MongooseTransactionManager,
+    private readonly criteriaConverter: MongooseCriteriaConverter
+  ) {}
+
+  protected abstract model(): Model<T>
+
+  // Sesión ligada a la transacción activa (o null fuera de runInTransaction). Encadenarla
+  // con .session() en TODA lectura/escritura para que se una a la transacción del use case.
+  protected session(): ClientSession | null {
+    return this.transactionManager.getEntityManager()
+  }
+
+  protected async searchByCriteria(criteria: Criteria): Promise<T[]> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    let cursor = this.model()
+      .find(this.excludeSoftDeleted(query.filter))
+      .session(this.session())
+      // Desempate determinista: la paginación por offset sin orden estable repite/salta filas
+      // entre páginas. _id es UUIDv7 (ordenado en el tiempo), así que además da un orden por
+      // defecto razonable cuando no se pide sort explícito.
+      .sort({ ...query.sort, _id: 1 })
+
+    if (query.skip) {
+      cursor = cursor.skip(query.skip)
+    }
+    if (query.limit) {
+      cursor = cursor.limit(query.limit)
+    }
+
+    return cursor.lean<T[]>().exec()
+  }
+
+  protected async countByCriteria(criteria: Criteria): Promise<number> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    return this.model().countDocuments(this.excludeSoftDeleted(query.filter)).session(this.session()).exec()
+  }
+
+  protected async existsByCriteria(criteria: Criteria): Promise<boolean> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+    const found = await this.model()
+      .exists(this.excludeSoftDeleted(query.filter))
+      .session(this.session())
+
+    return found !== null
+  }
+
+  // Paridad con el soft-delete de la referencia: los documentos borrados llevan deletedAt
+  // y ninguna consulta base los ve. $eq null casa tanto null como campo ausente.
+  private excludeSoftDeleted(filter: FilterQuery<T>): FilterQuery<T> {
+    return { ...filter, deletedAt: null } as FilterQuery<T>
+  }
+}

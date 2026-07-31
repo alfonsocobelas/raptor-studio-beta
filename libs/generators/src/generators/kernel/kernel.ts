@@ -36,10 +36,21 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     return list
   })
 
+  // Un modelo Mongoose raíz por recurso: los hijos de composición van embebidos.
+  const mongooseModels = MODEL_LIST.map(model => {
+    const n = names(model.name)
+    return {
+      token: n.className,
+      schemaConst: `${n.className}Schema`,
+      importPath: `../../../../${model.context}/modules/${model.plural}/infrastructure/persistence/mongoose/${n.fileName}.schema`
+    }
+  })
+
   const substitutions = {
     sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
     databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
-    entities
+    entities,
+    mongooseModels
   }
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
   // lo específico del motor (config + persistencia compartida) vive en árboles paralelos

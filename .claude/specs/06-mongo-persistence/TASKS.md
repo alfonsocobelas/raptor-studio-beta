@@ -13,9 +13,9 @@
 
 ## Kernel — infra compartida
 
-- [ ] **TASK-03**: Config mongo emitida: bloque `database.uri` en `environments/*.json` +
+- [x] **TASK-03**: Config mongo emitida: bloque `database.uri` en `environments/*.json` +
       `config-types`/`config-validation` según motor (TDD en `kernel.spec.ts`).
-- [ ] **TASK-04**: Plantillas `persistence/mongoose/`: `shared-persistence.module` +
+- [x] **TASK-04**: Plantillas `persistence/mongoose/`: `shared-persistence.module` +
       `mongoose.repository` base + `mongoose-transaction-manager`/`-context` (TDD kernel).
 - [ ] **TASK-05**: `mongoose-criteria-converter` (Criteria → filter/sort/skip/limit), paridad de
       operadores con el converter TypeORM (TDD kernel).
