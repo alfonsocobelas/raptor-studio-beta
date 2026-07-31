@@ -36,6 +36,8 @@ export const authPlugin = definePlugin({
   makeTargets: {
     'seed-auth': '\tNODE_ENV=local npm run seed:auth'
   },
+  // Sin los usuarios sembrados el primer login es imposible: local-setup lo encadena.
+  localSetupSteps: ['seed-auth'],
 
   apply(tree: Tree, context: PluginContext): void {
     registerModule(tree, context)

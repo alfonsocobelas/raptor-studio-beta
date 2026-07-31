@@ -238,7 +238,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 }
 
 /** Vuelca en package.json y Makefile lo que cada plugin declara en su manifiesto. */
-function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugin[]): void {
+export function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugin[]): void {
   if (!plugins.length) {
     return
   }
@@ -267,6 +267,14 @@ function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugin[]): v
     (_match, existing: string) => `.PHONY: ${existing} ${targets.map(([name]) => name).join(' ')}`
   )
   makefile += `\n# --- plugins ---\n${targets.map(([name, body]) => `${name}:\n${body}`).join('\n\n')}\n`
+
+  const setupSteps = plugins.flatMap(p => p.localSetupSteps ?? [])
+  if (setupSteps.length) {
+    makefile = makefile.replace(
+      /^(local-setup:(?:.*\n)*?)(\t@echo )/m,
+      `$1${setupSteps.map(step => `\t$(MAKE) ${step}\n`).join('')}$2`
+    )
+  }
   tree.write(makefilePath, makefile)
 }
 

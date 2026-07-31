@@ -33,6 +33,8 @@ export interface AppPlugin {
   scripts?: Record<string, string>
   /** Targets que el plugin añade al Makefile (nombre → cuerpo) */
   makeTargets?: Record<string, string>
+  /** Targets (de makeTargets) que local-setup debe encadenar tras migrar y sembrar */
+  localSetupSteps?: string[]
   /** Schemas de PostgreSQL que el plugin necesita */
   schemas?: string[]
   /** Carpeta de assets copiada literalmente (relativa al directorio del plugin) */
