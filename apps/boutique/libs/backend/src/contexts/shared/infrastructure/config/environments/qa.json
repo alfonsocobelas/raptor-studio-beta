@@ -2,21 +2,21 @@
   "env": "qa",
   "app": {
     "port": 3000,
-    "baseUrl": "vault.APP-BASE-URL"
+    "baseUrl": "vault.app.base-url"
   },
   "cors": {
-    "origin": "vault.CORS-ORIGIN"
+    "origin": "vault.cors.origin"
   },
   "logger": {
     "level": "info"
   },
   "typeorm": {
     "type": "postgres",
-    "host": "vault.DB-HOST",
+    "host": "vault.typeorm.host",
     "port": 5432,
-    "username": "vault.DB-USER",
-    "password": "vault.DB-PASSWORD",
-    "database": "vault.DB-NAME",
+    "username": "vault.typeorm.username",
+    "password": "vault.typeorm.password",
+    "database": "vault.typeorm.database",
     "ssl": true,
     "autoLoadEntities": true,
     "synchronize": false,
