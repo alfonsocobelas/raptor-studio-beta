@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { Injectable, inject, resource, signal } from '@angular/core'
+import { API_PREFIX } from '../http/api.constants'
 import { InviteUserDto, UserDto, UserRoleEnum, UserStatusEnum } from '<%- sharedDomainAlias %>'
 import { firstValueFrom } from 'rxjs'
 import { OffsetPaginatedOutput } from './pagination.types'
@@ -29,29 +30,29 @@ export class UserService {
   readonly users = resource<OffsetPaginatedOutput<UserDto>, UserRequest>({
     params: () => this.request(),
     loader: ({ params: req }) =>
-      firstValueFrom(this._http.get<OffsetPaginatedOutput<UserDto>>('/api/v1/users', { params: this.buildParams(req) }))
+      firstValueFrom(this._http.get<OffsetPaginatedOutput<UserDto>>(`${API_PREFIX}/users`, { params: this.buildParams(req) }))
   })
 
   invite(dto: InviteUserDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/auth/invitations', dto)).then(() => {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/invitations`, dto)).then(() => {
       this.users.reload()
     })
   }
 
   changeRole(id: string, role: UserRoleEnum): Promise<void> {
-    return firstValueFrom(this._http.put<void>(`/api/v1/users/${id}/role`, { role })).then(() => {
+    return firstValueFrom(this._http.put<void>(`${API_PREFIX}/users/${id}/role`, { role })).then(() => {
       this.users.reload()
     })
   }
 
   disable(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`/api/v1/users/${id}/disable`, {})).then(() => {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/users/${id}/disable`, {})).then(() => {
       this.users.reload()
     })
   }
 
   reactivate(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`/api/v1/users/${id}/reactivate`, {})).then(() => {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/users/${id}/reactivate`, {})).then(() => {
       this.users.reload()
     })
   }

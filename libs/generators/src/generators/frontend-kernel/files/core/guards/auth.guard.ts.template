@@ -1,12 +1,13 @@
 import { inject } from '@angular/core'
 import { CanActivateFn, Router } from '@angular/router'
+import { LOGIN_ROUTE } from '../http/api.constants'
 import { UserRoleEnum } from '<%- sharedDomainAlias %>'
 import { AuthService } from '../services/auth.service'
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService)
   const router = inject(Router)
-  return auth.isAuthenticated() ? true : router.createUrlTree(['/login'])
+  return auth.isAuthenticated() ? true : router.createUrlTree([LOGIN_ROUTE])
 }
 
 export const adminGuard: CanActivateFn = () => {
