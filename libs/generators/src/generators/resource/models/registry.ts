@@ -35,6 +35,19 @@ export const MODELS: Record<string, ResourceDefinition> = {
 export const MODEL_LIST: ResourceDefinition[] = Object.values(MODELS)
 
 /**
+ * Registra modelos EXTERNOS (resources embebidos en un --appFile del estudio)
+ * para la generación en curso: los sub-generadores (kernel, root, shared-domain,
+ * resource) los resuelven por selectModels como si fueran del registro estático.
+ * Muta los bindings exportados a propósito — el proceso de generación es efímero.
+ */
+export function registerModels(models: ResourceDefinition[]): void {
+  for (const model of models) {
+    if (!MODELS[model.name]) MODEL_LIST.push(model)
+    MODELS[model.name] = model
+  }
+}
+
+/**
  * Modelos de una app concreta. Sin `names` devuelve el registro entero;
  * con una lista, solo esos (un proyecto de cliente no arrastra los modelos de otro).
  */

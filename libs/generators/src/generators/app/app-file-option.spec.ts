@@ -76,3 +76,82 @@ describe('app generator — opción appFile', () => {
     expect(schema.properties.appFile.type).toBe('string')
   })
 })
+
+describe('app generator — resources[] embebidos en appFile (entidades del estudio)', () => {
+  const writeAppJson = (content: unknown): string => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'appfile-res-'))
+    const file = path.join(dir, 'cliente.app.json')
+    writeFileSync(file, JSON.stringify(content))
+    return file
+  }
+  const conductorResource = {
+    schemaVersion: 1,
+    name: 'conductor',
+    plural: 'conductores',
+    context: 'flotas',
+    schemaName: 'flotas',
+    sharedDomainAlias: '@app/shared/domain',
+    labels: { singular: 'Conductor', plural: 'Conductores', gender: 'm' },
+    formSections: [{ id: 'general', title: 'Datos de conductor' }],
+    constraintsConst: 'CONDUCTOR_CONSTRAINTS',
+    audit: true,
+    constraints: { NOMBRE: { MIN: 2, MAX: 200 } },
+    fields: {
+      id: { type: 'uuid', pk: true, query: { filterable: 1 } },
+      nombre: {
+        type: 'string',
+        required: true,
+        vo: {
+          name: 'ConductorNombre',
+          fieldName: 'Nombre',
+          ensure: 'string',
+          minLength: true,
+          lengthRule: 'max',
+          constraintKey: 'NOMBRE'
+        },
+        form: { control: 'text', label: 'Nombre', section: 'general', order: 1 },
+        table: { show: true, order: 1, label: 'Nombre', minWidth: 120 },
+        query: { sortable: 1, filterable: 2, searchable: 1 },
+        column: { type: 'varchar', lengthConst: 'NOMBRE.MAX' }
+      }
+    },
+    list: {
+      deleteLabelField: 'nombre',
+      defaultSort: { field: 'nombre', dir: 'asc' },
+      features: { create: true, export: ['csv'], search: true, view: false, edit: true, delete: true }
+    }
+  }
+
+  it('genera una app con una entidad NUEVA no registrada en MODELS', async () => {
+    const file = writeAppJson({
+      schemaVersion: 1,
+      name: 'flotas',
+      pages: [{ kind: 'resource', resource: 'conductor' }],
+      resources: [conductorResource]
+    })
+
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'flotas', appFile: file, skipInstall: true })
+
+    const nav = tree.read('apps/flotas/apps/frontend-app/src/nav.ts', 'utf-8')
+    expect(nav).toContain("{ label: 'Conductores', route: '/flotas/conductores' }")
+    expect(tree.exists('apps/flotas/libs/backend/src/contexts/flotas/modules/conductores/domain/conductor.ts')).toBe(
+      true
+    )
+    expect(
+      tree.read('apps/flotas/libs/backend/src/contexts/flotas/modules/conductores/domain/conductor.ts', 'utf-8')
+    ).not.toContain('= .create(')
+  }, 120000)
+
+  it('rechaza un resource embebido inválido antes de emitir nada', async () => {
+    const file = writeAppJson({
+      schemaVersion: 1,
+      name: 'flotas',
+      pages: [],
+      resources: [{ ...conductorResource, schemaName: 'Mal Formato' }]
+    })
+    const tree: Tree = createTreeWithEmptyWorkspace()
+
+    await expect(appGenerator(tree, { name: 'x', appFile: file, skipInstall: true })).rejects.toThrow(/snake_case/)
+  })
+})

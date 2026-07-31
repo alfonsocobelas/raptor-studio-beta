@@ -1,9 +1,9 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
-import { defineApp, type AppDefinition, type ResourceDefinition } from '@acc/schema'
+import { defineApp, defineResource, type AppDefinition, type ResourceDefinition } from '@acc/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { MODELS, selectModels } from '../resource/models/registry'
+import { MODELS, registerModels, selectModels } from '../resource/models/registry'
 import { composeApp, composeFlat, type AppComposition } from './composition'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
@@ -380,7 +380,15 @@ function loadAppFile(file: string): AppDefinition {
   if (!fs.existsSync(file)) {
     throw new Error(`App-schema file no existe: ${file}`)
   }
-  return defineApp(JSON.parse(fs.readFileSync(file, 'utf-8')) as AppDefinition)
+  const { resources, ...definition } = JSON.parse(fs.readFileSync(file, 'utf-8')) as AppDefinition & {
+    resources?: ResourceDefinition[]
+  }
+  // entidades diseñadas en el estudio: pasan el MISMO gate que las registradas
+  // y entran al registro de esta generación antes de componer
+  if (resources?.length) {
+    registerModels(resources.map(r => defineResource(r)))
+  }
+  return defineApp(definition)
 }
 
 function routeOf(model: { route?: string; context: string; plural: string }): string {
