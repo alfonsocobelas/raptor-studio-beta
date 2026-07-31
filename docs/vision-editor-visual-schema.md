@@ -86,7 +86,18 @@ Sin ese vocabulario, el lienzo no tiene nada que editar. Es la fase A y es útil
 - Undo/redo: trivial si el estado es un único árbol de schema inmutable — decidir pronto la forma del store.
 - Dónde vive la app del editor: `apps/studio` en este monorepo (probable) vs. repo aparte.
 
-## 7. Relación con documentos existentes
+## 7. Corrección de rumbo (2026-07-31, spec 13)
+
+Feedback de Alfonso sobre la primera implementación: la esencia era un **lienzo en blanco**
+(Figma/Excalidraw) con **chat a la derecha** y **barra de componentes genéricos** donde soltar
+una tabla CREA una entidad nueva con sus columnas — no un editor de composición sobre modelos
+de demo. Reconstruido en la spec 13: DraftResource (entidades diseñadas en el lienzo, expandidas
+a resource-schemas canónicos), DesignStore vacío de arranque, barra Tabla/KPI, pestañas de
+página, inspector de columnas, chat que diseña entidades (structured outputs sin catálogo), y
+`--appFile` con `resources[]` embebidos — verificado e2e: entidad dibujada → app generada.
+El estudio no muestra NINGÚN contenido de demos.
+
+## 8. Relación con documentos existentes
 
 - `docs/integracion-ia-generador.md` — el chat es la fase ① con UI; el gate determinista no cambia.
 - `docs/ACELERADOR-arquitectura-consolidada.md` — nada de esto toca el núcleo determinista; el editor es un cliente más del schema.
