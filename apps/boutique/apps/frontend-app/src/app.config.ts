@@ -24,7 +24,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withComponentInputBinding()),
-    // Sin authInterceptor: el proyecto generado no trae módulo de auth todavía.
     provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor])),
     provideAppInitializer(() => inject(AuthService).loadCurrentUser()),
     { provide: API_BASE_URL, useValue: '' },

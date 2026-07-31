@@ -101,6 +101,8 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
       config
         .replace(/import \{ devAuthProvider \} from '\.\/dev-auth'\n/, '')
         .replace(/\s*devAuthProvider,/, '')
+        // el esqueleto justifica la ausencia de auth; con el plugin activo mentiría
+        .replace(/\s*\/\/ Sin authInterceptor:[^\n]*/, '')
         .replace(
           "import { apiBaseUrlInterceptor } from '@app/frontend/core/http/api-base-url.interceptor'",
           "import { apiBaseUrlInterceptor } from '@app/frontend/core/http/api-base-url.interceptor'\nimport { authInterceptor } from '@app/frontend/core/http/auth.interceptor'"
