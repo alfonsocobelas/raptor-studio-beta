@@ -7,12 +7,7 @@ import { ContractDate } from '../../../shared/domain/value-objects/contract-date
 import { ContractNumber } from '../../../shared/domain/value-objects/contract-number.vo'
 import { CustomerName } from '../../../shared/domain/value-objects/customer-name.vo'
 import { SyncTimestamp } from '../../../shared/domain/value-objects/sync-timestamp.vo'
-import {
-  LicenseAggregateProps,
-  LicensePrimitiveProps,
-  LicenseUpdateProps,
-  RegisterLicenseProps
-} from './license-types'
+import { LicenseAggregateProps, LicensePrimitiveProps, LicenseUpdateProps, RegisterLicenseProps } from './license-types'
 import { AnnualValue } from './value-objects/annual-value.vo'
 import { LicenseLifecycleStatus } from './value-objects/license-lifecycle-status.vo'
 import { LicenseMetric } from './value-objects/license-metric.vo'
@@ -188,7 +183,9 @@ export class License extends AggregateRoot {
       LicenseStatus.create(props.status),
       props.source ? LicenseSource.create(props.source) : LicenseSource.create('MANUAL'),
       props.materialId ?? '',
-      props.lifecycleStatus ? LicenseLifecycleStatus.create(props.lifecycleStatus) : LicenseLifecycleStatus.create('active'),
+      props.lifecycleStatus
+        ? LicenseLifecycleStatus.create(props.lifecycleStatus)
+        : LicenseLifecycleStatus.create('active'),
       props.archivedAt ? SyncTimestamp.fromISOString(props.archivedAt) : null,
       props.lastSeenInSyncAt ? SyncTimestamp.fromISOString(props.lastSeenInSyncAt) : null,
       props.currentUnits,
@@ -263,13 +260,13 @@ export class License extends AggregateRoot {
       this._status = LicenseStatus.create(updates.status)
     }
     if (updates.currentUnits !== undefined) {
-      this._currentUnits = .create(updates.currentUnits)
+      this._currentUnits = updates.currentUnits
     }
     if (updates.consumptionPct !== undefined) {
-      this._consumptionPct = .create(updates.consumptionPct)
+      this._consumptionPct = updates.consumptionPct
     }
     if (updates.excessUnits !== undefined) {
-      this._excessUnits = .create(updates.excessUnits)
+      this._excessUnits = updates.excessUnits
     }
     if (updates.annualValue !== undefined) {
       this._annualValue = AnnualValue.create(updates.annualValue)
