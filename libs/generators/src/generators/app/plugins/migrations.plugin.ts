@@ -92,8 +92,20 @@ function renderTable(model: ResourceDefinition): string {
   const pk = Object.entries(model.fields).find(([, f]) => f.pk)?.[0] ?? 'id'
   columns.push(`CONSTRAINT pk_${model.plural} PRIMARY KEY (${snake(pk)})`)
 
+  // unicidad ifPresent (decisión 2026-07-30): los uniques opcionales van como índice único
+  // parcial (canon uq_customers_tax_id) para que dos filas con el valor vacío convivan.
+  const partialIndexes: string[] = []
   for (const [name, field] of Object.entries(model.fields)) {
-    if (field.unique) {
+    if (!field.unique) {
+      continue
+    }
+    if (isOptionalUnique(field)) {
+      partialIndexes.push(`    await queryRunner.query(\`
+      CREATE UNIQUE INDEX uq_${model.plural}_${snake(name)}
+        ON ${table} (${snake(name)})
+        WHERE ${snake(name)} <> ''
+    \`)`)
+    } else {
       columns.push(`CONSTRAINT uq_${model.plural}_${snake(name)} UNIQUE (${snake(name)})`)
     }
   }
@@ -101,13 +113,21 @@ function renderTable(model: ResourceDefinition): string {
   const width = Math.max(...columns.map(c => c.split(' ')[0].length))
   const rendered = columns.map(c => `        ${c.split(' ')[0].padEnd(width)} ${c.split(' ').slice(1).join(' ')}`).join(',\n')
 
-  return `    await queryRunner.query(\`CREATE SCHEMA IF NOT EXISTS ${model.schemaName}\`)
+  return [
+    `    await queryRunner.query(\`CREATE SCHEMA IF NOT EXISTS ${model.schemaName}\`)
 
     await queryRunner.query(\`
       CREATE TABLE ${table} (
 ${rendered}
       )
-    \`)`
+    \`)`,
+    ...partialIndexes
+  ].join('\n\n')
+}
+
+/** Unique opcional (semántica ifPresent): string no requerido y no nullable, como el taxId del canon. */
+function isOptionalUnique(field: FieldDefinition): boolean {
+  return field.required !== true && !(field.nullable ?? false) && field.type === 'string'
 }
 
 function renderColumn(model: ResourceDefinition, name: string, field: FieldDefinition): string {
