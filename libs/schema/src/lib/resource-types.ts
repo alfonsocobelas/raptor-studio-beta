@@ -241,6 +241,8 @@ export interface ResourceDefinition {
   sharedDomainAlias?: string
   /** DTO type name in emitted frontend code; defaults to <ClassName>Dto */
   dtoName?: string
+  /** Emit the attachments piece for this resource: dropzone in its screen + upload/download/delete endpoints over FileStoragePort (spec 14) */
+  attachments?: boolean
   /** Dialog form sections, in emission order */
   formSections?: { id: string; title: string }[]
   /** Group-level validators the dialog attaches (known set: 'dateRange') */
