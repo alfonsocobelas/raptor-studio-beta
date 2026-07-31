@@ -1,5 +1,5 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
-import type { ResourceDefinition } from '@acc/schema'
+import { defineApp, type AppDefinition, type ResourceDefinition } from '@acc/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -20,6 +20,8 @@ export interface AppGeneratorSchema {
   name: string
   /** Registered app-schema declaring the composition (mutually exclusive with models/dashboard) */
   app?: string
+  /** Path to an app-schema JSON file (e.g. downloaded from the studio wizard); same gate as `app` */
+  appFile?: string
   /** Comma-separated model names to include; defaults to the whole registry */
   models?: string
   /** Output directory; defaults to apps/<name> */
@@ -78,14 +80,18 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const root = options.directory ?? path.join('apps', appName)
   // Nx rellena los defaults del schema.json (dashboard=false), así que solo cuentan
   // como composición explícita un models presente o un dashboard pedido de verdad
-  if (options.app && (options.models !== undefined || options.dashboard === true)) {
+  const flatOptions = options.models !== undefined || options.dashboard === true
+  const schemaSources = [options.app, options.appFile, flatOptions ? 'flat' : undefined].filter(Boolean)
+  if (schemaSources.length > 1) {
     throw new Error(
-      `Options 'app' and 'models'/'dashboard' are mutually exclusive: the app-schema '${options.app}' already declares the composition`
+      `Options 'app', 'appFile' and 'models'/'dashboard' are mutually exclusive: only one composition source is allowed`
     )
   }
   const composition = options.app
     ? composeApp(selectApp(options.app), MODELS)
-    : composeFlat(selectModels(options.models), options.dashboard ?? false)
+    : options.appFile
+      ? composeApp(loadAppFile(options.appFile), MODELS)
+      : composeFlat(selectModels(options.models), options.dashboard ?? false)
   const models = composition.models
   // los sub-generadores siguen recibiendo la lista por nombre, venga de donde venga la composición
   const modelNames = models.map(m => m.name).join(',')
@@ -364,6 +370,17 @@ export function dashboardSubstitutions(models: ResourceDefinition[]): Record<str
     specTotalAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(${e.total})`).join('\n'),
     tmpl: ''
   }
+}
+
+/**
+ * Carga un app-schema desde un JSON del usuario (p. ej. descargado del wizard
+ * del estudio) y le aplica el mismo gate estructural que a los registrados.
+ */
+function loadAppFile(file: string): AppDefinition {
+  if (!fs.existsSync(file)) {
+    throw new Error(`App-schema file no existe: ${file}`)
+  }
+  return defineApp(JSON.parse(fs.readFileSync(file, 'utf-8')) as AppDefinition)
 }
 
 function routeOf(model: { route?: string; context: string; plural: string }): string {

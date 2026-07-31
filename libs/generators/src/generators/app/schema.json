@@ -18,6 +18,10 @@
       "type": "string",
       "description": "Registered app-schema declaring the composition (pages, nav, dashboard); mutually exclusive with models/dashboard"
     },
+    "appFile": {
+      "type": "string",
+      "description": "Path to an app-schema JSON file (e.g. downloaded from the studio wizard); mutually exclusive with app/models/dashboard"
+    },
     "models": {
       "type": "string",
       "description": "Comma-separated model names (defaults to all registered models)",
