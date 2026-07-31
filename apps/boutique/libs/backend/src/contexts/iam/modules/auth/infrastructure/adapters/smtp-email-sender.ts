@@ -1,5 +1,12 @@
 import { EmailSender } from '../../application/ports/email-sender'
-import { invitationHtml, invitationText, passwordResetHtml, passwordResetText } from './email-templates'
+import {
+  invitationHtml,
+  invitationSubject,
+  invitationText,
+  passwordResetHtml,
+  passwordResetSubject,
+  passwordResetText
+} from './email-templates'
 
 export interface MailAttachment {
   filename: string
@@ -32,16 +39,11 @@ export class SmtpEmailSender extends EmailSender {
   }
 
   async sendInvitation(email: string, link: string): Promise<void> {
-    await this.send(email, 'Invitación a la aplicación', invitationHtml(link), invitationText(link))
+    await this.send(email, invitationSubject, invitationHtml(link), invitationText(link))
   }
 
   async sendPasswordReset(email: string, link: string): Promise<void> {
-    await this.send(
-      email,
-      'Restablece tu contraseña de la aplicación',
-      passwordResetHtml(link),
-      passwordResetText(link)
-    )
+    await this.send(email, passwordResetSubject, passwordResetHtml(link), passwordResetText(link))
   }
 
   private async send(to: string, subject: string, html: string, text: string): Promise<void> {

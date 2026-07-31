@@ -1,4 +1,4 @@
-import type { Tree } from '@nx/devkit'
+import { names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { definePlugin, type PluginContext } from './plugin'
 
@@ -44,6 +44,7 @@ export const authPlugin = definePlugin({
     registerEntities(tree, context)
     addSchemaMigration(tree, context)
     registerTestRepositories(tree, context)
+    brandEmailTemplates(tree, context)
     wireFrontend(tree, context)
   },
 
@@ -112,6 +113,23 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
     )
     tree.delete(path.join(app, 'dev-auth.ts'))
   }
+}
+
+/**
+ * Los emails transaccionales llevan el nombre visible del producto en asuntos,
+ * títulos y pie. Los assets se copian literales con un neutro ('la aplicación');
+ * aquí se marca con el nombre de la app para que ningún correo salga sin marca.
+ */
+function brandEmailTemplates(tree: Tree, context: PluginContext): void {
+  const templatesPath = path.join(
+    context.root,
+    'libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/email-templates.ts'
+  )
+  const source = tree.read(templatesPath, 'utf-8')
+  if (!source) {
+    return
+  }
+  tree.write(templatesPath, source.replace("PRODUCT_NAME = 'la aplicación'", `PRODUCT_NAME = '${names(context.appName).className}'`))
 }
 
 /**

@@ -1,5 +1,12 @@
 import { EmailSender } from '../../application/ports/email-sender'
-import { invitationHtml, invitationText, passwordResetHtml, passwordResetText } from './email-templates'
+import {
+  invitationHtml,
+  invitationSubject,
+  invitationText,
+  passwordResetHtml,
+  passwordResetSubject,
+  passwordResetText
+} from './email-templates'
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
 
@@ -16,7 +23,7 @@ export class BrevoEmailSender extends EmailSender {
   }
 
   async sendInvitation(email: string, link: string): Promise<void> {
-    await this.send(email, 'Invitación a la aplicación', invitationHtml(link), invitationText(link))
+    await this.send(email, invitationSubject, invitationHtml(link), invitationText(link))
   }
 
   async sendPasswordReset(email: string, link: string): Promise<void> {
