@@ -76,7 +76,9 @@ const SPARTAN_COMPONENTS = [
 export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Promise<GeneratorCallback> {
   const appName = names(options.name).fileName
   const root = options.directory ?? path.join('apps', appName)
-  if (options.app && (options.models !== undefined || options.dashboard !== undefined)) {
+  // Nx rellena los defaults del schema.json (dashboard=false), así que solo cuentan
+  // como composición explícita un models presente o un dashboard pedido de verdad
+  if (options.app && (options.models !== undefined || options.dashboard === true)) {
     throw new Error(
       `Options 'app' and 'models'/'dashboard' are mutually exclusive: the app-schema '${options.app}' already declares the composition`
     )

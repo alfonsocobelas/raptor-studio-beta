@@ -48,6 +48,14 @@ describe('app generator — opción app (app-schema)', () => {
     )
   })
 
+  it('tolera los defaults que rellena Nx (dashboard=false no es composición explícita)', async () => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+
+    await expect(
+      appGenerator(tree, { name: 'x', app: 'demo', dashboard: false, plugins: 'none', ui: 'spartan', skipInstall: true })
+    ).resolves.toBeDefined()
+  }, 120000)
+
   it('schema.json declara la opción app', () => {
     const schema = JSON.parse(readFileSync(path.join(__dirname, 'schema.json'), 'utf-8'))
 
