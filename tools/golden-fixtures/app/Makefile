@@ -41,6 +41,7 @@ local-setup: up
 	sleep 6
 	$(MAKE) migrate
 	$(MAKE) seed
+	$(MAKE) seed-auth
 	@echo "Listo. 'make api' (http://localhost:3000/api/v1) y 'make web' (http://localhost:4200)"
 
 # --- plugins ---
