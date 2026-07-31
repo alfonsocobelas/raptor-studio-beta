@@ -29,6 +29,22 @@ describe('Register<%- className %>UseCase', () => {
     })
   })
 
+<%_ if (app.hasOptionalUniques) { _%>
+  describe('given the optional unique fields are empty', () => {
+    it('skips their uniqueness checks (ifPresent semantics)', async () => {
+      repositoryMock.givenDoesNotExist()
+      repositoryMock.whenRegisterSuccess()
+
+      const input = <%- className %>Mother.primitives(<%- app.optionalUniqueOverrides %>)
+      await useCase.invoke(input)
+
+      repositoryMock.assertCalledTimes('exists', <%- app.requiredUniqueCount %>)
+      const registered = repositoryMock.registered<%- className %>().toPrimitives()
+      expect(registered.id).toBe(input.id)
+    })
+  })
+
+<%_ } _%>
   describe('given a duplicate exists', () => {
     it('throws AlreadyExistsError and does not register', async () => {
       repositoryMock.givenAlreadyExists()

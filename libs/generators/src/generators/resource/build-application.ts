@@ -21,6 +21,8 @@ export interface UniqueSpecBinding {
   specFileName: string
   /** field name as filter key ('sapId') */
   field: string
+  /** campo opcional → semántica ifPresent: el check de unicidad solo aplica si no está vacío */
+  optional: boolean
 }
 
 export interface ApplicationBindings {
@@ -35,6 +37,12 @@ export interface ApplicationBindings {
   updateCheckBlocks: string[]
   /** search/export use cases need AlreadyExistsError only when checks exist */
   hasUniqueChecks: boolean
+  /** hay uniques opcionales → el test del register cubre la rama ifPresent */
+  hasOptionalUniques: boolean
+  /** overrides del mother con los opcionales vacíos: "{ taxId: '' }" */
+  optionalUniqueOverrides: string
+  /** checks que corren siempre (uniques requeridos) */
+  requiredUniqueCount: number
 }
 
 export function renderApplication(definition: ResourceDefinition, emitAggregate: boolean): ApplicationBindings {
@@ -54,7 +62,8 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
       voLocal: !field.voShared,
       voFileName: names(voNameOf(field)).fileName,
       specFileName: `${n.fileName}-with-${names(name).fileName}`,
-      field: name
+      field: name,
+      optional: field.required !== true && !(field.nullable ?? false) && field.type === 'string'
     }
   })
 
@@ -63,15 +72,26 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
   )
 
   const prop = n.propertyName
-  const registerCheckBlocks = uniqueSpecs.map(s =>
-    [
-      `    const ${s.field}Exists = await this.${prop}Repository.exists(${s.fn}(${prop}.${s.field}))`,
+  // unicidad ifPresent (decisión ratificada 2026-07-30): en campos opcionales el check
+  // solo corre si el valor no está vacío — canon hasTaxId() del register de customers.
+  const registerCheckBlocks = uniqueSpecs.map(s => {
+    const cap = s.field.charAt(0).toUpperCase() + s.field.slice(1)
+    const check = [
+      `const ${s.field}Exists = await this.${prop}Repository.exists(${s.fn}(${prop}.${s.field}))`,
       ``,
-      `    if (${s.field}Exists) {`,
-      `      throw new AlreadyExistsError('${className}', '${s.field}', ${prop}.${s.field}.value)`,
+      `if (${s.field}Exists) {`,
+      `  throw new AlreadyExistsError('${className}', '${s.field}', ${prop}.${s.field}.value)`,
+      `}`
+    ]
+    if (!s.optional) {
+      return check.map(line => (line ? `    ${line}` : line)).join('\n')
+    }
+    return [
+      `    if (${prop}.has${cap}()) {`,
+      ...check.map(line => (line ? `      ${line}` : line)),
       `    }`
     ].join('\n')
-  )
+  })
 
   const updateCheckBlocks = uniqueSpecs.map(s => {
     const cap = s.field.charAt(0).toUpperCase() + s.field.slice(1)
@@ -96,7 +116,13 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     registerSpecImports,
     registerCheckBlocks,
     updateCheckBlocks,
-    hasUniqueChecks: uniqueSpecs.length > 0
+    hasUniqueChecks: uniqueSpecs.length > 0,
+    hasOptionalUniques: uniqueSpecs.some(s => s.optional),
+    optionalUniqueOverrides: `{ ${uniqueSpecs
+      .filter(s => s.optional)
+      .map(s => `${s.field}: ''`)
+      .join(', ')} }`,
+    requiredUniqueCount: uniqueSpecs.filter(s => !s.optional).length
   }
 }
 

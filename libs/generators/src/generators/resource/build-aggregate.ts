@@ -130,7 +130,11 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
       ...ctxs.map(c => toPrimitivesLine(c, period)).filter((l): l is string => l !== null)
     ],
     updateGuardBlocks: [...editable.map(c => updateGuard(c)), ...(period ? [periodUpdateGuard(period)] : [])],
-    uniquenessMethods: ctxs.filter(c => c.unique).map(c => uniquenessMethod(c, className)),
+    uniquenessMethods: [
+      // canon customer.ts: los has<Cap>() de los uniques opcionales van antes de los new*IfChanged
+      ...ctxs.filter(c => isOptionalUnique(c)).map(c => presenceMethod(c)),
+      ...ctxs.filter(c => c.unique).map(c => uniquenessMethod(c, className))
+    ],
     aggregatePropsLines: [
       `id: ${idClass}`,
       ...members.filter(c => !c.sync).map(c => `${c.name}: ${memberType(c)}`),
@@ -312,6 +316,16 @@ function periodUpdateGuard(period: { start: string; end: string }): string {
     `      this._period = Period.create(start, end)`,
     `    }`
   ].join('\n')
+}
+
+/** Unique opcional (semántica ifPresent): string no requerido y no nullable, como el taxId del canon. */
+function isOptionalUnique(c: FieldCtx): boolean {
+  return c.unique && c.field.required !== true && !c.nullable && c.field.type === 'string'
+}
+
+function presenceMethod(c: FieldCtx): string {
+  const cap = c.name.charAt(0).toUpperCase() + c.name.slice(1)
+  return [`  has${cap}(): boolean {`, `    return !this._${c.name}.isEmpty()`, `  }`].join('\n')
 }
 
 function uniquenessMethod(c: FieldCtx, className: string): string {
