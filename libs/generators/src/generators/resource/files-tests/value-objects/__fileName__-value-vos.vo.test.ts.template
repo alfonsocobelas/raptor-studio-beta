@@ -55,11 +55,14 @@ describe('<%- v.voName %>', () => {
   })
 })
 <%_ }) _%>
-<%_ if (vt.texts.length) { _%>
+<%_ const freeTexts = vt.texts.filter(v => !v.required && !v.noInner && !v.email) _%>
+<%_ const strictTexts = vt.texts.filter(v => (v.required || v.noInner) && !v.email) _%>
+<%_ const emailTexts = vt.texts.filter(v => v.email) _%>
+<%_ if (freeTexts.length) { _%>
 
 describe.each([
-<%_ vt.texts.forEach((v, i) => { _%>
-  { name: '<%- v.voName %>', Vo: <%- v.voName %>, max: <%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX }<%- i < vt.texts.length - 1 ? ',' : '' %>
+<%_ freeTexts.forEach((v, i) => { _%>
+  { name: '<%- v.voName %>', Vo: <%- v.voName %>, max: <%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX }<%- i < freeTexts.length - 1 ? ',' : '' %>
 <%_ }) _%>
 ])('$name (optional text)', ({ Vo, max }) => {
   it('should accept an empty string', () => {
@@ -84,6 +87,81 @@ describe.each([
   })
 })
 <%_ } _%>
+<%_ strictTexts.forEach(v => { _%>
+
+describe('<%- v.voName %> (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => <%- v.voName %>.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => <%- v.voName %>.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => <%- v.voName %>.create('x'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX + 1))).toThrow(<%- className %>Error)
+  })
+<%_ if (v.required) { _%>
+
+  it('should throw for an empty or whitespace-only string', () => {
+    expect(() => <%- v.voName %>.create('')).toThrow()
+    expect(() => <%- v.voName %>.create('   ')).toThrow()
+  })
+<%_ } _%>
+<%_ if (v.minKey) { _%>
+
+  it('should throw for strings shorter than the min', () => {
+    expect(() => <%- v.voName %>.create('a'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.minKey %>.MIN - 1))).toThrow()
+  })
+<%_ } _%>
+<%_ if (v.noInner) { _%>
+
+  it('should throw for inner whitespace', () => {
+    const min = <%- v.minKey ? `${constantName}_CONSTRAINTS.${v.minKey}.MIN` : '1' %>
+    expect(() => <%- v.voName %>.create(`${'a'.repeat(min)} ${'b'.repeat(min)}`)).toThrow()
+  })
+<%_ } _%>
+
+  it('should accept and preserve valid values', () => {
+    const min = <%- v.minKey ? `${constantName}_CONSTRAINTS.${v.minKey}.MIN` : '1' %>
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: <%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(<%- v.voName %>.create(value).value).toBe(value)
+      }),
+      { numRuns: 100 }
+    )
+  })
+})
+<%_ }) _%>
+<%_ emailTexts.forEach(v => { _%>
+
+describe('<%- v.voName %> (email)', () => {
+  it('should accept an empty string (optional field)', () => {
+    expect(<%- v.voName %>.create('').value).toBe('')
+  })
+
+  it('should throw for a non-email string', () => {
+    expect(() => <%- v.voName %>.create('not-an-email')).toThrow(<%- className %>Error)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => <%- v.voName %>.create(`${'a'.repeat(<%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX)}@mail.com`)).toThrow(<%- className %>Error)
+  })
+
+  it('should accept and preserve valid emails', () => {
+    fc.assert(
+      fc.property(fc.emailAddress().filter(v => v.length <= <%- constantName %>_CONSTRAINTS.<%- v.maxKey %>.MAX), value => {
+        expect(<%- v.voName %>.create(value).value).toBe(value)
+      }),
+      { numRuns: 50 }
+    )
+  })
+})
+<%_ }) _%>
 <%_ vt.arrays.forEach(v => { _%>
 
 describe('<%- v.voName %>', () => {

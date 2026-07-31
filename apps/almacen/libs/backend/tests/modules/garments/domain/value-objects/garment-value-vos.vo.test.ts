@@ -50,8 +50,6 @@ describe('StockUnits', () => {
 })
 
 describe.each([
-  { name: 'Sku', Vo: Sku, max: GARMENT_CONSTRAINTS.SKU.MAX },
-  { name: 'GarmentName', Vo: GarmentName, max: GARMENT_CONSTRAINTS.NAME.MAX },
   { name: 'GarmentBrand', Vo: GarmentBrand, max: GARMENT_CONSTRAINTS.BRAND.MAX },
   { name: 'GarmentColor', Vo: GarmentColor, max: GARMENT_CONSTRAINTS.COLOR.MAX }
 ])('$name (optional text)', ({ Vo, max }) => {
@@ -75,6 +73,85 @@ describe.each([
           expect(Vo.create(value).value).toBe(value)
         }
       ),
+      { numRuns: 100 }
+    )
+  })
+})
+
+describe('Sku (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => Sku.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => Sku.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => Sku.create('x'.repeat(GARMENT_CONSTRAINTS.SKU.MAX + 1))).toThrow(GarmentError)
+  })
+
+  it('should throw for an empty or whitespace-only string', () => {
+    expect(() => Sku.create('')).toThrow()
+    expect(() => Sku.create('   ')).toThrow()
+  })
+
+  it('should throw for strings shorter than the min', () => {
+    expect(() => Sku.create('a'.repeat(GARMENT_CONSTRAINTS.SKU.MIN - 1))).toThrow()
+  })
+
+  it('should throw for inner whitespace', () => {
+    const min = GARMENT_CONSTRAINTS.SKU.MIN
+    expect(() => Sku.create(`${'a'.repeat(min)} ${'b'.repeat(min)}`)).toThrow()
+  })
+
+  it('should accept and preserve valid values', () => {
+    const min = GARMENT_CONSTRAINTS.SKU.MIN
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: GARMENT_CONSTRAINTS.SKU.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(Sku.create(value).value).toBe(value)
+      }),
+      { numRuns: 100 }
+    )
+  })
+})
+
+describe('GarmentName (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => GarmentName.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => GarmentName.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => GarmentName.create('x'.repeat(GARMENT_CONSTRAINTS.NAME.MAX + 1))).toThrow(GarmentError)
+  })
+
+  it('should throw for an empty or whitespace-only string', () => {
+    expect(() => GarmentName.create('')).toThrow()
+    expect(() => GarmentName.create('   ')).toThrow()
+  })
+
+  it('should throw for strings shorter than the min', () => {
+    expect(() => GarmentName.create('a'.repeat(GARMENT_CONSTRAINTS.NAME.MIN - 1))).toThrow()
+  })
+
+  it('should accept and preserve valid values', () => {
+    const min = GARMENT_CONSTRAINTS.NAME.MIN
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: GARMENT_CONSTRAINTS.NAME.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(GarmentName.create(value).value).toBe(value)
+      }),
       { numRuns: 100 }
     )
   })

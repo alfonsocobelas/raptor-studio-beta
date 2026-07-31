@@ -79,7 +79,6 @@ describe('ContractCurrency', () => {
 })
 
 describe.each([
-  { name: 'CmsCaseId', Vo: CmsCaseId, max: CONTRACT_CONSTRAINTS.CMS_CASE_ID.MAX },
   { name: 'BusinessModel', Vo: BusinessModel, max: CONTRACT_CONSTRAINTS.BUSINESS_MODEL.MAX },
   { name: 'ContractNotes', Vo: ContractNotes, max: CONTRACT_CONSTRAINTS.NOTES.MAX },
   { name: 'SupportModel', Vo: SupportModel, max: CONTRACT_CONSTRAINTS.SUPPORT_MODEL.MAX }
@@ -104,6 +103,39 @@ describe.each([
           expect(Vo.create(value).value).toBe(value)
         }
       ),
+      { numRuns: 100 }
+    )
+  })
+})
+
+describe('CmsCaseId (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => CmsCaseId.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => CmsCaseId.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => CmsCaseId.create('x'.repeat(CONTRACT_CONSTRAINTS.CMS_CASE_ID.MAX + 1))).toThrow(ContractError)
+  })
+
+  it('should throw for inner whitespace', () => {
+    const min = 1
+    expect(() => CmsCaseId.create(`${'a'.repeat(min)} ${'b'.repeat(min)}`)).toThrow()
+  })
+
+  it('should accept and preserve valid values', () => {
+    const min = 1
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: CONTRACT_CONSTRAINTS.CMS_CASE_ID.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(CmsCaseId.create(value).value).toBe(value)
+      }),
       { numRuns: 100 }
     )
   })

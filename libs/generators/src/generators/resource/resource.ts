@@ -156,6 +156,22 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend-tests'),
       substitutions
     )
+    // una suite sin tests es un fallo para jest: si el modelo no tiene VOs de un
+    // grupo, su fichero no se emite
+    const voTests = substitutions.domainTests.voTests
+    const testsDir = path.join(outputDir, 'backend-tests/value-objects')
+    if (!voTests.enums.length) {
+      tree.delete(path.join(testsDir, `${substitutions.fileName}-enum-vos.vo.test.ts`))
+    }
+    if (
+      !voTests.numbers.length &&
+      !voTests.texts.length &&
+      !voTests.exacts.length &&
+      !voTests.arrays.length &&
+      !voTests.booleans.length
+    ) {
+      tree.delete(path.join(testsDir, `${substitutions.fileName}-value-vos.vo.test.ts`))
+    }
   }
 
   reinjectAiSlots(tree, outputDir, aiSlots)

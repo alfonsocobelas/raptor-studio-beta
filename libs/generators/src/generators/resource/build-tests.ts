@@ -19,7 +19,7 @@ export interface DomainTestBindings {
   voTests: {
     enums: { voName: string; valuesList: string; comment?: string }[]
     numbers: { voName: string; integer: boolean; unset: boolean; minKey: string }[]
-    texts: { voName: string; maxKey: string }[]
+    texts: { voName: string; maxKey: string; minKey: string | null; required: boolean; noInner: boolean; email: boolean }[]
     exacts: { voName: string; lengthKey: string }[]
     arrays: { voName: string }[]
     booleans: { voName: string }[]
@@ -141,12 +141,24 @@ function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestB
       })),
     texts: owned
       .filter(c => c.field.type === 'string' && voOf(c).lengthRule === 'max' && !voOf(c).values?.length)
-      .map(c => ({ voName: c.voName, maxKey: key(c) })),
+      .map(c => {
+        const vo = voOf(c)
+        return {
+          voName: c.voName,
+          maxKey: key(c),
+          // el test de longitud mínima solo existe si el VO la valida
+          minKey: vo.minLength === true ? key(c) : null,
+          required: vo.ensure === 'string' || vo.minLength === true,
+          noInner: vo.noInnerWhitespace === true,
+          email: vo.email === true
+        }
+      }),
     exacts: owned.filter(c => voOf(c).lengthRule === 'exact').map(c => ({ voName: c.voName, lengthKey: key(c) })),
     arrays: owned.filter(c => c.field.column?.array).map(c => ({ voName: c.voName })),
     booleans: owned.filter(c => c.field.type === 'boolean').map(c => ({ voName: c.voName })),
+    // los VOs de email quedan fuera: su regex rechaza el texto libre que usa este grupo
     sanitizations: owned
-      .filter(c => c.field.type === 'string' && !voOf(c).values?.length)
+      .filter(c => c.field.type === 'string' && !voOf(c).values?.length && voOf(c).email !== true)
       .map(c => ({ voName: c.voName, inner: voOf(c).noInnerWhitespace === true }))
   }
 }

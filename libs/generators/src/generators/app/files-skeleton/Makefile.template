@@ -1,4 +1,4 @@
-.PHONY: help up down test-up test-down seed api web typecheck local-setup
+.PHONY: help up down test-up test-down seed api web test typecheck local-setup
 
 help:
 	@grep -E '^[a-zA-Z-]+:' Makefile | sed 's/:.*//'
@@ -23,6 +23,9 @@ api:
 
 web:
 	npm run web
+
+test:
+	npm test
 
 typecheck:
 	npm run typecheck

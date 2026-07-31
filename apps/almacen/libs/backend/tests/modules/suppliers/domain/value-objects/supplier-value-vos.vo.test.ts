@@ -32,9 +32,6 @@ describe('LeadTimeDays', () => {
 })
 
 describe.each([
-  { name: 'SupplierName', Vo: SupplierName, max: SUPPLIER_CONSTRAINTS.NAME.MAX },
-  { name: 'SupplierTaxId', Vo: SupplierTaxId, max: SUPPLIER_CONSTRAINTS.TAX_ID.MAX },
-  { name: 'SupplierEmail', Vo: SupplierEmail, max: SUPPLIER_CONSTRAINTS.EMAIL.MAX },
   { name: 'SupplierPhone', Vo: SupplierPhone, max: SUPPLIER_CONSTRAINTS.PHONE.MAX },
   { name: 'SupplierCity', Vo: SupplierCity, max: SUPPLIER_CONSTRAINTS.CITY.MAX }
 ])('$name (optional text)', ({ Vo, max }) => {
@@ -63,6 +60,102 @@ describe.each([
   })
 })
 
+describe('SupplierName (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => SupplierName.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => SupplierName.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => SupplierName.create('x'.repeat(SUPPLIER_CONSTRAINTS.NAME.MAX + 1))).toThrow(SupplierError)
+  })
+
+  it('should throw for an empty or whitespace-only string', () => {
+    expect(() => SupplierName.create('')).toThrow()
+    expect(() => SupplierName.create('   ')).toThrow()
+  })
+
+  it('should throw for strings shorter than the min', () => {
+    expect(() => SupplierName.create('a'.repeat(SUPPLIER_CONSTRAINTS.NAME.MIN - 1))).toThrow()
+  })
+
+  it('should accept and preserve valid values', () => {
+    const min = SUPPLIER_CONSTRAINTS.NAME.MIN
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: SUPPLIER_CONSTRAINTS.NAME.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(SupplierName.create(value).value).toBe(value)
+      }),
+      { numRuns: 100 }
+    )
+  })
+})
+
+describe('SupplierTaxId (constrained text)', () => {
+  it('should throw for null/undefined', () => {
+    expect(() => SupplierTaxId.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    expect(() => SupplierTaxId.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => SupplierTaxId.create('x'.repeat(SUPPLIER_CONSTRAINTS.TAX_ID.MAX + 1))).toThrow(SupplierError)
+  })
+
+  it('should throw for inner whitespace', () => {
+    const min = 1
+    expect(() => SupplierTaxId.create(`${'a'.repeat(min)} ${'b'.repeat(min)}`)).toThrow()
+  })
+
+  it('should accept and preserve valid values', () => {
+    const min = 1
+    // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+    const alphanum = fc
+      .array(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+        minLength: min,
+        maxLength: SUPPLIER_CONSTRAINTS.TAX_ID.MAX
+      })
+      .map(chars => chars.join(''))
+    fc.assert(
+      fc.property(alphanum, value => {
+        expect(SupplierTaxId.create(value).value).toBe(value)
+      }),
+      { numRuns: 100 }
+    )
+  })
+})
+
+describe('SupplierEmail (email)', () => {
+  it('should accept an empty string (optional field)', () => {
+    expect(SupplierEmail.create('').value).toBe('')
+  })
+
+  it('should throw for a non-email string', () => {
+    expect(() => SupplierEmail.create('not-an-email')).toThrow(SupplierError)
+  })
+
+  it('should throw when longer than the max', () => {
+    expect(() => SupplierEmail.create(`${'a'.repeat(SUPPLIER_CONSTRAINTS.EMAIL.MAX)}@mail.com`)).toThrow(SupplierError)
+  })
+
+  it('should accept and preserve valid emails', () => {
+    fc.assert(
+      fc.property(
+        fc.emailAddress().filter(v => v.length <= SUPPLIER_CONSTRAINTS.EMAIL.MAX),
+        value => {
+          expect(SupplierEmail.create(value).value).toBe(value)
+        }
+      ),
+      { numRuns: 50 }
+    )
+  })
+})
+
 describe('SupplierName — sanitization', () => {
   it('should trim edges and keep inner whitespace (free text)', () => {
     expect(SupplierName.create('  Sample text  ').value).toBe('Sample text')
@@ -76,12 +169,6 @@ describe('SupplierTaxId — sanitization', () => {
 
   it('should throw for inner whitespace (code field)', () => {
     expect(() => SupplierTaxId.create('12 345')).toThrow(InvalidArgumentError)
-  })
-})
-
-describe('SupplierEmail — sanitization', () => {
-  it('should trim edges and keep inner whitespace (free text)', () => {
-    expect(SupplierEmail.create('  Sample text  ').value).toBe('Sample text')
   })
 })
 
