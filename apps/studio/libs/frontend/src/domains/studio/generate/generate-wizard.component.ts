@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
 import { FormsModule } from '@angular/forms'
+import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
 import { AppStore } from '../editor/app-store'
 import {
@@ -89,6 +91,23 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             }
           </div>
 
+          <details class="mb-3">
+            <summary class="text-muted-foreground cursor-pointer text-xs">Avanzado</summary>
+            <div class="mt-2 space-y-2">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" [(ngModel)]="install" name="install" data-testid="wizard-install" />
+                Instalar dependencias al generar (npm install + Spartan)
+              </label>
+              <input
+                class="border-input w-full rounded-md border px-3 py-2 text-sm"
+                name="directory"
+                [(ngModel)]="directory"
+                placeholder="Directorio destino (por defecto apps/<nombre>)"
+                data-testid="wizard-directory"
+              />
+            </div>
+          </details>
+
           @if (command(); as cmd) {
             <div class="bg-muted mb-4 rounded-md p-3">
               <p class="text-muted-foreground mb-1 text-xs">
@@ -118,14 +137,30 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             </button>
             <button
               type="button"
-              class="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm disabled:opacity-50"
+              class="border-input hover:bg-accent rounded-md border px-3 py-2 text-sm disabled:opacity-50"
               [disabled]="!valid()"
               data-testid="wizard-download"
               (click)="download()"
             >
               Descargar schema
             </button>
+            <button
+              type="button"
+              class="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm disabled:opacity-50"
+              [disabled]="!valid() || generating()"
+              data-testid="wizard-generate"
+              (click)="generateHere()"
+            >
+              {{ generating() ? 'Generando…' : 'Generar aquí' }}
+            </button>
           </div>
+
+          @if (generateOutput(); as out) {
+            <pre
+              class="bg-muted mt-4 max-h-48 overflow-auto rounded-md p-3 text-xs"
+              [attr.data-testid]="generateOk() ? 'generate-ok' : 'generate-error'"
+            >{{ out }}</pre>
+          }
         </div>
       </div>
     }
@@ -133,6 +168,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 })
 export class GenerateWizardComponent {
   private readonly store = inject(AppStore)
+  private readonly http = inject(HttpClient)
 
   protected readonly uiOptions = UI_OPTIONS
   protected readonly databaseOptions = DATABASE_OPTIONS
@@ -144,6 +180,11 @@ export class GenerateWizardComponent {
   protected readonly database = signal<WizardOptions['database']>('postgres')
   protected readonly plugins = signal<string[]>([])
   protected readonly copied = signal(false)
+  protected readonly install = signal(true)
+  protected readonly directory = signal('')
+  protected readonly generating = signal(false)
+  protected readonly generateOutput = signal<string | null>(null)
+  protected readonly generateOk = signal(false)
 
   protected readonly valid = computed(() => KEBAB.test(this.name()))
   protected readonly command = computed(() =>
@@ -159,6 +200,36 @@ export class GenerateWizardComponent {
   protected download(): void {
     const file = buildAppFile(this.store.definition(), this.name())
     downloadBlob(new Blob([file.content], { type: 'application/json' }), file.filename)
+  }
+
+  /** Fase F (opción 1): el backend LOCAL ejecuta el generador — sin terminal. */
+  protected async generateHere(): Promise<void> {
+    this.generating.set(true)
+    this.generateOutput.set(null)
+    try {
+      const result = await firstValueFrom(
+        this.http.post<{ ok: boolean; output: string; root: string }>('/api/v1/studio/generate', {
+          name: this.name(),
+          ui: this.ui(),
+          database: this.database(),
+          plugins: this.plugins(),
+          schema: this.store.definition(),
+          skipInstall: !this.install(),
+          ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
+        })
+      )
+      this.generateOk.set(result.ok)
+      this.generateOutput.set(result.ok ? `✅ Generada en ${result.root}\n\n${result.output}` : result.output)
+    } catch (e) {
+      this.generateOk.set(false)
+      const detail =
+        typeof e === 'object' && e !== null && 'error' in e
+          ? ((e as { error?: { message?: string } }).error?.message ?? 'backend local no disponible')
+          : String(e)
+      this.generateOutput.set(`✗ ${detail}\nSi el backend no está arrancado: npm run studio:api (o usa descarga + comando).`)
+    } finally {
+      this.generating.set(false)
+    }
   }
 
   protected async copyCommand(): Promise<void> {
