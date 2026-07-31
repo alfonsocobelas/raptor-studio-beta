@@ -5,6 +5,7 @@ import { AppStore } from '../editor/app-store'
 import { addKpiWidget, addResourcePage, movePage, paletteOf, removePage } from '../editor/app-mutations'
 import { PagePreviewComponent } from './page-preview.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
+import { GenerateWizardComponent } from '../generate/generate-wizard.component'
 
 /**
  * Lienzo del editor (fase C): nav reordenable por drag&drop, borrado por hover,
@@ -14,7 +15,7 @@ import { ChatPanelComponent } from '../chat/chat-panel.component'
 @Component({
   selector: 'studio-preview',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PagePreviewComponent, ChatPanelComponent, CdkDropList, CdkDrag],
+  imports: [PagePreviewComponent, ChatPanelComponent, GenerateWizardComponent, CdkDropList, CdkDrag],
   template: `
     <div class="flex h-full gap-6">
       <aside class="w-56 shrink-0 border-r pr-4">
@@ -56,14 +57,17 @@ import { ChatPanelComponent } from '../chat/chat-panel.component'
             <h1 class="text-lg font-semibold">{{ selectedPage().label }}</h1>
             <p class="text-muted-foreground text-sm">Cada cambio muta el app-schema; el lienzo se re-deriva</p>
           </div>
-          <button
-            type="button"
-            class="border-input hover:bg-accent rounded-md border px-3 py-1.5 text-sm"
-            data-testid="toggle-schema"
-            (click)="showSchema.set(!showSchema())"
-          >
-            {{ showSchema() ? 'Ocultar schema' : 'Ver schema' }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="border-input hover:bg-accent rounded-md border px-3 py-1.5 text-sm"
+              data-testid="toggle-schema"
+              (click)="showSchema.set(!showSchema())"
+            >
+              {{ showSchema() ? 'Ocultar schema' : 'Ver schema' }}
+            </button>
+            <studio-generate-wizard />
+          </div>
         </header>
         @if (showSchema()) {
           <pre
