@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
-import { DataTable, type ColumnDef } from '../../../shared/components/data-table'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { CanvasTableComponent } from './canvas-table.component'
 import { DesignStore } from './design-store'
-import { buildSampleRows, mockTotal } from './mock-data'
-
-const PAGE_SIZE = 10
+import { mockTotal } from './mock-data'
 
 /**
  * Una página del diseño pintada como en la app real: cabecera con título,
@@ -14,7 +12,7 @@ const PAGE_SIZE = 10
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DataTable, KpiCardComponent],
+  imports: [KpiCardComponent, CanvasTableComponent],
   template: `
     @if (page(); as current) {
       @if (current.kind === 'dashboard') {
@@ -55,18 +53,8 @@ const PAGE_SIZE = 10
                 + {{ v.gender === 'f' ? 'Nueva' : 'Nuevo' }} {{ v.labelSingular.toLowerCase() }}
               </button>
             </header>
-            <!-- keyed: fuerza recrear el DataTable al cambiar de entidad (mantiene
-                 estado interno de columnas visibles por instancia) -->
-            @for (key of [current.resource]; track key) {
-              <app-data-table
-                [serverSide]="true"
-                [columns]="v.columns"
-                [data]="v.rows"
-                [total]="v.total"
-                [page]="1"
-                [pageSize]="pageSize"
-              />
-            }
+            <!-- tabla editable: mismo aspecto que la emitida, cabeceras con ✎/✕ -->
+            <studio-canvas-table [resource]="current.resource" />
             <button
               type="button"
               class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
@@ -119,7 +107,6 @@ export class CanvasPageComponent {
   readonly select = output<string>()
 
   protected readonly store = inject(DesignStore)
-  protected readonly pageSize = PAGE_SIZE
 
   protected readonly page = computed(() => this.store.composition().pages[this.pageIndex()])
 
@@ -147,21 +134,11 @@ export class CanvasPageComponent {
     const draft = this.store.resources().find(r => r.name === page.resource)
     const model = this.store.registry()[page.resource]
     if (!draft || !model) return null
-    const modelIndex = this.store.composition().models.findIndex(m => m.name === page.resource)
-    const columns: ColumnDef[] = draft.fields.map(f => ({
-      key: f.name,
-      label: f.label,
-      minWidth: 120,
-      ...(f.type === 'number' || f.type === 'integer' ? { type: 'number' as const } : {})
-    }))
     return {
       labelSingular: draft.labelSingular,
       labelPlural: draft.labelPlural,
       gender: draft.gender,
-      attachments: draft.attachments ?? false,
-      columns,
-      rows: buildSampleRows(draft, PAGE_SIZE),
-      total: mockTotal(modelIndex)
+      attachments: draft.attachments ?? false
     }
   })
 
