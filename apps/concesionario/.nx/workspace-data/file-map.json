@@ -1,0 +1,2023 @@
+{
+  "version": "6.0",
+  "nxVersion": "22.7.8",
+  "pathMappings": {
+    "@app/shared/domain": [
+      "libs/shared/domain/src/index.ts"
+    ],
+    "@app/backend/*": [
+      "libs/backend/src/*"
+    ],
+    "@app/frontend/*": [
+      "libs/frontend/src/*"
+    ],
+    "@spartan-ng/helm/alert-dialog": [
+      "./libs/ui/alert-dialog/src/index.ts"
+    ],
+    "@spartan-ng/helm/utils": [
+      "./libs/ui/utils/src/index.ts"
+    ],
+    "@spartan-ng/helm/button": [
+      "./libs/ui/button/src/index.ts"
+    ]
+  },
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "nonProjectFiles": [
+      {
+        "file": ".npmrc",
+        "hash": "18085261541358865259"
+      },
+      {
+        "file": ".postcssrc.json",
+        "hash": "1757434806578486340"
+      },
+      {
+        "file": ".prettierignore",
+        "hash": "5407418692668764289"
+      },
+      {
+        "file": ".prettierrc",
+        "hash": "16267754514737964994"
+      },
+      {
+        "file": "Makefile",
+        "hash": "16007280931958455669"
+      },
+      {
+        "file": "README.md",
+        "hash": "2338099931585179138"
+      },
+      {
+        "file": "angular.json",
+        "hash": "8075638523988174611"
+      },
+      {
+        "file": "apps/backend-api/Dockerfile",
+        "hash": "13736277137840382508"
+      },
+      {
+        "file": "apps/backend-api/src/main.ts",
+        "hash": "15314921204390474940"
+      },
+      {
+        "file": "components.json",
+        "hash": "7029336101824501887"
+      },
+      {
+        "file": "docker/docker-compose.local.yml",
+        "hash": "8112190649146675697"
+      },
+      {
+        "file": "docker/docker-compose.test.yml",
+        "hash": "14490335662256152116"
+      },
+      {
+        "file": "eslint.config.mjs",
+        "hash": "9002143704707986394"
+      },
+      {
+        "file": "jest.config.js",
+        "hash": "1907429012343846454"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/config/search-client-config.ts",
+        "hash": "13281729379395712936"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/dtos/get-client-input.dto.ts",
+        "hash": "10852763819304710876"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/dtos/register-client-input.dto.ts",
+        "hash": "14435208302499976378"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/dtos/remove-client-input.dto.ts",
+        "hash": "16564125203506786269"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/dtos/update-client-input.dto.ts",
+        "hash": "6295018704703885679"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/export-clients.handler.ts",
+        "hash": "5041336346177749282"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/get-client.handler.ts",
+        "hash": "10965056344226320698"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/register-client.handler.ts",
+        "hash": "6936549438063751057"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/remove-client.handler.ts",
+        "hash": "10229195528174593399"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/search-clients.handler.ts",
+        "hash": "664787128778659203"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/handlers/update-client.handler.ts",
+        "hash": "3669845868008131730"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/export-clients-usecase.service.ts",
+        "hash": "16737098442785761713"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/get-client-usecase.service.ts",
+        "hash": "17692134778828433149"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/register-client-usecase.service.ts",
+        "hash": "16911392454263565738"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/remove-client-usecase.service.ts",
+        "hash": "16473183865282784705"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/search-clients-usecase.service.ts",
+        "hash": "15199478901499510363"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/application/use-cases/update-client-usecase.service.ts",
+        "hash": "17954187122032817328"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/clients.module.ts",
+        "hash": "4007720706168550355"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/client-constants.ts",
+        "hash": "5907861409578396713"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/client-errors.ts",
+        "hash": "12482994977398679880"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/client-repository.ts",
+        "hash": "18025270695025984573"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/client-types.ts",
+        "hash": "15591048812842643747"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/client.ts",
+        "hash": "4112582592571934518"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/specifications/client-with-id.specification.ts",
+        "hash": "12356155015430381456"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/specifications/client-with-tax-id.specification.ts",
+        "hash": "451471627765222697"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-address.vo.ts",
+        "hash": "16305058121022268185"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-city.vo.ts",
+        "hash": "7177862919733742344"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-email.vo.ts",
+        "hash": "15065622110937387683"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-name.vo.ts",
+        "hash": "12266056586657932744"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-notes.vo.ts",
+        "hash": "9473795470240721020"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-phone.vo.ts",
+        "hash": "9450882553310435804"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-tax-id.vo.ts",
+        "hash": "17492357618545224793"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/domain/value-objects/client-type.vo.ts",
+        "hash": "3548681748134505064"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/entrypoints/clients-export-columns.ts",
+        "hash": "5534113648282989615"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/entrypoints/clients.controller.ts",
+        "hash": "1435276608048284783"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/entrypoints/dtos/export-clients-query.dto.ts",
+        "hash": "3818692641628307630"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/entrypoints/dtos/register-client.dto.ts",
+        "hash": "8713202203692625513"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/entrypoints/dtos/update-client.dto.ts",
+        "hash": "13537834652155882481"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/persistence/typeorm/client.mapper.ts",
+        "hash": "16009296074149271596"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/persistence/typeorm/typeorm-client.entity.ts",
+        "hash": "11630151276356836502"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/persistence/typeorm/typeorm-client.repository.ts",
+        "hash": "3258767986534264263"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/seed/local-seed.fixtures.ts",
+        "hash": "16901068502526974570"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/seed/local-seed.ts",
+        "hash": "4146140844150736101"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/clients/infrastructure/seed/local-seeder.ts",
+        "hash": "5291350846090888026"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/config/search-sale-config.ts",
+        "hash": "14738030751797151040"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/dtos/get-sale-input.dto.ts",
+        "hash": "13712034777728347548"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/dtos/register-sale-input.dto.ts",
+        "hash": "2871361125404401453"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/dtos/remove-sale-input.dto.ts",
+        "hash": "10056185119589736522"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/dtos/update-sale-input.dto.ts",
+        "hash": "1025884488284189142"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/export-sales.handler.ts",
+        "hash": "11644717188868196726"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/get-sale.handler.ts",
+        "hash": "17705805539605913888"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/register-sale.handler.ts",
+        "hash": "10605345607071566829"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/remove-sale.handler.ts",
+        "hash": "3110254109984555093"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/search-sales.handler.ts",
+        "hash": "15375830520325620767"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/handlers/update-sale.handler.ts",
+        "hash": "17180363947150613364"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/export-sales-usecase.service.ts",
+        "hash": "9739905107071212850"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/get-sale-usecase.service.ts",
+        "hash": "3340447490062170653"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/register-sale-usecase.service.ts",
+        "hash": "2150949484825037657"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/remove-sale-usecase.service.ts",
+        "hash": "14673539259858304059"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/search-sales-usecase.service.ts",
+        "hash": "17321007536818999601"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/application/use-cases/update-sale-usecase.service.ts",
+        "hash": "5832865222023451501"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/sale-constants.ts",
+        "hash": "11336272330196958640"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/sale-errors.ts",
+        "hash": "9765049969110374051"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/sale-repository.ts",
+        "hash": "14432594547681647571"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/sale-types.ts",
+        "hash": "17094533052228046734"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/sale.ts",
+        "hash": "14178299024730247325"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/specifications/sale-with-id.specification.ts",
+        "hash": "6698401235747736404"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/specifications/sale-with-reference.specification.ts",
+        "hash": "5218228371815257241"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/payment-method.vo.ts",
+        "hash": "6259479020799649872"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-amount.vo.ts",
+        "hash": "1751491179371099452"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-client-label.vo.ts",
+        "hash": "11070187605295319394"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-date.vo.ts",
+        "hash": "15911194018752113311"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-discount.vo.ts",
+        "hash": "6414829266640856001"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-reference.vo.ts",
+        "hash": "7081978729124054616"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-status.vo.ts",
+        "hash": "12889795062786641983"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/sale-vehicle-label.vo.ts",
+        "hash": "3729429006808049719"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/domain/value-objects/salesperson.vo.ts",
+        "hash": "2317331492774298913"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/entrypoints/dtos/export-sales-query.dto.ts",
+        "hash": "2798062438088653455"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/entrypoints/dtos/register-sale.dto.ts",
+        "hash": "3080658488789160661"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/entrypoints/dtos/update-sale.dto.ts",
+        "hash": "14556215784457974428"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/entrypoints/sales-export-columns.ts",
+        "hash": "12427988303721734848"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/entrypoints/sales.controller.ts",
+        "hash": "17395664133322184768"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/persistence/typeorm/sale.mapper.ts",
+        "hash": "16900443555260154978"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/persistence/typeorm/typeorm-sale.entity.ts",
+        "hash": "7806588543246811194"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/persistence/typeorm/typeorm-sale.repository.ts",
+        "hash": "3577910233949309841"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/seed/local-seed.fixtures.ts",
+        "hash": "4717358898650132461"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/seed/local-seed.ts",
+        "hash": "10071618562138118758"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/infrastructure/seed/local-seeder.ts",
+        "hash": "13152315419414275084"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/sales/sales.module.ts",
+        "hash": "14622107003362704501"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/config/search-vehicle-config.ts",
+        "hash": "641432157271406073"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/dtos/get-vehicle-input.dto.ts",
+        "hash": "10388332480684334013"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/dtos/register-vehicle-input.dto.ts",
+        "hash": "913058144583849372"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/dtos/remove-vehicle-input.dto.ts",
+        "hash": "17908632704484599631"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/dtos/update-vehicle-input.dto.ts",
+        "hash": "4560022877926346208"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/export-vehicles.handler.ts",
+        "hash": "9833428325984589360"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/get-vehicle.handler.ts",
+        "hash": "5046492105122978837"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/register-vehicle.handler.ts",
+        "hash": "113486532770651251"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/remove-vehicle.handler.ts",
+        "hash": "10928138016759534238"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/search-vehicles.handler.ts",
+        "hash": "15955156223896360059"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/handlers/update-vehicle.handler.ts",
+        "hash": "15983934314236915749"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/export-vehicles-usecase.service.ts",
+        "hash": "4755013505523644113"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/get-vehicle-usecase.service.ts",
+        "hash": "388840034523490029"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/register-vehicle-usecase.service.ts",
+        "hash": "18419256523520924793"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/remove-vehicle-usecase.service.ts",
+        "hash": "3272631282884392545"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/search-vehicles-usecase.service.ts",
+        "hash": "17887983756904145520"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/application/use-cases/update-vehicle-usecase.service.ts",
+        "hash": "13250621691445658882"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/specifications/vehicle-with-id.specification.ts",
+        "hash": "17869891723047426904"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/specifications/vehicle-with-plate.specification.ts",
+        "hash": "10347580616070850862"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/specifications/vehicle-with-vin.specification.ts",
+        "hash": "14895680161728260159"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/fuel-type.vo.ts",
+        "hash": "8922714528444130453"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/mileage.vo.ts",
+        "hash": "8002327003383670929"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/plate.vo.ts",
+        "hash": "13570131558770313944"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/price.vo.ts",
+        "hash": "9508709573005556480"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-brand.vo.ts",
+        "hash": "14112950358589815834"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-color.vo.ts",
+        "hash": "8377759975715745648"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-model.vo.ts",
+        "hash": "13313283484720622878"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-notes.vo.ts",
+        "hash": "9342023809621068066"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-status.vo.ts",
+        "hash": "6739496624034157933"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-version.vo.ts",
+        "hash": "12353330228669427575"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vehicle-year.vo.ts",
+        "hash": "1913501032075131153"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/value-objects/vin.vo.ts",
+        "hash": "16140292373557808564"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/vehicle-constants.ts",
+        "hash": "8765151621507086218"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/vehicle-errors.ts",
+        "hash": "6920710960518433263"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/vehicle-repository.ts",
+        "hash": "14894058787913083951"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/vehicle-types.ts",
+        "hash": "15728417396903190019"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/domain/vehicle.ts",
+        "hash": "18333295162001563420"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/entrypoints/dtos/export-vehicles-query.dto.ts",
+        "hash": "7924965089162185598"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/entrypoints/dtos/register-vehicle.dto.ts",
+        "hash": "12492073006580129259"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/entrypoints/dtos/update-vehicle.dto.ts",
+        "hash": "11520900321925927653"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/entrypoints/vehicles-export-columns.ts",
+        "hash": "11046302853433566417"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/entrypoints/vehicles.controller.ts",
+        "hash": "4169555273860210959"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/persistence/typeorm/typeorm-vehicle.entity.ts",
+        "hash": "1765171538617270538"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/persistence/typeorm/typeorm-vehicle.repository.ts",
+        "hash": "16959208565589720684"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/persistence/typeorm/vehicle.mapper.ts",
+        "hash": "1506169422605701463"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/seed/local-seed.fixtures.ts",
+        "hash": "15569333564466725492"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/seed/local-seed.ts",
+        "hash": "16860875755879761993"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/infrastructure/seed/local-seeder.ts",
+        "hash": "14494477091672018622"
+      },
+      {
+        "file": "libs/backend/src/contexts/dealership/modules/vehicles/vehicles.module.ts",
+        "hash": "7483446519542399600"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/config/search-users-config.ts",
+        "hash": "10647253177786822971"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/accept-invitation-input.dto.ts",
+        "hash": "15747280637435501029"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/authenticated-user.ts",
+        "hash": "11742913343671351845"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/change-user-role-input.dto.ts",
+        "hash": "8968893409379215657"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/disable-user-input.dto.ts",
+        "hash": "3098496662308294377"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/forgot-password-input.dto.ts",
+        "hash": "1092034993559714052"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/invite-user-input.dto.ts",
+        "hash": "6533525696675996206"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/login-input.dto.ts",
+        "hash": "11610540600816815557"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/logout-input.dto.ts",
+        "hash": "8281554996909288441"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/reactivate-user-input.dto.ts",
+        "hash": "16917620437582614543"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/reset-password-input.dto.ts",
+        "hash": "17812599795934454107"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/dtos/resolve-session-input.dto.ts",
+        "hash": "5332598716585279767"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/accept-invitation.handler.ts",
+        "hash": "6816497456426565962"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/change-user-role.handler.ts",
+        "hash": "14510917965079030089"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/disable-user.handler.ts",
+        "hash": "15374128879368327309"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/forgot-password.handler.ts",
+        "hash": "10203624392189148232"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/invite-user.handler.ts",
+        "hash": "3670821814736437332"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/login.handler.ts",
+        "hash": "5990887823813952647"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/logout.handler.ts",
+        "hash": "14925485307057161327"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/reactivate-user.handler.ts",
+        "hash": "13371592915201612714"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/reset-password.handler.ts",
+        "hash": "16800391755068931408"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/handlers/search-users.handler.ts",
+        "hash": "15201416479924040320"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/ports/auth-config.ts",
+        "hash": "11480763812405919602"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/ports/clock.ts",
+        "hash": "18034822464905091431"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/ports/email-sender.ts",
+        "hash": "1466574163639663655"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/ports/password-hasher.ts",
+        "hash": "8678705194067312565"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/ports/secure-token-generator.ts",
+        "hash": "16701608883064895562"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/accept-invitation-usecase.service.ts",
+        "hash": "8472288163308350809"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/change-user-role-usecase.service.ts",
+        "hash": "3456064116270451421"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/disable-user-usecase.service.ts",
+        "hash": "5357873189540887760"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/invite-user-usecase.service.ts",
+        "hash": "7509403656901637259"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/login-usecase.service.ts",
+        "hash": "1835755357003040594"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/logout-usecase.service.ts",
+        "hash": "7161178851225683364"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/reactivate-user-usecase.service.ts",
+        "hash": "4085412839544898196"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/request-password-reset-usecase.service.ts",
+        "hash": "1103186904901636394"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/reset-password-usecase.service.ts",
+        "hash": "12243180549281965502"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/resolve-session-usecase.service.ts",
+        "hash": "15277242991368547769"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/application/use-cases/search-users-usecase.service.ts",
+        "hash": "3624375671818904559"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/auth.module.ts",
+        "hash": "16089443239196309687"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/auth-constants.ts",
+        "hash": "3877659220449282625"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/auth-errors.ts",
+        "hash": "12595848425519899288"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/auth-token-repository.ts",
+        "hash": "16313209541248345891"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/auth-token.ts",
+        "hash": "276837222525396436"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/auth-types.ts",
+        "hash": "7761666521640066842"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/session-repository.ts",
+        "hash": "4005673832463383198"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/session.ts",
+        "hash": "9153935471671730828"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/user-repository.ts",
+        "hash": "7013530137855898313"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/user.ts",
+        "hash": "12624809918449576185"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/auth-token-hash.vo.ts",
+        "hash": "3203404748083350708"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/auth-token-type.vo.ts",
+        "hash": "16254988723822378660"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/email.vo.ts",
+        "hash": "5889005946916559143"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/password-hash.vo.ts",
+        "hash": "12869309530378389554"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/plain-password.vo.ts",
+        "hash": "3340080852001998548"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/session-token-hash.vo.ts",
+        "hash": "6672514917376962409"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/user-name.vo.ts",
+        "hash": "2757712547561415828"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/user-role.vo.ts",
+        "hash": "7466121194430757860"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/domain/value-objects/user-status.vo.ts",
+        "hash": "2864967265742179707"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/acs-email-sender.ts",
+        "hash": "9826946492979892989"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/argon2-password-hasher.ts",
+        "hash": "4049540387071188208"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/brevo-email-sender.ts",
+        "hash": "259574443868363496"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/config-auth-config.ts",
+        "hash": "4101791270480231214"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/crypto-secure-token-generator.ts",
+        "hash": "8487554094007633339"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/email-sender.factory.ts",
+        "hash": "5580305299917132646"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/email-templates.ts",
+        "hash": "5998859936966316673"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/log-email-sender.ts",
+        "hash": "3422930749201450309"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/ses-email-sender.ts",
+        "hash": "12503865378661273874"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/smtp-email-sender.ts",
+        "hash": "11555085721979736339"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/adapters/system-clock.ts",
+        "hash": "12434183436336666020"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/auth.constants.ts",
+        "hash": "12401153293410219478"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/entrypoints/auth.controller.ts",
+        "hash": "6228175185950850483"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/entrypoints/dtos/auth-request.dtos.ts",
+        "hash": "2881329385056633738"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/entrypoints/dtos/users-request.dtos.ts",
+        "hash": "1970590549092654295"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/entrypoints/users.controller.ts",
+        "hash": "1203931249614488977"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/guards/roles.guard.ts",
+        "hash": "13616726868083754723"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/guards/session.guard.ts",
+        "hash": "17591208331221549087"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/auth-token.mapper.ts",
+        "hash": "3226307852733798661"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/session.mapper.ts",
+        "hash": "2515912270907679092"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-auth-token.entity.ts",
+        "hash": "14110301451962965231"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-auth-token.repository.ts",
+        "hash": "5674722370623555498"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-session.entity.ts",
+        "hash": "831519928560182343"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-session.repository.ts",
+        "hash": "1397421166106013651"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-user.entity.ts",
+        "hash": "14164738153292069968"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-user.repository.ts",
+        "hash": "2973617019805663855"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/user.mapper.ts",
+        "hash": "14704631137195684425"
+      },
+      {
+        "file": "libs/backend/src/contexts/iam/modules/auth/infrastructure/seed/local-seed.ts",
+        "hash": "13045884762450238437"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/application/dtos/search-output.dto.ts",
+        "hash": "5894566533742219420"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/application/paginate-with-cursor.ts",
+        "hash": "10830571232945519987"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/aggregate-root.ts",
+        "hash": "963773981116408844"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/enums.ts",
+        "hash": "415987133154877434"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/errors.ts",
+        "hash": "950501126707150556"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/logger/logger-enums.ts",
+        "hash": "9809157124351445645"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/logger/logger-sanitizer.ts",
+        "hash": "11449502566340425944"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/logger/logger.ts",
+        "hash": "5256397073216784737"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/persistence/transaction-manager.ts",
+        "hash": "6815584621608759997"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/criteria-validator.ts",
+        "hash": "15592584561370095548"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/criteria.ts",
+        "hash": "18202414696500627089"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/cursor.ts",
+        "hash": "13737815852825892385"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/filter-field.ts",
+        "hash": "7026225160247254518"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/filter-operator.ts",
+        "hash": "10851400434748945169"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/filter-value.ts",
+        "hash": "11180344778405710469"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/filter.ts",
+        "hash": "11129806251958441654"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/filters.ts",
+        "hash": "8779625104411950372"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/global-search.ts",
+        "hash": "4366790676263074620"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/order-by.ts",
+        "hash": "8597878690085253519"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/order-type.ts",
+        "hash": "3038796751405037487"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/order.ts",
+        "hash": "7701897178063652841"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/query/orders.ts",
+        "hash": "4514394857063802042"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/storage/file-storage.port.ts",
+        "hash": "11227182509841466608"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/types.ts",
+        "hash": "13578588631645188077"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/boolean-value-object.ts",
+        "hash": "3442333227780434694"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/clients/client-id.vo.ts",
+        "hash": "12804759981295022528"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/date-value-object.ts",
+        "hash": "8061220403912826467"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/enum-value-object.ts",
+        "hash": "5372702255826179517"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/iam/auth-token-id.vo.ts",
+        "hash": "14459999662247107555"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/iam/session-id.vo.ts",
+        "hash": "2871515509266965692"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/iam/user-id.vo.ts",
+        "hash": "9547054830149113545"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/integer-value-object.ts",
+        "hash": "524852124522563013"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/number-value-object.ts",
+        "hash": "15145023922444872880"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/qbr/qbr-activity-id.vo.ts",
+        "hash": "4506845579272280028"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/qbr/qbr-declaration-id.vo.ts",
+        "hash": "5000178185747827715"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/qbr/qbr-evidence-id.vo.ts",
+        "hash": "2434393849633429258"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/qbr/storage-key.vo.ts",
+        "hash": "17274853535607509204"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/sales/sale-id.vo.ts",
+        "hash": "11271863282855802057"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/spanish-title-case.ts",
+        "hash": "13662729814925752719"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/string-value-object.ts",
+        "hash": "5828970764219755484"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/sync-runs/sync-run-id.vo.ts",
+        "hash": "5674274222765979318"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/uuidv7-value-object.ts",
+        "hash": "3889976028732206186"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/value-object.ts",
+        "hash": "4092256979781322481"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/domain/value-objects/vehicles/vehicle-id.vo.ts",
+        "hash": "15204059245228305600"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/auth/auth-metadata.constants.ts",
+        "hash": "10129717948236210752"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/auth/current-user.decorator.ts",
+        "hash": "2941855452283999654"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/auth/public.decorator.ts",
+        "hash": "13708253823458188961"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/auth/roles.decorator.ts",
+        "hash": "8464061710693697664"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/config-types.ts",
+        "hash": "7041937664494093543"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts",
+        "hash": "10249822658690591410"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/config.module.ts",
+        "hash": "13917322331756037941"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/default.json",
+        "hash": "2861374219283556166"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/dev.json",
+        "hash": "556537905294602045"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/local.json",
+        "hash": "12426283293562900398"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/prod.json",
+        "hash": "1727239263678760686"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/qa.json",
+        "hash": "5234103461763439820"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/environments/test.json",
+        "hash": "2426297010099010047"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/loaders/azure/azure-config-loader.ts",
+        "hash": "10806370910442475978"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/loaders/azure/azure-secret-resolver.ts",
+        "hash": "7508345221838576284"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/config/loaders/config-sources.ts",
+        "hash": "6820509971667910653"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/dtos/paginate-offset.dto.ts",
+        "hash": "4490232448641351205"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/build-export-file.ts",
+        "hash": "4218288368582633213"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/csv-exporter.ts",
+        "hash": "12652575659137910540"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/export-column.ts",
+        "hash": "12265770559030441377"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/export-limit.ts",
+        "hash": "10103233905310842084"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/index.ts",
+        "hash": "7844889531954098351"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/export/xlsx-exporter.ts",
+        "hash": "10022509111564237723"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/filters/global-exception.filter.ts",
+        "hash": "15073790439923647151"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/health/health.controller.ts",
+        "hash": "9645042529416251132"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/health/health.module.ts",
+        "hash": "2873804881257174825"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/http/setup-app.ts",
+        "hash": "881679179533343711"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/interceptors/logger.interceptor.ts",
+        "hash": "14490747234136114053"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/logger/azure/azure-logger.service.ts",
+        "hash": "5185096281614777073"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/logger/logger.module.ts",
+        "hash": "2748835074571809507"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/1790000000000-InitialSchema.ts",
+        "hash": "5774988863208146446"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/1790000001000-CreateIamAuth.ts",
+        "hash": "17828628567150435085"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module.ts",
+        "hash": "5195129402868390786"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/snake-naming.strategy.ts",
+        "hash": "1949179106085391347"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-criteria-converter.ts",
+        "hash": "405783025445078817"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
+        "hash": "3212439429999304929"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-transaction-context.ts",
+        "hash": "2725230891727864093"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-transaction-manager.ts",
+        "hash": "3382434650879990775"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm.repository.ts",
+        "hash": "10007597450565903293"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/pipes/parse-criteria.pipe.ts",
+        "hash": "15994389948166443029"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/pipes/parse-uuid-v7.pipe.ts",
+        "hash": "10228825776620179730"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/storage/azure-blob-file-storage.ts",
+        "hash": "6367705423590246019"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/telemetry/init-telemetry.ts",
+        "hash": "2287791049514534041"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/infrastructure/telemetry/instrument.ts",
+        "hash": "14916070627378296810"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/utils/error-message.ts",
+        "hash": "11470976595755078445"
+      },
+      {
+        "file": "libs/backend/src/contexts/shared/utils/pagination.ts",
+        "hash": "1928270259297246294"
+      },
+      {
+        "file": "libs/backend/src/root.module.ts",
+        "hash": "8954150382972842328"
+      },
+      {
+        "file": "libs/backend/src/seed.ts",
+        "hash": "8522149455947004341"
+      },
+      {
+        "file": "libs/backend/tests/modules/clients/domain/mothers/client.builder.ts",
+        "hash": "1453341894102850535"
+      },
+      {
+        "file": "libs/backend/tests/modules/clients/domain/mothers/client.mother.ts",
+        "hash": "14505055169093502566"
+      },
+      {
+        "file": "libs/backend/tests/modules/clients/domain/value-objects/client-enum-vos.vo.test.ts",
+        "hash": "6425259328141182630"
+      },
+      {
+        "file": "libs/backend/tests/modules/clients/domain/value-objects/client-value-vos.vo.test.ts",
+        "hash": "13078402407643938365"
+      },
+      {
+        "file": "libs/backend/tests/modules/clients/mocks/client.repository.mock.ts",
+        "hash": "10875302770411130133"
+      },
+      {
+        "file": "libs/backend/tests/modules/sales/domain/mothers/sale.builder.ts",
+        "hash": "13099234443492374826"
+      },
+      {
+        "file": "libs/backend/tests/modules/sales/domain/mothers/sale.mother.ts",
+        "hash": "1485053637720130967"
+      },
+      {
+        "file": "libs/backend/tests/modules/sales/domain/value-objects/sale-enum-vos.vo.test.ts",
+        "hash": "18229843054437732010"
+      },
+      {
+        "file": "libs/backend/tests/modules/sales/domain/value-objects/sale-value-vos.vo.test.ts",
+        "hash": "13247655307605849165"
+      },
+      {
+        "file": "libs/backend/tests/modules/sales/mocks/sale.repository.mock.ts",
+        "hash": "4286226063141873303"
+      },
+      {
+        "file": "libs/backend/tests/modules/shared/mocks/mock-repository.ts",
+        "hash": "9510725047092826915"
+      },
+      {
+        "file": "libs/backend/tests/modules/vehicles/domain/mothers/vehicle.builder.ts",
+        "hash": "14612215377092165232"
+      },
+      {
+        "file": "libs/backend/tests/modules/vehicles/domain/mothers/vehicle.mother.ts",
+        "hash": "14869938696498311385"
+      },
+      {
+        "file": "libs/backend/tests/modules/vehicles/domain/value-objects/vehicle-enum-vos.vo.test.ts",
+        "hash": "16065636655393113434"
+      },
+      {
+        "file": "libs/backend/tests/modules/vehicles/domain/value-objects/vehicle-value-vos.vo.test.ts",
+        "hash": "8190362664720920795"
+      },
+      {
+        "file": "libs/backend/tests/modules/vehicles/mocks/vehicle.repository.mock.ts",
+        "hash": "7297150072979526368"
+      },
+      {
+        "file": "libs/frontend/src/core/guards/auth.guard.ts",
+        "hash": "5156490958987728021"
+      },
+      {
+        "file": "libs/frontend/src/core/http/api-base-url.interceptor.ts",
+        "hash": "1022762124708922760"
+      },
+      {
+        "file": "libs/frontend/src/core/http/api-base-url.token.ts",
+        "hash": "14102065957727489316"
+      },
+      {
+        "file": "libs/frontend/src/core/http/api.constants.ts",
+        "hash": "3389646256537824131"
+      },
+      {
+        "file": "libs/frontend/src/core/http/auth.interceptor.ts",
+        "hash": "17525753761380546014"
+      },
+      {
+        "file": "libs/frontend/src/core/services/auth.service.ts",
+        "hash": "10920493153064179389"
+      },
+      {
+        "file": "libs/frontend/src/core/services/client.service.spec.ts",
+        "hash": "7705585583988410746"
+      },
+      {
+        "file": "libs/frontend/src/core/services/client.service.ts",
+        "hash": "7924620589857853212"
+      },
+      {
+        "file": "libs/frontend/src/core/services/export-filename.ts",
+        "hash": "16641896659947606890"
+      },
+      {
+        "file": "libs/frontend/src/core/services/mocks/client.mock.ts",
+        "hash": "2408973379708579723"
+      },
+      {
+        "file": "libs/frontend/src/core/services/mocks/sale.mock.ts",
+        "hash": "13750175235737534242"
+      },
+      {
+        "file": "libs/frontend/src/core/services/mocks/vehicle.mock.ts",
+        "hash": "14810884174215338504"
+      },
+      {
+        "file": "libs/frontend/src/core/services/pagination.types.ts",
+        "hash": "13623043622128670592"
+      },
+      {
+        "file": "libs/frontend/src/core/services/sale.service.spec.ts",
+        "hash": "13232825242477900951"
+      },
+      {
+        "file": "libs/frontend/src/core/services/sale.service.ts",
+        "hash": "5085763143644150470"
+      },
+      {
+        "file": "libs/frontend/src/core/services/user.service.ts",
+        "hash": "352477303101788217"
+      },
+      {
+        "file": "libs/frontend/src/core/services/vehicle.service.spec.ts",
+        "hash": "16240778141264655819"
+      },
+      {
+        "file": "libs/frontend/src/core/services/vehicle.service.ts",
+        "hash": "13634896594808897861"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/clients/client-dialog.component.ts",
+        "hash": "1305926799560270614"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/clients/clients-list.component.ts",
+        "hash": "5274952422826589461"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/sales/sale-dialog.component.ts",
+        "hash": "2348087720762594004"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/sales/sales-list.component.ts",
+        "hash": "2049366088747887378"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/vehicles/vehicle-dialog.component.ts",
+        "hash": "10471677233853232286"
+      },
+      {
+        "file": "libs/frontend/src/domains/admin/bounded-contexts/dealership/features/vehicles/vehicles-list.component.ts",
+        "hash": "3632719749970629286"
+      },
+      {
+        "file": "libs/frontend/src/domains/auth/forgot-password.component.ts",
+        "hash": "4360318594603901541"
+      },
+      {
+        "file": "libs/frontend/src/domains/auth/login.component.ts",
+        "hash": "9288084887046076557"
+      },
+      {
+        "file": "libs/frontend/src/domains/auth/reset-password.component.ts",
+        "hash": "2716643344312857562"
+      },
+      {
+        "file": "libs/frontend/src/domains/auth/set-password.component.ts",
+        "hash": "3844699657993159505"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/app-logo.ts",
+        "hash": "7256187372671454701"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/data-table.ts",
+        "hash": "17287506457970924338"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/kpi-card.ts",
+        "hash": "13855092390720556971"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/button.directive.ts",
+        "hash": "4569380440588651178"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/confirm-dialog.ts",
+        "hash": "12156176635428036180"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/dialog-content.ts",
+        "hash": "14819341177487609977"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/dialog.ts",
+        "hash": "17642286159801298826"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/form-field.ts",
+        "hash": "12504396941489710963"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/input.directive.ts",
+        "hash": "1138615369260715731"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/notification.service.ts",
+        "hash": "14918092688286293560"
+      },
+      {
+        "file": "libs/frontend/src/shared/components/ui/select.ts",
+        "hash": "6228443531915688078"
+      },
+      {
+        "file": "libs/frontend/src/shared/utils/download-file.ts",
+        "hash": "9539383108727891144"
+      },
+      {
+        "file": "libs/frontend/src/shared/utils/navigation.ts",
+        "hash": "11905439561692247792"
+      },
+      {
+        "file": "libs/frontend/src/shared/utils/uuid.ts",
+        "hash": "17525064128167513673"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/accept-invitation.dto.ts",
+        "hash": "10942443803169946338"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/auth-enums.ts",
+        "hash": "8333125303061106383"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/change-role.dto.ts",
+        "hash": "9672004445068400956"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/current-user.dto.ts",
+        "hash": "1139937679861766841"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/forgot-password.dto.ts",
+        "hash": "12764016180069473865"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/invite-user.dto.ts",
+        "hash": "5936888491927179140"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/login.dto.ts",
+        "hash": "5960647651728610059"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/reset-password.dto.ts",
+        "hash": "6106914759069508406"
+      },
+      {
+        "file": "libs/shared/domain/src/auth/user.dto.ts",
+        "hash": "5847927755792394083"
+      },
+      {
+        "file": "libs/shared/domain/src/client/client.dto.ts",
+        "hash": "14453931341504677545"
+      },
+      {
+        "file": "libs/shared/domain/src/client/register-client.dto.ts",
+        "hash": "14532132184693147367"
+      },
+      {
+        "file": "libs/shared/domain/src/client/update-client.dto.ts",
+        "hash": "3253540916733917287"
+      },
+      {
+        "file": "libs/shared/domain/src/export/export-format.ts",
+        "hash": "10450210744540809937"
+      },
+      {
+        "file": "libs/shared/domain/src/index.ts",
+        "hash": "1207694514063842296"
+      },
+      {
+        "file": "libs/shared/domain/src/sale/register-sale.dto.ts",
+        "hash": "10789241364728707421"
+      },
+      {
+        "file": "libs/shared/domain/src/sale/sale.dto.ts",
+        "hash": "16811336893987426461"
+      },
+      {
+        "file": "libs/shared/domain/src/sale/update-sale.dto.ts",
+        "hash": "5400702364791808288"
+      },
+      {
+        "file": "libs/shared/domain/src/vehicle/register-vehicle.dto.ts",
+        "hash": "2550321341785773185"
+      },
+      {
+        "file": "libs/shared/domain/src/vehicle/update-vehicle.dto.ts",
+        "hash": "17732853837482213451"
+      },
+      {
+        "file": "libs/shared/domain/src/vehicle/vehicle.dto.ts",
+        "hash": "8879208402603675077"
+      },
+      {
+        "file": "nx.json",
+        "hash": "15346915310279900910"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "17079253268348442130"
+      },
+      {
+        "file": "package.json",
+        "hash": "556427009115863233"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "341872956715647249"
+      },
+      {
+        "file": "tsconfig.json",
+        "hash": "9608568598477457545"
+      }
+    ],
+    "projectFileMap": {
+      "button": [
+        {
+          "file": "libs/ui/button/README.md",
+          "hash": "427777127131774792"
+        },
+        {
+          "file": "libs/ui/button/eslint.config.mjs",
+          "hash": "15322641216897645235",
+          "deps": [
+            "npm:@nx/eslint-plugin",
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
+          ]
+        },
+        {
+          "file": "libs/ui/button/ng-package.json",
+          "hash": "11048894886450900686"
+        },
+        {
+          "file": "libs/ui/button/package.json",
+          "hash": "14359448867537971469",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "libs/ui/button/project.json",
+          "hash": "14497227864262406683"
+        },
+        {
+          "file": "libs/ui/button/src/index.ts",
+          "hash": "5168917203269790378"
+        },
+        {
+          "file": "libs/ui/button/src/lib/hlm-button.token.ts",
+          "hash": "9576183639981922411",
+          "deps": [
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "libs/ui/button/src/lib/hlm-button.ts",
+          "hash": "9967205475844960681",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "utils",
+            "npm:class-variance-authority",
+            "npm:clsx"
+          ]
+        },
+        {
+          "file": "libs/ui/button/tsconfig.json",
+          "hash": "13591125564359673629"
+        },
+        {
+          "file": "libs/ui/button/tsconfig.lib.json",
+          "hash": "8614085375968109344"
+        },
+        {
+          "file": "libs/ui/button/tsconfig.lib.prod.json",
+          "hash": "10809217796916261822"
+        }
+      ],
+      "frontend-app": [
+        {
+          "file": "apps/frontend-app/proxy.conf.json",
+          "hash": "17567628080379185070"
+        },
+        {
+          "file": "apps/frontend-app/src/app.component.ts",
+          "hash": "9169419468896140192",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router",
+            "npm:rxjs"
+          ]
+        },
+        {
+          "file": "apps/frontend-app/src/app.config.ts",
+          "hash": "1368145977981143419",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/frontend-app/src/app.routes.ts",
+          "hash": "7457996498344668700",
+          "deps": [
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "apps/frontend-app/src/index.html",
+          "hash": "3354032232751174571"
+        },
+        {
+          "file": "apps/frontend-app/src/main.ts",
+          "hash": "8250937703844935067",
+          "deps": [
+            "npm:@angular/platform-browser"
+          ]
+        },
+        {
+          "file": "apps/frontend-app/src/nav.ts",
+          "hash": "7362838820042097026"
+        },
+        {
+          "file": "apps/frontend-app/src/styles.css",
+          "hash": "9547494920019804127"
+        },
+        {
+          "file": "apps/frontend-app/tsconfig.app.json",
+          "hash": "15520330139544859330"
+        },
+        {
+          "file": "apps/frontend-app/tsconfig.json",
+          "hash": "1971953284064234732"
+        }
+      ],
+      "utils": [
+        {
+          "file": "libs/ui/utils/README.md",
+          "hash": "7895454965472636336"
+        },
+        {
+          "file": "libs/ui/utils/eslint.config.mjs",
+          "hash": "15322641216897645235",
+          "deps": [
+            "npm:@nx/eslint-plugin",
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
+          ]
+        },
+        {
+          "file": "libs/ui/utils/ng-package.json",
+          "hash": "8873708889896206110"
+        },
+        {
+          "file": "libs/ui/utils/package.json",
+          "hash": "4221834714047339573",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "libs/ui/utils/project.json",
+          "hash": "12370850176616904350"
+        },
+        {
+          "file": "libs/ui/utils/src/index.ts",
+          "hash": "12007391678651720588"
+        },
+        {
+          "file": "libs/ui/utils/src/lib/hlm.ts",
+          "hash": "17766057926556533011",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:clsx",
+            "npm:tailwind-merge"
+          ]
+        },
+        {
+          "file": "libs/ui/utils/src/lib/provide-spartan-hlm.ts",
+          "hash": "8802958615540562867",
+          "deps": [
+            "npm:@angular/cdk",
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "libs/ui/utils/tsconfig.json",
+          "hash": "13591125564359673629"
+        },
+        {
+          "file": "libs/ui/utils/tsconfig.lib.json",
+          "hash": "8614085375968109344"
+        },
+        {
+          "file": "libs/ui/utils/tsconfig.lib.prod.json",
+          "hash": "10809217796916261822"
+        }
+      ],
+      "alert-dialog": [
+        {
+          "file": "libs/ui/alert-dialog/README.md",
+          "hash": "9942561831650628913"
+        },
+        {
+          "file": "libs/ui/alert-dialog/eslint.config.mjs",
+          "hash": "15322641216897645235",
+          "deps": [
+            "npm:@nx/eslint-plugin",
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/ng-package.json",
+          "hash": "16115132533188126138"
+        },
+        {
+          "file": "libs/ui/alert-dialog/package.json",
+          "hash": "15144138744748021575",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/project.json",
+          "hash": "13948850446973541134"
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/index.ts",
+          "hash": "10501625384483100756"
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-action.ts",
+          "hash": "10500488471256661606",
+          "deps": [
+            "npm:@angular/core",
+            "button"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-cancel.ts",
+          "hash": "7031119018884351134",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "button"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-content.ts",
+          "hash": "11682148939919632876",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-description.ts",
+          "hash": "2985068028211542750",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-footer.ts",
+          "hash": "12897621783801067316",
+          "deps": [
+            "npm:@angular/core",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-header.ts",
+          "hash": "2518528867213600594",
+          "deps": [
+            "npm:@angular/core",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-media.ts",
+          "hash": "10893584525240717147",
+          "deps": [
+            "npm:@angular/core",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-overlay.ts",
+          "hash": "16741212235031542866",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "utils",
+            "npm:clsx"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-portal.ts",
+          "hash": "8764404097264377146",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-title.ts",
+          "hash": "5928466763991531376",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain",
+            "utils"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog-trigger.ts",
+          "hash": "18174320529068423712",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/src/lib/hlm-alert-dialog.ts",
+          "hash": "17684089949846462150",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@spartan-ng/brain"
+          ]
+        },
+        {
+          "file": "libs/ui/alert-dialog/tsconfig.json",
+          "hash": "13591125564359673629"
+        },
+        {
+          "file": "libs/ui/alert-dialog/tsconfig.lib.json",
+          "hash": "8614085375968109344"
+        },
+        {
+          "file": "libs/ui/alert-dialog/tsconfig.lib.prod.json",
+          "hash": "10809217796916261822"
+        }
+      ]
+    }
+  },
+  "externalNodesHash": "4640866276187382587"
+}

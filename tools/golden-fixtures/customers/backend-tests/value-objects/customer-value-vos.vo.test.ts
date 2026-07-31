@@ -119,21 +119,25 @@ describe('TaxId (constrained text)', () => {
 
 describe('SapId — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(SapId.create('  12345  ').value).toBe('12345')
+    const sample = '1'.repeat(CUSTOMER_CONSTRAINTS.SAP_ID.MIN)
+    expect(SapId.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => SapId.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '1'.repeat(CUSTOMER_CONSTRAINTS.SAP_ID.MIN)
+    expect(() => SapId.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })
 
 describe('TaxId — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(TaxId.create('  12345  ').value).toBe('12345')
+    const sample = '12345'
+    expect(TaxId.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => TaxId.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '12345'
+    expect(() => TaxId.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })
 

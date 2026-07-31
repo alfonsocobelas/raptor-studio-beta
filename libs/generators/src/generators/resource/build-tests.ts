@@ -23,7 +23,7 @@ export interface DomainTestBindings {
     exacts: { voName: string; lengthKey: string }[]
     arrays: { voName: string }[]
     booleans: { voName: string }[]
-    sanitizations: { voName: string; inner: boolean }[]
+    sanitizations: { voName: string; inner: boolean; minKey: string | null }[]
   }
 }
 
@@ -159,7 +159,7 @@ function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestB
     // los VOs de email quedan fuera: su regex rechaza el texto libre que usa este grupo
     sanitizations: owned
       .filter(c => c.field.type === 'string' && !voOf(c).values?.length && voOf(c).email !== true)
-      .map(c => ({ voName: c.voName, inner: voOf(c).noInnerWhitespace === true }))
+      .map(c => ({ voName: c.voName, inner: voOf(c).noInnerWhitespace === true, minKey: voOf(c).minLength === true ? key(c) : null }))
   }
 }
 

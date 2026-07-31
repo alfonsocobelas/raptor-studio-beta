@@ -175,11 +175,13 @@ describe('MetricName (constrained text)', () => {
 
 describe('MetricId — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(MetricId.create('  12345  ').value).toBe('12345')
+    const sample = '12345'
+    expect(MetricId.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => MetricId.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '12345'
+    expect(() => MetricId.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })
 

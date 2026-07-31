@@ -124,10 +124,12 @@ describe('ProjectDescription — sanitization', () => {
 
 describe('SapProjectId — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(SapProjectId.create('  12345  ').value).toBe('12345')
+    const sample = '12345'
+    expect(SapProjectId.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => SapProjectId.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '12345'
+    expect(() => SapProjectId.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })

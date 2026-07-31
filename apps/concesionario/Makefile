@@ -1,4 +1,4 @@
-.PHONY: help up down test-up test-down seed api web typecheck local-setup migrate migrate-rollback seed-auth
+.PHONY: help up down test-up test-down seed api web test typecheck local-setup migrate migrate-rollback seed-auth
 
 help:
 	@grep -E '^[a-zA-Z-]+:' Makefile | sed 's/:.*//'
@@ -24,8 +24,12 @@ api:
 web:
 	npm run web
 
+test:
+	npm test
+
 typecheck:
 	npm run typecheck
+	npm run lint:ui-boundaries
 
 # Onboarding en un comando: base de datos + datos + API
 local-setup: up

@@ -43,7 +43,7 @@ import { TypeOrmAuthTokenRepository } from './infrastructure/persistence/typeorm
 import { TypeOrmSessionRepository } from './infrastructure/persistence/typeorm/typeorm-session.repository'
 import { TypeOrmUserRepository } from './infrastructure/persistence/typeorm/typeorm-user.repository'
 import { AppLogger } from '../../../shared/domain/logger/logger'
-import { SmtpConfig } from '../../../shared/infrastructure/config/config-types'
+import { AcsEmailConfig, BrevoConfig, SesConfig, SmtpConfig } from '../../../shared/infrastructure/config/config-types'
 
 @Module({
   controllers: [AuthController, UsersController],
@@ -89,7 +89,15 @@ import { SmtpConfig } from '../../../shared/infrastructure/config/config-types'
       provide: EmailSender,
       inject: [ConfigService, AppLogger],
       useFactory: (config: ConfigService, logger: AppLogger): EmailSender =>
-        createEmailSender(config.get<SmtpConfig>('smtp'), logger)
+        createEmailSender(
+          {
+            acs: config.get<AcsEmailConfig>('acs'),
+            ses: config.get<SesConfig>('ses'),
+            brevo: config.get<BrevoConfig>('brevo'),
+            smtp: config.get<SmtpConfig>('smtp')
+          },
+          logger
+        )
     }
   ]
 })

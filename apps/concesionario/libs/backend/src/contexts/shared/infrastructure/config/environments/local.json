@@ -16,7 +16,7 @@
     "port": 5432,
     "username": "alfonso.dominguez",
     "password": "",
-    "database": "authtest",
+    "database": "concesionario_local",
     "ssl": false,
     "autoLoadEntities": true,
     "synchronize": false,

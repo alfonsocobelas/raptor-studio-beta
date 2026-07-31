@@ -28,6 +28,22 @@ export interface SmtpConfig {
   from?: string
 }
 
+export interface AcsEmailConfig {
+  connectionString: string
+  senderAddress: string
+}
+
+export interface SesConfig {
+  region: string
+  from: string
+}
+
+export interface BrevoConfig {
+  apiKey: string
+  from: string
+  fromName?: string
+}
+
 export interface StorageConfig {
   connectionString: string
   container: string
@@ -41,6 +57,9 @@ export interface AppConfig {
   }
   logger: LoggerConfig
   typeorm: TypeOrmConfig
+  acs?: AcsEmailConfig
+  ses?: SesConfig
+  brevo?: BrevoConfig
   smtp?: SmtpConfig
   storage?: StorageConfig
 }

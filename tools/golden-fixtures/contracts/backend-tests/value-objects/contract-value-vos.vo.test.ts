@@ -179,11 +179,13 @@ describe('IsFavorite', () => {
 
 describe('CmsCaseId — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(CmsCaseId.create('  12345  ').value).toBe('12345')
+    const sample = '12345'
+    expect(CmsCaseId.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => CmsCaseId.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '12345'
+    expect(() => CmsCaseId.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })
 
@@ -195,11 +197,13 @@ describe('BusinessModel — sanitization', () => {
 
 describe('ContractCurrency — sanitization', () => {
   it('should trim leading and trailing whitespace', () => {
-    expect(ContractCurrency.create('  12345  ').value).toBe('12345')
+    const sample = '12345'
+    expect(ContractCurrency.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => ContractCurrency.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = '12345'
+    expect(() => ContractCurrency.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 })
 

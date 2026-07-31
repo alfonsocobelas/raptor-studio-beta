@@ -55,6 +55,34 @@ class SmtpAuthValidator {
   pass!: string
 }
 
+class AcsValidator {
+  @IsString()
+  connectionString!: string
+
+  @IsString()
+  senderAddress!: string
+}
+
+class SesValidator {
+  @IsString()
+  region!: string
+
+  @IsString()
+  from!: string
+}
+
+class BrevoValidator {
+  @IsString()
+  apiKey!: string
+
+  @IsString()
+  from!: string
+
+  @IsOptional()
+  @IsString()
+  fromName?: string
+}
+
 class SmtpValidator {
   @IsString()
   host!: string
@@ -98,6 +126,21 @@ export class RootValidator {
   @ValidateNested()
   @Type(() => TypeOrmValidator)
   typeorm!: TypeOrmValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AcsValidator)
+  acs?: AcsValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SesValidator)
+  ses?: SesValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BrevoValidator)
+  brevo?: BrevoValidator
 
   // Sección opcional: sin ella el módulo de auth cae a LogEmailSender (no envía emails reales).
   @IsOptional()

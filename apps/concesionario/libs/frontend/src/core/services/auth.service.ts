@@ -9,6 +9,7 @@ import {
   UserRoleEnum
 } from '@app/shared/domain'
 import { catchError, firstValueFrom, of } from 'rxjs'
+import { API_PREFIX } from '../http/api.constants'
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -53,7 +54,7 @@ export class AuthService {
 
   async loadCurrentUser(): Promise<CurrentUserDto | null> {
     const user = await firstValueFrom(
-      this._http.get<CurrentUserDto>('/api/v1/auth/me').pipe(catchError(() => of(null)))
+      this._http.get<CurrentUserDto>(`${API_PREFIX}/auth/me`).pipe(catchError(() => of(null)))
     )
     this._currentUser.set(user)
     this._loaded.set(true)
@@ -69,26 +70,26 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<CurrentUserDto> {
-    const user = await firstValueFrom(this._http.post<CurrentUserDto>('/api/v1/auth/login', dto))
+    const user = await firstValueFrom(this._http.post<CurrentUserDto>(`${API_PREFIX}/auth/login`, dto))
     this._currentUser.set(user)
     this._loaded.set(true)
     return user
   }
 
   async logout(): Promise<void> {
-    await firstValueFrom(this._http.post<void>('/api/v1/auth/logout', {}))
+    await firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/logout`, {}))
     this._currentUser.set(null)
   }
 
   acceptInvitation(dto: AcceptInvitationDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/auth/accept-invitation', dto))
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/accept-invitation`, dto))
   }
 
   requestReset(dto: ForgotPasswordDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/auth/forgot-password', dto))
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/forgot-password`, dto))
   }
 
   resetPassword(dto: ResetPasswordDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/auth/reset-password', dto))
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/reset-password`, dto))
   }
 }

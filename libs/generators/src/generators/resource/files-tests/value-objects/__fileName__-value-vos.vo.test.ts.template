@@ -206,12 +206,15 @@ describe('<%- v.voName %>', () => {
 
 describe('<%- v.voName %> — sanitization', () => {
 <%_ if (v.inner) { _%>
+<%_ const sample = v.minKey ? `'1'.repeat(${constantName}_CONSTRAINTS.${v.minKey}.MIN)` : `'12345'` _%>
   it('should trim leading and trailing whitespace', () => {
-    expect(<%- v.voName %>.create('  12345  ').value).toBe('12345')
+    const sample = <%- sample %>
+    expect(<%- v.voName %>.create(`  ${sample}  `).value).toBe(sample)
   })
 
   it('should throw for inner whitespace (code field)', () => {
-    expect(() => <%- v.voName %>.create('12 345')).toThrow(InvalidArgumentError)
+    const sample = <%- sample %>
+    expect(() => <%- v.voName %>.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
   })
 <%_ } else { _%>
   it('should trim edges and keep inner whitespace (free text)', () => {
