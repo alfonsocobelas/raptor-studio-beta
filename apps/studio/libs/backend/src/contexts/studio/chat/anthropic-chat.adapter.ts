@@ -52,6 +52,10 @@ const SYSTEM_PROMPT = [
   '  y como máximo un {kind:"dashboard", widgets:[{kind:"kpi-total", resource}]}.',
   '  El orden gobierna el menú; toda página/widget referencia entidades de resources.',
   '',
+  'Cada campo lleva samples: 10 valores de ejemplo REALISTAS y coherentes con el negocio',
+  '(nombres de producto reales, precios con céntimos, ciudades, referencias tipo XXX-1041,',
+  'fechas dd/mm/aaaa, booleanos como Sí/No) — son el mockup que ve el usuario.',
+  '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
   'reply es una frase breve en español explicando qué cambiaste.'
@@ -84,9 +88,10 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
                   properties: {
                     name: { type: 'string' },
                     label: { type: 'string' },
-                    type: { type: 'string', enum: FIELD_TYPES }
+                    type: { type: 'string', enum: FIELD_TYPES },
+                    samples: { type: 'array', items: { type: 'string' } }
                   },
-                  required: ['name', 'label', 'type'],
+                  required: ['name', 'label', 'type', 'samples'],
                   additionalProperties: false
                 }
               }

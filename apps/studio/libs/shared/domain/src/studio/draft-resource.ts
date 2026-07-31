@@ -11,6 +11,8 @@ export interface DraftField {
   name: string
   label: string
   type: DraftFieldType
+  /** Valores de ejemplo REALISTAS para el mockup del lienzo (los aporta la IA; solo diseño) */
+  samples?: (string | number | boolean)[]
 }
 
 export interface DraftResource {
