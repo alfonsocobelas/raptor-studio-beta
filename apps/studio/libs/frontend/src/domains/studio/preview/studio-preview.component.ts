@@ -4,6 +4,7 @@ import { MODELS } from '@acc/generators/src/generators/resource/models/registry'
 import { AppStore } from '../editor/app-store'
 import { addKpiWidget, addResourcePage, movePage, paletteOf, removePage } from '../editor/app-mutations'
 import { PagePreviewComponent } from './page-preview.component'
+import { ChatPanelComponent } from '../chat/chat-panel.component'
 
 /**
  * Lienzo del editor (fase C): nav reordenable por drag&drop, borrado por hover,
@@ -13,7 +14,7 @@ import { PagePreviewComponent } from './page-preview.component'
 @Component({
   selector: 'studio-preview',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PagePreviewComponent, CdkDropList, CdkDrag],
+  imports: [PagePreviewComponent, ChatPanelComponent, CdkDropList, CdkDrag],
   template: `
     <div class="flex h-full gap-6">
       <aside class="w-56 shrink-0 border-r pr-4">
@@ -73,7 +74,7 @@ import { PagePreviewComponent } from './page-preview.component'
         <studio-page-preview [page]="selectedPage()" [pageIndex]="selectedIndex()" />
       </main>
 
-      <aside class="w-60 shrink-0 border-l pl-4">
+      <aside class="flex w-72 shrink-0 flex-col border-l pl-4">
         <h2 class="text-muted-foreground mb-3 text-xs font-semibold uppercase tracking-wide">Paleta</h2>
         <div class="flex flex-col gap-2" data-testid="studio-palette">
           @if (palette().dashboard) {
@@ -104,6 +105,9 @@ import { PagePreviewComponent } from './page-preview.component'
           @if (!palette().dashboard && !palette().resourcePages.length && !palette().kpiWidgets.length) {
             <p class="text-muted-foreground text-xs">Todo el catálogo está en el lienzo.</p>
           }
+        </div>
+        <div class="mt-4 min-h-0 flex-1 border-t pt-4">
+          <studio-chat-panel />
         </div>
       </aside>
     </div>

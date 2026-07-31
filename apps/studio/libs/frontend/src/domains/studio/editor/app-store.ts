@@ -1,5 +1,5 @@
 import { computed, signal, Injectable } from '@angular/core'
-import type { AppDefinition } from '@acc/schema'
+import { defineApp, type AppDefinition } from '@acc/schema'
 import { composeApp } from '@acc/generators/src/generators/app/composition'
 import { APPS } from '@acc/generators/src/generators/app/apps/registry'
 import { MODELS } from '@acc/generators/src/generators/resource/models/registry'
@@ -19,6 +19,15 @@ export class AppStore {
   readonly lastError = this._lastError.asReadonly()
   readonly composition = computed(() => composeApp(this._definition(), MODELS))
   readonly schemaJson = computed(() => JSON.stringify(this._definition(), null, 2))
+
+  /** Sustituye la definición entera (propuesta del chat); mismo gate que apply. */
+  applyExternal(definition: AppDefinition): boolean {
+    return this.apply(() => {
+      const validated = defineApp(JSON.parse(JSON.stringify(definition)) as AppDefinition)
+      composeApp(validated, MODELS) // referencias contra el catálogo, no solo estructura
+      return validated
+    })
+  }
 
   /** Aplica una mutación pura; devuelve false (y conserva el estado) si no valida. */
   apply(mutation: (def: AppDefinition) => AppDefinition): boolean {

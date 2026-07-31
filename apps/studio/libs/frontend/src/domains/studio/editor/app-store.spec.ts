@@ -32,6 +32,33 @@ describe('AppStore', () => {
     expect(store.lastError()).toMatch(/duplicated resource page/)
   })
 
+  it('applyExternal acepta un schema completo válido (propuesta del chat)', () => {
+    const store = new AppStore()
+
+    const ok = store.applyExternal({
+      schemaVersion: 1,
+      name: 'boutique',
+      pages: [{ kind: 'resource', resource: 'vehicle' }]
+    })
+
+    expect(ok).toBe(true)
+    expect(store.composition().models.map(m => m.name)).toEqual(['vehicle'])
+  })
+
+  it('applyExternal rechaza un schema con recursos fuera del catálogo', () => {
+    const store = new AppStore()
+    const before = store.definition()
+
+    const ok = store.applyExternal({
+      schemaVersion: 1,
+      name: 'x',
+      pages: [{ kind: 'resource', resource: 'unicornio' }]
+    })
+
+    expect(ok).toBe(false)
+    expect(store.definition()).toBe(before)
+  })
+
   it('schemaJson refleja el estado vivo', () => {
     const store = new AppStore()
 
