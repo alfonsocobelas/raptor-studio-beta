@@ -5,7 +5,7 @@ export const routes: Routes = [
   {
     path: 'studio',
     loadComponent: () =>
-      import('@app/frontend/domains/studio/preview/studio-preview.component').then(m => m.StudioPreviewComponent)
+      import('@app/frontend/domains/studio/design/studio-canvas.component').then(m => m.StudioCanvasComponent)
   },
   {
     path: 'dashboard',

@@ -3,12 +3,11 @@ import { HttpClient } from '@angular/common/http'
 import { FormsModule } from '@angular/forms'
 import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
-import { AppStore } from '../editor/app-store'
+import { DesignStore } from '../design/design-store'
 import {
   DATABASE_OPTIONS,
   PLUGIN_OPTIONS,
   UI_OPTIONS,
-  buildAppFile,
   buildCommand,
   type WizardOptions
 } from './wizard-command'
@@ -167,7 +166,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
   `
 })
 export class GenerateWizardComponent {
-  private readonly store = inject(AppStore)
+  private readonly store = inject(DesignStore)
   private readonly http = inject(HttpClient)
 
   protected readonly uiOptions = UI_OPTIONS
@@ -198,8 +197,9 @@ export class GenerateWizardComponent {
   }
 
   protected download(): void {
-    const file = buildAppFile(this.store.definition(), this.name())
-    downloadBlob(new Blob([file.content], { type: 'application/json' }), file.filename)
+    // el artefacto de --appFile: app-schema + resource-schemas expandidos, con el nombre elegido
+    const design = { ...(JSON.parse(this.store.exportJson()) as Record<string, unknown>), name: this.name() }
+    downloadBlob(new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' }), `${this.name()}.app.json`)
   }
 
   /** Fase F (opción 1): el backend LOCAL ejecuta el generador — sin terminal. */
@@ -213,7 +213,11 @@ export class GenerateWizardComponent {
           ui: this.ui(),
           database: this.database(),
           plugins: this.plugins(),
-          schema: this.store.definition(),
+          design: {
+            appName: this.name(),
+            resources: this.store.resources(),
+            pages: this.store.definition().pages
+          },
           skipInstall: !this.install(),
           ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
         })

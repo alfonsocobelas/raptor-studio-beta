@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http'
 import { Injectable, inject, signal } from '@angular/core'
 import { firstValueFrom } from 'rxjs'
-import type { AppDefinition } from '@acc/schema'
-import { AppStore } from '../editor/app-store'
+import { DesignStore, type Design } from '../design/design-store'
 
 export interface ChatEntry {
   role: 'user' | 'assistant'
@@ -11,18 +10,18 @@ export interface ChatEntry {
 
 interface ChatResponse {
   reply: string
-  schema: AppDefinition
+  design: Design
   mode: string
 }
 
 /**
- * Cliente del chat de diseño: envía la conversación y el app-schema vigente al
- * backend y aplica la propuesta al lienzo SOLO a través del gate del AppStore.
+ * Cliente del chat de diseño: envía la conversación y el DISEÑO vigente
+ * (entidades + páginas) y aplica la propuesta al lienzo vía el gate del store.
  */
 @Injectable({ providedIn: 'root' })
 export class StudioChatService {
   private readonly http = inject(HttpClient)
-  private readonly store = inject(AppStore)
+  private readonly store = inject(DesignStore)
 
   readonly history = signal<ChatEntry[]>([])
   readonly pending = signal(false)
@@ -40,18 +39,22 @@ export class StudioChatService {
       const response = await firstValueFrom(
         this.http.post<ChatResponse>('/api/v1/studio/chat', {
           messages: this.history(),
-          schema: this.store.definition()
+          design: {
+            appName: this.store.appName(),
+            resources: this.store.resources(),
+            pages: this.store.definition().pages
+          }
         })
       )
       this.mode.set(response.mode)
       this.history.update(h => [...h, { role: 'assistant', text: response.reply }])
-      if (!this.store.applyExternal(response.schema)) {
-        this.error.set(`La propuesta no pasó el gate del lienzo: ${this.store.lastError() ?? 'schema inválido'}`)
+      if (!this.store.applyExternal(response.design)) {
+        this.error.set(`La propuesta no pasó el gate del lienzo: ${this.store.lastError() ?? 'diseño inválido'}`)
       }
     } catch (e) {
       const detail =
         typeof e === 'object' && e !== null && 'error' in e
-          ? ((e as { error?: { message?: string } }).error?.message ?? 'error de red')
+          ? ((e as { error?: { message?: string } }).error?.message ?? 'backend local no disponible (npm run studio:api)')
           : String(e)
       this.error.set(detail)
     } finally {

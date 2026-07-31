@@ -6,7 +6,7 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner'
 import { NAV_ITEMS } from './nav'
 
 /** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
-const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation']
+const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation', '/studio']
 
 /**
  * Shell de la aplicación (piel Spartan): barra lateral con una entrada por recurso,
