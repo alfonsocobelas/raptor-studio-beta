@@ -1,6 +1,0 @@
-export const MOVEMENT_CONSTRAINTS = {
-  REFERENCE: { MIN: 3, MAX: 20 },
-  GARMENT_LABEL: { MIN: 2, MAX: 200 },
-  COUNTERPARTY: { MAX: 200 },
-  QUANTITY: { MIN: 1 }
-} as const
