@@ -213,6 +213,10 @@ export class Customer extends AggregateRoot {
     return this._id.equals(other._id)
   }
 
+  hasTaxId(): boolean {
+    return !this._taxId.isEmpty()
+  }
+
   newSapIdIfChanged(updates: CustomerUniquenessUpdateProps): Undefinable<SapId> {
     if (!updates.sapId) {
       return
