@@ -14,6 +14,10 @@
       },
       "x-prompt": "\u00bfC\u00f3mo se llama la aplicaci\u00f3n?"
     },
+    "app": {
+      "type": "string",
+      "description": "Registered app-schema declaring the composition (pages, nav, dashboard); mutually exclusive with models/dashboard"
+    },
     "models": {
       "type": "string",
       "description": "Comma-separated model names (defaults to all registered models)",

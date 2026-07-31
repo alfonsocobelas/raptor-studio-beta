@@ -5,11 +5,14 @@ import type { AppDefinition, PageDefinition, ResourceDefinition } from '@acc/sch
  * deriva nav, rutas, ruta por defecto y dashboard. Las opciones planas (models,
  * dashboard) y el app-schema (defineApp) convergen aquí — un solo camino de render.
  */
+/** Página normalizada: el label del menú siempre queda resuelto al componer. */
+export type ComposedPage = PageDefinition & { label: string }
+
 export interface AppComposition {
   /** Modelos incluidos en la app (backend + servicio), en orden de aparición */
   models: ResourceDefinition[]
   /** Páginas con labels resueltos; su orden gobierna nav y rutas */
-  pages: PageDefinition[]
+  pages: ComposedPage[]
   dashboard: boolean
   /** Modelos con tarjeta KPI en el dashboard, en orden de widget */
   kpiModels: ResourceDefinition[]
@@ -17,7 +20,7 @@ export interface AppComposition {
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
 export function composeFlat(models: ResourceDefinition[], dashboard: boolean): AppComposition {
-  const pages: PageDefinition[] = models.map(model => ({
+  const pages: ComposedPage[] = models.map(model => ({
     kind: 'resource',
     resource: model.name,
     label: labelOf(model)
@@ -51,7 +54,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   }
 
   const kpiModels: ResourceDefinition[] = []
-  const pages: PageDefinition[] = definition.pages.map(page => {
+  const pages: ComposedPage[] = definition.pages.map(page => {
     if (page.kind === 'dashboard') {
       for (const widget of page.widgets) {
         const model = resolve(widget.resource)

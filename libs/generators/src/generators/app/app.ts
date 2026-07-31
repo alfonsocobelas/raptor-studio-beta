@@ -3,7 +3,9 @@ import type { ResourceDefinition } from '@acc/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { selectModels } from '../resource/models/registry'
+import { MODELS, selectModels } from '../resource/models/registry'
+import { composeApp, composeFlat, type AppComposition } from './composition'
+import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
 import rootGenerator from '../root/root'
 import sharedDomainGenerator from '../shared-domain/shared-domain'
@@ -16,6 +18,8 @@ import type { AppPlugin, PluginContext } from './plugins/plugin'
 
 export interface AppGeneratorSchema {
   name: string
+  /** Registered app-schema declaring the composition (mutually exclusive with models/dashboard) */
+  app?: string
   /** Comma-separated model names to include; defaults to the whole registry */
   models?: string
   /** Output directory; defaults to apps/<name> */
@@ -72,7 +76,17 @@ const SPARTAN_COMPONENTS = [
 export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Promise<GeneratorCallback> {
   const appName = names(options.name).fileName
   const root = options.directory ?? path.join('apps', appName)
-  const models = selectModels(options.models)
+  if (options.app && (options.models !== undefined || options.dashboard !== undefined)) {
+    throw new Error(
+      `Options 'app' and 'models'/'dashboard' are mutually exclusive: the app-schema '${options.app}' already declares the composition`
+    )
+  }
+  const composition = options.app
+    ? composeApp(selectApp(options.app), MODELS)
+    : composeFlat(selectModels(options.models), options.dashboard ?? false)
+  const models = composition.models
+  // los sub-generadores siguen recibiendo la lista por nombre, venga de donde venga la composición
+  const modelNames = models.map(m => m.name).join(',')
   const ui = options.ui ?? 'spartan'
   const database = selectDatabase(options.database)
   // valida la combinación plugins×motor antes de emitir un solo fichero
@@ -84,11 +98,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 1. kernel backend + composition root
   await kernelGenerator(tree, {
     directory: backendSrc,
-    models: options.models,
+    models: modelNames,
     sharedDomainAlias: SHARED_DOMAIN_ALIAS,
     database
   })
-  await rootGenerator(tree, { directory: backendSrc, models: options.models })
+  await rootGenerator(tree, { directory: backendSrc, models: modelNames })
   // el arranque vive en apps/backend-api; la config por entorno la emite el kernel
   tree.delete(path.join(backendSrc, 'main.ts'))
   tree.delete(path.join(backendSrc, 'environments'))
@@ -110,7 +124,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   })
 
   // 2. DTOs compartidos + kernel Angular
-  await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: options.models })
+  await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: modelNames })
   await frontendKernelGenerator(tree, { directory: frontendSrc, sharedDomainAlias: SHARED_DOMAIN_ALIAS, ui })
 
   // 3. un módulo por recurso, repartido al layout canónico
@@ -164,31 +178,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
 
-  // 5. lo único que depende de los modelos
-  const dashboard = options.dashboard ?? false
-  const dashboardRoute = `  {
-    path: 'dashboard',
-    loadComponent: () =>
-      import('${SCOPE}/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  }`
+  // 5. lo único que depende de la composición (páginas) y de los modelos
   generateFiles(tree, path.join(__dirname, 'files'), root, {
-    defaultRoute: dashboard ? 'dashboard' : routeOf(models[0]),
-    routeEntries: [
-      ...(dashboard ? [dashboardRoute] : []),
-      ...models.map(
-        model => `  {
-    path: '${routeOf(model)}',
-    loadComponent: () =>
-      import(
-        '${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}/${model.plural}-list.component'
-      ).then(m => m.${names(model.name).className}sListComponent)
-  }`
-      )
-    ].join(',\n'),
-    navItems: [
-      ...(dashboard ? [`  { label: 'Dashboard', route: '/dashboard' }`] : []),
-      ...models.map(model => `  { label: '${model.labels?.plural ?? model.plural}', route: '/${routeOf(model)}' }`)
-    ].join(',\n'),
+    ...shellSubstitutions(composition),
     seedImports: models
       .map(model => {
         const n = names(model.name)
@@ -221,8 +213,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       .join('\n'),
     tmpl: ''
   })
-  if (dashboard) {
-    generateFiles(tree, path.join(__dirname, 'files-dashboard'), root, dashboardSubstitutions(models))
+  if (composition.dashboard) {
+    generateFiles(tree, path.join(__dirname, 'files-dashboard'), root, dashboardSubstitutions(composition.kpiModels))
   }
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
@@ -374,6 +366,48 @@ export function dashboardSubstitutions(models: ResourceDefinition[]): Record<str
 
 function routeOf(model: { route?: string; context: string; plural: string }): string {
   return (model.route ?? `/${model.context}/${model.plural}`).replace(/^\//, '')
+}
+
+/**
+ * Bindings del shell (rutas, menú y ruta por defecto), pre-masticados desde la
+ * composición: el orden de páginas gobierna el orden de nav y rutas, y la primera
+ * página es la ruta por defecto. Plantillas tontas: aquí se decide todo.
+ */
+export function shellSubstitutions(composition: AppComposition): {
+  defaultRoute: string
+  routeEntries: string
+  navItems: string
+} {
+  const modelOf = (resource: string): ResourceDefinition => {
+    const model = composition.models.find(m => m.name === resource)
+    if (!model) throw new Error(`Composition page references resource '${resource}' outside its own models`)
+    return model
+  }
+  const pathOf = (page: AppComposition['pages'][number]): string =>
+    page.kind === 'dashboard' ? 'dashboard' : routeOf(modelOf(page.resource))
+  const dashboardRoute = `  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('${SCOPE}/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  }`
+
+  return {
+    defaultRoute: pathOf(composition.pages[0]),
+    routeEntries: composition.pages
+      .map(page => {
+        if (page.kind === 'dashboard') return dashboardRoute
+        const model = modelOf(page.resource)
+        return `  {
+    path: '${routeOf(model)}',
+    loadComponent: () =>
+      import(
+        '${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}/${model.plural}-list.component'
+      ).then(m => m.${names(model.name).className}sListComponent)
+  }`
+      })
+      .join(',\n'),
+    navItems: composition.pages.map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`).join(',\n')
+  }
 }
 
 /**
