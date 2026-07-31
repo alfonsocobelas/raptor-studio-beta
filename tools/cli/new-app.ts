@@ -14,6 +14,7 @@ interface CliArgs {
   models?: string
   ui?: string
   plugins?: string
+  dashboard?: boolean
   skipInstall: boolean
 }
 
@@ -79,6 +80,16 @@ async function main(): Promise<void> {
       })
     ).plugins
 
+  const dashboard =
+    args.dashboard ??
+    (
+      await prompt<{ dashboard: boolean }>({
+        type: 'confirm',
+        name: 'dashboard',
+        message: '¿Añado un dashboard de KPIs como pantalla de inicio? (un total por recurso)'
+      })
+    ).dashboard
+
   // email envía a través del puerto EmailSender que instala auth
   if (plugins.includes('email') && !plugins.includes('auth')) {
     console.log('ℹ email requiere auth: se añade automáticamente.')
@@ -94,6 +105,9 @@ async function main(): Promise<void> {
     `--directory=apps/${name}`,
     '--no-interactive'
   ]
+  if (dashboard) {
+    flags.push('--dashboard')
+  }
   if (args.skipInstall) {
     flags.push('--skipInstall')
   }
@@ -111,6 +125,8 @@ function parseArgs(argv: string[]): CliArgs {
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
     if (flag === '--skip-install') args.skipInstall = true
+    else if (flag === '--dashboard') args.dashboard = true
+    else if (flag === '--no-dashboard') args.dashboard = false
     else if (flag === '--name') args.name = argv[++i]
     else if (flag === '--models') args.models = argv[++i]
     else if (flag === '--ui') args.ui = argv[++i]

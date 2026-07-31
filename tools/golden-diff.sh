@@ -39,10 +39,10 @@ done
 # La capa de composición (esqueleto, plugins, recolocaciones, cableado del root)
 # no la cubren los módulos: se genera una app canónica completa y se compara.
 # contract+project ejercitan composición, período, lookups y delete; los 3
-# plugins opcionales van activados. skipInstall: el gate no toca la red.
+# plugins opcionales y el dashboard van activados. skipInstall: el gate no toca la red.
 APP_OUT="$ROOT/tmp/generated/app-golden"
 if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app app-golden \
-      --models=contract,project --ui=spartan --plugins=auth,email,observability \
+      --models=contract,project --ui=spartan --plugins=auth,email,observability --dashboard \
       --directory=tmp/generated/app-golden --skipInstall --no-interactive >/dev/null 2>&1; then
   summary+=" app: ❌ generación falló |"; failures=$((failures+1))
 else

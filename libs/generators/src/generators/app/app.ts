@@ -1,4 +1,5 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
+import type { ResourceDefinition } from '@acc/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -22,6 +23,8 @@ export interface AppGeneratorSchema {
   ui?: 'spartan' | 'material'
   /** Comma-separated plugins to assemble (migrations, auth) */
   plugins?: string
+  /** Emit a KPI dashboard (one total per resource) as the home screen */
+  dashboard?: boolean
   /** Skip npm install and the Spartan UI materialisation (offline / CI) */
   skipInstall?: boolean
 }
@@ -155,10 +158,17 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
 
   // 5. lo único que depende de los modelos
+  const dashboard = options.dashboard ?? false
+  const dashboardRoute = `  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('${SCOPE}/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  }`
   generateFiles(tree, path.join(__dirname, 'files'), root, {
-    defaultRoute: routeOf(models[0]),
-    routeEntries: models
-      .map(
+    defaultRoute: dashboard ? 'dashboard' : routeOf(models[0]),
+    routeEntries: [
+      ...(dashboard ? [dashboardRoute] : []),
+      ...models.map(
         model => `  {
     path: '${routeOf(model)}',
     loadComponent: () =>
@@ -167,10 +177,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       ).then(m => m.${names(model.name).className}sListComponent)
   }`
       )
-      .join(',\n'),
-    navItems: models
-      .map(model => `  { label: '${model.labels?.plural ?? model.plural}', route: '/${routeOf(model)}' }`)
-      .join(',\n'),
+    ].join(',\n'),
+    navItems: [
+      ...(dashboard ? [`  { label: 'Dashboard', route: '/dashboard' }`] : []),
+      ...models.map(model => `  { label: '${model.labels?.plural ?? model.plural}', route: '/${routeOf(model)}' }`)
+    ].join(',\n'),
     seedImports: models
       .map(model => {
         const n = names(model.name)
@@ -203,6 +214,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       .join('\n'),
     tmpl: ''
   })
+  if (dashboard) {
+    generateFiles(tree, path.join(__dirname, 'files-dashboard'), root, dashboardSubstitutions(models))
+  }
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
   //    Decisión 2026-07-31: un esquema versionado no es opcional en ningún proyecto.
@@ -306,6 +320,49 @@ function run(command: string, cwd: string): void {
     execSync(command, { cwd, stdio: 'inherit' })
   } catch {
     console.warn(`\n⚠ Falló "${command}". Reejecútalo a mano en ${cwd}.`)
+  }
+}
+
+/**
+ * Bindings del dashboard opcional, pre-masticados (plantillas tontas): una carga de
+ * total por recurso y su KPI card. Los totales del spec son distintos por recurso
+ * (deterministas, derivados del orden) para que un cruce de endpoints falle.
+ */
+export function dashboardSubstitutions(models: ResourceDefinition[]): Record<string, string> {
+  const entries = models.map((model, index) => ({
+    property: names(model.plural).propertyName,
+    api: model.api ?? `/api/v1/${model.plural}`,
+    label: model.labels?.plural ?? model.plural,
+    subtitle: model.labels?.subtitle,
+    total: (index + 1) * 7
+  }))
+  return {
+    resourceEntries: entries
+      .map(
+        e => `  readonly ${e.property} = this._total('${e.api}')
+  readonly ${e.property}Total = computed(() => (this.${e.property}.hasValue() ? this.${e.property}.value().total : 0))`
+      )
+      .join('\n\n'),
+    loadingExpr: entries.map(e => `this.${e.property}.isLoading()`).join(' || '),
+    errorExpr: entries.map(e => `this.${e.property}.error() !== undefined`).join(' || '),
+    gridCols: String(Math.min(Math.max(entries.length, 2), 4)),
+    kpiCards: entries
+      .map(e => {
+        const subtitle = e.subtitle ? `\n            subtitle="${e.subtitle}"` : ''
+        return `          <app-kpi-card
+            title="${e.label}"
+            [value]="service.${e.property}Total()"${subtitle}
+            testId="kpi-${e.property}"
+          />`
+      })
+      .join('\n'),
+    specTotals: entries.map(e => `  '${e.api}': ${e.total}`).join(',\n'),
+    specCallAsserts: entries
+      .map(e => `    expect(httpGet).toHaveBeenCalledWith('${e.api}', { params: { page: '1', pageSize: '1' } })`)
+      .join('\n'),
+    specZeroAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(0)`).join('\n'),
+    specTotalAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(${e.total})`).join('\n'),
+    tmpl: ''
   }
 }
 

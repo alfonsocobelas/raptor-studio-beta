@@ -47,6 +47,12 @@
         ]
       }
     },
+    "dashboard": {
+      "type": "boolean",
+      "default": false,
+      "description": "Emit a KPI dashboard (one total per resource) as the home screen",
+      "x-prompt": "¿Añado un dashboard de KPIs como pantalla de inicio?"
+    },
     "plugins": {
       "type": "string",
       "default": "none",
