@@ -49,9 +49,9 @@
     },
     "plugins": {
       "type": "string",
-      "default": "migrations",
-      "description": "Comma-separated plugins to assemble (migrations, auth)",
-      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (migrations, auth, email, observability \u2014 separados por comas; 'none' para ninguno)"
+      "default": "none",
+      "description": "Comma-separated optional plugins (auth, email, observability); migrations is built in",
+      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (auth, email, observability \u2014 separados por comas; 'none' para ninguno)"
     }
   },
   "required": [

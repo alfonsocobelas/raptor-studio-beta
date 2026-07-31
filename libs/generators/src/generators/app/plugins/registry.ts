@@ -9,7 +9,6 @@ import type { AppPlugin } from './plugin'
  * del generador y se pueda ensamblar en la app.
  */
 export const PLUGINS: Record<string, AppPlugin> = {
-  migrations: migrationsPlugin,
   auth: authPlugin,
   email: emailPlugin,
   observability: observabilityPlugin
@@ -23,6 +22,14 @@ export function selectPlugins(names: string | undefined): AppPlugin[] {
     .split(',')
     .map(n => n.trim())
     .filter(n => n && n !== 'none')
+    .filter(n => {
+      // las migraciones vienen de fábrica desde 2026-07-31: se tolera el nombre por compatibilidad
+      if (n === 'migrations') {
+        console.warn('ℹ migrations ya viene de fábrica; no hace falta pedirla como plugin.')
+        return false
+      }
+      return true
+    })
     .map(n => {
       const plugin = PLUGINS[n]
       if (!plugin) {

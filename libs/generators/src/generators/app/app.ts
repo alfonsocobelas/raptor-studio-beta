@@ -8,6 +8,7 @@ import rootGenerator from '../root/root'
 import sharedDomainGenerator from '../shared-domain/shared-domain'
 import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
+import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -198,8 +199,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     tmpl: ''
   })
 
-  // 6. plugins elegidos en el formulario (migraciones, auth…)
-  const plugins = selectPlugins(options.plugins)
+  // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
+  //    Decisión 2026-07-31: un esquema versionado no es opcional en ningún proyecto.
+  const plugins = [migrationsPlugin, ...selectPlugins(options.plugins)]
   const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE }
   for (const plugin of plugins) {
     if (plugin.assets) {
