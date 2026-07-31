@@ -1,3 +1,6 @@
+// La telemetría se inicializa antes que cualquier otro import: el SDK de Azure
+// Monitor debe parchear los módulos (http, pg…) antes de que la app los cargue.
+import '@app/backend/contexts/shared/infrastructure/telemetry/instrument'
 import { NestFactory } from '@nestjs/core'
 import { RootModule } from '@app/backend/root.module'
 import { setupApp } from '@app/backend/contexts/shared/infrastructure/http/setup-app'

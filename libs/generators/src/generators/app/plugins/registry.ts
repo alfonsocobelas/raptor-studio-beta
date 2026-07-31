@@ -1,5 +1,6 @@
 import { authPlugin } from './auth.plugin'
 import { emailPlugin } from './email.plugin'
+import { observabilityPlugin } from './observability.plugin'
 import { migrationsPlugin } from './migrations.plugin'
 import type { AppPlugin } from './plugin'
 
@@ -10,7 +11,8 @@ import type { AppPlugin } from './plugin'
 export const PLUGINS: Record<string, AppPlugin> = {
   migrations: migrationsPlugin,
   auth: authPlugin,
-  email: emailPlugin
+  email: emailPlugin,
+  observability: observabilityPlugin
 }
 
 export function selectPlugins(names: string | undefined): AppPlugin[] {
