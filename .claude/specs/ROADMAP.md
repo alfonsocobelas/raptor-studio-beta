@@ -57,7 +57,7 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 
 | Fase | Pieza                                                        | Estado    |
 | ---- | ------------------------------------------------------------ | --------- |
-| A    | App/page-schema + soporte en el generador (sin UI)           | Pendiente |
+| A    | App/page-schema + soporte en el generador (sin UI)           | ✅ 2026-07-31 (spec 07: `defineApp`, registro `APPS`, `--app=demo` ≡ opciones planas byte a byte) |
 | B    | Visor read-only: schema → preview vivo (app Angular monorepo) | Pendiente |
 | C    | Interactividad: hover-borrar, drag&drop (CDK) → muta schema  | Pendiente |
 | D    | Chat IA que edita el schema (structured output + gate)       | Pendiente |
