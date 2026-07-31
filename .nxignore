@@ -1,3 +1,6 @@
 .angular
 apps/almacen
 apps/concesionario
+apps/boutique
+apps/studio
+tmp

@@ -291,9 +291,12 @@ function toPrimitivesLine(c: FieldCtx, period?: { start: string; end: string }):
 }
 
 function updateGuard(c: FieldCtx): string {
-  const assign = c.nullable
-    ? `this._${c.name} = updates.${c.name} === null ? null : ${c.voName}.create(updates.${c.name})`
-    : `this._${c.name} = ${c.voName}.create(updates.${c.name})`
+  // campos sin VO (snapshots numéricos): asignación cruda, como en toPrimitives
+  const assign = !c.voName
+    ? `this._${c.name} = updates.${c.name}`
+    : c.nullable
+      ? `this._${c.name} = updates.${c.name} === null ? null : ${c.voName}.create(updates.${c.name})`
+      : `this._${c.name} = ${c.voName}.create(updates.${c.name})`
   return `    if (updates.${c.name} !== undefined) {\n      ${assign}\n    }`
 }
 
