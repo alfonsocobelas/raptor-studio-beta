@@ -44,7 +44,8 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 | —   | `ui-nivel-2`           | Contratos headless + adapters de piel (ADR-003)                                                                      | Solo con cliente real  |
 | —   | `adapter-storage-s3`   | 2º proveedor: valida la abstracción del puerto                                                                       | Solo con cliente AWS   |
 | —   | `arquetipo-bridge-api` | Perfil `bridge-api` (ref. ip-opentext-cmis-api)                                                                      | Solo con proyecto real |
-| —   | `demo-app-gate-visual` | App de demo que monta el código generado + recuperar el gate visual Playwright MCP para conducir las vistas emitidas | Tras spec 04           |
+| ✅ 05 | `generador-app-y-plugins` | Proyecto arrancable en un comando: esqueleto literal, plugins (auth/email/observability), migraciones de fábrica, 2 pieles, tests emitidos ejecutables, CI, CLI | **Hecha (retroactiva 2026-07-31)** |
+| —   | `demo-app-gate-visual` | ~~App de demo~~ → cubierto por spec 05 (demos verificadas con Playwright); queda solo integrar el gate visual como paso reproducible | Parcialmente cubierta  |
 | —   | `gitflow-completo`     | Reinstaurar ramas/PRs/rulesets (base: spec 51 de la referencia)                                                      | Cuando madure          |
 
 ## Pendientes conocidos (no bloquean la spec 00)
