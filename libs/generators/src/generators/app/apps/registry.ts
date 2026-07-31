@@ -1,5 +1,6 @@
 import type { AppDefinition } from '@acc/schema'
 import { demo } from './demo.app'
+import { boutique } from './boutique.app'
 
 /**
  * Registro estático de app-schemas — el lugar único donde se declara la composición
@@ -7,7 +8,8 @@ import { demo } from './demo.app'
  * modelos: el plugin va empaquetado y un escaneo de directorio no sobreviviría al build.
  */
 export const APPS: Record<string, AppDefinition> = {
-  demo
+  demo,
+  boutique
 }
 
 export function selectApp(name: string): AppDefinition {
