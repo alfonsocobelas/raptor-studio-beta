@@ -61,7 +61,7 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 | B    | Visor read-only: schema → preview vivo (app Angular monorepo) | ✅ 2026-07-31 (spec 08: `apps/studio` dogfood `--app=boutique`, visor `/studio` con DataTable/KpiCard reales, verificado en navegador) |
 | C    | Interactividad: hover-borrar, drag&drop (CDK) → muta schema  | ✅ 2026-07-31 (spec 09: mutaciones puras con gate defineApp, AppStore, paleta del catálogo, panel JSON; smoke Playwright) |
 | D    | Chat IA que edita el schema (structured output + gate)       | ✅ 2026-07-31 (spec 10: ChatPort con adapters Anthropic/fake, gate defineApp+composeApp en servidor y cliente, panel en /studio) |
-| E    | Wizard de plugins (db, infra, auth…)                         | Pendiente |
+| E    | Wizard de plugins (db, infra, auth…)                         | ✅ 2026-07-31 (spec 11: `--appFile` en el generador + wizard en /studio con descarga del schema y comando exacto; verificado end-to-end) |
 | F    | Escritorio (Electron/Tauri) — solo si hace falta             | Pendiente |
 
 ## Pendientes conocidos (no bloquean la spec 00)
