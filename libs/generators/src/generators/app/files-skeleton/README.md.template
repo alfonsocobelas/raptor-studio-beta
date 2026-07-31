@@ -29,3 +29,11 @@ para cambiar un campo, edita el modelo y vuelve a generar. Lo escrito entre
 `// @ai:begin` y `// @ai:end` (por ejemplo las filas de seed realistas) sobrevive.
 
 Para añadir más componentes Spartan: `npm run ui:add -- <nombre>`.
+
+## CI
+
+`.github/workflows/ci.yml` ejecuta en cada push/PR: typecheck, fronteras de UI
+(ADR-003), tests unitarios, tests de integración contra un Postgres de servicio
+(mismo puerto y credenciales que `docker-compose.test.yml`) y el build del
+frontend. Requiere `package-lock.json` commiteado (lo genera el primer
+`npm install`).
