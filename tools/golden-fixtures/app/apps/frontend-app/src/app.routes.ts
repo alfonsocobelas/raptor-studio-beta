@@ -21,7 +21,12 @@ export const routes: Routes = [
     path: 'accept-invitation',
     loadComponent: () => import('@app/frontend/domains/auth/set-password.component').then(m => m.SetPasswordComponent)
   },
-  { path: '', pathMatch: 'full', redirectTo: 'sap-licensing/contracts' },
+  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  },
   {
     path: 'sap-licensing/contracts',
     loadComponent: () =>
