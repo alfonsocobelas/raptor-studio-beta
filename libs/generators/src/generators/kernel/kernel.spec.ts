@@ -78,6 +78,35 @@ describe('kernel generator', () => {
     expect(module).not.toContain("name: 'Contact'")
   })
 
+  it('emits the mongoose criteria converter with full operator parity', async () => {
+    const mongoTree = createTreeWithEmptyWorkspace()
+    await kernelGenerator(mongoTree, { database: 'mongo' })
+
+    const converter =
+      mongoTree.read(
+        'tmp/generated/kernel/contexts/shared/infrastructure/persistence/mongoose/mongoose-criteria-converter.ts',
+        'utf-8'
+      ) ?? ''
+    for (const operator of [
+      'Operator.EQUAL',
+      'Operator.NOT_EQUAL',
+      'Operator.IN',
+      'Operator.GT',
+      'Operator.GTE',
+      'Operator.LT',
+      'Operator.LTE',
+      'Operator.CONTAINS',
+      'Operator.NOT_CONTAINS',
+      'Operator.STARTS_WITH',
+      'Operator.ENDS_WITH'
+    ]) {
+      expect(converter).toContain(operator)
+    }
+    // búsqueda global y cursor keyset presentes, como en el converter typeorm
+    expect(converter).toContain('generateSearch')
+    expect(converter).toContain('generateCursor')
+  })
+
   it('keeps the postgres config untouched by default', () => {
     const types = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/config-types.ts', 'utf-8') ?? ''
     expect(types).toContain('TypeOrmConfig')
