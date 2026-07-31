@@ -137,6 +137,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     }
     relocate(
       tree,
+      path.join(staging, 'backend-tests-application'),
+      path.join(testsRoot, 'application/use-cases')
+    )
+    relocate(
+      tree,
       path.join(staging, 'backend-tests-integration'),
       path.join(root, 'libs/backend/tests/infrastructure/repositories')
     )

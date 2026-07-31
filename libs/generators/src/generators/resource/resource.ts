@@ -156,6 +156,23 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend-tests'),
       substitutions
     )
+    // tests de use case (unit, sobre el mock del repositorio)
+    if (substitutions.app.emit) {
+      generateFiles(
+        tree,
+        path.join(__dirname, '..', 'resource', 'files-tests-application'),
+        path.join(outputDir, 'backend-tests-application'),
+        substitutions
+      )
+      const appTests = path.join(outputDir, 'backend-tests-application')
+      if (!substitutions.app.writes) {
+        tree.delete(path.join(appTests, `register-${substitutions.fileName}-usecase.test.ts`))
+        tree.delete(path.join(appTests, `update-${substitutions.fileName}-usecase.test.ts`))
+      }
+      if (!substitutions.app.removes) {
+        tree.delete(path.join(appTests, `remove-${substitutions.fileName}-usecase.test.ts`))
+      }
+    }
     // test de integración del repositorio (corre contra el Postgres del compose de test)
     if (substitutions.entry.emit) {
       generateFiles(

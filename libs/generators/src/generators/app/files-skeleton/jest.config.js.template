@@ -29,7 +29,6 @@ module.exports = {
       ...base,
       displayName: 'integration',
       testMatch: ['<rootDir>/libs/backend/tests/infrastructure/**/*.test.ts'],
-      setupFilesAfterEach: undefined,
       setupFilesAfterEnv: ['<rootDir>/libs/backend/tests/infrastructure/jest.setup.integration.ts']
     }
   ]

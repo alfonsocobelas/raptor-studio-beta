@@ -14,3 +14,4 @@
 - [x] **TASK-09**: Suite de integración emitida (arranger/setup/repos/test canónico) 23/23 contra Postgres (5b227d1)
 - [x] **TASK-10**: CI + .gitignore en la app emitida (7b41d92)
 - [x] **TASK-11**: CLI `npm run new` + migraciones de fábrica (27c53f2)
+- [x] **TASK-12**: Tests de use case emitidos (get/search/export/register/update/remove, derivados del schema con ramas por únicos y features) — 200/200 en la demo a la primera

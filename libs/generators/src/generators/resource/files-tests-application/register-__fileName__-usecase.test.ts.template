@@ -1,0 +1,53 @@
+import { Register<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/register-<%- fileName %>-usecase.service'
+<%_ if (app.hasUniqueChecks) { _%>
+import { AlreadyExistsError } from '../../../../../src/contexts/shared/domain/errors'
+<%_ } _%>
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('Register<%- className %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: Register<%- className %>UseCase
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+    useCase = new Register<%- className %>UseCase(repositoryMock)
+  })
+<%_ if (app.hasUniqueChecks) { _%>
+
+  describe('given no duplicate exists', () => {
+    it('checks each unique field once and registers', async () => {
+      repositoryMock.givenDoesNotExist()
+      repositoryMock.whenRegisterSuccess()
+
+      const input = <%- className %>Mother.primitives()
+      await useCase.invoke(input)
+
+      repositoryMock.assertCalledTimes('exists', <%- app.uniqueSpecs.length %>)
+      const registered = repositoryMock.registered<%- className %>().toPrimitives()
+      expect(registered.id).toBe(input.id)
+    })
+  })
+
+  describe('given a duplicate exists', () => {
+    it('throws AlreadyExistsError and does not register', async () => {
+      repositoryMock.givenAlreadyExists()
+
+      await expect(useCase.invoke(<%- className %>Mother.primitives())).rejects.toThrow(AlreadyExistsError)
+      repositoryMock.assertNotCalled('register')
+    })
+  })
+<%_ } else { _%>
+
+  it('registers without uniqueness checks (the model declares no unique fields)', async () => {
+    repositoryMock.whenRegisterSuccess()
+
+    const input = <%- className %>Mother.primitives()
+    await useCase.invoke(input)
+
+    repositoryMock.assertNotCalled('exists')
+    const registered = repositoryMock.registered<%- className %>().toPrimitives()
+    expect(registered.id).toBe(input.id)
+  })
+<%_ } _%>
+})

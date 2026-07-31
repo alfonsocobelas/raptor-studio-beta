@@ -1,0 +1,36 @@
+import { v7 as uuidv7 } from 'uuid'
+import { Remove<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/remove-<%- fileName %>-usecase.service'
+import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('Remove<%- className %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: Remove<%- className %>UseCase
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+    useCase = new Remove<%- className %>UseCase(repositoryMock)
+  })
+
+  describe('given the <%- fileName %> exists', () => {
+    it('removes it', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      repositoryMock.givenFound(<%- propertyName %>)
+      repositoryMock.whenRemoveSuccess()
+
+      await useCase.invoke({ id: <%- propertyName %>.id.value })
+
+      repositoryMock.assertCalled('remove')
+    })
+  })
+
+  describe('given the <%- fileName %> does not exist', () => {
+    it('throws EntityNotFoundError and does not remove', async () => {
+      repositoryMock.givenNotFound()
+
+      await expect(useCase.invoke({ id: uuidv7() })).rejects.toThrow(EntityNotFoundError)
+      repositoryMock.assertNotCalled('remove')
+    })
+  })
+})

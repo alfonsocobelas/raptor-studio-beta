@@ -1,0 +1,34 @@
+import { v7 as uuidv7 } from 'uuid'
+import { Get<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/get-<%- fileName %>-usecase.service'
+import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('Get<%- className %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: Get<%- className %>UseCase
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+    useCase = new Get<%- className %>UseCase(repositoryMock)
+  })
+
+  describe('given the <%- fileName %> exists', () => {
+    it('returns its primitives', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      repositoryMock.givenFound(<%- propertyName %>)
+
+      const result = await useCase.invoke({ id: <%- propertyName %>.id.value })
+
+      expect(result).toEqual(<%- propertyName %>.toPrimitives())
+    })
+  })
+
+  describe('given the <%- fileName %> does not exist', () => {
+    it('throws EntityNotFoundError', async () => {
+      repositoryMock.givenNotFound()
+
+      await expect(useCase.invoke({ id: uuidv7() })).rejects.toThrow(EntityNotFoundError)
+    })
+  })
+})
