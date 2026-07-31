@@ -9,6 +9,7 @@ import { HealthModule } from './contexts/shared/infrastructure/health/health.mod
 import { GarmentsModule } from './contexts/warehouse/modules/garments/garments.module'
 import { SuppliersModule } from './contexts/warehouse/modules/suppliers/suppliers.module'
 import { MovementsModule } from './contexts/warehouse/modules/movements/movements.module'
+import { StudioChatModule } from './contexts/studio/chat/studio-chat.module'
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { MovementsModule } from './contexts/warehouse/modules/movements/movement
     HealthModule,
     GarmentsModule,
     SuppliersModule,
-    MovementsModule
+    MovementsModule,
+    StudioChatModule
   ],
   providers: [
     {
