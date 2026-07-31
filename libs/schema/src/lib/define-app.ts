@@ -1,0 +1,66 @@
+import { AppDefinition, PageDefinition } from './app-types'
+import { SchemaValidationError } from './validation-errors'
+
+const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
+
+// Structural validation only (v1): the model registry lives in the generator,
+// so resource existence is checked there, not here.
+export function defineApp(definition: AppDefinition): AppDefinition {
+  const problems = [...validateIdentity(definition), ...validatePages(definition.pages)]
+
+  if (problems.length) throw new SchemaValidationError(definition.name, problems)
+
+  return Object.freeze(definition)
+}
+
+function validateIdentity(definition: AppDefinition): string[] {
+  const problems: string[] = []
+
+  if (definition.schemaVersion !== 1) problems.push('schemaVersion: must be 1')
+  if (!KEBAB_CASE.test(definition.name)) problems.push('name: must be non-empty kebab-case')
+
+  return problems
+}
+
+function validatePages(pages: PageDefinition[]): string[] {
+  const problems: string[] = []
+
+  if (!pages.length) problems.push('pages: at least one page is required')
+
+  const dashboards = pages.filter(p => p.kind === 'dashboard').length
+  if (dashboards > 1) problems.push(`pages: at most one dashboard page is allowed (found ${dashboards})`)
+
+  const seenResources = new Set<string>()
+  pages.forEach((page, index) => {
+    if (page.kind === 'dashboard') {
+      problems.push(...validateDashboard(page, index))
+      return
+    }
+    if (!KEBAB_CASE.test(page.resource)) {
+      problems.push(`pages[${index}]: resource must be non-empty kebab-case`)
+      return
+    }
+    if (seenResources.has(page.resource)) problems.push(`pages: duplicated resource page '${page.resource}'`)
+    seenResources.add(page.resource)
+  })
+
+  return problems
+}
+
+function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>, index: number): string[] {
+  const problems: string[] = []
+
+  if (!page.widgets.length) problems.push(`pages[${index}]: dashboard requires at least one widget`)
+
+  const seen = new Set<string>()
+  page.widgets.forEach((widget, widgetIndex) => {
+    if (!KEBAB_CASE.test(widget.resource)) {
+      problems.push(`pages[${index}].widgets[${widgetIndex}]: resource must be non-empty kebab-case`)
+      return
+    }
+    if (seen.has(widget.resource)) problems.push(`pages[${index}]: duplicated widget for resource '${widget.resource}'`)
+    seen.add(widget.resource)
+  })
+
+  return problems
+}
