@@ -10,6 +10,8 @@ proveedor elegido contra su gestor de secretos:
 Reglas:
 
 - **Nunca** commitear secretos en claro: en local usa valores de desarrollo;
-  en dev/qa/prod siempre `vault.<NOMBRE-DEL-SECRETO>`.
+  en dev/qa/prod siempre `vault.<ruta.de.config>` (minúsculas, puntos). El loader
+  deriva el nombre del secreto uniendo la ruta con `-`: `vault.typeorm.password`
+  → secreto `typeorm-password`.
 - `NODE_ENV` selecciona el fichero (`local`, `dev`, `qa`, `prod`, `test`);
   un `NODE_ENV` desconocido debe romper el arranque, nunca degradar a otro entorno.

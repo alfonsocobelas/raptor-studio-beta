@@ -39,6 +39,6 @@ describe('kernel generator', () => {
     expect(types).not.toContain('SapSync')
 
     const prod = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/environments/prod.json', 'utf-8') ?? ''
-    expect(prod).toContain('vault.DB-PASSWORD')
+    expect(prod).toContain('vault.typeorm.password')
   })
 })

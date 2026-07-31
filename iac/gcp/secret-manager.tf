@@ -1,10 +1,10 @@
 # Espejo de key-vault.tf: secretos que resuelve @acc/infra-config-gcp/aws (marcadores vault.*).
 locals {
   secrets = {
-    "DB-PASSWORD" = random_password.db.result
-    "DB-HOST"     = google_sql_database_instance.main.connection_name
-    "DB-USER"     = var.db_username
-    "DB-NAME"     = var.db_name
+    "typeorm-password" = random_password.db.result
+    "typeorm-host"     = google_sql_database_instance.main.connection_name
+    "typeorm-username"     = var.db_username
+    "typeorm-database"     = var.db_name
   }
 }
 

@@ -27,7 +27,7 @@ describe('root generator', () => {
 
   it('keeps secrets out of the prod template (vault markers only)', () => {
     const prod = tree.read('tmp/generated/root/environments/prod.json', 'utf-8') ?? ''
-    expect(prod).toContain('vault.DB-PASSWORD')
+    expect(prod).toContain('vault.typeorm.password')
     expect(prod).not.toMatch(/password":\s*"(?!vault\.)/)
   })
 })

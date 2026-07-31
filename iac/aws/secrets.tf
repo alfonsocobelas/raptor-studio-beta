@@ -1,7 +1,7 @@
 # Espejo de key-vault.tf: los secretos que resuelve @acc/infra-config-aws (marcadores vault.*).
 # Nombres = claves vault.* de environments/*.json.
 resource "aws_secretsmanager_secret" "db_password" {
-  name = "${local.name}/DB-PASSWORD"
+  name = "${local.name}/typeorm-password"
 }
 
 resource "aws_secretsmanager_secret_version" "db_password" {
@@ -10,7 +10,7 @@ resource "aws_secretsmanager_secret_version" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_host" {
-  name = "${local.name}/DB-HOST"
+  name = "${local.name}/typeorm-host"
 }
 
 resource "aws_secretsmanager_secret_version" "db_host" {
@@ -19,7 +19,7 @@ resource "aws_secretsmanager_secret_version" "db_host" {
 }
 
 resource "aws_secretsmanager_secret" "db_user" {
-  name = "${local.name}/DB-USER"
+  name = "${local.name}/typeorm-username"
 }
 
 resource "aws_secretsmanager_secret_version" "db_user" {
@@ -28,7 +28,7 @@ resource "aws_secretsmanager_secret_version" "db_user" {
 }
 
 resource "aws_secretsmanager_secret" "db_name" {
-  name = "${local.name}/DB-NAME"
+  name = "${local.name}/typeorm-database"
 }
 
 resource "aws_secretsmanager_secret_version" "db_name" {
