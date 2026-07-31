@@ -3,15 +3,13 @@ import { Injectable, inject, resource, signal } from '@angular/core'
 import { ExportFormat, GarmentDto, RegisterGarmentDto, UpdateGarmentDto } from '@app/shared/domain'
 import { firstValueFrom } from 'rxjs'
 import { ColumnFilter, SortOrder } from '../../shared/components/data-table'
+import { API_PREFIX } from '../http/api.constants'
+import { OffsetPaginatedOutput } from './pagination.types'
 import { parseContentDispositionFilename } from './export-filename'
 
-export interface OffsetPaginatedOutput<T> {
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  items: T[]
-}
+export type { OffsetPaginatedOutput } from './pagination.types'
+
+const API_URL = `${API_PREFIX}/garments`
 
 export interface GarmentRequest {
   page: number
@@ -37,26 +35,26 @@ export class GarmentService {
     params: () => this.request(),
     loader: ({ params: req }) =>
       firstValueFrom(
-        this._http.get<OffsetPaginatedOutput<GarmentDto>>('/api/v1/garments', {
+        this._http.get<OffsetPaginatedOutput<GarmentDto>>(API_URL, {
           params: this.buildParams(req)
         })
       )
   })
 
   create(dto: RegisterGarmentDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/garments', dto)).then(() => {
+    return firstValueFrom(this._http.post<void>(API_URL, dto)).then(() => {
       this.garments.reload()
     })
   }
 
   update(id: string, dto: UpdateGarmentDto): Promise<void> {
-    return firstValueFrom(this._http.put<void>(`/api/v1/garments/${id}`, dto)).then(() => {
+    return firstValueFrom(this._http.put<void>(`${API_URL}/${id}`, dto)).then(() => {
       this.garments.reload()
     })
   }
 
   remove(id: string): Promise<void> {
-    return firstValueFrom(this._http.delete<void>(`/api/v1/garments/${id}`)).then(() => {
+    return firstValueFrom(this._http.delete<void>(`${API_URL}/${id}`)).then(() => {
       this.garments.reload()
     })
   }
@@ -66,7 +64,7 @@ export class GarmentService {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }
 
     const response = await firstValueFrom(
-      this._http.get('/api/v1/garments/export', { params, responseType: 'blob', observe: 'response' })
+      this._http.get(`${API_URL}/export`, { params, responseType: 'blob', observe: 'response' })
     )
 
     const blob = response.body as Blob

@@ -16,6 +16,15 @@ describe('buildSubstitutions', () => {
       expect(subs.plural).toBe('contracts')
       expect(subs.schemaName).toBe('sap_licensing')
     })
+
+    it('derives the api resource under the shared API_PREFIX', () => {
+      // WHEN
+      const subs = buildSubstitutions(contract)
+
+      // THEN — el servicio emitido compone `${API_PREFIX}/<apiResource>`
+      expect(subs.api).toBe('/api/v1/contracts')
+      expect(subs.apiResource).toBe('contracts')
+    })
   })
 
   describe('module-level flags', () => {

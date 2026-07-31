@@ -71,6 +71,8 @@ export interface ResourceSubstitutions {
   deleteLabelField: string
   dtoName: string
   api: string
+  /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
+  apiResource: string
   serviceSharedImports: string
   angularCoreImports: string
   /** Dialog bindings */
@@ -264,6 +266,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
     api: definition.api ?? `/api/v1/${definition.plural}`,
+    apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
     ...renderForm(definition, n.fileName),
