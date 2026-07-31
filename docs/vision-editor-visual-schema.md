@@ -65,7 +65,7 @@ Sin ese vocabulario, el lienzo no tiene nada que editar. Es la fase A y es útil
 |------|-------|-------|
 | A | **App/page-schema** + soporte en el generador | ✅ Hecha (spec 07, 2026-07-31): `defineApp` en `libs/schema`, registro `APPS`, `--app` en el generador de app con gate de equivalencia. |
 | B | **Visor read-only**: schema → preview vivo | ✅ Hecha (spec 08, 2026-07-31): `apps/studio` scaffoldeado con el propio generador; visor `/studio` con los componentes reales. |
-| C | **Interactividad**: resaltar al hover, borrar, drag&drop desde paleta | Angular CDK drag-drop. Todas las interacciones = mutaciones del schema. |
+| C | **Interactividad**: resaltar al hover, borrar, drag&drop desde paleta | ✅ Hecha (spec 09, 2026-07-31): toda interacción es una mutación del app-schema validada con `defineApp`. |
 | D | **Chat IA** que crea/edita el schema | Structured output validado contra el JSON Schema del resource/app-schema. Se confía en el gate, no en la IA. |
 | E | **Wizard de plugins** (db, infra hosting, auth, email…) | Casi trivial: formulario sobre las opciones que los generadores de app/plugins ya exponen. |
 | F | **Empaquetado escritorio** (Electron/Tauri) | Solo si hace falta. La web app cubre A–E; el acceso al disco/generador puede darlo un backend Nest local que invoque `nx generate`. |
