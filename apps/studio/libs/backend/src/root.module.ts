@@ -10,6 +10,7 @@ import { GarmentsModule } from './contexts/warehouse/modules/garments/garments.m
 import { SuppliersModule } from './contexts/warehouse/modules/suppliers/suppliers.module'
 import { MovementsModule } from './contexts/warehouse/modules/movements/movements.module'
 import { StudioChatModule } from './contexts/studio/chat/studio-chat.module'
+import { StudioGenerateModule } from './contexts/studio/generate/studio-generate.module'
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { StudioChatModule } from './contexts/studio/chat/studio-chat.module'
     GarmentsModule,
     SuppliersModule,
     MovementsModule,
-    StudioChatModule
+    StudioChatModule,
+    StudioGenerateModule
   ],
   providers: [
     {
