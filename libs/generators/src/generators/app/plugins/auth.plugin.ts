@@ -43,6 +43,7 @@ export const authPlugin = definePlugin({
     registerModule(tree, context)
     registerEntities(tree, context)
     addSchemaMigration(tree, context)
+    registerTestRepositories(tree, context)
     wireFrontend(tree, context)
   },
 
@@ -111,6 +112,24 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
     )
     tree.delete(path.join(app, 'dev-auth.ts'))
   }
+}
+
+/**
+ * Registra el repositorio de usuarios en TestRepositoriesModule: los tests de
+ * integración de IAM resuelven sus providers por ahí, igual que los de negocio.
+ */
+function registerTestRepositories(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.root, 'libs/backend/tests/infrastructure/test-repositories.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('TypeOrmUserRepository')) {
+    return
+  }
+  const userRepoImport =
+    "import { TypeOrmUserRepository } from '../../src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-user.repository'"
+  const wired = source
+    .replace(/\n\nconst repositories = \[/, `\n${userRepoImport}\n\nconst repositories = [`)
+    .replace(/(const repositories = \[[\s\S]*?)\n\]/, '$1,\n  TypeOrmUserRepository\n]')
+  tree.write(modulePath, wired)
 }
 
 /** Cablea AuthModule en el composition root que emitió el generador de root. */

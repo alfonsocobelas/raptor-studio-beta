@@ -3,8 +3,9 @@ import { SharedPersistenceModule } from '../../src/contexts/shared/infrastructur
 import { TypeOrmGarmentRepository } from '../../src/contexts/warehouse/modules/garments/infrastructure/persistence/typeorm/typeorm-garment.repository'
 import { TypeOrmSupplierRepository } from '../../src/contexts/warehouse/modules/suppliers/infrastructure/persistence/typeorm/typeorm-supplier.repository'
 import { TypeOrmMovementRepository } from '../../src/contexts/warehouse/modules/movements/infrastructure/persistence/typeorm/typeorm-movement.repository'
+import { TypeOrmUserRepository } from '../../src/contexts/iam/modules/auth/infrastructure/persistence/typeorm/typeorm-user.repository'
 
-const repositories = [TypeOrmGarmentRepository, TypeOrmSupplierRepository, TypeOrmMovementRepository]
+const repositories = [TypeOrmGarmentRepository, TypeOrmSupplierRepository, TypeOrmMovementRepository, TypeOrmUserRepository]
 
 @Module({
   imports: [SharedPersistenceModule],
