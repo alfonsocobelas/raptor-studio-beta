@@ -3,15 +3,13 @@ import { Injectable, inject, resource, signal } from '@angular/core'
 import { CustomerDto, ExportFormat, RegisterCustomerDto, UpdateCustomerDto } from '@sap-licenses/shared/domain'
 import { firstValueFrom } from 'rxjs'
 import { ColumnFilter, SortOrder } from '../../shared/components/data-table'
+import { API_PREFIX } from '../http/api.constants'
+import { OffsetPaginatedOutput } from './pagination.types'
 import { parseContentDispositionFilename } from './export-filename'
 
-export interface OffsetPaginatedOutput<T> {
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  items: T[]
-}
+export type { OffsetPaginatedOutput } from './pagination.types'
+
+const API_URL = `${API_PREFIX}/customers`
 
 export interface CustomerRequest {
   page: number
@@ -37,20 +35,20 @@ export class CustomerService {
     params: () => this.request(),
     loader: ({ params: req }) =>
       firstValueFrom(
-        this._http.get<OffsetPaginatedOutput<CustomerDto>>('/api/v1/customers', {
+        this._http.get<OffsetPaginatedOutput<CustomerDto>>(API_URL, {
           params: this.buildParams(req)
         })
       )
   })
 
   create(dto: RegisterCustomerDto): Promise<void> {
-    return firstValueFrom(this._http.post<void>('/api/v1/customers', dto)).then(() => {
+    return firstValueFrom(this._http.post<void>(API_URL, dto)).then(() => {
       this.customers.reload()
     })
   }
 
   update(id: string, dto: UpdateCustomerDto): Promise<void> {
-    return firstValueFrom(this._http.put<void>(`/api/v1/customers/${id}`, dto)).then(() => {
+    return firstValueFrom(this._http.put<void>(`${API_URL}/${id}`, dto)).then(() => {
       this.customers.reload()
     })
   }
@@ -60,7 +58,7 @@ export class CustomerService {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }
 
     const response = await firstValueFrom(
-      this._http.get('/api/v1/customers/export', { params, responseType: 'blob', observe: 'response' })
+      this._http.get(`${API_URL}/export`, { params, responseType: 'blob', observe: 'response' })
     )
 
     const blob = response.body as Blob

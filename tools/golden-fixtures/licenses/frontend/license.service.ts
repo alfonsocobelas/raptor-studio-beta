@@ -3,15 +3,13 @@ import { Injectable, inject, resource, signal } from '@angular/core'
 import { ExportFormat, LicenseWithConsumptionDto } from '@sap-licenses/shared/domain'
 import { firstValueFrom } from 'rxjs'
 import { ColumnFilter, SortOrder } from '../../shared/components/data-table'
+import { API_PREFIX } from '../http/api.constants'
+import { OffsetPaginatedOutput } from './pagination.types'
 import { parseContentDispositionFilename } from './export-filename'
 
-export interface OffsetPaginatedOutput<T> {
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  items: T[]
-}
+export type { OffsetPaginatedOutput } from './pagination.types'
+
+const API_URL = `${API_PREFIX}/licenses`
 
 export interface LicenseRequest {
   page: number
@@ -37,7 +35,7 @@ export class LicenseService {
     params: () => this.request(),
     loader: ({ params: req }) =>
       firstValueFrom(
-        this._http.get<OffsetPaginatedOutput<LicenseWithConsumptionDto>>('/api/v1/licenses', {
+        this._http.get<OffsetPaginatedOutput<LicenseWithConsumptionDto>>(API_URL, {
           params: this.buildParams(req)
         })
       )
@@ -48,7 +46,7 @@ export class LicenseService {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }
 
     const response = await firstValueFrom(
-      this._http.get('/api/v1/licenses/export', { params, responseType: 'blob', observe: 'response' })
+      this._http.get(`${API_URL}/export`, { params, responseType: 'blob', observe: 'response' })
     )
 
     const blob = response.body as Blob
