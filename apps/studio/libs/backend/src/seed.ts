@@ -4,33 +4,21 @@ import { NestFactory } from '@nestjs/core'
 import { CoreConfigModule } from './contexts/shared/infrastructure/config/config.module'
 import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.module'
 import { SharedPersistenceModule } from './contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
-import { CustomersModule } from './contexts/sap-licensing/modules/customers/customers.module'
-import { RegisterCustomerUseCase } from './contexts/sap-licensing/modules/customers/application/use-cases/register-customer-usecase.service'
-import { SEED_CUSTOMERS } from './contexts/sap-licensing/modules/customers/infrastructure/seed/local-seed.fixtures'
-import { CustomerLocalSeeder } from './contexts/sap-licensing/modules/customers/infrastructure/seed/local-seeder'
-import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
-import { RegisterContractUseCase } from './contexts/sap-licensing/modules/contracts/application/use-cases/register-contract-usecase.service'
-import { SEED_CONTRACTS } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seed.fixtures'
-import { ContractLocalSeeder } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seeder'
-import { LicensesModule } from './contexts/sap-licensing/modules/licenses/licenses.module'
-import { RegisterLicenseUseCase } from './contexts/sap-licensing/modules/licenses/application/use-cases/register-license-usecase.service'
-import { SEED_LICENSES } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seed.fixtures'
-import { LicenseLocalSeeder } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seeder'
-import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
-import { RegisterProjectUseCase } from './contexts/sap-licensing/modules/projects/application/use-cases/register-project-usecase.service'
-import { SEED_PROJECTS } from './contexts/sap-licensing/modules/projects/infrastructure/seed/local-seed.fixtures'
-import { ProjectLocalSeeder } from './contexts/sap-licensing/modules/projects/infrastructure/seed/local-seeder'
+import { GarmentsModule } from './contexts/warehouse/modules/garments/garments.module'
+import { RegisterGarmentUseCase } from './contexts/warehouse/modules/garments/application/use-cases/register-garment-usecase.service'
+import { SEED_GARMENTS } from './contexts/warehouse/modules/garments/infrastructure/seed/local-seed.fixtures'
+import { GarmentLocalSeeder } from './contexts/warehouse/modules/garments/infrastructure/seed/local-seeder'
+import { SuppliersModule } from './contexts/warehouse/modules/suppliers/suppliers.module'
+import { RegisterSupplierUseCase } from './contexts/warehouse/modules/suppliers/application/use-cases/register-supplier-usecase.service'
+import { SEED_SUPPLIERS } from './contexts/warehouse/modules/suppliers/infrastructure/seed/local-seed.fixtures'
+import { SupplierLocalSeeder } from './contexts/warehouse/modules/suppliers/infrastructure/seed/local-seeder'
+import { MovementsModule } from './contexts/warehouse/modules/movements/movements.module'
+import { RegisterMovementUseCase } from './contexts/warehouse/modules/movements/application/use-cases/register-movement-usecase.service'
+import { SEED_MOVEMENTS } from './contexts/warehouse/modules/movements/infrastructure/seed/local-seed.fixtures'
+import { MovementLocalSeeder } from './contexts/warehouse/modules/movements/infrastructure/seed/local-seeder'
 
 @Module({
-  imports: [
-    CoreConfigModule,
-    LoggerModule,
-    SharedPersistenceModule,
-    CustomersModule,
-    ContractsModule,
-    LicensesModule,
-    ProjectsModule
-  ]
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, GarmentsModule, SuppliersModule, MovementsModule]
 })
 class SeedModule {}
 
@@ -46,21 +34,17 @@ async function bootstrap(): Promise<void> {
 
   const context = await NestFactory.createApplicationContext(SeedModule, { logger: ['error', 'warn'] })
   try {
-    const customersSummary = await new CustomerLocalSeeder(context.get(RegisterCustomerUseCase)).seed(SEED_CUSTOMERS)
+    const garmentsSummary = await new GarmentLocalSeeder(context.get(RegisterGarmentUseCase)).seed(SEED_GARMENTS)
     console.log(
-      `[seed] customers: +${customersSummary.customersCreated} created, ${customersSummary.customersSkipped} skipped`
+      `[seed] garments: +${garmentsSummary.garmentsCreated} created, ${garmentsSummary.garmentsSkipped} skipped`
     )
-    const contractsSummary = await new ContractLocalSeeder(context.get(RegisterContractUseCase)).seed(SEED_CONTRACTS)
+    const suppliersSummary = await new SupplierLocalSeeder(context.get(RegisterSupplierUseCase)).seed(SEED_SUPPLIERS)
     console.log(
-      `[seed] contracts: +${contractsSummary.contractsCreated} created, ${contractsSummary.contractsSkipped} skipped`
+      `[seed] suppliers: +${suppliersSummary.suppliersCreated} created, ${suppliersSummary.suppliersSkipped} skipped`
     )
-    const licensesSummary = await new LicenseLocalSeeder(context.get(RegisterLicenseUseCase)).seed(SEED_LICENSES)
+    const movementsSummary = await new MovementLocalSeeder(context.get(RegisterMovementUseCase)).seed(SEED_MOVEMENTS)
     console.log(
-      `[seed] licenses: +${licensesSummary.licensesCreated} created, ${licensesSummary.licensesSkipped} skipped`
-    )
-    const projectsSummary = await new ProjectLocalSeeder(context.get(RegisterProjectUseCase)).seed(SEED_PROJECTS)
-    console.log(
-      `[seed] projects: +${projectsSummary.projectsCreated} created, ${projectsSummary.projectsSkipped} skipped`
+      `[seed] movements: +${movementsSummary.movementsCreated} created, ${movementsSummary.movementsSkipped} skipped`
     )
   } finally {
     await context.close()

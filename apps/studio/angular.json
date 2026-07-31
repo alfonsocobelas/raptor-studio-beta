@@ -14,17 +14,26 @@
             "browser": "apps/frontend-app/src/main.ts",
             "index": "apps/frontend-app/src/index.html",
             "tsConfig": "apps/frontend-app/tsconfig.app.json",
-            "styles": ["apps/frontend-app/src/styles.css"],
-            "polyfills": []
+            "styles": [
+              "apps/frontend-app/src/styles.css"
+            ],
+            "polyfills": [],
+            "preserveSymlinks": true
           },
           "configurations": {
-            "development": { "optimization": false, "sourceMap": true }
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
           },
           "defaultConfiguration": "development"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": { "buildTarget": "frontend-app:build", "port": 4200 }
+          "options": {
+            "buildTarget": "frontend-app:build",
+            "port": 4200
+          }
         }
       }
     }

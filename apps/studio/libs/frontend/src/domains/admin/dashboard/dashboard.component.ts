@@ -22,30 +22,24 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
       } @else if (service.loadError()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los datos</p>
       } @else {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <app-kpi-card
-            title="Clientes"
-            [value]="service.customersTotal()"
-            subtitle="Gestión de clientes SAP"
-            testId="kpi-customers"
+            title="Prendas"
+            [value]="service.garmentsTotal()"
+            subtitle="Inventario del almacén"
+            testId="kpi-garments"
           />
           <app-kpi-card
-            title="Contratos"
-            [value]="service.contractsTotal()"
-            subtitle="Gestión de contratos SAP y acuerdos de licenciamiento"
-            testId="kpi-contracts"
+            title="Proveedores"
+            [value]="service.suppliersTotal()"
+            subtitle="Proveedores del almacén"
+            testId="kpi-suppliers"
           />
           <app-kpi-card
-            title="Licencias"
-            [value]="service.licensesTotal()"
-            subtitle="Observabilidad del parque de licencias SAP"
-            testId="kpi-licenses"
-          />
-          <app-kpi-card
-            title="Proyectos"
-            [value]="service.projectsTotal()"
-            subtitle="Proyectos de implementación SAP asociados a clientes"
-            testId="kpi-projects"
+            title="Movimientos"
+            [value]="service.movementsTotal()"
+            subtitle="Entradas y salidas de stock"
+            testId="kpi-movements"
           />
         </div>
 

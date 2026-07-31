@@ -1,38 +1,36 @@
 import { Routes } from '@angular/router'
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+  { path: '', pathMatch: 'full', redirectTo: 'studio' },
+  {
+    path: 'studio',
+    loadComponent: () =>
+      import('@app/frontend/domains/studio/preview/studio-preview.component').then(m => m.StudioPreviewComponent)
+  },
   {
     path: 'dashboard',
     loadComponent: () =>
       import('@app/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
-    path: 'sap-licensing/customers',
+    path: 'warehouse/garments',
     loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/customers/customers-list.component').then(
-        m => m.CustomersListComponent
+      import('@app/frontend/domains/admin/bounded-contexts/warehouse/features/garments/garments-list.component').then(
+        m => m.GarmentsListComponent
       )
   },
   {
-    path: 'sap-licensing/contracts',
+    path: 'warehouse/suppliers',
     loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/contracts/contracts-list.component').then(
-        m => m.ContractsListComponent
+      import('@app/frontend/domains/admin/bounded-contexts/warehouse/features/suppliers/suppliers-list.component').then(
+        m => m.SuppliersListComponent
       )
   },
   {
-    path: 'sap-licensing/licenses',
+    path: 'warehouse/movements',
     loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/licenses/licenses-list.component').then(
-        m => m.LicensesListComponent
-      )
-  },
-  {
-    path: 'sap-licensing/projects',
-    loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-list.component').then(
-        m => m.ProjectsListComponent
+      import('@app/frontend/domains/admin/bounded-contexts/warehouse/features/movements/movements-list.component').then(
+        m => m.MovementsListComponent
       )
   }
 ]

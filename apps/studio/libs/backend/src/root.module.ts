@@ -6,10 +6,9 @@ import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.mod
 import { LoggerInterceptor } from './contexts/shared/infrastructure/interceptors/logger.interceptor'
 import { GlobalExceptionFilter } from './contexts/shared/infrastructure/filters/global-exception.filter'
 import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
-import { CustomersModule } from './contexts/sap-licensing/modules/customers/customers.module'
-import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
-import { LicensesModule } from './contexts/sap-licensing/modules/licenses/licenses.module'
-import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
+import { GarmentsModule } from './contexts/warehouse/modules/garments/garments.module'
+import { SuppliersModule } from './contexts/warehouse/modules/suppliers/suppliers.module'
+import { MovementsModule } from './contexts/warehouse/modules/movements/movements.module'
 
 @Module({
   imports: [
@@ -17,10 +16,9 @@ import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projec
     LoggerModule,
     SharedPersistenceModule,
     HealthModule,
-    CustomersModule,
-    ContractsModule,
-    LicensesModule,
-    ProjectsModule
+    GarmentsModule,
+    SuppliersModule,
+    MovementsModule
   ],
   providers: [
     {

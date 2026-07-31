@@ -1,16 +1,10 @@
 import { Module } from '@nestjs/common'
 import { SharedPersistenceModule } from '../../src/contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
-import { TypeOrmCustomerRepository } from '../../src/contexts/sap-licensing/modules/customers/infrastructure/persistence/typeorm/typeorm-customer.repository'
-import { TypeOrmContractRepository } from '../../src/contexts/sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.repository'
-import { TypeOrmLicenseRepository } from '../../src/contexts/sap-licensing/modules/licenses/infrastructure/persistence/typeorm/typeorm-license.repository'
-import { TypeOrmProjectRepository } from '../../src/contexts/sap-licensing/modules/projects/infrastructure/persistence/typeorm/typeorm-project.repository'
+import { TypeOrmGarmentRepository } from '../../src/contexts/warehouse/modules/garments/infrastructure/persistence/typeorm/typeorm-garment.repository'
+import { TypeOrmSupplierRepository } from '../../src/contexts/warehouse/modules/suppliers/infrastructure/persistence/typeorm/typeorm-supplier.repository'
+import { TypeOrmMovementRepository } from '../../src/contexts/warehouse/modules/movements/infrastructure/persistence/typeorm/typeorm-movement.repository'
 
-const repositories = [
-  TypeOrmCustomerRepository,
-  TypeOrmContractRepository,
-  TypeOrmLicenseRepository,
-  TypeOrmProjectRepository
-]
+const repositories = [TypeOrmGarmentRepository, TypeOrmSupplierRepository, TypeOrmMovementRepository]
 
 @Module({
   imports: [SharedPersistenceModule],

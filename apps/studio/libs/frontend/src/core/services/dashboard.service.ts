@@ -15,28 +15,23 @@ interface PaginatedTotal {
 export class DashboardService {
   private readonly _http = inject(HttpClient)
 
-  readonly customers = this._total('/api/v1/customers')
-  readonly customersTotal = computed(() => (this.customers.hasValue() ? this.customers.value().total : 0))
+  readonly garments = this._total('/api/v1/garments')
+  readonly garmentsTotal = computed(() => (this.garments.hasValue() ? this.garments.value().total : 0))
 
-  readonly contracts = this._total('/api/v1/contracts')
-  readonly contractsTotal = computed(() => (this.contracts.hasValue() ? this.contracts.value().total : 0))
+  readonly suppliers = this._total('/api/v1/suppliers')
+  readonly suppliersTotal = computed(() => (this.suppliers.hasValue() ? this.suppliers.value().total : 0))
 
-  readonly licenses = this._total('/api/v1/licenses')
-  readonly licensesTotal = computed(() => (this.licenses.hasValue() ? this.licenses.value().total : 0))
-
-  readonly projects = this._total('/api/v1/projects')
-  readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
+  readonly movements = this._total('/api/v1/movements')
+  readonly movementsTotal = computed(() => (this.movements.hasValue() ? this.movements.value().total : 0))
 
   readonly loading = computed(
-    () =>
-      this.customers.isLoading() || this.contracts.isLoading() || this.licenses.isLoading() || this.projects.isLoading()
+    () => this.garments.isLoading() || this.suppliers.isLoading() || this.movements.isLoading()
   )
   readonly loadError = computed(
     () =>
-      this.customers.error() !== undefined ||
-      this.contracts.error() !== undefined ||
-      this.licenses.error() !== undefined ||
-      this.projects.error() !== undefined
+      this.garments.error() !== undefined ||
+      this.suppliers.error() !== undefined ||
+      this.movements.error() !== undefined
   )
 
   private _total(api: string) {
