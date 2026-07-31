@@ -2,7 +2,7 @@ import { Nullable } from '../../../../src/contexts/shared/domain/types'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { Project } from '../../../../src/contexts/sap-licensing/modules/projects/domain/project'
 import { ProjectRepository } from '../../../../src/contexts/sap-licensing/modules/projects/domain/project-repository'
-import { ProjectName } from '../../../../src/contexts/sap-licensing/shared/domain/value-objects/project-name.vo'
+import { ProjectName } from '../../../../src/contexts/sap-licensing/modules/projects/domain/value-objects/project-name.vo'
 import { ProjectId } from '../../../../src/contexts/shared/domain/value-objects/projects/project-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
@@ -13,6 +13,10 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   save(project: Project): Promise<void> {
     return this.getMock('save')(project)
+  }
+
+  remove(projectId: ProjectId): Promise<void> {
+    return this.getMock('remove')(projectId)
   }
 
   get(projectId: ProjectId): Promise<Nullable<Project>> {
@@ -86,6 +90,10 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   whenRegisterFailsOnce(error: Error): void {
     this.getMock('register').mockRejectedValueOnce(error)
+  }
+
+  whenRemoveSuccess(): void {
+    this.setMockResult('remove', undefined)
   }
 
   matchingCriteria(): Criteria {

@@ -1,30 +1,34 @@
 import { Nullable } from '../../../../src/contexts/shared/domain/types'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
-import { Supplier } from '../../../../src/contexts/warehouse/modules/suppliers/domain/supplier'
-import { SupplierRepository } from '../../../../src/contexts/warehouse/modules/suppliers/domain/supplier-repository'
-import { SupplierTaxId } from '../../../../src/contexts/warehouse/shared/domain/value-objects/supplier-tax-id.vo'
-import { SupplierId } from '../../../../src/contexts/shared/domain/value-objects/suppliers/supplier-id.vo'
+import { Movement } from '../../../../src/contexts/warehouse/modules/movements/domain/movement'
+import { MovementRepository } from '../../../../src/contexts/warehouse/modules/movements/domain/movement-repository'
+import { MovementReference } from '../../../../src/contexts/warehouse/modules/movements/domain/value-objects/movement-reference.vo'
+import { MovementId } from '../../../../src/contexts/shared/domain/value-objects/movements/movement-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
-export class SupplierRepositoryMock extends MockRepository<Supplier> implements SupplierRepository {
-  register(supplier: Supplier): Promise<void> {
-    return this.getMock('register')(supplier)
+export class MovementRepositoryMock extends MockRepository<Movement> implements MovementRepository {
+  register(movement: Movement): Promise<void> {
+    return this.getMock('register')(movement)
   }
 
-  save(supplier: Supplier): Promise<void> {
-    return this.getMock('save')(supplier)
+  save(movement: Movement): Promise<void> {
+    return this.getMock('save')(movement)
   }
 
-  get(supplierId: SupplierId): Promise<Nullable<Supplier>> {
-    return this.getMock('get')(supplierId)
+  remove(movementId: MovementId): Promise<void> {
+    return this.getMock('remove')(movementId)
   }
 
-  matching(criteria: Criteria): Promise<Supplier[]> {
+  get(movementId: MovementId): Promise<Nullable<Movement>> {
+    return this.getMock('get')(movementId)
+  }
+
+  matching(criteria: Criteria): Promise<Movement[]> {
     return this.getMock('matching')(criteria)
   }
 
-  findByTaxId(taxId: SupplierTaxId): Promise<Nullable<Supplier>> {
-    return this.getMock('findByTaxId')(taxId)
+  findByReference(reference: MovementReference): Promise<Nullable<Movement>> {
+    return this.getMock('findByReference')(reference)
   }
 
   exists(criteria: Criteria): Promise<boolean> {
@@ -36,26 +40,26 @@ export class SupplierRepositoryMock extends MockRepository<Supplier> implements 
   }
 
   // helpers
-  givenFound(supplier: Supplier): void {
-    this.setMockResult('get', supplier)
+  givenFound(movement: Movement): void {
+    this.setMockResult('get', movement)
   }
 
   givenNotFound(): void {
     this.setMockResult('get', null)
   }
 
-  givenMatching(suppliers: Supplier[]): void {
-    this.setMockResult('matching', suppliers)
+  givenMatching(movements: Movement[]): void {
+    this.setMockResult('matching', movements)
   }
 
-  givenMatchingSequence(...results: Supplier[][]): void {
+  givenMatchingSequence(...results: Movement[][]): void {
     const mock = this.getMock('matching')
     mock.mockReset()
     results.forEach(result => mock.mockResolvedValueOnce(result))
   }
 
-  givenByTaxId(supplier: Nullable<Supplier>): void {
-    this.setMockResult('findByTaxId', supplier)
+  givenByReference(movement: Nullable<Movement>): void {
+    this.setMockResult('findByReference', movement)
   }
 
   givenAlreadyExists(): void {
@@ -88,6 +92,10 @@ export class SupplierRepositoryMock extends MockRepository<Supplier> implements 
     this.getMock('register').mockRejectedValueOnce(error)
   }
 
+  whenRemoveSuccess(): void {
+    this.setMockResult('remove', undefined)
+  }
+
   matchingCriteria(): Criteria {
     const calls = this.getMock('matching').mock.calls
     return calls[calls.length - 1][0] as Criteria
@@ -98,12 +106,12 @@ export class SupplierRepositoryMock extends MockRepository<Supplier> implements 
     return calls[calls.length - 1][0] as Criteria
   }
 
-  registeredSupplier(): Supplier {
-    return this.getMock('register').mock.calls[0][0] as Supplier
+  registeredMovement(): Movement {
+    return this.getMock('register').mock.calls[0][0] as Movement
   }
 
-  savedSupplier(): Supplier {
+  savedMovement(): Movement {
     const calls = this.getMock('save').mock.calls
-    return calls[calls.length - 1][0] as Supplier
+    return calls[calls.length - 1][0] as Movement
   }
 }

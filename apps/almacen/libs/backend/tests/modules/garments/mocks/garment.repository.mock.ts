@@ -2,7 +2,7 @@ import { Nullable } from '../../../../src/contexts/shared/domain/types'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { Garment } from '../../../../src/contexts/warehouse/modules/garments/domain/garment'
 import { GarmentRepository } from '../../../../src/contexts/warehouse/modules/garments/domain/garment-repository'
-import { Sku } from '../../../../src/contexts/warehouse/shared/domain/value-objects/sku.vo'
+import { Sku } from '../../../../src/contexts/warehouse/modules/garments/domain/value-objects/sku.vo'
 import { GarmentId } from '../../../../src/contexts/shared/domain/value-objects/garments/garment-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
@@ -13,6 +13,10 @@ export class GarmentRepositoryMock extends MockRepository<Garment> implements Ga
 
   save(garment: Garment): Promise<void> {
     return this.getMock('save')(garment)
+  }
+
+  remove(garmentId: GarmentId): Promise<void> {
+    return this.getMock('remove')(garmentId)
   }
 
   get(garmentId: GarmentId): Promise<Nullable<Garment>> {
@@ -86,6 +90,10 @@ export class GarmentRepositoryMock extends MockRepository<Garment> implements Ga
 
   whenRegisterFailsOnce(error: Error): void {
     this.getMock('register').mockRejectedValueOnce(error)
+  }
+
+  whenRemoveSuccess(): void {
+    this.setMockResult('remove', undefined)
   }
 
   matchingCriteria(): Criteria {

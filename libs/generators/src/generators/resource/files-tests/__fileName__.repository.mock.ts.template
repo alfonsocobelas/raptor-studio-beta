@@ -3,7 +3,11 @@ import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { <%- className %> } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>'
 import { <%- className %>Repository } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-repository'
 <%_ domainTests.uniqueFinders.forEach(f => { _%>
-import { <%- f.voName %> } from '../../../../src/contexts/<%- context %>/shared/domain/value-objects/<%- f.voName.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()) %>.vo'
+<%_ if (f.shared) { _%>
+import { <%- f.voName %> } from '../../../../src/contexts/<%- context %>/shared/domain/value-objects/<%- f.voFileName %>.vo'
+<%_ } else { _%>
+import { <%- f.voName %> } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/value-objects/<%- f.voFileName %>.vo'
+<%_ } _%>
 <%_ }) _%>
 import { <%- className %>Id } from '../../../../src/contexts/shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
@@ -16,6 +20,12 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   save(<%- propertyName %>: <%- className %>): Promise<void> {
     return this.getMock('save')(<%- propertyName %>)
   }
+<%_ if (app.removes) { _%>
+
+  remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
+    return this.getMock('remove')(<%- propertyName %>Id)
+  }
+<%_ } _%>
 
   get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
     return this.getMock('get')(<%- propertyName %>Id)
@@ -93,6 +103,12 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   whenRegisterFailsOnce(error: Error): void {
     this.getMock('register').mockRejectedValueOnce(error)
   }
+<%_ if (app.removes) { _%>
+
+  whenRemoveSuccess(): void {
+    this.setMockResult('remove', undefined)
+  }
+<%_ } _%>
 
   matchingCriteria(): Criteria {
     const calls = this.getMock('matching').mock.calls

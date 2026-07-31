@@ -109,11 +109,19 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
         : path.join(frontendSrc, 'domains/admin/bounded-contexts', model.context, 'features', model.plural)
       move(tree, path.join(staged, file), path.join(target, file))
     }
-    relocate(
-      tree,
-      path.join(staging, 'backend-tests'),
-      path.join(root, 'libs/backend/tests/modules', model.plural, 'domain/mothers')
-    )
+    // Layout canónico de tests: el mock del repositorio vive en mocks/ (4 niveles hasta
+    // la raíz del backend), mother/builder en domain/mothers/ y los property-tests de VOs
+    // en domain/value-objects/ (5 niveles) — las profundidades de import lo exigen.
+    const stagedTests = path.join(staging, 'backend-tests')
+    const testsRoot = path.join(root, 'libs/backend/tests/modules', model.plural)
+    relocate(tree, path.join(stagedTests, 'value-objects'), path.join(testsRoot, 'domain/value-objects'))
+    for (const file of tree.children(stagedTests)) {
+      if (!tree.isFile(path.join(stagedTests, file))) {
+        continue
+      }
+      const target = file.includes('.repository.mock.') ? path.join(testsRoot, 'mocks') : path.join(testsRoot, 'domain/mothers')
+      move(tree, path.join(stagedTests, file), path.join(target, file))
+    }
     tree.delete(staging)
   }
   tree.delete(path.join(root, '.gen'))

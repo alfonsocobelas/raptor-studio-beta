@@ -8,7 +8,7 @@ import { FieldDefinition, ResourceDefinition } from '@acc/schema'
  */
 export interface DomainTestBindings {
   emit: boolean
-  uniqueFinders: { method: string; param: string; voName: string; givenName: string }[]
+  uniqueFinders: { method: string; param: string; voName: string; voFileName: string; shared: boolean; givenName: string }[]
   portImports: string[]
   builderImports: string[]
   builderDefaultLines: string[]
@@ -77,6 +77,9 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     method: `findBy${cap(c.name)}`,
     param: c.name,
     voName: c.voName,
+    voFileName: c.voName.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()),
+    // el import del mock debe apuntar a donde vive el VO: módulo (vo) o shared del contexto (voShared)
+    shared: Boolean(c.field.voShared),
     givenName: `givenBy${cap(c.name)}`
   }))
 
