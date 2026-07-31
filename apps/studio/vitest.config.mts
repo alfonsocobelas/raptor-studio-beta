@@ -22,7 +22,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['libs/frontend/src/**/*.spec.ts'],
+    include: ['libs/frontend/src/**/*.spec.ts', 'libs/shared/domain/src/**/*.spec.ts'],
     setupFiles: ['libs/frontend/src/test-setup.ts']
   }
 })

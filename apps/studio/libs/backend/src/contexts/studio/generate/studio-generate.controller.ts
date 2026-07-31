@@ -4,8 +4,9 @@ import { execFile } from 'child_process'
 import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
-import type { AppDefinition } from '@acc/schema'
-import { validateProposal } from '../chat/validate-proposal'
+import { draftToResource } from '@app/shared/domain'
+import { validateDesign } from '../chat/validate-proposal'
+import type { DesignPayload } from '../chat/chat.types'
 import {
   DATABASE_VALUES,
   PLUGIN_VALUES,
@@ -28,7 +29,7 @@ class GenerateRequestDto {
   plugins!: string[]
 
   @IsObject()
-  schema!: AppDefinition
+  design!: DesignPayload
 
   @IsOptional()
   @IsBoolean()
@@ -56,13 +57,20 @@ export class StudioGenerateController {
 
   @Post()
   async generate(@Body() body: GenerateRequestDto): Promise<GenerateResult> {
-    const schema = (() => {
+    const design = (() => {
       try {
-        return validateProposal({ ...body.schema, name: body.name })
+        return validateDesign({ ...body.design, appName: body.name })
       } catch (e) {
-        throw new BadRequestException(`El app-schema no pasa el gate: ${e instanceof Error ? e.message : String(e)}`)
+        throw new BadRequestException(`El diseño no pasa el gate: ${e instanceof Error ? e.message : String(e)}`)
       }
     })()
+    // el artefacto de --appFile: app-schema + resource-schemas EXPANDIDOS
+    const appFileContent = {
+      schemaVersion: 1,
+      name: body.name,
+      pages: design.pages,
+      resources: design.resources.map(r => draftToResource(r, body.name))
+    }
 
     const appFile = path.join(mkdtempSync(path.join(tmpdir(), 'studio-gen-')), `${body.name}.app.json`)
     let args: string[]
@@ -71,7 +79,7 @@ export class StudioGenerateController {
     } catch (e) {
       throw new BadRequestException(e instanceof Error ? e.message : String(e))
     }
-    writeFileSync(appFile, JSON.stringify(schema, null, 2))
+    writeFileSync(appFile, JSON.stringify(appFileContent, null, 2))
 
     return new Promise<GenerateResult>(resolve => {
       execFile(

@@ -1,14 +1,21 @@
-import { defineApp, type AppDefinition } from '@acc/schema'
+import { defineApp, defineResource } from '@acc/schema'
+import { draftToResource } from '@app/shared/domain'
 import { composeApp } from '@acc/generators/src/generators/app/composition'
-import { MODELS } from '@acc/generators/src/generators/resource/models/registry'
+import type { DesignPayload } from './chat.types'
 
 /**
- * Gate determinista del chat: validación estructural (defineApp) + referencias
- * contra el catálogo real (composeApp/MODELS). Lanza si la propuesta no es
- * generable; el controller lo traduce a 422 y el lienzo no cambia.
+ * Gate determinista del diseño: cada entidad draft debe expandir a un
+ * resource-schema válido (defineResource) y las páginas deben componer contra
+ * ESAS entidades (defineApp + composeApp). Lanza si algo no es generable.
  */
-export function validateProposal(schema: AppDefinition): AppDefinition {
-  const validated = defineApp(JSON.parse(JSON.stringify(schema)) as AppDefinition)
-  composeApp(validated, MODELS)
-  return validated
+export function validateDesign(design: DesignPayload): DesignPayload {
+  const clean: DesignPayload = JSON.parse(JSON.stringify(design)) as DesignPayload
+  const registry = Object.fromEntries(
+    clean.resources.map(r => [r.name, defineResource(draftToResource(r, clean.appName))])
+  )
+  if (clean.pages.length) {
+    const definition = defineApp({ schemaVersion: 1, name: clean.appName, pages: clean.pages })
+    composeApp(definition, registry)
+  }
+  return clean
 }

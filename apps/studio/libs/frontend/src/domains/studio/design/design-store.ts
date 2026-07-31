@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core'
 import { defineApp, defineResource, type AppDefinition, type DashboardPage, type ResourceDefinition } from '@acc/schema'
 import { composeApp, type AppComposition } from '@acc/generators/src/generators/app/composition'
-import { draftToResource, newDraftResource, type DraftField, type DraftResource } from './draft-resource'
+import { draftToResource, newDraftResource, type DraftField, type DraftResource } from '@app/shared/domain'
 
 /** El diseño completo: nombre de app + entidades dibujadas + composición de páginas. */
 export interface Design {

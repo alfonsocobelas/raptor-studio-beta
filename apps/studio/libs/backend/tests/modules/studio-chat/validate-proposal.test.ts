@@ -1,30 +1,47 @@
-import type { AppDefinition } from '@acc/schema'
-import { validateProposal } from '@app/backend/contexts/studio/chat/validate-proposal'
+import { validateDesign } from '@app/backend/contexts/studio/chat/validate-proposal'
+import type { DesignPayload } from '@app/backend/contexts/studio/chat/chat.types'
 
-describe('validateProposal — gate determinista del chat', () => {
-  it('acepta un app-schema válido contra el catálogo real', () => {
-    const schema: AppDefinition = {
-      schemaVersion: 1,
-      name: 'boutique',
-      pages: [{ kind: 'resource', resource: 'garment' }]
+const vehiculo = {
+  name: 'vehiculo',
+  plural: 'vehiculos',
+  labelSingular: 'Vehículo',
+  labelPlural: 'Vehículos',
+  gender: 'm' as const,
+  fields: [{ name: 'matricula', label: 'Matrícula', type: 'string' as const }]
+}
+
+describe('validateDesign — gate determinista del diseño', () => {
+  it('acepta un diseño válido con entidades nuevas', () => {
+    const design: DesignPayload = {
+      appName: 'flotas',
+      resources: [vehiculo],
+      pages: [{ kind: 'resource', resource: 'vehiculo' }]
     }
 
-    expect(() => validateProposal(schema)).not.toThrow()
+    expect(() => validateDesign(design)).not.toThrow()
   })
 
-  it('rechaza un recurso fuera del catálogo', () => {
-    const schema: AppDefinition = {
-      schemaVersion: 1,
-      name: 'boutique',
-      pages: [{ kind: 'resource', resource: 'unicornio' }]
+  it('acepta un lienzo vacío (estado válido de diseño)', () => {
+    expect(() => validateDesign({ appName: 'x', resources: [], pages: [] })).not.toThrow()
+  })
+
+  it('rechaza páginas que referencian entidades no declaradas', () => {
+    const design: DesignPayload = {
+      appName: 'flotas',
+      resources: [vehiculo],
+      pages: [{ kind: 'resource', resource: 'fantasma' }]
     }
 
-    expect(() => validateProposal(schema)).toThrow(/unknown resource model 'unicornio'/)
+    expect(() => validateDesign(design)).toThrow(/unknown resource model 'fantasma'/)
   })
 
-  it('rechaza un schema estructuralmente inválido', () => {
-    const schema = { schemaVersion: 1, name: 'x', pages: [] } as unknown as AppDefinition
+  it('rechaza entidades cuyo draft no expande a un resource-schema válido', () => {
+    const design: DesignPayload = {
+      appName: 'flotas',
+      resources: [{ ...vehiculo, name: 'Mal Nombre' }],
+      pages: []
+    }
 
-    expect(() => validateProposal(schema)).toThrow(/at least one page/)
+    expect(() => validateDesign(design)).toThrow()
   })
 })

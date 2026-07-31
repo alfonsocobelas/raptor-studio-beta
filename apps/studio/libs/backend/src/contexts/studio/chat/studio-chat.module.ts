@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { MODELS } from '@acc/generators/src/generators/resource/models/registry'
 import { ChatPort } from './chat.port'
 import { FakeChatAdapter } from './fake-chat.adapter'
 import { AnthropicChatAdapter } from './anthropic-chat.adapter'
@@ -16,7 +15,7 @@ import { StudioChatController } from './studio-chat.controller'
     {
       provide: ChatPort,
       useFactory: (): ChatPort =>
-        process.env['ANTHROPIC_API_KEY'] ? new AnthropicChatAdapter(MODELS) : new FakeChatAdapter(MODELS)
+        process.env['ANTHROPIC_API_KEY'] ? new AnthropicChatAdapter() : new FakeChatAdapter()
     }
   ]
 })

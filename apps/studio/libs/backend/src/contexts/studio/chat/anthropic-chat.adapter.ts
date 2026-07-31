@@ -1,41 +1,31 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { AppDefinition, ResourceDefinition } from '@acc/schema'
 import { ChatPort } from './chat.port'
-import type { ChatMessage, ChatProposal } from './chat.types'
+import type { ChatMessage, ChatProposal, DesignPayload } from './chat.types'
 
 /**
- * Adapter real: claude-opus-5 con structured outputs — la respuesta llega YA
- * conforme al JSON Schema del app-schema (doble cinturón: el gate del
- * controller vuelve a validar). La clave la resuelve el SDK del entorno.
+ * Adapter real: claude-opus-5 con structured outputs — la IA diseña ENTIDADES
+ * NUEVAS (drafts con campos tipados) y la composición de páginas; nunca código.
+ * El gate del controller re-valida todo (doble cinturón).
  */
 export class AnthropicChatAdapter extends ChatPort {
   readonly mode = 'anthropic'
   private readonly client = new Anthropic()
-  private readonly system: string
-  private readonly responseSchema: Record<string, unknown>
 
-  constructor(registry: Record<string, ResourceDefinition>) {
-    super()
-    this.system = buildSystemPrompt(registry)
-    this.responseSchema = buildResponseSchema(Object.keys(registry))
-  }
-
-  async propose(messages: ChatMessage[], currentSchema: AppDefinition): Promise<ChatProposal> {
+  async propose(messages: ChatMessage[], current: DesignPayload): Promise<ChatProposal> {
     const turns = messages.map((m, i) => ({
       role: m.role,
       content:
-        // el schema vigente viaja en el último turno de usuario: la IA parte SIEMPRE del estado real
         i === messages.length - 1 && m.role === 'user'
-          ? `App-schema vigente:\n${JSON.stringify(currentSchema, null, 2)}\n\nPetición: ${m.text}`
+          ? `Diseño vigente:\n${JSON.stringify(current, null, 2)}\n\nPetición: ${m.text}`
           : m.text
     }))
 
     const response = await this.client.messages.create({
       model: 'claude-opus-5',
       max_tokens: 16000,
-      system: this.system,
+      system: SYSTEM_PROMPT,
       messages: turns,
-      output_config: { format: { type: 'json_schema', schema: this.responseSchema } }
+      output_config: { format: { type: 'json_schema', schema: RESPONSE_SCHEMA } }
     })
 
     if (response.stop_reason === 'refusal') {
@@ -49,79 +39,102 @@ export class AnthropicChatAdapter extends ChatPort {
   }
 }
 
-function buildSystemPrompt(registry: Record<string, ResourceDefinition>): string {
-  const catalog = Object.values(registry)
-    .map(m => `- ${m.name} («${m.labels?.plural ?? m.plural}»): ${m.labels?.subtitle ?? ''}`)
-    .join('\n')
-  return [
-    'Eres el asistente de diseño de un acelerador de dashboards. El usuario describe la aplicación',
-    'que quiere y tú respondes con el app-schema COMPLETO resultante (nunca código).',
-    '',
-    'Vocabulario del app-schema: páginas de tipo "dashboard" (con widgets "kpi-total") y "resource".',
-    'El orden de páginas gobierna el menú y las rutas. Como máximo un dashboard.',
-    '',
-    'Catálogo de recursos disponibles (los ÚNICOS que puedes usar):',
-    catalog,
-    '',
-    'Reglas: parte siempre del app-schema vigente que acompaña a la petición; aplica el cambio',
-    'mínimo que pide el usuario; nunca inventes recursos fuera del catálogo; el campo reply es',
-    'una frase breve en español explicando qué cambiaste (o por qué no procede el cambio).'
-  ].join('\n')
-}
+const SYSTEM_PROMPT = [
+  'Eres el asistente de diseño de un acelerador de dashboards. El usuario describe la aplicación',
+  'que quiere y tú respondes con el DISEÑO completo resultante (nunca código):',
+  '',
+  '- appName: nombre kebab-case de la aplicación.',
+  '- resources: las ENTIDADES del negocio (tú las creas). Cada una con name (singular kebab),',
+  '  plural, labelSingular/labelPlural en español, gender (m|f) y fields tipados.',
+  '  Tipos de campo: string (texto corto), text (texto largo), number (decimal), integer,',
+  '  boolean, date. El primer campo string actúa como «nombre» de la entidad.',
+  '- pages: composición. Páginas {kind:"resource", resource:<name>} (tabla+CRUD de la entidad)',
+  '  y como máximo un {kind:"dashboard", widgets:[{kind:"kpi-total", resource}]}.',
+  '  El orden gobierna el menú; toda página/widget referencia entidades de resources.',
+  '',
+  'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
+  'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
+  'reply es una frase breve en español explicando qué cambiaste.'
+].join('\n')
 
-/** JSON Schema de {reply, schema} con el enum de recursos acotado al catálogo real. */
-function buildResponseSchema(resources: string[]): Record<string, unknown> {
-  const resourceEnum = { type: 'string', enum: resources }
-  return {
-    type: 'object',
-    properties: {
-      reply: { type: 'string' },
-      schema: {
-        type: 'object',
-        properties: {
-          schemaVersion: { type: 'integer', const: 1 },
-          name: { type: 'string' },
-          pages: {
-            type: 'array',
-            items: {
-              anyOf: [
-                {
+const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date']
+
+const RESPONSE_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  properties: {
+    reply: { type: 'string' },
+    design: {
+      type: 'object',
+      properties: {
+        appName: { type: 'string' },
+        resources: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              plural: { type: 'string' },
+              labelSingular: { type: 'string' },
+              labelPlural: { type: 'string' },
+              gender: { type: 'string', enum: ['m', 'f'] },
+              fields: {
+                type: 'array',
+                items: {
                   type: 'object',
                   properties: {
-                    kind: { type: 'string', const: 'dashboard' },
+                    name: { type: 'string' },
                     label: { type: 'string' },
-                    widgets: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: { kind: { type: 'string', const: 'kpi-total' }, resource: resourceEnum },
-                        required: ['kind', 'resource'],
-                        additionalProperties: false
-                      }
-                    }
+                    type: { type: 'string', enum: FIELD_TYPES }
                   },
-                  required: ['kind', 'widgets'],
-                  additionalProperties: false
-                },
-                {
-                  type: 'object',
-                  properties: {
-                    kind: { type: 'string', const: 'resource' },
-                    resource: resourceEnum,
-                    label: { type: 'string' }
-                  },
-                  required: ['kind', 'resource'],
+                  required: ['name', 'label', 'type'],
                   additionalProperties: false
                 }
-              ]
-            }
+              }
+            },
+            required: ['name', 'plural', 'labelSingular', 'labelPlural', 'gender', 'fields'],
+            additionalProperties: false
           }
         },
-        required: ['schemaVersion', 'name', 'pages'],
-        additionalProperties: false
-      }
-    },
-    required: ['reply', 'schema'],
-    additionalProperties: false
-  }
+        pages: {
+          type: 'array',
+          items: {
+            anyOf: [
+              {
+                type: 'object',
+                properties: {
+                  kind: { type: 'string', const: 'dashboard' },
+                  label: { type: 'string' },
+                  widgets: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: { kind: { type: 'string', const: 'kpi-total' }, resource: { type: 'string' } },
+                      required: ['kind', 'resource'],
+                      additionalProperties: false
+                    }
+                  }
+                },
+                required: ['kind', 'widgets'],
+                additionalProperties: false
+              },
+              {
+                type: 'object',
+                properties: {
+                  kind: { type: 'string', const: 'resource' },
+                  resource: { type: 'string' },
+                  label: { type: 'string' }
+                },
+                required: ['kind', 'resource'],
+                additionalProperties: false
+              }
+            ]
+          }
+        }
+      },
+      required: ['appName', 'resources', 'pages'],
+      additionalProperties: false
+    }
+  },
+  required: ['reply', 'design'],
+  additionalProperties: false
 }

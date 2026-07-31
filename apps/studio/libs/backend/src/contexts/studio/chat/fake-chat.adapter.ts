@@ -1,85 +1,104 @@
-import type { AppDefinition, DashboardPage, ResourceDefinition } from '@acc/schema'
+import { newDraftResource, type DraftFieldType } from '@app/shared/domain'
 import { ChatPort } from './chat.port'
-import type { ChatMessage, ChatProposal } from './chat.types'
+import type { ChatMessage, ChatProposal, DesignPayload } from './chat.types'
 
 /**
- * Adapter de demostración (sin red, sin clave): entiende «añade/quita la
- * página/el kpi de <recurso>» contra el catálogo real. Determinista a
- * propósito — es el que corren los tests y el smoke de Playwright.
+ * Adapter de demostración (sin red, sin clave), determinista a propósito:
+ * - «crea una tabla de empleados con nombre, puesto y salario»
+ * - «añade un kpi de empleados» · «quita la tabla de empleados»
+ * Los tipos de campo se infieren por heurística de nombre (fecha→date, precio→number…).
  */
 export class FakeChatAdapter extends ChatPort {
   readonly mode = 'fake'
 
-  constructor(private readonly registry: Record<string, ResourceDefinition>) {
-    super()
-  }
-
-  async propose(messages: ChatMessage[], currentSchema: AppDefinition): Promise<ChatProposal> {
+  async propose(messages: ChatMessage[], current: DesignPayload): Promise<ChatProposal> {
     const last = [...messages].reverse().find(m => m.role === 'user')?.text ?? ''
     const text = normalize(last)
+    const design: DesignPayload = JSON.parse(JSON.stringify(current)) as DesignPayload
 
-    const action: 'add' | 'remove' | null = /\b(anade|agrega|pon|crea)\b/.test(text)
-      ? 'add'
-      : /\b(quita|elimina|borra)\b/.test(text)
-        ? 'remove'
-        : null
-    const target: 'kpi' | 'page' = /\bkpi\b/.test(text) ? 'kpi' : 'page'
-    const model = Object.values(this.registry).find(m =>
-      [m.name, m.plural, m.labels?.plural, m.labels?.singular]
-        .filter((s): s is string => Boolean(s))
-        .some(s => text.includes(normalize(s)))
-    )
+    const add = /\b(crea|anade|agrega|pon)\b/.test(text)
+    const remove = /\b(quita|elimina|borra)\b/.test(text)
+    const kpi = /\bkpi\b/.test(text)
 
-    if (!action || !model) {
-      return {
-        reply:
-          'Modo demo: entiendo «añade/quita la página de <recurso>» y «añade/quita el kpi de <recurso>». ' +
-          `Recursos del catálogo: ${Object.values(this.registry)
-            .map(m => m.labels?.plural ?? m.plural)
-            .join(', ')}.`,
-        schema: currentSchema
+    // «... tabla/entidad de <nombre> [con <campo1>, <campo2> y <campo3>]»
+    const tableMatch = text.match(/(?:tabla|entidad)\s+(?:de\s+)?([a-z0-9-]+)(?:\s+con\s+(.+))?$/)
+    const kpiMatch = text.match(/kpi\s+(?:de\s+)?([a-z0-9-]+)/)
+
+    if (add && !kpi && tableMatch) {
+      const label = capitalize(tableMatch[1])
+      const draft = newDraftResource(label)
+      if (design.resources.some(r => r.name === draft.name)) {
+        return { reply: `Ya existe la entidad «${label}».`, design }
       }
+      if (tableMatch[2]) {
+        draft.fields = tableMatch[2]
+          .split(/,|\s+y\s+/)
+          .map(s => s.trim())
+          .filter(Boolean)
+          .map(raw => ({ name: camel(raw), label: capitalize(raw), type: inferType(raw) }))
+      }
+      design.resources.push(draft)
+      design.pages.push({ kind: 'resource', resource: draft.name })
+      return { reply: `Creada la tabla de ${label} con ${draft.fields.length} campos.`, design }
     }
 
-    const label = model.labels?.plural ?? model.plural
-    if (target === 'kpi') {
-      return { reply: `${action === 'add' ? 'Añadido' : 'Quitado'} el KPI de ${label}.`, schema: this.mutateKpi(currentSchema, model.name, action) }
+    if (add && kpi && kpiMatch) {
+      const target = design.resources.find(r => [r.name, r.plural].includes(kpiMatch[1]))
+      if (!target) return { reply: `No encuentro la entidad «${kpiMatch[1]}» en el diseño.`, design }
+      const widget = { kind: 'kpi-total' as const, resource: target.name }
+      const dashboard = design.pages.find(p => p.kind === 'dashboard')
+      if (dashboard && dashboard.kind === 'dashboard') dashboard.widgets.push(widget)
+      else design.pages.unshift({ kind: 'dashboard', widgets: [widget] })
+      return { reply: `Añadido el KPI de ${target.labelPlural}.`, design }
     }
-    return { reply: `${action === 'add' ? 'Añadida' : 'Quitada'} la página de ${label}.`, schema: this.mutatePage(currentSchema, model.name, action) }
-  }
 
-  private mutatePage(schema: AppDefinition, resource: string, action: 'add' | 'remove'): AppDefinition {
-    const pages =
-      action === 'add'
-        ? [...schema.pages, { kind: 'resource' as const, resource }]
-        : schema.pages.filter(p => !(p.kind === 'resource' && p.resource === resource))
-    return { ...schema, pages }
-  }
-
-  private mutateKpi(schema: AppDefinition, resource: string, action: 'add' | 'remove'): AppDefinition {
-    const widget = { kind: 'kpi-total' as const, resource }
-    const dashboardIndex = schema.pages.findIndex(p => p.kind === 'dashboard')
-    if (dashboardIndex === -1) {
-      return action === 'add'
-        ? { ...schema, pages: [{ kind: 'dashboard', widgets: [widget] }, ...schema.pages] }
-        : schema
+    if (remove && tableMatch) {
+      const name = tableMatch[1]
+      const target = design.resources.find(r => [r.name, r.plural].includes(name))
+      if (!target) return { reply: `No encuentro la entidad «${name}».`, design }
+      design.resources = design.resources.filter(r => r.name !== target.name)
+      design.pages = design.pages
+        .filter(p => !(p.kind === 'resource' && p.resource === target.name))
+        .map(p => (p.kind === 'dashboard' ? { ...p, widgets: p.widgets.filter(w => w.resource !== target.name) } : p))
+        .filter(p => p.kind !== 'dashboard' || p.widgets.length > 0)
+      return { reply: `Eliminada la entidad ${target.labelSingular}.`, design }
     }
-    const dashboard = schema.pages[dashboardIndex] as DashboardPage
-    const widgets =
-      action === 'add'
-        ? [...dashboard.widgets, widget]
-        : dashboard.widgets.filter(w => w.resource !== resource)
+
     return {
-      ...schema,
-      pages: schema.pages.map((p, i) => (i === dashboardIndex ? { ...dashboard, widgets } : p))
+      reply:
+        'Modo demo: prueba «crea una tabla de empleados con nombre, puesto y salario», ' +
+        '«añade un kpi de empleados» o «quita la tabla de empleados».',
+      design
     }
   }
 }
 
-/** minúsculas y sin acentos, para casar «Añade» con «anade» */
+function inferType(raw: string): DraftFieldType {
+  const s = normalize(raw)
+  if (/fecha|dia|caducidad|alta|baja/.test(s)) return 'date'
+  if (/precio|importe|salario|coste|total|presupuesto/.test(s)) return 'number'
+  if (/numero|cantidad|unidades|edad|anos|plazas|stock/.test(s)) return 'integer'
+  if (/activo|disponible|habilitado|flag/.test(s)) return 'boolean'
+  if (/descripcion|notas|observaciones|comentario/.test(s)) return 'text'
+  return 'string'
+}
+
 function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
+}
+
+function capitalize(s: string): string {
+  const clean = s.trim()
+  return clean.charAt(0).toUpperCase() + clean.slice(1)
+}
+
+function camel(raw: string): string {
+  const parts = normalize(raw)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(' ')
+  return parts[0] + parts.slice(1).map(capitalize).join('')
 }
