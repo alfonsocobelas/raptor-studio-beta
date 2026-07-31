@@ -10,6 +10,7 @@
     "ui:add": "nx g @spartan-ng/cli:ui",
     "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '\u2717 Las pantallas importan la librer\u00eda de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
     "test": "NODE_ENV=test jest --selectProjects unit",
+    "test:front": "vitest run",
     "test:integration": "NODE_ENV=test jest --selectProjects integration --runInBand"
   },
   "dependencies": {
@@ -70,6 +71,7 @@
     "@types/node": "^22.10.0",
     "fast-check": "^3.23.2",
     "jest": "^29.7.0",
+    "jsdom": "^26.1.0",
     "nx": "^22.7.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.2.2",

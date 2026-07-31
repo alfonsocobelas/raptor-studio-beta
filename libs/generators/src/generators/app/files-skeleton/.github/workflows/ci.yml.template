@@ -49,5 +49,8 @@ jobs:
       - name: Tests de integración (contra el Postgres del service)
         run: npm run test:integration
 
+      - name: Tests de frontend (vitest)
+        run: npm run test:front
+
       - name: Build del frontend
         run: npx ng build
