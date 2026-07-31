@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # El mismo Postgres efímero que docker-compose.test.yml, en el puerto que
-      # espera environments/test.json (5434).
+      # El mismo Postgres efímero que docker-compose.test.yml. El puerto publicado
+      # debe coincidir con el que espera environments/test.json.
       postgres:
         image: postgres:16-alpine
         env:
