@@ -22,6 +22,12 @@ export interface AwsSecretsReader {
 export interface AwsConfigLoaderOptions {
   /** Joins the vault.* dots into the secret name; '-' keeps parity with Azure, '/' fits AWS paths */
   separator?: string
+  /**
+   * Namespace prepended as `${prefix}/<name>` (Secrets Manager shares one namespace per
+   * account+region, unlike one-vault-per-env Azure). Defaults to AWS_SECRETS_PREFIX,
+   * the AWS mirror of AZURE_KEYVAULT_URL: the "where" comes from the environment.
+   */
+  prefix?: string
 }
 
 /**
@@ -39,7 +45,8 @@ export async function resolveAwsConfig<T>(
   }
 
   const reader = client ?? createSecretsManagerClient()
-  return resolvePlaceholders(rawConfig, name => getSecretValue(name, reader), options)
+  const prefix = options.prefix ?? process.env['AWS_SECRETS_PREFIX']
+  return resolvePlaceholders(rawConfig, name => getSecretValue(prefix ? `${prefix}/${name}` : name, reader), options)
 }
 
 /** Region/credentials resolve from the standard AWS environment (12-factor). */

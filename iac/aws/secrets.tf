@@ -1,5 +1,6 @@
 # Espejo de key-vault.tf: los secretos que resuelve @acc/infra-config-aws (marcadores vault.*).
-# Nombres = claves vault.* de environments/*.json.
+# Nombres = ${local.name}/<clave vault.* aplanada>; el loader antepone el prefijo leyendo
+# AWS_SECRETS_PREFIX (inyectado en apprunner.tf), espejo AWS de AZURE_KEYVAULT_URL.
 resource "aws_secretsmanager_secret" "db_password" {
   name = "${local.name}/typeorm-password"
 }

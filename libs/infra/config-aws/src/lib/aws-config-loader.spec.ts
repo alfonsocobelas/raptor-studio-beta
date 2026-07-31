@@ -32,6 +32,27 @@ describe('resolveAwsConfig', () => {
     expect(resolved).toEqual({ host: 'db.aws.example' })
   })
 
+  it('namespaces the secret name with the prefix option', async () => {
+    const reader = fakeReader({ 'boutique-prod/typeorm-host': 'db.aws.example' })
+
+    const resolved = await resolveAwsConfig({ host: 'vault.typeorm.host' }, reader, { prefix: 'boutique-prod' })
+
+    expect(resolved).toEqual({ host: 'db.aws.example' })
+  })
+
+  it('defaults the prefix from AWS_SECRETS_PREFIX (12-factor, mirrors AZURE_KEYVAULT_URL)', async () => {
+    process.env['AWS_SECRETS_PREFIX'] = 'boutique-prod'
+    try {
+      const reader = fakeReader({ 'boutique-prod/typeorm-host': 'db.aws.example' })
+
+      const resolved = await resolveAwsConfig({ host: 'vault.typeorm.host' }, reader)
+
+      expect(resolved).toEqual({ host: 'db.aws.example' })
+    } finally {
+      delete process.env['AWS_SECRETS_PREFIX']
+    }
+  })
+
   it('wraps lookup failures in AwsSecretsError', async () => {
     await expect(resolveAwsConfig({ a: 'vault.missing.secret' }, fakeReader({}))).rejects.toMatchObject({
       name: 'AwsSecretsError'
