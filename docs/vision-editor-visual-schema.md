@@ -64,7 +64,7 @@ Sin ese vocabulario, el lienzo no tiene nada que editar. Es la fase A y es útil
 | Fase | Pieza | Notas |
 |------|-------|-------|
 | A | **App/page-schema** + soporte en el generador | ✅ Hecha (spec 07, 2026-07-31): `defineApp` en `libs/schema`, registro `APPS`, `--app` en el generador de app con gate de equivalencia. |
-| B | **Visor read-only**: schema → preview vivo | App Angular en el propio monorepo (reusa `libs/ui`). Valida el WYSIWYG. |
+| B | **Visor read-only**: schema → preview vivo | ✅ Hecha (spec 08, 2026-07-31): `apps/studio` scaffoldeado con el propio generador; visor `/studio` con los componentes reales. |
 | C | **Interactividad**: resaltar al hover, borrar, drag&drop desde paleta | Angular CDK drag-drop. Todas las interacciones = mutaciones del schema. |
 | D | **Chat IA** que crea/edita el schema | Structured output validado contra el JSON Schema del resource/app-schema. Se confía en el gate, no en la IA. |
 | E | **Wizard de plugins** (db, infra hosting, auth, email…) | Casi trivial: formulario sobre las opciones que los generadores de app/plugins ya exponen. |

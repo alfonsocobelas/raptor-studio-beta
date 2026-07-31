@@ -58,13 +58,21 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 | Fase | Pieza                                                        | Estado    |
 | ---- | ------------------------------------------------------------ | --------- |
 | A    | App/page-schema + soporte en el generador (sin UI)           | ✅ 2026-07-31 (spec 07: `defineApp`, registro `APPS`, `--app=demo` ≡ opciones planas byte a byte) |
-| B    | Visor read-only: schema → preview vivo (app Angular monorepo) | Pendiente |
+| B    | Visor read-only: schema → preview vivo (app Angular monorepo) | ✅ 2026-07-31 (spec 08: `apps/studio` dogfood `--app=boutique`, visor `/studio` con DataTable/KpiCard reales, verificado en navegador) |
 | C    | Interactividad: hover-borrar, drag&drop (CDK) → muta schema  | Pendiente |
 | D    | Chat IA que edita el schema (structured output + gate)       | Pendiente |
 | E    | Wizard de plugins (db, infra, auth…)                         | Pendiente |
 | F    | Escritorio (Electron/Tauri) — solo si hace falta             | Pendiente |
 
 ## Pendientes conocidos (no bloquean la spec 00)
+
+Descubiertos por el dogfooding del estudio (2026-07-31, spec 08): la app ensamblada con los 4
+modelos de oro **no compila entera** — (a) los VOs de context-shared (`voShared`: CustomerName,
+ContractDate, Period, Phone, SyncTimestamp, constants) se importan pero ningún generador los
+emite (van con spec 15 `kernel-config-infra`/C1); (b) los dialogs de contract/project usan
+enums como valores, `*-labels` y DTOs (`LicenseWithConsumptionDto`) que faltan — es el trabajo
+restante de la spec 04. Las demos (boutique/almacén/concesionario) no lo sufren porque sus
+modelos no usan esos conceptos. El bug de `update()` sin VO sí se arregló (fix + re-baseline).
 
 Del README del starter (2026-07-12): ~~ADR-008 distribución del kernel (B1)~~ → **RESUELTO 2026-07-30** (docs/ADR-008: paquetes npm @acc/*, instalabilidad verificada por smoke; pipeline de publicación pendiente), selección de adapter en
 generación (A3), propagación de denormalización (B2), scoping en Criteria (B4), constante compartida
