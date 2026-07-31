@@ -61,3 +61,24 @@ export abstract class SessionStore {
   abstract deleteByTokenHash(tokenHash: string): Promise<void>
   abstract deleteAllByUserId(userId: string): Promise<void>
 }
+
+/** Identidad verificada devuelta por un proveedor de login social (OIDC/OAuth2). */
+export interface SocialIdentity {
+  provider: string
+  /** Identificador estable en el proveedor (sub de OIDC, id de GitHub). */
+  subject: string
+  email: Nullable<string>
+  emailVerified: boolean
+  name: Nullable<string>
+}
+
+/**
+ * Login social por authorization-code flow. El aggregate de sesión y el alta/enlace
+ * de usuario viven en la app; los adapters solo verifican la identidad con el IdP.
+ * `state` SIEMPRE lo genera y valida el caller (CSRF); `nonce` liga el id_token al intento.
+ */
+export abstract class SocialLoginProvider {
+  abstract readonly name: string
+  abstract authorizationUrl(input: { redirectUri: string; state: string; nonce?: string }): string
+  abstract exchangeCode(input: { code: string; redirectUri: string; nonce?: string }): Promise<SocialIdentity>
+}
