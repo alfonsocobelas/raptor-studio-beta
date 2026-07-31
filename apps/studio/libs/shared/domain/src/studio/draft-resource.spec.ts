@@ -66,6 +66,15 @@ describe('draftToResource', () => {
 })
 
 describe('newDraftResource', () => {
+  it('si el nombre ya viene en plural, deriva el singular (Empleados → empleado/empleados)', () => {
+    const created = newDraftResource('Empleados')
+
+    expect(created.name).toBe('empleado')
+    expect(created.plural).toBe('empleados')
+    expect(created.labelSingular).toBe('Empleado')
+    expect(created.labelPlural).toBe('Empleados')
+  })
+
   it('crea una entidad con un campo nombre por defecto', () => {
     const created = newDraftResource('Vehículo')
 

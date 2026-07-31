@@ -15,7 +15,7 @@ describe('FakeChatAdapter — modo demo determinista (lienzo en blanco)', () => 
     expect(design.resources).toHaveLength(1)
     const fields = design.resources[0].fields
     expect(fields.map(f => f.type)).toEqual(['string', 'number', 'date'])
-    expect(design.pages).toContainEqual({ kind: 'resource', resource: 'empleados' })
+    expect(design.pages).toContainEqual({ kind: 'resource', resource: 'empleado' })
     expect(reply).toContain('Empleados')
   })
 

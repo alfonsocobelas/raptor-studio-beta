@@ -24,14 +24,21 @@ export interface DraftResource {
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
 
-/** «Vehículo» → draft con plural naïf y un campo nombre; editable después. */
+/**
+ * «Vehículo» → vehiculo/vehiculos · «Empleados» → empleado/empleados.
+ * Pluralización naïf editable después (el chat real produce singular/plural correctos).
+ */
 export function newDraftResource(label: string): DraftResource {
-  const name = kebab(label)
+  const raw = kebab(label)
+  const alreadyPlural = raw.endsWith('s') && raw.length > 2
+  const name = alreadyPlural ? raw.slice(0, -1) : raw
+  const plural = alreadyPlural ? raw : `${raw}s`
+  const singularLabel = alreadyPlural ? label.trim().slice(0, -1) : label.trim()
   return {
     name,
-    plural: `${name}s`,
-    labelSingular: label,
-    labelPlural: `${label}s`,
+    plural,
+    labelSingular: singularLabel,
+    labelPlural: alreadyPlural ? label.trim() : `${label.trim()}s`,
     gender: 'm',
     fields: [{ name: 'nombre', label: 'Nombre', type: 'string' }]
   }
