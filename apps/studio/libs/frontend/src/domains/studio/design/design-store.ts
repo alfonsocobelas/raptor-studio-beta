@@ -138,6 +138,10 @@ export class DesignStore {
     }))
   }
 
+  toggleAttachments(resource: string, on: boolean): boolean {
+    return this.updateResource(resource, draft => ({ ...draft, attachments: on }))
+  }
+
   removeField(resource: string, index: number): boolean {
     return this.updateResource(resource, draft => ({
       ...draft,

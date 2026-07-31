@@ -22,6 +22,8 @@ export interface DraftResource {
   labelPlural: string
   gender: 'm' | 'f'
   fields: DraftField[]
+  /** La vista de la entidad incluye el componente de subida de ficheros (spec 14) */
+  attachments?: boolean
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
@@ -152,6 +154,7 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
 
   const firstString = draft.fields.find(f => f.type === 'string')
   return {
+    ...(draft.attachments ? { attachments: true } : {}),
     schemaVersion: 1,
     name: draft.name,
     plural: draft.plural,

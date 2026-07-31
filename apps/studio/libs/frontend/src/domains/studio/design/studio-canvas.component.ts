@@ -6,7 +6,7 @@ import { InspectorComponent } from './inspector.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
 
-type ToolKind = 'table' | 'kpi' | 'dashboard'
+type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
 
 /**
  * El estudio: barra de componentes (clic o drag&drop al lienzo), lienzo que
@@ -83,6 +83,19 @@ type ToolKind = 'table' | 'kpi' | 'dashboard'
               </div>
             }
           </div>
+          <button
+            type="button"
+            class="toolbar-item"
+            draggable="true"
+            data-testid="tool-files"
+            [disabled]="!activeResource()"
+            (dragstart)="dragging.set('files')"
+            (dragend)="dragging.set(null)"
+            (click)="addFiles()"
+            title="Añade subida de ficheros a la vista activa (clic o arrastra)"
+          >
+            🗎 Ficheros
+          </button>
           @if (!hasDashboard()) {
             <button
               type="button"
@@ -231,6 +244,18 @@ export class StudioCanvasComponent {
     if (tool === 'table') this.naming.set(true)
     if (tool === 'kpi') this.kpiMenu.set(true)
     if (tool === 'dashboard') this.addDashboard()
+    if (tool === 'files') this.addFiles()
+  }
+
+  /** Recurso de la página activa (null si es el dashboard). */
+  protected readonly activeResource = computed(() => {
+    const page = this.pages()[this.clampedTab()]
+    return page?.kind === 'resource' ? page.resource : null
+  })
+
+  protected addFiles(): void {
+    const resource = this.activeResource()
+    if (resource) this.store.toggleAttachments(resource, true)
   }
 
   protected confirmTable(): void {

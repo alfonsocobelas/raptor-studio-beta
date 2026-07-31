@@ -58,6 +58,15 @@ import { DesignStore } from './design-store'
         >
           + Añadir columna
         </button>
+        <label class="mt-3 flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            [checked]="resource.attachments ?? false"
+            (change)="store.toggleAttachments(resource.name, !(resource.attachments ?? false))"
+            data-testid="inspector-attachments"
+          />
+          Subida de ficheros en esta vista
+        </label>
         @if (store.lastError(); as error) {
           <p class="text-destructive mt-2 text-xs">{{ error }}</p>
         }

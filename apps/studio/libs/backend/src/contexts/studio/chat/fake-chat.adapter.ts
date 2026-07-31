@@ -20,6 +20,23 @@ export class FakeChatAdapter extends ChatPort {
     const remove = /\b(quita|elimina|borra)\b/.test(text)
     const kpi = /\bkpi\b/.test(text)
 
+    // «añade subida de ficheros/adjuntos a <entidad>» (o quita)
+    if (/fichero|adjunto|archivo|documento/.test(text)) {
+      const target =
+        design.resources.find(r => text.includes(r.name) || text.includes(normalize(r.plural))) ??
+        (design.resources.length === 1 ? design.resources[0] : undefined)
+      if (!target) {
+        return { reply: 'Dime a qué entidad añado la subida de ficheros (o créala primero).', design }
+      }
+      target.attachments = !remove
+      return {
+        reply: remove
+          ? `Quitada la subida de ficheros de ${target.labelPlural}.`
+          : `Añadida la subida de ficheros a la vista de ${target.labelPlural}.`,
+        design
+      }
+    }
+
     // «... tabla/entidad de <nombre> [con <campo1>, <campo2> y <campo3>]»
     const tableMatch = text.match(/(?:tabla|entidad)\s+(?:de\s+)?([a-z0-9-]+)(?:\s+con\s+(.+))?$/)
     const kpiMatch = text.match(/kpi\s+(?:de\s+)?([a-z0-9-]+)/)

@@ -76,6 +76,38 @@ const PAGE_SIZE = 10
               ✕
             </button>
           </div>
+          @if (v.attachments) {
+            <div
+              class="group relative mt-6 rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
+              [attr.data-testid]="'canvas-attachments-' + current.resource"
+            >
+              <h2 class="mb-2 text-sm font-semibold">Ficheros adjuntos</h2>
+              <div class="border-input bg-background flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center">
+                <p class="text-2xl">🗎</p>
+                <p class="text-sm font-medium">Arrastra ficheros aquí o haz clic para subirlos</p>
+                <p class="text-muted-foreground text-xs">PDF, imágenes o documentos · máx. 10 MB</p>
+              </div>
+              <ul class="mt-3 space-y-1">
+                @for (file of sampleFiles; track file.name) {
+                  <li class="bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                    <span>📄 {{ file.name }}</span>
+                    <span class="text-muted-foreground flex items-center gap-3 text-xs">
+                      {{ file.size }}
+                      <button type="button" class="pointer-events-none">🗑</button>
+                    </span>
+                  </li>
+                }
+              </ul>
+              <button
+                type="button"
+                class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
+                [attr.data-testid]="'delete-attachments-' + current.resource"
+                (click)="removeAttachments($event, current.resource)"
+              >
+                ✕
+              </button>
+            </div>
+          }
         }
       }
     }
@@ -126,11 +158,23 @@ export class CanvasPageComponent {
       labelSingular: draft.labelSingular,
       labelPlural: draft.labelPlural,
       gender: draft.gender,
+      attachments: draft.attachments ?? false,
       columns,
       rows: buildSampleRows(draft, PAGE_SIZE),
       total: mockTotal(modelIndex)
     }
   })
+
+  protected readonly sampleFiles = [
+    { name: 'albaran-julio.pdf', size: '182 KB' },
+    { name: 'foto-lote-0412.jpg', size: '1,4 MB' },
+    { name: 'certificado-calidad.pdf', size: '96 KB' }
+  ]
+
+  protected removeAttachments(event: Event, resource: string): void {
+    event.stopPropagation()
+    this.store.toggleAttachments(resource, false)
+  }
 
   protected deleteWidget(widgetIndex: number): void {
     this.store.removeWidget(this.pageIndex(), widgetIndex)

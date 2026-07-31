@@ -45,7 +45,8 @@ const SYSTEM_PROMPT = [
   '',
   '- appName: nombre kebab-case de la aplicación.',
   '- resources: las ENTIDADES del negocio (tú las creas). Cada una con name (singular kebab),',
-  '  plural, labelSingular/labelPlural en español, gender (m|f) y fields tipados.',
+  '  plural, labelSingular/labelPlural en español, gender (m|f), fields tipados y',
+  '  attachments (boolean): true si la vista de la entidad incluye subida de ficheros.',
   '  Tipos de campo: string (texto corto), text (texto largo), number (decimal), integer,',
   '  boolean, date. El primer campo string actúa como «nombre» de la entidad.',
   '- pages: composición. Páginas {kind:"resource", resource:<name>} (tabla+CRUD de la entidad)',
@@ -81,6 +82,7 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
               labelSingular: { type: 'string' },
               labelPlural: { type: 'string' },
               gender: { type: 'string', enum: ['m', 'f'] },
+              attachments: { type: 'boolean' },
               fields: {
                 type: 'array',
                 items: {
