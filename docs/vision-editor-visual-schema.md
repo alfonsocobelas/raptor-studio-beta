@@ -1,0 +1,93 @@
+# Visión: editor visual de schemas (chat + lienzo)
+
+**Fecha:** 2026-07-31
+**Estado:** Visión aprobada en brainstorming — pendiente de spec (ejecutar tras el trabajo en curso)
+**Decisión ancla:** lienzo **schema-driven** con los componentes reales del generador (no diseño libre traducido a schema)
+
+---
+
+## 0. Idea en una frase
+
+Una aplicación con **chat + lienzo** donde el usuario describe la aplicación que quiere y la IA (y el propio usuario, con el ratón) editan **el resource-schema/app-schema — nunca código**. El lienzo es una proyección viva del schema renderizada con los mismos componentes Spartan/Material que emite el generador. Al terminar el diseño, un wizard de plugins elige base de datos, infra, autenticación, etc., y el generador determinista produce la aplicación.
+
+Esto es la fase "① pre-generación: la IA escribe el MODELO, no el código" de `integracion-ia-generador.md`, con interfaz gráfica.
+
+## 1. El "UML por debajo" ya existe
+
+No se inventa un modelo intermedio nuevo: **la fuente de verdad es el schema** (los `defineResource` actuales más un app/page-schema por crear). El lienzo no tiene estado propio de diseño; todo lo que se ve se deriva del schema, y toda interacción muta el schema.
+
+```
+                  muta (structured output validado)
+  Chat IA ──────────────────────────────┐
+                                        ▼
+  Usuario (hover/borrar/drag&drop) ──> resource-schemas + app-schema   (fuente de verdad)
+                                        │
+                                        │ deriva (unidireccional)
+                                        ▼
+                                 Lienzo = render con los MISMOS
+                                 componentes de libs/ui que emite
+                                 el generador
+                                        │
+                  wizard de plugins     ▼
+                 (db, infra, auth) ──> generador Nx determinista ──> aplicación
+```
+
+Ejemplos del binding:
+
+- Pasar el cursor sobre una tabla la resalta y muestra una cruz: borrar = eliminar el recurso (o su presencia en la página) del schema.
+- Borrar una columna = quitar `table.show` del campo correspondiente.
+- Arrastrar una tarjeta KPI desde la paleta = añadir un nodo al page-schema.
+- Reordenar columnas = reordenar `fields` (o un índice de orden de tabla).
+
+## 2. Por qué schema-driven y no diseño libre (decisión cerrada)
+
+Se descartó el enfoque "estilo Claude Design" (la IA pinta HTML arbitrario y luego se traduce a schema) y el híbrido (explorar libre + consolidar):
+
+- **Todo lo dibujable es generable.** La paleta solo contiene lo que el generador sabe emitir. No existen diseños huérfanos que luego no se puedan generar.
+- **Sin traducción con pérdida.** No hay paso de ingeniería inversa HTML→schema, que es frágil y lossy.
+- **WYSIWYG exacto.** Como el preview usa los componentes reales de `libs/ui`, no es un mockup: es literalmente lo que se va a generar.
+- **Coherente con la constitución:** determinismo en el centro, IA en los bordes, y regla 7 ("generar, no interpretar" — lo raro se edita a mano sobre el código generado, no se retuerce el schema ni el lienzo).
+
+La restricción de vocabulario es una virtud: es el mismo argumento que hace valioso al generador.
+
+## 3. Prerrequisito real: app/page-schema (trabajo de generador, no de UI)
+
+Hoy el resource-schema describe **un recurso** (tabla paginada + CRUD). Un lienzo invita a componer **páginas**: varias tablas, KPIs, tarjetas, layout, navegación. Antes de cualquier UI hace falta:
+
+- Un **app-schema/page-schema**: páginas, secciones, composición de recursos y widgets (KPI, tarjeta, tabla embebida…), menú/navegación.
+- Que el **generador lo consuma** (hoy la composición de la app la deciden los generadores de app/plugins con opciones planas).
+
+Sin ese vocabulario, el lienzo no tiene nada que editar. Es la fase A y es útil por sí sola aunque la UI nunca se construya.
+
+## 4. Descomposición en fases (cada una útil por sí sola)
+
+| Fase | Pieza | Notas |
+|------|-------|-------|
+| A | **App/page-schema** + soporte en el generador | Sin UI. Prerrequisito de todo lo demás. |
+| B | **Visor read-only**: schema → preview vivo | App Angular en el propio monorepo (reusa `libs/ui`). Valida el WYSIWYG. |
+| C | **Interactividad**: resaltar al hover, borrar, drag&drop desde paleta | Angular CDK drag-drop. Todas las interacciones = mutaciones del schema. |
+| D | **Chat IA** que crea/edita el schema | Structured output validado contra el JSON Schema del resource/app-schema. Se confía en el gate, no en la IA. |
+| E | **Wizard de plugins** (db, infra hosting, auth, email…) | Casi trivial: formulario sobre las opciones que los generadores de app/plugins ya exponen. |
+| F | **Empaquetado escritorio** (Electron/Tauri) | Solo si hace falta. La web app cubre A–E; el acceso al disco/generador puede darlo un backend Nest local que invoque `nx generate`. |
+
+**No se necesita app de escritorio hasta F**, y puede que nunca: una app Angular dentro del monorepo da el preview con componentes reales gratis.
+
+## 5. Riesgos señalados
+
+- **Es un producto en sí mismo.** Riesgo de que se coma al generador. Mitigación: fases pequeñas, cada una con valor autónomo; A y E aportan valor incluso sin lienzo.
+- **Tentación de enriquecer el schema para el lienzo** (inner-platform). El schema crece solo cuando el *generador* necesita el concepto, nunca "para que se pueda dibujar".
+- **Dos pieles (Spartan default, Material congelada).** El visor renderiza con la piel activa; no se diseña "por piel", se diseña schema.
+
+## 6. Cuestiones abiertas (para la spec de cada fase)
+
+- Granularidad del page-schema: ¿solo composición de widgets conocidos o también layout (grid/columnas)? Empezar por lo mínimo que el generador pueda emitir.
+- Edición de campos desde el lienzo: ¿formulario de propiedades al seleccionar un componente (tipo inspector), o solo vía chat? Probable: inspector simple.
+- Persistencia del diseño en curso: fichero(s) `*.model.ts` en el repo del cliente vs. JSON de trabajo del editor que se materializa a `*.model.ts` al finalizar.
+- Undo/redo: trivial si el estado es un único árbol de schema inmutable — decidir pronto la forma del store.
+- Dónde vive la app del editor: `apps/studio` en este monorepo (probable) vs. repo aparte.
+
+## 7. Relación con documentos existentes
+
+- `docs/integracion-ia-generador.md` — el chat es la fase ① con UI; el gate determinista no cambia.
+- `docs/ACELERADOR-arquitectura-consolidada.md` — nada de esto toca el núcleo determinista; el editor es un cliente más del schema.
+- `docs/contrato-unidad-vista-rag.md` — la paleta de componentes es la versión visual del mismo contrato esqueleto↔pieza.

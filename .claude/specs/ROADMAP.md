@@ -49,6 +49,21 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 | —   | `demo-app-gate-visual` | ~~App de demo~~ → cubierto por spec 05 (demos verificadas con Playwright); queda solo integrar el gate visual como paso reproducible | Parcialmente cubierta  |
 | —   | `gitflow-completo`     | Reinstaurar ramas/PRs/rulesets (base: spec 51 de la referencia)                                                      | Cuando madure          |
 
+## Fase 4 — Editor visual de schemas (visión 2026-07-31, ver `docs/vision-editor-visual-schema.md`)
+
+Chat + lienzo schema-driven: el usuario y la IA editan el schema (nunca código) y el lienzo lo
+renderiza con los componentes reales de `libs/ui`. Decisión ancla cerrada: schema-driven, no
+diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el trabajo en curso):
+
+| Fase | Pieza                                                        | Estado    |
+| ---- | ------------------------------------------------------------ | --------- |
+| A    | App/page-schema + soporte en el generador (sin UI)           | Pendiente |
+| B    | Visor read-only: schema → preview vivo (app Angular monorepo) | Pendiente |
+| C    | Interactividad: hover-borrar, drag&drop (CDK) → muta schema  | Pendiente |
+| D    | Chat IA que edita el schema (structured output + gate)       | Pendiente |
+| E    | Wizard de plugins (db, infra, auth…)                         | Pendiente |
+| F    | Escritorio (Electron/Tauri) — solo si hace falta             | Pendiente |
+
 ## Pendientes conocidos (no bloquean la spec 00)
 
 Del README del starter (2026-07-12): ~~ADR-008 distribución del kernel (B1)~~ → **RESUELTO 2026-07-30** (docs/ADR-008: paquetes npm @acc/*, instalabilidad verificada por smoke; pipeline de publicación pendiente), selección de adapter en
