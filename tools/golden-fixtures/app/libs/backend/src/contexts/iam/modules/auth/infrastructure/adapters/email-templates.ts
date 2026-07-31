@@ -11,10 +11,10 @@
  */
 
 /**
- * Sampled from the corporate assets: the band is the navy of the la aplicación dark
- * lockup, and the call to action uses the mid green of the Avvale mark. The band
- * must stay clear of the mark's own darkest teal (#248b7f) — matching it would
- * swallow that arm of the logo into the background.
+ * Sampled from the corporate assets: the band is Avvale's dark navy and the call
+ * to action uses the mid green of the Avvale mark. The band must stay clear of
+ * the mark's own darkest teal (#248b7f) — matching it would swallow that arm of
+ * the logo into the background.
  */
 const BRAND_BAND = '#08202e'
 const BRAND_GREEN = '#59af31'
@@ -25,6 +25,12 @@ const CANVAS = '#f6f7f8'
 const RULE = '#e5e7eb'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+
+/** Nombre visible del producto en los emails. El generador lo marca con el de la app. */
+export const PRODUCT_NAME = 'AppGolden'
+
+export const invitationSubject = `Invitación a ${PRODUCT_NAME}`
+export const passwordResetSubject = `Restablece tu contraseña de ${PRODUCT_NAME}`
 
 /**
  * An image that travels inside the message and is referenced from the html as
@@ -67,7 +73,7 @@ function layout(body: EmailBody): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>la aplicación</title>
+<title>${PRODUCT_NAME}</title>
 </head>
 <body style="margin:0; padding:0; background-color:${CANVAS};">
 <div style="display:none; max-height:0; overflow:hidden; opacity:0;">${escapeHtml(body.preheader)}</div>
@@ -106,7 +112,7 @@ function layout(body: EmailBody): string {
 
 <tr>
 <td style="background-color:${CANVAS}; padding:20px 32px; border-top:1px solid ${RULE};">
-<p style="margin:0 0 4px 0; font-family:${FONT}; font-size:12px; color:${MUTED};">la aplicación &middot; una solución de Avvale</p>
+<p style="margin:0 0 4px 0; font-family:${FONT}; font-size:12px; color:${MUTED};">${PRODUCT_NAME} &middot; una solución de Avvale</p>
 <p style="margin:0; font-family:${FONT}; font-size:12px; color:${MUTED};">Correo autom&aacute;tico, no respondas a este mensaje. ${escapeHtml(body.disclaimer)}</p>
 </td>
 </tr>
@@ -122,9 +128,9 @@ function layout(body: EmailBody): string {
 
 export function invitationHtml(link: string): string {
   return layout({
-    preheader: 'Establece tu contraseña para acceder a la aplicación.',
-    heading: 'Te damos la bienvenida a la aplicación',
-    intro: 'Has sido invitado al portal de gestión de licencias SAP de Avvale. Para empezar, establece tu contraseña.',
+    preheader: `Establece tu contraseña para acceder a ${PRODUCT_NAME}.`,
+    heading: `Te damos la bienvenida a ${PRODUCT_NAME}`,
+    intro: `Has sido invitado a ${PRODUCT_NAME}. Para empezar, establece tu contraseña.`,
     ctaLabel: 'Establecer contraseña',
     link,
     expiry: 'Este enlace caduca en 48 horas.',
@@ -134,10 +140,9 @@ export function invitationHtml(link: string): string {
 
 export function passwordResetHtml(link: string): string {
   return layout({
-    preheader: 'Restablece la contraseña de tu cuenta de la aplicación.',
+    preheader: `Restablece la contraseña de tu cuenta de ${PRODUCT_NAME}.`,
     heading: 'Restablece tu contraseña',
-    intro:
-      'Solicitaste restablecer la contraseña de tu cuenta de la aplicación. Elige una nueva desde el siguiente enlace.',
+    intro: `Solicitaste restablecer la contraseña de tu cuenta de ${PRODUCT_NAME}. Elige una nueva desde el siguiente enlace.`,
     ctaLabel: 'Restablecer contraseña',
     link,
     expiry: 'Este enlace caduca en 1 hora.',
@@ -147,23 +152,23 @@ export function passwordResetHtml(link: string): string {
 
 export function invitationText(link: string): string {
   return [
-    'Te damos la bienvenida a la aplicación',
+    `Te damos la bienvenida a ${PRODUCT_NAME}`,
     '',
-    'Has sido invitado al portal de gestión de licencias SAP de Avvale.',
+    `Has sido invitado a ${PRODUCT_NAME}.`,
     'Establece tu contraseña desde esta dirección:',
     link,
     '',
     'Este enlace caduca en 48 horas.',
     'Si no esperabas esta invitación, puedes ignorar este correo.',
     '',
-    'la aplicación - una solución de Avvale',
+    `${PRODUCT_NAME} - una solución de Avvale`,
     'Correo automático, no respondas a este mensaje.'
   ].join('\n')
 }
 
 export function passwordResetText(link: string): string {
   return [
-    'Restablece tu contraseña de la aplicación',
+    passwordResetSubject,
     '',
     'Solicitaste restablecer la contraseña de tu cuenta.',
     'Elige una nueva desde esta dirección:',
@@ -172,7 +177,7 @@ export function passwordResetText(link: string): string {
     'Este enlace caduca en 1 hora.',
     'Si no solicitaste el cambio, ignora este correo: tu contraseña seguirá siendo la misma.',
     '',
-    'la aplicación - una solución de Avvale',
+    `${PRODUCT_NAME} - una solución de Avvale`,
     'Correo automático, no respondas a este mensaje.'
   ].join('\n')
 }

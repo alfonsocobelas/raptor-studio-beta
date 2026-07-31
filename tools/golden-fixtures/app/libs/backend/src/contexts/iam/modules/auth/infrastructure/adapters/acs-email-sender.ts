@@ -1,5 +1,12 @@
 import { EmailSender } from '../../application/ports/email-sender'
-import { invitationHtml, invitationText, passwordResetHtml, passwordResetText } from './email-templates'
+import {
+  invitationHtml,
+  invitationSubject,
+  invitationText,
+  passwordResetHtml,
+  passwordResetSubject,
+  passwordResetText
+} from './email-templates'
 
 export interface AcsEmailMessage {
   senderAddress: string
@@ -22,7 +29,7 @@ export class AcsEmailSender extends EmailSender {
   }
 
   async sendInvitation(email: string, link: string): Promise<void> {
-    await this.send(email, 'Invitación a la aplicación', invitationHtml(link), invitationText(link))
+    await this.send(email, invitationSubject, invitationHtml(link), invitationText(link))
   }
 
   async sendPasswordReset(email: string, link: string): Promise<void> {
