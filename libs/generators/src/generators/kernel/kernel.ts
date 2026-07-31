@@ -36,11 +36,14 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     return list
   })
 
-  generateFiles(tree, path.join(__dirname, 'files'), outputDir, {
+  const substitutions = {
     sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
     databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
     entities
-  })
+  }
+  generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
+  // lo específico del motor (config + persistencia compartida) vive en árboles paralelos
+  generateFiles(tree, path.join(__dirname, `files-${options.database ?? 'postgres'}`), outputDir, substitutions)
 
   // Un id-VO por recurso registrado: el kernel no puede conocer de antemano las
   // entidades de cada cliente, así que se derivan del registro en vez de hardcodearse.

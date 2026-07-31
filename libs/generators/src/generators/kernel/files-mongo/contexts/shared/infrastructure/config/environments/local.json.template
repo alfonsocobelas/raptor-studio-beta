@@ -1,0 +1,16 @@
+{
+  "env": "local",
+  "app": {
+    "port": 3000,
+    "baseUrl": "http://localhost:4200"
+  },
+  "cors": {
+    "origin": "http://localhost:4200"
+  },
+  "logger": {
+    "level": "all"
+  },
+  "mongo": {
+    "uri": "mongodb://localhost:27017/<%- databaseName %>_local?replicaSet=rs0&directConnection=true"
+  }
+}
