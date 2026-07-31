@@ -1,0 +1,72 @@
+import * as nodemailer from 'nodemailer'
+import { AppLogger } from '../../../../../shared/domain/logger/logger'
+import {
+  AcsEmailConfig,
+  BrevoConfig,
+  SesConfig,
+  SmtpConfig
+} from '../../../../../shared/infrastructure/config/config-types'
+import { EmailSender } from '../../application/ports/email-sender'
+import { AcsEmailClient, AcsEmailSender } from './acs-email-sender'
+import { BrevoEmailSender } from './brevo-email-sender'
+import { LogEmailSender } from './log-email-sender'
+import { SesClient, SesEmailSender } from './ses-email-sender'
+import { MailTransport, SmtpEmailSender } from './smtp-email-sender'
+
+export interface EmailSections {
+  acs?: AcsEmailConfig
+  ses?: SesConfig
+  brevo?: BrevoConfig
+  smtp?: SmtpConfig
+}
+
+/**
+ * La sección de config presente decide el adaptador, por precedencia
+ * `acs → ses → brevo → smtp → log`:
+ * - `acs`: Azure Communication Services (connection string, típicamente desde vault).
+ * - `ses`: Amazon SES (credenciales por la cadena estándar del SDK de AWS).
+ * - `brevo`: API HTTP de Brevo (capa gratuita, sin SDK).
+ * - `smtp`: un relay SMTP cualquiera (nodemailer).
+ * - ninguna: se loguean los envíos (LogEmailSender), para local y test.
+ *
+ * Los SDK de Azure/AWS se cargan solo si su sección está presente: un proyecto que
+ * usa Brevo no necesita tenerlos instalados.
+ */
+export function createEmailSender(sections: EmailSections, logger: AppLogger): EmailSender {
+  if (sections.acs) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { EmailClient } = require('@azure/communication-email') as {
+      EmailClient: new (connectionString: string) => unknown
+    }
+    const client = new EmailClient(sections.acs.connectionString) as AcsEmailClient
+    return new AcsEmailSender(client, sections.acs.senderAddress)
+  }
+
+  if (sections.ses) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses') as {
+      SESClient: new (config: { region: string }) => { send(command: unknown): Promise<unknown> }
+      SendEmailCommand: new (input: unknown) => unknown
+    }
+    const sdk = new SESClient({ region: sections.ses.region })
+    const client: SesClient = { sendEmail: input => sdk.send(new SendEmailCommand(input)) }
+    return new SesEmailSender(client, sections.ses.from)
+  }
+
+  if (sections.brevo) {
+    return new BrevoEmailSender(sections.brevo.apiKey, { email: sections.brevo.from, name: sections.brevo.fromName })
+  }
+
+  if (sections.smtp) {
+    const transporter = nodemailer.createTransport({
+      host: sections.smtp.host,
+      port: sections.smtp.port,
+      secure: sections.smtp.secure,
+      auth: sections.smtp.auth
+    }) as unknown as MailTransport
+
+    return new SmtpEmailSender(transporter, sections.smtp.from ?? 'noreply@localhost')
+  }
+
+  return new LogEmailSender(logger)
+}
