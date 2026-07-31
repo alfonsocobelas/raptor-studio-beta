@@ -2,18 +2,20 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { filter, map } from 'rxjs'
+import { HlmToasterImports } from '@spartan-ng/helm/sonner'
 import { NAV_ITEMS } from './nav'
 
 /** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
 const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation']
 
 /**
- * Shell de la aplicación: barra lateral con una entrada por recurso y el outlet
- * donde se montan los listados generados.
+ * Shell de la aplicación (piel Spartan): barra lateral con una entrada por recurso,
+ * el outlet donde se montan los listados generados y el toaster de sonner —
+ * NotificationService emite por toast y sin este montaje los avisos no se ven.
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (bare()) {
@@ -42,6 +44,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
         </main>
       </div>
     }
+    <hlm-toaster />
   `
 })
 export class AppComponent {
