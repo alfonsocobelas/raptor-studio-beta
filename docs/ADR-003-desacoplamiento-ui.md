@@ -1,6 +1,6 @@
 # ADR-003: Desacoplamiento del front de las librerías de componentes
 
-**Estado:** Propuesto
+**Estado:** Aceptado e implementado (Nivel 1) — addendum 2026-07-31
 **Fecha:** 2026-07-10
 **Autor:** Alfonso Domínguez
 **Relacionado:** ADR-001 (arquitectura del acelerador), `guia-generador-nx.md`
@@ -116,7 +116,39 @@ El generador reduce el coste de esperar: como el acoplamiento vive en plantillas
 ## 7. Action items
 
 1. [ ] Regla de lint: prohibir imports de `@spartan-ng/*` en features generadas (solo en `libs/ui` y componentes shared).
-2. [ ] Extraer `form`/`dialog`/`button`/`toast` a componentes shared del acelerador (como ya está `data-table`).
-3. [ ] Plantillas del generador emiten contra shared, nunca contra Spartan directo.
-4. [ ] Design tokens como CSS custom properties.
+2. [x] Extraer `form`/`dialog`/`button`/`toast` a componentes shared del acelerador (como ya está `data-table`). *(2026-07-31: `shared/components/ui/` — dialog, dialog-content, confirm-dialog, form-field, select, input, button, notification.service)*
+3. [x] Plantillas del generador emiten contra shared, nunca contra Spartan directo. *(2026-07-31: cero referencias `Hlm*`/`spartan` en listado, diálogo y pantallas de auth emitidas)*
+4. [x] Design tokens como CSS custom properties. *(2026-07-31: la piel Material puentea los tokens de Tailwind a `--mat-sys-*` vía `@theme`; Spartan usa su preset)*
 5. [ ] Documentar el disparador de salto a Nivel 2 (cliente con librería distinta) y dejarlo como decisión pendiente, no construida.
+
+---
+
+## 8. Addendum 2026-07-31 — Nivel 1 implementado; política de pieles
+
+El Nivel 1 está construido y verificado con dos pieles reales en el generador
+(`--ui=spartan | material`), cada una implementando los mismos contratos con API
+pública idéntica. Ambas se validaron end-to-end en apps generadas (concesionario
+en Spartan, almacén en Material): tabla, CRUD contra Postgres, auth y diálogos.
+
+**Decisión de mantenimiento (cierra la duda "¿abandonamos multi-librería?"):**
+
+- **Spartan NG es la piel por defecto y la única de primera clase.** Es el canon
+  de la referencia y la más completa (1.321 líneas vs 706).
+- **Material queda disponible pero congelada:** no se invierte más en ella hasta
+  que un cliente la pida. Si aparece un contrato nuevo en el kernel, se
+  implementa en ambas pieles (los contratos son deliberadamente pequeños; el
+  `data-table` fue la excepción y ya está pagado).
+- **No se añade una tercera piel de forma especulativa.** El mecanismo `--ui`
+  hace que añadirla sea una operación contenida cuando exista demanda real.
+
+Lecciones de implementación que condicionan futuros contratos:
+
+- El portal de la librería (directiva estructural) no sobrevive a dos niveles de
+  proyección de contenido; el `<dialog>` nativo vive en el top layer, por encima
+  de los overlays del CDK. Por eso `app-dialog` usa overlay propio.
+- `MatButton` es un componente (no vale como hostDirective) y `matInput` exige
+  ser hijo de `mat-form-field`: donde Material no se puede componer tras un
+  contrato genérico, la piel cae a markup tematizado y el fichero documenta por qué.
+- Tailwind v4 deja el color de borde en `currentColor`: toda piel debe puentear
+  sus tokens de color (el preset de Spartan lo hace; en Material lo hace el
+  `@theme` de su `styles.css`).
