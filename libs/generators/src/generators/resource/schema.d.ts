@@ -5,4 +5,6 @@ export interface ResourceGeneratorSchema {
   name: string
   /** Output directory; defaults to tmp/generated/<plural> (golden-diff working area) */
   directory?: string
+  /** Persistence engine of the emitted app (default postgres) */
+  database?: 'postgres' | 'mongo'
 }

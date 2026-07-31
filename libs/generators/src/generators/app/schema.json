@@ -47,6 +47,26 @@
         ]
       }
     },
+    "database": {
+      "type": "string",
+      "default": "postgres",
+      "description": "Persistence engine of the emitted app (postgres/TypeORM or mongo/Mongoose)",
+      "enum": ["postgres", "mongo"],
+      "x-prompt": {
+        "message": "¿Qué motor de persistencia?",
+        "type": "list",
+        "items": [
+          {
+            "value": "postgres",
+            "label": "PostgreSQL (TypeORM)"
+          },
+          {
+            "value": "mongo",
+            "label": "MongoDB (Mongoose)"
+          }
+        ]
+      }
+    },
     "dashboard": {
       "type": "boolean",
       "default": false,

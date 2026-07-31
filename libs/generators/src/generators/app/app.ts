@@ -11,6 +11,7 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
+import { selectDatabase, type DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
 export interface AppGeneratorSchema {
@@ -21,6 +22,8 @@ export interface AppGeneratorSchema {
   directory?: string
   /** Component library the emitted frontend is built on */
   ui?: 'spartan' | 'material'
+  /** Persistence engine of the emitted app (default postgres) */
+  database?: DatabaseEngine
   /** Comma-separated plugins to assemble (migrations, auth) */
   plugins?: string
   /** Emit a KPI dashboard (one total per resource) as the home screen */
@@ -71,6 +74,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const root = options.directory ?? path.join('apps', appName)
   const models = selectModels(options.models)
   const ui = options.ui ?? 'spartan'
+  const database = selectDatabase(options.database)
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')
@@ -79,7 +83,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   await kernelGenerator(tree, {
     directory: backendSrc,
     models: options.models,
-    sharedDomainAlias: SHARED_DOMAIN_ALIAS
+    sharedDomainAlias: SHARED_DOMAIN_ALIAS,
+    database
   })
   await rootGenerator(tree, { directory: backendSrc, models: options.models })
   // el arranque vive en apps/backend-api; la config por entorno la emite el kernel
@@ -109,7 +114,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 3. un módulo por recurso, repartido al layout canónico
   for (const model of models) {
     const staging = path.join(root, '.gen', model.name)
-    await resourceGenerator(tree, { name: model.name, directory: staging, sharedDomainAlias: SHARED_DOMAIN_ALIAS })
+    await resourceGenerator(tree, { name: model.name, directory: staging, sharedDomainAlias: SHARED_DOMAIN_ALIAS, database })
 
     relocate(tree, path.join(staging, 'backend'), path.join(backendSrc, 'contexts', model.context, 'modules', model.plural))
     // El canon separa el servicio del recurso (core/services, compartido) de su

@@ -16,6 +16,12 @@
     "models": {
       "type": "string",
       "description": "Comma-separated model names to include (defaults to all registered models)"
+    },
+    "database": {
+      "type": "string",
+      "default": "postgres",
+      "enum": ["postgres", "mongo"],
+      "description": "Persistence engine of the emitted app"
     }
   }
 }

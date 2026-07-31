@@ -21,6 +21,12 @@
     "sharedDomainAlias": {
       "type": "string",
       "description": "Overrides the model's shared-domain import alias"
+    },
+    "database": {
+      "type": "string",
+      "default": "postgres",
+      "enum": ["postgres", "mongo"],
+      "description": "Persistence engine of the emitted app"
     }
   },
   "required": [
