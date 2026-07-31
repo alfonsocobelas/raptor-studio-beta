@@ -37,6 +37,8 @@ export interface AppPlugin {
   localSetupSteps?: string[]
   /** Schemas de PostgreSQL que el plugin necesita */
   schemas?: string[]
+  /** Motor que el plugin exige (p.ej. auth emite persistencia TypeORM); sin valor = agnóstico */
+  requiresDatabase?: 'postgres'
   /** Carpeta de assets copiada literalmente (relativa al directorio del plugin) */
   assets?: string
   /** Cableado libre sobre el árbol: ficheros derivados de los modelos, parches de config… */

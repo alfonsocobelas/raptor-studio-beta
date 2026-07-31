@@ -75,6 +75,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const models = selectModels(options.models)
   const ui = options.ui ?? 'spartan'
   const database = selectDatabase(options.database)
+  // valida la combinación plugins×motor antes de emitir un solo fichero
+  const plugins = [migrationsPlugin, ...selectPlugins(options.plugins, database)]
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')
@@ -225,7 +227,6 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
   //    Decisión 2026-07-31: un esquema versionado no es opcional en ningún proyecto.
-  const plugins = [migrationsPlugin, ...selectPlugins(options.plugins)]
   const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE }
   for (const plugin of plugins) {
     if (plugin.assets) {

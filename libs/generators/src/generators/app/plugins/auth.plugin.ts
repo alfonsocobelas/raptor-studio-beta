@@ -21,6 +21,7 @@ const AUTH_SCHEMA = 'iam'
 export const authPlugin = definePlugin({
   name: 'auth',
   description: 'Login por sesión con cookie, invitaciones, reset de contraseña y roles',
+  requiresDatabase: 'postgres',
   assets: 'assets-auth',
   dependencies: {
     argon2: '^0.41.1',

@@ -32,6 +32,22 @@ describe('selectPlugins', () => {
   it('does not offer migrations in the registry (built-in, not optional)', () => {
     expect(Object.keys(PLUGINS)).toEqual(['auth', 'email', 'observability'])
   })
+
+  it('rejects plugins that require postgres when the app targets mongo', () => {
+    // v1: auth emite persistencia TypeORM; adaptarlo a mongo es una spec posterior
+    expect(() => selectPlugins('auth', 'mongo')).toThrow(/auth.*postgres/)
+  })
+
+  it('allows engine-agnostic plugins with mongo', () => {
+    const plugins = selectPlugins('email,observability', 'mongo')
+
+    expect(plugins.map(p => p.name)).toEqual(['email', 'observability'])
+  })
+
+  it('keeps auth available on postgres (default engine)', () => {
+    expect(selectPlugins('auth', 'postgres').map(p => p.name)).toEqual(['auth'])
+    expect(selectPlugins('auth').map(p => p.name)).toEqual(['auth'])
+  })
 })
 
 describe('plugin manifests', () => {
