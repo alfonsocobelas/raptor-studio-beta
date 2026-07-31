@@ -68,7 +68,7 @@ Sin ese vocabulario, el lienzo no tiene nada que editar. Es la fase A y es útil
 | C | **Interactividad**: resaltar al hover, borrar, drag&drop desde paleta | ✅ Hecha (spec 09, 2026-07-31): toda interacción es una mutación del app-schema validada con `defineApp`. |
 | D | **Chat IA** que crea/edita el schema | ✅ Hecha (spec 10, 2026-07-31): claude-opus-5 con structured outputs en el backend del estudio; el gate valida en servidor y cliente; adapter fake sin clave. |
 | E | **Wizard de plugins** (db, infra hosting, auth, email…) | ✅ Hecha (spec 11, 2026-07-31): wizard sobre las opciones reales del generador + `--appFile` como puente schema-diseñado → generador. |
-| F | **Empaquetado escritorio** (Electron/Tauri) | Solo si hace falta. La web app cubre A–E; el acceso al disco/generador puede darlo un backend Nest local que invoque `nx generate`. |
+| F | **Empaquetado escritorio** (Electron/Tauri) | ✅ Resuelta (spec 12, 2026-07-31, decisión de Alfonso): generación in situ vía backend local (`studio-api`, botón «Generar aquí»), sin empaquetar. Si algún día hay usuarios sin entorno de desarrollo, el empaquetado será con **Electron** (Node embebido = el generador encaja directo; Tauri exigiría un sidecar Node). |
 
 **No se necesita app de escritorio hasta F**, y puede que nunca: una app Angular dentro del monorepo da el preview con componentes reales gratis.
 

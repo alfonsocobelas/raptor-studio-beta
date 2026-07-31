@@ -62,7 +62,7 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 | C    | Interactividad: hover-borrar, drag&drop (CDK) → muta schema  | ✅ 2026-07-31 (spec 09: mutaciones puras con gate defineApp, AppStore, paleta del catálogo, panel JSON; smoke Playwright) |
 | D    | Chat IA que edita el schema (structured output + gate)       | ✅ 2026-07-31 (spec 10: ChatPort con adapters Anthropic/fake, gate defineApp+composeApp en servidor y cliente, panel en /studio) |
 | E    | Wizard de plugins (db, infra, auth…)                         | ✅ 2026-07-31 (spec 11: `--appFile` en el generador + wizard en /studio con descarga del schema y comando exacto; verificado end-to-end) |
-| F    | Escritorio (Electron/Tauri) — solo si hace falta             | Pendiente |
+| F    | Escritorio (Electron/Tauri) — solo si hace falta             | ✅ 2026-07-31 resuelta como **generación in situ sin empaquetar** (spec 12, decisión de Alfonso): botón «Generar aquí» vía `studio-api` local (chat+generate sin Postgres). Electron queda instalado como devDep del estudio para la comparativa opcional. |
 
 ## Pendientes conocidos (no bloquean la spec 00)
 
