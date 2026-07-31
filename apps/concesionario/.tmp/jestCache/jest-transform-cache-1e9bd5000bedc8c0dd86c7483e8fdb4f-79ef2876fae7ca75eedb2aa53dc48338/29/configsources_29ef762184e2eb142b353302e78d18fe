@@ -1,0 +1,37 @@
+430972baeb2cbbb27b6cb002439ffd47
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.loadRawConfig = loadRawConfig;
+const default_json_1 = __importDefault(require("../environments/default.json"));
+const dev_json_1 = __importDefault(require("../environments/dev.json"));
+const local_json_1 = __importDefault(require("../environments/local.json"));
+const prod_json_1 = __importDefault(require("../environments/prod.json"));
+const qa_json_1 = __importDefault(require("../environments/qa.json"));
+const test_json_1 = __importDefault(require("../environments/test.json"));
+const CONFIGS = {
+    default: default_json_1.default,
+    dev: dev_json_1.default,
+    local: local_json_1.default,
+    prod: prod_json_1.default,
+    qa: qa_json_1.default,
+    test: test_json_1.default
+};
+/**
+ * Returns the raw environment config as bundled JSON (no secret resolution).
+ * Static imports keep it bundle-safe; every loader builds on top of this.
+ */
+function loadRawConfig() {
+    // `??` (not `||`) on purpose: an unset NODE_ENV defaults to test (jest/tooling),
+    // but NODE_ENV="" is a misconfiguration (a deploy set it empty) and must fail loudly
+    // via the Unknown-NODE_ENV throw below, never silently load the test config (localhost DB).
+    const env = process.env['NODE_ENV'] ?? 'test';
+    const config = CONFIGS[env];
+    if (!config) {
+        throw new Error(`Unknown NODE_ENV: ${env}`);
+    }
+    return config;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL3NoYXJlZC9pbmZyYXN0cnVjdHVyZS9jb25maWcvbG9hZGVycy9jb25maWctc291cmNlcy50cyIsIm1hcHBpbmdzIjoiOzs7OztBQW9CQSxzQ0FZQztBQWhDRCxnRkFBd0Q7QUFDeEQsd0VBQWdEO0FBQ2hELDRFQUFvRDtBQUNwRCwwRUFBa0Q7QUFDbEQsc0VBQThDO0FBQzlDLDBFQUFrRDtBQUVsRCxNQUFNLE9BQU8sR0FBNEM7SUFDdkQsT0FBTyxFQUFFLHNCQUFhO0lBQ3RCLEdBQUcsRUFBRSxrQkFBUztJQUNkLEtBQUssRUFBRSxvQkFBVztJQUNsQixJQUFJLEVBQUUsbUJBQVU7SUFDaEIsRUFBRSxFQUFFLGlCQUFRO0lBQ1osSUFBSSxFQUFFLG1CQUFVO0NBQ2pCLENBQUE7QUFFRDs7O0dBR0c7QUFDSCxTQUFnQixhQUFhO0lBQzNCLGlGQUFpRjtJQUNqRixxRkFBcUY7SUFDckYsNEZBQTRGO0lBQzVGLE1BQU0sR0FBRyxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsVUFBVSxDQUFDLElBQUksTUFBTSxDQUFBO0lBQzdDLE1BQU0sTUFBTSxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsQ0FBQTtJQUUzQixJQUFJLENBQUMsTUFBTSxFQUFFLENBQUM7UUFDWixNQUFNLElBQUksS0FBSyxDQUFDLHFCQUFxQixHQUFHLEVBQUUsQ0FBQyxDQUFBO0lBQzdDLENBQUM7SUFFRCxPQUFPLE1BQU0sQ0FBQTtBQUNmLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL3NoYXJlZC9pbmZyYXN0cnVjdHVyZS9jb25maWcvbG9hZGVycy9jb25maWctc291cmNlcy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgZGVmYXVsdENvbmZpZyBmcm9tICcuLi9lbnZpcm9ubWVudHMvZGVmYXVsdC5qc29uJ1xuaW1wb3J0IGRldkNvbmZpZyBmcm9tICcuLi9lbnZpcm9ubWVudHMvZGV2Lmpzb24nXG5pbXBvcnQgbG9jYWxDb25maWcgZnJvbSAnLi4vZW52aXJvbm1lbnRzL2xvY2FsLmpzb24nXG5pbXBvcnQgcHJvZENvbmZpZyBmcm9tICcuLi9lbnZpcm9ubWVudHMvcHJvZC5qc29uJ1xuaW1wb3J0IHFhQ29uZmlnIGZyb20gJy4uL2Vudmlyb25tZW50cy9xYS5qc29uJ1xuaW1wb3J0IHRlc3RDb25maWcgZnJvbSAnLi4vZW52aXJvbm1lbnRzL3Rlc3QuanNvbidcblxuY29uc3QgQ09ORklHUzogUmVjb3JkPHN0cmluZywgUmVjb3JkPHN0cmluZywgdW5rbm93bj4+ID0ge1xuICBkZWZhdWx0OiBkZWZhdWx0Q29uZmlnLFxuICBkZXY6IGRldkNvbmZpZyxcbiAgbG9jYWw6IGxvY2FsQ29uZmlnLFxuICBwcm9kOiBwcm9kQ29uZmlnLFxuICBxYTogcWFDb25maWcsXG4gIHRlc3Q6IHRlc3RDb25maWdcbn1cblxuLyoqXG4gKiBSZXR1cm5zIHRoZSByYXcgZW52aXJvbm1lbnQgY29uZmlnIGFzIGJ1bmRsZWQgSlNPTiAobm8gc2VjcmV0IHJlc29sdXRpb24pLlxuICogU3RhdGljIGltcG9ydHMga2VlcCBpdCBidW5kbGUtc2FmZTsgZXZlcnkgbG9hZGVyIGJ1aWxkcyBvbiB0b3Agb2YgdGhpcy5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGxvYWRSYXdDb25maWcoKTogUmVjb3JkPHN0cmluZywgdW5rbm93bj4ge1xuICAvLyBgPz9gIChub3QgYHx8YCkgb24gcHVycG9zZTogYW4gdW5zZXQgTk9ERV9FTlYgZGVmYXVsdHMgdG8gdGVzdCAoamVzdC90b29saW5nKSxcbiAgLy8gYnV0IE5PREVfRU5WPVwiXCIgaXMgYSBtaXNjb25maWd1cmF0aW9uIChhIGRlcGxveSBzZXQgaXQgZW1wdHkpIGFuZCBtdXN0IGZhaWwgbG91ZGx5XG4gIC8vIHZpYSB0aGUgVW5rbm93bi1OT0RFX0VOViB0aHJvdyBiZWxvdywgbmV2ZXIgc2lsZW50bHkgbG9hZCB0aGUgdGVzdCBjb25maWcgKGxvY2FsaG9zdCBEQikuXG4gIGNvbnN0IGVudiA9IHByb2Nlc3MuZW52WydOT0RFX0VOViddID8/ICd0ZXN0J1xuICBjb25zdCBjb25maWcgPSBDT05GSUdTW2Vudl1cblxuICBpZiAoIWNvbmZpZykge1xuICAgIHRocm93IG5ldyBFcnJvcihgVW5rbm93biBOT0RFX0VOVjogJHtlbnZ9YClcbiAgfVxuXG4gIHJldHVybiBjb25maWdcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

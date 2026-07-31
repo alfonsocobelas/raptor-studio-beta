@@ -156,6 +156,15 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend-tests'),
       substitutions
     )
+    // test de integración del repositorio (corre contra el Postgres del compose de test)
+    if (substitutions.entry.emit) {
+      generateFiles(
+        tree,
+        path.join(__dirname, '..', 'resource', 'files-tests-integration'),
+        path.join(outputDir, 'backend-tests-integration'),
+        substitutions
+      )
+    }
     // una suite sin tests es un fallo para jest: si el modelo no tiene VOs de un
     // grupo, su fichero no se emite
     const voTests = substitutions.domainTests.voTests

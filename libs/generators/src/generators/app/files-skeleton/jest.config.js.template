@@ -1,13 +1,9 @@
 /** @type {import('jest').Config} */
 
-// Tests unitarios del backend emitido (VO property-tests + los que se escriban a mano
-// sobre mothers/builders/mocks). Integración/e2e llegarán con su propio proyecto.
-module.exports = {
-  displayName: 'unit',
+const base = {
   testEnvironment: 'node',
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: __dirname,
-  testMatch: ['<rootDir>/libs/backend/tests/**/*.test.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }]
   },
@@ -16,6 +12,25 @@ module.exports = {
     '^@app/backend/(.*)$': '<rootDir>/libs/backend/src/$1'
   },
   clearMocks: true,
-  passWithNoTests: true,
   cacheDirectory: '<rootDir>/.tmp/jestCache'
+}
+
+module.exports = {
+  testTimeout: 30000,
+  passWithNoTests: true,
+  projects: [
+    {
+      ...base,
+      displayName: 'unit',
+      testMatch: ['<rootDir>/libs/backend/tests/modules/**/*.test.ts']
+    },
+    {
+      // Necesita el Postgres del compose de test: `make test-up` antes de correrla.
+      ...base,
+      displayName: 'integration',
+      testMatch: ['<rootDir>/libs/backend/tests/infrastructure/**/*.test.ts'],
+      setupFilesAfterEach: undefined,
+      setupFilesAfterEnv: ['<rootDir>/libs/backend/tests/infrastructure/jest.setup.integration.ts']
+    }
+  ]
 }

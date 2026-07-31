@@ -1,4 +1,4 @@
-.PHONY: help up down test-up test-down seed api web test typecheck local-setup
+.PHONY: help up down test-up test-down seed api web test test-integration typecheck local-setup
 
 help:
 	@grep -E '^[a-zA-Z-]+:' Makefile | sed 's/:.*//'
@@ -26,6 +26,10 @@ web:
 
 test:
 	npm test
+
+# Integración contra el Postgres efímero: make test-up antes (docker)
+test-integration:
+	npm run test:integration
 
 typecheck:
 	npm run typecheck

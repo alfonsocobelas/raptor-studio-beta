@@ -1,0 +1,86 @@
+6c0bd625749630149b22247696a81a8c
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TypeOrmSaleEntity = void 0;
+const typeorm_1 = require("typeorm");
+const sale_constants_1 = require("../../../domain/sale-constants");
+const numericTransformer = {
+    to: (value) => value,
+    from: (value) => Number(value)
+};
+let TypeOrmSaleEntity = class TypeOrmSaleEntity {
+    id;
+    reference;
+    saleDate;
+    vehicleLabel;
+    clientLabel;
+    salesperson;
+    amount;
+    discount;
+    paymentMethod;
+    status;
+    createdAt;
+    updatedAt;
+};
+exports.TypeOrmSaleEntity = TypeOrmSaleEntity;
+__decorate([
+    (0, typeorm_1.PrimaryColumn)('uuid'),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: sale_constants_1.SALE_CONSTRAINTS.REFERENCE.MAX }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "reference", void 0);
+__decorate([
+    (0, typeorm_1.Column)('date'),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "saleDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: sale_constants_1.SALE_CONSTRAINTS.VEHICLE_LABEL.MAX }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "vehicleLabel", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: sale_constants_1.SALE_CONSTRAINTS.CLIENT_LABEL.MAX }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "clientLabel", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: sale_constants_1.SALE_CONSTRAINTS.SALESPERSON.MAX, default: '' }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "salesperson", void 0);
+__decorate([
+    (0, typeorm_1.Column)('numeric', { precision: 12, scale: 2, default: 0, transformer: numericTransformer }),
+    __metadata("design:type", Number)
+], TypeOrmSaleEntity.prototype, "amount", void 0);
+__decorate([
+    (0, typeorm_1.Column)('numeric', { precision: 12, scale: 2, default: 0, transformer: numericTransformer }),
+    __metadata("design:type", Number)
+], TypeOrmSaleEntity.prototype, "discount", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: 20, default: 'cash' }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, typeorm_1.Column)('varchar', { length: 20, default: 'pending' }),
+    __metadata("design:type", String)
+], TypeOrmSaleEntity.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    __metadata("design:type", Date)
+], TypeOrmSaleEntity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz' }),
+    __metadata("design:type", Date)
+], TypeOrmSaleEntity.prototype, "updatedAt", void 0);
+exports.TypeOrmSaleEntity = TypeOrmSaleEntity = __decorate([
+    (0, typeorm_1.Entity)({ name: 'sales', schema: 'dealership' })
+], TypeOrmSaleEntity);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL2RlYWxlcnNoaXAvbW9kdWxlcy9zYWxlcy9pbmZyYXN0cnVjdHVyZS9wZXJzaXN0ZW5jZS90eXBlb3JtL3R5cGVvcm0tc2FsZS5lbnRpdHkudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEscUNBQTJGO0FBQzNGLG1FQUEyRTtBQUUzRSxNQUFNLGtCQUFrQixHQUFHO0lBQ3pCLEVBQUUsRUFBRSxDQUFDLEtBQWEsRUFBVSxFQUFFLENBQUMsS0FBSztJQUNwQyxJQUFJLEVBQUUsQ0FBQyxLQUFhLEVBQVUsRUFBRSxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUM7Q0FDL0MsQ0FBQTtBQUdNLElBQU0saUJBQWlCLEdBQXZCLE1BQU0saUJBQWlCO0lBRTVCLEVBQUUsQ0FBUztJQUdYLFNBQVMsQ0FBUztJQUdsQixRQUFRLENBQVM7SUFHakIsWUFBWSxDQUFTO0lBR3JCLFdBQVcsQ0FBUztJQUdwQixXQUFXLENBQVM7SUFHcEIsTUFBTSxDQUFTO0lBR2YsUUFBUSxDQUFTO0lBR2pCLGFBQWEsQ0FBUztJQUd0QixNQUFNLENBQVM7SUFHZixTQUFTLENBQU87SUFHaEIsU0FBUyxDQUFPO0NBQ2pCLENBQUE7QUFwQ1ksOENBQWlCO0FBRTVCO0lBREMsSUFBQSx1QkFBYSxFQUFDLE1BQU0sQ0FBQzs7NkNBQ1g7QUFHWDtJQURDLElBQUEsZ0JBQU0sRUFBQyxTQUFTLEVBQUUsRUFBRSxNQUFNLEVBQUUsaUNBQU0sQ0FBQyxTQUFTLENBQUMsR0FBRyxFQUFFLENBQUM7O29EQUNsQztBQUdsQjtJQURDLElBQUEsZ0JBQU0sRUFBQyxNQUFNLENBQUM7O21EQUNFO0FBR2pCO0lBREMsSUFBQSxnQkFBTSxFQUFDLFNBQVMsRUFBRSxFQUFFLE1BQU0sRUFBRSxpQ0FBTSxDQUFDLGFBQWEsQ0FBQyxHQUFHLEVBQUUsQ0FBQzs7dURBQ25DO0FBR3JCO0lBREMsSUFBQSxnQkFBTSxFQUFDLFNBQVMsRUFBRSxFQUFFLE1BQU0sRUFBRSxpQ0FBTSxDQUFDLFlBQVksQ0FBQyxHQUFHLEVBQUUsQ0FBQzs7c0RBQ25DO0FBR3BCO0lBREMsSUFBQSxnQkFBTSxFQUFDLFNBQVMsRUFBRSxFQUFFLE1BQU0sRUFBRSxpQ0FBTSxDQUFDLFdBQVcsQ0FBQyxHQUFHLEVBQUUsT0FBTyxFQUFFLEVBQUUsRUFBRSxDQUFDOztzREFDL0M7QUFHcEI7SUFEQyxJQUFBLGdCQUFNLEVBQUMsU0FBUyxFQUFFLEVBQUUsU0FBUyxFQUFFLEVBQUUsRUFBRSxLQUFLLEVBQUUsQ0FBQyxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsV0FBVyxFQUFFLGtCQUFrQixFQUFFLENBQUM7O2lEQUM3RTtBQUdmO0lBREMsSUFBQSxnQkFBTSxFQUFDLFNBQVMsRUFBRSxFQUFFLFNBQVMsRUFBRSxFQUFFLEVBQUUsS0FBSyxFQUFFLENBQUMsRUFBRSxPQUFPLEVBQUUsQ0FBQyxFQUFFLFdBQVcsRUFBRSxrQkFBa0IsRUFBRSxDQUFDOzttREFDM0U7QUFHakI7SUFEQyxJQUFBLGdCQUFNLEVBQUMsU0FBUyxFQUFFLEVBQUUsTUFBTSxFQUFFLEVBQUUsRUFBRSxPQUFPLEVBQUUsTUFBTSxFQUFFLENBQUM7O3dEQUM3QjtBQUd0QjtJQURDLElBQUEsZ0JBQU0sRUFBQyxTQUFTLEVBQUUsRUFBRSxNQUFNLEVBQUUsRUFBRSxFQUFFLE9BQU8sRUFBRSxTQUFTLEVBQUUsQ0FBQzs7aURBQ3ZDO0FBR2Y7SUFEQyxJQUFBLDBCQUFnQixFQUFDLEVBQUUsSUFBSSxFQUFFLGFBQWEsRUFBRSxDQUFDOzhCQUM5QixJQUFJO29EQUFBO0FBR2hCO0lBREMsSUFBQSwwQkFBZ0IsRUFBQyxFQUFFLElBQUksRUFBRSxhQUFhLEVBQUUsQ0FBQzs4QkFDOUIsSUFBSTtvREFBQTs0QkFuQ0wsaUJBQWlCO0lBRDdCLElBQUEsZ0JBQU0sRUFBQyxFQUFFLElBQUksRUFBRSxPQUFPLEVBQUUsTUFBTSxFQUFFLFlBQVksRUFBRSxDQUFDO0dBQ25DLGlCQUFpQixDQW9DN0IiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL2RlYWxlcnNoaXAvbW9kdWxlcy9zYWxlcy9pbmZyYXN0cnVjdHVyZS9wZXJzaXN0ZW5jZS90eXBlb3JtL3R5cGVvcm0tc2FsZS5lbnRpdHkudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQ29sdW1uLCBDcmVhdGVEYXRlQ29sdW1uLCBFbnRpdHksIFByaW1hcnlDb2x1bW4sIFVwZGF0ZURhdGVDb2x1bW4gfSBmcm9tICd0eXBlb3JtJ1xuaW1wb3J0IHsgU0FMRV9DT05TVFJBSU5UUyBhcyBMSU1JVFMgfSBmcm9tICcuLi8uLi8uLi9kb21haW4vc2FsZS1jb25zdGFudHMnXG5cbmNvbnN0IG51bWVyaWNUcmFuc2Zvcm1lciA9IHtcbiAgdG86ICh2YWx1ZTogbnVtYmVyKTogbnVtYmVyID0+IHZhbHVlLFxuICBmcm9tOiAodmFsdWU6IHN0cmluZyk6IG51bWJlciA9PiBOdW1iZXIodmFsdWUpXG59XG5cbkBFbnRpdHkoeyBuYW1lOiAnc2FsZXMnLCBzY2hlbWE6ICdkZWFsZXJzaGlwJyB9KVxuZXhwb3J0IGNsYXNzIFR5cGVPcm1TYWxlRW50aXR5IHtcbiAgQFByaW1hcnlDb2x1bW4oJ3V1aWQnKVxuICBpZCE6IHN0cmluZ1xuXG4gIEBDb2x1bW4oJ3ZhcmNoYXInLCB7IGxlbmd0aDogTElNSVRTLlJFRkVSRU5DRS5NQVggfSlcbiAgcmVmZXJlbmNlITogc3RyaW5nXG5cbiAgQENvbHVtbignZGF0ZScpXG4gIHNhbGVEYXRlITogc3RyaW5nXG5cbiAgQENvbHVtbigndmFyY2hhcicsIHsgbGVuZ3RoOiBMSU1JVFMuVkVISUNMRV9MQUJFTC5NQVggfSlcbiAgdmVoaWNsZUxhYmVsITogc3RyaW5nXG5cbiAgQENvbHVtbigndmFyY2hhcicsIHsgbGVuZ3RoOiBMSU1JVFMuQ0xJRU5UX0xBQkVMLk1BWCB9KVxuICBjbGllbnRMYWJlbCE6IHN0cmluZ1xuXG4gIEBDb2x1bW4oJ3ZhcmNoYXInLCB7IGxlbmd0aDogTElNSVRTLlNBTEVTUEVSU09OLk1BWCwgZGVmYXVsdDogJycgfSlcbiAgc2FsZXNwZXJzb24hOiBzdHJpbmdcblxuICBAQ29sdW1uKCdudW1lcmljJywgeyBwcmVjaXNpb246IDEyLCBzY2FsZTogMiwgZGVmYXVsdDogMCwgdHJhbnNmb3JtZXI6IG51bWVyaWNUcmFuc2Zvcm1lciB9KVxuICBhbW91bnQhOiBudW1iZXJcblxuICBAQ29sdW1uKCdudW1lcmljJywgeyBwcmVjaXNpb246IDEyLCBzY2FsZTogMiwgZGVmYXVsdDogMCwgdHJhbnNmb3JtZXI6IG51bWVyaWNUcmFuc2Zvcm1lciB9KVxuICBkaXNjb3VudCE6IG51bWJlclxuXG4gIEBDb2x1bW4oJ3ZhcmNoYXInLCB7IGxlbmd0aDogMjAsIGRlZmF1bHQ6ICdjYXNoJyB9KVxuICBwYXltZW50TWV0aG9kITogc3RyaW5nXG5cbiAgQENvbHVtbigndmFyY2hhcicsIHsgbGVuZ3RoOiAyMCwgZGVmYXVsdDogJ3BlbmRpbmcnIH0pXG4gIHN0YXR1cyE6IHN0cmluZ1xuXG4gIEBDcmVhdGVEYXRlQ29sdW1uKHsgdHlwZTogJ3RpbWVzdGFtcHR6JyB9KVxuICBjcmVhdGVkQXQhOiBEYXRlXG5cbiAgQFVwZGF0ZURhdGVDb2x1bW4oeyB0eXBlOiAndGltZXN0YW1wdHonIH0pXG4gIHVwZGF0ZWRBdCE6IERhdGVcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

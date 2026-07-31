@@ -1,0 +1,260 @@
+82efe8d48980a464acb410a77f7500d9
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RootValidator = void 0;
+exports.validate = validate;
+const class_transformer_1 = require("class-transformer");
+const class_validator_1 = require("class-validator");
+class TypeOrmValidator {
+    host;
+    port;
+    username;
+    password;
+    database;
+    ssl;
+    synchronize;
+    dropSchema;
+    logging;
+    migrationsRun;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TypeOrmValidator.prototype, "host", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], TypeOrmValidator.prototype, "port", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TypeOrmValidator.prototype, "username", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TypeOrmValidator.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TypeOrmValidator.prototype, "database", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], TypeOrmValidator.prototype, "ssl", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], TypeOrmValidator.prototype, "synchronize", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], TypeOrmValidator.prototype, "dropSchema", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], TypeOrmValidator.prototype, "logging", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], TypeOrmValidator.prototype, "migrationsRun", void 0);
+class AppValidator {
+    port;
+    baseUrl;
+}
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AppValidator.prototype, "port", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AppValidator.prototype, "baseUrl", void 0);
+class LoggerValidator {
+    level;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], LoggerValidator.prototype, "level", void 0);
+class SmtpAuthValidator {
+    user;
+    pass;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SmtpAuthValidator.prototype, "user", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SmtpAuthValidator.prototype, "pass", void 0);
+class AcsValidator {
+    connectionString;
+    senderAddress;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AcsValidator.prototype, "connectionString", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AcsValidator.prototype, "senderAddress", void 0);
+class SesValidator {
+    region;
+    from;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SesValidator.prototype, "region", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SesValidator.prototype, "from", void 0);
+class BrevoValidator {
+    apiKey;
+    from;
+    fromName;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BrevoValidator.prototype, "apiKey", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BrevoValidator.prototype, "from", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], BrevoValidator.prototype, "fromName", void 0);
+class SmtpValidator {
+    host;
+    port;
+    secure;
+    auth;
+    from;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SmtpValidator.prototype, "host", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], SmtpValidator.prototype, "port", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SmtpValidator.prototype, "secure", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => SmtpAuthValidator),
+    __metadata("design:type", SmtpAuthValidator)
+], SmtpValidator.prototype, "auth", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SmtpValidator.prototype, "from", void 0);
+class StorageValidator {
+    connectionString;
+    container;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StorageValidator.prototype, "connectionString", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], StorageValidator.prototype, "container", void 0);
+class RootValidator {
+    env;
+    app;
+    logger;
+    typeorm;
+    acs;
+    ses;
+    brevo;
+    // Sección opcional: sin ella el módulo de auth cae a LogEmailSender (no envía emails reales).
+    smtp;
+    // Sección opcional: solo si el proyecto usa el puerto de storage (@acc/infra-ports).
+    storage;
+}
+exports.RootValidator = RootValidator;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RootValidator.prototype, "env", void 0);
+__decorate([
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => AppValidator),
+    __metadata("design:type", AppValidator)
+], RootValidator.prototype, "app", void 0);
+__decorate([
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => LoggerValidator),
+    __metadata("design:type", LoggerValidator)
+], RootValidator.prototype, "logger", void 0);
+__decorate([
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => TypeOrmValidator),
+    __metadata("design:type", TypeOrmValidator)
+], RootValidator.prototype, "typeorm", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => AcsValidator),
+    __metadata("design:type", AcsValidator)
+], RootValidator.prototype, "acs", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => SesValidator),
+    __metadata("design:type", SesValidator)
+], RootValidator.prototype, "ses", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => BrevoValidator),
+    __metadata("design:type", BrevoValidator
+    // Sección opcional: sin ella el módulo de auth cae a LogEmailSender (no envía emails reales).
+    )
+], RootValidator.prototype, "brevo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => SmtpValidator),
+    __metadata("design:type", SmtpValidator
+    // Sección opcional: solo si el proyecto usa el puerto de storage (@acc/infra-ports).
+    )
+], RootValidator.prototype, "smtp", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => StorageValidator),
+    __metadata("design:type", StorageValidator)
+], RootValidator.prototype, "storage", void 0);
+function validate(config) {
+    const validatedConfig = (0, class_transformer_1.plainToInstance)(RootValidator, config, { enableImplicitConversion: true });
+    const errors = (0, class_validator_1.validateSync)(validatedConfig, { skipMissingProperties: false });
+    if (errors.length) {
+        throw new Error(`Config validation failed: ${errors.toString()}`);
+    }
+    return validatedConfig;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL3NoYXJlZC9pbmZyYXN0cnVjdHVyZS9jb25maWcvY29uZmlnLXZhbGlkYXRpb24udHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBNkpBLDRCQVNDO0FBdEtELHlEQUF5RDtBQUN6RCxxREFBeUc7QUFFekcsTUFBTSxnQkFBZ0I7SUFFcEIsSUFBSSxDQUFTO0lBR2IsSUFBSSxDQUFTO0lBR2IsUUFBUSxDQUFTO0lBR2pCLFFBQVEsQ0FBUztJQUdqQixRQUFRLENBQVM7SUFJakIsR0FBRyxDQUFVO0lBR2IsV0FBVyxDQUFVO0lBR3JCLFVBQVUsQ0FBVTtJQUdwQixPQUFPLENBQVU7SUFHakIsYUFBYSxDQUFVO0NBQ3hCO0FBN0JDO0lBREMsSUFBQSwwQkFBUSxHQUFFOzs4Q0FDRTtBQUdiO0lBREMsSUFBQSwwQkFBUSxHQUFFOzs4Q0FDRTtBQUdiO0lBREMsSUFBQSwwQkFBUSxHQUFFOztrREFDTTtBQUdqQjtJQURDLElBQUEsMEJBQVEsR0FBRTs7a0RBQ007QUFHakI7SUFEQyxJQUFBLDBCQUFRLEdBQUU7O2tEQUNNO0FBSWpCO0lBRkMsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSwyQkFBUyxHQUFFOzs2Q0FDQztBQUdiO0lBREMsSUFBQSwyQkFBUyxHQUFFOztxREFDUztBQUdyQjtJQURDLElBQUEsMkJBQVMsR0FBRTs7b0RBQ1E7QUFHcEI7SUFEQyxJQUFBLDJCQUFTLEdBQUU7O2lEQUNLO0FBR2pCO0lBREMsSUFBQSwyQkFBUyxHQUFFOzt1REFDVztBQUd6QixNQUFNLFlBQVk7SUFFaEIsSUFBSSxDQUFTO0lBR2IsT0FBTyxDQUFTO0NBQ2pCO0FBSkM7SUFEQyxJQUFBLDBCQUFRLEdBQUU7OzBDQUNFO0FBR2I7SUFEQyxJQUFBLDBCQUFRLEdBQUU7OzZDQUNLO0FBR2xCLE1BQU0sZUFBZTtJQUVuQixLQUFLLENBQVM7Q0FDZjtBQURDO0lBREMsSUFBQSwwQkFBUSxHQUFFOzs4Q0FDRztBQUdoQixNQUFNLGlCQUFpQjtJQUVyQixJQUFJLENBQVM7SUFHYixJQUFJLENBQVM7Q0FDZDtBQUpDO0lBREMsSUFBQSwwQkFBUSxHQUFFOzsrQ0FDRTtBQUdiO0lBREMsSUFBQSwwQkFBUSxHQUFFOzsrQ0FDRTtBQUdmLE1BQU0sWUFBWTtJQUVoQixnQkFBZ0IsQ0FBUztJQUd6QixhQUFhLENBQVM7Q0FDdkI7QUFKQztJQURDLElBQUEsMEJBQVEsR0FBRTs7c0RBQ2M7QUFHekI7SUFEQyxJQUFBLDBCQUFRLEdBQUU7O21EQUNXO0FBR3hCLE1BQU0sWUFBWTtJQUVoQixNQUFNLENBQVM7SUFHZixJQUFJLENBQVM7Q0FDZDtBQUpDO0lBREMsSUFBQSwwQkFBUSxHQUFFOzs0Q0FDSTtBQUdmO0lBREMsSUFBQSwwQkFBUSxHQUFFOzswQ0FDRTtBQUdmLE1BQU0sY0FBYztJQUVsQixNQUFNLENBQVM7SUFHZixJQUFJLENBQVM7SUFJYixRQUFRLENBQVM7Q0FDbEI7QUFSQztJQURDLElBQUEsMEJBQVEsR0FBRTs7OENBQ0k7QUFHZjtJQURDLElBQUEsMEJBQVEsR0FBRTs7NENBQ0U7QUFJYjtJQUZDLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMEJBQVEsR0FBRTs7Z0RBQ007QUFHbkIsTUFBTSxhQUFhO0lBRWpCLElBQUksQ0FBUztJQUdiLElBQUksQ0FBUztJQUdiLE1BQU0sQ0FBVTtJQUtoQixJQUFJLENBQW9CO0lBSXhCLElBQUksQ0FBUztDQUNkO0FBaEJDO0lBREMsSUFBQSwwQkFBUSxHQUFFOzsyQ0FDRTtBQUdiO0lBREMsSUFBQSwwQkFBUSxHQUFFOzsyQ0FDRTtBQUdiO0lBREMsSUFBQSwyQkFBUyxHQUFFOzs2Q0FDSTtBQUtoQjtJQUhDLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsZ0NBQWMsR0FBRTtJQUNoQixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsaUJBQWlCLENBQUM7OEJBQ3ZCLGlCQUFpQjsyQ0FBQTtBQUl4QjtJQUZDLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsMEJBQVEsR0FBRTs7MkNBQ0U7QUFHZixNQUFNLGdCQUFnQjtJQUVwQixnQkFBZ0IsQ0FBUztJQUd6QixTQUFTLENBQVM7Q0FDbkI7QUFKQztJQURDLElBQUEsMEJBQVEsR0FBRTs7MERBQ2M7QUFHekI7SUFEQyxJQUFBLDBCQUFRLEdBQUU7O21EQUNPO0FBR3BCLE1BQWEsYUFBYTtJQUV4QixHQUFHLENBQVM7SUFJWixHQUFHLENBQWU7SUFJbEIsTUFBTSxDQUFrQjtJQUl4QixPQUFPLENBQW1CO0lBSzFCLEdBQUcsQ0FBZTtJQUtsQixHQUFHLENBQWU7SUFLbEIsS0FBSyxDQUFpQjtJQUV0Qiw4RkFBOEY7SUFJOUYsSUFBSSxDQUFnQjtJQUVwQixxRkFBcUY7SUFJckYsT0FBTyxDQUFtQjtDQUMzQjtBQTFDRCxzQ0EwQ0M7QUF4Q0M7SUFEQyxJQUFBLDBCQUFRLEdBQUU7OzBDQUNDO0FBSVo7SUFGQyxJQUFBLGdDQUFjLEdBQUU7SUFDaEIsSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLFlBQVksQ0FBQzs4QkFDbkIsWUFBWTswQ0FBQTtBQUlsQjtJQUZDLElBQUEsZ0NBQWMsR0FBRTtJQUNoQixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsZUFBZSxDQUFDOzhCQUNuQixlQUFlOzZDQUFBO0FBSXhCO0lBRkMsSUFBQSxnQ0FBYyxHQUFFO0lBQ2hCLElBQUEsd0JBQUksRUFBQyxHQUFHLEVBQUUsQ0FBQyxnQkFBZ0IsQ0FBQzs4QkFDbkIsZ0JBQWdCOzhDQUFBO0FBSzFCO0lBSEMsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSxnQ0FBYyxHQUFFO0lBQ2hCLElBQUEsd0JBQUksRUFBQyxHQUFHLEVBQUUsQ0FBQyxZQUFZLENBQUM7OEJBQ25CLFlBQVk7MENBQUE7QUFLbEI7SUFIQyxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLGdDQUFjLEdBQUU7SUFDaEIsSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLFlBQVksQ0FBQzs4QkFDbkIsWUFBWTswQ0FBQTtBQUtsQjtJQUhDLElBQUEsNEJBQVUsR0FBRTtJQUNaLElBQUEsZ0NBQWMsR0FBRTtJQUNoQixJQUFBLHdCQUFJLEVBQUMsR0FBRyxFQUFFLENBQUMsY0FBYyxDQUFDOzhCQUNuQixjQUFjO0lBRXRCLDhGQUE4Rjs7NENBRnhFO0FBTXRCO0lBSEMsSUFBQSw0QkFBVSxHQUFFO0lBQ1osSUFBQSxnQ0FBYyxHQUFFO0lBQ2hCLElBQUEsd0JBQUksRUFBQyxHQUFHLEVBQUUsQ0FBQyxhQUFhLENBQUM7OEJBQ25CLGFBQWE7SUFFcEIscUZBQXFGOzsyQ0FGakU7QUFNcEI7SUFIQyxJQUFBLDRCQUFVLEdBQUU7SUFDWixJQUFBLGdDQUFjLEdBQUU7SUFDaEIsSUFBQSx3QkFBSSxFQUFDLEdBQUcsRUFBRSxDQUFDLGdCQUFnQixDQUFDOzhCQUNuQixnQkFBZ0I7OENBQUE7QUFHNUIsU0FBZ0IsUUFBUSxDQUFDLE1BQStCO0lBQ3RELE1BQU0sZUFBZSxHQUFHLElBQUEsbUNBQWUsRUFBQyxhQUFhLEVBQUUsTUFBTSxFQUFFLEVBQUUsd0JBQXdCLEVBQUUsSUFBSSxFQUFFLENBQUMsQ0FBQTtJQUNsRyxNQUFNLE1BQU0sR0FBRyxJQUFBLDhCQUFZLEVBQUMsZUFBZSxFQUFFLEVBQUUscUJBQXFCLEVBQUUsS0FBSyxFQUFFLENBQUMsQ0FBQTtJQUU5RSxJQUFJLE1BQU0sQ0FBQyxNQUFNLEVBQUUsQ0FBQztRQUNsQixNQUFNLElBQUksS0FBSyxDQUFDLDZCQUE2QixNQUFNLENBQUMsUUFBUSxFQUFFLEVBQUUsQ0FBQyxDQUFBO0lBQ25FLENBQUM7SUFFRCxPQUFPLGVBQWUsQ0FBQTtBQUN4QixDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9Vc2Vycy9hbGZvbnNvLmRvbWluZ3Vlei9WU0NvZGUvYWNlbGVyYWRvci9hcHBzL2NvbmNlc2lvbmFyaW8vbGlicy9iYWNrZW5kL3NyYy9jb250ZXh0cy9zaGFyZWQvaW5mcmFzdHJ1Y3R1cmUvY29uZmlnL2NvbmZpZy12YWxpZGF0aW9uLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHBsYWluVG9JbnN0YW5jZSwgVHlwZSB9IGZyb20gJ2NsYXNzLXRyYW5zZm9ybWVyJ1xuaW1wb3J0IHsgSXNCb29sZWFuLCBJc051bWJlciwgSXNPcHRpb25hbCwgSXNTdHJpbmcsIFZhbGlkYXRlTmVzdGVkLCB2YWxpZGF0ZVN5bmMgfSBmcm9tICdjbGFzcy12YWxpZGF0b3InXG5cbmNsYXNzIFR5cGVPcm1WYWxpZGF0b3Ige1xuICBASXNTdHJpbmcoKVxuICBob3N0ITogc3RyaW5nXG5cbiAgQElzTnVtYmVyKClcbiAgcG9ydCE6IG51bWJlclxuXG4gIEBJc1N0cmluZygpXG4gIHVzZXJuYW1lITogc3RyaW5nXG5cbiAgQElzU3RyaW5nKClcbiAgcGFzc3dvcmQhOiBzdHJpbmdcblxuICBASXNTdHJpbmcoKVxuICBkYXRhYmFzZSE6IHN0cmluZ1xuXG4gIEBJc09wdGlvbmFsKClcbiAgQElzQm9vbGVhbigpXG4gIHNzbD86IGJvb2xlYW5cblxuICBASXNCb29sZWFuKClcbiAgc3luY2hyb25pemUhOiBib29sZWFuXG5cbiAgQElzQm9vbGVhbigpXG4gIGRyb3BTY2hlbWEhOiBib29sZWFuXG5cbiAgQElzQm9vbGVhbigpXG4gIGxvZ2dpbmchOiBib29sZWFuXG5cbiAgQElzQm9vbGVhbigpXG4gIG1pZ3JhdGlvbnNSdW4hOiBib29sZWFuXG59XG5cbmNsYXNzIEFwcFZhbGlkYXRvciB7XG4gIEBJc051bWJlcigpXG4gIHBvcnQhOiBudW1iZXJcblxuICBASXNTdHJpbmcoKVxuICBiYXNlVXJsITogc3RyaW5nXG59XG5cbmNsYXNzIExvZ2dlclZhbGlkYXRvciB7XG4gIEBJc1N0cmluZygpXG4gIGxldmVsITogc3RyaW5nXG59XG5cbmNsYXNzIFNtdHBBdXRoVmFsaWRhdG9yIHtcbiAgQElzU3RyaW5nKClcbiAgdXNlciE6IHN0cmluZ1xuXG4gIEBJc1N0cmluZygpXG4gIHBhc3MhOiBzdHJpbmdcbn1cblxuY2xhc3MgQWNzVmFsaWRhdG9yIHtcbiAgQElzU3RyaW5nKClcbiAgY29ubmVjdGlvblN0cmluZyE6IHN0cmluZ1xuXG4gIEBJc1N0cmluZygpXG4gIHNlbmRlckFkZHJlc3MhOiBzdHJpbmdcbn1cblxuY2xhc3MgU2VzVmFsaWRhdG9yIHtcbiAgQElzU3RyaW5nKClcbiAgcmVnaW9uITogc3RyaW5nXG5cbiAgQElzU3RyaW5nKClcbiAgZnJvbSE6IHN0cmluZ1xufVxuXG5jbGFzcyBCcmV2b1ZhbGlkYXRvciB7XG4gIEBJc1N0cmluZygpXG4gIGFwaUtleSE6IHN0cmluZ1xuXG4gIEBJc1N0cmluZygpXG4gIGZyb20hOiBzdHJpbmdcblxuICBASXNPcHRpb25hbCgpXG4gIEBJc1N0cmluZygpXG4gIGZyb21OYW1lPzogc3RyaW5nXG59XG5cbmNsYXNzIFNtdHBWYWxpZGF0b3Ige1xuICBASXNTdHJpbmcoKVxuICBob3N0ITogc3RyaW5nXG5cbiAgQElzTnVtYmVyKClcbiAgcG9ydCE6IG51bWJlclxuXG4gIEBJc0Jvb2xlYW4oKVxuICBzZWN1cmUhOiBib29sZWFuXG5cbiAgQElzT3B0aW9uYWwoKVxuICBAVmFsaWRhdGVOZXN0ZWQoKVxuICBAVHlwZSgoKSA9PiBTbXRwQXV0aFZhbGlkYXRvcilcbiAgYXV0aD86IFNtdHBBdXRoVmFsaWRhdG9yXG5cbiAgQElzT3B0aW9uYWwoKVxuICBASXNTdHJpbmcoKVxuICBmcm9tPzogc3RyaW5nXG59XG5cbmNsYXNzIFN0b3JhZ2VWYWxpZGF0b3Ige1xuICBASXNTdHJpbmcoKVxuICBjb25uZWN0aW9uU3RyaW5nITogc3RyaW5nXG5cbiAgQElzU3RyaW5nKClcbiAgY29udGFpbmVyITogc3RyaW5nXG59XG5cbmV4cG9ydCBjbGFzcyBSb290VmFsaWRhdG9yIHtcbiAgQElzU3RyaW5nKClcbiAgZW52ITogc3RyaW5nXG5cbiAgQFZhbGlkYXRlTmVzdGVkKClcbiAgQFR5cGUoKCkgPT4gQXBwVmFsaWRhdG9yKVxuICBhcHAhOiBBcHBWYWxpZGF0b3JcblxuICBAVmFsaWRhdGVOZXN0ZWQoKVxuICBAVHlwZSgoKSA9PiBMb2dnZXJWYWxpZGF0b3IpXG4gIGxvZ2dlciE6IExvZ2dlclZhbGlkYXRvclxuXG4gIEBWYWxpZGF0ZU5lc3RlZCgpXG4gIEBUeXBlKCgpID0+IFR5cGVPcm1WYWxpZGF0b3IpXG4gIHR5cGVvcm0hOiBUeXBlT3JtVmFsaWRhdG9yXG5cbiAgQElzT3B0aW9uYWwoKVxuICBAVmFsaWRhdGVOZXN0ZWQoKVxuICBAVHlwZSgoKSA9PiBBY3NWYWxpZGF0b3IpXG4gIGFjcz86IEFjc1ZhbGlkYXRvclxuXG4gIEBJc09wdGlvbmFsKClcbiAgQFZhbGlkYXRlTmVzdGVkKClcbiAgQFR5cGUoKCkgPT4gU2VzVmFsaWRhdG9yKVxuICBzZXM/OiBTZXNWYWxpZGF0b3JcblxuICBASXNPcHRpb25hbCgpXG4gIEBWYWxpZGF0ZU5lc3RlZCgpXG4gIEBUeXBlKCgpID0+IEJyZXZvVmFsaWRhdG9yKVxuICBicmV2bz86IEJyZXZvVmFsaWRhdG9yXG5cbiAgLy8gU2VjY2nDs24gb3BjaW9uYWw6IHNpbiBlbGxhIGVsIG3Ds2R1bG8gZGUgYXV0aCBjYWUgYSBMb2dFbWFpbFNlbmRlciAobm8gZW52w61hIGVtYWlscyByZWFsZXMpLlxuICBASXNPcHRpb25hbCgpXG4gIEBWYWxpZGF0ZU5lc3RlZCgpXG4gIEBUeXBlKCgpID0+IFNtdHBWYWxpZGF0b3IpXG4gIHNtdHA/OiBTbXRwVmFsaWRhdG9yXG5cbiAgLy8gU2VjY2nDs24gb3BjaW9uYWw6IHNvbG8gc2kgZWwgcHJveWVjdG8gdXNhIGVsIHB1ZXJ0byBkZSBzdG9yYWdlIChAYWNjL2luZnJhLXBvcnRzKS5cbiAgQElzT3B0aW9uYWwoKVxuICBAVmFsaWRhdGVOZXN0ZWQoKVxuICBAVHlwZSgoKSA9PiBTdG9yYWdlVmFsaWRhdG9yKVxuICBzdG9yYWdlPzogU3RvcmFnZVZhbGlkYXRvclxufVxuXG5leHBvcnQgZnVuY3Rpb24gdmFsaWRhdGUoY29uZmlnOiBSZWNvcmQ8c3RyaW5nLCB1bmtub3duPik6IFJvb3RWYWxpZGF0b3Ige1xuICBjb25zdCB2YWxpZGF0ZWRDb25maWcgPSBwbGFpblRvSW5zdGFuY2UoUm9vdFZhbGlkYXRvciwgY29uZmlnLCB7IGVuYWJsZUltcGxpY2l0Q29udmVyc2lvbjogdHJ1ZSB9KVxuICBjb25zdCBlcnJvcnMgPSB2YWxpZGF0ZVN5bmModmFsaWRhdGVkQ29uZmlnLCB7IHNraXBNaXNzaW5nUHJvcGVydGllczogZmFsc2UgfSlcblxuICBpZiAoZXJyb3JzLmxlbmd0aCkge1xuICAgIHRocm93IG5ldyBFcnJvcihgQ29uZmlnIHZhbGlkYXRpb24gZmFpbGVkOiAke2Vycm9ycy50b1N0cmluZygpfWApXG4gIH1cblxuICByZXR1cm4gdmFsaWRhdGVkQ29uZmlnXG59XG4iXSwidmVyc2lvbiI6M30=

@@ -84,7 +84,19 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // la config local debe apuntar al Postgres que levanta el compose emitido,
   // o `make local-setup` arrancaría contra una base que no existe
-  alignLocalDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/local.json'), appName)
+  alignDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/local.json'), {
+    port: 5433,
+    password: 'local_only_not_a_secret',
+    database: 'app_local',
+    synchronize: true
+  })
+  // la suite de integración corre contra el Postgres efímero del compose de test
+  alignDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/test.json'), {
+    port: 5434,
+    password: 'test_only_not_a_secret',
+    database: 'app_test',
+    synchronize: false
+  })
 
   // 2. DTOs compartidos + kernel Angular
   await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: options.models })
@@ -122,6 +134,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       const target = file.includes('.repository.mock.') ? path.join(testsRoot, 'mocks') : path.join(testsRoot, 'domain/mothers')
       move(tree, path.join(stagedTests, file), path.join(target, file))
     }
+    relocate(
+      tree,
+      path.join(staging, 'backend-tests-integration'),
+      path.join(root, 'libs/backend/tests/infrastructure/repositories')
+    )
     tree.delete(staging)
   }
   tree.delete(path.join(root, '.gen'))
@@ -161,6 +178,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       })
       .join('\n'),
     seedModules: models.map(model => `${names(model.plural).className}Module`).join(', '),
+    repoImports: models
+      .map(model => {
+        const n = names(model.name)
+        return `import { TypeOrm${n.className}Repository } from '../../src/contexts/${model.context}/modules/${model.plural}/infrastructure/persistence/typeorm/typeorm-${n.fileName}.repository'`
+      })
+      .join('\n'),
+    repoList: models.map(model => `  TypeOrm${names(model.name).className}Repository`).join(',\n'),
     seedRuns: models
       .map(model => {
         const n = names(model.name)
@@ -243,23 +267,23 @@ function sortKeys(record: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)))
 }
 
-/** Deja local.json coherente con docker/docker-compose.local.yml. */
-function alignLocalDatabase(tree: Tree, configPath: string, appName: string): void {
+/**
+ * Deja cada environment coherente con su docker-compose. Los nombres de BD son fijos
+ * (app_local/app_test) porque el esqueleto se copia verbatim: el compose no se templa.
+ */
+function alignDatabase(
+  tree: Tree,
+  configPath: string,
+  overrides: { port: number; password: string; database: string; synchronize: boolean }
+): void {
   const raw = tree.read(configPath, 'utf-8')
   if (!raw) {
     return
   }
   const config = JSON.parse(raw) as { typeorm: Record<string, unknown> }
-  config.typeorm = {
-    ...config.typeorm,
-    port: 5433,
-    username: 'app',
-    password: 'local_only_not_a_secret',
-    database: `${appName}_local`,
-    // sin el plugin de migraciones, el esquema local lo materializa TypeORM al arrancar
-    synchronize: true
-  }
-  tree.write(configPath, `${JSON.stringify(config, null, 2)}\n`)
+  config.typeorm = { ...config.typeorm, username: 'app', ...overrides }
+  tree.write(configPath, `${JSON.stringify(config, null, 2)}
+`)
 }
 
 function run(command: string, cwd: string): void {

@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common'
+import { SharedPersistenceModule } from '../../src/contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
+<%- repoImports %>
+
+const repositories = [
+<%- repoList %>
+]
+
+@Module({
+  imports: [SharedPersistenceModule],
+  providers: repositories,
+  exports: repositories
+})
+export class TestRepositoriesModule {}

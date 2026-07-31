@@ -27,7 +27,7 @@ const randomContractNumber = (): string => String(Math.floor(1000000000 + Math.r
 export class ContractBuilder {
   private props: ContractPrimitiveProps = {
     id: uuidv7(),
-    contractType: 'ContractType 1',
+    contractType: 'cloud',
     contractNumber: randomContractNumber(),
     customerId: uuidv7(),
     customerName: 'CustomerName 1',

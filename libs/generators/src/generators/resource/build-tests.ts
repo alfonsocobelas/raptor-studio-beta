@@ -101,7 +101,7 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     uniqueFinders,
     portImports: renderPortImports(definition, uniques),
     builderImports: renderBuilderImports(definition, ctxs, moduleBase, contextShared, globalShared),
-    builderDefaultLines: ctxs.map(c => `${c.name}: ${builderDefault(c)}`),
+    builderDefaultLines: ctxs.map(c => `${c.name}: ${builderDefault(definition, c)}`),
     builderWiths: withFields.map(c => ({ cap: cap(c.name), name: c.name, tsType: builderWithType(c) })),
     builderCreateArgs: [
       `id: ${className}Id.create(this.props.id)`,
@@ -114,9 +114,17 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     ],
     randomHelpers: uniques
       .filter(c => c.field.type === 'string')
-      .map(
-        c => `const random${cap(c.name)} = (): string => String(Math.floor(1000000000 + Math.random() * 9000000000))`
-      ),
+      .map(c => {
+        // el valor aleatorio debe respetar el MIN del VO: 10 dígitos por defecto,
+        // más si la constraint exige una longitud mínima mayor
+        const vo = typeof c.field.vo === 'object' ? c.field.vo : undefined
+        const constraintKey = vo?.constraintKey ?? c.name.replace(/([A-Z])/g, '_$1').toUpperCase()
+        const min = vo?.minLength === true ? constraintMin(definition, constraintKey) : 0
+        const digits = Math.max(10, min)
+        const lower = `1${'0'.repeat(digits - 1)}`
+        const span = `9${'0'.repeat(digits - 1)}`
+        return `const random${cap(c.name)} = (): string => String(Math.floor(${lower} + Math.random() * ${span}))`
+      }),
     motherUniqueShortcuts: uniques.map(c => ({ cap: cap(c.name), name: c.name })),
     voTests: renderVoTests(definition, ctxs)
   }
@@ -163,6 +171,15 @@ function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestB
   }
 }
 
+/** MIN declarado en las constraints del recurso para una clave (0 si no existe). */
+function constraintMin(definition: ResourceDefinition, constraintKey: string): number {
+  const entry = constraintKey.split('.').reduce<unknown>((acc, part) => {
+    return acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[part] : undefined
+  }, definition.constraints)
+  const min = entry && typeof entry === 'object' ? (entry as Record<string, unknown>)['MIN'] : undefined
+  return typeof min === 'number' ? min : 0
+}
+
 function voName(field: FieldDefinition): string {
   if (typeof field.vo === 'object') return field.vo.name
   if (typeof field.vo === 'string') return field.vo
@@ -172,7 +189,7 @@ function voName(field: FieldDefinition): string {
   return ''
 }
 
-function builderDefault(c: Ctx): string {
+function builderDefault(definition: ResourceDefinition, c: Ctx): string {
   if (c.unique && c.field.type === 'string') return `random${cap(c.name)}()`
   if (c.field.type === 'uuid') return 'uuidv7()'
   if (c.sync && (c.nullable || c.field.voShared)) {
@@ -183,9 +200,16 @@ function builderDefault(c: Ctx): string {
   const d = c.field.column?.default
   if (c.field.column?.array) return "['Sample Area']"
   if (d !== undefined) return typeof d === 'string' ? `'${d}'` : String(d)
+  const vo = typeof c.field.vo === 'object' ? c.field.vo : undefined
+  // un enum sin default de columna debe muestrear un valor DEL conjunto, no un literal inventado
+  if (vo?.values?.length) return `'${vo.values[0]}'`
   if (c.field.type === 'date') return c.name.toLowerCase().includes('end') ? "'2027-01-14'" : "'2026-01-15'"
   if (c.field.type === 'boolean') return 'false'
-  if (c.field.type === 'number' || c.field.type === 'integer') return '0'
+  if (c.field.type === 'number' || c.field.type === 'integer') {
+    // y un numérico con MIN declarado debe arrancar en el MIN, no en 0
+    const min = vo?.min === true ? constraintMin(definition, vo?.constraintKey ?? c.name.replace(/([A-Z])/g, '_$1').toUpperCase()) : 0
+    return String(min)
+  }
   if (c.nullable) return 'null'
   return `'${names(c.name).className} 1'`
 }

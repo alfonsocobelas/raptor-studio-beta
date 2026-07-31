@@ -1,0 +1,10 @@
+055c112bebc4195fd8794005d1b25d7f
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Encoding = void 0;
+var Encoding;
+(function (Encoding) {
+    Encoding["BASE64"] = "base64";
+    Encoding["UTF8"] = "utf-8";
+})(Encoding || (exports.Encoding = Encoding = {}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL3NoYXJlZC9kb21haW4vZW51bXMudHMiLCJtYXBwaW5ncyI6Ijs7O0FBQUEsSUFBWSxRQUdYO0FBSEQsV0FBWSxRQUFRO0lBQ2xCLDZCQUFpQixDQUFBO0lBQ2pCLDBCQUFjLENBQUE7QUFDaEIsQ0FBQyxFQUhXLFFBQVEsd0JBQVIsUUFBUSxRQUduQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvVXNlcnMvYWxmb25zby5kb21pbmd1ZXovVlNDb2RlL2FjZWxlcmFkb3IvYXBwcy9jb25jZXNpb25hcmlvL2xpYnMvYmFja2VuZC9zcmMvY29udGV4dHMvc2hhcmVkL2RvbWFpbi9lbnVtcy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZW51bSBFbmNvZGluZyB7XG4gIEJBU0U2NCA9ICdiYXNlNjQnLFxuICBVVEY4ID0gJ3V0Zi04J1xufVxuIl0sInZlcnNpb24iOjN9

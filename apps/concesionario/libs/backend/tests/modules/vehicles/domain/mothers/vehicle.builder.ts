@@ -15,7 +15,7 @@ import { VehicleYear } from '../../../../../src/contexts/dealership/modules/vehi
 import { Vin } from '../../../../../src/contexts/dealership/modules/vehicles/domain/value-objects/vin.vo'
 import { VehicleId } from '../../../../../src/contexts/shared/domain/value-objects/vehicles/vehicle-id.vo'
 
-const randomVin = (): string => String(Math.floor(1000000000 + Math.random() * 9000000000))
+const randomVin = (): string => String(Math.floor(10000000000 + Math.random() * 90000000000))
 
 const randomPlate = (): string => String(Math.floor(1000000000 + Math.random() * 9000000000))
 
@@ -28,8 +28,8 @@ export class VehicleBuilder {
     version: '',
     plate: randomPlate(),
     color: '',
-    fuel: 'Fuel 1',
-    year: 0,
+    fuel: 'gasoline',
+    year: 1990,
     mileage: 0,
     price: 0,
     status: 'stock',

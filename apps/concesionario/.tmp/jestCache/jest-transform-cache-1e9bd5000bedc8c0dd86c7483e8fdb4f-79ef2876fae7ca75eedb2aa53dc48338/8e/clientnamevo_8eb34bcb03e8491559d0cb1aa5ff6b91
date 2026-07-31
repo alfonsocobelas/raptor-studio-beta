@@ -1,0 +1,26 @@
+f45bd1978cfd3f9e87a051ce845b8d9e
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ClientName = void 0;
+const string_value_object_1 = require("../../../../../shared/domain/value-objects/string-value-object");
+const client_constants_1 = require("../client-constants");
+const client_errors_1 = require("../client-errors");
+class ClientName extends string_value_object_1.StringValueObject {
+    static fieldName = 'Client name';
+    constructor(value) {
+        super(value);
+    }
+    static create(value) {
+        this.ensureIsString(value);
+        value = this.normalize(value);
+        if (value.length < client_constants_1.CLIENT_CONSTRAINTS.NAME.MIN) {
+            throw new client_errors_1.ClientError(`Client name must be at least ${client_constants_1.CLIENT_CONSTRAINTS.NAME.MIN} characters`);
+        }
+        if (value.length > client_constants_1.CLIENT_CONSTRAINTS.NAME.MAX) {
+            throw new client_errors_1.ClientError(`Client name must be at most ${client_constants_1.CLIENT_CONSTRAINTS.NAME.MAX} characters`);
+        }
+        return new ClientName(value);
+    }
+}
+exports.ClientName = ClientName;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL2RlYWxlcnNoaXAvbW9kdWxlcy9jbGllbnRzL2RvbWFpbi92YWx1ZS1vYmplY3RzL2NsaWVudC1uYW1lLnZvLnRzIiwibWFwcGluZ3MiOiI7OztBQUFBLHdHQUFrRztBQUNsRywwREFBd0Q7QUFDeEQsb0RBQThDO0FBRTlDLE1BQWEsVUFBVyxTQUFRLHVDQUFpQjtJQUNyQyxNQUFNLENBQVUsU0FBUyxHQUFHLGFBQWEsQ0FBQTtJQUVuRCxZQUFvQixLQUFhO1FBQy9CLEtBQUssQ0FBQyxLQUFLLENBQUMsQ0FBQTtJQUNkLENBQUM7SUFFRCxNQUFNLENBQUMsTUFBTSxDQUFDLEtBQWE7UUFDekIsSUFBSSxDQUFDLGNBQWMsQ0FBQyxLQUFLLENBQUMsQ0FBQTtRQUMxQixLQUFLLEdBQUcsSUFBSSxDQUFDLFNBQVMsQ0FBQyxLQUFLLENBQUMsQ0FBQTtRQUU3QixJQUFJLEtBQUssQ0FBQyxNQUFNLEdBQUcscUNBQWtCLENBQUMsSUFBSSxDQUFDLEdBQUcsRUFBRSxDQUFDO1lBQy9DLE1BQU0sSUFBSSwyQkFBVyxDQUFDLGdDQUFnQyxxQ0FBa0IsQ0FBQyxJQUFJLENBQUMsR0FBRyxhQUFhLENBQUMsQ0FBQTtRQUNqRyxDQUFDO1FBRUQsSUFBSSxLQUFLLENBQUMsTUFBTSxHQUFHLHFDQUFrQixDQUFDLElBQUksQ0FBQyxHQUFHLEVBQUUsQ0FBQztZQUMvQyxNQUFNLElBQUksMkJBQVcsQ0FBQywrQkFBK0IscUNBQWtCLENBQUMsSUFBSSxDQUFDLEdBQUcsYUFBYSxDQUFDLENBQUE7UUFDaEcsQ0FBQztRQUVELE9BQU8sSUFBSSxVQUFVLENBQUMsS0FBSyxDQUFDLENBQUE7SUFDOUIsQ0FBQzs7QUFwQkgsZ0NBcUJDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9Vc2Vycy9hbGZvbnNvLmRvbWluZ3Vlei9WU0NvZGUvYWNlbGVyYWRvci9hcHBzL2NvbmNlc2lvbmFyaW8vbGlicy9iYWNrZW5kL3NyYy9jb250ZXh0cy9kZWFsZXJzaGlwL21vZHVsZXMvY2xpZW50cy9kb21haW4vdmFsdWUtb2JqZWN0cy9jbGllbnQtbmFtZS52by50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBTdHJpbmdWYWx1ZU9iamVjdCB9IGZyb20gJy4uLy4uLy4uLy4uLy4uL3NoYXJlZC9kb21haW4vdmFsdWUtb2JqZWN0cy9zdHJpbmctdmFsdWUtb2JqZWN0J1xuaW1wb3J0IHsgQ0xJRU5UX0NPTlNUUkFJTlRTIH0gZnJvbSAnLi4vY2xpZW50LWNvbnN0YW50cydcbmltcG9ydCB7IENsaWVudEVycm9yIH0gZnJvbSAnLi4vY2xpZW50LWVycm9ycydcblxuZXhwb3J0IGNsYXNzIENsaWVudE5hbWUgZXh0ZW5kcyBTdHJpbmdWYWx1ZU9iamVjdCB7XG4gIHByb3RlY3RlZCBzdGF0aWMgb3ZlcnJpZGUgZmllbGROYW1lID0gJ0NsaWVudCBuYW1lJ1xuXG4gIHByaXZhdGUgY29uc3RydWN0b3IodmFsdWU6IHN0cmluZykge1xuICAgIHN1cGVyKHZhbHVlKVxuICB9XG5cbiAgc3RhdGljIGNyZWF0ZSh2YWx1ZTogc3RyaW5nKTogQ2xpZW50TmFtZSB7XG4gICAgdGhpcy5lbnN1cmVJc1N0cmluZyh2YWx1ZSlcbiAgICB2YWx1ZSA9IHRoaXMubm9ybWFsaXplKHZhbHVlKVxuXG4gICAgaWYgKHZhbHVlLmxlbmd0aCA8IENMSUVOVF9DT05TVFJBSU5UUy5OQU1FLk1JTikge1xuICAgICAgdGhyb3cgbmV3IENsaWVudEVycm9yKGBDbGllbnQgbmFtZSBtdXN0IGJlIGF0IGxlYXN0ICR7Q0xJRU5UX0NPTlNUUkFJTlRTLk5BTUUuTUlOfSBjaGFyYWN0ZXJzYClcbiAgICB9XG5cbiAgICBpZiAodmFsdWUubGVuZ3RoID4gQ0xJRU5UX0NPTlNUUkFJTlRTLk5BTUUuTUFYKSB7XG4gICAgICB0aHJvdyBuZXcgQ2xpZW50RXJyb3IoYENsaWVudCBuYW1lIG11c3QgYmUgYXQgbW9zdCAke0NMSUVOVF9DT05TVFJBSU5UUy5OQU1FLk1BWH0gY2hhcmFjdGVyc2ApXG4gICAgfVxuXG4gICAgcmV0dXJuIG5ldyBDbGllbnROYW1lKHZhbHVlKVxuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

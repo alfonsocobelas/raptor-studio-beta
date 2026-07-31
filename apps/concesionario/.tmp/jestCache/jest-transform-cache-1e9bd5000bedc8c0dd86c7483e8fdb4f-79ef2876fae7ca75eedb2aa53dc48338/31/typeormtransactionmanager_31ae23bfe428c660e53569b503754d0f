@@ -1,0 +1,36 @@
+e9216e1cdf202bafef94f35293e6cd08
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TypeOrmTransactionManager = void 0;
+const common_1 = require("@nestjs/common");
+const typeorm_1 = require("typeorm");
+const transaction_manager_1 = require("../../../domain/persistence/transaction-manager");
+const typeorm_transaction_context_1 = require("./typeorm-transaction-context");
+let TypeOrmTransactionManager = class TypeOrmTransactionManager extends transaction_manager_1.TransactionManager {
+    dataSource;
+    constructor(dataSource) {
+        super();
+        this.dataSource = dataSource;
+    }
+    async runInTransaction(work) {
+        return this.dataSource.transaction(manager => typeorm_transaction_context_1.TypeOrmTransactionContext.storage.run(manager, work));
+    }
+    getEntityManager() {
+        return typeorm_transaction_context_1.TypeOrmTransactionContext.storage.getStore() ?? this.dataSource.manager;
+    }
+};
+exports.TypeOrmTransactionManager = TypeOrmTransactionManager;
+exports.TypeOrmTransactionManager = TypeOrmTransactionManager = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeorm_1.DataSource])
+], TypeOrmTransactionManager);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL1VzZXJzL2FsZm9uc28uZG9taW5ndWV6L1ZTQ29kZS9hY2VsZXJhZG9yL2FwcHMvY29uY2VzaW9uYXJpby9saWJzL2JhY2tlbmQvc3JjL2NvbnRleHRzL3NoYXJlZC9pbmZyYXN0cnVjdHVyZS9wZXJzaXN0ZW5jZS90eXBlb3JtL3R5cGVvcm0tdHJhbnNhY3Rpb24tbWFuYWdlci50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSwyQ0FBMkM7QUFDM0MscUNBQW1EO0FBQ25ELHlGQUFvRjtBQUNwRiwrRUFBeUU7QUFHbEUsSUFBTSx5QkFBeUIsR0FBL0IsTUFBTSx5QkFBMEIsU0FBUSx3Q0FBa0I7SUFDbEM7SUFBN0IsWUFBNkIsVUFBc0I7UUFDakQsS0FBSyxFQUFFLENBQUE7UUFEb0IsZUFBVSxHQUFWLFVBQVUsQ0FBWTtJQUVuRCxDQUFDO0lBRUQsS0FBSyxDQUFDLGdCQUFnQixDQUFJLElBQXNCO1FBQzlDLE9BQU8sSUFBSSxDQUFDLFVBQVUsQ0FBQyxXQUFXLENBQUMsT0FBTyxDQUFDLEVBQUUsQ0FBQyx1REFBeUIsQ0FBQyxPQUFPLENBQUMsR0FBRyxDQUFDLE9BQU8sRUFBRSxJQUFJLENBQUMsQ0FBQyxDQUFBO0lBQ3JHLENBQUM7SUFFRCxnQkFBZ0I7UUFDZCxPQUFPLHVEQUF5QixDQUFDLE9BQU8sQ0FBQyxRQUFRLEVBQUUsSUFBSSxJQUFJLENBQUMsVUFBVSxDQUFDLE9BQU8sQ0FBQTtJQUNoRixDQUFDO0NBQ0YsQ0FBQTtBQVpZLDhEQUF5QjtvQ0FBekIseUJBQXlCO0lBRHJDLElBQUEsbUJBQVUsR0FBRTtxQ0FFOEIsb0JBQVU7R0FEeEMseUJBQXlCLENBWXJDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIi9Vc2Vycy9hbGZvbnNvLmRvbWluZ3Vlei9WU0NvZGUvYWNlbGVyYWRvci9hcHBzL2NvbmNlc2lvbmFyaW8vbGlicy9iYWNrZW5kL3NyYy9jb250ZXh0cy9zaGFyZWQvaW5mcmFzdHJ1Y3R1cmUvcGVyc2lzdGVuY2UvdHlwZW9ybS90eXBlb3JtLXRyYW5zYWN0aW9uLW1hbmFnZXIudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSW5qZWN0YWJsZSB9IGZyb20gJ0BuZXN0anMvY29tbW9uJ1xuaW1wb3J0IHsgRGF0YVNvdXJjZSwgRW50aXR5TWFuYWdlciB9IGZyb20gJ3R5cGVvcm0nXG5pbXBvcnQgeyBUcmFuc2FjdGlvbk1hbmFnZXIgfSBmcm9tICcuLi8uLi8uLi9kb21haW4vcGVyc2lzdGVuY2UvdHJhbnNhY3Rpb24tbWFuYWdlcidcbmltcG9ydCB7IFR5cGVPcm1UcmFuc2FjdGlvbkNvbnRleHQgfSBmcm9tICcuL3R5cGVvcm0tdHJhbnNhY3Rpb24tY29udGV4dCdcblxuQEluamVjdGFibGUoKVxuZXhwb3J0IGNsYXNzIFR5cGVPcm1UcmFuc2FjdGlvbk1hbmFnZXIgZXh0ZW5kcyBUcmFuc2FjdGlvbk1hbmFnZXIge1xuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHJlYWRvbmx5IGRhdGFTb3VyY2U6IERhdGFTb3VyY2UpIHtcbiAgICBzdXBlcigpXG4gIH1cblxuICBhc3luYyBydW5JblRyYW5zYWN0aW9uPFQ+KHdvcms6ICgpID0+IFByb21pc2U8VD4pOiBQcm9taXNlPFQ+IHtcbiAgICByZXR1cm4gdGhpcy5kYXRhU291cmNlLnRyYW5zYWN0aW9uKG1hbmFnZXIgPT4gVHlwZU9ybVRyYW5zYWN0aW9uQ29udGV4dC5zdG9yYWdlLnJ1bihtYW5hZ2VyLCB3b3JrKSlcbiAgfVxuXG4gIGdldEVudGl0eU1hbmFnZXIoKTogRW50aXR5TWFuYWdlciB7XG4gICAgcmV0dXJuIFR5cGVPcm1UcmFuc2FjdGlvbkNvbnRleHQuc3RvcmFnZS5nZXRTdG9yZSgpID8/IHRoaXMuZGF0YVNvdXJjZS5tYW5hZ2VyXG4gIH1cbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

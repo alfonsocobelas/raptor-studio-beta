@@ -6570,6 +6570,26 @@
     "type": "static"
   },
   {
+    "source": "npm:@nestjs/testing",
+    "target": "npm:@nestjs/common",
+    "type": "static"
+  },
+  {
+    "source": "npm:@nestjs/testing",
+    "target": "npm:@nestjs/core",
+    "type": "static"
+  },
+  {
+    "source": "npm:@nestjs/testing",
+    "target": "npm:@nestjs/platform-express",
+    "type": "static"
+  },
+  {
+    "source": "npm:@nestjs/testing",
+    "target": "npm:tslib",
+    "type": "static"
+  },
+  {
     "source": "npm:@nestjs/typeorm",
     "target": "npm:@nestjs/common",
     "type": "static"

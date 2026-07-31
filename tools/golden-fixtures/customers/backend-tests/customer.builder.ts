@@ -29,7 +29,7 @@ export class CustomerBuilder {
     notes: '',
     city: '',
     country: '',
-    customerType: 'CustomerType 1',
+    customerType: 'cloud',
     status: 'active',
     archivedAt: null,
     lastSeenInSyncAt: null

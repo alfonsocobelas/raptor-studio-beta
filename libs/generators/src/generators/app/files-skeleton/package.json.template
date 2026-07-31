@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "ui:add": "nx g @spartan-ng/cli:ui",
     "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '\u2717 Las pantallas importan la librer\u00eda de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
-    "test": "NODE_ENV=test jest"
+    "test": "NODE_ENV=test jest --selectProjects unit",
+    "test:integration": "NODE_ENV=test jest --selectProjects integration --runInBand"
   },
   "dependencies": {
     "@angular/cdk": "21.2.6",
@@ -55,6 +56,7 @@
     "@angular/build": "21.2.8",
     "@angular/cli": "21.2.8",
     "@angular/compiler-cli": "21.2.8",
+    "@nestjs/testing": "^11.1.26",
     "@nx/angular": "^22.7.5",
     "@nx/devkit": "^22.7.5",
     "@nx/js": "^22.7.5",

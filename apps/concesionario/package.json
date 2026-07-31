@@ -9,12 +9,13 @@
     "typecheck": "tsc -p tsconfig.json",
     "ui:add": "nx g @spartan-ng/cli:ui",
     "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '✗ Las pantallas importan la librería de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
-    "test": "NODE_ENV=test jest",
+    "test": "NODE_ENV=test jest --selectProjects unit",
     "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/Migration",
     "migration:generate": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/Migration",
     "migration:run": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
     "migration:revert": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
-    "seed:auth": "ts-node -T -r tsconfig-paths/register libs/backend/src/contexts/iam/modules/auth/infrastructure/seed/local-seed.ts"
+    "seed:auth": "ts-node -T -r tsconfig-paths/register libs/backend/src/contexts/iam/modules/auth/infrastructure/seed/local-seed.ts",
+    "test:integration": "NODE_ENV=test jest --selectProjects integration --runInBand"
   },
   "dependencies": {
     "@angular/cdk": "21.2.6",
@@ -69,6 +70,7 @@
     "@angular/cli": "21.2.8",
     "@angular/compiler-cli": "21.2.8",
     "@eslint/js": "^9.8.0",
+    "@nestjs/testing": "^11.1.28",
     "@nx/angular": "^22.7.5",
     "@nx/devkit": "^22.7.5",
     "@nx/eslint": "22.7.8",

@@ -4194,6 +4194,15 @@
         "hash": "sha512-Ssql79H+EQY/Wg108eJqN4NiNsO/tLrj+qbzOWSQUf2JE4vJQ2RG3WTqUOrYjfjWmVHD3+Ys0+azed7LSMKScw=="
       }
     },
+    "npm:@nestjs/testing": {
+      "type": "npm",
+      "name": "npm:@nestjs/testing",
+      "data": {
+        "version": "11.1.28",
+        "packageName": "@nestjs/testing",
+        "hash": "sha512-B+VgRxeLaH7jkOMgAyUP3N3rpFlisQ7JRxixRbgHvG6a0VgKbbkNSofKExexCgKmQQak80undb3+2kE1lUBmRQ=="
+      }
+    },
     "npm:@nestjs/typeorm": {
       "type": "npm",
       "name": "npm:@nestjs/typeorm",
@@ -17138,6 +17147,7 @@
     "node_modules/@nestjs/core": "npm:@nestjs/core",
     "node_modules/@nestjs/platform-express": "npm:@nestjs/platform-express",
     "node_modules/@nestjs/terminus": "npm:@nestjs/terminus",
+    "node_modules/@nestjs/testing": "npm:@nestjs/testing",
     "node_modules/@nestjs/typeorm": "npm:@nestjs/typeorm",
     "node_modules/@ng-icons/core": "npm:@ng-icons/core",
     "node_modules/@ng-icons/lucide": "npm:@ng-icons/lucide",
