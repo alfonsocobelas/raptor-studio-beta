@@ -26,6 +26,7 @@ web:
 
 typecheck:
 	npm run typecheck
+	npm run lint:ui-boundaries
 
 # Onboarding en un comando: base de datos + datos + API
 local-setup: up

@@ -1,4 +1,5 @@
 import { formatFiles, generateFiles, type Tree } from '@nx/devkit'
+import { execSync } from 'child_process'
 import * as path from 'path'
 import { buildSubstitutions } from './build-substitutions'
 import { harvestAiSlots, reinjectAiSlots } from './ai-slots'
@@ -20,8 +21,16 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   const substitutions = buildSubstitutions(model)
   const outputDir = options.directory ?? path.join('tmp', 'generated', model.plural)
 
-  // §7 del maestro: lo escrito en los huecos @ai sobrevive a la regeneración
+  // §7 del maestro: lo escrito en los huecos @ai sobrevive a la regeneración.
+  // La cosecha usa visitNotIgnoredFiles: en un directorio git-ignorado (p.ej. tmp/)
+  // no ve nada y lo escrito en los huecos se perdería EN SILENCIO — mejor avisar.
   const aiSlots = harvestAiSlots(tree, outputDir)
+  if (!aiSlots.size && isGitIgnored(outputDir)) {
+    console.warn(
+      `⚠ '${outputDir}' está git-ignorado: los huecos // @ai:begin no se conservan al regenerar ahí. ` +
+        'Genera dentro del árbol versionado si has escrito contenido en ellos.'
+    )
+  }
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
@@ -152,6 +161,15 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   reinjectAiSlots(tree, outputDir, aiSlots)
 
   await formatFiles(tree)
+}
+
+function isGitIgnored(dir: string): boolean {
+  try {
+    execSync(`git check-ignore -q ${JSON.stringify(dir)}`, { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
 }
 
 export default resourceGenerator

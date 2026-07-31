@@ -112,7 +112,7 @@ class SmtpValidator {`
   tree.write(
     validationPath,
     withClasses.replace(
-      /(\n  \/\/ Sección opcional: sin ella el módulo de auth[^\n]*\n)/,
+      /(\n {2}\/\/ Sección opcional: sin ella el módulo de auth[^\n]*\n)/,
       `\n  @IsOptional()
   @ValidateNested()
   @Type(() => AcsValidator)

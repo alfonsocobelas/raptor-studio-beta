@@ -115,7 +115,7 @@ El generador reduce el coste de esperar: como el acoplamiento vive en plantillas
 
 ## 7. Action items
 
-1. [ ] Regla de lint: prohibir imports de `@spartan-ng/*` en features generadas (solo en `libs/ui` y componentes shared).
+1. [x] Regla de lint: prohibir imports de `@spartan-ng/*` en features generadas (solo en `libs/ui` y componentes shared). *(2026-07-31: `npm run lint:ui-boundaries` en la app emitida — grep sobre domains/ y core/, encadenado en `make typecheck`; versión pragmática sin plugin ESLint)*
 2. [x] Extraer `form`/`dialog`/`button`/`toast` a componentes shared del acelerador (como ya está `data-table`). *(2026-07-31: `shared/components/ui/` — dialog, dialog-content, confirm-dialog, form-field, select, input, button, notification.service)*
 3. [x] Plantillas del generador emiten contra shared, nunca contra Spartan directo. *(2026-07-31: cero referencias `Hlm*`/`spartan` en listado, diálogo y pantallas de auth emitidas)*
 4. [x] Design tokens como CSS custom properties. *(2026-07-31: la piel Material puentea los tokens de Tailwind a `--mat-sys-*` vía `@theme`; Spartan usa su preset)*
