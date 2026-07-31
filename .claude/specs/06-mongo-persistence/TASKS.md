@@ -7,7 +7,7 @@
 
 ## Contrato y guard
 
-- [ ] **TASK-01**: Opción `database: 'postgres' | 'mongo'` en `app/schema.json` (default postgres,
+- [x] **TASK-01**: Opción `database: 'postgres' | 'mongo'` en `app/schema.json` (default postgres,
       x-prompt) + propagación tipada a `kernel` y `resource`. Test: sin opción, la salida no cambia.
 - [ ] **TASK-02**: Guard de plugins incompatibles: `database=mongo` + `auth` → error claro (con test).
 
