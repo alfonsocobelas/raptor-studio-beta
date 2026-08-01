@@ -20,14 +20,25 @@ import { StudioChatService } from './studio-chat.service'
       </h2>
       <div class="mb-2 flex-1 space-y-2 overflow-auto" data-testid="chat-history">
         @for (entry of chat.history(); track $index) {
-          <div
-            class="rounded-md px-3 py-2 text-sm"
-            [class.bg-accent]="entry.role === 'user'"
-            [class.bg-muted]="entry.role === 'assistant'"
-            [attr.data-testid]="'chat-' + entry.role + '-' + $index"
-          >
-            {{ entry.text }}
-          </div>
+          @if (entry.role === 'user') {
+            <div class="flex justify-end" [attr.data-testid]="'chat-user-' + $index">
+              <div class="max-w-[85%]">
+                <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">Tú</p>
+                <div class="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3 py-2 text-sm">
+                  {{ entry.text }}
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="flex justify-start" [attr.data-testid]="'chat-assistant-' + $index">
+              <div class="max-w-[90%]">
+                <p class="text-muted-foreground mb-0.5 text-[10px] font-medium uppercase tracking-wide">
+                  ✦ Asistente
+                </p>
+                <div class="bg-muted rounded-2xl rounded-bl-sm border px-3 py-2 text-sm">{{ entry.text }}</div>
+              </div>
+            </div>
+          }
         }
         @if (chat.pending()) {
           <p class="text-muted-foreground text-xs" data-testid="chat-pending">Pensando…</p>
