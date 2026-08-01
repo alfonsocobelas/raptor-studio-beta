@@ -49,10 +49,17 @@ export const migrationsPlugin = definePlugin({
     // Timestamp fijo (los generadores no pueden usar Date.now(): rompería la reproducibilidad)
     const stamp = 1790000000000
     const className = `InitialSchema${stamp}`
-    const body = context.models.map(renderTable).join('\n\n')
+    const body = context.models
+      .map(model => (model.attachments ? [renderTable(model), renderAttachmentsTable(model)].join('\n\n') : renderTable(model)))
+      .join('\n\n')
     const drops = [...context.models]
       .reverse()
-      .map(model => `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`)
+      .flatMap(model => [
+        ...(model.attachments
+          ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}_attachments\`)`]
+          : []),
+        `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`
+      ])
       .join('\n')
 
     tree.write(
@@ -123,6 +130,26 @@ ${rendered}
     \`)`,
     ...partialIndexes
   ].join('\n\n')
+}
+
+/** Tabla de adjuntos (spec 14): metadatos del fichero; el binario vive en FileStoragePort. */
+function renderAttachmentsTable(model: ResourceDefinition): string {
+  const table = `${model.schemaName}.${model.plural}_attachments`
+  return `    await queryRunner.query(\`
+      CREATE TABLE ${table} (
+        id          UUID         NOT NULL,
+        file_name   VARCHAR(255) NOT NULL,
+        mime_type   VARCHAR(128) NOT NULL,
+        size_bytes  INT          NOT NULL,
+        storage_key UUID         NOT NULL,
+        uploaded_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        CONSTRAINT pk_${model.plural}_attachments PRIMARY KEY (id)
+      )
+    \`)
+
+    await queryRunner.query(\`
+      CREATE INDEX idx_${model.plural}_attachments_file_name ON ${table} (file_name)
+    \`)`
 }
 
 /** Unique opcional (semántica ifPresent): string no requerido y no nullable, como el taxId del canon. */

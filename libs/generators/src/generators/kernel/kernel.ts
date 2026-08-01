@@ -33,6 +33,13 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
       const c = names(model.composition.name)
       list.push({ className: `TypeOrm${c.className}Entity`, importPath: `${base}/typeorm-${c.fileName}.entity` })
     }
+    // la entidad de adjuntos vive en su propio módulo, pero el DataSource debe conocerla
+    if (model.attachments) {
+      list.push({
+        className: `TypeOrm${n.className}AttachmentEntity`,
+        importPath: `../../../../${model.context}/modules/${model.plural}/infrastructure/attachments/${n.fileName}-attachment.entity`
+      })
+    }
     return list
   })
 

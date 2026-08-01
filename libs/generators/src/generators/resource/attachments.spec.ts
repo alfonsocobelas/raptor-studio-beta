@@ -82,3 +82,51 @@ describe('resource generator — adjuntos', () => {
     expect(withoutFiles.exists('k2/contexts/shared/domain/storage/attachment-constants.ts')).toBe(false)
   })
 })
+
+describe('adjuntos — persistencia y migración', () => {
+  const invoice = () =>
+    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true }) as ResourceDefinition
+
+  it('el DataSource del kernel registra la entidad de adjuntos', async () => {
+    registerModels([invoice()])
+    const tree = createTreeWithEmptyWorkspace()
+    await kernelGenerator(tree, { directory: 'k', models: 'invoice' })
+
+    const persistence = tree.read(
+      'k/contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module.ts',
+      'utf-8'
+    )
+    expect(persistence).toContain('TypeOrmInvoiceAttachmentEntity')
+    expect(persistence).toContain('infrastructure/attachments/invoice-attachment.entity')
+  })
+
+  it('la migración inicial crea (y borra) la tabla de adjuntos', async () => {
+    const { migrationsPlugin } = await import('../app/plugins/migrations.plugin')
+    const tree = createTreeWithEmptyWorkspace()
+    migrationsPlugin.apply?.(tree, {
+      root: 'r',
+      appName: 'app',
+      backendSrc: 'r/libs/backend/src',
+      frontendSrc: 'r/libs/frontend/src',
+      models: [invoice()],
+      scope: '@app'
+    })
+
+    const file = tree
+      .children('r/libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations')
+      .find(f => f.includes('InitialSchema')) as string
+    const migration =
+      tree.read(`r/libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/${file}`, 'utf-8') ??
+      ''
+
+    expect(migration).toContain('CREATE TABLE warehouse.invoices_attachments')
+    expect(migration).toContain('storage_key UUID')
+    expect(migration).toContain('DROP TABLE IF EXISTS warehouse.invoices_attachments')
+    // el borrado de adjuntos va ANTES del de su recurso (FK-safe)
+    const dropLines = migration.split('\n').filter(line => line.includes('DROP TABLE IF EXISTS'))
+    const attachmentsAt = dropLines.findIndex(line => line.includes('invoices_attachments'))
+    const resourceAt = dropLines.findIndex(line => line.includes('invoices') && !line.includes('attachments'))
+    expect(attachmentsAt).toBeGreaterThanOrEqual(0)
+    expect(attachmentsAt).toBeLessThan(resourceAt)
+  })
+})
