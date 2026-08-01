@@ -1,0 +1,102 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { v7 as uuidv7 } from 'uuid'
+import {
+  ALLOWED_ATTACHMENT_MIME_TYPES,
+  MAX_ATTACHMENT_SIZE_BYTES
+} from '../../../../../shared/domain/storage/attachment-constants'
+import { FileStoragePort } from '../../../../../shared/domain/storage/file-storage.port'
+import { TypeOrm<%= className %>AttachmentEntity } from './<%= fileName %>-attachment.entity'
+
+export interface <%= className %>AttachmentDto {
+  id: string
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+  uploadedAt: string
+}
+
+export interface Uploaded<%= className %>File {
+  buffer: Buffer
+  originalName: string
+  mimeType: string
+  sizeBytes: number
+}
+
+/**
+ * Adjuntos de <%= labelPlural %>: metadatos en tabla propia, binario en el puerto de
+ * almacenamiento. El storageKey lo genera SIEMPRE el backend (uuidv7), nunca el cliente.
+ */
+@Injectable()
+export class <%= className %>AttachmentsService {
+  constructor(
+    @InjectRepository(TypeOrm<%= className %>AttachmentEntity)
+    private readonly repository: Repository<TypeOrm<%= className %>AttachmentEntity>,
+    private readonly fileStorage: FileStoragePort
+  ) {}
+
+  async list(): Promise<<%= className %>AttachmentDto[]> {
+    const rows = await this.repository.find({ order: { uploadedAt: 'DESC' } })
+    return rows.map(row => this.toDto(row))
+  }
+
+  async upload(file: Uploaded<%= className %>File): Promise<<%= className %>AttachmentDto> {
+    if (file.sizeBytes > MAX_ATTACHMENT_SIZE_BYTES) {
+      throw new BadRequestException(`El fichero supera el máximo de ${MAX_ATTACHMENT_SIZE_BYTES} bytes`)
+    }
+    if (!ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.mimeType as (typeof ALLOWED_ATTACHMENT_MIME_TYPES)[number])) {
+      throw new BadRequestException(`Tipo de fichero no permitido: ${file.mimeType}`)
+    }
+
+    const storageKey = uuidv7()
+    await this.fileStorage.upload(storageKey, file.buffer, file.mimeType)
+
+    // Si falla el guardado de metadatos se borra el binario: un blob huérfano es
+    // inofensivo, una fila apuntando a un blob inexistente no.
+    try {
+      const row = await this.repository.save(
+        this.repository.create({
+          id: uuidv7(),
+          fileName: file.originalName,
+          mimeType: file.mimeType,
+          sizeBytes: file.sizeBytes,
+          storageKey
+        })
+      )
+      return this.toDto(row)
+    } catch (error) {
+      await this.fileStorage.delete(storageKey).catch(() => undefined)
+      throw error
+    }
+  }
+
+  async download(id: string): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
+    const row = await this.findOrThrow(id)
+    return { buffer: await this.fileStorage.download(row.storageKey), fileName: row.fileName, mimeType: row.mimeType }
+  }
+
+  async remove(id: string): Promise<void> {
+    const row = await this.findOrThrow(id)
+    await this.repository.delete({ id })
+    await this.fileStorage.delete(row.storageKey).catch(() => undefined)
+  }
+
+  private async findOrThrow(id: string): Promise<TypeOrm<%= className %>AttachmentEntity> {
+    const row = await this.repository.findOne({ where: { id } })
+    if (!row) {
+      throw new NotFoundException(`Adjunto ${id} no encontrado`)
+    }
+    return row
+  }
+
+  private toDto(row: TypeOrm<%= className %>AttachmentEntity): <%= className %>AttachmentDto {
+    return {
+      id: row.id,
+      fileName: row.fileName,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      uploadedAt: row.uploadedAt.toISOString()
+    }
+  }
+}

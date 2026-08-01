@@ -1,0 +1,54 @@
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors
+} from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { MAX_ATTACHMENT_SIZE_BYTES } from '../../../../../shared/domain/storage/attachment-constants'
+import { ParseUUIDv7Pipe } from '../../../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
+import { <%= className %>AttachmentDto, <%= className %>AttachmentsService } from './<%= fileName %>-attachments.service'
+
+/** Adjuntos de <%= labelPlural %>: subir, listar, descargar y borrar. */
+@Controller('<%= plural %>/attachments')
+export class <%= className %>AttachmentsController {
+  constructor(private readonly attachments: <%= className %>AttachmentsService) {}
+
+  @Get()
+  list(): Promise<<%= className %>AttachmentDto[]> {
+    return this.attachments.list()
+  }
+
+  // Tope de tamaño en multer antes de que el buffer llegue a memoria; el servicio
+  // revalida tamaño y MIME antes de tocar el almacenamiento.
+  @Post()
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_ATTACHMENT_SIZE_BYTES } }))
+  upload(
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string; size: number }
+  ): Promise<<%= className %>AttachmentDto> {
+    return this.attachments.upload({
+      buffer: file.buffer,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      sizeBytes: file.size
+    })
+  }
+
+  @Get(':id/download')
+  async download(@Param('id', ParseUUIDv7Pipe) id: string): Promise<StreamableFile> {
+    const { buffer, fileName, mimeType } = await this.attachments.download(id)
+    return new StreamableFile(buffer, { type: mimeType, disposition: `attachment; filename="${fileName}"` })
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.attachments.remove(id)
+  }
+}

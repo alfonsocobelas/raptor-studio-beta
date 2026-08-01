@@ -30,6 +30,8 @@ export async function rootGenerator(tree: Tree, options: RootGeneratorSchema) {
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, {
     resourceModules,
+    // el módulo de almacenamiento solo existe si algún recurso declara adjuntos
+    attachments: MODEL_LIST.some(model => model.attachments),
     schemaList: schemas.join(', '),
     databaseName: `${schemas[0] ?? 'app'}_local`
   })

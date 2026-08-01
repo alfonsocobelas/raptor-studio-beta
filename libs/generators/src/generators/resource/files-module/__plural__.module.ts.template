@@ -11,10 +11,22 @@ import { <%- pluralClassName %>Controller } from './infrastructure/entrypoints/<
 import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/<%- entry.childControllerFile %>.controller'
 <%_ } _%>
 import { TypeOrm<%- className %>Repository } from './infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
+<%_ if (attachments) { _%>
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { TypeOrm<%- className %>AttachmentEntity } from './infrastructure/attachments/<%- fileName %>-attachment.entity'
+import { <%- className %>AttachmentsController } from './infrastructure/attachments/<%- fileName %>-attachments.controller'
+import { <%- className %>AttachmentsService } from './infrastructure/attachments/<%- fileName %>-attachments.service'
+<%_ } _%>
 
 @Module({
-  controllers: [<%- pluralClassName %>Controller<% if (aggregate.composition) { %>, <%- entry.childControllerClass %><% } %>],
+<%_ if (attachments) { _%>
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity])],
+<%_ } _%>
+  controllers: [<%- pluralClassName %>Controller<% if (aggregate.composition) { %>, <%- entry.childControllerClass %><% } %><% if (attachments) { %>, <%- className %>AttachmentsController<% } %>],
   providers: [
+<%_ if (attachments) { _%>
+    <%- className %>AttachmentsService,
+<%_ } _%>
 <%_ entry.moduleProviderNames.forEach(name => { _%>
     <%- name %>,
 <%_ }) _%>

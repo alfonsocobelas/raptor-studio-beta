@@ -53,6 +53,10 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     mongooseModels
   }
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
+  // puerto + adapter de almacenamiento: solo si algún recurso declara adjuntos
+  if (MODEL_LIST.some(model => model.attachments)) {
+    generateFiles(tree, path.join(__dirname, 'files-attachments'), outputDir, substitutions)
+  }
   // lo específico del motor (config + persistencia compartida) vive en árboles paralelos
   generateFiles(tree, path.join(__dirname, `files-${options.database ?? 'postgres'}`), outputDir, substitutions)
 

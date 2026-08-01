@@ -71,6 +71,10 @@ export interface ResourceSubstitutions {
   deleteLabelField: string
   dtoName: string
   api: string
+  /** Etiqueta plural legible (para comentarios y títulos emitidos) */
+  labelPlural: string
+  /** El recurso emite el bloque de adjuntos (spec 14) */
+  attachments: boolean
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
   apiResource: string
   serviceSharedImports: string
@@ -266,6 +270,8 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
     api: definition.api ?? `/api/v1/${definition.plural}`,
+    labelPlural: definition.labels?.plural ?? definition.plural,
+    attachments: definition.attachments ?? false,
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),

@@ -1,0 +1,24 @@
+import { Column, CreateDateColumn, Entity, Index, PrimaryColumn } from 'typeorm'
+
+/** Metadatos de un adjunto de <%= labelPlural %>. El binario vive en FileStoragePort. */
+@Entity({ name: '<%= plural %>_attachments', schema: '<%= schemaName %>' })
+export class TypeOrm<%= className %>AttachmentEntity {
+  @PrimaryColumn({ type: 'uuid' })
+  id!: string
+
+  @Index()
+  @Column({ name: 'file_name', type: 'varchar', length: 255 })
+  fileName!: string
+
+  @Column({ name: 'mime_type', type: 'varchar', length: 128 })
+  mimeType!: string
+
+  @Column({ name: 'size_bytes', type: 'int' })
+  sizeBytes!: number
+
+  @Column({ name: 'storage_key', type: 'uuid' })
+  storageKey!: string
+
+  @CreateDateColumn({ name: 'uploaded_at', type: 'timestamptz' })
+  uploadedAt!: Date
+}
