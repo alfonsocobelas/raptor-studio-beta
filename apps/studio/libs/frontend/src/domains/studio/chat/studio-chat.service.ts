@@ -42,7 +42,7 @@ export class StudioChatService {
           design: {
             appName: this.store.appName(),
             resources: this.store.resources(),
-            pages: this.store.definition().pages
+            pages: this.store.pages()
           }
         })
       )

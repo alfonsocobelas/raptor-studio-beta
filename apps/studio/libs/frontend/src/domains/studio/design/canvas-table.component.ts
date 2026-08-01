@@ -168,7 +168,7 @@ export class CanvasTableComponent {
     return draft ? buildSampleRows(draft, PAGE_SIZE) : []
   })
   protected readonly total = computed(() =>
-    mockTotal(this.store.composition().models.findIndex(m => m.name === this.resource()))
+    mockTotal(this.store.resources().findIndex(r => r.name === this.resource()))
   )
   protected readonly lastPage = computed(() => Math.ceil(this.total() / PAGE_SIZE))
 

@@ -1,85 +1,116 @@
 import { describe, expect, it } from 'vitest'
 import { DesignStore } from './design-store'
 
-describe('DesignStore — lienzo en blanco', () => {
-  it('arranca VACÍO: sin recursos, sin páginas, sin nada de demos', () => {
+describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
+  it('arranca VACÍO: sin recursos, sin vistas', () => {
     const store = new DesignStore()
 
     expect(store.resources()).toEqual([])
-    expect(store.definition().pages).toEqual([])
-    expect(store.composition().pages).toEqual([])
+    expect(store.pages()).toEqual([])
   })
 
-  it('addTable crea la entidad Y su página, y la composición la refleja', () => {
+  it('crea una vista en blanco: existe la vista y no tiene bloques', () => {
     const store = new DesignStore()
 
-    const ok = store.addTable('Vehículo')
+    store.addPage('blank', 'Inicio')
 
-    expect(ok).toBe(true)
+    expect(store.pages()).toEqual([{ title: 'Inicio', blocks: [] }])
+  })
+
+  it('el preset «Listado» crea la entidad y su tabla dentro de la vista', () => {
+    const store = new DesignStore()
+
+    store.addPage('list', 'Vehículos')
+
     expect(store.resources().map(r => r.name)).toEqual(['vehiculo'])
-    expect(store.composition().pages).toEqual([
-      expect.objectContaining({ kind: 'resource', resource: 'vehiculo' })
-    ])
-    expect(store.composition().models[0].labels?.singular).toBe('Vehículo')
+    expect(store.pages()[0].blocks).toEqual([{ kind: 'table', resource: 'vehiculo', width: 'full' }])
   })
 
-  it('addKpi crea el dashboard si falta y añade la tarjeta', () => {
+  it('el preset «Ficha» compone métricas + datos + adjuntos', () => {
     const store = new DesignStore()
-    store.addTable('Vehículo')
 
-    store.addKpi('vehiculo')
+    store.addPage('detail', 'Cliente')
 
-    expect(store.composition().pages[0].kind).toBe('dashboard')
-    expect(store.composition().kpiModels.map(m => m.name)).toEqual(['vehiculo'])
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis', 'fields', 'attachments'])
   })
 
-  it('removePage de una página de recurso elimina TAMBIÉN la entidad y sus KPIs', () => {
+  it('la tabla es un bloque opcional: se añade y se quita sin tocar la vista', () => {
     const store = new DesignStore()
-    store.addTable('Vehículo')
-    store.addTable('Conductor')
-    store.addKpi('vehiculo')
+    store.addPage('blank', 'Panel')
+    store.addResource('Pedido')
 
-    store.removePage(1) // página de vehiculo (0 = dashboard)
+    store.addBlock(0, { kind: 'table', resource: 'pedido' })
+    store.addBlock(0, { kind: 'attachments', resource: 'pedido' })
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table', 'attachments'])
 
-    expect(store.resources().map(r => r.name)).toEqual(['conductor'])
-    expect(store.composition().kpiModels).toEqual([])
-    expect(store.composition().pages.some(p => p.kind === 'resource' && p.resource === 'vehiculo')).toBe(false)
+    store.removeBlock(0, 0)
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['attachments'])
+    expect(store.pages()).toHaveLength(1)
+    expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
 
-  it('puede quedarse vacío otra vez (borrar la última página es válido en el lienzo)', () => {
+  it('mueve bloques dentro de la vista (orden = composición)', () => {
     const store = new DesignStore()
-    store.addTable('Vehículo')
+    store.addPage('panel', 'Ventas')
+
+    store.moveBlock(0, 1, 0)
+
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table', 'kpis'])
+  })
+
+  it('borrar una vista no borra la entidad si otra la usa', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Catálogo')
+    store.addBlock(1, { kind: 'cards', resource: 'pedido' })
 
     store.removePage(0)
 
-    expect(store.definition().pages).toEqual([])
-    expect(store.resources()).toEqual([])
+    expect(store.pages()).toHaveLength(1)
+    // la entidad sobrevive porque la galería de la otra vista la sigue usando
+    expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
 
-  it('edición de campos: añadir, renombrar, cambiar tipo y quitar', () => {
+  it('el app-schema exportable solo incluye las vistas generables, y avisa del resto', () => {
     const store = new DesignStore()
-    store.addTable('Vehículo')
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Catálogo')
+    store.addBlock(1, { kind: 'cards', resource: 'pedido' })
+
+    const exported = store.toAppSchema()
+
+    expect(exported.pages.map(p => p.kind)).toEqual(['resource'])
+    expect(store.notGenerable()).toEqual([{ page: 'Catálogo', blocks: ['cards'] }])
+  })
+
+  it('una vista con solo KPIs se exporta como dashboard', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Resumen')
+    store.addBlock(1, { kind: 'kpis', resources: ['pedido'] })
+
+    expect(store.toAppSchema().pages.map(p => p.kind)).toEqual(['resource', 'dashboard'])
+  })
+
+  it('los adjuntos de un bloque marcan la entidad para el generador', () => {
+    const store = new DesignStore()
+    store.addPage('detail', 'Cliente')
+
+    expect(store.resources()[0].attachments).toBe(true)
+  })
+
+  it('edición de campos de una entidad del diseño', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Vehículo')
 
     store.addField('vehiculo')
     store.updateField('vehiculo', 1, { name: 'matricula', label: 'Matrícula', type: 'string' })
-    store.addField('vehiculo')
-    store.updateField('vehiculo', 2, { name: 'plazas', label: 'Plazas', type: 'integer' })
     store.removeField('vehiculo', 0)
 
-    const fields = store.resources()[0].fields
-    expect(fields.map(f => f.name)).toEqual(['matricula', 'plazas'])
-    expect(store.composition().models[0].fields['plazas'].column).toMatchObject({ type: 'int' })
+    expect(store.resources()[0].fields.map(f => f.name)).toEqual(['matricula'])
   })
 
-  it('rechaza duplicar el nombre de entidad', () => {
-    const store = new DesignStore()
-    store.addTable('Vehículo')
-
-    expect(store.addTable('Vehículo')).toBe(false)
-    expect(store.lastError()).toMatch(/existe/i)
-  })
-
-  it('applyExternal (chat) sustituye recursos y composición de una vez', () => {
+  it('applyExternal (chat) sustituye entidades y vistas de una vez', () => {
     const store = new DesignStore()
 
     const ok = store.applyExternal({
@@ -94,27 +125,24 @@ describe('DesignStore — lienzo en blanco', () => {
           fields: [{ name: 'nombre', label: 'Nombre', type: 'string' }]
         }
       ],
-      pages: [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'conductor' }] },
-        { kind: 'resource', resource: 'conductor' }
-      ]
+      pages: [{ title: 'Conductores', blocks: [{ kind: 'table', resource: 'conductor', width: 'full' }] }]
     })
 
     expect(ok).toBe(true)
     expect(store.appName()).toBe('flotas')
-    expect(store.composition().pages).toHaveLength(2)
+    expect(store.pages()[0].title).toBe('Conductores')
   })
 
-  it('applyExternal rechaza páginas que referencian entidades inexistentes', () => {
+  it('applyExternal rechaza bloques que referencian entidades inexistentes', () => {
     const store = new DesignStore()
 
     const ok = store.applyExternal({
       appName: 'x',
       resources: [],
-      pages: [{ kind: 'resource', resource: 'fantasma' }]
+      pages: [{ title: 'Rota', blocks: [{ kind: 'table', resource: 'fantasma' }] }]
     })
 
     expect(ok).toBe(false)
-    expect(store.definition().pages).toEqual([])
+    expect(store.pages()).toEqual([])
   })
 })

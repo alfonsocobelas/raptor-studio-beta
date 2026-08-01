@@ -1,5 +1,4 @@
-import type { AppDefinition } from '@acc/schema'
-import type { DraftResource } from '@app/shared/domain'
+import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -10,7 +9,7 @@ export interface ChatMessage {
 export interface DesignPayload {
   appName: string
   resources: DraftResource[]
-  pages: AppDefinition['pages']
+  pages: DesignPage[]
 }
 
 /** Lo que propone la IA: un reply breve y el diseño COMPLETO resultante (nunca código). */

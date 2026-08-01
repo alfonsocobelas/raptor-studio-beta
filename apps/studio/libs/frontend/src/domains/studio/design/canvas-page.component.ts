@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
+import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { DesignStore } from './design-store'
 import { CanvasTableComponent } from './canvas-table.component'
 import { CanvasDetailComponent } from './canvas-detail.component'
 import { CanvasCardsComponent } from './canvas-cards.component'
-import { DesignStore } from './design-store'
 import { mockTotal } from './mock-data'
 
 /**
- * Una página del diseño pintada como en la app real: cabecera con título,
- * subtítulo y «Nuevo X», tabla con acciones y paginación con totales de
- * mockup, o rejilla de KPIs. Hover → resaltado + ✕; clic en tabla → inspector.
+ * Una VISTA del diseño: sus bloques en orden, cada uno a ancho completo o media
+ * fila (ADR-009). Hover sobre un bloque → mover, cambiar ancho y quitar.
  */
 @Component({
   selector: 'studio-canvas-page',
@@ -17,174 +17,165 @@ import { mockTotal } from './mock-data'
   imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent],
   template: `
     @if (page(); as current) {
-      @if (current.kind === 'dashboard') {
-        <header class="mb-5">
-          <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p class="text-muted-foreground text-sm">Resumen de {{ store.appName() }}</p>
-        </header>
-        <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + kpiCols() + ', minmax(0, 1fr))'">
-          @for (kpi of kpis(); track kpi.testId) {
-            <div class="group relative rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60">
-              <app-kpi-card [title]="kpi.title" [value]="kpi.value" [subtitle]="kpi.subtitle" [testId]="kpi.testId" />
-              <button
-                type="button"
-                class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
-                [attr.data-testid]="'delete-' + kpi.testId"
-                (click)="deleteWidget(kpi.widgetIndex)"
-              >
-                ✕
-              </button>
-            </div>
-          }
+      <header class="mb-5">
+        <h1 class="text-2xl font-bold tracking-tight">{{ current.title }}</h1>
+        <p class="text-muted-foreground text-sm capitalize">{{ store.appName() }}</p>
+      </header>
+
+      @if (!current.blocks.length) {
+        <div class="text-muted-foreground rounded-lg border border-dashed py-16 text-center" data-testid="empty-page">
+          <p class="mb-1 text-sm font-medium">Vista vacía</p>
+          <p class="text-xs">Añade bloques desde la barra: tabla, KPIs, datos, galería o ficheros.</p>
         </div>
-      } @else if (current.kind === 'detail' || current.kind === 'cards') {
-        <div
-          class="group relative rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
-          [attr.data-testid]="'canvas-' + current.kind + '-' + current.resource"
-        >
-          <header class="mb-4 flex items-center gap-2">
-            <span class="bg-amber-100 text-amber-800 rounded px-2 py-0.5 text-[10px] font-semibold uppercase">
-              diseño · aún no generable
-            </span>
-          </header>
-          @if (current.kind === 'detail') {
-            <studio-canvas-detail [resource]="current.resource" />
-          } @else {
-            <studio-canvas-cards [resource]="current.resource" />
-          }
-          <button
-            type="button"
-            class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
-            [attr.data-testid]="'delete-' + current.kind + '-' + current.resource"
-            (click)="deletePage($event)"
-          >
-            ✕
-          </button>
-        </div>
-      } @else {
-        @if (view(); as v) {
-          <div
-            class="group relative cursor-pointer rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
-            [class.ring-2]="selected() === current.resource"
-            [class.ring-primary]="selected() === current.resource"
-            [attr.data-testid]="'canvas-table-' + current.resource"
-            (click)="select.emit(current.resource)"
-          >
-            <header class="mb-4 flex items-end justify-between">
-              <div>
-                <h1 class="text-2xl font-bold tracking-tight">{{ v.labelPlural }}</h1>
-                <p class="text-muted-foreground text-sm">Gestión de {{ v.labelPlural.toLowerCase() }} de {{ store.appName() }}</p>
-              </div>
-              <button type="button" class="bg-primary text-primary-foreground pointer-events-none rounded-md px-3 py-2 text-sm font-medium">
-                + {{ v.gender === 'f' ? 'Nueva' : 'Nuevo' }} {{ v.labelSingular.toLowerCase() }}
-              </button>
-            </header>
-            <!-- tabla editable: mismo aspecto que la emitida, cabeceras con ✎/✕ -->
-            <studio-canvas-table [resource]="current.resource" />
-            <button
-              type="button"
-              class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
-              [attr.data-testid]="'delete-table-' + current.resource"
-              (click)="deletePage($event)"
-            >
-              ✕
-            </button>
-          </div>
-          @if (v.attachments) {
-            <div
-              class="group relative mt-6 rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
-              [attr.data-testid]="'canvas-attachments-' + current.resource"
-            >
-              <h2 class="mb-2 text-sm font-semibold">Ficheros adjuntos</h2>
-              <div class="border-input bg-background flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center">
-                <p class="text-2xl">🗎</p>
-                <p class="text-sm font-medium">Arrastra ficheros aquí o haz clic para subirlos</p>
-                <p class="text-muted-foreground text-xs">PDF, imágenes o documentos · máx. 10 MB</p>
-              </div>
-              <ul class="mt-3 space-y-1">
-                @for (file of sampleFiles; track file.name) {
-                  <li class="bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                    <span>📄 {{ file.name }}</span>
-                    <span class="text-muted-foreground flex items-center gap-3 text-xs">
-                      {{ file.size }}
-                      <button type="button" class="pointer-events-none">🗑</button>
-                    </span>
-                  </li>
-                }
-              </ul>
-              <button
-                type="button"
-                class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
-                [attr.data-testid]="'delete-attachments-' + current.resource"
-                (click)="removeAttachments($event, current.resource)"
-              >
-                ✕
-              </button>
-            </div>
-          }
-        }
       }
+
+      <div class="flex flex-wrap gap-4">
+        @for (block of current.blocks; track $index) {
+          <div
+            class="group relative rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
+            [class]="block.width === 'half' ? 'min-w-80 flex-1' : 'w-full'"
+            [attr.data-testid]="'block-' + block.kind + '-' + $index"
+            (click)="selectBlock(block)"
+          >
+            @if (!generable(block)) {
+              <span
+                class="absolute -top-2 left-3 z-10 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-800"
+              >
+                diseño · aún no generable
+              </span>
+            }
+
+            @switch (block.kind) {
+              @case ('table') {
+                <studio-canvas-table [resource]="block.resource ?? ''" />
+              }
+              @case ('fields') {
+                <studio-canvas-detail [resource]="block.resource ?? ''" />
+              }
+              @case ('cards') {
+                <studio-canvas-cards [resource]="block.resource ?? ''" />
+              }
+              @case ('kpis') {
+                <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + kpiCols(block) + ', minmax(0, 1fr))'">
+                  @for (kpi of kpis(block); track kpi.testId) {
+                    <app-kpi-card
+                      [title]="kpi.title"
+                      [value]="kpi.value"
+                      [subtitle]="kpi.subtitle"
+                      [testId]="kpi.testId"
+                    />
+                  }
+                </div>
+              }
+              @case ('attachments') {
+                <section>
+                  <h2 class="mb-2 text-sm font-semibold">Ficheros adjuntos</h2>
+                  <div
+                    class="border-input bg-background flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center"
+                  >
+                    <p class="text-2xl">🗎</p>
+                    <p class="text-sm font-medium">Arrastra ficheros aquí o haz clic para subirlos</p>
+                    <p class="text-muted-foreground text-xs">PDF, imágenes o documentos · máx. 10 MB</p>
+                  </div>
+                  <ul class="mt-3 space-y-1">
+                    @for (file of sampleFiles; track file.name) {
+                      <li class="bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                        <span>📄 {{ file.name }}</span>
+                        <span class="text-muted-foreground text-xs">{{ file.size }}</span>
+                      </li>
+                    }
+                  </ul>
+                </section>
+              }
+              @default {
+                <p class="text-muted-foreground rounded-lg border p-4 text-sm">{{ block.text }}</p>
+              }
+            }
+
+            <div class="absolute -right-2 -top-2 hidden gap-1 group-hover:flex">
+              <button
+                type="button"
+                class="bg-background h-6 w-6 rounded-full border text-xs shadow"
+                title="Mover arriba"
+                [attr.data-testid]="'block-up-' + $index"
+                (click)="move($event, $index, -1)"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                class="bg-background h-6 rounded-full border px-2 text-[10px] shadow"
+                title="Ancho completo o media fila"
+                [attr.data-testid]="'block-width-' + $index"
+                (click)="toggleWidth($event, $index, block)"
+              >
+                {{ block.width === 'half' ? '½' : '1' }}
+              </button>
+              <button
+                type="button"
+                class="bg-destructive h-6 w-6 rounded-full text-xs font-bold text-white shadow"
+                title="Quitar bloque"
+                [attr.data-testid]="'block-remove-' + $index"
+                (click)="remove($event, $index)"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        }
+      </div>
     }
   `
 })
 export class CanvasPageComponent {
   readonly pageIndex = input.required<number>()
-  readonly selected = input<string | null>(null)
   readonly select = output<string>()
 
   protected readonly store = inject(DesignStore)
-
-  protected readonly page = computed(() => this.store.composition().pages[this.pageIndex()])
-
-  protected readonly kpis = computed(() => {
-    const page = this.page()
-    if (page?.kind !== 'dashboard') return []
-    return page.widgets.map((widget, index) => {
-      const draft = this.store.resources().find(r => r.name === widget.resource)
-      const modelIndex = this.store.composition().models.findIndex(m => m.name === widget.resource)
-      return {
-        widgetIndex: index,
-        title: draft?.labelPlural ?? widget.resource,
-        value: mockTotal(modelIndex),
-        subtitle: `Total de ${draft?.labelPlural.toLowerCase() ?? widget.resource}`,
-        testId: `kpi-${widget.resource}`
-      }
-    })
-  })
-
-  protected readonly kpiCols = computed(() => Math.min(Math.max(this.kpis().length, 2), 4))
-
-  protected readonly view = computed(() => {
-    const page = this.page()
-    if (page?.kind !== 'resource') return null
-    const draft = this.store.resources().find(r => r.name === page.resource)
-    const model = this.store.registry()[page.resource]
-    if (!draft || !model) return null
-    return {
-      labelSingular: draft.labelSingular,
-      labelPlural: draft.labelPlural,
-      gender: draft.gender,
-      attachments: draft.attachments ?? false
-    }
-  })
+  protected readonly page = computed(() => this.store.pages()[this.pageIndex()])
 
   protected readonly sampleFiles = [
     { name: 'albaran-julio.pdf', size: '182 KB' },
-    { name: 'foto-lote-0412.jpg', size: '1,4 MB' },
-    { name: 'certificado-calidad.pdf', size: '96 KB' }
+    { name: 'foto-lote-0412.jpg', size: '1,4 MB' }
   ]
 
-  protected removeAttachments(event: Event, resource: string): void {
-    event.stopPropagation()
-    this.store.toggleAttachments(resource, false)
+  protected generable(block: DesignBlock): boolean {
+    return GENERABLE_BLOCKS.includes(block.kind)
   }
 
-  protected deleteWidget(widgetIndex: number): void {
-    this.store.removeWidget(this.pageIndex(), widgetIndex)
+  protected kpis(block: DesignBlock): { title: string; value: number; subtitle?: string; testId: string }[] {
+    return (block.resources ?? []).map((resource, index) => {
+      const draft = this.store.resources().find(r => r.name === resource)
+      return {
+        title: draft?.labelPlural ?? resource,
+        value: mockTotal(index),
+        subtitle: `Total de ${draft?.labelPlural.toLowerCase() ?? resource}`,
+        testId: `kpi-${resource}`
+      }
+    })
   }
 
-  protected deletePage(event: Event): void {
+  protected kpiCols(block: DesignBlock): number {
+    return Math.min(Math.max((block.resources ?? []).length, 2), 4)
+  }
+
+  protected selectBlock(block: DesignBlock): void {
+    if (block.resource) this.select.emit(block.resource)
+  }
+
+  protected move(event: Event, index: number, delta: number): void {
     event.stopPropagation()
-    this.store.removePage(this.pageIndex())
+    const target = index + delta
+    if (target >= 0) this.store.moveBlock(this.pageIndex(), index, target)
+  }
+
+  protected toggleWidth(event: Event, index: number, block: DesignBlock): void {
+    event.stopPropagation()
+    this.store.setBlockWidth(this.pageIndex(), index, block.width === 'half' ? 'full' : 'half')
+  }
+
+  protected remove(event: Event, index: number): void {
+    event.stopPropagation()
+    this.store.removeBlock(this.pageIndex(), index)
   }
 }

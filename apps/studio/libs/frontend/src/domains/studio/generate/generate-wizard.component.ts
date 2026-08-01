@@ -216,7 +216,7 @@ export class GenerateWizardComponent {
           design: {
             appName: this.name(),
             resources: this.store.resources(),
-            pages: this.store.definition().pages
+            pages: this.store.toAppSchema().pages
           },
           skipInstall: !this.install(),
           ...(this.directory().trim() ? { directory: this.directory().trim() } : {})

@@ -49,9 +49,14 @@ const SYSTEM_PROMPT = [
   '  attachments (boolean): true si la vista de la entidad incluye subida de ficheros.',
   '  Tipos de campo: string (texto corto), text (texto largo), number (decimal), integer,',
   '  boolean, date. El primer campo string actúa como «nombre» de la entidad.',
-  '- pages: composición. Páginas {kind:"resource", resource:<name>} (tabla+CRUD de la entidad)',
-  '  y como máximo un {kind:"dashboard", widgets:[{kind:"kpi-total", resource}]}.',
-  '  El orden gobierna el menú; toda página/widget referencia entidades de resources.',
+  '- pages: las VISTAS. Cada una con title y blocks (bloques en orden, ancho "full" o "half"):',
+  '    {kind:"table", resource}       listado con búsqueda, filtros y CRUD',
+  '    {kind:"kpis", resources:[...]} fila de tarjetas de totales',
+  '    {kind:"fields", resource}      ficha con los datos de un registro',
+  '    {kind:"cards", resource}       galería de tarjetas',
+  '    {kind:"attachments", resource} subida de ficheros',
+  '  Una vista puede combinar varios bloques (p. ej. kpis + table, o fields + attachments).',
+  '  El orden de vistas gobierna el menú; todo bloque referencia entidades de resources.',
   '',
   'Cada campo lleva samples: 10 valores de ejemplo REALISTAS y coherentes con el negocio',
   '(nombres de producto reales, precios con céntimos, ciudades, referencias tipo XXX-1041,',
@@ -105,36 +110,27 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
         pages: {
           type: 'array',
           items: {
-            anyOf: [
-              {
-                type: 'object',
-                properties: {
-                  kind: { type: 'string', const: 'dashboard' },
-                  label: { type: 'string' },
-                  widgets: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: { kind: { type: 'string', const: 'kpi-total' }, resource: { type: 'string' } },
-                      required: ['kind', 'resource'],
-                      additionalProperties: false
-                    }
-                  }
-                },
-                required: ['kind', 'widgets'],
-                additionalProperties: false
-              },
-              {
-                type: 'object',
-                properties: {
-                  kind: { type: 'string', const: 'resource' },
-                  resource: { type: 'string' },
-                  label: { type: 'string' }
-                },
-                required: ['kind', 'resource'],
-                additionalProperties: false
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              blocks: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    kind: { type: 'string', enum: ['table', 'kpis', 'fields', 'cards', 'attachments', 'text'] },
+                    resource: { type: 'string' },
+                    resources: { type: 'array', items: { type: 'string' } },
+                    text: { type: 'string' },
+                    width: { type: 'string', enum: ['full', 'half'] }
+                  },
+                  required: ['kind'],
+                  additionalProperties: false
+                }
               }
-            ]
+            },
+            required: ['title', 'blocks'],
+            additionalProperties: false
           }
         }
       },

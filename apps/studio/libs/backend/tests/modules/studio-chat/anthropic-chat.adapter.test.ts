@@ -18,7 +18,7 @@ const design: DesignPayload = {
       fields: [{ name: 'matricula', label: 'Matrícula', type: 'string' }]
     }
   ],
-  pages: [{ kind: 'resource', resource: 'vehiculo' }]
+  pages: [{ title: 'Vehículos', blocks: [{ kind: 'table', resource: 'vehiculo' }] }]
 }
 
 describe('AnthropicChatAdapter', () => {

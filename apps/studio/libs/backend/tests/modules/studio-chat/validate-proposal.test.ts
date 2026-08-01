@@ -15,7 +15,7 @@ describe('validateDesign — gate determinista del diseño', () => {
     const design: DesignPayload = {
       appName: 'flotas',
       resources: [vehiculo],
-      pages: [{ kind: 'resource', resource: 'vehiculo' }]
+      pages: [{ title: 'Vehículos', blocks: [{ kind: 'table', resource: 'vehiculo' }] }]
     }
 
     expect(() => validateDesign(design)).not.toThrow()
@@ -29,10 +29,10 @@ describe('validateDesign — gate determinista del diseño', () => {
     const design: DesignPayload = {
       appName: 'flotas',
       resources: [vehiculo],
-      pages: [{ kind: 'resource', resource: 'fantasma' }]
+      pages: [{ title: 'Rota', blocks: [{ kind: 'table', resource: 'fantasma' }] }]
     }
 
-    expect(() => validateDesign(design)).toThrow(/unknown resource model 'fantasma'/)
+    expect(() => validateDesign(design)).toThrow(/entidad inexistente: fantasma/)
   })
 
   it('rechaza entidades cuyo draft no expande a un resource-schema válido', () => {

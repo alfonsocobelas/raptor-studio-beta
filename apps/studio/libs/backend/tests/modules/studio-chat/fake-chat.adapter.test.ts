@@ -15,7 +15,7 @@ describe('FakeChatAdapter — modo demo determinista (lienzo en blanco)', () => 
     expect(design.resources).toHaveLength(1)
     const fields = design.resources[0].fields
     expect(fields.map(f => f.type)).toEqual(['string', 'number', 'date'])
-    expect(design.pages).toContainEqual({ kind: 'resource', resource: 'empleado' })
+    expect(design.pages[0].blocks).toContainEqual({ kind: 'table', resource: 'empleado', width: 'full' })
     expect(reply).toContain('Empleados')
   })
 
@@ -24,7 +24,7 @@ describe('FakeChatAdapter — modo demo determinista (lienzo en blanco)', () => 
 
     const { design } = await adapter.propose([{ role: 'user', text: 'añade un kpi de vehiculos' }], base.design)
 
-    expect(design.pages[0]).toMatchObject({ kind: 'dashboard' })
+    expect(design.pages[0].blocks[0]).toMatchObject({ kind: 'kpis' })
   })
 
   it('quita una tabla y limpia sus KPIs', async () => {

@@ -55,17 +55,17 @@ export class FakeChatAdapter extends ChatPort {
           .map(raw => ({ name: camel(raw), label: capitalize(raw), type: inferType(raw) }))
       }
       design.resources.push(draft)
-      design.pages.push({ kind: 'resource', resource: draft.name })
+      design.pages.push({ title: draft.labelPlural, blocks: [{ kind: 'table', resource: draft.name, width: 'full' }] })
       return { reply: `Creada la tabla de ${label} con ${draft.fields.length} campos.`, design }
     }
 
     if (add && kpi && kpiMatch) {
       const target = design.resources.find(r => [r.name, r.plural].includes(kpiMatch[1]))
       if (!target) return { reply: `No encuentro la entidad «${kpiMatch[1]}» en el diseño.`, design }
-      const widget = { kind: 'kpi-total' as const, resource: target.name }
-      const dashboard = design.pages.find(p => p.kind === 'dashboard')
-      if (dashboard && dashboard.kind === 'dashboard') dashboard.widgets.push(widget)
-      else design.pages.unshift({ kind: 'dashboard', widgets: [widget] })
+      const dashboard = design.pages.find(p => p.blocks.some(b => b.kind === 'kpis'))
+      const kpiBlock = dashboard?.blocks.find(b => b.kind === 'kpis')
+      if (kpiBlock) kpiBlock.resources = [...new Set([...(kpiBlock.resources ?? []), target.name])]
+      else design.pages.unshift({ title: 'Dashboard', blocks: [{ kind: 'kpis', resources: [target.name], width: 'full' }] })
       return { reply: `Añadido el KPI de ${target.labelPlural}.`, design }
     }
 
@@ -75,9 +75,14 @@ export class FakeChatAdapter extends ChatPort {
       if (!target) return { reply: `No encuentro la entidad «${name}».`, design }
       design.resources = design.resources.filter(r => r.name !== target.name)
       design.pages = design.pages
-        .filter(p => !(p.kind === 'resource' && p.resource === target.name))
-        .map(p => (p.kind === 'dashboard' ? { ...p, widgets: p.widgets.filter(w => w.resource !== target.name) } : p))
-        .filter(p => p.kind !== 'dashboard' || p.widgets.length > 0)
+        .map(p => ({
+          ...p,
+          blocks: p.blocks
+            .filter(b => b.resource !== target.name)
+            .map(b => (b.resources ? { ...b, resources: b.resources.filter(r => r !== target.name) } : b))
+            .filter(b => !b.resources || b.resources.length > 0)
+        }))
+        .filter(p => p.blocks.length > 0)
       return { reply: `Eliminada la entidad ${target.labelSingular}.`, design }
     }
 
