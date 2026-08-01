@@ -90,6 +90,15 @@ export class DesignStore {
     return this.mutate(this._resources(), pages)
   }
 
+  /** Arquetipos de diseño (ficha, galería): mismo gate, aún no generables. */
+  addArchetype(kind: 'detail' | 'cards', resource: string): boolean {
+    if (this._pages().some(p => p.kind === kind && 'resource' in p && p.resource === resource)) {
+      this._lastError.set(`Ya existe una vista «${kind}» de «${resource}»`)
+      return false
+    }
+    return this.mutate(this._resources(), [...this._pages(), { kind, resource }])
+  }
+
   removeWidget(pageIndex: number, widgetIndex: number): boolean {
     const pages = [...this._pages()]
     const page = pages[pageIndex]

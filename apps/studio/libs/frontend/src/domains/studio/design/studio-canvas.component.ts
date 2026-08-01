@@ -6,7 +6,7 @@ import { InspectorComponent } from './inspector.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
 
-type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
+type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files' | 'detail' | 'cards'
 
 /**
  * El estudio: barra de componentes (clic o drag&drop al lienzo), lienzo que
@@ -96,6 +96,43 @@ type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
           >
             🗎 Ficheros
           </button>
+          <div class="relative">
+            <button
+              type="button"
+              class="toolbar-item"
+              draggable="true"
+              data-testid="tool-archetypes"
+              [disabled]="!store.resources().length"
+              (dragstart)="dragging.set('detail')"
+              (dragend)="dragging.set(null)"
+              (click)="archetypeMenu.set(!archetypeMenu())"
+              title="Otras vistas: ficha o galería de tarjetas"
+            >
+              ▧ Más vistas
+            </button>
+            @if (archetypeMenu()) {
+              <div class="bg-background absolute left-0 top-9 z-20 min-w-52 rounded-md border p-1 shadow-md">
+                @for (resource of store.resources(); track resource.name) {
+                  <button
+                    type="button"
+                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
+                    [attr.data-testid]="'detail-of-' + resource.name"
+                    (click)="addArchetype('detail', resource.name)"
+                  >
+                    🗂 Ficha de {{ resource.labelSingular }}
+                  </button>
+                  <button
+                    type="button"
+                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
+                    [attr.data-testid]="'cards-of-' + resource.name"
+                    (click)="addArchetype('cards', resource.name)"
+                  >
+                    ▩ Galería de {{ resource.labelPlural }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
           @if (!hasDashboard()) {
             <button
               type="button"
@@ -240,6 +277,7 @@ export class StudioCanvasComponent {
   protected readonly naming = signal(false)
   protected readonly tableName = signal('')
   protected readonly kpiMenu = signal(false)
+  protected readonly archetypeMenu = signal(false)
   protected readonly showSchema = signal(false)
   protected readonly activeTab = signal(0)
   protected readonly selected = signal<string | null>(null)
@@ -257,6 +295,7 @@ export class StudioCanvasComponent {
     if (tool === 'kpi') this.kpiMenu.set(true)
     if (tool === 'dashboard') this.addDashboard()
     if (tool === 'files') this.addFiles()
+    if (tool === 'detail' || tool === 'cards') this.archetypeMenu.set(true)
   }
 
   /** Recurso de la página activa (null si es el dashboard). */
@@ -279,6 +318,11 @@ export class StudioCanvasComponent {
       this.activeTab.set(this.pages().length - 1)
       this.selected.set(this.store.resources().at(-1)?.name ?? null)
     }
+  }
+
+  protected addArchetype(kind: 'detail' | 'cards', resource: string): void {
+    this.archetypeMenu.set(false)
+    if (this.store.addArchetype(kind, resource)) this.activeTab.set(this.pages().length - 1)
   }
 
   protected addKpi(resource: string): void {

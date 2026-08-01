@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { CanvasTableComponent } from './canvas-table.component'
+import { CanvasDetailComponent } from './canvas-detail.component'
+import { CanvasCardsComponent } from './canvas-cards.component'
 import { DesignStore } from './design-store'
 import { mockTotal } from './mock-data'
 
@@ -12,7 +14,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent],
   template: `
     @if (page(); as current) {
       @if (current.kind === 'dashboard') {
@@ -34,6 +36,30 @@ import { mockTotal } from './mock-data'
               </button>
             </div>
           }
+        </div>
+      } @else if (current.kind === 'detail' || current.kind === 'cards') {
+        <div
+          class="group relative rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
+          [attr.data-testid]="'canvas-' + current.kind + '-' + current.resource"
+        >
+          <header class="mb-4 flex items-center gap-2">
+            <span class="bg-amber-100 text-amber-800 rounded px-2 py-0.5 text-[10px] font-semibold uppercase">
+              diseño · aún no generable
+            </span>
+          </header>
+          @if (current.kind === 'detail') {
+            <studio-canvas-detail [resource]="current.resource" />
+          } @else {
+            <studio-canvas-cards [resource]="current.resource" />
+          }
+          <button
+            type="button"
+            class="bg-destructive absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow group-hover:flex"
+            [attr.data-testid]="'delete-' + current.kind + '-' + current.resource"
+            (click)="deletePage($event)"
+          >
+            ✕
+          </button>
         </div>
       } @else {
         @if (view(); as v) {
