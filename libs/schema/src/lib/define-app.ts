@@ -40,8 +40,10 @@ function validatePages(pages: PageDefinition[]): string[] {
       problems.push(`pages[${index}]: resource must be non-empty kebab-case`)
       return
     }
-    if (seenResources.has(page.resource)) problems.push(`pages: duplicated resource page '${page.resource}'`)
-    seenResources.add(page.resource)
+    // la unicidad aplica por (kind, recurso): una entidad puede tener lista Y ficha
+    const key = `${page.kind}:${page.resource}`
+    if (seenResources.has(key)) problems.push(`pages: duplicated ${page.kind} page '${page.resource}'`)
+    seenResources.add(key)
   })
 
   return problems

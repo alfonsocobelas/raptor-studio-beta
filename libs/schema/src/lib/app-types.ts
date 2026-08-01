@@ -25,7 +25,24 @@ export interface ResourcePage {
   label?: string
 }
 
-export type PageDefinition = DashboardPage | ResourcePage
+/** Ficha de un registro: cabecera con estado, secciones de datos, métricas y adjuntos. */
+export interface DetailPage {
+  kind: 'detail'
+  resource: string
+  label?: string
+}
+
+/** Galería de tarjetas (una por registro) en vez de tabla. */
+export interface CardsPage {
+  kind: 'cards'
+  resource: string
+  label?: string
+}
+
+export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage
+
+/** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
+export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource']
 
 export interface AppDefinition {
   schemaVersion: 1
