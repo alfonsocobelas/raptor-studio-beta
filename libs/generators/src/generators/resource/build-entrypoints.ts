@@ -157,6 +157,27 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   }
 }
 
+/**
+ * Un sample del schema al literal que espera el DTO de registro: los booleanos
+ * llegan a veces como «Sí/No» (lenguaje del diseño) y las fechas como dd/mm/aaaa.
+ */
+function renderSampleValue(sample: string | number | boolean, field: FieldDefinition): string {
+  if (field.type === 'boolean') {
+    const truthy = typeof sample === 'boolean' ? sample : /^(s[ií]|true|1)$/i.test(String(sample).trim())
+    return String(truthy)
+  }
+  if (field.type === 'number' || field.type === 'integer') {
+    const value = typeof sample === 'number' ? sample : Number(String(sample).replace(',', '.').replace(/[^0-9.-]/g, ''))
+    return String(Number.isFinite(value) ? value : 0)
+  }
+  const text = String(sample)
+  if (field.type === 'date' || field.type === 'timestamptz') {
+    const spanish = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+    return `'${spanish ? `${spanish[3]}-${spanish[2]}-${spanish[1]}` : text}'`
+  }
+  return `'${text.replace(/'/g, "\\'")}'`
+}
+
 // UUIDv7-like determinista: categoría estable por recurso (hash del plural) + índice
 function seedUuid(plural: string, n: number): string {
   const category = [...plural].reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 0xffff, 7)
@@ -192,6 +213,14 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
     }
     if (vo?.values?.length) {
       lines.push(`${c.name}: '${vo.values[(i - 1) % vo.values.length]}'`)
+      continue
+    }
+
+    // Ejemplos del dominio: quien conoce el negocio (el chat del estudio) los declara
+    // en el schema, así la app nace con datos coherentes en vez de «Nombre seed 1».
+    const sample = c.field.samples?.length ? c.field.samples[(i - 1) % c.field.samples.length] : undefined
+    if (sample !== undefined) {
+      lines.push(`${c.name}: ${renderSampleValue(sample, c.field)}`)
       continue
     }
     if (!c.required) continue

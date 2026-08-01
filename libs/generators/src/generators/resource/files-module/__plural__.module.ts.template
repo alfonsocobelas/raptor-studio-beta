@@ -13,6 +13,7 @@ import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/
 import { TypeOrm<%- className %>Repository } from './infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
 <%_ if (attachments) { _%>
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { StorageModule } from '../../shared/infrastructure/storage/storage.module'
 import { TypeOrm<%- className %>AttachmentEntity } from './infrastructure/attachments/<%- fileName %>-attachment.entity'
 import { <%- className %>AttachmentsController } from './infrastructure/attachments/<%- fileName %>-attachments.controller'
 import { <%- className %>AttachmentsService } from './infrastructure/attachments/<%- fileName %>-attachments.service'
@@ -20,9 +21,15 @@ import { <%- className %>AttachmentsService } from './infrastructure/attachments
 
 @Module({
 <%_ if (attachments) { _%>
-  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity])],
+  // StorageModule explícito (no se confía en @Global): así el módulo funciona en
+  // cualquier contexto Nest — API, seed o tests — sin depender del root.
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule],
 <%_ } _%>
-  controllers: [<%- pluralClassName %>Controller<% if (aggregate.composition) { %>, <%- entry.childControllerClass %><% } %><% if (attachments) { %>, <%- className %>AttachmentsController<% } %>],
+<%_ if (attachments) { _%>
+  // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro
+  // y '<%- plural %>/attachments' colisionaría con '<%- plural %>/:id' del recurso
+<%_ } _%>
+  controllers: [<% if (attachments) { %><%- className %>AttachmentsController, <% } %><%- pluralClassName %>Controller<% if (aggregate.composition) { %>, <%- entry.childControllerClass %><% } %>],
   providers: [
 <%_ if (attachments) { _%>
     <%- className %>AttachmentsService,

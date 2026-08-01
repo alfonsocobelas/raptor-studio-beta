@@ -161,6 +161,9 @@ export interface FieldDefinition {
   optionalPrimitive?: boolean
   /** optionalPrimitive fields default to non-updatable (sync-populated); set true for user-editable ones */
   updatable?: boolean
+  /** Valores de ejemplo del dominio (los aporta quien conoce el negocio: el chat del estudio).
+   *  Alimentan el mockup del lienzo y las filas de semilla del código emitido. */
+  samples?: (string | number | boolean)[]
   query?: FieldQuery
   table?: FieldTable
   form?: FieldForm
