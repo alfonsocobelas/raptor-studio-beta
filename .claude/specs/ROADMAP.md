@@ -64,6 +64,26 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 | E    | Wizard de plugins (db, infra, auth…)                         | ✅ 2026-07-31 (spec 11: `--appFile` en el generador + wizard en /studio con descarga del schema y comando exacto; verificado end-to-end) |
 | F    | Escritorio (Electron/Tauri) — solo si hace falta             | ✅ 2026-07-31 resuelta como **generación in situ sin empaquetar** (spec 12, decisión de Alfonso): botón «Generar aquí» vía `studio-api` local (chat+generate sin Postgres). Electron queda instalado como devDep del estudio para la comparativa opcional. |
 
+## Observaciones abiertas (2026-08-01, sesión del estudio) — atajar más adelante
+
+1. **Adapter de Azure emitido siempre y sin dependencia** (⚠️ bug latente, mismo patrón que el de
+   winston): el kernel copia `azure-blob-file-storage.ts` en TODAS las apps, nadie lo referencia y
+   `@azure/storage-blob` NO está en el `package.json` emitido — compila aquí solo por hoisting del
+   monorepo; en máquina de cliente reventaría. Arreglo: sacarlo del kernel siempre-emitido (plugin
+   de storage) → **exige re-baseline deliberado del golden de app; requiere OK de Alfonso**.
+2. **Adjuntos: alcance por página, no por registro.** Hoy `attachments: true` da un área de
+   documentos de la entidad (albaranes, catálogos). Los adjuntos POR FILA necesitan el arquetipo
+   `detail` (spec 15) — se añadirá allí.
+3. **Sin fixture de oro para `attachments`** (TASK-05 de la spec 14): cubierto por 8 tests unitarios
+   + compilación e2e real, pero no por el gate de oro. Congelar un modelo con adjuntos.
+4. **La tabla del lienzo es una réplica controlada**, no el DataTable emitido (hacía falta para
+   editar cabeceras). WYSIWYG estricto exigiría un «modo diseño» en el DataTable emitido.
+5. **Puerto 3000 ocupado** por sap-licences en el entorno de Alfonso: el estudio arranca con
+   `PORT=3400 npm run studio:api` (documentar en el README del estudio).
+6. **Pluralización naïf** en el lienzo (`newDraftResource`): «Vehículo» → vehiculos. Suficiente para
+   diseñar (el chat real produce singular/plural correctos y se puede editar), pero conviene una
+   lista de irregulares si se usa mucho a mano.
+
 ## Pendientes conocidos (no bloquean la spec 00)
 
 Descubiertos por el dogfooding del estudio (2026-07-31, spec 08): la app ensamblada con los 4
