@@ -88,7 +88,9 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
         ...(field.type === 'date' ? { type: 'date' as const } : {}),
         minWidth: 120
       },
-      query: { sortable: order, ...(isNameField ? { filterable: 2, searchable: 1 } : {}) }
+      query: { sortable: order, ...(isNameField ? { filterable: 2, searchable: 1 } : {}) },
+      // los ejemplos del diseño viajan al generador: las semillas dejan de ser «Nombre seed 1»
+      ...(field.samples?.length ? { samples: field.samples } : {})
     }
 
     switch (field.type) {
