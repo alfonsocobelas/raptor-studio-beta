@@ -125,7 +125,7 @@ type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
       <div class="flex min-h-0 flex-1">
         <!-- lienzo: la app dibujada como una web -->
         <main
-          class="bg-muted/40 min-w-0 flex-1 overflow-auto p-6"
+          class="canvas-surface min-w-0 flex-1 overflow-auto p-10"
           [class.ring-2]="dragging()"
           [class.ring-primary]="dragging()"
           (dragover)="$event.preventDefault()"
@@ -145,7 +145,7 @@ type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
             </div>
           } @else {
             <!-- marco de la app: sidebar + página, como la web generada -->
-            <div class="bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden rounded-lg border shadow-sm">
+            <div class="bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden rounded-xl border shadow-xl ring-1 ring-black/5">
               <aside class="bg-card flex w-56 shrink-0 flex-col border-r p-4" data-testid="mock-sidebar">
                 <div class="mb-6 flex items-center gap-2 px-1">
                   <div class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase">
@@ -206,6 +206,18 @@ type ToolKind = 'table' | 'kpi' | 'dashboard' | 'files'
     </div>
   `,
   styles: `
+    /* lienzo tipo Figma: retícula de puntos sobre fondo neutro */
+    .canvas-surface {
+      /* los tokens del tema son oklch() completos: se mezclan con color-mix, no con hsl(var()) */
+      background-color: color-mix(in oklab, var(--muted) 55%, var(--background));
+      background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--foreground) 22%, transparent) 1.2px,
+        transparent 1.2px
+      );
+      background-size: 22px 22px;
+      background-position: -11px -11px;
+    }
     .toolbar-item {
       border: 1px solid hsl(var(--border));
       border-radius: 0.375rem;
