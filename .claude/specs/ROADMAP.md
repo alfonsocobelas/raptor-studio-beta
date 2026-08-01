@@ -80,7 +80,13 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
    editar cabeceras). WYSIWYG estricto exigiría un «modo diseño» en el DataTable emitido.
 5. **Puerto 3000 ocupado** por sap-licences en el entorno de Alfonso: el estudio arranca con
    `PORT=3400 npm run studio:api` (documentar en el README del estudio).
-6. **Pluralización naïf** en el lienzo (`newDraftResource`): «Vehículo» → vehiculos. Suficiente para
+6. **Vista de generación con animación** (petición de Alfonso, 2026-08-01): al pulsar «Generar
+   aquí» el diálogo debería dar paso a una **pantalla de progreso animada** (spinner/pasos con
+   estados: validando diseño → generando módulos → instalando dependencias → listo), no al
+   estado «Generando…» de un botón. La generación puede tardar minutos con instalación, así que
+   necesita feedback de progreso real (idealmente streaming del log del generador, hoy se
+   devuelve entero al terminar).
+7. **Pluralización naïf** en el lienzo (`newDraftResource`): «Vehículo» → vehiculos. Suficiente para
    diseñar (el chat real produce singular/plural correctos y se puede editar), pero conviene una
    lista de irregulares si se usa mucho a mano.
 
