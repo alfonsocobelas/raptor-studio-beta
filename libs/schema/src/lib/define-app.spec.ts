@@ -1,4 +1,5 @@
 import { defineApp } from './define-app'
+import { PALETTES } from './palettes'
 import { AppDefinition } from './app-types'
 import { SchemaValidationError } from './validation-errors'
 
@@ -134,5 +135,42 @@ describe('defineApp', () => {
       'name: must be non-empty kebab-case',
       'pages: at least one page is required'
     ])
+  })
+})
+
+describe('theme — paleta de la app (spec 18)', () => {
+  const app = (theme?: { palette: string }): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'clinica',
+      pages: [{ kind: 'resource', resource: 'paciente' }],
+      ...(theme ? { theme } : {})
+    }) as AppDefinition
+
+  it('acepta una paleta del catálogo', () => {
+    expect(defineApp(app({ palette: 'ocean' })).theme?.palette).toBe('ocean')
+  })
+
+  it('sin tema declarado, la app es neutra (lo que se emite hoy)', () => {
+    expect(defineApp(app()).theme).toBeUndefined()
+  })
+
+  it('rechaza una paleta fuera del catálogo: el lienzo no es un editor de temas', () => {
+    expect(() => defineApp(app({ palette: 'fucsia-flúor' }))).toThrow(/theme.*palette/i)
+  })
+
+  it('el catálogo publica los tokens de cada paleta en claro y en oscuro', () => {
+    const ocean = PALETTES.find(p => p.id === 'ocean')
+
+    expect(ocean).toMatchObject({
+      id: 'ocean',
+      label: expect.any(String),
+      light: { primary: expect.any(String), primaryForeground: expect.any(String), ring: expect.any(String) },
+      dark: { primary: expect.any(String), primaryForeground: expect.any(String) }
+    })
+  })
+
+  it('neutral es la primera paleta: es el defecto y coincide con lo emitido hoy', () => {
+    expect(PALETTES[0].id).toBe('neutral')
   })
 })

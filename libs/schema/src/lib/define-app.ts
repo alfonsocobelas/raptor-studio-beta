@@ -1,4 +1,5 @@
 import { AppDefinition, PageDefinition } from './app-types'
+import { PALETTE_IDS } from './palettes'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -6,7 +7,7 @@ const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 // Structural validation only (v1): the model registry lives in the generator,
 // so resource existence is checked there, not here.
 export function defineApp(definition: AppDefinition): AppDefinition {
-  const problems = [...validateIdentity(definition), ...validatePages(definition.pages)]
+  const problems = [...validateIdentity(definition), ...validateTheme(definition), ...validatePages(definition.pages)]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
 
@@ -20,6 +21,16 @@ function validateIdentity(definition: AppDefinition): string[] {
   if (!KEBAB_CASE.test(definition.name)) problems.push('name: must be non-empty kebab-case')
 
   return problems
+}
+
+/** El catálogo es cerrado a propósito: sin colores libres (spec 18). */
+function validateTheme(definition: AppDefinition): string[] {
+  const palette = definition.theme?.palette
+  if (palette === undefined) return []
+
+  return PALETTE_IDS.includes(palette)
+    ? []
+    : [`theme.palette: unknown palette '${palette}' (available: ${PALETTE_IDS.join(', ')})`]
 }
 
 function validatePages(pages: PageDefinition[]): string[] {
