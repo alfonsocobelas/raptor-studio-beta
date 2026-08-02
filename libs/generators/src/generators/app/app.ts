@@ -410,60 +410,78 @@ export function shellSubstitutions(composition: AppComposition): {
     if (!model) throw new Error(`Composition page references resource '${resource}' outside its own models`)
     return model
   }
-  const pathOf = (page: AppComposition['pages'][number]): string =>
-    page.kind === 'dashboard' ? 'dashboard' : routeOf(modelOf(page.resource))
+  const galleryPath = (model: ResourceDefinition): string => `${routeOf(model)}/galeria`
+  // Una vista de tarjetas apunta a la galería; una de tabla, al listado.
+  const pathOf = (page: AppComposition['pages'][number]): string => {
+    if (page.kind === 'dashboard') return 'dashboard'
+    const model = modelOf(page.resource)
+    return page.kind === 'cards' ? galleryPath(model) : routeOf(model)
+  }
+
   const dashboardRoute = `  {
     path: 'dashboard',
     loadComponent: () =>
       import('${SCOPE}/frontend/domains/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   }`
 
-  return {
-    defaultRoute: pathOf(composition.pages[0]),
-    routeEntries: composition.pages
-      .map(page => {
-        if (page.kind === 'dashboard') return dashboardRoute
-        const model = modelOf(page.resource)
-        const feature = `${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}`
-        const list = `  {
+  const featureOf = (model: ResourceDefinition): string =>
+    `${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}`
+
+  const listRoute = (model: ResourceDefinition): string => `  {
     path: '${routeOf(model)}',
     loadComponent: () =>
       import(
-        '${feature}/${model.plural}-list.component'
+        '${featureOf(model)}/${model.plural}-list.component'
       ).then(m => m.${names(model.name).className}sListComponent)
   }`
-        // Orden obligatorio: listado, galería y por último ':id'. Declarar ':id'
-        // antes haría que capturase 'galeria' como si fuera un identificador.
-        const gallery = model.gallery
-          ? `  {
-    path: '${routeOf(model)}/galeria',
+
+  const galleryRoute = (model: ResourceDefinition): string => `  {
+    path: '${galleryPath(model)}',
     loadComponent: () =>
       import(
-        '${feature}/${model.plural}-gallery.component'
+        '${featureOf(model)}/${model.plural}-gallery.component'
       ).then(m => m.${names(model.plural).className}GalleryComponent)
   }`
-          : null
-        const detail = model.detail
-          ? `  {
+
+  const detailRoute = (model: ResourceDefinition): string => `  {
     path: '${routeOf(model)}/:id',
     loadComponent: () =>
       import(
-        '${feature}/${names(model.name).fileName}-detail.component'
+        '${featureOf(model)}/${names(model.name).fileName}-detail.component'
       ).then(m => m.${names(model.name).className}DetailComponent)
   }`
-          : null
-        return [list, gallery, detail].filter(Boolean).join(',\n')
-      })
-      .join(',\n'),
+
+  /**
+   * Las rutas se agrupan por modelo aunque el mismo recurso aparezca en varias
+   * vistas: la ficha es una sola, se declare desde donde se declare. Y el orden
+   * es obligatorio — listado, galería y ':id' al final, porque declarado antes
+   * capturaría 'galeria' como si fuera un identificador.
+   */
+  const seen = new Set<string>()
+  const routes: string[] = []
+  for (const page of composition.pages) {
+    if (page.kind === 'dashboard') {
+      routes.push(dashboardRoute)
+      continue
+    }
+    const model = modelOf(page.resource)
+    if (seen.has(model.name)) continue
+    seen.add(model.name)
+
+    const wantsList = composition.pages.some(p => p.kind === 'resource' && p.resource === model.name)
+    const wantsGallery = Boolean(model.gallery)
+    if (wantsList) routes.push(listRoute(model))
+    if (wantsGallery) routes.push(galleryRoute(model))
+    if (model.detail) routes.push(detailRoute(model))
+  }
+
+  return {
+    defaultRoute: pathOf(composition.pages[0]),
+    routeEntries: routes.join(',\n'),
+    // Una entrada por VISTA: si el mismo recurso tiene tabla y galería, son dos
+    // vistas y por tanto dos entradas, cada una con su propio título.
     navItems: composition.pages
-      .flatMap(page => {
-        const entries = [`  { label: '${page.label}', route: '/${pathOf(page)}' }`]
-        if (page.kind !== 'dashboard' && modelOf(page.resource).gallery) {
-          const model = modelOf(page.resource)
-          entries.push(`  { label: '${page.label} · galería', route: '/${routeOf(model)}/galeria' }`)
-        }
-        return entries
-      })
+      .map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`)
       .join(',\n')
   }
 }

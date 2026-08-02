@@ -20,11 +20,13 @@ export interface AppComposition {
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
 export function composeFlat(models: ResourceDefinition[], dashboard: boolean): AppComposition {
-  const pages: ComposedPage[] = models.map(model => ({
-    kind: 'resource',
-    resource: model.name,
-    label: labelOf(model)
-  }))
+  const pages: ComposedPage[] = models.flatMap(model => [
+    { kind: 'resource' as const, resource: model.name, label: labelOf(model) },
+    // una galería declarada sin vista que la muestre sería inalcanzable
+    ...(model.gallery
+      ? [{ kind: 'cards' as const, resource: model.name, label: `${labelOf(model)} · galería` }]
+      : [])
+  ])
   if (dashboard) {
     pages.unshift({
       kind: 'dashboard',

@@ -151,12 +151,46 @@ describe('shellSubstitutions — ruta de la galería (spec 17)', () => {
 
     expect(subs.routeEntries).toContain("path: 'crm/customers/galeria'")
     expect(subs.routeEntries).toContain('CustomersGalleryComponent')
-    expect(subs.navItems).toContain("route: '/crm/customers/galeria'")
+    expect(subs.navItems).toContain("{ label: 'customers · galería', route: '/crm/customers/galeria' }")
   })
 
   it('la galería va ANTES de :id, o la ficha capturaría «galeria» como id', () => {
     const subs = shellSubstitutions(composeFlat([model({ gallery: {}, detail: {} })], false))
 
     expect(subs.routeEntries.indexOf('customers/galeria')).toBeLessThan(subs.routeEntries.indexOf('customers/:id'))
+  })
+})
+
+describe('shellSubstitutions — vista SOLO de galería (spec 17)', () => {
+  const tratamiento = {
+    schemaVersion: 1,
+    name: 'tratamiento',
+    plural: 'tratamientos',
+    context: 'clinica',
+    schemaName: 'clinica',
+    labels: { singular: 'Tratamiento', plural: 'Tratamientos' },
+    gallery: {},
+    fields: { id: { type: 'uuid', pk: true } }
+  } as unknown as ResourceDefinition
+
+  const composed = {
+    models: [tratamiento],
+    pages: [{ kind: 'cards' as const, resource: 'tratamiento', label: 'Catálogo' }],
+    dashboard: false,
+    kpiModels: []
+  }
+
+  it('emite la galería y NO el listado: la vista no pidió tabla', () => {
+    const subs = shellSubstitutions(composed)
+
+    expect(subs.routeEntries).toContain('clinica/tratamientos/galeria')
+    expect(subs.routeEntries).not.toContain("path: 'clinica/tratamientos',")
+    expect(subs.defaultRoute).toBe('clinica/tratamientos/galeria')
+  })
+
+  it('el menú lleva una sola entrada, con el título de la vista', () => {
+    const subs = shellSubstitutions(composed)
+
+    expect(subs.navItems).toBe("  { label: 'Catálogo', route: '/clinica/tratamientos/galeria' }")
   })
 })
