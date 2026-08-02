@@ -4,6 +4,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
+import { ignoreNestedWorkspace } from './nxignore'
 import { applyPalette } from './palette'
 import { composeApp, composeFlat, type AppComposition } from './composition'
 import { selectApp } from './apps/registry'
@@ -184,6 +185,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 4. esqueleto: copia literal, sin plantillas. La capa por librería va después
   //    para que pueda sobrescribir lo que dependa de la piel (hoja de estilos).
+  // la app es un workspace anidado: el padre no debe escanearla (colisión de proyectos)
+  ignoreNestedWorkspace(tree, root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
   // el styles.css se copia literal, así que la paleta se aplica encima (spec 18)
