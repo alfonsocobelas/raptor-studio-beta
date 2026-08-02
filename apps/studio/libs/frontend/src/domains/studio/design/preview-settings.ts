@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core'
-import { PALETTES } from '@acc/schema'
+import { THEMES } from '@acc/schema'
 
 export type PreviewTheme = 'light' | 'dark'
 export type PreviewSkin = 'spartan' | 'material'
@@ -12,14 +12,14 @@ export interface PreviewPalette {
 }
 
 /**
- * Las paletas del selector SON las del catálogo del schema: si el lienzo
- * ofreciera una que el generador no conoce, lo que ves no sería lo que se
+ * Los temas del selector SON los del catálogo del schema: si el lienzo
+ * ofreciera uno que el generador no conoce, lo que ves no sería lo que se
  * genera. Solo afectan a la app dibujada, nunca al chrome del estudio.
  */
-export const PREVIEW_PALETTES: PreviewPalette[] = PALETTES.map(p => ({
-  id: p.id,
-  label: p.label,
-  swatch: p.light.primary
+export const PREVIEW_PALETTES: PreviewPalette[] = THEMES.map(t => ({
+  id: t.id,
+  label: t.label,
+  swatch: t.light.primary
 }))
 
 /**

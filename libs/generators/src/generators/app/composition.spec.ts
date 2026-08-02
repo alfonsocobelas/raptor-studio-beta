@@ -115,7 +115,21 @@ describe('composeApp — tema (spec 18)', () => {
     paciente: { name: 'paciente', plural: 'pacientes', context: 'clinica' } as unknown as ResourceDefinition
   }
 
-  it('la paleta declarada viaja en la composición', () => {
+  it('el tema declarado viaja en la composición', () => {
+    const composed = composeApp(
+      {
+        schemaVersion: 1,
+        name: 'clinica',
+        theme: { id: 'ocean' },
+        pages: [{ kind: 'resource', resource: 'paciente' }]
+      } as AppDefinition,
+      registry
+    )
+
+    expect(composed.themeId).toBe('ocean')
+  })
+
+  it('el alias palette de la spec 18 sigue viajando', () => {
     const composed = composeApp(
       {
         schemaVersion: 1,
@@ -126,7 +140,7 @@ describe('composeApp — tema (spec 18)', () => {
       registry
     )
 
-    expect(composed.palette).toBe('ocean')
+    expect(composed.themeId).toBe('ocean')
   })
 
   it('sin tema declarado la composición es neutra', () => {
@@ -135,6 +149,6 @@ describe('composeApp — tema (spec 18)', () => {
       registry
     )
 
-    expect(composed.palette).toBeUndefined()
+    expect(composed.themeId).toBe('neutral')
   })
 })

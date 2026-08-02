@@ -177,7 +177,8 @@ describe('shellSubstitutions — vista SOLO de galería (spec 17)', () => {
     models: [tratamiento],
     pages: [{ kind: 'cards' as const, resource: 'tratamiento', label: 'Catálogo' }],
     dashboard: false,
-    kpiModels: []
+    kpiModels: [],
+    themeId: 'neutral'
   }
 
   it('emite la galería y NO el listado: la vista no pidió tabla', () => {

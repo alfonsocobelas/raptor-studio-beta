@@ -1,5 +1,5 @@
 import { defineApp } from './define-app'
-import { PALETTES } from './palettes'
+import { THEME_IDS, THEMES } from './themes'
 import { AppDefinition } from './app-types'
 import { SchemaValidationError } from './validation-errors'
 
@@ -138,8 +138,8 @@ describe('defineApp', () => {
   })
 })
 
-describe('theme — paleta de la app (spec 18)', () => {
-  const app = (theme?: { palette: string }): AppDefinition =>
+describe('theme — tema de la app (spec 20)', () => {
+  const app = (theme?: { id?: string; palette?: string }): AppDefinition =>
     ({
       schemaVersion: 1,
       name: 'clinica',
@@ -147,7 +147,11 @@ describe('theme — paleta de la app (spec 18)', () => {
       ...(theme ? { theme } : {})
     }) as AppDefinition
 
-  it('acepta una paleta del catálogo', () => {
+  it('acepta un tema del catálogo', () => {
+    expect(defineApp(app({ id: 'ocean' })).theme?.id).toBe('ocean')
+  })
+
+  it('sigue aceptando el alias palette de la spec 18: no invalida lo ya generado', () => {
     expect(defineApp(app({ palette: 'ocean' })).theme?.palette).toBe('ocean')
   })
 
@@ -155,22 +159,19 @@ describe('theme — paleta de la app (spec 18)', () => {
     expect(defineApp(app()).theme).toBeUndefined()
   })
 
-  it('rechaza una paleta fuera del catálogo: el lienzo no es un editor de temas', () => {
-    expect(() => defineApp(app({ palette: 'fucsia-flúor' }))).toThrow(/theme.*palette/i)
+  it('rechaza un tema fuera del catálogo: el lienzo no es un editor de temas', () => {
+    expect(() => defineApp(app({ id: 'fucsia-flúor' }))).toThrow(/theme\.id/i)
   })
 
-  it('el catálogo publica los tokens de cada paleta en claro y en oscuro', () => {
-    const ocean = PALETTES.find(p => p.id === 'ocean')
-
-    expect(ocean).toMatchObject({
-      id: 'ocean',
-      label: expect.any(String),
-      light: { primary: expect.any(String), primaryForeground: expect.any(String), ring: expect.any(String) },
-      dark: { primary: expect.any(String), primaryForeground: expect.any(String) }
-    })
+  it('rechaza también un alias fuera del catálogo', () => {
+    expect(() => defineApp(app({ palette: 'fucsia-flúor' }))).toThrow(/theme\.id/i)
   })
 
-  it('neutral es la primera paleta: es el defecto y coincide con lo emitido hoy', () => {
-    expect(PALETTES[0].id).toBe('neutral')
+  it('enumera los temas disponibles al rechazar', () => {
+    expect(() => defineApp(app({ id: 'fucsia-flúor' }))).toThrow(new RegExp(THEME_IDS.join(', ')))
+  })
+
+  it('neutral es el primer tema: es el defecto y coincide con lo emitido hoy', () => {
+    expect(THEMES[0].id).toBe('neutral')
   })
 })

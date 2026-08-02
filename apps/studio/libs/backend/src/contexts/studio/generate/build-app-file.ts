@@ -14,12 +14,12 @@ export interface AppFileContent extends AppDefinition {
  */
 export function buildAppFile(design: DesignPayload, name: string): AppFileContent {
   // 'neutral' es exactamente lo que emite el esqueleto: declararlo sería ruido
-  const palette = design.palette && design.palette !== 'neutral' ? design.palette : undefined
+  const themeId = design.palette && design.palette !== 'neutral' ? design.palette : undefined
 
   return {
     schemaVersion: 1,
     name,
-    ...(palette ? { theme: { palette } } : {}),
+    ...(themeId ? { theme: { id: themeId } } : {}),
     pages: designPagesToAppPages(design.pages),
     resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }

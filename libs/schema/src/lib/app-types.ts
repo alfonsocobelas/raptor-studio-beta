@@ -44,10 +44,12 @@ export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPa
 /** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
 export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource']
 
-/** Aspecto de la app emitida: por ahora, la paleta del color de acción (spec 18). */
+/** Aspecto de la app emitida: el tema viste la app entera (spec 20). */
 export interface ThemeDefinition {
-  /** Id de una paleta del catálogo (@acc/schema PALETTES) */
-  palette: string
+  /** Id de un tema del catálogo (@acc/schema THEMES) */
+  id?: string
+  /** @deprecated nombre que usó la spec 18; se sigue leyendo como alias de `id` */
+  palette?: string
 }
 
 export interface AppDefinition {

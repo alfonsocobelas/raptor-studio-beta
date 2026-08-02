@@ -1,3 +1,4 @@
+import { DEFAULT_THEME_ID, resolveThemeId } from '@acc/schema'
 import type { AppDefinition, PageDefinition, ResourceDefinition } from '@acc/schema'
 
 /**
@@ -16,8 +17,8 @@ export interface AppComposition {
   dashboard: boolean
   /** Modelos con tarjeta KPI en el dashboard, en orden de widget */
   kpiModels: ResourceDefinition[]
-  /** Paleta declarada por el app-schema (spec 18); ausente = neutra */
-  palette?: string
+  /** Tema declarado por el app-schema (spec 20); siempre resuelto, 'neutral' por defecto */
+  themeId: string
 }
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
@@ -36,7 +37,7 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
       widgets: models.map(model => ({ kind: 'kpi-total', resource: model.name }))
     })
   }
-  return { models, pages, dashboard, kpiModels: dashboard ? models : [] }
+  return { models, pages, dashboard, kpiModels: dashboard ? models : [], themeId: DEFAULT_THEME_ID }
 }
 
 /** Composición declarada por un app-schema; valida cada referencia contra el registro. */
@@ -72,7 +73,13 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     return { ...page, label: page.label ?? labelOf(model) }
   })
 
-  return { models, pages, dashboard: kpiModels.length > 0, kpiModels, palette: definition.theme?.palette }
+  return {
+    models,
+    pages,
+    dashboard: kpiModels.length > 0,
+    kpiModels,
+    themeId: resolveThemeId(definition.theme)
+  }
 }
 
 function labelOf(model: ResourceDefinition): string {

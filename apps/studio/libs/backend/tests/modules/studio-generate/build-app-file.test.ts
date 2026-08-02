@@ -26,7 +26,7 @@ describe('buildAppFile — el artefacto que consume el generador', () => {
   })
 
   it('la paleta elegida en el lienzo viaja al artefacto: lo que ves es lo que se genera', () => {
-    expect(buildAppFile(design, 'clinica').theme).toEqual({ palette: 'ocean' })
+    expect(buildAppFile(design, 'clinica').theme).toEqual({ id: 'ocean' })
   })
 
   it('sin paleta elegida no declara tema (la app sale neutra)', () => {

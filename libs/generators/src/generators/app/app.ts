@@ -174,7 +174,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
   // el styles.css se copia literal, así que la paleta se aplica encima (spec 18)
-  applyPalette(tree, root, composition.palette)
+  applyPalette(tree, root, composition.themeId)
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
   generateFiles(tree, path.join(__dirname, 'files'), root, {

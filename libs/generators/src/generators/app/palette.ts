@@ -1,5 +1,5 @@
 import type { Tree } from '@nx/devkit'
-import { findPalette } from '@acc/schema'
+import { findTheme } from '@acc/schema'
 import * as path from 'path'
 
 const STYLES = 'apps/frontend-app/src/styles.css'
@@ -19,7 +19,7 @@ const TINTED = ['--primary', '--primary-foreground', '--ring'] as const
 export function applyPalette(tree: Tree, root: string, paletteId: string | undefined): void {
   if (!paletteId || paletteId === 'neutral') return
 
-  const palette = findPalette(paletteId)
+  const palette = findTheme(paletteId)
   if (!palette) return
 
   const file = path.join(root, STYLES)

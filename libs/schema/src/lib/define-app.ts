@@ -1,5 +1,5 @@
 import { AppDefinition, PageDefinition } from './app-types'
-import { PALETTE_IDS } from './palettes'
+import { THEME_IDS } from './themes'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -23,14 +23,14 @@ function validateIdentity(definition: AppDefinition): string[] {
   return problems
 }
 
-/** El catálogo es cerrado a propósito: sin colores libres (spec 18). */
+/** El catálogo es cerrado a propósito: sin colores libres (spec 20). */
 function validateTheme(definition: AppDefinition): string[] {
-  const palette = definition.theme?.palette
-  if (palette === undefined) return []
+  const declared = definition.theme?.id ?? definition.theme?.palette
+  if (declared === undefined) return []
 
-  return PALETTE_IDS.includes(palette)
+  return THEME_IDS.includes(declared)
     ? []
-    : [`theme.palette: unknown palette '${palette}' (available: ${PALETTE_IDS.join(', ')})`]
+    : [`theme.id: unknown theme '${declared}' (available: ${THEME_IDS.join(', ')})`]
 }
 
 function validatePages(pages: PageDefinition[]): string[] {
