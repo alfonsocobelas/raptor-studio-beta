@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
 import { ignoreNestedWorkspace } from './nxignore'
-import { applyPalette } from './palette'
+import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
@@ -173,12 +173,15 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   ignoreNestedWorkspace(tree, root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
-  // el styles.css se copia literal, así que la paleta se aplica encima (spec 18)
-  applyPalette(tree, root, composition.themeId)
+
+  // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
+  const theme = themeSubstitutions(composition.themeId)
+  generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
   generateFiles(tree, path.join(__dirname, 'files'), root, {
     ...shellSubstitutions(composition),
+    themeClass: theme.themeClass,
     seedImports: models
       .map(model => {
         const n = names(model.name)

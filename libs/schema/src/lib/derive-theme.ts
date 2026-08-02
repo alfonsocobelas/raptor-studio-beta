@@ -66,6 +66,39 @@ export interface Theme {
   destructive?: { light: string; dark: string }
 }
 
+/**
+ * Orden de los tokens en el fichero emitido. NO es cosmético: la fixture de oro
+ * está congelada con este orden, así que cambiarlo rompe el gate.
+ */
+export const TOKEN_ORDER: string[] = [
+  'background',
+  'foreground',
+  'card',
+  'card-foreground',
+  'popover',
+  'popover-foreground',
+  'primary',
+  'primary-foreground',
+  'secondary',
+  'secondary-foreground',
+  'muted',
+  'muted-foreground',
+  'accent',
+  'accent-foreground',
+  'destructive',
+  'border',
+  'input',
+  'ring',
+  'sidebar',
+  'sidebar-foreground',
+  'sidebar-primary',
+  'sidebar-primary-foreground',
+  'sidebar-accent',
+  'sidebar-accent-foreground',
+  'sidebar-border',
+  'sidebar-ring'
+]
+
 export interface ThemeTokens {
   light: Record<string, string>
   dark: Record<string, string>
