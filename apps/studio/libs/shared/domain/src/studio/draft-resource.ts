@@ -73,7 +73,7 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
       // de generar, así que aquí basta con no emitir un campo a medias.
       if (field.refTo) {
         Object.assign(fields, relationFields(field, field.refTo, index + 1))
-        constraints[`${snake(field.name)}_NAME`.toLowerCase()] = { MAX: 200 }
+        constraints[`${snake(field.name)}_NAME`] = { MAX: 200 }
       }
       return
     }

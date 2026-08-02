@@ -194,6 +194,14 @@ describe('draftToResource — referencias entre entidades', () => {
     expect(fields()['pacienteId'].table?.show).toBeFalsy()
   })
 
+  it('declara la constraint del nombre con la clave que usa el lengthConst', () => {
+    const resource = draftToResource(cita(), 'vetcare')
+    const lengthConst = resource.fields['pacienteName'].column?.lengthConst
+
+    expect(lengthConst).toBe('PACIENTE_NAME.MAX')
+    expect(resource.constraints?.['PACIENTE_NAME']).toEqual({ MAX: 200 })
+  })
+
   it('no emite un campo suelto con el nombre del draft', () => {
     expect(fields()['paciente']).toBeUndefined()
   })
