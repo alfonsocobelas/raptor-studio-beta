@@ -106,3 +106,17 @@ de campos (C1), uniformización de los 4 módulos de oro (C2), anotar ADR-001 (A
 
 ✅ Las 5 decisiones del resource-schema fueron **ratificadas el 2026-07-30** (ver skill `schema-authoring`) —
 el starter original las tenía cerradas pero no llegó a este repo.
+
+## Observaciones abiertas (cont.)
+
+8. **Piel Material del lienzo es una aproximación**, no la librería real: se
+   simula con radios, mayúsculas y peso de fuente. Para fidelidad habría que
+   montar la piel material congelada dentro del estudio (coste alto, valor
+   dudoso antes de generar).
+9. **Paletas de previsualización no viajan al app-schema todavía**: elegir
+   "Océano" en el lienzo NO cambia los tokens de la app generada. Siguiente
+   paso natural: `theme: { palette }` en el app-schema y el kernel emitiendo
+   los tokens correspondientes en styles.css.
+10. **Tema del estudio no se persiste** entre recargas (el de la app generada
+    sí, vía localStorage en ThemeService).
+
