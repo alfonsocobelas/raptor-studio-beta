@@ -1,16 +1,16 @@
-import { Export<%- className %>sUseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/export-<%- plural %>-usecase.service'
+import { Export<%- pluralClassName %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/export-<%- plural %>-usecase.service'
 import search<%- className %>Config from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/config/search-<%- fileName %>-config'
 import { ExportTooLargeError } from '../../../../../src/contexts/shared/domain/errors'
 import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
 
-describe('Export<%- className %>sUseCase', () => {
+describe('Export<%- pluralClassName %>UseCase', () => {
   let repositoryMock: <%- className %>RepositoryMock
-  let useCase: Export<%- className %>sUseCase
+  let useCase: Export<%- pluralClassName %>UseCase
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-    useCase = new Export<%- className %>sUseCase(repositoryMock)
+    useCase = new Export<%- pluralClassName %>UseCase(repositoryMock)
   })
 
   it('returns every matching <%- fileName %> as primitives, without paginating', async () => {
@@ -25,7 +25,7 @@ describe('Export<%- className %>sUseCase', () => {
   })
 
   it('checks the count first and throws ExportTooLargeError without loading rows', async () => {
-    useCase = new Export<%- className %>sUseCase(repositoryMock, 2)
+    useCase = new Export<%- pluralClassName %>UseCase(repositoryMock, 2)
     repositoryMock.givenCount(3)
 
     await expect(useCase.invoke({})).rejects.toBeInstanceOf(ExportTooLargeError)

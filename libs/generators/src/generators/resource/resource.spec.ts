@@ -1,6 +1,8 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import { Tree } from '@nx/devkit'
 import { resourceGenerator } from './resource'
+import { MODELS, registerModels } from './models/registry'
+import type { ResourceDefinition } from '@acc/schema'
 
 describe('resource generator', () => {
   let tree: Tree
@@ -28,5 +30,32 @@ describe('resource generator', () => {
     await resourceGenerator(tree, { name: 'contract', directory: 'tmp/probe' })
 
     expect(tree.children('tmp/probe').length).toBeGreaterThan(0)
+  })
+})
+
+/**
+ * Defecto 18 (visto en motorhub): los tests emitidos pluralizaban a mano
+ * `<className>s` y producían «ExportReparacionsUseCase» cuando la clase real es
+ * «ExportReparacionesUseCase». El plural del modelo es dato, no se inventa.
+ */
+describe('resource generator — plural en los tests emitidos', () => {
+  it('usa el plural declarado, no className + s', async () => {
+    const reparacion = {
+      ...MODELS['supplier'],
+      name: 'reparacion',
+      plural: 'reparaciones',
+      labels: { singular: 'Reparación', plural: 'Reparaciones' }
+    } as ResourceDefinition
+    registerModels([reparacion])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'reparacion', directory: 'out' })
+
+    const search = tree.read('out/backend-tests-application/search-reparaciones-usecase.test.ts', 'utf-8') ?? ''
+    const exportTest = tree.read('out/backend-tests-application/export-reparaciones-usecase.test.ts', 'utf-8') ?? ''
+
+    expect(search).toContain('SearchReparacionesUseCase')
+    expect(search).not.toContain('SearchReparacionsUseCase')
+    expect(exportTest).toContain('ExportReparacionesUseCase')
+    expect(exportTest).not.toContain('ExportReparacionsUseCase')
   })
 })

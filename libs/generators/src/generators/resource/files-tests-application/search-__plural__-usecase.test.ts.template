@@ -1,18 +1,18 @@
-import { Search<%- className %>sUseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/search-<%- plural %>-usecase.service'
+import { Search<%- pluralClassName %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/search-<%- plural %>-usecase.service'
 import search<%- className %>Config from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/config/search-<%- fileName %>-config'
 import { OffsetInput } from '../../../../../src/contexts/shared/domain/query/criteria'
 import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
 
-describe('Search<%- className %>sUseCase', () => {
+describe('Search<%- pluralClassName %>UseCase', () => {
   let repositoryMock: <%- className %>RepositoryMock
-  let useCase: Search<%- className %>sUseCase
+  let useCase: Search<%- pluralClassName %>UseCase
 
   const baseInput: OffsetInput = { page: 1, pageSize: 10 }
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-    useCase = new Search<%- className %>sUseCase(repositoryMock)
+    useCase = new Search<%- pluralClassName %>UseCase(repositoryMock)
   })
 
   it('returns a paginated list with correct metadata', async () => {
