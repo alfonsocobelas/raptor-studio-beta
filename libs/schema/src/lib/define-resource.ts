@@ -6,7 +6,7 @@ const SNAKE_CASE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/
 
 // Structural validation only (v1): rules grow with the templates, never ahead of them.
 export function defineResource(definition: ResourceDefinition): ResourceDefinition {
-  const problems = [...validateIdentity(definition), ...validateFields(definition)]
+  const problems = [...validateIdentity(definition), ...validateFields(definition), ...validateDetail(definition)]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
 
@@ -34,6 +34,26 @@ function validateFields(definition: ResourceDefinition): string[] {
 
   for (const [name, field] of Object.entries(definition.fields)) {
     problems.push(...validateField(name, field))
+  }
+
+  return problems
+}
+
+/**
+ * La ficha se alcanza SOLO desde la acción de ver del listado, así que declararla
+ * con esa acción apagada emitiría una pantalla inalcanzable (spec 16).
+ */
+function validateDetail(definition: ResourceDefinition): string[] {
+  const { detail } = definition
+  if (!detail) return []
+
+  const problems: string[] = []
+
+  if (definition.list?.features?.view === false) {
+    problems.push("detail: requires list.features.view (the detail is only reachable from the list's view action)")
+  }
+  for (const name of [...(detail.title ? [detail.title] : []), ...(detail.fields ?? [])]) {
+    if (!definition.fields[name]) problems.push(`detail: unknown field '${name}'`)
   }
 
   return problems

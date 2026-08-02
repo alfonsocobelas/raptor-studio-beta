@@ -214,9 +214,16 @@ export interface RelationDefinition {
   drilldown?: boolean
 }
 
+/**
+ * Ficha de un registro (spec 16). Su PRESENCIA es lo que hace que el generador
+ * emita el componente de detalle y su ruta `<ruta>/:id`; todo lo demás se
+ * deriva de los campos, así que los ajustes son opcionales.
+ */
 export interface DetailDefinition {
-  title: string
-  sections: string[]
+  /** Campo cuyo valor titula la ficha; por defecto, el primer campo de texto buscable */
+  title?: string
+  /** Campos mostrados y su orden; por defecto, todos los del listado más los del formulario */
+  fields?: string[]
 }
 
 export type ConstraintValue = { shared: true | string } | number | { [key: string]: number | Record<string, number> }

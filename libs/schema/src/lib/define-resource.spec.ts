@@ -182,3 +182,27 @@ describe('defineResource', () => {
     })
   })
 })
+
+describe('detail — la ficha del registro (spec 16)', () => {
+  it('acepta un recurso que declara ficha (la presencia basta: todo se deriva)', () => {
+    const model = defineResource({ ...validDefinition(), detail: {} })
+
+    expect(model.detail).toEqual({})
+  })
+
+  it('rechaza una ficha con un campo de título que no existe', () => {
+    expect(() => defineResource({ ...validDefinition(), detail: { title: 'inexistente' } })).toThrow(
+      /detail.*inexistente/i
+    )
+  })
+
+  it('rechaza la ficha si el listado no ofrece la acción de ver: sería inalcanzable', () => {
+    expect(() =>
+      defineResource({
+        ...validDefinition(),
+        detail: {},
+        list: { ...validDefinition().list, features: { view: false } }
+      })
+    ).toThrow(/detail.*view/i)
+  })
+})
