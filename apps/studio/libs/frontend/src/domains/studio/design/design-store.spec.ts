@@ -26,12 +26,12 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.pages()[0].blocks).toEqual([{ kind: 'table', resource: 'vehiculo', width: 'full' }])
   })
 
-  it('el preset «Ficha» compone métricas + datos + adjuntos', () => {
+  it('el preset «Ficha» compone los datos del registro y sus ficheros', () => {
     const store = new DesignStore()
 
     store.addPage('detail', 'Cliente')
 
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis', 'fields', 'attachments'])
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['fields', 'attachments'])
   })
 
   it('la tabla es un bloque opcional: se añade y se quita sin tocar la vista', () => {
@@ -40,11 +40,11 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     store.addResource('Pedido')
 
     store.addBlock(0, { kind: 'table', resource: 'pedido' })
-    store.addBlock(0, { kind: 'attachments', resource: 'pedido' })
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table', 'attachments'])
+    store.addBlock(0, { kind: 'kpis', resources: ['pedido'] })
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table', 'kpis'])
 
     store.removeBlock(0, 0)
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['attachments'])
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis'])
     expect(store.pages()).toHaveLength(1)
     expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
@@ -173,5 +173,53 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     store.addBlock(1, { kind: 'text', text: 'Recordatorio del equipo' })
 
     expect(store.notGenerable()).toEqual([{ page: 'Notas', blocks: ['text'] }])
+  })
+
+  it('la ficha es OTRA pantalla: añadir «Datos» a una vista con tabla crea su propia vista', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+
+    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+
+    expect(store.pages().map(p => p.title)).toEqual(['Pacientes', 'Ficha de paciente'])
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table'])
+    expect(store.pages()[1].blocks.map(b => b.kind)).toEqual(['fields'])
+  })
+
+  it('la vista de ficha no es navegación de primer nivel: no sale en el menú', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+
+    expect(store.pages()[1].drillDown).toBe(true)
+    expect(store.menuPages().map(p => p.title)).toEqual(['Pacientes'])
+  })
+
+  it('los adjuntos van a la ficha, no al listado', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+
+    store.addBlock(0, { kind: 'attachments', resource: 'paciente' })
+
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table'])
+    expect(store.pages()[1].blocks.map(b => b.kind)).toEqual(['fields', 'attachments'])
+  })
+
+  it('una segunda ficha de la misma entidad reutiliza la vista existente', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+
+    expect(store.pages()).toHaveLength(2)
+  })
+
+  it('el preset «Ficha» crea directamente una vista de detalle', () => {
+    const store = new DesignStore()
+    store.addPage('detail', 'Cliente')
+
+    expect(store.pages()[0].drillDown).toBe(true)
+    expect(store.menuPages()).toEqual([])
   })
 })

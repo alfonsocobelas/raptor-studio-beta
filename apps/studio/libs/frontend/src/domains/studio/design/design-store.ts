@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core'
 import { defineApp, defineResource, type AppDefinition, type ResourceDefinition } from '@acc/schema'
 import {
+  DETAIL_BLOCKS,
   GENERABLE_BLOCKS,
   VIEW_PRESETS,
   draftToResource,
@@ -75,7 +76,8 @@ export class DesignStore {
     if (resourceName && blocks.some(b => b.kind === 'cards')) {
       resources = resources.map(r => (r.name === resourceName ? { ...r, gallery: true } : r))
     }
-    return this.mutate(resources, [...this._pages(), { title, blocks }])
+    const page: DesignPage = { title, blocks, ...(preset.drillDown ? { drillDown: true } : {}) }
+    return this.mutate(resources, [...this._pages(), page])
   }
 
   /** Entidad suelta (sin vista): para componer a mano después. */
@@ -89,6 +91,11 @@ export class DesignStore {
   }
 
   addBlock(pageIndex: number, block: DesignBlock): boolean {
+    // La ficha es otra PANTALLA (el generador la emite en <ruta>/:id): sus
+    // bloques nunca se apilan bajo el listado, se van a su propia vista.
+    if (DETAIL_BLOCKS.includes(block.kind) && block.resource && !this._pages()[pageIndex]?.drillDown) {
+      return this.addToDetailPage(block.resource, block)
+    }
     const pages = this._pages().map((page, i) =>
       i === pageIndex ? { ...page, blocks: [...page.blocks, { width: 'full' as const, ...block }] } : page
     )
@@ -101,6 +108,34 @@ export class DesignStore {
         : block.kind === 'cards' && block.resource
         ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
         : this._resources()
+    return this.mutate(resources, pages)
+  }
+
+  /** Vistas que sí son navegación de primer nivel (las fichas se abren desde ellas). */
+  menuPages(): DesignPage[] {
+    return this._pages().filter(p => !p.drillDown)
+  }
+
+  /** Índice de la vista de ficha de una entidad, creándola si aún no existe. */
+  private addToDetailPage(resource: string, block: DesignBlock): boolean {
+    const label = this._resources().find(r => r.name === resource)?.labelSingular ?? resource
+    const existing = this._pages().findIndex(p => p.drillDown && p.blocks.some(b => b.resource === resource))
+    const entry = { width: 'full' as const, ...block }
+
+    const pages =
+      existing >= 0
+        ? this._pages().map((page, i) =>
+            i === existing && !page.blocks.some(b => b.kind === block.kind)
+              ? { ...page, blocks: [...page.blocks, entry] }
+              : page
+          )
+        : [...this._pages(), { title: `Ficha de ${label.toLowerCase()}`, blocks: [entry], drillDown: true }]
+
+    const resources = this._resources().map(r =>
+      r.name === resource
+        ? { ...r, detail: true, ...(block.kind === 'attachments' ? { attachments: true } : {}) }
+        : r
+    )
     return this.mutate(resources, pages)
   }
 

@@ -225,6 +225,26 @@ const BLOCK_TOOLS: BlockTool[] = [
               </p>
             </div>
           } @else {
+            <!-- selector de VISTAS: chrome del estudio, fuera del mockup. Aquí sí
+                 aparecen las fichas, que en la app se abren desde el listado. -->
+            <div class="mx-auto mb-3 flex max-w-6xl flex-wrap items-center gap-1" data-testid="view-tabs">
+              @for (page of pages(); track $index) {
+                <button
+                  type="button"
+                  class="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs"
+                  [class.bg-primary]="$index === clampedTab()"
+                  [class.text-primary-foreground]="$index === clampedTab()"
+                  [class.border-transparent]="$index === clampedTab()"
+                  [attr.data-testid]="'view-tab-' + $index"
+                  (click)="activeTab.set($index)"
+                >
+                  @if (page.drillDown) {
+                    <ng-icon name="lucideIdCard" size="12" />
+                  }
+                  {{ page.title }}
+                </button>
+              }
+            </div>
             <div
               class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
               [attr.data-palette]="preview.palette()"
@@ -244,6 +264,7 @@ const BLOCK_TOOLS: BlockTool[] = [
                 </div>
                 <nav class="flex flex-col gap-1">
                   @for (page of pages(); track $index) {
+                    @if (!page.drillDown) {
                     <div class="group relative">
                       <button
                         type="button"
@@ -261,9 +282,10 @@ const BLOCK_TOOLS: BlockTool[] = [
                         [attr.data-testid]="'nav-close-' + $index"
                         (click)="store.removePage($index)"
                       >
-                        ✕
+                        <ng-icon name="lucideX" size="11" />
                       </button>
                     </div>
+                    }
                   }
                 </nav>
                 <span class="flex-1"></span>
@@ -286,6 +308,15 @@ const BLOCK_TOOLS: BlockTool[] = [
                 </div>
               </aside>
               <section class="min-w-0 flex-1 p-6">
+                @if (pages()[clampedTab()]?.drillDown) {
+                  <p
+                    class="text-muted-foreground mb-4 flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs"
+                    data-testid="drilldown-hint"
+                  >
+                    <ng-icon name="lucideIdCard" size="14" />
+                    Ficha de un registro · se abre desde el listado, no aparece en el menú
+                  </p>
+                }
                 <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
               </section>
             </div>

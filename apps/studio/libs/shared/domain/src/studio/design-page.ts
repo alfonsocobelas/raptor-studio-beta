@@ -21,11 +21,19 @@ export interface DesignBlock {
 export interface DesignPage {
   title: string
   blocks: DesignBlock[]
+  /**
+   * Vista a la que se LLEGA desde otra (la ficha de un registro), no una
+   * entrada de menú. El generador la emite en `<ruta>/:id`, así que dibujarla
+   * apilada bajo el listado haría que el lienzo mintiera sobre el resultado.
+   */
+  drillDown?: boolean
 }
 
 export interface BlockPreset {
   id: string
   label: string
+  /** El preset crea una vista de detalle (no aparece en el menú) */
+  drillDown?: boolean
   /** Nombre del icono lucide (el MISMO set que emite la app generada) */
   icon: string
   description: string
@@ -46,11 +54,11 @@ export const VIEW_PRESETS: BlockPreset[] = [
     id: 'detail',
     label: 'Ficha',
     icon: 'lucideIdCard',
-    description: 'Datos de un registro, métricas y adjuntos',
+    description: 'Datos de un registro y sus ficheros (se abre desde el listado)',
+    drillDown: true,
     blocks: resource =>
       resource
         ? [
-            { kind: 'kpis', resources: [resource], width: 'full' },
             { kind: 'fields', resource, width: 'full' },
             { kind: 'attachments', resource, width: 'full' }
           ]
@@ -79,4 +87,7 @@ export const VIEW_PRESETS: BlockPreset[] = [
 ]
 
 /** Bloques que el GENERADOR sabe emitir hoy (el resto es solo diseño). */
+/** Bloques que solo tienen sentido en la ficha de un registro. */
+export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
+
 export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments']
