@@ -775,7 +775,12 @@ function renderGallery(definition: ResourceDefinition): GallerySubstitution | nu
 
   const fields = Object.entries(definition.fields).filter(([, f]) => !f.pk)
   const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
-  const numbers = fields.filter(([, f]) => f.type === 'number' || f.type === 'integer')
+  // el decimal manda sobre el entero: en una tarjeta el importe pesa más que
+  // una duración o un contador
+  const numbers = [
+    ...fields.filter(([, f]) => f.type === 'number'),
+    ...fields.filter(([, f]) => f.type === 'integer')
+  ]
 
   const titleField = gallery.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
   const subtitleField = gallery.subtitle ?? texts.map(([name]) => name).find(name => name !== titleField) ?? null

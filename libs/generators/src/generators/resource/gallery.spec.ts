@@ -12,6 +12,19 @@ describe('resource generator — galería', () => {
   const withGallery = (extra: Partial<ResourceDefinition> = {}): ResourceDefinition =>
     ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', gallery: {}, ...extra }) as ResourceDefinition
 
+  /** Entidad con un entero declarado ANTES que el decimal, para fijar la prioridad. */
+  const conNumeros = (): ResourceDefinition => {
+    const base = withGallery()
+    return {
+      ...base,
+      fields: {
+        ...base.fields,
+        duracionMinutos: { type: 'integer', table: { show: true, label: 'Duración (min)' } },
+        precio: { type: 'number', table: { show: true, label: 'Precio' } }
+      }
+    } as ResourceDefinition
+  }
+
   const generate = async (model: ResourceDefinition): Promise<Tree> => {
     registerModels([model])
     const tree = createTreeWithEmptyWorkspace()
@@ -61,6 +74,20 @@ describe('resource generator — galería', () => {
 
     expect(conDetalle.read('out/frontend/invoices-gallery.component.ts', 'utf-8')).toContain('navigate')
     expect(sinDetalle.read('out/frontend/invoices-gallery.component.ts', 'utf-8')).not.toContain('navigate')
+  })
+
+  it('destaca el decimal antes que el entero: el importe manda sobre la duración', async () => {
+    const tree = await generate(conNumeros())
+    const gallery = tree.read('out/frontend/invoices-gallery.component.ts', 'utf-8') ?? ''
+
+    expect(gallery).toContain("cardMetric = 'precio'")
+  })
+
+  it('los chips llevan su etiqueta: un número suelto no dice nada', async () => {
+    const tree = await generate(conNumeros())
+    const gallery = tree.read('out/frontend/invoices-gallery.component.ts', 'utf-8') ?? ''
+
+    expect(gallery).toContain('{{ chip.label }}')
   })
 
   it('mantiene búsqueda y paginación del listado', async () => {

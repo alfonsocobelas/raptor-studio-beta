@@ -56,7 +56,9 @@ import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../.
 <%_ if (gallery.chips.length) { _%>
               <div class="flex flex-wrap gap-1">
                 @for (chip of chips; track chip.key) {
-                  <span class="bg-muted rounded-full px-2 py-0.5 text-xs">{{ text(item, chip.key) }}</span>
+                  <span class="bg-muted rounded-full px-2 py-0.5 text-xs">
+                    <span class="text-muted-foreground">{{ chip.label }}:</span> {{ text(item, chip.key) }}
+                  </span>
                 }
               </div>
 <%_ } _%>
