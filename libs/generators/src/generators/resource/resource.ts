@@ -111,6 +111,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-attachments-front'), outputDir, substitutions)
   }
 
+  // ficha (spec 16): el destino de la acción «ver», emitido solo si se declara
+  if (model.detail) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-detail'), outputDir, substitutions)
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     const comp = substitutions.aggregate.composition

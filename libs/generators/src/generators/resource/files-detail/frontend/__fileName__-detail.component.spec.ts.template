@@ -1,0 +1,56 @@
+import { provideZonelessChangeDetection } from '@angular/core'
+import { TestBed } from '@angular/core/testing'
+import { ActivatedRoute } from '@angular/router'
+import { vi } from 'vitest'
+import { <%- className %>DetailComponent } from './<%- fileName %>-detail.component'
+import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+import { <%- test.mockConst %> } from './mocks/<%- fileName %>.mock'
+
+const routeWith = (id: string | null) => ({ snapshot: { paramMap: { get: () => id } } })
+
+const record = () => <%- test.mockConst %>.data[0]
+
+describe('<%- className %>DetailComponent — ficha', () => {
+  const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: ActivatedRoute, useValue: routeWith(id) },
+        { provide: <%- className %>Service, useValue: { findOne, update: vi.fn(), remove: vi.fn() } }
+      ]
+    })
+    return { component: TestBed.inject(<%- className %>DetailComponent), findOne }
+  }
+
+  beforeEach(() => TestBed.resetTestingModule())
+
+  it('carga el registro del id de la ruta', async () => {
+    const { component, findOne } = setup(record().id)
+    await component.load()
+
+    expect(findOne).toHaveBeenCalledWith(record().id)
+    expect(component.<%- propertyName %>()).toEqual(record())
+    expect(component.loading()).toBe(false)
+  })
+
+  it('marca no encontrado cuando la ruta no trae id', async () => {
+    const { component } = setup(null)
+    await component.load()
+
+    expect(component.notFound()).toBe(true)
+  })
+
+  it('distingue un 404 de un error de red', async () => {
+    const { component } = setup(record().id, vi.fn().mockRejectedValue({ status: 404 }))
+    await component.load()
+
+    expect(component.notFound()).toBe(true)
+    expect(component.error()).toBe(false)
+  })
+
+  it('muestra un guion cuando el campo viene vacío', () => {
+    const { component } = setup(record().id)
+
+    expect(component.format({ ...record(), <%- detail.titleField %>: null } as never, { key: '<%- detail.titleField %>', label: 'x' })).toBe('—')
+  })
+})

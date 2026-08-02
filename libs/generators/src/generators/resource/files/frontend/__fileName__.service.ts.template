@@ -40,6 +40,13 @@ export class <%- className %>Service {
         })
       )
   })
+<%_ if (detail) { _%>
+
+  /** Carga un registro por id: lo que necesita la ficha (spec 16). */
+  findOne(id: string): Promise<<%- dtoName %>> {
+    return firstValueFrom(this._http.get<<%- dtoName %>>(`${API_URL}/${id}`))
+  }
+<%_ } _%>
 <%_ if (features.edit) { _%>
 
   create(dto: Register<%- className %>Dto): Promise<void> {

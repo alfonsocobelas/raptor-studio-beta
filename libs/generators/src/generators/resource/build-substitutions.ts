@@ -75,6 +75,8 @@ export interface ResourceSubstitutions {
   labelPlural: string
   /** El recurso emite el bloque de adjuntos (spec 14) */
   attachments: boolean
+  /** Ficha del registro (spec 16): null cuando el modelo no la declara */
+  detail: DetailSubstitution | null
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
   apiResource: string
   serviceSharedImports: string
@@ -162,6 +164,14 @@ export interface FormSectionSubstitution {
   title: string
   grid: boolean
   fields: FormFieldSubstitution[]
+}
+
+/** Todo lo que la plantilla de la ficha necesita ya masticado (regla 8). */
+export interface DetailSubstitution {
+  /** Campo que titula la ficha */
+  titleField: string
+  /** Filas de datos, en orden, con su etiqueta y su formato */
+  rows: string[]
 }
 
 export interface UiStrings {
@@ -272,6 +282,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     api: definition.api ?? `/api/v1/${definition.plural}`,
     labelPlural: definition.labels?.plural ?? definition.plural,
     attachments: definition.attachments ?? false,
+    detail: renderDetail(definition),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
@@ -708,6 +719,43 @@ function renderUiStrings(definition: ResourceDefinition): UiStrings {
     toastDeleted: `${singular} eliminad${suffix}`,
     toastDeleteError: `No se pudo eliminar ${article} ${lowerSingular}`
   }
+}
+
+/**
+ * Ficha (spec 16): se deriva de los campos. El título es el primer campo de
+ * texto buscable —el mismo criterio que usa el estudio al crear la entidad— y
+ * las filas salen de las columnas del listado más los campos del formulario,
+ * que juntos son «lo que el usuario reconoce» de la entidad.
+ */
+function renderDetail(definition: ResourceDefinition): DetailSubstitution | null {
+  const { detail } = definition
+  if (!detail) return null
+
+  const fields = Object.entries(definition.fields)
+  const firstText = fields.find(([, f]) => f.type === 'string' && f.query?.searchable)?.[0]
+  const titleField = detail.title ?? firstText ?? fields.find(([, f]) => !f.pk)?.[0] ?? 'id'
+
+  const shown =
+    detail.fields ??
+    fields.filter(([, f]) => f.table?.show || (f.form && f.form.control !== 'none')).map(([name]) => name)
+
+  const rows = shown
+    .filter(name => name !== titleField)
+    .map(name => {
+      const field = definition.fields[name]
+      const label = field?.table?.label ?? field?.form?.label ?? name
+      const type = field?.table?.type === 'date' || field?.type === 'date' ? 'date' : detailValueType(field)
+      return `{ key: '${name}', label: '${label}'${type ? `, type: '${type}'` : ''} }`
+    })
+
+  return { titleField, rows }
+}
+
+function detailValueType(field: FieldDefinition | undefined): string | null {
+  if (!field) return null
+  if (field.type === 'boolean') return 'boolean'
+  if (field.type === 'integer' || field.type === 'number') return 'number'
+  return null
 }
 
 function renderFrontendColumn(name: string, table: FieldTable): string {
