@@ -126,3 +126,19 @@ el starter original las tenía cerradas pero no llegó a este repo.
 12. **La app generada no persiste la paleta por usuario**: el tema claro/oscuro
     sí (localStorage), el color es fijo. Correcto por ahora (es identidad de
     cliente, no preferencia), pero anotado por si algún cliente lo pide.
+
+## Defectos del generador detectados en demos (NO parchear la demo: arreglar aquí)
+
+13. **La instalación de Spartan tarda 20 min y revienta**: 16 invocaciones
+    separadas de `nx g @spartan-ng/cli:ui`, cada una arrancando Nx de cero.
+    Supera el tope de 15 min del studio-api y deja la app a medias (node_modules
+    sin `.bin`, sin `libs/ui`). Arreglo: vendorizar los helm una vez y copiarlos.
+14. **Regenerar sobre una app existente machaca `tsconfig.base.json`** y con él
+    las rutas `@spartan-ng/helm/*` que añadió `ui:add`. La app deja de compilar.
+15. **El script `web` no fija puerto**: `ng serve` toma el 4200 y choca con
+    cualquier otro Angular abierto; el proceso muere y parece que «tarda».
+16. **Un timeout de generación deja la carpeta a medias** sin avisar: parece
+    una app generada y no lo es.
+17. **Booleanos en el listado emitido salen como `true`/`false`** (la ficha ya
+    los pinta Sí/No).
+
