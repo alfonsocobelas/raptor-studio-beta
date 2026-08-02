@@ -26,6 +26,8 @@ export interface DraftResource {
   attachments?: boolean
   /** La entidad tiene ficha de registro (spec 16) */
   detail?: boolean
+  /** La entidad se muestra como galería de tarjetas (spec 17) */
+  gallery?: boolean
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
@@ -162,6 +164,7 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
   return {
     ...(draft.attachments ? { attachments: true } : {}),
     ...(hasDetail ? { detail: {} } : {}),
+    ...(draft.gallery ? { gallery: {} } : {}),
     schemaVersion: 1,
     name: draft.name,
     plural: draft.plural,

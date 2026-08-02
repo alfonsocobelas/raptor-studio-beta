@@ -78,4 +78,4 @@ export const VIEW_PRESETS: BlockPreset[] = [
 ]
 
 /** Bloques que el GENERADOR sabe emitir hoy (el resto es solo diseño). */
-export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'attachments']
+export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments']

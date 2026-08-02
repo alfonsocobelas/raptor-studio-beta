@@ -74,13 +74,24 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
   it('el app-schema exportable solo incluye las vistas generables, y avisa del resto', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')
-    store.addPage('blank', 'Catálogo')
-    store.addBlock(1, { kind: 'cards', resource: 'pedido' })
+    store.addPage('blank', 'Notas')
+    store.addBlock(1, { kind: 'text', text: 'Aviso para el equipo' })
 
     const exported = store.toAppSchema()
 
     expect(exported.pages.map(p => p.kind)).toEqual(['resource'])
-    expect(store.notGenerable()).toEqual([{ page: 'Catálogo', blocks: ['cards'] }])
+    expect(store.notGenerable()).toEqual([{ page: 'Notas', blocks: ['text'] }])
+  })
+
+  it('la galería ya es generable: viaja al app-schema como página de tarjetas', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Catálogo')
+    store.addBlock(1, { kind: 'cards', resource: 'pedido' })
+
+    expect(store.toAppSchema().pages.map(p => p.kind)).toEqual(['resource', 'cards'])
+    expect(store.resources()[0].gallery).toBe(true)
+    expect(store.notGenerable()).toEqual([])
   })
 
   it('una vista con solo KPIs se exporta como dashboard', () => {

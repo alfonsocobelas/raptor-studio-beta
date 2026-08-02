@@ -110,3 +110,22 @@ describe('draftToResource — ficha (spec 16)', () => {
     expect(resource.detail).toEqual({})
   })
 })
+
+describe('draftToResource — galería (spec 17)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Tratamientos'),
+    fields: [
+      { name: 'nombre', label: 'Nombre', type: 'string' },
+      { name: 'precio', label: 'Precio', type: 'number' }
+    ],
+    ...extra
+  })
+
+  it('sin galería declarada no emite gallery', () => {
+    expect(draftToResource(draft(), 'clinica').gallery).toBeUndefined()
+  })
+
+  it('con galería declarada emite gallery', () => {
+    expect(draftToResource(draft({ gallery: true }), 'clinica').gallery).toEqual({})
+  })
+})

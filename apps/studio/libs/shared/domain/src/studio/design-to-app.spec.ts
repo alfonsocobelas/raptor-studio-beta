@@ -44,11 +44,16 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     ])
   })
 
-  it('descarta los bloques aún no generables (galería, ficha, texto)', () => {
-    const pages: DesignPage[] = [
-      { title: 'Tratamientos', blocks: [{ kind: 'cards', resource: 'tratamiento' }] },
-      { title: 'Ficha', blocks: [{ kind: 'fields', resource: 'paciente' }, { kind: 'text', text: 'hola' }] }
-    ]
+  it('una vista de galería se emite como página de tarjetas', () => {
+    const pages: DesignPage[] = [{ title: 'Tratamientos', blocks: [{ kind: 'cards', resource: 'tratamiento' }] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([
+      { kind: 'cards', resource: 'tratamiento', label: 'Tratamientos' }
+    ])
+  })
+
+  it('descarta los bloques aún no generables (texto)', () => {
+    const pages: DesignPage[] = [{ title: 'Notas', blocks: [{ kind: 'text', text: 'hola' }] }]
 
     expect(designPagesToAppPages(pages)).toEqual([])
   })

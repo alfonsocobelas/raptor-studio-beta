@@ -72,6 +72,9 @@ export class DesignStore {
     if (resourceName && blocks.some(b => b.kind === 'fields')) {
       resources = resources.map(r => (r.name === resourceName ? { ...r, detail: true } : r))
     }
+    if (resourceName && blocks.some(b => b.kind === 'cards')) {
+      resources = resources.map(r => (r.name === resourceName ? { ...r, gallery: true } : r))
+    }
     return this.mutate(resources, [...this._pages(), { title, blocks }])
   }
 
@@ -94,6 +97,8 @@ export class DesignStore {
         ? this._resources().map(r => (r.name === block.resource ? { ...r, attachments: true } : r))
         : block.kind === 'fields' && block.resource
         ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
+        : block.kind === 'cards' && block.resource
+        ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
         : this._resources()
     return this.mutate(resources, pages)
   }
@@ -108,6 +113,8 @@ export class DesignStore {
         ? this._resources().map(r => (r.name === removed.resource ? { ...r, attachments: false } : r))
         : removed?.kind === 'fields' && removed.resource
         ? this._resources().map(r => (r.name === removed.resource ? { ...r, detail: false } : r))
+        : removed?.kind === 'cards' && removed.resource
+        ? this._resources().map(r => (r.name === removed.resource ? { ...r, gallery: false } : r))
         : this._resources()
     return this.mutate(resources, pages)
   }
