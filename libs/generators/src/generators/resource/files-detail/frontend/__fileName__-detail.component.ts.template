@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { DatePipe, DecimalPipe } from '@angular/common'
+import { DatePipe } from '@angular/common'
 import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> } from '@ng-icons/lucide'
@@ -24,6 +24,12 @@ import { RelatedTable } from '../../../../../../shared/components/related-table'
 import { <%- className %>AttachmentsComponent } from './<%- fileName %>-attachments.component'
 <%_ } _%>
 
+/**
+ * Sin separador de miles, como el listado: agrupar convierte un año (2019) en
+ * «2.019». El mismo dato debe leerse igual en toda la app.
+ */
+const NUMBER_FORMAT = new Intl.NumberFormat('es-ES', { useGrouping: false, maximumFractionDigits: 2 })
+
 /** Una fila de la ficha: qué campo, cómo se llama y cómo se formatea. */
 interface DetailRow {
   key: string
@@ -38,7 +44,7 @@ interface DetailRow {
  */
 @Component({
   selector: 'app-<%- fileName %>-detail',
-  imports: [NgIcon, DatePipe, DecimalPipe<%- related.length ? ', RelatedTable' : '' %><%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
+  imports: [NgIcon, DatePipe<%- related.length ? ', RelatedTable' : '' %><%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
   providers: [provideIcons({ lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -195,7 +201,7 @@ export class <%- className %>DetailComponent {
     if (value === null || value === undefined || value === '') return '—'
     if (row.type === 'boolean') return value ? 'Sí' : 'No'
     if (row.type === 'date') return new DatePipe('es-ES').transform(value as string, 'dd/MM/yyyy') ?? '—'
-    if (row.type === 'number') return new DecimalPipe('es-ES').transform(value as number) ?? '—'
+    if (row.type === 'number') return NUMBER_FORMAT.format(value as number)
     return String(value)
   }
 <%_ if (features.edit) { _%>

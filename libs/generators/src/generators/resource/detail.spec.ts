@@ -151,4 +151,13 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain("key: 'propietarioName'")
     expect(detail).not.toContain("key: 'propietarioId'")
   })
+
+  it('un número se lee igual en la ficha que en el listado: sin separador de miles', async () => {
+    const tree = await generate(withDetail())
+    const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
+
+    // 2019 es un año, 84300 unos kilómetros: agrupar convierte el año en «2.019»
+    expect(detail).toContain('useGrouping: false')
+    expect(detail).not.toContain('DecimalPipe')
+  })
 })
