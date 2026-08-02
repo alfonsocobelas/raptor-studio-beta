@@ -1,4 +1,5 @@
 import { buildAppFile } from '@app/backend/contexts/studio/generate/build-app-file'
+import { describeGenerationFailure } from '@app/backend/contexts/studio/generate/generation-failure'
 import type { DesignPayload } from '@app/backend/contexts/studio/chat/chat.types'
 
 const design: DesignPayload = {
@@ -40,5 +41,16 @@ describe('buildAppFile — el artefacto que consume el generador', () => {
     const file = buildAppFile(design, 'clinica')
 
     expect(file.resources[0]).toMatchObject({ name: 'paciente', schemaVersion: 1 })
+  })
+
+  it('describe un timeout como lo que es: una carpeta a medias, no una app', () => {
+    const message = describeGenerationFailure({ killed: true, signal: 'SIGTERM' })
+
+    expect(message).toMatch(/tiempo|timeout/i)
+    expect(message).toMatch(/a medias|incompleta/i)
+  })
+
+  it('un fallo normal no se disfraza de timeout', () => {
+    expect(describeGenerationFailure({ killed: false, message: 'boom' })).toContain('boom')
   })
 })

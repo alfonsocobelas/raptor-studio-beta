@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { buildAppFile } from './build-app-file'
+import { describeGenerationFailure } from './generation-failure'
 import { validateDesign } from '../chat/validate-proposal'
 import type { DesignPayload } from '../chat/chat.types'
 import {
@@ -89,7 +90,7 @@ export class StudioGenerateController {
           console.log(`[generate] ${body.name}: ${error ? 'FALLÓ' : 'OK'} en ${(elapsedMs / 1000).toFixed(1)} s`)
           resolve({
             ok: !error,
-            output: error ? `${output}\n${error.message}` : output,
+            output: error ? `${output}\n${describeGenerationFailure(error)}` : output,
             root: path.join(this.acceleratorRoot, body.directory ?? path.join('apps', body.name)),
             elapsedMs
           })
