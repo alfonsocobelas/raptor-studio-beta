@@ -5,12 +5,14 @@ import type { FieldDefinition, ResourceDefinition } from '@acc/schema'
  * draftToResource la expande a un ResourceDefinition completo siguiendo los
  * patrones canónicos (VOs, constraints, columnas) — el usuario nunca ve esto.
  */
-export type DraftFieldType = 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'date'
+export type DraftFieldType = 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'date' | 'ref'
 
 export interface DraftField {
   name: string
   label: string
   type: DraftFieldType
+  /** Entidad referenciada cuando `type` es 'ref' (spec 15) */
+  refTo?: string
   /** Valores de ejemplo REALISTAS para el mockup del lienzo (los aporta la IA; solo diseño) */
   samples?: (string | number | boolean)[]
 }
@@ -32,7 +34,7 @@ export interface DraftResource {
   subtitle?: string
 }
 
-export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
+export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref']
 
 /**
  * «Vehículo» → vehiculo/vehiculos · «Empleados» → empleado/empleados.
@@ -63,6 +65,18 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
 
   let stringSeen = false
   draft.fields.forEach((field, index) => {
+    // Una referencia se expande al par canónico (contract.customerId): el id
+    // gobierna la integridad y el nombre denormalizado es lo que el usuario ve
+    // y por lo que busca. Nunca un campo suelto con el nombre del draft.
+    if (field.type === 'ref') {
+      // Sin destino no hay nada que expandir; el gate del diseño lo rechaza antes
+      // de generar, así que aquí basta con no emitir un campo a medias.
+      if (field.refTo) {
+        Object.assign(fields, relationFields(field, field.refTo, index + 1))
+        constraints[`${snake(field.name)}_NAME`.toLowerCase()] = { MAX: 200 }
+      }
+      return
+    }
     const isNameField = field.type === 'string' && !stringSeen
     if (field.type === 'string') stringSeen = true
     const key = snake(field.name)
@@ -197,6 +211,37 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
       }
     }
   } as unknown as ResourceDefinition
+}
+
+/** El par id + nombre denormalizado de una referencia (canon de contract.model.ts). */
+function relationFields(field: DraftField, refTo: string, order: number): Record<string, FieldDefinition> {
+  const idName = `${field.name}Id`
+  const nameName = `${field.name}Name`
+
+  return {
+    [idName]: {
+      type: 'uuid',
+      required: true,
+      query: { filterable: order + 10 },
+      relation: { to: refTo, kind: 'reference' },
+      form: {
+        control: 'select',
+        label: field.label,
+        section: 'general',
+        order,
+        placeholder: `Seleccionar ${field.label.toLowerCase()}`,
+        lookup: { resource: refTo, labelField: 'nombre', denormalizes: nameName }
+      }
+    },
+    [nameName]: {
+      type: 'string',
+      required: true,
+      query: { filterable: order + 11, sortable: order, searchable: order },
+      table: { show: true, order, label: field.label, filterable: true, minWidth: 180 },
+      column: { type: 'varchar', lengthConst: `${snake(field.name)}_NAME.MAX` },
+      ...(field.samples?.length ? { samples: field.samples } : {})
+    }
+  }
 }
 
 function kebab(s: string): string {

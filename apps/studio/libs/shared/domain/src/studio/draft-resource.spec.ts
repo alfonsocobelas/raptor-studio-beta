@@ -146,3 +146,55 @@ describe('draftToResource — entradilla (spec 18)', () => {
     expect(resource.labels?.subtitle).toBe('Pacientes dados de alta este año')
   })
 })
+
+/**
+ * Spec 15 · fase 1: una referencia dibujada se expande al par canónico del
+ * resource-schema — id con relación y selector, y nombre denormalizado que es
+ * lo que el usuario ve y por lo que busca (patrón de contract.customerId).
+ */
+describe('draftToResource — referencias entre entidades', () => {
+  const cita = (): DraftResource => ({
+    ...newDraftResource('Citas'),
+    fields: [
+      { name: 'motivo', label: 'Motivo', type: 'string' },
+      { name: 'paciente', label: 'Paciente', type: 'ref', refTo: 'paciente' }
+    ]
+  })
+
+  const fields = () => draftToResource(cita(), 'vetcare').fields
+
+  it('emite el campo id con su relación y lo hace filtrable', () => {
+    const id = fields()['pacienteId']
+
+    expect(id).toMatchObject({
+      type: 'uuid',
+      required: true,
+      relation: { to: 'paciente', kind: 'reference' }
+    })
+    expect(id.query?.filterable).toBeTruthy()
+  })
+
+  it('el formulario ofrece un selector alimentado por la otra entidad', () => {
+    expect(fields()['pacienteId'].form).toMatchObject({
+      control: 'select',
+      label: 'Paciente',
+      lookup: { resource: 'paciente', labelField: 'nombre', denormalizes: 'pacienteName' }
+    })
+  })
+
+  it('emite el nombre denormalizado: es lo que se ve en la tabla y por lo que se busca', () => {
+    const name = fields()['pacienteName']
+
+    expect(name).toMatchObject({ type: 'string', required: true })
+    expect(name.table).toMatchObject({ show: true, label: 'Paciente' })
+    expect(name.query?.searchable).toBeTruthy()
+  })
+
+  it('el id NO se muestra en la tabla: el usuario ve nombres, no uuids', () => {
+    expect(fields()['pacienteId'].table?.show).toBeFalsy()
+  })
+
+  it('no emite un campo suelto con el nombre del draft', () => {
+    expect(fields()['paciente']).toBeUndefined()
+  })
+})
