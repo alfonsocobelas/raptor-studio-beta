@@ -8,7 +8,7 @@ import type { BadgeEntry, FieldDefinition, ResourceDefinition } from '@acc/schem
 export interface PreviewColumn {
   key: string
   label: string
-  type?: 'text' | 'number' | 'date' | 'badge'
+  type?: 'text' | 'number' | 'date' | 'badge' | 'boolean'
   badgeMap?: Record<string, BadgeEntry>
   minWidth?: number
 }
@@ -32,6 +32,7 @@ export function visibleColumns(model: ResourceDefinition): PreviewColumn[] {
 function derivedType(field: FieldDefinition): PreviewColumn['type'] {
   if (field.type === 'number' || field.type === 'integer') return 'number'
   if (field.type === 'date' || field.type === 'timestamptz') return 'date'
+  if (field.type === 'boolean') return 'boolean'
   return undefined
 }
 
@@ -60,7 +61,8 @@ function sampleValue(
     case 'integer':
       return (index + 1) * 12
     case 'boolean':
-      return index % 2 === 0
+      // Sí/No, como la ficha y como el listado emitido: nadie lee 'true' en una tabla
+      return index % 2 === 0 ? 'Sí' : 'No'
     case 'date':
     case 'timestamptz':
       return new Date(Date.UTC(2026, 0, 1 + index)).toISOString()

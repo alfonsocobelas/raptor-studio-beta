@@ -56,6 +56,25 @@ describe('visibleColumns', () => {
     expect(cols.find(c => c.key === 'status')?.badgeMap).toHaveProperty('in_stock')
   })
 
+  it('una columna booleana se declara como tal y se lee Sí/No, no true/false', () => {
+    // GIVEN un modelo con un campo booleano visible en la tabla
+    const withFlag = {
+      ...model,
+      fields: {
+        ...model.fields,
+        active: { type: 'boolean', table: { show: true, order: 9, label: 'Activo' } }
+      }
+    } as unknown as ResourceDefinition
+
+    // WHEN se piden columnas y filas
+    const column = visibleColumns(withFlag).find(c => c.key === 'active')
+    const values = sampleRows(withFlag, 4).map(row => row['active'])
+
+    // THEN el visor lo dibuja como la app emitida, que ya no muestra true/false
+    expect(column?.type).toBe('boolean')
+    expect(new Set(values)).toEqual(new Set(['Sí', 'No']))
+  })
+
   it('devuelve vacío si ningún campo es visible', () => {
     const bare = { ...model, fields: { id: { type: 'uuid', pk: true } } } as unknown as ResourceDefinition
 
