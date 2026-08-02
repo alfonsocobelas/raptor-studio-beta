@@ -56,7 +56,11 @@ export function newDraftResource(label: string): DraftResource {
   }
 }
 
-export function draftToResource(draft: DraftResource, appName: string): ResourceDefinition {
+export function draftToResource(
+  draft: DraftResource,
+  appName: string,
+  others: DraftResource[] = []
+): ResourceDefinition {
   const className = pascal(draft.name)
   const constraints: Record<string, Record<string, number>> = {}
   const fields: Record<string, FieldDefinition> = {
@@ -72,7 +76,11 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
       // Sin destino no hay nada que expandir; el gate del diseño lo rechaza antes
       // de generar, así que aquí basta con no emitir un campo a medias.
       if (field.refTo) {
-        Object.assign(fields, relationFields(field, field.refTo, index + 1))
+        // la etiqueta del selector es el campo de texto REAL del destino
+        // (un vehículo se identifica por matrícula, no por «nombre»)
+        const target = others.find(o => o.name === field.refTo)
+        const labelField = target?.fields.find(f => f.type === 'string')?.name ?? 'nombre'
+        Object.assign(fields, relationFields(field, field.refTo, index + 1, labelField))
         constraints[`${snake(field.name)}_NAME`] = { MAX: 200 }
       }
       return
@@ -214,7 +222,12 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
 }
 
 /** El par id + nombre denormalizado de una referencia (canon de contract.model.ts). */
-function relationFields(field: DraftField, refTo: string, order: number): Record<string, FieldDefinition> {
+function relationFields(
+  field: DraftField,
+  refTo: string,
+  order: number,
+  labelField: string
+): Record<string, FieldDefinition> {
   const idName = `${field.name}Id`
   const nameName = `${field.name}Name`
 
@@ -230,7 +243,7 @@ function relationFields(field: DraftField, refTo: string, order: number): Record
         section: 'general',
         order,
         placeholder: `Seleccionar ${field.label.toLowerCase()}`,
-        lookup: { resource: refTo, labelField: 'nombre', denormalizes: nameName }
+        lookup: { resource: refTo, labelField, denormalizes: nameName }
       }
     },
     [nameName]: {

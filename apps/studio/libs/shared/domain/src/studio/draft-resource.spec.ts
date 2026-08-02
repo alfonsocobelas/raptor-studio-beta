@@ -174,6 +174,24 @@ describe('draftToResource — referencias entre entidades', () => {
     expect(id.query?.filterable).toBeTruthy()
   })
 
+  it('el selector etiqueta con el campo REAL de la entidad destino, no siempre «nombre»', () => {
+    const vehiculo: DraftResource = {
+      ...newDraftResource('Vehículos'),
+      fields: [{ name: 'matricula', label: 'Matrícula', type: 'string' }]
+    }
+    const reparacion: DraftResource = {
+      ...newDraftResource('Reparaciones'),
+      fields: [
+        { name: 'descripcion', label: 'Descripción', type: 'string' },
+        { name: 'vehiculo', label: 'Vehículo', type: 'ref', refTo: 'vehiculo' }
+      ]
+    }
+
+    const lookup = draftToResource(reparacion, 'taller', [vehiculo]).fields['vehiculoId'].form?.lookup
+
+    expect(lookup).toMatchObject({ resource: 'vehiculo', labelField: 'matricula' })
+  })
+
   it('el formulario ofrece un selector alimentado por la otra entidad', () => {
     expect(fields()['pacienteId'].form).toMatchObject({
       control: 'select',

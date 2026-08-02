@@ -40,7 +40,7 @@ export class DesignStore {
 
   /** Resource-schemas canónicos derivados de las entidades del diseño. */
   readonly registry = computed<Record<string, ResourceDefinition>>(() =>
-    Object.fromEntries(this._resources().map(r => [r.name, draftToResource(r, this._appName())]))
+    Object.fromEntries(this._resources().map(r => [r.name, draftToResource(r, this._appName(), this._resources())]))
   )
 
   readonly exportJson = computed(() =>

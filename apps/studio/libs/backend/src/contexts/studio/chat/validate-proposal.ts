@@ -29,7 +29,7 @@ export function validateDesign(design: DesignPayload): DesignPayload {
   }
 
   const registry = Object.fromEntries(
-    clean.resources.map(r => [r.name, defineResource(draftToResource(r, clean.appName))])
+    clean.resources.map(r => [r.name, defineResource(draftToResource(r, clean.appName, clean.resources))])
   )
   for (const page of clean.pages) {
     for (const block of page.blocks) {

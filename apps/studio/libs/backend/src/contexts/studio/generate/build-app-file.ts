@@ -21,6 +21,6 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
     name,
     ...(palette ? { theme: { palette } } : {}),
     pages: designPagesToAppPages(design.pages),
-    resources: design.resources.map(r => draftToResource(r, name))
+    resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }
 }
