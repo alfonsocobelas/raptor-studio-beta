@@ -77,6 +77,8 @@ export interface ResourceSubstitutions {
   attachments: boolean
   /** Ficha del registro (spec 16): null cuando el modelo no la declara */
   detail: DetailSubstitution | null
+  /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
+  gallery: GallerySubstitution | null
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
   apiResource: string
   serviceSharedImports: string
@@ -172,6 +174,16 @@ export interface DetailSubstitution {
   titleField: string
   /** Filas de datos, en orden, con su etiqueta y su formato */
   rows: string[]
+}
+
+/** Campos que pinta cada tarjeta, ya resueltos (regla 8). */
+export interface GallerySubstitution {
+  titleField: string
+  subtitleField: string | null
+  metricField: string | null
+  metricLabel: string | null
+  /** Hasta dos campos más, como chips */
+  chips: { key: string; label: string }[]
 }
 
 export interface UiStrings {
@@ -283,6 +295,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     labelPlural: definition.labels?.plural ?? definition.plural,
     attachments: definition.attachments ?? false,
     detail: renderDetail(definition),
+    gallery: renderGallery(definition),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
@@ -749,6 +762,39 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
     })
 
   return { titleField, rows }
+}
+
+/**
+ * Galería (spec 17): título = primer texto buscable, subtítulo = siguiente texto,
+ * métrica = primer número. Los chips son los dos campos restantes que la tabla
+ * muestra — lo justo para que la tarjeta diga algo sin convertirse en una ficha.
+ */
+function renderGallery(definition: ResourceDefinition): GallerySubstitution | null {
+  const { gallery } = definition
+  if (!gallery) return null
+
+  const fields = Object.entries(definition.fields).filter(([, f]) => !f.pk)
+  const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
+  const numbers = fields.filter(([, f]) => f.type === 'number' || f.type === 'integer')
+
+  const titleField = gallery.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
+  const subtitleField = gallery.subtitle ?? texts.map(([name]) => name).find(name => name !== titleField) ?? null
+  const metricField = gallery.metric ?? numbers[0]?.[0] ?? null
+  const labelOf = (name: string): string =>
+    definition.fields[name]?.table?.label ?? definition.fields[name]?.form?.label ?? name
+
+  const chips = fields
+    .filter(([name, f]) => f.table?.show && ![titleField, subtitleField, metricField].includes(name))
+    .slice(0, 2)
+    .map(([name]) => ({ key: name, label: labelOf(name) }))
+
+  return {
+    titleField,
+    subtitleField,
+    metricField,
+    metricLabel: metricField ? labelOf(metricField) : null,
+    chips
+  }
 }
 
 function detailValueType(field: FieldDefinition | undefined): string | null {

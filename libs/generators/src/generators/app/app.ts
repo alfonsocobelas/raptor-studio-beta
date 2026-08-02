@@ -432,20 +432,39 @@ export function shellSubstitutions(composition: AppComposition): {
         '${feature}/${model.plural}-list.component'
       ).then(m => m.${names(model.name).className}sListComponent)
   }`
-        if (!model.detail) return list
-        // la ficha va DESPUÉS del listado: Angular resuelve por orden y ':id'
-        // declarado antes eclipsaría la ruta exacta del listado
-        return `${list},
-  {
+        // Orden obligatorio: listado, galería y por último ':id'. Declarar ':id'
+        // antes haría que capturase 'galeria' como si fuera un identificador.
+        const gallery = model.gallery
+          ? `  {
+    path: '${routeOf(model)}/galeria',
+    loadComponent: () =>
+      import(
+        '${feature}/${model.plural}-gallery.component'
+      ).then(m => m.${names(model.plural).className}GalleryComponent)
+  }`
+          : null
+        const detail = model.detail
+          ? `  {
     path: '${routeOf(model)}/:id',
     loadComponent: () =>
       import(
         '${feature}/${names(model.name).fileName}-detail.component'
       ).then(m => m.${names(model.name).className}DetailComponent)
   }`
+          : null
+        return [list, gallery, detail].filter(Boolean).join(',\n')
       })
       .join(',\n'),
-    navItems: composition.pages.map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`).join(',\n')
+    navItems: composition.pages
+      .flatMap(page => {
+        const entries = [`  { label: '${page.label}', route: '/${pathOf(page)}' }`]
+        if (page.kind !== 'dashboard' && modelOf(page.resource).gallery) {
+          const model = modelOf(page.resource)
+          entries.push(`  { label: '${page.label} · galería', route: '/${routeOf(model)}/galeria' }`)
+        }
+        return entries
+      })
+      .join(',\n')
   }
 }
 

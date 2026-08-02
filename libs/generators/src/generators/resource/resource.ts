@@ -116,6 +116,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-detail'), outputDir, substitutions)
   }
 
+  // galería (spec 17): otra lectura del listado, en tarjetas
+  if (model.gallery) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gallery'), outputDir, substitutions)
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     const comp = substitutions.aggregate.composition

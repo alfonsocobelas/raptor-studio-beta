@@ -133,3 +133,30 @@ describe('shellSubstitutions — ruta de la ficha (spec 16)', () => {
     )
   })
 })
+
+describe('shellSubstitutions — ruta de la galería (spec 17)', () => {
+  const model = (extra: object = {}): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'customer',
+      plural: 'customers',
+      context: 'crm',
+      schemaName: 'crm',
+      fields: { id: { type: 'uuid', pk: true } },
+      ...extra
+    }) as ResourceDefinition
+
+  it('registra <ruta>/galeria con su entrada de menú', () => {
+    const subs = shellSubstitutions(composeFlat([model({ gallery: {} })], false))
+
+    expect(subs.routeEntries).toContain("path: 'crm/customers/galeria'")
+    expect(subs.routeEntries).toContain('CustomersGalleryComponent')
+    expect(subs.navItems).toContain("route: '/crm/customers/galeria'")
+  })
+
+  it('la galería va ANTES de :id, o la ficha capturaría «galeria» como id', () => {
+    const subs = shellSubstitutions(composeFlat([model({ gallery: {}, detail: {} })], false))
+
+    expect(subs.routeEntries.indexOf('customers/galeria')).toBeLessThan(subs.routeEntries.indexOf('customers/:id'))
+  })
+})
