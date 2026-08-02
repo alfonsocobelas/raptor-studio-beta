@@ -1,6 +1,7 @@
 export * from './lib/app-types'
 export * from './lib/define-app'
 export * from './lib/define-resource'
+export * from './lib/derive-theme'
 export * from './lib/palettes'
 export * from './lib/resource-types'
 export * from './lib/validation-errors'
