@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core'
+import { PALETTES } from '@acc/schema'
 
 export type PreviewTheme = 'light' | 'dark'
 export type PreviewSkin = 'spartan' | 'material'
@@ -10,15 +11,16 @@ export interface PreviewPalette {
   swatch: string
 }
 
-/** Paletas de previsualización: solo afectan a la app dibujada, nunca al estudio. */
-export const PREVIEW_PALETTES: PreviewPalette[] = [
-  { id: 'neutral', label: 'Neutro', swatch: 'oklch(0.25 0 0)' },
-  { id: 'hydrangea', label: 'Hortensia', swatch: 'oklch(0.53 0.16 285)' },
-  { id: 'ocean', label: 'Océano', swatch: 'oklch(0.55 0.14 235)' },
-  { id: 'forest', label: 'Bosque', swatch: 'oklch(0.52 0.13 155)' },
-  { id: 'amber', label: 'Ámbar', swatch: 'oklch(0.62 0.15 65)' },
-  { id: 'rose', label: 'Rosa', swatch: 'oklch(0.56 0.17 15)' }
-]
+/**
+ * Las paletas del selector SON las del catálogo del schema: si el lienzo
+ * ofreciera una que el generador no conoce, lo que ves no sería lo que se
+ * genera. Solo afectan a la app dibujada, nunca al chrome del estudio.
+ */
+export const PREVIEW_PALETTES: PreviewPalette[] = PALETTES.map(p => ({
+  id: p.id,
+  label: p.label,
+  swatch: p.light.primary
+}))
 
 /**
  * Ajustes de PREVISUALIZACIÓN de la app en el lienzo (tema, paleta y piel).

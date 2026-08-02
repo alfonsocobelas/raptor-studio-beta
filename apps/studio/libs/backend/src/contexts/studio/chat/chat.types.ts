@@ -10,6 +10,8 @@ export interface DesignPayload {
   appName: string
   resources: DraftResource[]
   pages: DesignPage[]
+  /** Paleta elegida en el lienzo (id del catálogo de @acc/schema) */
+  palette?: string
 }
 
 /** Lo que propone la IA: un reply breve y el diseño COMPLETO resultante (nunca código). */

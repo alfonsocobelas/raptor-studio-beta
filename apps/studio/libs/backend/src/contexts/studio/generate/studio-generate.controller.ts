@@ -4,7 +4,7 @@ import { execFile } from 'child_process'
 import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
-import { designPagesToAppPages, draftToResource } from '@app/shared/domain'
+import { buildAppFile } from './build-app-file'
 import { validateDesign } from '../chat/validate-proposal'
 import type { DesignPayload } from '../chat/chat.types'
 import {
@@ -64,13 +64,7 @@ export class StudioGenerateController {
         throw new BadRequestException(`El diseño no pasa el gate: ${e instanceof Error ? e.message : String(e)}`)
       }
     })()
-    // el artefacto de --appFile: app-schema + resource-schemas EXPANDIDOS
-    const appFileContent = {
-      schemaVersion: 1,
-      name: body.name,
-      pages: designPagesToAppPages(design.pages),
-      resources: design.resources.map(r => draftToResource(r, body.name))
-    }
+    const appFileContent = buildAppFile(design, body.name)
 
     const appFile = path.join(mkdtempSync(path.join(tmpdir(), 'studio-gen-')), `${body.name}.app.json`)
     let args: string[]

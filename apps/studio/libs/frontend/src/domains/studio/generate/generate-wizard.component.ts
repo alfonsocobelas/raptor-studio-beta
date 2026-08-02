@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
+import { PreviewSettings } from '../design/preview-settings'
 import {
   DATABASE_OPTIONS,
   PLUGIN_OPTIONS,
@@ -168,6 +169,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 export class GenerateWizardComponent {
   private readonly store = inject(DesignStore)
   private readonly http = inject(HttpClient)
+  private readonly preview = inject(PreviewSettings)
 
   protected readonly uiOptions = UI_OPTIONS
   protected readonly databaseOptions = DATABASE_OPTIONS
@@ -216,7 +218,9 @@ export class GenerateWizardComponent {
           design: {
             appName: this.name(),
             resources: this.store.resources(),
-            pages: this.store.pages()
+            pages: this.store.pages(),
+            // lo que ves en el lienzo es lo que se genera (spec 18)
+            palette: this.preview.palette()
           },
           skipInstall: !this.install(),
           ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
