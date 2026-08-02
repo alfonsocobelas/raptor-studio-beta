@@ -26,6 +26,7 @@ export interface DesignPage {
 export interface BlockPreset {
   id: string
   label: string
+  /** Nombre del icono lucide (el MISMO set que emite la app generada) */
   icon: string
   description: string
   blocks: (resource?: string) => DesignBlock[]
@@ -33,18 +34,18 @@ export interface BlockPreset {
 
 /** Presets de vista: puntos de partida, todos editables después. */
 export const VIEW_PRESETS: BlockPreset[] = [
-  { id: 'blank', label: 'En blanco', icon: '▢', description: 'Vista vacía; añade los bloques que quieras', blocks: () => [] },
+  { id: 'blank', label: 'En blanco', icon: 'lucideSquareDashed', description: 'Vista vacía; añade los bloques que quieras', blocks: () => [] },
   {
     id: 'list',
     label: 'Listado',
-    icon: '▦',
+    icon: 'lucideTable',
     description: 'Tabla con búsqueda, filtros y CRUD',
     blocks: resource => (resource ? [{ kind: 'table', resource, width: 'full' }] : [])
   },
   {
     id: 'detail',
     label: 'Ficha',
-    icon: '🗂',
+    icon: 'lucideIdCard',
     description: 'Datos de un registro, métricas y adjuntos',
     blocks: resource =>
       resource
@@ -58,14 +59,14 @@ export const VIEW_PRESETS: BlockPreset[] = [
   {
     id: 'gallery',
     label: 'Galería',
-    icon: '▩',
+    icon: 'lucideLayoutGrid',
     description: 'Una tarjeta por registro',
     blocks: resource => (resource ? [{ kind: 'cards', resource, width: 'full' }] : [])
   },
   {
     id: 'panel',
     label: 'Panel',
-    icon: '▤',
+    icon: 'lucideLayoutDashboard',
     description: 'Métricas arriba y listado debajo',
     blocks: resource =>
       resource

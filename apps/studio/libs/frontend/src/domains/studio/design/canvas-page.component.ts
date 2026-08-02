@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideArrowUp, lucideColumns2, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
 import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { DesignStore } from './design-store'
@@ -14,7 +16,8 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, NgIcon],
+  providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
       <header class="mb-5">
@@ -73,7 +76,7 @@ import { mockTotal } from './mock-data'
                   <div
                     class="border-input bg-background flex flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center"
                   >
-                    <p class="text-2xl">🗎</p>
+                    <ng-icon name="lucidePaperclip" size="26" class="text-muted-foreground" />
                     <p class="text-sm font-medium">Arrastra ficheros aquí o haz clic para subirlos</p>
                     <p class="text-muted-foreground text-xs">PDF, imágenes o documentos · máx. 10 MB</p>
                   </div>
@@ -100,7 +103,7 @@ import { mockTotal } from './mock-data'
                 [attr.data-testid]="'block-up-' + $index"
                 (click)="move($event, $index, -1)"
               >
-                ↑
+                <ng-icon name="lucideArrowUp" size="13" />
               </button>
               <button
                 type="button"
@@ -109,7 +112,7 @@ import { mockTotal } from './mock-data'
                 [attr.data-testid]="'block-width-' + $index"
                 (click)="toggleWidth($event, $index, block)"
               >
-                {{ block.width === 'half' ? '½' : '1' }}
+                <ng-icon [name]="block.width === 'half' ? 'lucideColumns2' : 'lucideSquare'" size="13" />
               </button>
               <button
                 type="button"
@@ -118,7 +121,7 @@ import { mockTotal } from './mock-data'
                 [attr.data-testid]="'block-remove-' + $index"
                 (click)="remove($event, $index)"
               >
-                ✕
+                <ng-icon name="lucideX" size="13" />
               </button>
             </div>
           </div>

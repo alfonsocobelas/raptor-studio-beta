@@ -2,6 +2,41 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms'
 import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
 import { PREVIEW_PALETTES, PreviewSettings } from './preview-settings'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import {
+  lucideChartNoAxesColumn,
+  lucideCheck,
+  lucideChevronUp,
+  lucideIdCard,
+  lucideLayoutDashboard,
+  lucideLayoutGrid,
+  lucideMoon,
+  lucidePaperclip,
+  lucidePlus,
+  lucideSquareDashed,
+  lucideSun,
+  lucideTable,
+  lucideTrash2,
+  lucideX
+} from '@ng-icons/lucide'
+
+/** Un solo set de iconos en todo el estudio: el mismo lucide que emite la app. */
+const STUDIO_ICONS = {
+  lucideChartNoAxesColumn,
+  lucideCheck,
+  lucideChevronUp,
+  lucideIdCard,
+  lucideLayoutDashboard,
+  lucideLayoutGrid,
+  lucideMoon,
+  lucidePaperclip,
+  lucidePlus,
+  lucideSquareDashed,
+  lucideSun,
+  lucideTable,
+  lucideTrash2,
+  lucideX
+}
 import { DesignStore } from './design-store'
 import { CanvasPageComponent } from './canvas-page.component'
 import { InspectorComponent } from './inspector.component'
@@ -17,11 +52,11 @@ interface BlockTool {
 }
 
 const BLOCK_TOOLS: BlockTool[] = [
-  { kind: 'table', icon: '▦', label: 'Tabla', needsResource: true },
-  { kind: 'kpis', icon: '◳', label: 'KPIs', needsResource: true },
-  { kind: 'fields', icon: '🗂', label: 'Datos', needsResource: true },
-  { kind: 'cards', icon: '▩', label: 'Galería', needsResource: true },
-  { kind: 'attachments', icon: '🗎', label: 'Ficheros', needsResource: true }
+  { kind: 'table', icon: 'lucideTable', label: 'Tabla', needsResource: true },
+  { kind: 'kpis', icon: 'lucideChartNoAxesColumn', label: 'KPIs', needsResource: true },
+  { kind: 'fields', icon: 'lucideIdCard', label: 'Datos', needsResource: true },
+  { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería', needsResource: true },
+  { kind: 'attachments', icon: 'lucidePaperclip', label: 'Ficheros', needsResource: true }
 ]
 
 /**
@@ -31,7 +66,8 @@ const BLOCK_TOOLS: BlockTool[] = [
 @Component({
   selector: 'studio-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, CanvasPageComponent, InspectorComponent, ChatPanelComponent, GenerateWizardComponent],
+  imports: [FormsModule, NgIcon, CanvasPageComponent, InspectorComponent, ChatPanelComponent, GenerateWizardComponent],
+  providers: [provideIcons(STUDIO_ICONS)],
   template: `
     <div class="flex h-screen flex-col">
       <header class="flex items-center gap-3 border-b px-4 py-2">
@@ -72,7 +108,10 @@ const BLOCK_TOOLS: BlockTool[] = [
                     [attr.data-testid]="'preset-' + preset.id"
                     (click)="startPage(preset.id)"
                   >
-                    <span class="text-sm font-medium">{{ preset.icon }} {{ preset.label }}</span>
+                    <span class="flex items-center gap-2 text-sm font-medium">
+                      <ng-icon [name]="preset.icon" size="16" />
+                      {{ preset.label }}
+                    </span>
                     <span class="text-muted-foreground block text-xs">{{ preset.description }}</span>
                   </button>
                 }
@@ -93,7 +132,8 @@ const BLOCK_TOOLS: BlockTool[] = [
                 (click)="openBlockMenu(tool.kind)"
                 [title]="'Añadir ' + tool.label + ' a la vista activa'"
               >
-                {{ tool.icon }} {{ tool.label }}
+                <ng-icon [name]="tool.icon" size="15" />
+                {{ tool.label }}
               </button>
               @if (blockMenu() === tool.kind) {
                 <div class="bg-background absolute left-0 top-9 z-20 min-w-48 rounded-md border p-1 shadow-md">
@@ -143,7 +183,7 @@ const BLOCK_TOOLS: BlockTool[] = [
             data-testid="preview-theme"
             (click)="preview.toggleTheme()"
           >
-            {{ preview.theme() === 'light' ? '☀️' : '🌙' }}
+            <ng-icon [name]="preview.theme() === 'light' ? 'lucideSun' : 'lucideMoon'" size="14" />
           </button>
           <span class="bg-border mx-1 h-4 w-px"></span>
           <button
@@ -234,7 +274,7 @@ const BLOCK_TOOLS: BlockTool[] = [
                   data-testid="mock-theme-toggle"
                   (click)="preview.toggleTheme()"
                 >
-                  {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
+                  <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
                   <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                 </button>
                 <div class="text-muted-foreground flex items-center gap-2 border-t px-1 pt-3 text-xs">

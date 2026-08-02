@@ -1,32 +1,59 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import {
+  lucideDownload,
+  lucideEye,
+  lucideListFilter,
+  lucidePencil,
+  lucidePlus,
+  lucideSearch,
+  lucideSettings2,
+  lucideTrash2,
+  lucideX
+} from '@ng-icons/lucide'
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftResource } from '@app/shared/domain'
 import { DesignStore } from './design-store'
 import { buildSampleRows, mockTotal } from './mock-data'
 
-const PAGE_SIZE = 10
+// 5 filas: en el lienzo la tabla convive con otros bloques y no debe comérselos
+const PAGE_SIZE = 5
 
 /**
  * Réplica CONTROLADA de la tabla emitida, pensada para diseñar: réplica fiel
  * del look del DataTable (búsqueda, botones, paginación) pero con cabeceras
- * editables — hover sobre una columna → ✎/✕, popover para renombrar o cambiar
+ * editables — hover sobre una columna → /✕, popover para renombrar o cambiar
  * el tipo, y «+» para añadir columna. Toda edición muta el draft en el store.
  */
 @Component({
   selector: 'studio-canvas-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, NgIcon],
+  providers: [
+    provideIcons({
+      lucideDownload,
+      lucideEye,
+      lucideListFilter,
+      lucidePencil,
+      lucidePlus,
+      lucideSearch,
+      lucideSettings2,
+      lucideTrash2,
+      lucideX
+    })
+  ],
   template: `
     @if (draft(); as resource) {
       <!-- chrome del listado (mock estático, mismo aspecto que el emitido) -->
       <div class="mb-3 flex items-center justify-between gap-3">
         <div class="border-input text-muted-foreground flex w-72 items-center gap-2 rounded-md border px-3 py-2 text-sm">
-          <span>🔍</span> Buscar en todas las columnas...
+          <ng-icon name="lucideSearch" size="14" />
+          Buscar en todas las columnas...
         </div>
         <div class="flex gap-2">
-          <span class="chrome-btn">▽ Filtros</span>
-          <span class="chrome-btn">▥ Columnas</span>
-          <span class="chrome-btn">⬇ Exportar</span>
+          <span class="chrome-btn"><ng-icon name="lucideListFilter" size="14" /> Filtros</span>
+          <span class="chrome-btn"><ng-icon name="lucideSettings2" size="14" /> Columnas</span>
+          <span class="chrome-btn"><ng-icon name="lucideDownload" size="14" /> Exportar</span>
         </div>
       </div>
 
@@ -47,7 +74,9 @@ const PAGE_SIZE = 10
                   <span class="flex items-center gap-1">
                     {{ field.label }}
                     <span class="ml-1 hidden gap-1 group-hover/col:inline-flex">
-                      <span class="hover:text-foreground" title="Editar columna">✎</span>
+                      <span class="hover:text-foreground" title="Editar columna">
+                        <ng-icon name="lucidePencil" size="13" />
+                      </span>
                       <button
                         type="button"
                         class="text-destructive font-bold"
@@ -55,7 +84,7 @@ const PAGE_SIZE = 10
                         [attr.data-testid]="'col-delete-' + field.name"
                         (click)="removeColumn($event, $index)"
                       >
-                        ✕
+                        <ng-icon name="lucideX" size="13" />
                       </button>
                     </span>
                   </span>
@@ -104,7 +133,7 @@ const PAGE_SIZE = 10
                   data-testid="col-add"
                   (click)="addColumn($event)"
                 >
-                  +
+                  <ng-icon name="lucidePlus" size="13" />
                 </button>
               </th>
             </tr>
@@ -112,7 +141,11 @@ const PAGE_SIZE = 10
           <tbody>
             @for (row of rows(); track $index) {
               <tr class="hover:bg-muted/50 border-b last:border-0">
-                <td class="text-muted-foreground px-4 py-3">✎ &nbsp; 🗑</td>
+                <td class="text-muted-foreground flex gap-2 px-4 py-3">
+                  <ng-icon name="lucideEye" size="15" />
+                  <ng-icon name="lucidePencil" size="15" />
+                  <ng-icon name="lucideTrash2" size="15" class="text-destructive" />
+                </td>
                 @for (field of resource.fields; track field.name) {
                   <td
                     class="px-4 py-3"
@@ -132,7 +165,7 @@ const PAGE_SIZE = 10
       <div class="text-muted-foreground mt-3 flex items-center justify-between text-sm">
         <span>1-{{ rows().length }} de {{ total() }} registros</span>
         <span class="flex items-center gap-2">
-          Por página: <span class="chrome-btn">10 ▾</span>
+          Por página: <span class="chrome-btn">{{ pageSize }}</span>
           <span class="chrome-btn">‹</span>
           <span class="bg-primary text-primary-foreground rounded-md px-2.5 py-1">1</span>
           <span class="chrome-btn">2</span> … <span class="chrome-btn">{{ lastPage() }}</span>
@@ -157,6 +190,7 @@ export class CanvasTableComponent {
 
   protected readonly store = inject(DesignStore)
   protected readonly types = DRAFT_FIELD_TYPES
+  protected readonly pageSize = PAGE_SIZE
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
 

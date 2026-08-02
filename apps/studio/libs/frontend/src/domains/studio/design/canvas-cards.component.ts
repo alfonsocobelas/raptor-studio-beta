@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideSearch } from '@ng-icons/lucide'
 import { DesignStore } from './design-store'
 import { buildSampleRows } from './mock-data'
 
@@ -9,12 +11,14 @@ import { buildSampleRows } from './mock-data'
  */
 @Component({
   selector: 'studio-canvas-cards',
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideSearch })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
       <div class="mb-4 flex items-center gap-2">
         <div class="border-input text-muted-foreground flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-sm">
-          <span>🔍</span> Buscar {{ v.labelPlural.toLowerCase() }}…
+          <ng-icon name="lucideSearch" size="14" /> Buscar {{ v.labelPlural.toLowerCase() }}…
         </div>
         <span class="chip-filter bg-primary text-primary-foreground">Todos</span>
         <span class="chip-filter">Recientes</span>
