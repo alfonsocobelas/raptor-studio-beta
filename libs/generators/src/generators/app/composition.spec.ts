@@ -1,4 +1,4 @@
-import { defineApp, type ResourceDefinition } from '@acc/schema'
+import { defineApp, type AppDefinition, type ResourceDefinition } from '@acc/schema'
 import { composeApp, composeFlat } from './composition'
 
 const model = (name: string, plural: string, labelPlural?: string): ResourceDefinition =>
@@ -107,5 +107,34 @@ describe('composeApp', () => {
     })
 
     expect(() => composeApp(app, registry)).toThrow("App 'demo' references unknown resource model 'invoice'")
+  })
+})
+
+describe('composeApp — tema (spec 18)', () => {
+  const registry = {
+    paciente: { name: 'paciente', plural: 'pacientes', context: 'clinica' } as unknown as ResourceDefinition
+  }
+
+  it('la paleta declarada viaja en la composición', () => {
+    const composed = composeApp(
+      {
+        schemaVersion: 1,
+        name: 'clinica',
+        theme: { palette: 'ocean' },
+        pages: [{ kind: 'resource', resource: 'paciente' }]
+      } as AppDefinition,
+      registry
+    )
+
+    expect(composed.palette).toBe('ocean')
+  })
+
+  it('sin tema declarado la composición es neutra', () => {
+    const composed = composeApp(
+      { schemaVersion: 1, name: 'clinica', pages: [{ kind: 'resource', resource: 'paciente' }] } as AppDefinition,
+      registry
+    )
+
+    expect(composed.palette).toBeUndefined()
   })
 })

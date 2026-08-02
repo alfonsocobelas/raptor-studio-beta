@@ -16,6 +16,8 @@ export interface AppComposition {
   dashboard: boolean
   /** Modelos con tarjeta KPI en el dashboard, en orden de widget */
   kpiModels: ResourceDefinition[]
+  /** Paleta declarada por el app-schema (spec 18); ausente = neutra */
+  palette?: string
 }
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
@@ -70,7 +72,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     return { ...page, label: page.label ?? labelOf(model) }
   })
 
-  return { models, pages, dashboard: kpiModels.length > 0, kpiModels }
+  return { models, pages, dashboard: kpiModels.length > 0, kpiModels, palette: definition.theme?.palette }
 }
 
 function labelOf(model: ResourceDefinition): string {
