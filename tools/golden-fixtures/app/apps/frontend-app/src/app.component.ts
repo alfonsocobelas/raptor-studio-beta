@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { filter, map } from 'rxjs'
 import { HlmToasterImports } from '@spartan-ng/helm/sonner'
 import { NAV_ITEMS } from './nav'
+import { ThemeService } from '@app/frontend/core/services/theme.service'
 
 /** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
 const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation']
@@ -22,7 +23,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
       <router-outlet />
     } @else {
       <div class="flex min-h-screen">
-        <aside class="bg-card w-60 shrink-0 border-r p-4">
+        <aside class="bg-card flex w-60 shrink-0 flex-col border-r p-4">
           <div class="mb-6 px-2">
             <p class="text-base font-bold tracking-tight">{{ appTitle }}</p>
             <p class="text-muted-foreground text-xs">Panel de gestión</p>
@@ -38,6 +39,17 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
               </a>
             }
           </nav>
+          <span class="flex-1"></span>
+          <button
+            type="button"
+            class="hover:bg-accent/60 mt-4 flex items-center gap-2 rounded-md px-3 py-2 text-sm"
+            (click)="theme.toggle()"
+            [attr.aria-label]="theme.theme() === 'light' ? 'Activar tema oscuro' : 'Activar tema claro'"
+            data-testid="theme-toggle"
+          >
+            {{ theme.theme() === 'light' ? '🌙' : '☀️' }}
+            <span>{{ theme.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
+          </button>
         </aside>
         <main class="min-w-0 flex-1 p-6">
           <router-outlet />
@@ -50,6 +62,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
 export class AppComponent {
   private readonly _router = inject(Router)
 
+  protected readonly theme = inject(ThemeService)
   protected readonly appTitle = 'Dashboard'
   protected readonly navItems = NAV_ITEMS
 
