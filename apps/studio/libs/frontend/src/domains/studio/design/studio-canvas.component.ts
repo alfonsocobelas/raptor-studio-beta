@@ -227,6 +227,16 @@ const BLOCK_TOOLS: BlockTool[] = [
                   }
                 </nav>
                 <span class="flex-1"></span>
+                <!-- el botón de tema que llevará la app generada: aquí es funcional -->
+                <button
+                  type="button"
+                  class="hover:bg-accent/60 mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm"
+                  data-testid="mock-theme-toggle"
+                  (click)="preview.toggleTheme()"
+                >
+                  {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
+                  <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
+                </button>
                 <div class="text-muted-foreground flex items-center gap-2 border-t px-1 pt-3 text-xs">
                   <div class="bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold">AC</div>
                   <div>
