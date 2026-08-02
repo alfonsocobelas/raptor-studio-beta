@@ -84,3 +84,29 @@ describe('newDraftResource', () => {
     expect(() => defineResource(draftToResource(created, 'mi-app'))).not.toThrow()
   })
 })
+
+describe('draftToResource — ficha (spec 16)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Pacientes'),
+    fields: [
+      { name: 'nombre', label: 'Nombre', type: 'string' },
+      { name: 'telefono', label: 'Teléfono', type: 'string' }
+    ],
+    ...extra
+  })
+
+  it('sin ficha declarada no emite detail', () => {
+    expect(draftToResource(draft(), 'clinica').detail).toBeUndefined()
+  })
+
+  it('con ficha declarada emite detail', () => {
+    expect(draftToResource(draft({ detail: true }), 'clinica').detail).toEqual({})
+  })
+
+  it('los adjuntos arrastran la ficha: sin ella no habría dónde mostrarlos', () => {
+    const resource = draftToResource(draft({ attachments: true }), 'clinica')
+
+    expect(resource.attachments).toBe(true)
+    expect(resource.detail).toEqual({})
+  })
+})

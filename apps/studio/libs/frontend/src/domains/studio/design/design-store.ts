@@ -69,6 +69,9 @@ export class DesignStore {
     if (resourceName && blocks.some(b => b.kind === 'attachments')) {
       resources = resources.map(r => (r.name === resourceName ? { ...r, attachments: true } : r))
     }
+    if (resourceName && blocks.some(b => b.kind === 'fields')) {
+      resources = resources.map(r => (r.name === resourceName ? { ...r, detail: true } : r))
+    }
     return this.mutate(resources, [...this._pages(), { title, blocks }])
   }
 
@@ -89,6 +92,8 @@ export class DesignStore {
     const resources =
       block.kind === 'attachments' && block.resource
         ? this._resources().map(r => (r.name === block.resource ? { ...r, attachments: true } : r))
+        : block.kind === 'fields' && block.resource
+        ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
         : this._resources()
     return this.mutate(resources, pages)
   }
@@ -101,6 +106,8 @@ export class DesignStore {
     const resources =
       removed?.kind === 'attachments' && removed.resource
         ? this._resources().map(r => (r.name === removed.resource ? { ...r, attachments: false } : r))
+        : removed?.kind === 'fields' && removed.resource
+        ? this._resources().map(r => (r.name === removed.resource ? { ...r, detail: false } : r))
         : this._resources()
     return this.mutate(resources, pages)
   }

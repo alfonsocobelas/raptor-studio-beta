@@ -24,6 +24,8 @@ export interface DraftResource {
   fields: DraftField[]
   /** La vista de la entidad incluye el componente de subida de ficheros (spec 14) */
   attachments?: boolean
+  /** La entidad tiene ficha de registro (spec 16) */
+  detail?: boolean
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
@@ -155,8 +157,11 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
   })
 
   const firstString = draft.fields.find(f => f.type === 'string')
+  // los adjuntos viven DENTRO de la ficha, así que la arrastran consigo
+  const hasDetail = Boolean(draft.detail || draft.attachments)
   return {
     ...(draft.attachments ? { attachments: true } : {}),
+    ...(hasDetail ? { detail: {} } : {}),
     schemaVersion: 1,
     name: draft.name,
     plural: draft.plural,
@@ -171,7 +176,15 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
     fields,
     list: {
       ...(firstString ? { deleteLabelField: firstString.name, defaultSort: { field: firstString.name, dir: 'asc' as const } } : {}),
-      features: { create: true, export: ['csv' as const], search: Boolean(firstString), view: false, edit: true, delete: true }
+      // la acción «ver» solo se ofrece si hay ficha a la que ir (spec 16)
+      features: {
+        create: true,
+        export: ['csv' as const],
+        search: Boolean(firstString),
+        view: hasDetail,
+        edit: true,
+        delete: true
+      }
     }
   } as unknown as ResourceDefinition
 }
