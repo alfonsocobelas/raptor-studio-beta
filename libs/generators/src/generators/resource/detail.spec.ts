@@ -92,4 +92,38 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain('@ai:begin detail-extra')
     expect(detail).toContain('@ai:end')
   })
+
+  /**
+   * Spec 15 · fase 3: la ficha de un registro muestra los registros que le
+   * apuntan. Consulta filtrada por el id del padre (ADR-002 punto 4), nunca join.
+   */
+  it('lista los registros hijos que referencian a este', async () => {
+    const paciente = { ...withDetail(), name: 'paciente', plural: 'pacientes' } as ResourceDefinition
+    const cita = {
+      ...MODELS['supplier'],
+      name: 'cita',
+      plural: 'citas',
+      labels: { singular: 'Cita', plural: 'Citas' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        motivo: { type: 'string', table: { show: true, label: 'Motivo' } },
+        pacienteId: { type: 'uuid', relation: { to: 'paciente', kind: 'reference' } }
+      }
+    } as unknown as ResourceDefinition
+
+    registerModels([paciente, cita])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'paciente', directory: 'out' })
+    const detail = tree.read('out/frontend/paciente-detail.component.ts', 'utf-8') ?? ''
+
+    expect(detail).toContain('app-related-table')
+    expect(detail).toContain("field=\"pacienteId\"")
+    expect(detail).toContain('Citas')
+  })
+
+  it('sin hijos que lo referencien, la ficha no monta tablas relacionadas', async () => {
+    const tree = await generate(withDetail())
+
+    expect(tree.read('out/frontend/invoice-detail.component.ts', 'utf-8')).not.toContain('app-related-table')
+  })
 })

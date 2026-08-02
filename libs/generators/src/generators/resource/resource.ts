@@ -18,7 +18,8 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     ? { ...registered, sharedDomainAlias: options.sharedDomainAlias }
     : registered
 
-  const substitutions = buildSubstitutions(model)
+  // los demás modelos registrados: de ahí salen las tablas relacionadas de la ficha
+  const substitutions = buildSubstitutions(model, Object.values(MODELS))
   const outputDir = options.directory ?? path.join('tmp', 'generated', model.plural)
 
   // §7 del maestro: lo escrito en los huecos @ai sobrevive a la regeneración.

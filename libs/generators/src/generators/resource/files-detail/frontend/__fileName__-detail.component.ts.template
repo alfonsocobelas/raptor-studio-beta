@@ -17,6 +17,9 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 <%_ } _%>
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ if (related.length) { _%>
+import { RelatedTable } from '../../../../../../shared/components/related-table'
+<%_ } _%>
 <%_ if (attachments) { _%>
 import { <%- className %>AttachmentsComponent } from './<%- fileName %>-attachments.component'
 <%_ } _%>
@@ -35,7 +38,7 @@ interface DetailRow {
  */
 @Component({
   selector: 'app-<%- fileName %>-detail',
-  imports: [NgIcon, DatePipe, DecimalPipe<%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
+  imports: [NgIcon, DatePipe, DecimalPipe<%- related.length ? ', RelatedTable' : '' %><%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
   providers: [provideIcons({ lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -90,6 +93,17 @@ interface DetailRow {
             </div>
           }
         </dl>
+<%_ related.forEach(rel => { _%>
+
+        <app-related-table
+          title="<%- rel.title %>"
+          endpoint="<%- rel.endpoint %>"
+          field="<%- rel.field %>"
+          [value]="item.id"
+          [columns]="<%- rel.columns %>"
+          route="<%- rel.route %>"
+        />
+<%_ }) _%>
 <%_ if (attachments) { _%>
 
         <app-<%- plural %>-attachments [<%- propertyName %>Id]="item.id" />

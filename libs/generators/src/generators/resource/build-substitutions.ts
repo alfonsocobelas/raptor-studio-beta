@@ -79,6 +79,8 @@ export interface ResourceSubstitutions {
   detail: DetailSubstitution | null
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
   gallery: GallerySubstitution | null
+  /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
+  related: RelatedSubstitution[]
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
   apiResource: string
   serviceSharedImports: string
@@ -186,6 +188,20 @@ export interface GallerySubstitution {
   chips: { key: string; label: string }[]
 }
 
+/** Una tabla de registros hijos dentro de la ficha del padre. */
+export interface RelatedSubstitution {
+  /** Título de la sección (plural del hijo) */
+  title: string
+  /** Endpoint del hijo, ya con su prefijo */
+  endpoint: string
+  /** Campo del hijo que apunta al padre (pacienteId) */
+  field: string
+  /** Ruta del listado del hijo, para «ver todos» */
+  route: string
+  /** Columnas ya renderizadas como objetos literales */
+  columns: string
+}
+
 export interface UiStrings {
   title: string
   subtitle: string
@@ -232,7 +248,7 @@ const DEFAULT_TS_TYPE: Record<FieldType, string> = {
 }
 
 // All rendering logic lives here on purpose: templates stay dumb (project rule #8).
-export function buildSubstitutions(definition: ResourceDefinition): ResourceSubstitutions {
+export function buildSubstitutions(definition: ResourceDefinition, others: ResourceDefinition[] = []): ResourceSubstitutions {
   const n = names(definition.name)
   const fields = Object.entries(definition.fields)
   const columns = fields.map(([name, field]) => renderColumn(name, field))
@@ -296,6 +312,7 @@ export function buildSubstitutions(definition: ResourceDefinition): ResourceSubs
     attachments: definition.attachments ?? false,
     detail: renderDetail(definition),
     gallery: renderGallery(definition),
+    related: renderRelated(definition, others),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
@@ -800,6 +817,38 @@ function renderGallery(definition: ResourceDefinition): GallerySubstitution | nu
     metricLabel: metricField ? labelOf(metricField) : null,
     chips
   }
+}
+
+/**
+ * Drill-down derivado (ADR-002 punto 4): las entidades que declaran una
+ * referencia a esta se muestran en su ficha como una tabla filtrada por el id
+ * del padre. Nunca un join: una consulta al listado del hijo con un filtro.
+ */
+function renderRelated(definition: ResourceDefinition, others: ResourceDefinition[]): RelatedSubstitution[] {
+  return others
+    .filter(other => other.name !== definition.name)
+    .flatMap(other => {
+      const link = Object.entries(other.fields).find(
+        ([, field]) => field.relation?.kind === 'reference' && field.relation.to === definition.name
+      )
+      if (!link) return []
+
+      const columns = Object.entries(other.fields)
+        .filter(([name, field]) => field.table?.show && name !== link[0])
+        .sort(([, a], [, b]) => (a.table?.order ?? 99) - (b.table?.order ?? 99))
+        .slice(0, 4)
+        .map(([name, field]) => `{ key: '${name}', label: '${field.table?.label ?? name}' }`)
+
+      return [
+        {
+          title: other.labels?.plural ?? other.plural,
+          endpoint: other.api ?? `/api/v1/${other.plural}`,
+          field: link[0],
+          route: other.route ?? `/${other.context}/${other.plural}`,
+          columns: `[${columns.join(', ')}]`
+        }
+      ]
+    })
 }
 
 function detailValueType(field: FieldDefinition | undefined): string | null {
