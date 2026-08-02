@@ -42,8 +42,11 @@ describe('previewThemeVars — el lienzo pinta con los tokens que se van a emiti
     const vars = previewThemeVars('ocean', 'light')
 
     // THEN el fondo dibujado lleva el tono, igual que el emitido
-    expect(vars['--background']).toBe('oklch(0.99 0.012 236)')
-    expect(vars['--card']).toBe('oklch(0.99 0.012 236)')
+    expect(vars['--background']).toBe('oklch(0.965 0.016 236)')
+    expect(vars['--muted']).toBe('oklch(0.93 0.016 236)')
+    // tarjeta blanca sobre página teñida: sin ese escalón el lienzo es una mancha plana
+    expect(vars['--card']).toBe('oklch(1 0 0)')
+    expect(vars['--background']).not.toBe(vars['--card'])
   })
 
   it('ningún tema del catálogo se aparta de lo que se emitirá', () => {

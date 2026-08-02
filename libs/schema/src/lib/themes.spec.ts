@@ -1,5 +1,6 @@
 import { deriveTheme } from './derive-theme'
 import { findTheme, resolveThemeId, THEME_IDS, THEMES } from './themes'
+import { insideSrgb, isSurfaceToken } from './testing/srgb'
 
 const NEUTRAL_WHITE = 'oklch(1 0 0)'
 
@@ -63,17 +64,41 @@ describe('theme catalog', () => {
       for (const theme of coloured()) {
         const tokens = deriveTheme(theme)
         expect(tokens.light['background']).not.toBe(NEUTRAL_WHITE)
-        expect(tokens.light['card']).not.toBe(NEUTRAL_WHITE)
+        expect(tokens.light['muted']).not.toBe('oklch(0.97 0 0)')
         expect(tokens.dark['card']).not.toBe('oklch(0.205 0 0)')
       }
     })
 
-    it('keeps the lightest step below 1 so the tint survives sRGB', () => {
+    it('lifts the cards off the page instead of painting both the same', () => {
       // GIVEN los temas con color
-      // WHEN se mira su fondo claro
-      // THEN no está en L=1, donde el croma máximo es 0 y el tinte se pierde
+      // WHEN se comparan página y tarjeta
+      // THEN no coinciden: sin ese escalón la pantalla es una mancha plana
       for (const theme of coloured()) {
-        expect(theme.surface.ramp?.base).toBeLessThan(1)
+        const { light } = deriveTheme(theme)
+        expect(light['background']).not.toBe(light['card'])
+      }
+    })
+
+    it('tints the page enough to be seen, not by a rounding error', () => {
+      // GIVEN los temas con color
+      // WHEN se mira la luminancia de su fondo claro
+      // THEN está donde el gamut sRGB admite croma: por encima de 0.97 no cabe
+      for (const theme of coloured()) {
+        expect(theme.surface.ramp?.page).toBeLessThanOrEqual(0.97)
+      }
+    })
+
+    it('keeps every token inside sRGB, or the tint is silently lost', () => {
+      // GIVEN todos los temas del catálogo
+      // WHEN se convierte cada token a sRGB
+      // THEN ninguno se recorta: un token recortado se dibuja neutro y el tema
+      // se ve gris por mucho croma que declare
+      for (const theme of THEMES) {
+        const tokens = deriveTheme(theme)
+        for (const [name, value] of [...Object.entries(tokens.light), ...Object.entries(tokens.dark)]) {
+          if (!isSurfaceToken(name)) continue
+          expect({ theme: theme.id, name, value, inside: insideSrgb(value) }).toMatchObject({ inside: true })
+        }
       }
     })
   })

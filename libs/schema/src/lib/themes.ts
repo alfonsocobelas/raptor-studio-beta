@@ -18,14 +18,24 @@ export interface NamedTheme extends Theme {
 }
 
 /**
- * Croma de las superficies. Es deliberadamente bajo: un fondo con el croma del
- * botón no es un tema, es un flúor. Se nota en tarjetas, bordes y sidebar sin
- * pelearse con el contenido.
+ * Croma de las superficies. Bajo a propósito —un fondo con el croma del botón no
+ * es un tema, es un flúor— pero no tanto como para perderse: 0.016 es lo que
+ * cabe en sRGB a la luminancia de la página teñida.
  */
-const SURFACE_CHROMA = 0.012
+const SURFACE_CHROMA = 0.016
 
-/** En sRGB, con L=1 el croma máximo es 0: un tema con color no puede partir de 1. */
-const TINTED_BASE = { base: 0.99 }
+/**
+ * Escalones claros de un tema con color. Bajan respecto al neutro porque el
+ * gamut sRGB no admite croma arriba: a L=1 el máximo es 0 y a L=0.99 es 0.005,
+ * así que un tono declarado ahí se recorta y la superficie sale blanca.
+ *
+ * `base` se queda en 1 y sin teñir: la tarjeta es blanca y la página lleva el
+ * tono, que es lo que le da relieve.
+ */
+const TINTED = {
+  ramp: { page: 0.965, subtle: 0.955, wash: 0.93, line: 0.89 },
+  untinted: ['base'] as const
+}
 
 export const THEMES: NamedTheme[] = [
   {
@@ -51,7 +61,7 @@ export const THEMES: NamedTheme[] = [
   {
     id: 'hydrangea',
     label: 'Hortensia',
-    surface: { chroma: SURFACE_CHROMA, hue: 286, ramp: TINTED_BASE },
+    surface: { chroma: SURFACE_CHROMA, hue: 286, ramp: TINTED.ramp, untinted: [...TINTED.untinted] },
     light: {
       primary: 'oklch(0.53 0.16 285)',
       primaryForeground: 'oklch(0.99 0 0)',
@@ -70,7 +80,7 @@ export const THEMES: NamedTheme[] = [
   {
     id: 'ocean',
     label: 'Océano',
-    surface: { chroma: SURFACE_CHROMA, hue: 236, ramp: TINTED_BASE },
+    surface: { chroma: SURFACE_CHROMA, hue: 236, ramp: TINTED.ramp, untinted: [...TINTED.untinted] },
     light: {
       primary: 'oklch(0.55 0.14 235)',
       primaryForeground: 'oklch(0.99 0 0)',
@@ -89,7 +99,7 @@ export const THEMES: NamedTheme[] = [
   {
     id: 'forest',
     label: 'Bosque',
-    surface: { chroma: 0.011, hue: 156, ramp: TINTED_BASE },
+    surface: { chroma: SURFACE_CHROMA, hue: 156, ramp: TINTED.ramp, untinted: [...TINTED.untinted] },
     light: {
       primary: 'oklch(0.52 0.13 155)',
       primaryForeground: 'oklch(0.99 0 0)',
@@ -108,7 +118,7 @@ export const THEMES: NamedTheme[] = [
   {
     id: 'amber',
     label: 'Ámbar',
-    surface: { chroma: SURFACE_CHROMA, hue: 75, ramp: TINTED_BASE },
+    surface: { chroma: SURFACE_CHROMA, hue: 75, ramp: TINTED.ramp, untinted: [...TINTED.untinted] },
     light: {
       primary: 'oklch(0.62 0.15 65)',
       primaryForeground: 'oklch(0.2 0 0)',
@@ -127,7 +137,7 @@ export const THEMES: NamedTheme[] = [
   {
     id: 'rose',
     label: 'Rosa',
-    surface: { chroma: SURFACE_CHROMA, hue: 16, ramp: TINTED_BASE },
+    surface: { chroma: SURFACE_CHROMA, hue: 16, ramp: TINTED.ramp, untinted: [...TINTED.untinted] },
     light: {
       primary: 'oklch(0.56 0.17 15)',
       primaryForeground: 'oklch(0.99 0 0)',

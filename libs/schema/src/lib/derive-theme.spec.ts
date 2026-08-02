@@ -1,4 +1,5 @@
 import { deriveTheme, Theme } from './derive-theme'
+import { insideSrgb, isSurfaceToken } from './testing/srgb'
 
 /**
  * El tema neutro tal y como lo declara hoy el esqueleto: croma 0, tono 0 y la
@@ -107,9 +108,15 @@ describe('deriveTheme', () => {
 
   describe('a tinted theme dresses the surfaces, not just the action', () => {
     const tinted = (): Theme => ({
-      // el escalón más claro baja de 1: en sRGB, con L=1 el croma máximo es 0,
-      // así que un fondo que se queda en 1 sale blanco por mucho croma que pida
-      surface: { chroma: 0.02, hue: 250, ramp: { base: 0.99 } },
+      // los escalones claros bajan: en sRGB el croma no cabe por encima de ~0.97,
+      // así que un fondo que se queda arriba sale blanco por mucho croma que pida.
+      // 'base' se queda en 1 y sin teñir: tarjetas blancas sobre página con tono
+      surface: {
+        chroma: 0.016,
+        hue: 250,
+        ramp: { page: 0.965, subtle: 0.955, wash: 0.93, line: 0.89 },
+        untinted: ['base']
+      },
       light: {
         primary: 'oklch(0.55 0.14 250)',
         primaryForeground: 'oklch(0.99 0 0)',
@@ -126,7 +133,7 @@ describe('deriveTheme', () => {
       }
     })
 
-    it('tints the light background, cards and borders', () => {
+    it('tints the light page, sidebar, chips and borders', () => {
       // GIVEN un tema con croma y tono
       const theme = tinted()
 
@@ -134,11 +141,23 @@ describe('deriveTheme', () => {
       const { light } = deriveTheme(theme)
 
       // THEN las superficies llevan el tono, no solo el botón
-      expect(light['background']).toBe('oklch(0.99 0.02 250)')
-      expect(light['card']).toBe('oklch(0.99 0.02 250)')
-      expect(light['muted']).toBe('oklch(0.97 0.02 250)')
-      expect(light['border']).toBe('oklch(0.922 0.02 250)')
-      expect(light['sidebar']).toBe('oklch(0.985 0.02 250)')
+      expect(light['background']).toBe('oklch(0.965 0.016 250)')
+      expect(light['muted']).toBe('oklch(0.93 0.016 250)')
+      expect(light['border']).toBe('oklch(0.89 0.016 250)')
+      expect(light['sidebar']).toBe('oklch(0.955 0.016 250)')
+    })
+
+    it('leaves the untinted steps neutral: white cards over a tinted page', () => {
+      // GIVEN un tema que declara 'base' sin teñir
+      const theme = tinted()
+
+      // WHEN se deriva
+      const { light } = deriveTheme(theme)
+
+      // THEN la tarjeta es blanco puro, y es lo que le da relieve sobre la página
+      expect(light['card']).toBe('oklch(1 0 0)')
+      expect(light['popover']).toBe('oklch(1 0 0)')
+      expect(light['background']).not.toBe(light['card'])
     })
 
     it('tints the dark surfaces too', () => {
@@ -149,9 +168,9 @@ describe('deriveTheme', () => {
       const { dark } = deriveTheme(theme)
 
       // THEN el fondo y las tarjetas oscuras llevan el tono
-      expect(dark['background']).toBe('oklch(0.145 0.02 250)')
-      expect(dark['card']).toBe('oklch(0.205 0.02 250)')
-      expect(dark['muted']).toBe('oklch(0.269 0.02 250)')
+      expect(dark['background']).toBe('oklch(0.145 0.016 250)')
+      expect(dark['card']).toBe('oklch(0.205 0.016 250)')
+      expect(dark['muted']).toBe('oklch(0.269 0.016 250)')
     })
 
     it('leaves the dark border as a white overlay', () => {
@@ -165,6 +184,19 @@ describe('deriveTheme', () => {
       // en una línea de color sobre fondo oscuro, que es lo que evita el velo
       expect(dark['border']).toBe('oklch(1 0 0 / 10%)')
       expect(dark['input']).toBe('oklch(1 0 0 / 15%)')
+    })
+
+    it('keeps every tinted surface inside sRGB, or the tint is silently lost', () => {
+      // GIVEN un tema con croma y tono
+      const { light, dark } = deriveTheme(tinted())
+
+      // WHEN se convierte cada superficie a sRGB
+      // THEN ninguna se sale del gamut: fuera de él el navegador recorta a blanco
+      // y la superficie se ve neutra por mucho croma que declare
+      for (const [name, value] of [...Object.entries(light), ...Object.entries(dark)]) {
+        if (!isSurfaceToken(name)) continue
+        expect({ name, value, inside: insideSrgb(value) }).toMatchObject({ inside: true })
+      }
     })
 
     it('does not touch the ramp of other themes', () => {

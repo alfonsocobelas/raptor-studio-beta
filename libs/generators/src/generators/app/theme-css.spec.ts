@@ -99,9 +99,12 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
       const { lightTokens } = themeSubstitutions('ocean')
 
       // THEN el fondo y las tarjetas llevan el tono, que es lo que la spec 18 no hacía
-      expect(lightTokens).toContain('  --background: oklch(0.99 0.012 236);')
-      expect(lightTokens).toContain('  --card: oklch(0.99 0.012 236);')
+      expect(lightTokens).toContain('  --background: oklch(0.965 0.016 236);')
+      expect(lightTokens).toContain('  --muted: oklch(0.93 0.016 236);')
+      expect(lightTokens).toContain('  --border: oklch(0.89 0.016 236);')
       expect(lightTokens).toContain('  --primary: oklch(0.55 0.14 235);')
+      // la tarjeta se queda blanca: es lo que le da relieve sobre la página teñida
+      expect(lightTokens).toContain('  --card: oklch(1 0 0);')
     })
 
     it('tiñe también el oscuro', () => {
@@ -110,7 +113,7 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
       const { darkTokens } = themeSubstitutions('ocean')
 
       // THEN el fondo oscuro lleva el tono
-      expect(darkTokens).toContain('  --background: oklch(0.145 0.012 236);')
+      expect(darkTokens).toContain('  --background: oklch(0.145 0.016 236);')
       expect(darkTokens).toContain('  --primary: oklch(0.72 0.12 236);')
     })
   })

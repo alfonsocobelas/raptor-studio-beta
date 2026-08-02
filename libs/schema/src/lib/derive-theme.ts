@@ -16,6 +16,8 @@
  */
 export interface Ramp {
   base: number
+  /** Fondo de página en claro. Separado de `base` para que la tarjeta blanca destaque */
+  page: number
   subtle: number
   wash: number
   line: number
@@ -28,6 +30,8 @@ export interface Ramp {
 
 export const DEFAULT_RAMP: Ramp = {
   base: 1,
+  // el neutro no distingue página de tarjeta: ambas en blanco, como el esqueleto
+  page: 1,
   subtle: 0.985,
   wash: 0.97,
   line: 0.922,
@@ -51,11 +55,18 @@ export interface ThemeSurface {
   chroma: number
   hue: number
   /**
-   * Retoques a la rampa. El caso real es `base`: en sRGB, con L=1 el croma
-   * máximo es 0, así que un tema con color debe bajar su escalón más claro
-   * (0.99) o su fondo saldrá blanco por mucho croma que declare.
+   * Retoques a la rampa. Un tema con color TIENE que bajar sus escalones claros:
+   * el gamut sRGB no admite croma por encima de L≈0.97 (a L=1 el máximo es 0, a
+   * L=0.99 es 0.005), así que un tono declarado ahí arriba se recorta y la
+   * superficie se dibuja blanca. Fue exactamente el fallo del primer intento.
    */
   ramp?: Partial<Ramp>
+  /**
+   * Escalones que se quedan neutros aunque el tema tenga croma. El caso real es
+   * `base`: tarjetas blancas sobre una página teñida, que es lo que les da
+   * relieve. Teñir ambas por igual devuelve una mancha plana.
+   */
+  untinted?: (keyof Ramp)[]
 }
 
 export interface Theme {
@@ -119,7 +130,7 @@ const DARK_INPUT = 'oklch(1 0 0 / 15%)'
 
 /** Qué escalón de la rampa ocupa cada superficie, en cada modo. */
 const LIGHT_SURFACES: Record<string, keyof Ramp> = {
-  background: 'base',
+  background: 'page',
   foreground: 'deep',
   card: 'base',
   'card-foreground': 'deep',
@@ -166,9 +177,10 @@ const surfaceTokens = (
   ramp: Ramp,
   surface: ThemeSurface
 ): Record<string, string> => {
+  const untinted = new Set(surface.untinted ?? [])
   const tokens: Record<string, string> = {}
   for (const [token, step] of Object.entries(roles)) {
-    tokens[token] = oklch(ramp[step], surface.chroma, surface.hue)
+    tokens[token] = untinted.has(step) ? oklch(ramp[step], 0, 0) : oklch(ramp[step], surface.chroma, surface.hue)
   }
   return tokens
 }
