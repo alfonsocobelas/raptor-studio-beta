@@ -1,8 +1,8 @@
 # 15 — Relaciones · TASKS
 
 ## Fase 1 — el contrato admite relaciones
-- [ ] TASK-01 — `DraftField` tipo `ref` + expansión al par canónico en draftToResource
-- [ ] TASK-02 — gate del diseño: rechaza referencias a entidades inexistentes
+- [x] TASK-01 — `DraftField` tipo `ref` + expansión al par canónico en draftToResource
+- [x] TASK-02 — gate del diseño: rechaza referencias a entidades inexistentes
 - [ ] TASK-03 — el chat (prompt + fake adapter) declara relaciones
 - [ ] TASK-04 — editor de columna del lienzo: tipo «referencia a → entidad»
 

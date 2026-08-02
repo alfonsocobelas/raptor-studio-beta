@@ -1,6 +1,17 @@
 # 19 — Código de negocio autogenerado
 
-**Estado:** activa · **Depende de:** 15 (fase 1, cerrada)
+**Estado:** EN PAUSA (2026-08-02) — Alfonso quiere pensar el formato antes de emitir
+**Depende de:** 15 (fase 1, cerrada)
+
+> Hecho ya: TASK-01, el contrato `code` en el resource-schema con sus
+> validaciones. Es INERTE: ninguna plantilla lo consume todavía, así que no
+> afecta a nada generado. Retomar por TASK-02.
+>
+> **Decisiones abiertas antes de seguir:**
+> 1. ¿Numeración por año (`EXP-2026-0001`)? Cambia cuándo se reinicia el contador.
+> 2. ¿Prefijo derivado del nombre o siempre explícito en el diseño?
+> 3. ¿Hace falta algún caso con correlatividad legal (sin huecos)? Eso NO lo
+>    resuelve una secuencia y sería otra spec.
 
 ## 1. Problema
 

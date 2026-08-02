@@ -142,3 +142,8 @@ el starter original las tenía cerradas pero no llegó a este repo.
 17. **Booleanos en el listado emitido salen como `true`/`false`** (la ficha ya
     los pinta Sí/No).
 
+## En pausa
+
+- **Spec 19 (código de negocio)**: contrato hecho e inerte; pendiente decidir
+  formato (¿año?) antes de emitir. Alfonso lo está pensando.
+
