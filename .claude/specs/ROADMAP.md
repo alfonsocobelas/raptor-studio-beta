@@ -142,6 +142,11 @@ el starter original las tenía cerradas pero no llegó a este repo.
 17. **Booleanos en el listado emitido salen como `true`/`false`** (la ficha ya
     los pinta Sí/No).
 
+18. **La «paleta» de la spec 18 sólo tiñe la acción**, no viste la app: cambia
+    botones y chips de enum, y deja fondos, tarjetas, bordes y sidebar en gris.
+    No era lo pedido (Alfonso, 2026-08-02: «yo lo que exigía eran temas»). Lo
+    corrige la **spec 20**, que deriva el juego completo de tokens.
+
 ## En pausa
 
 - **Spec 19 (código de negocio)**: contrato hecho e inerte; pendiente decidir
