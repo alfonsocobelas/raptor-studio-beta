@@ -93,3 +93,43 @@ describe('shellSubstitutions — nav y rutas derivadas de la composición', () =
     expect(subs.routeEntries.indexOf("path: 'dashboard'")).toBeLessThan(subs.routeEntries.indexOf('customers'))
   })
 })
+
+describe('shellSubstitutions — ruta de la ficha (spec 16)', () => {
+  const model = (name: string, plural: string, detail?: object): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name,
+      plural,
+      context: 'crm',
+      schemaName: 'crm',
+      fields: { id: { type: 'uuid', pk: true } },
+      ...(detail ? { detail } : {})
+    }) as ResourceDefinition
+
+  it('registra <ruta>/:id cuando el recurso declara ficha', () => {
+    const subs = shellSubstitutions(composeFlat([model('customer', 'customers', {})], false))
+
+    expect(subs.routeEntries).toContain("path: 'crm/customers/:id'")
+    expect(subs.routeEntries).toContain('CustomerDetailComponent')
+  })
+
+  it('la ficha NO añade entrada de menú: es un drill-down, no navegación de primer nivel', () => {
+    const subs = shellSubstitutions(composeFlat([model('customer', 'customers', {})], false))
+
+    expect(subs.navItems.match(/route:/g)).toHaveLength(1)
+  })
+
+  it('sin ficha declarada no hay ruta de detalle', () => {
+    const subs = shellSubstitutions(composeFlat([model('customer', 'customers')], false))
+
+    expect(subs.routeEntries).not.toContain(':id')
+  })
+
+  it('la ficha se declara DESPUÉS del listado para que la ruta específica no la eclipse', () => {
+    const subs = shellSubstitutions(composeFlat([model('customer', 'customers', {})], false))
+
+    expect(subs.routeEntries.indexOf("path: 'crm/customers'")).toBeLessThan(
+      subs.routeEntries.indexOf("path: 'crm/customers/:id'")
+    )
+  })
+})

@@ -424,12 +424,24 @@ export function shellSubstitutions(composition: AppComposition): {
       .map(page => {
         if (page.kind === 'dashboard') return dashboardRoute
         const model = modelOf(page.resource)
-        return `  {
+        const feature = `${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}`
+        const list = `  {
     path: '${routeOf(model)}',
     loadComponent: () =>
       import(
-        '${SCOPE}/frontend/domains/admin/bounded-contexts/${model.context}/features/${model.plural}/${model.plural}-list.component'
+        '${feature}/${model.plural}-list.component'
       ).then(m => m.${names(model.name).className}sListComponent)
+  }`
+        if (!model.detail) return list
+        // la ficha va DESPUÉS del listado: Angular resuelve por orden y ':id'
+        // declarado antes eclipsaría la ruta exacta del listado
+        return `${list},
+  {
+    path: '${routeOf(model)}/:id',
+    loadComponent: () =>
+      import(
+        '${feature}/${names(model.name).fileName}-detail.component'
+      ).then(m => m.${names(model.name).className}DetailComponent)
   }`
       })
       .join(',\n'),
