@@ -152,7 +152,7 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     moduleHandlerImports,
     moduleUseCaseImports,
     moduleProviderNames,
-    seedItems: [1, 2].map(i => renderSeedItem(definition, dtoCtxs, i)),
+    seedItems: seedRowNumbers(definition).map(i => renderSeedItem(definition, dtoCtxs, i)),
     seedConst: `SEED_${names(definition.plural).constantName}`
   }
 }
@@ -198,6 +198,23 @@ function seedMin(definition: ResourceDefinition, fieldName: string, vo?: { const
   }, definition.constraints)
   const min = entry && typeof entry === 'object' ? (entry as Record<string, unknown>)['MIN'] : undefined
   return typeof min === 'number' ? min : 0
+}
+
+/** Tope de filas sembradas: es una demo navegable, no una carga de datos. */
+const MAX_SEED_ROWS = 10
+
+/**
+ * Cuántas filas sembrar: tantas como ejemplos aporte el campo más surtido
+ * (los declara quien conoce el negocio, vía el chat del estudio), con un tope.
+ * Sin ejemplos se mantienen las dos de siempre.
+ */
+function seedRowNumbers(definition: ResourceDefinition): number[] {
+  const richest = Math.max(
+    0,
+    ...Object.values(definition.fields).map(field => field.samples?.length ?? 0)
+  )
+  const rows = Math.min(Math.max(richest, 2), MAX_SEED_ROWS)
+  return Array.from({ length: rows }, (_, index) => index + 1)
 }
 
 function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number): string[] {
