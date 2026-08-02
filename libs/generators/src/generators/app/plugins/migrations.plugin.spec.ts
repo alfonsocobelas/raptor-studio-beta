@@ -73,4 +73,18 @@ describe('migrationsPlugin.apply', () => {
       expect.arrayContaining(['migration:generate', 'migration:run', 'migration:revert'])
     )
   })
+
+  it('the attachments table hangs off its record with a cascading foreign key (spec 16)', () => {
+    migrationsPlugin.apply?.(tree, {
+      ...contextFor(tree),
+      models: [{ ...supplier, attachments: true, detail: {} } as typeof supplier]
+    })
+
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+
+    expect(migration).toContain('supplier_id UUID         NOT NULL')
+    expect(migration).toContain('CONSTRAINT fk_suppliers_attachments_supplier')
+    expect(migration).toContain('ON DELETE CASCADE')
+    expect(migration).toContain('idx_suppliers_attachments_supplier_id')
+  })
 })

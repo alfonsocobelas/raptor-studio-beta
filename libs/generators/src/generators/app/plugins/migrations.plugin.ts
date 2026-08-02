@@ -135,16 +135,26 @@ ${rendered}
 /** Tabla de adjuntos (spec 14): metadatos del fichero; el binario vive en FileStoragePort. */
 function renderAttachmentsTable(model: ResourceDefinition): string {
   const table = `${model.schemaName}.${model.plural}_attachments`
+  const owner = `${snake(model.name)}_id`
+  // Los adjuntos son del registro: FK con borrado en cascada, para que borrar el
+  // registro no deje metadatos huérfanos apuntando a blobs que ya nadie reclama.
   return `    await queryRunner.query(\`
       CREATE TABLE ${table} (
         id          UUID         NOT NULL,
+        ${owner} UUID         NOT NULL,
         file_name   VARCHAR(255) NOT NULL,
         mime_type   VARCHAR(128) NOT NULL,
         size_bytes  INT          NOT NULL,
         storage_key UUID         NOT NULL,
         uploaded_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
-        CONSTRAINT pk_${model.plural}_attachments PRIMARY KEY (id)
+        CONSTRAINT pk_${model.plural}_attachments PRIMARY KEY (id),
+        CONSTRAINT fk_${model.plural}_attachments_${snake(model.name)} FOREIGN KEY (${owner})
+          REFERENCES ${model.schemaName}.${model.plural} (id) ON DELETE CASCADE
       )
+    \`)
+
+    await queryRunner.query(\`
+      CREATE INDEX idx_${model.plural}_attachments_${owner} ON ${table} (${owner})
     \`)
 
     await queryRunner.query(\`

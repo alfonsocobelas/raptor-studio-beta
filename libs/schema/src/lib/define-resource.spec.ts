@@ -196,6 +196,10 @@ describe('detail — la ficha del registro (spec 16)', () => {
     )
   })
 
+  it('rechaza adjuntos sin ficha: los ficheros son de un registro y se ven en su ficha', () => {
+    expect(() => defineResource({ ...validDefinition(), attachments: true })).toThrow(/attachments.*detail/i)
+  })
+
   it('rechaza la ficha si el listado no ofrece la acción de ver: sería inalcanzable', () => {
     expect(() =>
       defineResource({

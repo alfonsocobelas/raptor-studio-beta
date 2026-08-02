@@ -36,12 +36,12 @@ export class <%= className %>AttachmentsService {
     private readonly fileStorage: FileStoragePort
   ) {}
 
-  async list(): Promise<<%= className %>AttachmentDto[]> {
-    const rows = await this.repository.find({ order: { uploadedAt: 'DESC' } })
+  async list(<%= propertyName %>Id: string): Promise<<%= className %>AttachmentDto[]> {
+    const rows = await this.repository.find({ where: { <%= propertyName %>Id }, order: { uploadedAt: 'DESC' } })
     return rows.map(row => this.toDto(row))
   }
 
-  async upload(file: Uploaded<%= className %>File): Promise<<%= className %>AttachmentDto> {
+  async upload(<%= propertyName %>Id: string, file: Uploaded<%= className %>File): Promise<<%= className %>AttachmentDto> {
     if (file.sizeBytes > MAX_ATTACHMENT_SIZE_BYTES) {
       throw new BadRequestException(`El fichero supera el máximo de ${MAX_ATTACHMENT_SIZE_BYTES} bytes`)
     }
@@ -58,6 +58,7 @@ export class <%= className %>AttachmentsService {
       const row = await this.repository.save(
         this.repository.create({
           id: uuidv7(),
+          <%= propertyName %>Id,
           fileName: file.originalName,
           mimeType: file.mimeType,
           sizeBytes: file.sizeBytes,
@@ -71,19 +72,21 @@ export class <%= className %>AttachmentsService {
     }
   }
 
-  async download(id: string): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
-    const row = await this.findOrThrow(id)
+  async download(<%= propertyName %>Id: string, id: string): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
+    const row = await this.findOrThrow(<%= propertyName %>Id, id)
     return { buffer: await this.fileStorage.download(row.storageKey), fileName: row.fileName, mimeType: row.mimeType }
   }
 
-  async remove(id: string): Promise<void> {
-    const row = await this.findOrThrow(id)
+  async remove(<%= propertyName %>Id: string, id: string): Promise<void> {
+    const row = await this.findOrThrow(<%= propertyName %>Id, id)
     await this.repository.delete({ id })
     await this.fileStorage.delete(row.storageKey).catch(() => undefined)
   }
 
-  private async findOrThrow(id: string): Promise<TypeOrm<%= className %>AttachmentEntity> {
-    const row = await this.repository.findOne({ where: { id } })
+  // El id del registro entra en el WHERE: pedir el adjunto de otro registro es un 404,
+  // no una fuga.
+  private async findOrThrow(<%= propertyName %>Id: string, id: string): Promise<TypeOrm<%= className %>AttachmentEntity> {
+    const row = await this.repository.findOne({ where: { id, <%= propertyName %>Id } })
     if (!row) {
       throw new NotFoundException(`Adjunto ${id} no encontrado`)
     }

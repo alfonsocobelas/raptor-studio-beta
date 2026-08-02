@@ -36,13 +36,10 @@ import { downloadBlob } from '../../../../../../shared/utils/download-file'
 <%_ if (features.edit) { _%>
 import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%- fileName %>-dialog.component'
 <%_ } _%>
-<%_ if (attachments) { _%>
-import { <%- className %>AttachmentsComponent } from './<%- fileName %>-attachments.component'
-<%_ } _%>
 
 @Component({
   selector: 'app-<%- plural %>-list',
-  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
+  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %>],
   providers: [provideIcons({ <%- icons.join(', ') %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -91,10 +88,6 @@ import { <%- className %>AttachmentsComponent } from './<%- fileName %>-attachme
           (exportRequested)="onExport($event)"
         />
       }
-<%_ if (attachments) { _%>
-
-      <app-<%- plural %>-attachments />
-<%_ } _%>
     </div>
 <%_ if (features.edit) { _%>
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
@@ -51,14 +51,21 @@ interface AttachmentDto {
 })
 export class <%= className %>AttachmentsComponent {
   private readonly http = inject(HttpClient)
-  private readonly endpoint = '<%= api %>/attachments'
+  /** Registro dueño de los ficheros: los adjuntos cuelgan del registro, no del recurso. */
+  readonly <%= propertyName %>Id = input.required<string>()
+
+  private readonly endpoint = computed(() => `<%= api %>/${this.<%= propertyName %>Id()}/attachments`)
 
   protected readonly files = signal<AttachmentDto[]>([])
   protected readonly dragging = signal(false)
   protected readonly error = signal<string | null>(null)
 
   constructor() {
-    void this.reload()
+    // recarga al cambiar de registro: el input no existe aún en el constructor
+    effect(() => {
+      this.<%= propertyName %>Id()
+      void this.reload()
+    })
   }
 
   protected onDragOver(event: DragEvent): void {
@@ -80,13 +87,13 @@ export class <%= className %>AttachmentsComponent {
 
   protected async download(file: AttachmentDto): Promise<void> {
     const blob = await firstValueFrom(
-      this.http.get(`${this.endpoint}/${file.id}/download`, { responseType: 'blob' })
+      this.http.get(`${this.endpoint()}/${file.id}/download`, { responseType: 'blob' })
     )
     downloadBlob(blob, file.fileName)
   }
 
   protected async remove(file: AttachmentDto): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.endpoint}/${file.id}`))
+    await firstValueFrom(this.http.delete<void>(`${this.endpoint()}/${file.id}`))
     await this.reload()
   }
 
@@ -99,7 +106,7 @@ export class <%= className %>AttachmentsComponent {
     const body = new FormData()
     body.append('file', file)
     try {
-      await firstValueFrom(this.http.post<AttachmentDto>(this.endpoint, body))
+      await firstValueFrom(this.http.post<AttachmentDto>(this.endpoint(), body))
       await this.reload()
     } catch {
       this.error.set('No se pudo subir el fichero (tipo no permitido o demasiado grande).')
@@ -107,6 +114,6 @@ export class <%= className %>AttachmentsComponent {
   }
 
   private async reload(): Promise<void> {
-    this.files.set(await firstValueFrom(this.http.get<AttachmentDto[]>(this.endpoint)))
+    this.files.set(await firstValueFrom(this.http.get<AttachmentDto[]>(this.endpoint())))
   }
 }

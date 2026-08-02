@@ -6,6 +6,11 @@ export class TypeOrm<%= className %>AttachmentEntity {
   @PrimaryColumn({ type: 'uuid' })
   id!: string
 
+  /** Registro al que pertenece el adjunto: los ficheros son DEL registro, no del recurso. */
+  @Index()
+  @Column({ name: '<%= propertyName %>_id', type: 'uuid' })
+  <%= propertyName %>Id!: string
+
   @Index()
   @Column({ name: 'file_name', type: 'varchar', length: 255 })
   fileName!: string

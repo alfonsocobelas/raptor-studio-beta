@@ -11,7 +11,7 @@ import type { ResourceDefinition } from '@acc/schema'
  */
 describe('resource generator — adjuntos', () => {
   const withAttachments = (): ResourceDefinition =>
-    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true }) as ResourceDefinition
+    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
 
   const generate = async (model: ResourceDefinition): Promise<Tree> => {
     registerModels([model])
@@ -33,7 +33,7 @@ describe('resource generator — adjuntos', () => {
     const tree = await generate(withAttachments())
     const controller = tree.read('out/backend/infrastructure/attachments/invoice-attachments.controller.ts', 'utf-8')
 
-    expect(controller).toContain("@Controller('invoices/attachments')")
+    expect(controller).toContain("@Controller('invoices/:invoiceId/attachments')")
     expect(controller).toContain('@UseInterceptors(FileInterceptor')
     expect(controller).toContain("@Get(':id/download')")
     expect(controller).toContain('@Delete')
@@ -85,7 +85,7 @@ describe('resource generator — adjuntos', () => {
 
 describe('adjuntos — persistencia y migración', () => {
   const invoice = () =>
-    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true }) as ResourceDefinition
+    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
 
   it('el DataSource del kernel registra la entidad de adjuntos', async () => {
     registerModels([invoice()])
@@ -128,5 +128,52 @@ describe('adjuntos — persistencia y migración', () => {
     const resourceAt = dropLines.findIndex(line => line.includes('invoices') && !line.includes('attachments'))
     expect(attachmentsAt).toBeGreaterThanOrEqual(0)
     expect(attachmentsAt).toBeLessThan(resourceAt)
+  })
+})
+
+/**
+ * Spec 16 · TASK-04: los adjuntos cuelgan del REGISTRO, no del recurso. Las
+ * radiografías son de un paciente concreto, no de «pacientes».
+ */
+describe('resource generator — adjuntos por registro', () => {
+  const withAttachments = (): ResourceDefinition =>
+    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
+
+  const generate = async (): Promise<Tree> => {
+    registerModels([withAttachments()])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'invoice', directory: 'out' })
+    return tree
+  }
+
+  it('la entidad guarda a qué registro pertenece el adjunto', async () => {
+    const tree = await generate()
+    const entity = tree.read('out/backend/infrastructure/attachments/invoice-attachment.entity.ts', 'utf-8')
+
+    expect(entity).toContain("name: 'invoice_id'")
+    expect(entity).toContain('invoiceId!: string')
+  })
+
+  it('las rutas cuelgan del registro', async () => {
+    const tree = await generate()
+    const controller = tree.read('out/backend/infrastructure/attachments/invoice-attachments.controller.ts', 'utf-8')
+
+    expect(controller).toContain("@Controller('invoices/:invoiceId/attachments')")
+    expect(controller).toContain("@Param('invoiceId', ParseUUIDv7Pipe)")
+  })
+
+  it('el servicio filtra y sella por registro', async () => {
+    const tree = await generate()
+    const service = tree.read('out/backend/infrastructure/attachments/invoice-attachments.service.ts', 'utf-8')
+
+    expect(service).toContain('invoiceId')
+    expect(service).toContain('where: { invoiceId }')
+  })
+
+  it('el componente recibe el registro al que pertenece', async () => {
+    const tree = await generate()
+    const component = tree.read('out/frontend/invoice-attachments.component.ts', 'utf-8')
+
+    expect(component).toContain('invoiceId = input.required<string>()')
   })
 })

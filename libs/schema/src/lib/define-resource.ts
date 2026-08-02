@@ -45,7 +45,10 @@ function validateFields(definition: ResourceDefinition): string[] {
  */
 function validateDetail(definition: ResourceDefinition): string[] {
   const { detail } = definition
-  if (!detail) return []
+  if (!detail) {
+    // los adjuntos cuelgan de un registro y solo se ven en su ficha (spec 16)
+    return definition.attachments ? ['attachments: requires detail (files belong to a record, shown in its detail)'] : []
+  }
 
   const problems: string[] = []
 
