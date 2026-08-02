@@ -120,3 +120,9 @@ el starter original las tenía cerradas pero no llegó a este repo.
 10. **Tema del estudio no se persiste** entre recargas (el de la app generada
     sí, vía localStorage en ThemeService).
 
+11. **Booleanos en la tabla emitida se ven como `true`/`false`** (visto en la
+    clínica generada). La ficha ya los formatea como Sí/No; la columna del
+    listado debería hacer lo mismo — es el mismo formateo, en dos sitios.
+12. **La app generada no persiste la paleta por usuario**: el tema claro/oscuro
+    sí (localStorage), el color es fijo. Correcto por ahora (es identidad de
+    cliente, no preferencia), pero anotado por si algún cliente lo pide.
