@@ -6,7 +6,12 @@ const SNAKE_CASE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/
 
 // Structural validation only (v1): rules grow with the templates, never ahead of them.
 export function defineResource(definition: ResourceDefinition): ResourceDefinition {
-  const problems = [...validateIdentity(definition), ...validateFields(definition), ...validateDetail(definition)]
+  const problems = [
+    ...validateIdentity(definition),
+    ...validateFields(definition),
+    ...validateDetail(definition),
+    ...validateGallery(definition)
+  ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
 
@@ -60,6 +65,17 @@ function validateDetail(definition: ResourceDefinition): string[] {
   }
 
   return problems
+}
+
+/** La galería también se deriva de los campos: si se fija uno, debe existir (spec 17). */
+function validateGallery(definition: ResourceDefinition): string[] {
+  const { gallery } = definition
+  if (!gallery) return []
+
+  return [gallery.title, gallery.subtitle, gallery.metric]
+    .filter((name): name is string => name !== undefined)
+    .filter(name => !definition.fields[name])
+    .map(name => `gallery: unknown field '${name}'`)
 }
 
 function validateField(name: string, field: FieldDefinition): string[] {

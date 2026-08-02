@@ -219,6 +219,19 @@ export interface RelationDefinition {
  * emita el componente de detalle y su ruta `<ruta>/:id`; todo lo demás se
  * deriva de los campos, así que los ajustes son opcionales.
  */
+/**
+ * Galería de tarjetas (spec 17). Como la ficha, su PRESENCIA es lo que la emite;
+ * título, subtítulo y métrica se derivan de los campos salvo que se fijen aquí.
+ */
+export interface GalleryDefinition {
+  /** Campo que titula la tarjeta; por defecto, el primer campo de texto buscable */
+  title?: string
+  /** Campo del subtítulo; por defecto, el segundo campo de texto */
+  subtitle?: string
+  /** Campo numérico destacado en la tarjeta */
+  metric?: string
+}
+
 export interface DetailDefinition {
   /** Campo cuyo valor titula la ficha; por defecto, el primer campo de texto buscable */
   title?: string
@@ -302,4 +315,6 @@ export interface ResourceDefinition {
   list?: ListDefinition
   relations?: Record<string, RelationDefinition>
   detail?: DetailDefinition
+  /** Galería de tarjetas sobre el mismo listado (spec 17) */
+  gallery?: GalleryDefinition
 }

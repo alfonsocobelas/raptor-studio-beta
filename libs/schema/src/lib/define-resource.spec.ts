@@ -210,3 +210,23 @@ describe('detail — la ficha del registro (spec 16)', () => {
     ).toThrow(/detail.*view/i)
   })
 })
+
+describe('gallery — tarjetas en vez de tabla (spec 17)', () => {
+  it('acepta un recurso que declara galería (todo se deriva de los campos)', () => {
+    const model = defineResource({ ...validDefinition(), gallery: {} })
+
+    expect(model.gallery).toEqual({})
+  })
+
+  it('rechaza una galería cuyo título apunta a un campo inexistente', () => {
+    expect(() => defineResource({ ...validDefinition(), gallery: { title: 'fantasma' } })).toThrow(
+      /gallery.*fantasma/i
+    )
+  })
+
+  it('rechaza una galería cuya métrica apunta a un campo inexistente', () => {
+    expect(() => defineResource({ ...validDefinition(), gallery: { metric: 'fantasma' } })).toThrow(
+      /gallery.*fantasma/i
+    )
+  })
+})
