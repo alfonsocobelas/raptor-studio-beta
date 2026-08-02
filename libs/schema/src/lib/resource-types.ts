@@ -223,6 +223,18 @@ export interface RelationDefinition {
  * Galería de tarjetas (spec 17). Como la ficha, su PRESENCIA es lo que la emite;
  * título, subtítulo y métrica se derivan de los campos salvo que se fijen aquí.
  */
+/**
+ * Código de negocio autogenerado (spec 19): `PAC-0001`. Lo asigna SIEMPRE el
+ * backend desde una secuencia de Postgres; ni el cliente lo propone ni el
+ * formulario lo edita. Su presencia es lo que hace que se emita.
+ */
+export interface CodeDefinition {
+  /** Prefijo corto en mayúsculas; por defecto, las tres primeras letras de la entidad */
+  prefix?: string
+  /** Dígitos del contador (por defecto 4: PAC-0001) */
+  padding?: number
+}
+
 export interface GalleryDefinition {
   /** Campo que titula la tarjeta; por defecto, el primer campo de texto buscable */
   title?: string
@@ -317,4 +329,6 @@ export interface ResourceDefinition {
   detail?: DetailDefinition
   /** Galería de tarjetas sobre el mismo listado (spec 17) */
   gallery?: GalleryDefinition
+  /** Código de negocio autogenerado y legible (spec 19) */
+  code?: CodeDefinition
 }

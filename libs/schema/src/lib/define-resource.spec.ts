@@ -230,3 +230,31 @@ describe('gallery — tarjetas en vez de tabla (spec 17)', () => {
     )
   })
 })
+
+describe('code — código de negocio autogenerado (spec 19)', () => {
+  it('acepta un recurso que declara código, con prefijo derivado', () => {
+    expect(defineResource({ ...validDefinition(), code: {} }).code).toEqual({})
+  })
+
+  it('acepta prefijo y relleno explícitos', () => {
+    const model = defineResource({ ...validDefinition(), code: { prefix: 'EXP', padding: 6 } })
+
+    expect(model.code).toEqual({ prefix: 'EXP', padding: 6 })
+  })
+
+  it('rechaza un prefijo que no sea corto y en mayúsculas: es un código, no una frase', () => {
+    expect(() => defineResource({ ...validDefinition(), code: { prefix: 'expediente' } })).toThrow(/code.*prefix/i)
+  })
+
+  it('rechaza un relleno absurdo', () => {
+    expect(() => defineResource({ ...validDefinition(), code: { padding: 0 } })).toThrow(/code.*padding/i)
+    expect(() => defineResource({ ...validDefinition(), code: { padding: 12 } })).toThrow(/code.*padding/i)
+  })
+
+  it('rechaza declarar código si ya hay un campo llamado code', () => {
+    const definition = validDefinition()
+    definition.fields['code'] = { type: 'string' }
+
+    expect(() => defineResource({ ...definition, code: {} })).toThrow(/code.*already|ya existe/i)
+  })
+})

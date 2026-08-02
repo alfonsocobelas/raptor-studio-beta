@@ -10,7 +10,8 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateIdentity(definition),
     ...validateFields(definition),
     ...validateDetail(definition),
-    ...validateGallery(definition)
+    ...validateGallery(definition),
+    ...validateCode(definition)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -76,6 +77,28 @@ function validateGallery(definition: ResourceDefinition): string[] {
     .filter((name): name is string => name !== undefined)
     .filter(name => !definition.fields[name])
     .map(name => `gallery: unknown field '${name}'`)
+}
+
+const CODE_PREFIX = /^[A-Z][A-Z0-9]{1,5}$/
+
+/** El código es corto y legible: un prefijo largo o un relleno absurdo no lo son (spec 19). */
+function validateCode(definition: ResourceDefinition): string[] {
+  const { code } = definition
+  if (!code) return []
+
+  const problems: string[] = []
+
+  if (code.prefix !== undefined && !CODE_PREFIX.test(code.prefix)) {
+    problems.push(`code.prefix: must be 2-6 uppercase characters (got '${code.prefix}')`)
+  }
+  if (code.padding !== undefined && (code.padding < 2 || code.padding > 10)) {
+    problems.push(`code.padding: must be between 2 and 10 (got ${code.padding})`)
+  }
+  if (definition.fields['code']) {
+    problems.push("code: the resource already declares a 'code' field")
+  }
+
+  return problems
 }
 
 function validateField(name: string, field: FieldDefinition): string[] {
