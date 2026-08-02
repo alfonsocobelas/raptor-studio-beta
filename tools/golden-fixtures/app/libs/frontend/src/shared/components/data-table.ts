@@ -53,7 +53,7 @@ export interface ColumnDef {
   sortable?: boolean
   filterable?: boolean
   // 'badges': el valor de la celda es un ARRAY y se pinta un badge por elemento (spec 39)
-  type?: 'text' | 'number' | 'date' | 'badge' | 'badges'
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'badges'
   badgeMap?: Record<string, { label: string; variant: string }>
   // Etiqueta de presentación por valor para celdas de texto (ej. 'yearly' → 'Anual'); fallback al valor crudo
   valueMap?: Record<string, string>
@@ -528,6 +528,8 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
         }
       } @else if (col.type === 'date') {
         {{ formatDateCell(getCellValue(row, col.key)) }}
+      } @else if (col.type === 'boolean') {
+        {{ formatBooleanCell(row[col.key]) }}
       } @else if (col.type === 'badges' && col.badgeMap) {
         @if (getBadgeValues(row, col).length) {
           <span class="flex flex-wrap gap-1">
@@ -885,6 +887,14 @@ export class DataTable implements OnDestroy {
   }
 
   private readonly locale = inject(LOCALE_ID)
+
+  /** Celdas 'boolean': un listado dice Sí/No, igual que la ficha — nunca true/false. */
+  protected formatBooleanCell(value: unknown): string {
+    if (value === null || value === undefined || value === '') {
+      return '—'
+    }
+    return value ? 'Sí' : 'No'
+  }
 
   // Celdas 'date' (spec 40): ISO → dd-MM-yyyy con el locale de la app; vacío/nulo → guion (contrato abierto)
   formatDateCell(value: string): string {

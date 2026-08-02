@@ -294,12 +294,7 @@ export function buildSubstitutions(definition: ResourceDefinition, others: Resou
     route: definition.route ?? `/${definition.context}/${definition.plural}`,
     sharedDomainAlias: definition.sharedDomainAlias ?? '@acc/shared/domain',
     ui: renderUiStrings(definition),
-    frontendColumns: [
-      ...fields.filter(([, f]) => f.table?.show).map(([name, f]) => [name, f.table as FieldTable] as const),
-      ...Object.entries(definition.list?.virtualColumns ?? {})
-    ]
-      .sort(([, a], [, b]) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
-      .map(([name, table]) => renderFrontendColumn(name, table)),
+    frontendColumns: renderFrontendColumns(definition),
     valueMapImports: [
       ...new Set(fields.map(([, f]) => f.table?.valueMapConst).filter((c): c is string => c !== undefined))
     ],
@@ -862,11 +857,31 @@ function detailValueType(field: FieldDefinition | undefined): string | null {
   return null
 }
 
+/** Columnas del listado, ya ordenadas y renderizadas (regla 8). */
+export function renderFrontendColumns(definition: ResourceDefinition): string[] {
+  const fields = Object.entries(definition.fields)
+
+  return [
+    ...fields.filter(([, f]) => f.table?.show).map(([name, f]) => [name, f.table as FieldTable, f] as const),
+    ...Object.entries(definition.list?.virtualColumns ?? {}).map(([name, table]) => [name, table, undefined] as const)
+  ]
+    .sort(([, a], [, b]) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
+    .map(([name, table, field]) =>
+      renderFrontendColumn(name, {
+        // un booleano se lee Sí/No, igual que en la ficha (defecto 17)
+        ...(field?.type === 'boolean' && !table.type ? { type: 'boolean' as const } : {}),
+        ...table
+      })
+    )
+}
+
 function renderFrontendColumn(name: string, table: FieldTable): string {
   const parts = [`key: '${name}'`, `label: '${table.label}'`]
   if (table.filterable) parts.push('filterable: true')
   if (table.sortable === false) parts.push('sortable: false')
-  if (table.type === 'date' || table.type === 'number') parts.push(`type: '${table.type}'`)
+  if (table.type === 'date' || table.type === 'number' || table.type === 'boolean') {
+    parts.push(`type: '${table.type}'`)
+  }
   if (table.minWidth !== undefined) parts.push(`minWidth: ${table.minWidth}`)
   if (table.valueMapConst) parts.push(`valueMap: ${table.valueMapConst}`)
   if (table.type === 'badge' && table.badgeMap) {

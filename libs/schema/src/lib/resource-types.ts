@@ -79,7 +79,7 @@ export interface FieldTable {
   /** UI truth of the DataTable (independent of backend query flags, as in the golden modules) */
   filterable?: boolean
   sortable?: false
-  type?: 'badge' | 'date' | 'number'
+  type?: 'badge' | 'date' | 'number' | 'boolean'
   badgeMap?: Record<string, BadgeEntry>
   /** Name of a labels const (from <name>-labels.ts) rendered as valueMap */
   valueMapConst?: string

@@ -35,7 +35,7 @@ export interface ColumnDef {
   sortField?: string
   sortable?: boolean
   filterable?: boolean
-  type?: 'text' | 'number' | 'date' | 'badge' | 'badges'
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'badges'
   badgeMap?: Record<string, { label: string; variant: string }>
   valueMap?: Record<string, string>
   minWidth?: number
@@ -396,6 +396,10 @@ export class DataTable implements OnDestroy {
     }
     if (column.type === 'date') {
       return formatDate(String(value), 'dd/MM/yyyy', this._locale)
+    }
+    // Un listado dice Sí/No, igual que la ficha — nunca true/false (defecto 17)
+    if (column.type === 'boolean') {
+      return value ? 'Sí' : 'No'
     }
     if (column.valueMap) {
       return column.valueMap[String(value)] ?? String(value)
