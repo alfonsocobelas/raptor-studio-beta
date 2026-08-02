@@ -73,6 +73,18 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain('Editar')
   })
 
+  it('invoca el componente de adjuntos con SU selector real (plural) y le pasa el registro', async () => {
+    registerModels([{ ...withDetail(), attachments: true } as ResourceDefinition])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'invoice', directory: 'out' })
+    const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
+    const component = tree.read('out/frontend/invoice-attachments.component.ts', 'utf-8') ?? ''
+
+    const selector = component.match(/selector: '([^']+)'/)?.[1]
+    expect(selector).toBe('app-invoices-attachments')
+    expect(detail).toContain(`<${selector} [invoiceId]=`)
+  })
+
   it('deja un hueco de IA para lo que la ficha no puede derivar', async () => {
     const tree = await generate(withDetail())
     const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8')

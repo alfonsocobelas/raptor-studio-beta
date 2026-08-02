@@ -92,7 +92,7 @@ interface DetailRow {
         </dl>
 <%_ if (attachments) { _%>
 
-        <app-<%- fileName %>-attachments [<%- propertyName %>Id]="item.id" />
+        <app-<%- plural %>-attachments [<%- propertyName %>Id]="item.id" />
 <%_ } _%>
       }
     </div>

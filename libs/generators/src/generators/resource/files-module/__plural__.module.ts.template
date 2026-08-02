@@ -13,7 +13,7 @@ import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/
 import { TypeOrm<%- className %>Repository } from './infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
 <%_ if (attachments) { _%>
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { StorageModule } from '../../shared/infrastructure/storage/storage.module'
+import { StorageModule } from '../../../shared/infrastructure/storage/storage.module'
 import { TypeOrm<%- className %>AttachmentEntity } from './infrastructure/attachments/<%- fileName %>-attachment.entity'
 import { <%- className %>AttachmentsController } from './infrastructure/attachments/<%- fileName %>-attachments.controller'
 import { <%- className %>AttachmentsService } from './infrastructure/attachments/<%- fileName %>-attachments.service'

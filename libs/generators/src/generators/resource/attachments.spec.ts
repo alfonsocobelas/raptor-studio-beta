@@ -146,6 +146,14 @@ describe('resource generator — adjuntos por registro', () => {
     return tree
   }
 
+  it('el módulo importa StorageModule con la profundidad real del árbol emitido', async () => {
+    const tree = await generate()
+    const module = tree.read('out/backend/invoices.module.ts', 'utf-8')
+
+    // contexts/<ctx>/modules/<plural>/ → shared vive tres niveles arriba
+    expect(module).toContain("from '../../../shared/infrastructure/storage/storage.module'")
+  })
+
   it('la entidad guarda a qué registro pertenece el adjunto', async () => {
     const tree = await generate()
     const entity = tree.read('out/backend/infrastructure/attachments/invoice-attachment.entity.ts', 'utf-8')
