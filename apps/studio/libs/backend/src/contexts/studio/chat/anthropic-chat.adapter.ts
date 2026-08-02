@@ -62,12 +62,18 @@ const SYSTEM_PROMPT = [
   '(nombres de producto reales, precios con céntimos, ciudades, referencias tipo XXX-1041,',
   'fechas dd/mm/aaaa, booleanos como Sí/No) — son el mockup que ve el usuario.',
   '',
+  'RELACIONES: declara las que se deducen de la petición, no las omitas. Si una cita es',
+  'de un paciente, cita lleva {name:"paciente", label:"Paciente", type:"ref", refTo:"paciente"}',
+  'y sus samples son nombres del padre (los mismos que declaraste en esa entidad). refTo',
+  'debe nombrar una entidad de resources, nunca la propia. Sin relaciones la app son tablas',
+  'sueltas: un pedido SIN cliente o una cita SIN paciente están mal diseñados.',
+  '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
   'reply es una frase breve en español explicando qué cambiaste.'
 ].join('\n')
 
-const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date']
+const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref']
 
 const RESPONSE_SCHEMA: Record<string, unknown> = {
   type: 'object',
@@ -96,7 +102,8 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
                     name: { type: 'string' },
                     label: { type: 'string' },
                     type: { type: 'string', enum: FIELD_TYPES },
-                    samples: { type: 'array', items: { type: 'string' } }
+                    samples: { type: 'array', items: { type: 'string' } },
+                    refTo: { type: 'string' }
                   },
                   required: ['name', 'label', 'type', 'samples'],
                   additionalProperties: false

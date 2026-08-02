@@ -33,9 +33,13 @@ const EMPRESAS = [
   'Naturalia Trade'
 ]
 
-export function buildSampleRows(draft: DraftResource, count: number): Record<string, unknown>[] {
+export function buildSampleRows(
+  draft: DraftResource,
+  count: number,
+  others: DraftResource[] = []
+): Record<string, unknown>[] {
   return Array.from({ length: count }, (_, i) =>
-    Object.fromEntries(draft.fields.map(field => [field.name, sampleValue(field, i, draft)]))
+    Object.fromEntries(draft.fields.map(field => [field.name, sampleValue(field, i, draft, others)]))
   )
 }
 
@@ -44,8 +48,17 @@ export function mockTotal(index: number): number {
   return [124, 87, 53, 205, 68][index % 5]
 }
 
-function sampleValue(field: DraftField, i: number, draft: DraftResource): unknown {
+function sampleValue(field: DraftField, i: number, draft: DraftResource, others: DraftResource[] = []): unknown {
   if (field.samples?.length) return field.samples[i % field.samples.length]
+
+  // Una referencia se ve como el NOMBRE del padre: es lo que mostrará la tabla
+  // emitida (el uuid queda oculto en el campo id).
+  if (field.type === 'ref') {
+    const parent = others.find(o => o.name === field.refTo)
+    const names = parent?.fields.find(f => f.type === 'string')?.samples
+    if (names?.length) return names[i % names.length]
+    return `${field.label} ${i + 1}`
+  }
 
   const key = normalize(`${field.name} ${field.label}`)
   switch (field.type) {

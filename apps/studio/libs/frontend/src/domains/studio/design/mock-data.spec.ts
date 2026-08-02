@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DraftResource } from '@app/shared/domain'
+import { newDraftResource, type DraftResource } from '@app/shared/domain'
 import { buildSampleRows } from './mock-data'
 
 const fruta: DraftResource = {
@@ -45,5 +45,32 @@ describe('buildSampleRows — mockup con sentido', () => {
 
   it('es determinista', () => {
     expect(buildSampleRows(fruta, 5)).toEqual(buildSampleRows(fruta, 5))
+  })
+
+  it('una referencia enseña nombres del padre, no identificadores (spec 15)', () => {
+    const paciente: DraftResource = {
+      ...newDraftResource('Pacientes'),
+      fields: [{ name: 'nombre', label: 'Nombre', type: 'string', samples: ['Luna', 'Simba', 'Nala'] }]
+    }
+    const cita: DraftResource = {
+      ...newDraftResource('Citas'),
+      fields: [
+        { name: 'motivo', label: 'Motivo', type: 'string', samples: ['Vacuna'] },
+        { name: 'paciente', label: 'Paciente', type: 'ref', refTo: 'paciente' }
+      ]
+    }
+
+    const rows = buildSampleRows(cita, 3, [paciente])
+
+    expect(rows.map(r => r['paciente'])).toEqual(['Luna', 'Simba', 'Nala'])
+  })
+
+  it('sin conocer la entidad referenciada usa su etiqueta, nunca un uuid', () => {
+    const cita: DraftResource = {
+      ...newDraftResource('Citas'),
+      fields: [{ name: 'paciente', label: 'Paciente', type: 'ref', refTo: 'paciente' }]
+    }
+
+    expect(String(buildSampleRows(cita, 1)[0]['paciente'])).not.toMatch(/-/)
   })
 })

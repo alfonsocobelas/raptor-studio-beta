@@ -58,7 +58,7 @@ export class CanvasDetailComponent {
     const draft = this.store.resources().find(r => r.name === this.resource())
     if (!draft) return null
 
-    const [sample] = buildSampleRows(draft, 1)
+    const [sample] = buildSampleRows(draft, 1, this.store.resources())
     // el generador titula con el primer campo de texto y lo excluye de la rejilla
     const titleField = draft.fields.find(f => f.type === 'string')
     const title = String(sample[titleField?.name ?? ''] ?? draft.labelSingular)

@@ -110,9 +110,27 @@ const PAGE_SIZE = 5
                         data-testid="col-editor-type"
                       >
                         @for (type of types; track type) {
-                          <option [value]="type">{{ type }}</option>
+                          <option [value]="type">{{ typeLabels[type] }}</option>
                         }
                       </select>
+
+                      @if (field.type === 'ref') {
+                        <label class="text-muted-foreground mb-1 mt-2 block text-xs">Entidad referenciada</label>
+                        <select
+                          class="border-input w-full rounded border px-2 py-1 text-sm"
+                          [ngModel]="field.refTo ?? ''"
+                          (ngModelChange)="retarget($index, $event)"
+                          data-testid="col-editor-refto"
+                        >
+                          <option value="">Elegir entidad…</option>
+                          @for (other of otherResources(); track other.name) {
+                            <option [value]="other.name">{{ other.labelSingular }}</option>
+                          }
+                        </select>
+                        @if (!field.refTo) {
+                          <p class="text-destructive mt-1 text-xs">Una referencia sin destino no se genera.</p>
+                        }
+                      }
                       <div class="mt-2 flex justify-between">
                         <button type="button" class="text-destructive text-xs" (click)="removeColumn($event, $index)">
                           Borrar columna
@@ -190,6 +208,20 @@ export class CanvasTableComponent {
 
   protected readonly store = inject(DesignStore)
   protected readonly types = DRAFT_FIELD_TYPES
+  protected readonly typeLabels: Record<string, string> = {
+    string: 'texto',
+    text: 'texto largo',
+    number: 'número',
+    integer: 'entero',
+    boolean: 'sí/no',
+    date: 'fecha',
+    ref: 'referencia a…'
+  }
+
+  /** Candidatas a ser referenciadas: cualquier entidad menos la propia. */
+  protected readonly otherResources = computed(() =>
+    this.store.resources().filter(r => r.name !== this.resource())
+  )
   protected readonly pageSize = PAGE_SIZE
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
@@ -199,7 +231,7 @@ export class CanvasTableComponent {
   )
   protected readonly rows = computed(() => {
     const draft = this.draft()
-    return draft ? buildSampleRows(draft, PAGE_SIZE) : []
+    return draft ? buildSampleRows(draft, PAGE_SIZE, this.store.resources()) : []
   })
   protected readonly total = computed(() =>
     mockTotal(this.store.resources().findIndex(r => r.name === this.resource()))
@@ -226,6 +258,11 @@ export class CanvasTableComponent {
   protected retype(index: number, type: string): void {
     const draft = this.draft()
     if (draft) this.store.updateField(draft.name, index, { type: type as (typeof DRAFT_FIELD_TYPES)[number] })
+  }
+
+  protected retarget(index: number, refTo: string): void {
+    const draft = this.draft()
+    if (draft) this.store.updateField(draft.name, index, { refTo: refTo || undefined })
   }
 
   protected removeColumn(event: Event, index: number): void {

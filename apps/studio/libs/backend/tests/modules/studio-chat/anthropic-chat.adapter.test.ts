@@ -50,4 +50,32 @@ describe('AnthropicChatAdapter', () => {
 
     await expect(adapter.propose([{ role: 'user', text: 'x' }], design)).rejects.toThrow(/rechazad/i)
   })
+
+  it('el schema de salida admite referencias entre entidades (spec 15)', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const schema = JSON.stringify(createMock.mock.calls[0][0].output_config.format.schema)
+
+    expect(schema).toContain('"ref"')
+    expect(schema).toContain('refTo')
+  })
+
+  it('el prompt pide declarar las relaciones que se deducen de la petición', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const system = createMock.mock.calls[0][0].system as string
+
+    expect(system).toMatch(/relaci/i)
+    expect(system).toContain('refTo')
+  })
 })
