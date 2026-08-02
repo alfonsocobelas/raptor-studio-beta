@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms'
 import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
 import { PREVIEW_PALETTES, PreviewSettings } from './preview-settings'
+import { previewThemeVars } from './preview-theme'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
@@ -252,6 +253,7 @@ const BLOCK_TOOLS: BlockTool[] = [
             </div>
             <div
               class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
+              [style]="previewVars()"
               [attr.data-palette]="preview.palette()"
               [attr.data-skin]="preview.skin()"
               [class.dark]="preview.theme() === 'dark'"
@@ -340,80 +342,12 @@ const BLOCK_TOOLS: BlockTool[] = [
       background-position: -11px -11px;
     }
     /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
-       en oscuro, aquí se redefinen todos los tokens para que no se hereden. */
+       en oscuro, aquí se redefinen todos los tokens para que no se hereden. Los
+       valores los pone [style] desde el catálogo — los mismos que se emitirán. */
     .preview-scope {
-      --background: oklch(1 0 0);
-      --foreground: oklch(0.145 0 0);
-      --card: oklch(1 0 0);
-      --card-foreground: oklch(0.145 0 0);
-      --muted: oklch(0.97 0 0);
-      --muted-foreground: oklch(0.556 0 0);
-      --accent: oklch(0.97 0 0);
-      --accent-foreground: oklch(0.205 0 0);
-      --border: oklch(0.922 0 0);
-      --input: oklch(0.922 0 0);
-      --primary: oklch(0.25 0 0);
-      --primary-foreground: oklch(0.985 0 0);
-      --ring: oklch(0.7 0 0);
       --radius: 0.625rem;
       border-radius: var(--radius);
       color: var(--foreground);
-    }
-    .preview-scope.dark {
-      --background: oklch(0.145 0 0);
-      --foreground: oklch(0.985 0 0);
-      --card: oklch(0.205 0 0);
-      --card-foreground: oklch(0.985 0 0);
-      --muted: oklch(0.269 0 0);
-      --muted-foreground: oklch(0.708 0 0);
-      --accent: oklch(0.269 0 0);
-      --accent-foreground: oklch(0.985 0 0);
-      --border: oklch(1 0 0 / 12%);
-      --input: oklch(1 0 0 / 18%);
-      --primary: oklch(0.9 0 0);
-      --primary-foreground: oklch(0.2 0 0);
-    }
-    /* paletas: solo tiñen el color de acción, en claro y en oscuro */
-    .preview-scope[data-palette='hydrangea'] {
-      --primary: oklch(0.53 0.16 285);
-      --primary-foreground: oklch(0.99 0 0);
-      --ring: oklch(0.62 0.13 286);
-    }
-    .preview-scope[data-palette='ocean'] {
-      --primary: oklch(0.55 0.14 235);
-      --primary-foreground: oklch(0.99 0 0);
-      --ring: oklch(0.63 0.12 236);
-    }
-    .preview-scope[data-palette='forest'] {
-      --primary: oklch(0.52 0.13 155);
-      --primary-foreground: oklch(0.99 0 0);
-      --ring: oklch(0.6 0.11 156);
-    }
-    .preview-scope[data-palette='amber'] {
-      --primary: oklch(0.62 0.15 65);
-      --primary-foreground: oklch(0.2 0 0);
-      --ring: oklch(0.7 0.13 66);
-    }
-    .preview-scope[data-palette='rose'] {
-      --primary: oklch(0.56 0.17 15);
-      --primary-foreground: oklch(0.99 0 0);
-      --ring: oklch(0.64 0.15 16);
-    }
-    .preview-scope.dark[data-palette='hydrangea'] {
-      --primary: oklch(0.72 0.13 288);
-      --primary-foreground: oklch(0.17 0 0);
-    }
-    .preview-scope.dark[data-palette='ocean'] {
-      --primary: oklch(0.72 0.12 236);
-      --primary-foreground: oklch(0.17 0 0);
-    }
-    .preview-scope.dark[data-palette='forest'] {
-      --primary: oklch(0.7 0.11 156);
-      --primary-foreground: oklch(0.17 0 0);
-    }
-    .preview-scope.dark[data-palette='rose'] {
-      --primary: oklch(0.7 0.14 16);
-      --primary-foreground: oklch(0.17 0 0);
     }
     /* aproximación de piel: Material redondea más, sube el peso y usa mayúsculas */
     .preview-scope[data-skin='material'] {
@@ -448,6 +382,8 @@ export class StudioCanvasComponent {
   protected readonly store = inject(DesignStore)
   protected readonly preview = inject(PreviewSettings)
   protected readonly palettes = PREVIEW_PALETTES
+  /** Tokens del tema elegido: los mismos que emitirá el generador */
+  protected readonly previewVars = computed(() => previewThemeVars(this.preview.palette(), this.preview.theme()))
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 
