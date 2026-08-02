@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
+import { PREVIEW_PALETTES, PreviewSettings } from './preview-settings'
 import { DesignStore } from './design-store'
 import { CanvasPageComponent } from './canvas-page.component'
 import { InspectorComponent } from './inspector.component'
@@ -119,6 +120,51 @@ const BLOCK_TOOLS: BlockTool[] = [
         @if (store.lastError(); as error) {
           <span class="text-destructive max-w-80 truncate text-xs" data-testid="canvas-error">{{ error }}</span>
         }
+        <!-- ajustes de PREVISUALIZACIÓN de la app (no del estudio) -->
+        <div class="flex items-center gap-1 rounded-md border px-2 py-1" title="Vista previa de la app">
+          <span class="text-muted-foreground mr-1 text-[10px] uppercase tracking-wide">App</span>
+          @for (palette of palettes; track palette.id) {
+            <button
+              type="button"
+              class="h-4 w-4 rounded-full border transition-transform hover:scale-110"
+              [style.background]="palette.swatch"
+              [class.ring-2]="preview.palette() === palette.id"
+              [class.ring-offset-1]="preview.palette() === palette.id"
+              [attr.title]="palette.label"
+              [attr.data-testid]="'palette-' + palette.id"
+              (click)="preview.palette.set(palette.id)"
+            ></button>
+          }
+          <span class="bg-border mx-1 h-4 w-px"></span>
+          <button
+            type="button"
+            class="text-xs"
+            [attr.title]="'Tema de la app: ' + preview.theme()"
+            data-testid="preview-theme"
+            (click)="preview.toggleTheme()"
+          >
+            {{ preview.theme() === 'light' ? '☀️' : '🌙' }}
+          </button>
+          <span class="bg-border mx-1 h-4 w-px"></span>
+          <button
+            type="button"
+            class="text-[10px] font-medium uppercase"
+            title="Librería de componentes de la app"
+            data-testid="preview-skin"
+            (click)="preview.skin.set(preview.skin() === 'spartan' ? 'material' : 'spartan')"
+          >
+            {{ preview.skin() }}
+          </button>
+        </div>
+        <button
+          type="button"
+          class="toolbar-item"
+          [attr.title]="'Tema del estudio: ' + preview.studioTheme()"
+          data-testid="studio-theme"
+          (click)="preview.toggleStudioTheme()"
+        >
+          {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
+        </button>
         <button type="button" class="toolbar-item" data-testid="toggle-schema" (click)="showSchema.set(!showSchema())">
           {{ showSchema() ? 'Ocultar diseño' : 'Ver diseño' }}
         </button>
@@ -139,7 +185,13 @@ const BLOCK_TOOLS: BlockTool[] = [
               </p>
             </div>
           } @else {
-            <div class="bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden rounded-xl border shadow-xl ring-1 ring-black/5">
+            <div
+              class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
+              [attr.data-palette]="preview.palette()"
+              [attr.data-skin]="preview.skin()"
+              [class.dark]="preview.theme() === 'dark'"
+              data-testid="preview-scope"
+            >
               <aside class="bg-card flex w-56 shrink-0 flex-col border-r p-4" data-testid="mock-sidebar">
                 <div class="mb-6 flex items-center gap-2 px-1">
                   <div class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase">
@@ -210,6 +262,96 @@ const BLOCK_TOOLS: BlockTool[] = [
       background-size: 22px 22px;
       background-position: -11px -11px;
     }
+    /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
+       en oscuro, aquí se redefinen todos los tokens para que no se hereden. */
+    .preview-scope {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.145 0 0);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.145 0 0);
+      --muted: oklch(0.97 0 0);
+      --muted-foreground: oklch(0.556 0 0);
+      --accent: oklch(0.97 0 0);
+      --accent-foreground: oklch(0.205 0 0);
+      --border: oklch(0.922 0 0);
+      --input: oklch(0.922 0 0);
+      --primary: oklch(0.25 0 0);
+      --primary-foreground: oklch(0.985 0 0);
+      --ring: oklch(0.7 0 0);
+      --radius: 0.625rem;
+      border-radius: var(--radius);
+      color: var(--foreground);
+    }
+    .preview-scope.dark {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.205 0 0);
+      --card-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --accent: oklch(0.269 0 0);
+      --accent-foreground: oklch(0.985 0 0);
+      --border: oklch(1 0 0 / 12%);
+      --input: oklch(1 0 0 / 18%);
+      --primary: oklch(0.9 0 0);
+      --primary-foreground: oklch(0.2 0 0);
+    }
+    /* paletas: solo tiñen el color de acción, en claro y en oscuro */
+    .preview-scope[data-palette='hydrangea'] {
+      --primary: oklch(0.53 0.16 285);
+      --primary-foreground: oklch(0.99 0 0);
+      --ring: oklch(0.62 0.13 286);
+    }
+    .preview-scope[data-palette='ocean'] {
+      --primary: oklch(0.55 0.14 235);
+      --primary-foreground: oklch(0.99 0 0);
+      --ring: oklch(0.63 0.12 236);
+    }
+    .preview-scope[data-palette='forest'] {
+      --primary: oklch(0.52 0.13 155);
+      --primary-foreground: oklch(0.99 0 0);
+      --ring: oklch(0.6 0.11 156);
+    }
+    .preview-scope[data-palette='amber'] {
+      --primary: oklch(0.62 0.15 65);
+      --primary-foreground: oklch(0.2 0 0);
+      --ring: oklch(0.7 0.13 66);
+    }
+    .preview-scope[data-palette='rose'] {
+      --primary: oklch(0.56 0.17 15);
+      --primary-foreground: oklch(0.99 0 0);
+      --ring: oklch(0.64 0.15 16);
+    }
+    .preview-scope.dark[data-palette='hydrangea'] {
+      --primary: oklch(0.72 0.13 288);
+      --primary-foreground: oklch(0.17 0 0);
+    }
+    .preview-scope.dark[data-palette='ocean'] {
+      --primary: oklch(0.72 0.12 236);
+      --primary-foreground: oklch(0.17 0 0);
+    }
+    .preview-scope.dark[data-palette='forest'] {
+      --primary: oklch(0.7 0.11 156);
+      --primary-foreground: oklch(0.17 0 0);
+    }
+    .preview-scope.dark[data-palette='rose'] {
+      --primary: oklch(0.7 0.14 16);
+      --primary-foreground: oklch(0.17 0 0);
+    }
+    /* aproximación de piel: Material redondea más, sube el peso y usa mayúsculas */
+    .preview-scope[data-skin='material'] {
+      --radius: 1rem;
+    }
+    .preview-scope[data-skin='material'] .rounded-md,
+    .preview-scope[data-skin='material'] .rounded-lg,
+    .preview-scope[data-skin='material'] table {
+      border-radius: 0.9rem;
+    }
+    .preview-scope[data-skin='material'] button {
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-weight: 600;
+    }
     .toolbar-item {
       border: 1px solid hsl(var(--border));
       border-radius: 0.375rem;
@@ -227,6 +369,8 @@ const BLOCK_TOOLS: BlockTool[] = [
 })
 export class StudioCanvasComponent {
   protected readonly store = inject(DesignStore)
+  protected readonly preview = inject(PreviewSettings)
+  protected readonly palettes = PREVIEW_PALETTES
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 
