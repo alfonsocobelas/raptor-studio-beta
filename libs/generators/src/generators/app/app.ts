@@ -45,22 +45,6 @@ const SCOPE = '@app'
 const SHARED_DOMAIN_ALIAS = `${SCOPE}/shared/domain`
 
 /** Componentes Spartan que importan el kernel frontend y las features emitidas. */
-const SPARTAN_COMPONENTS = [
-  'alert-dialog',
-  'badge',
-  'button',
-  'card',
-  'checkbox',
-  'dialog',
-  'field',
-  'input',
-  'popover',
-  'select',
-  'separator',
-  'sonner',
-  'table',
-  'tooltip'
-]
 
 /**
  * Proyecto arrancable de una pieza. Compone el resto de generadores en la estructura
@@ -248,17 +232,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   //    descargan al crear la app en vez de vivir vendorizados en el acelerador)
   return () => {
     if (options.skipInstall) {
-      console.log(`\nPendiente: cd ${root} && npm install && npm run ui:add -- <componente>`)
+      console.log(`\nPendiente: cd ${root} && npm install`)
       return
     }
     const cwd = path.resolve(root)
+    // Los helm ya viajan vendorizados con el esqueleto (defecto 13): pedirlos al
+    // CLI de Spartan costaba 16 arranques de Nx y agotaba el tope del backend.
     run('npm install --no-audit --no-fund', cwd)
-    // los helm solo existen como fuente materializada; Material son paquetes npm normales
-    if (ui === 'spartan') {
-      for (const component of SPARTAN_COMPONENTS) {
-        run(`npx nx g @spartan-ng/cli:ui ${component} --no-interactive`, cwd)
-      }
-    }
     console.log(`\nListo: cd ${root} && make local-setup`)
   }
 }

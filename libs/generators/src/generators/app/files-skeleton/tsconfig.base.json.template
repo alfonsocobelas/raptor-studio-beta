@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2023", "DOM"],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
     "moduleResolution": "node",
     "module": "commonjs",
     "experimentalDecorators": true,
@@ -13,9 +16,63 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@app/shared/domain": ["libs/shared/domain/src/index.ts"],
-      "@app/backend/*": ["libs/backend/src/*"],
-      "@app/frontend/*": ["libs/frontend/src/*"]
+      "@app/shared/domain": [
+        "libs/shared/domain/src/index.ts"
+      ],
+      "@app/backend/*": [
+        "libs/backend/src/*"
+      ],
+      "@app/frontend/*": [
+        "libs/frontend/src/*"
+      ],
+      "@spartan-ng/helm/alert-dialog": [
+        "libs/ui/alert-dialog/src/index.ts"
+      ],
+      "@spartan-ng/helm/badge": [
+        "libs/ui/badge/src/index.ts"
+      ],
+      "@spartan-ng/helm/button": [
+        "libs/ui/button/src/index.ts"
+      ],
+      "@spartan-ng/helm/card": [
+        "libs/ui/card/src/index.ts"
+      ],
+      "@spartan-ng/helm/checkbox": [
+        "libs/ui/checkbox/src/index.ts"
+      ],
+      "@spartan-ng/helm/dialog": [
+        "libs/ui/dialog/src/index.ts"
+      ],
+      "@spartan-ng/helm/field": [
+        "libs/ui/field/src/index.ts"
+      ],
+      "@spartan-ng/helm/input": [
+        "libs/ui/input/src/index.ts"
+      ],
+      "@spartan-ng/helm/label": [
+        "libs/ui/label/src/index.ts"
+      ],
+      "@spartan-ng/helm/popover": [
+        "libs/ui/popover/src/index.ts"
+      ],
+      "@spartan-ng/helm/select": [
+        "libs/ui/select/src/index.ts"
+      ],
+      "@spartan-ng/helm/separator": [
+        "libs/ui/separator/src/index.ts"
+      ],
+      "@spartan-ng/helm/sonner": [
+        "libs/ui/sonner/src/index.ts"
+      ],
+      "@spartan-ng/helm/table": [
+        "libs/ui/table/src/index.ts"
+      ],
+      "@spartan-ng/helm/tooltip": [
+        "libs/ui/tooltip/src/index.ts"
+      ],
+      "@spartan-ng/helm/utils": [
+        "libs/ui/utils/src/index.ts"
+      ]
     }
   }
 }

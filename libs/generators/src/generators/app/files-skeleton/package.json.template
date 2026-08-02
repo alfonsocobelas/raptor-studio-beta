@@ -4,7 +4,7 @@
   "scripts": {
     "start": "ts-node -T -r tsconfig-paths/register apps/backend-api/src/main.ts",
     "seed": "ts-node -T -r tsconfig-paths/register libs/backend/src/seed.ts",
-    "web": "ng serve --proxy-config apps/frontend-app/proxy.conf.json",
+    "web": "ng serve --proxy-config apps/frontend-app/proxy.conf.json --port 4321",
     "web:build": "ng build",
     "typecheck": "tsc -p tsconfig.json",
     "ui:add": "nx g @spartan-ng/cli:ui",
