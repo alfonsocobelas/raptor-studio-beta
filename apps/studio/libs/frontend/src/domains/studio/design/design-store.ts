@@ -92,6 +92,7 @@ export class DesignStore {
     const pages = this._pages().map((page, i) =>
       i === pageIndex ? { ...page, blocks: [...page.blocks, { width: 'full' as const, ...block }] } : page
     )
+    if (block.kind === 'text') return this.mutate(this.withIntros(pages), pages)
     const resources =
       block.kind === 'attachments' && block.resource
         ? this._resources().map(r => (r.name === block.resource ? { ...r, attachments: true } : r))
@@ -101,6 +102,25 @@ export class DesignStore {
         ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
         : this._resources()
     return this.mutate(resources, pages)
+  }
+
+  /**
+   * El texto de una vista es la ENTRADILLA de la pantalla que esa vista emite
+   * (spec 18): el generador emite un componente por pantalla, no compone
+   * bloques, así que el texto se pega al listado o galería que lo acompaña.
+   */
+  private withIntros(pages: DesignPage[]): DraftResource[] {
+    const intros = new Map<string, string>()
+    for (const page of pages) {
+      const text = page.blocks.find(b => b.kind === 'text')?.text?.trim()
+      if (!text) continue
+      for (const block of page.blocks) {
+        if ((block.kind === 'table' || block.kind === 'cards') && block.resource && !intros.has(block.resource)) {
+          intros.set(block.resource, text)
+        }
+      }
+    }
+    return this._resources().map(r => (intros.has(r.name) ? { ...r, subtitle: intros.get(r.name) } : r))
   }
 
   removeBlock(pageIndex: number, blockIndex: number): boolean {
@@ -193,13 +213,25 @@ export class DesignStore {
   }
 
 
-  /** Vistas con bloques que el generador aún no emite (para avisar al usuario). */
+  /**
+   * Vistas con bloques que el generador aún no emite. Un texto NO cuenta si la
+   * vista lleva tabla o galería: ahí se emite como entradilla de la pantalla.
+   */
   notGenerable(): { page: string; blocks: string[] }[] {
     return this._pages()
-      .map(page => ({
-        page: page.title,
-        blocks: [...new Set(page.blocks.filter(b => !GENERABLE_BLOCKS.includes(b.kind)).map(b => b.kind))]
-      }))
+      .map(page => {
+        const hasScreen = page.blocks.some(b => (b.kind === 'table' || b.kind === 'cards') && b.resource)
+        return {
+          page: page.title,
+          blocks: [
+            ...new Set(
+              page.blocks
+                .filter(b => !GENERABLE_BLOCKS.includes(b.kind) && !(b.kind === 'text' && hasScreen))
+                .map(b => b.kind)
+            )
+          ]
+        }
+      })
       .filter(entry => entry.blocks.length > 0)
   }
 

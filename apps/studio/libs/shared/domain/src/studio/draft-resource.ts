@@ -28,6 +28,8 @@ export interface DraftResource {
   detail?: boolean
   /** La entidad se muestra como galería de tarjetas (spec 17) */
   gallery?: boolean
+  /** Entradilla de la pantalla: el texto que la vista puso junto a la tabla (spec 18) */
+  subtitle?: string
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date']
@@ -171,7 +173,12 @@ export function draftToResource(draft: DraftResource, appName: string): Resource
     context: kebab(appName),
     schemaName: snake(appName).toLowerCase(),
     sharedDomainAlias: '@app/shared/domain',
-    labels: { singular: draft.labelSingular, plural: draft.labelPlural, gender: draft.gender },
+    labels: {
+      singular: draft.labelSingular,
+      plural: draft.labelPlural,
+      gender: draft.gender,
+      ...(draft.subtitle ? { subtitle: draft.subtitle } : {})
+    },
     formSections: [{ id: 'general', title: `Datos de ${draft.labelSingular.toLowerCase()}` }],
     constraintsConst: `${snake(draft.name)}_CONSTRAINTS`,
     audit: true,

@@ -156,4 +156,22 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(ok).toBe(false)
     expect(store.pages()).toEqual([])
   })
+
+  it('un bloque de texto junto a una tabla se convierte en la entradilla de esa pantalla', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addBlock(0, { kind: 'text', text: 'Pacientes dados de alta este año' })
+
+    expect(store.resources()[0].subtitle).toBe('Pacientes dados de alta este año')
+    expect(store.notGenerable()).toEqual([])
+  })
+
+  it('un texto suelto, sin tabla ni galería, sigue sin ser una pantalla', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addPage('blank', 'Notas')
+    store.addBlock(1, { kind: 'text', text: 'Recordatorio del equipo' })
+
+    expect(store.notGenerable()).toEqual([{ page: 'Notas', blocks: ['text'] }])
+  })
 })

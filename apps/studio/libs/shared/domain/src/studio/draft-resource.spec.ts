@@ -129,3 +129,20 @@ describe('draftToResource — galería (spec 17)', () => {
     expect(draftToResource(draft({ gallery: true }), 'clinica').gallery).toEqual({})
   })
 })
+
+describe('draftToResource — entradilla (spec 18)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Pacientes'),
+    ...extra
+  })
+
+  it('sin texto, la pantalla no lleva entradilla', () => {
+    expect(draftToResource(draft(), 'clinica').labels?.subtitle).toBeUndefined()
+  })
+
+  it('el texto de la vista se emite como entradilla de la pantalla', () => {
+    const resource = draftToResource(draft({ subtitle: 'Pacientes dados de alta este año' }), 'clinica')
+
+    expect(resource.labels?.subtitle).toBe('Pacientes dados de alta este año')
+  })
+})
