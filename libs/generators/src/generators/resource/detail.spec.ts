@@ -126,4 +126,29 @@ describe('resource generator — ficha', () => {
 
     expect(tree.read('out/frontend/invoice-detail.component.ts', 'utf-8')).not.toContain('app-related-table')
   })
+
+  it('la ficha no enseña el uuid de una referencia: solo su nombre', async () => {
+    const conRef = {
+      ...withDetail(),
+      fields: {
+        ...withDetail().fields,
+        propietarioId: {
+          type: 'uuid',
+          required: true,
+          relation: { to: 'propietario', kind: 'reference' },
+          form: { control: 'select', label: 'Propietario' }
+        },
+        propietarioName: {
+          type: 'string',
+          required: true,
+          table: { show: true, label: 'Propietario' }
+        }
+      }
+    } as unknown as ResourceDefinition
+    const tree = await generate(conRef)
+    const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
+
+    expect(detail).toContain("key: 'propietarioName'")
+    expect(detail).not.toContain("key: 'propietarioId'")
+  })
 })

@@ -767,7 +767,11 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
 
   const shown =
     detail.fields ??
-    fields.filter(([, f]) => f.table?.show || (f.form && f.form.control !== 'none')).map(([name]) => name)
+    fields
+      // el id de una referencia es un uuid: en la ficha se ve su nombre denormalizado
+      .filter(([, f]) => !f.relation)
+      .filter(([, f]) => f.table?.show || (f.form && f.form.control !== 'none'))
+      .map(([name]) => name)
 
   const rows = shown
     .filter(name => name !== titleField)
