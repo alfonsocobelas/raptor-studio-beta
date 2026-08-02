@@ -1,9 +1,4 @@
 .angular
-apps/almacen
-apps/boutique
-apps/concesionario
 apps/studio
-apps/vetcare2
 tmp
 tmp/generated/app-golden
-tmp/vetcare-timing
