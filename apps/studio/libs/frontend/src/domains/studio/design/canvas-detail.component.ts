@@ -1,93 +1,52 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideArrowLeft, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { DesignStore } from './design-store'
 import { buildSampleRows } from './mock-data'
 
 /**
- * Arquetipo FICHA: cabecera con estado y acciones, tarjetas de datos por
- * secciones, fila de métricas y (si la entidad los declara) adjuntos.
- * Anatomía tomada de las fichas reales de la referencia.
+ * Réplica CONTROLADA de la ficha emitida (spec 16). Su anatomía copia
+ * `__fileName__-detail.component.ts.template` línea a línea: volver, título,
+ * Editar/Eliminar y una rejilla de datos con etiqueta en versalitas. Nada de
+ * avatares, badges de estado ni timelines: si el generador no lo emite, el
+ * lienzo no puede prometerlo.
  */
 @Component({
   selector: 'studio-canvas-detail',
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideArrowLeft, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
-      <header class="mb-5 flex items-start justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold">
-            {{ v.initials }}
+      <div class="min-w-0 space-y-6">
+        <span class="text-muted-foreground flex items-center gap-2 text-sm">
+          <ng-icon name="lucideArrowLeft" size="16" />
+          Volver a {{ v.labelPlural }}
+        </span>
+
+        <div class="flex items-start justify-between gap-4">
+          <h1 class="text-2xl font-bold tracking-tight">{{ v.title }}</h1>
+          <div class="flex gap-2">
+            <span class="border-input flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+              <ng-icon name="lucidePencil" size="16" />
+              Editar
+            </span>
+            <span class="text-destructive flex items-center gap-2 rounded-md px-3 py-2 text-sm">
+              <ng-icon name="lucideTrash2" size="16" />
+              Eliminar
+            </span>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-2xl font-bold tracking-tight">{{ v.title }}</h1>
-              <span class="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">Activo</span>
+        </div>
+
+        <dl class="bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
+          @for (row of v.rows; track row.label) {
+            <div class="min-w-0">
+              <dt class="text-muted-foreground text-xs uppercase tracking-wide">{{ row.label }}</dt>
+              <dd class="truncate text-sm font-medium">{{ row.value }}</dd>
             </div>
-            <p class="text-muted-foreground text-sm">{{ v.subtitle }}</p>
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <span class="chrome">Editar</span>
-          <span class="chrome">Exportar</span>
-        </div>
-      </header>
-
-      <div class="mb-5 grid grid-cols-3 gap-4">
-        @for (metric of v.metrics; track metric.label) {
-          <div class="rounded-lg border p-4">
-            <p class="text-muted-foreground text-sm">{{ metric.label }}</p>
-            <p class="text-2xl font-bold">{{ metric.value }}</p>
-          </div>
-        }
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <section class="rounded-lg border p-4">
-          <h2 class="mb-3 text-sm font-semibold">Datos generales</h2>
-          <dl class="space-y-2">
-            @for (row of v.left; track row.label) {
-              <div class="flex justify-between gap-4 border-b pb-2 last:border-0">
-                <dt class="text-muted-foreground text-sm">{{ row.label }}</dt>
-                <dd class="text-sm font-medium">{{ row.value }}</dd>
-              </div>
-            }
-          </dl>
-        </section>
-        <section class="rounded-lg border p-4">
-          <h2 class="mb-3 text-sm font-semibold">Detalle</h2>
-          <dl class="space-y-2">
-            @for (row of v.right; track row.label) {
-              <div class="flex justify-between gap-4 border-b pb-2 last:border-0">
-                <dt class="text-muted-foreground text-sm">{{ row.label }}</dt>
-                <dd class="text-sm font-medium">{{ row.value }}</dd>
-              </div>
-            }
-          </dl>
-        </section>
-      </div>
-
-      <section class="mt-4 rounded-lg border p-4">
-        <h2 class="mb-3 text-sm font-semibold">Actividad reciente</h2>
-        <ol class="space-y-3">
-          @for (item of v.timeline; track item.text) {
-            <li class="flex gap-3">
-              <span class="bg-primary mt-1.5 h-2 w-2 shrink-0 rounded-full"></span>
-              <div>
-                <p class="text-sm">{{ item.text }}</p>
-                <p class="text-muted-foreground text-xs">{{ item.date }}</p>
-              </div>
-            </li>
           }
-        </ol>
-      </section>
-    }
-  `,
-  styles: `
-    .chrome {
-      border: 1px solid hsl(var(--border));
-      border-radius: 0.375rem;
-      padding: 0.4rem 0.75rem;
-      font-size: 0.8rem;
-      user-select: none;
+        </dl>
+      </div>
     }
   `
 })
@@ -98,26 +57,18 @@ export class CanvasDetailComponent {
   protected readonly view = computed(() => {
     const draft = this.store.resources().find(r => r.name === this.resource())
     if (!draft) return null
-    const [row] = buildSampleRows(draft, 1)
-    const rows = draft.fields.map(f => ({ label: f.label, value: String(row[f.name] ?? '—') }))
-    const numeric = draft.fields.filter(f => f.type === 'number' || f.type === 'integer')
-    const title = String(row[draft.fields.find(f => f.type === 'string')?.name ?? ''] ?? draft.labelSingular)
+
+    const [sample] = buildSampleRows(draft, 1)
+    // el generador titula con el primer campo de texto y lo excluye de la rejilla
+    const titleField = draft.fields.find(f => f.type === 'string')
+    const title = String(sample[titleField?.name ?? ''] ?? draft.labelSingular)
 
     return {
       title,
-      initials: title.slice(0, 2).toUpperCase(),
-      subtitle: `${draft.labelSingular} · ficha completa`,
-      metrics: (numeric.length ? numeric : draft.fields.slice(0, 3)).slice(0, 3).map(f => ({
-        label: f.label,
-        value: String(row[f.name] ?? '—')
-      })),
-      left: rows.slice(0, Math.ceil(rows.length / 2)),
-      right: rows.slice(Math.ceil(rows.length / 2)),
-      timeline: [
-        { text: `Se actualizó ${draft.labelSingular.toLowerCase()}`, date: 'Hace 2 horas · María López' },
-        { text: 'Se adjuntó un documento', date: 'Ayer · Juan Pérez' },
-        { text: 'Registro creado', date: '28/07/2026 · Sistema' }
-      ]
+      labelPlural: draft.labelPlural,
+      rows: draft.fields
+        .filter(f => f.name !== titleField?.name)
+        .map(f => ({ label: f.label, value: String(sample[f.name] ?? '—') }))
     }
   })
 }

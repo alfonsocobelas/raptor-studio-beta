@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
-import { lucideArrowUp, lucideColumns2, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
+import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
 import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { DesignStore } from './design-store'
@@ -17,13 +17,17 @@ import { mockTotal } from './mock-data'
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, NgIcon],
-  providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucidePaperclip, lucideSquare, lucideX })],
+  providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
-      <header class="mb-5">
-        <h1 class="text-2xl font-bold tracking-tight">{{ current.title }}</h1>
-        <p class="text-muted-foreground text-sm capitalize">{{ store.appName() }}</p>
-      </header>
+      <!-- La ficha emitida NO tiene cabecera de página: su h1 es el nombre del
+           registro. Ponerla aquí sería prometer una pantalla distinta. -->
+      @if (!current.drillDown) {
+        <header class="mb-5">
+          <h1 class="text-2xl font-bold tracking-tight">{{ current.title }}</h1>
+          <p class="text-muted-foreground text-sm capitalize">{{ store.appName() }}</p>
+        </header>
+      }
 
       @if (!current.blocks.length) {
         <div class="text-muted-foreground rounded-lg border border-dashed py-16 text-center" data-testid="empty-page">
@@ -83,7 +87,10 @@ import { mockTotal } from './mock-data'
                   <ul class="mt-3 space-y-1">
                     @for (file of sampleFiles; track file.name) {
                       <li class="bg-background flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                        <span>📄 {{ file.name }}</span>
+                        <span class="flex items-center gap-2">
+                          <ng-icon name="lucideFile" size="14" class="text-muted-foreground" />
+                          {{ file.name }}
+                        </span>
                         <span class="text-muted-foreground text-xs">{{ file.size }}</span>
                       </li>
                     }

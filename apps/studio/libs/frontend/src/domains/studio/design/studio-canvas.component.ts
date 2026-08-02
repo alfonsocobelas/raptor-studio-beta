@@ -244,6 +244,11 @@ const BLOCK_TOOLS: BlockTool[] = [
                   {{ page.title }}
                 </button>
               }
+              @if (pages()[clampedTab()]?.drillDown) {
+                <span class="text-muted-foreground ml-2 text-xs" data-testid="drilldown-hint">
+                  se abre desde el listado · no aparece en el menú
+                </span>
+              }
             </div>
             <div
               class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
@@ -308,15 +313,6 @@ const BLOCK_TOOLS: BlockTool[] = [
                 </div>
               </aside>
               <section class="min-w-0 flex-1 p-6">
-                @if (pages()[clampedTab()]?.drillDown) {
-                  <p
-                    class="text-muted-foreground mb-4 flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs"
-                    data-testid="drilldown-hint"
-                  >
-                    <ng-icon name="lucideIdCard" size="14" />
-                    Ficha de un registro · se abre desde el listado, no aparece en el menú
-                  </p>
-                }
                 <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
               </section>
             </div>
