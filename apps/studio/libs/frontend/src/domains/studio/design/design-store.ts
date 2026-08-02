@@ -9,6 +9,8 @@ import {
   type DesignPage,
   type DraftField,
   type DraftResource
+,
+  designPagesToAppPages
 } from '@app/shared/domain'
 
 /** El diseño completo: nombre de app + entidades dibujadas + vistas con sus bloques. */
@@ -173,22 +175,9 @@ export class DesignStore {
    * dashboard). El resto se reporta en notGenerable().
    */
   toAppSchema(): AppDefinition {
-    const pages: AppDefinition['pages'] = []
-    for (const page of this._pages()) {
-      const table = page.blocks.find(b => b.kind === 'table' && b.resource)
-      const kpis = page.blocks.filter(b => b.kind === 'kpis').flatMap(b => b.resources ?? [])
-      if (table?.resource) {
-        pages.push({ kind: 'resource', resource: table.resource, label: page.title })
-      } else if (kpis.length && !pages.some(p => p.kind === 'dashboard')) {
-        pages.push({
-          kind: 'dashboard',
-          label: page.title,
-          widgets: kpis.map(resource => ({ kind: 'kpi-total', resource }))
-        })
-      }
-    }
-    return { schemaVersion: 1, name: this._appName(), pages }
+    return { schemaVersion: 1, name: this._appName(), pages: designPagesToAppPages(this._pages()) }
   }
+
 
   /** Vistas con bloques que el generador aún no emite (para avisar al usuario). */
   notGenerable(): { page: string; blocks: string[] }[] {

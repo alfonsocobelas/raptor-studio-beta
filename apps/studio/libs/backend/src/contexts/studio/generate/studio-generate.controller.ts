@@ -4,7 +4,7 @@ import { execFile } from 'child_process'
 import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
-import { draftToResource } from '@app/shared/domain'
+import { designPagesToAppPages, draftToResource } from '@app/shared/domain'
 import { validateDesign } from '../chat/validate-proposal'
 import type { DesignPayload } from '../chat/chat.types'
 import {
@@ -68,7 +68,7 @@ export class StudioGenerateController {
     const appFileContent = {
       schemaVersion: 1,
       name: body.name,
-      pages: design.pages,
+      pages: designPagesToAppPages(design.pages),
       resources: design.resources.map(r => draftToResource(r, body.name))
     }
 
