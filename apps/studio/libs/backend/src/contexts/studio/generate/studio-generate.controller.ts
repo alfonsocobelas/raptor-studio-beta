@@ -44,6 +44,8 @@ export interface GenerateResult {
   ok: boolean
   output: string
   root: string
+  /** Milisegundos de reloj que tardó el generador (alimenta la vista de progreso) */
+  elapsedMs: number
 }
 
 /**
@@ -75,17 +77,21 @@ export class StudioGenerateController {
     }
     writeFileSync(appFile, JSON.stringify(appFileContent, null, 2))
 
+    const startedAt = process.hrtime.bigint()
     return new Promise<GenerateResult>(resolve => {
       execFile(
         'npx',
         args,
         { cwd: this.acceleratorRoot, timeout: 15 * 60 * 1000, maxBuffer: 32 * 1024 * 1024 },
         (error, stdout, stderr) => {
+          const elapsedMs = Number((process.hrtime.bigint() - startedAt) / 1_000_000n)
           const output = `$ npx ${args.join(' ')}\n\n${stdout}${stderr}`
+          console.log(`[generate] ${body.name}: ${error ? 'FALLÓ' : 'OK'} en ${(elapsedMs / 1000).toFixed(1)} s`)
           resolve({
             ok: !error,
             output: error ? `${output}\n${error.message}` : output,
-            root: path.join(this.acceleratorRoot, body.directory ?? path.join('apps', body.name))
+            root: path.join(this.acceleratorRoot, body.directory ?? path.join('apps', body.name)),
+            elapsedMs
           })
         }
       )

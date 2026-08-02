@@ -155,6 +155,11 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             </button>
           </div>
 
+          @if (elapsed(); as ms) {
+            <p class="text-muted-foreground mt-3 text-xs" data-testid="generate-elapsed">
+              Generado en {{ (ms / 1000).toFixed(1) }} s
+            </p>
+          }
           @if (generateOutput(); as out) {
             <pre
               class="bg-muted mt-4 max-h-48 overflow-auto rounded-md p-3 text-xs"
@@ -186,6 +191,7 @@ export class GenerateWizardComponent {
   protected readonly generating = signal(false)
   protected readonly generateOutput = signal<string | null>(null)
   protected readonly generateOk = signal(false)
+  protected readonly elapsed = signal<number | null>(null)
 
   protected readonly valid = computed(() => KEBAB.test(this.name()))
   protected readonly command = computed(() =>
@@ -208,9 +214,10 @@ export class GenerateWizardComponent {
   protected async generateHere(): Promise<void> {
     this.generating.set(true)
     this.generateOutput.set(null)
+    this.elapsed.set(null)
     try {
       const result = await firstValueFrom(
-        this.http.post<{ ok: boolean; output: string; root: string }>('/api/v1/studio/generate', {
+        this.http.post<{ ok: boolean; output: string; root: string; elapsedMs: number }>('/api/v1/studio/generate', {
           name: this.name(),
           ui: this.ui(),
           database: this.database(),
@@ -227,6 +234,7 @@ export class GenerateWizardComponent {
         })
       )
       this.generateOk.set(result.ok)
+      this.elapsed.set(result.elapsedMs)
       this.generateOutput.set(result.ok ? `✅ Generada en ${result.root}\n\n${result.output}` : result.output)
     } catch (e) {
       this.generateOk.set(false)
