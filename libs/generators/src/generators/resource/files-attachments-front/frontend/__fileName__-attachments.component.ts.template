@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { firstValueFrom } from 'rxjs'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideFile, lucidePaperclip, lucideTrash2 } from '@ng-icons/lucide'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
 
 interface AttachmentDto {
@@ -14,6 +16,8 @@ interface AttachmentDto {
 /** Adjuntos de <%= labelPlural %>: arrastrar y soltar, listar, descargar y borrar. */
 @Component({
   selector: 'app-<%= plural %>-attachments',
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideFile, lucidePaperclip, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mt-6">
@@ -25,7 +29,7 @@ interface AttachmentDto {
         (dragleave)="dragging.set(false)"
         (drop)="onDrop($event)"
       >
-        <span class="text-2xl">🗎</span>
+        <ng-icon name="lucidePaperclip" size="26" class="text-muted-foreground" />
         <span class="text-sm font-medium">Arrastra ficheros aquí o haz clic para subirlos</span>
         <span class="text-muted-foreground text-xs">PDF, imágenes o documentos · máx. 10 MB</span>
         <input type="file" class="hidden" (change)="onPick($event)" />
@@ -38,10 +42,15 @@ interface AttachmentDto {
       <ul class="mt-3 space-y-1">
         @for (file of files(); track file.id) {
           <li class="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <button type="button" class="hover:underline" (click)="download(file)">📄 {{ file.fileName }}</button>
+            <button type="button" class="flex items-center gap-2 hover:underline" (click)="download(file)">
+              <ng-icon name="lucideFile" size="14" class="text-muted-foreground" />
+              {{ file.fileName }}
+            </button>
             <span class="text-muted-foreground flex items-center gap-3 text-xs">
               {{ formatSize(file.sizeBytes) }}
-              <button type="button" class="text-destructive" (click)="remove(file)">🗑</button>
+              <button type="button" class="text-destructive" (click)="remove(file)">
+                <ng-icon name="lucideTrash2" size="15" />
+              </button>
             </span>
           </li>
         }
