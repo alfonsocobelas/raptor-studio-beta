@@ -1,15 +1,14 @@
-import { authPlugin } from './auth.plugin'
 import { emailPlugin } from './email.plugin'
 import { observabilityPlugin } from './observability.plugin'
 import { migrationsPlugin } from './migrations.plugin'
 import type { AppPlugin } from './plugin'
 
 /**
- * Plugins disponibles. Añadir uno aquí basta para que aparezca en el formulario
- * del generador y se pueda ensamblar en la app.
+ * Plugins ADITIVOS disponibles (suma los que quieras). Las decisiones excluyentes
+ * (una sola opción entre varias: database, ui, infra, auth) viven en `slots.ts`.
+ * Añadir uno aquí basta para que aparezca en el formulario del generador.
  */
 export const PLUGINS: Record<string, AppPlugin> = {
-  auth: authPlugin,
   email: emailPlugin,
   observability: observabilityPlugin
 }

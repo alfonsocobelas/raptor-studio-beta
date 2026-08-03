@@ -15,7 +15,7 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
-import { validateCombination } from './plugins/slots'
+import { normalizeLegacyPlugins, slotPlugins, validateCombination } from './plugins/slots'
 import { selectDatabase, type DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -33,7 +33,9 @@ export interface AppGeneratorSchema {
   ui?: 'spartan' | 'material'
   /** Persistence engine of the emitted app (default postgres) */
   database?: DatabaseEngine
-  /** Comma-separated plugins to assemble (migrations, auth) */
+  /** Authentication slot of the emitted app (default none) */
+  auth?: string
+  /** Comma-separated additive plugins to assemble (email, observability) */
   plugins?: string
   /** Emit a KPI dashboard (one total per resource) as the home screen */
   dashboard?: boolean
@@ -84,10 +86,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const modelNames = models.map(m => m.name).join(',')
   const ui = options.ui ?? 'spartan'
   const database = selectDatabase(options.database)
-  // valida la combinación plugins×ranuras antes de emitir un solo fichero
-  const chosenPlugins = selectPlugins(options.plugins)
-  validateCombination({ database: options.database, ui: options.ui }, chosenPlugins)
-  const plugins = [migrationsPlugin, ...chosenPlugins]
+  // valida la combinación ranuras×plugins antes de emitir un solo fichero
+  const legacy = normalizeLegacyPlugins(options.plugins, options.auth)
+  const selection = { database: options.database, ui: options.ui, auth: legacy.auth }
+  const chosenPlugins = selectPlugins(legacy.plugins)
+  validateCombination(selection, chosenPlugins)
+  // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth
+  const plugins = [migrationsPlugin, ...slotPlugins(selection), ...chosenPlugins]
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')

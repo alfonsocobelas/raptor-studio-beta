@@ -1,4 +1,4 @@
-import { SLOTS, selectProvider, validateCombination } from './slots'
+import { SLOTS, normalizeLegacyPlugins, selectProvider, slotPlugins, validateCombination } from './slots'
 import { authPlugin } from './auth.plugin'
 import { emailPlugin } from './email.plugin'
 import { observabilityPlugin } from './observability.plugin'
@@ -9,8 +9,8 @@ import { observabilityPlugin } from './observability.plugin'
  * ya existe: database (postgres|mongo) y ui (spartan|material).
  */
 describe('SLOTS', () => {
-  it('registers the two existing exclusive decisions: database and ui', () => {
-    expect(Object.keys(SLOTS)).toEqual(['database', 'ui'])
+  it('registers the four exclusive decisions of the emitted app', () => {
+    expect(Object.keys(SLOTS)).toEqual(['database', 'ui', 'infra', 'auth'])
   })
 
   it('database offers postgres (default) and mongo', () => {
@@ -25,6 +25,25 @@ describe('SLOTS', () => {
 
     expect(slot.default).toBe('spartan')
     expect(slot.providers.map(p => p.value)).toEqual(['spartan', 'material'])
+  })
+
+  it('auth offers none (default) and single-tenant, which carries the auth plugin manifest', () => {
+    // TASK-03 (spec 22): auth deja de ser checkbox aditivo y pasa a ranura excluyente
+    const slot = SLOTS['auth']
+
+    expect(slot.default).toBe('none')
+    expect(slot.providers.map(p => p.value)).toEqual(['none', 'single-tenant'])
+    expect(slot.providers.find(p => p.value === 'none')?.plugin).toBeUndefined()
+    expect(slot.providers.find(p => p.value === 'single-tenant')?.plugin?.name).toBe('auth')
+  })
+
+  it('single-tenant auth declares its postgres requirement on the database slot', () => {
+    expect(SLOTS['auth'].providers.find(p => p.value === 'single-tenant')?.requires).toEqual({ database: 'postgres' })
+  })
+
+  it('infra is declared with only the none provider (real providers land in later specs)', () => {
+    expect(SLOTS['infra'].default).toBe('none')
+    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none'])
   })
 
   it('every slot declares label, a default that exists and labelled providers (what the form shows)', () => {
@@ -58,6 +77,45 @@ describe('selectProvider', () => {
   })
 })
 
+describe('slotPlugins', () => {
+  it('returns the emission manifests of the chosen providers', () => {
+    expect(slotPlugins({ auth: 'single-tenant' }).map(p => p.name)).toEqual(['auth'])
+  })
+
+  it('returns nothing when every slot sits on a provider without manifest', () => {
+    expect(slotPlugins({ auth: 'none', database: 'postgres', ui: 'spartan' })).toEqual([])
+    expect(slotPlugins({})).toEqual([])
+  })
+})
+
+describe('normalizeLegacyPlugins', () => {
+  it('maps the legacy --plugins=auth to the auth slot with a deprecation notice', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const normalized = normalizeLegacyPlugins('auth,email', undefined)
+
+    expect(normalized).toEqual({ plugins: 'email', auth: 'single-tenant' })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('--auth=single-tenant'))
+    warn.mockRestore()
+  })
+
+  it('leaves additive-only lists and an explicit auth choice untouched', () => {
+    expect(normalizeLegacyPlugins('email,observability', 'none')).toEqual({
+      plugins: 'email,observability',
+      auth: 'none'
+    })
+    expect(normalizeLegacyPlugins(undefined, undefined)).toEqual({ plugins: undefined, auth: undefined })
+  })
+
+  it('keeps an explicit --auth when the legacy name is also present', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(normalizeLegacyPlugins('auth', 'single-tenant')).toEqual({ plugins: '', auth: 'single-tenant' })
+
+    warn.mockRestore()
+  })
+})
+
 /**
  * TASK-02 (spec 22): las restricciones entre ranuras se declaran (`requires`) en el
  * manifiesto del proveedor o del plugin aditivo, y un único validador las aplica
@@ -70,6 +128,13 @@ describe('validateCombination', () => {
 
   it('validates the selected values against the registry (unknown value throws)', () => {
     expect(() => validateCombination({ database: 'oracle' })).toThrow(/Unknown database 'oracle'/)
+  })
+
+  it('rejects a slot provider whose requires contradicts another slot', () => {
+    // TASK-03: la restricción viaja en el manifiesto del proveedor, no en un guard a medida
+    expect(() => validateCombination({ database: 'mongo', auth: 'single-tenant' })).toThrow(
+      /single-tenant.*requires database=postgres.*mongo/
+    )
   })
 
   it('rejects an additive plugin whose requires contradicts the selection', () => {

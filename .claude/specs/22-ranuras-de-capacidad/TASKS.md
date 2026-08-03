@@ -11,10 +11,12 @@
       (proveedores actuales, defaults, sin emisión aún) + `selectProvider` con error genérico listando disponibles
 - [x] **TASK-02**: Tests + `validateCombination` (restricciones `requires` entre ranuras); migrar el
       guard `requiresDatabase` de `selectPlugins` a `requires: { database: 'postgres' }` del proveedor auth
-- [ ] **TASK-03**: Tests + ranura `auth` (`none`/`single-tenant`, reutilizando el manifiesto del plugin
+- [x] **TASK-03**: Tests + ranura `auth` (`none`/`single-tenant`, reutilizando el manifiesto del plugin
       actual) y ranura `infra` (solo `none`); compat `--plugins=auth` → warning + `auth=single-tenant`
-- [ ] **TASK-04**: `--auth` en `app/schema.json` (x-prompt list, default `none`) y cableado en `app.ts`
-      vía `selectProvider`/`validateCombination`; `selectDatabase` eliminado
+- [ ] **TASK-04**: `--auth` en `app/schema.json` (x-prompt list, default `none`); `selectDatabase`
+      eliminado en favor de `selectProvider`
+      · nota: el cableado de `auth` en `app.ts` se adelantó a TASK-03 — sacar auth de `PLUGINS` sin
+        cablear la ranura habría dejado el commit rojo (la fixture golden usa `--plugins=auth`)
 
 ## Proveedor de persistencia dueño de la emisión
 
