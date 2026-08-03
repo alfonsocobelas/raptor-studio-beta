@@ -1,10 +1,10 @@
-import { SLOTS, normalizeLegacyPlugins, selectProvider, slotPlugins, validateCombination } from './slots'
+import { SLOTS, normalizeLegacyPlugins, selectEngine, selectProvider, slotPlugins, validateCombination } from './slots'
 import { authPlugin } from './auth.plugin'
 import { emailPlugin } from './email.plugin'
 import { observabilityPlugin } from './observability.plugin'
 
 /**
- * TASK-01 (spec 22): las decisiones excluyentes del generador (elige-un-proveedor)
+ * TASK-01 (spec 23): las decisiones excluyentes del generador (elige-un-proveedor)
  * dejan de ser opciones planas y viven en un registro de ranuras. Se migra lo que
  * ya existe: database (postgres|mongo) y ui (spartan|material).
  */
@@ -28,7 +28,7 @@ describe('SLOTS', () => {
   })
 
   it('auth offers none (default) and single-tenant, which carries the auth plugin manifest', () => {
-    // TASK-03 (spec 22): auth deja de ser checkbox aditivo y pasa a ranura excluyente
+    // TASK-03 (spec 23): auth deja de ser checkbox aditivo y pasa a ranura excluyente
     const slot = SLOTS['auth']
 
     expect(slot.default).toBe('none')
@@ -77,6 +77,18 @@ describe('selectProvider', () => {
   })
 })
 
+describe('selectEngine', () => {
+  it('resolves the persistence engine through the registry, typed', () => {
+    // TASK-04 (spec 23): sustituye a selectDatabase — un único validador, el registro
+    expect(selectEngine(undefined)).toBe('postgres')
+    expect(selectEngine('mongo')).toBe('mongo')
+  })
+
+  it('rejects an unknown engine listing the registered ones', () => {
+    expect(() => selectEngine('mysql')).toThrow(/Unknown database 'mysql'.*postgres, mongo/)
+  })
+})
+
 describe('slotPlugins', () => {
   it('returns the emission manifests of the chosen providers', () => {
     expect(slotPlugins({ auth: 'single-tenant' }).map(p => p.name)).toEqual(['auth'])
@@ -107,17 +119,27 @@ describe('normalizeLegacyPlugins', () => {
     expect(normalizeLegacyPlugins(undefined, undefined)).toEqual({ plugins: undefined, auth: undefined })
   })
 
-  it('keeps an explicit --auth when the legacy name is also present', () => {
+  it('keeps an explicit non-default --auth when the legacy name is also present', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     expect(normalizeLegacyPlugins('auth', 'single-tenant')).toEqual({ plugins: '', auth: 'single-tenant' })
 
     warn.mockRestore()
   })
+
+  it('maps the legacy name even when Nx has filled auth with the slot default', () => {
+    // Nx rellena los defaults del schema.json, así que por CLI auth llega 'none', nunca undefined:
+    // sin esto el nombre heredado se ignoraba en silencio y la app salía sin autenticación
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    expect(normalizeLegacyPlugins('auth,email', 'none')).toEqual({ plugins: 'email', auth: 'single-tenant' })
+
+    warn.mockRestore()
+  })
 })
 
 /**
- * TASK-02 (spec 22): las restricciones entre ranuras se declaran (`requires`) en el
+ * TASK-02 (spec 23): las restricciones entre ranuras se declaran (`requires`) en el
  * manifiesto del proveedor o del plugin aditivo, y un único validador las aplica
  * antes de emitir nada. Sustituye al guard `requiresDatabase` ad-hoc de selectPlugins.
  */

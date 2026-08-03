@@ -15,8 +15,15 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
-import { normalizeLegacyPlugins, slotPlugins, validateCombination } from './plugins/slots'
-import { selectDatabase, type DatabaseEngine } from './database'
+import {
+  normalizeLegacyPlugins,
+  selectEngine,
+  selectUi,
+  slotPlugins,
+  validateCombination,
+  type UiLibrary
+} from './plugins/slots'
+import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
 export interface AppGeneratorSchema {
@@ -30,7 +37,7 @@ export interface AppGeneratorSchema {
   /** Output directory; defaults to apps/<name> */
   directory?: string
   /** Component library the emitted frontend is built on */
-  ui?: 'spartan' | 'material'
+  ui?: UiLibrary
   /** Persistence engine of the emitted app (default postgres) */
   database?: DatabaseEngine
   /** Authentication slot of the emitted app (default none) */
@@ -84,8 +91,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const models = composition.models
   // los sub-generadores siguen recibiendo la lista por nombre, venga de donde venga la composición
   const modelNames = models.map(m => m.name).join(',')
-  const ui = options.ui ?? 'spartan'
-  const database = selectDatabase(options.database)
+  const ui = selectUi(options.ui)
+  const database = selectEngine(options.database)
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
   const legacy = normalizeLegacyPlugins(options.plugins, options.auth)
   const selection = { database: options.database, ui: options.ui, auth: legacy.auth }

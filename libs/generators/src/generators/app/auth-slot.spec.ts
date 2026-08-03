@@ -3,7 +3,7 @@ import type { Tree } from '@nx/devkit'
 import { appGenerator } from './app'
 
 /**
- * TASK-03 (spec 22): auth pasa de plugin aditivo a ranura excluyente. La forma nueva
+ * TASK-03 (spec 23): auth pasa de plugin aditivo a ranura excluyente. La forma nueva
  * (`--auth=single-tenant`) y la heredada (`--plugins=auth`) deben emitir exactamente
  * lo mismo, y no pedir auth debe seguir dejando la app abierta.
  */

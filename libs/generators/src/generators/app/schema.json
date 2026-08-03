@@ -40,6 +40,7 @@
       "type": "string",
       "default": "spartan",
       "description": "Component library used by the emitted frontend",
+      "enum": ["spartan", "material"],
       "x-prompt": {
         "message": "\u00bfQu\u00e9 librer\u00eda de componentes?",
         "type": "list",
@@ -75,6 +76,26 @@
         ]
       }
     },
+    "auth": {
+      "type": "string",
+      "default": "none",
+      "description": "Authentication of the emitted app (exclusive slot)",
+      "enum": ["none", "single-tenant"],
+      "x-prompt": {
+        "message": "¿Qué autenticación?",
+        "type": "list",
+        "items": [
+          {
+            "value": "none",
+            "label": "Ninguna (app abierta)"
+          },
+          {
+            "value": "single-tenant",
+            "label": "Single-tenant (sesión por cookie, invitaciones, roles)"
+          }
+        ]
+      }
+    },
     "dashboard": {
       "type": "boolean",
       "default": false,
@@ -84,8 +105,8 @@
     "plugins": {
       "type": "string",
       "default": "none",
-      "description": "Comma-separated optional plugins (auth, email, observability); migrations is built in",
-      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (auth, email, observability \u2014 separados por comas; 'none' para ninguno)"
+      "description": "Comma-separated additive plugins (email, observability); migrations is built in and authentication is a slot",
+      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (email, observability \u2014 separados por comas; 'none' para ninguno)"
     }
   },
   "required": [

@@ -1,8 +1,9 @@
 import { authPlugin } from './auth.plugin'
 import type { AppPlugin } from './plugin'
+import type { DatabaseEngine } from '../database'
 
 /**
- * Ranuras de capacidad (spec 22): una ranura es una decisión excluyente de la app
+ * Ranuras de capacidad (spec 23): una ranura es una decisión excluyente de la app
  * generada — se elige exactamente UN proveedor entre los registrados. Complementa
  * a los plugins aditivos de `registry.ts`; mismo estilo: manifiesto tipado, sin
  * decoradores. Añadir un proveedor aquí basta para que aparezca en el formulario
@@ -31,24 +32,33 @@ export interface Slot {
   providers: SlotProvider[]
 }
 
+/** Librería de componentes del frontend emitido (la consume el kernel frontend). */
+export type UiLibrary = 'spartan' | 'material'
+
+/** Proveedores de persistencia, tipados con el motor: de aquí sale `selectEngine` sin casts. */
+const DATABASE_PROVIDERS: readonly (SlotProvider & { value: DatabaseEngine })[] = [
+  { value: 'postgres', label: 'PostgreSQL (TypeORM)' },
+  { value: 'mongo', label: 'MongoDB (Mongoose)' }
+]
+
+/** Ídem para la piel: el tipo concreto sobrevive a la resolución. */
+const UI_PROVIDERS: readonly (SlotProvider & { value: UiLibrary })[] = [
+  { value: 'spartan', label: 'Spartan NG (shadcn para Angular)' },
+  { value: 'material', label: 'Angular Material' }
+]
+
 export const SLOTS: Record<string, Slot> = {
   database: {
     name: 'database',
     label: 'Base de datos',
     default: 'postgres',
-    providers: [
-      { value: 'postgres', label: 'PostgreSQL (TypeORM)' },
-      { value: 'mongo', label: 'MongoDB (Mongoose)' }
-    ]
+    providers: [...DATABASE_PROVIDERS]
   },
   ui: {
     name: 'ui',
     label: 'Componentes',
     default: 'spartan',
-    providers: [
-      { value: 'spartan', label: 'Spartan NG (shadcn para Angular)' },
-      { value: 'material', label: 'Angular Material' }
-    ]
+    providers: [...UI_PROVIDERS]
   },
   infra: {
     name: 'infra',
@@ -105,17 +115,32 @@ export function validateCombination(selection: Record<string, string | undefined
   }
 }
 
+/** Resuelve un valor contra una lista de proveedores conservando su tipo concreto. */
+function resolve<T extends SlotProvider>(slot: Slot, providers: readonly T[], value: string | undefined): T {
+  const chosen = value ?? slot.default
+  const provider = providers.find(p => p.value === chosen)
+  if (!provider) {
+    throw new Error(`Unknown ${slot.name} '${chosen}'. Available: ${providers.map(p => p.value).join(', ')}`)
+  }
+  return provider
+}
+
 export function selectProvider(slotName: string, value: string | undefined): SlotProvider {
   const slot = SLOTS[slotName]
   if (!slot) {
     throw new Error(`Unknown slot '${slotName}'. Registered slots: ${Object.keys(SLOTS).join(', ')}`)
   }
-  const chosen = value ?? slot.default
-  const provider = slot.providers.find(p => p.value === chosen)
-  if (!provider) {
-    throw new Error(`Unknown ${slot.name} '${chosen}'. Available: ${slot.providers.map(p => p.value).join(', ')}`)
-  }
-  return provider
+  return resolve(slot, slot.providers, value)
+}
+
+/** El motor de persistencia elegido, tipado. Sustituye al validador ad-hoc `selectDatabase`. */
+export function selectEngine(value: string | undefined): DatabaseEngine {
+  return resolve(SLOTS['database'], DATABASE_PROVIDERS, value).value
+}
+
+/** La piel elegida, tipada. Antes era un `?? 'spartan'` sin validación. */
+export function selectUi(value: string | undefined): UiLibrary {
+  return resolve(SLOTS['ui'], UI_PROVIDERS, value).value
 }
 
 /** Los manifiestos de emisión de los proveedores elegidos, en el orden del registro. */
@@ -128,7 +153,11 @@ export function slotPlugins(selection: Record<string, string | undefined>): AppP
 /**
  * Compatibilidad: `--plugins=auth` era la forma antigua de pedir autenticación.
  * Se traduce a la ranura con aviso de deprecación para no romper comandos guardados.
- * Un `--auth` explícito manda sobre el nombre heredado.
+ *
+ * Un `--auth` distinto del default manda sobre el nombre heredado. El default NO cuenta
+ * como elección: Nx rellena los defaults del `schema.json` antes de llamar al generador,
+ * así que por CLI la opción llega siempre con valor y `undefined` solo se ve en tests.
+ * Consecuencia asumida: `--plugins=auth --auth=none` emite auth (indistinguible del default).
  */
 export function normalizeLegacyPlugins(
   plugins: string | undefined,
@@ -143,5 +172,6 @@ export function normalizeLegacyPlugins(
     .filter(n => n !== 'auth')
     .join(',')
   console.warn('ℹ --plugins=auth está deprecado: auth es una ranura. Usa --auth=single-tenant.')
-  return { plugins: remaining, auth: auth ?? 'single-tenant' }
+  const chosenExplicitly = auth !== undefined && auth !== SLOTS['auth'].default
+  return { plugins: remaining, auth: chosenExplicitly ? auth : 'single-tenant' }
 }

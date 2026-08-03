@@ -1,14 +1,6 @@
-/** Motor de persistencia de la app emitida. Decisión de app, nunca del resource-schema. */
+/**
+ * Motor de persistencia de la app emitida. Decisión de app, nunca del resource-schema.
+ * La validación vive en el registro de ranuras (`plugins/slots.ts`: `selectEngine`);
+ * aquí solo queda el tipo que comparten el kernel y el generador de recursos.
+ */
 export type DatabaseEngine = 'postgres' | 'mongo'
-
-const ENGINES: readonly DatabaseEngine[] = ['postgres', 'mongo']
-
-export function selectDatabase(value: string | undefined): DatabaseEngine {
-  if (value === undefined) {
-    return 'postgres'
-  }
-  if (!ENGINES.includes(value as DatabaseEngine)) {
-    throw new Error(`Unknown database '${value}'. Available: ${ENGINES.join(', ')}`)
-  }
-  return value as DatabaseEngine
-}

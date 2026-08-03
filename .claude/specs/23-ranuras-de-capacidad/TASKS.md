@@ -13,10 +13,14 @@
       guard `requiresDatabase` de `selectPlugins` a `requires: { database: 'postgres' }` del proveedor auth
 - [x] **TASK-03**: Tests + ranura `auth` (`none`/`single-tenant`, reutilizando el manifiesto del plugin
       actual) y ranura `infra` (solo `none`); compat `--plugins=auth` → warning + `auth=single-tenant`
-- [ ] **TASK-04**: `--auth` en `app/schema.json` (x-prompt list, default `none`); `selectDatabase`
+- [x] **TASK-04**: `--auth` en `app/schema.json` (x-prompt list, default `none`); `selectDatabase`
       eliminado en favor de `selectProvider`
       · nota: el cableado de `auth` en `app.ts` se adelantó a TASK-03 — sacar auth de `PLUGINS` sin
         cablear la ranura habría dejado el commit rojo (la fixture golden usa `--plugins=auth`)
+      · el gate de oro cazó aquí un bug real: Nx rellena los defaults del `schema.json`, así que
+        `options.auth` llega `'none'` y nunca `undefined` ⇒ la compat del nombre heredado no
+        disparaba y la app salía sin autenticación. Cubierto con test; `ui` también se valida ahora
+      · añadido `slots-schema.spec.ts`: candado de paridad entre `schema.json` y `SLOTS`
 
 ## Proveedor de persistencia dueño de la emisión
 
@@ -50,4 +54,4 @@
 ## Cierre
 
 - [ ] **TASK-15**: Re-encajar la spec 06: reformular TASK-06..12 sobre `mongooseProvider` y anotar el
-      ROADMAP (spec 22 hecha, specs C1–C4/D como huecos de las ranuras)
+      ROADMAP (spec 23 hecha, specs C1–C4/D como huecos de las ranuras)

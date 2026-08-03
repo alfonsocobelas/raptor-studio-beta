@@ -30,12 +30,12 @@ describe('selectPlugins', () => {
   })
 
   it('offers only the additive capabilities: migrations is built in and auth is a slot now', () => {
-    // TASK-03 (spec 22): auth es decisión excluyente ⇒ vive en SLOTS, no en la bolsa aditiva
+    // TASK-03 (spec 23): auth es decisión excluyente ⇒ vive en SLOTS, no en la bolsa aditiva
     expect(Object.keys(PLUGINS)).toEqual(['email', 'observability'])
   })
 
   it('resolves plugins without judging the engine (combination rules live in validateCombination)', () => {
-    // TASK-02 (spec 22): el guard requiresDatabase migró a requires + validateCombination
+    // TASK-02 (spec 23): el guard requiresDatabase migró a requires + validateCombination
     expect(selectPlugins('email,observability').map(p => p.name)).toEqual(['email', 'observability'])
   })
 })
