@@ -24,7 +24,7 @@
 
 ## Proveedor de persistencia dueño de la emisión
 
-- [ ] **TASK-05**: Tests + manifiestos `postgresProvider`/`mongooseProvider` (kernelFiles, dependencies,
+- [x] **TASK-05**: Tests + manifiestos `postgresProvider`/`mongooseProvider` (kernelFiles, dependencies,
       composeService, patchLocalConfig, testRepositoryImport) — datos movidos, aún sin consumidores
 - [ ] **TASK-06**: `kernel.ts` consume el proveedor (árbol `files-<engine>` desde el manifiesto);
       golden postgres vacío
