@@ -16,7 +16,8 @@
     "migration:generate": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/Migration",
     "migration:run": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
     "migration:revert": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
-    "studio:api": "PORT=3400 ts-node -T -r tsconfig-paths/register apps/studio-api/src/main.ts"
+    "studio:api": "PORT=3400 ts-node -T -r tsconfig-paths/register apps/studio-api/src/main.ts",
+    "studio:api:bridge": "STUDIO_CHAT_BRIDGE=1 npm run studio:api"
   },
   "dependencies": {
     "@acc/generators": "file:../../dist/libs/generators",
