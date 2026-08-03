@@ -7,7 +7,7 @@
 
 ## Mecanismo de ranuras (generador)
 
-- [ ] **TASK-01**: Tests + tipos `Slot`/`SlotProvider` y registro `SLOTS` con `database` y `ui`
+- [x] **TASK-01**: Tests + tipos `Slot`/`SlotProvider` y registro `SLOTS` con `database` y `ui`
       (proveedores actuales, defaults, sin emisión aún) + `selectProvider` con error genérico listando disponibles
 - [ ] **TASK-02**: Tests + `validateCombination` (restricciones `requires` entre ranuras); migrar el
       guard `requiresDatabase` de `selectPlugins` a `requires: { database: 'postgres' }` del proveedor auth
