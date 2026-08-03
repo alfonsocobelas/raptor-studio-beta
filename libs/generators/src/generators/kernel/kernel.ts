@@ -2,6 +2,7 @@ import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { selectModels } from '../resource/models/registry'
 import type { DatabaseEngine } from '../app/database'
+import { selectPersistence } from '../app/persistence/registry'
 
 export interface KernelGeneratorSchema {
   /** Comma-separated model names to include; defaults to the whole registry */
@@ -22,6 +23,7 @@ export interface KernelGeneratorSchema {
  * persistence module derives its entity list from the model registry.
  */
 export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema) {
+  const persistence = selectPersistence(options.database)
   const MODEL_LIST = selectModels(options.models)
   const outputDir = options.directory ?? path.join('tmp', 'generated', 'kernel')
 
@@ -64,8 +66,8 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
   if (MODEL_LIST.some(model => model.attachments)) {
     generateFiles(tree, path.join(__dirname, 'files-attachments'), outputDir, substitutions)
   }
-  // lo específico del motor (config + persistencia compartida) vive en árboles paralelos
-  generateFiles(tree, path.join(__dirname, `files-${options.database ?? 'postgres'}`), outputDir, substitutions)
+  // lo específico del motor (config + persistencia compartida) lo dicta su manifiesto
+  generateFiles(tree, path.join(__dirname, persistence.kernelFiles), outputDir, substitutions)
 
   // Un id-VO por recurso registrado: el kernel no puede conocer de antemano las
   // entidades de cada cliente, así que se derivan del registro en vez de hardcodearse.

@@ -1,6 +1,7 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import { Tree } from '@nx/devkit'
 import { kernelGenerator } from './kernel'
+import type { DatabaseEngine } from '../app/database'
 
 describe('kernel generator', () => {
   let tree: Tree
@@ -122,5 +123,15 @@ describe('kernel generator', () => {
 
     const prod = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/environments/prod.json', 'utf-8') ?? ''
     expect(prod).toContain('vault.typeorm.password')
+  })
+
+  it('rejects an engine without persistence manifest instead of failing on a missing template dir', async () => {
+    // TASK-06 (spec 23): el subárbol lo dicta el manifiesto; sin manifiesto el error es explícito
+    // y no un ENOENT opaco de `files-<lo que sea>` dentro de generateFiles
+    const orphan = createTreeWithEmptyWorkspace()
+
+    await expect(kernelGenerator(orphan, { database: 'oracle' as DatabaseEngine })).rejects.toThrow(
+      /Unknown database 'oracle'.*postgres, mongo/
+    )
   })
 })

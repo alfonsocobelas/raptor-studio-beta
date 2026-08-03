@@ -1,4 +1,5 @@
 import type { DatabaseEngine } from '../database'
+import { selectEngine } from '../plugins/slots'
 import { mongoPersistence } from './mongo.provider'
 import { postgresPersistence } from './postgres.provider'
 import type { PersistenceProvider } from './provider'
@@ -9,6 +10,11 @@ export const PERSISTENCE: Record<DatabaseEngine, PersistenceProvider> = {
   mongo: mongoPersistence
 }
 
-export function selectPersistence(engine: DatabaseEngine): PersistenceProvider {
-  return PERSISTENCE[engine]
+/**
+ * El manifiesto del motor pedido. La validación (y el mensaje de error) es la del
+ * registro de ranuras: un solo sitio decide qué motores existen. Sin valor, el default
+ * de la ranura — hoy postgres.
+ */
+export function selectPersistence(engine: string | undefined): PersistenceProvider {
+  return PERSISTENCE[selectEngine(engine)]
 }

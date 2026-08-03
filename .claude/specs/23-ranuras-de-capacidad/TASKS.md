@@ -26,7 +26,7 @@
 
 - [x] **TASK-05**: Tests + manifiestos `postgresProvider`/`mongooseProvider` (kernelFiles, dependencies,
       composeService, patchLocalConfig, testRepositoryImport) — datos movidos, aún sin consumidores
-- [ ] **TASK-06**: `kernel.ts` consume el proveedor (árbol `files-<engine>` desde el manifiesto);
+- [x] **TASK-06**: `kernel.ts` consume el proveedor (árbol `files-<engine>` desde el manifiesto);
       golden postgres vacío
 - [ ] **TASK-07**: `resource.ts` consume el proveedor (selección typeorm/mongoose en un punto único);
       golden postgres vacío
