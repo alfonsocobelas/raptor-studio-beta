@@ -28,7 +28,7 @@ import { StudioChatService } from './studio-chat.service'
             <div class="flex justify-end" [attr.data-testid]="'chat-user-' + $index">
               <div class="max-w-[85%]">
                 <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">Tú</p>
-                <div class="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3 py-2 text-sm">
+                <div class="bg-card rounded-2xl rounded-br-sm border px-3 py-2 text-sm">
                   {{ entry.text }}
                 </div>
               </div>
@@ -39,7 +39,7 @@ import { StudioChatService } from './studio-chat.service'
                 <p class="text-muted-foreground mb-0.5 text-[10px] font-medium uppercase tracking-wide">
                   ✦ Asistente
                 </p>
-                <div class="bg-muted rounded-2xl rounded-bl-sm border px-3 py-2 text-sm">{{ entry.text }}</div>
+                <div class="bg-muted rounded-2xl rounded-bl-sm px-3 py-2 text-sm">{{ entry.text }}</div>
               </div>
             </div>
           }
@@ -53,7 +53,7 @@ import { StudioChatService } from './studio-chat.service'
       </div>
       <!-- el botón vive DENTRO de la caja, así acompaña al textarea cuando crece -->
       <form
-        class="border-input focus-within:border-ring flex flex-col rounded-2xl border px-3 py-2 shadow-sm"
+        class="bg-muted border-input focus-within:border-ring flex flex-col rounded-2xl border px-3 py-2"
         (ngSubmit)="submit(input)"
       >
         <textarea
@@ -71,7 +71,7 @@ import { StudioChatService } from './studio-chat.service'
         <div class="flex items-center justify-end pt-1">
           <button
             type="submit"
-            class="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-full disabled:opacity-40"
+            class="bg-brand text-brand-foreground flex size-7 items-center justify-center rounded-full disabled:opacity-40"
             [disabled]="chat.pending() || !draft().trim()"
             aria-label="Enviar"
             data-testid="chat-send"

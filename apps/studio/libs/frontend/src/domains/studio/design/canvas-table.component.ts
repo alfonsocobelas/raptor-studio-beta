@@ -194,11 +194,11 @@ const PAGE_SIZE = 5
   `,
   styles: `
     .chrome-btn {
-      border: 1px solid hsl(var(--border));
+      border: 1px solid var(--border);
       border-radius: 0.375rem;
       padding: 0.35rem 0.65rem;
       font-size: 0.8rem;
-      color: hsl(var(--foreground));
+      color: var(--foreground);
       user-select: none;
     }
   `

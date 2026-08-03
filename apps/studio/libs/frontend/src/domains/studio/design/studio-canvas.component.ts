@@ -71,11 +71,11 @@ const BLOCK_TOOLS: BlockTool[] = [
   providers: [provideIcons(STUDIO_ICONS)],
   template: `
     <div class="flex h-screen flex-col">
-      <header class="flex items-center gap-3 border-b px-4 py-2">
+      <header class="bg-card flex items-center gap-3 border-b px-4 py-2">
         <!-- marca del producto -->
         <div class="flex shrink-0 items-center gap-2" data-testid="product-logo">
           <svg class="size-7" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
-            <rect width="32" height="32" rx="9" fill="#1c1917" />
+            <rect width="32" height="32" rx="9" fill="#1b1917" />
             <text
               x="16"
               y="17"
@@ -84,7 +84,7 @@ const BLOCK_TOOLS: BlockTool[] = [
               font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
               font-size="17"
               font-weight="700"
-              fill="#f97316"
+              fill="#f15539"
             >
               R
             </text>
@@ -334,7 +334,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           }
         </main>
 
-        <aside class="flex w-80 shrink-0 flex-col border-l p-4">
+        <aside class="bg-card flex w-80 shrink-0 flex-col border-l p-4">
           <div class="min-h-0 flex-1">
             <studio-chat-panel />
           </div>
@@ -377,14 +377,14 @@ const BLOCK_TOOLS: BlockTool[] = [
       font-weight: 600;
     }
     .toolbar-item {
-      border: 1px solid hsl(var(--border));
+      border: 1px solid var(--border);
       border-radius: 0.375rem;
       padding: 0.35rem 0.75rem;
       font-size: 0.875rem;
       transition: background-color 0.15s;
     }
     .toolbar-item:hover:not(:disabled) {
-      background-color: hsl(var(--accent));
+      background-color: var(--accent);
     }
     .toolbar-item:disabled {
       opacity: 0.4;

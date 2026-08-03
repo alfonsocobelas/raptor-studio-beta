@@ -53,7 +53,7 @@ import { buildSampleRows } from './mock-data'
   `,
   styles: `
     .chip-filter {
-      border: 1px solid hsl(var(--border));
+      border: 1px solid var(--border);
       border-radius: 9999px;
       padding: 0.3rem 0.85rem;
       font-size: 0.8rem;
