@@ -4,11 +4,11 @@
   "scripts": {
     "start": "ts-node -T -r tsconfig-paths/register apps/backend-api/src/main.ts",
     "seed": "ts-node -T -r tsconfig-paths/register libs/backend/src/seed.ts",
-    "web": "ng serve --proxy-config apps/frontend-app/proxy.conf.json",
+    "web": "ng serve --proxy-config apps/frontend-app/proxy.conf.json --port 4316",
     "web:build": "ng build",
     "typecheck": "tsc -p tsconfig.json",
     "ui:add": "nx g @spartan-ng/cli:ui",
-    "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '\u2717 Las pantallas importan la librer\u00eda de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
+    "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '✗ Las pantallas importan la librería de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
     "test": "NODE_ENV=test jest --selectProjects unit",
     "test:front": "vitest run",
     "test:integration": "NODE_ENV=test jest --selectProjects integration --runInBand",
@@ -16,7 +16,7 @@
     "migration:generate": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/migrations/Migration",
     "migration:run": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
     "migration:revert": "NODE_ENV=local ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d libs/backend/src/contexts/shared/infrastructure/persistence/typeorm/typeorm-data-source.ts",
-    "studio:api": "ts-node -T -r tsconfig-paths/register apps/studio-api/src/main.ts"
+    "studio:api": "PORT=3400 ts-node -T -r tsconfig-paths/register apps/studio-api/src/main.ts"
   },
   "dependencies": {
     "@acc/generators": "file:../../dist/libs/generators",
