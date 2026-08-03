@@ -4,6 +4,7 @@ import * as path from 'path'
 import { buildSubstitutions } from './build-substitutions'
 import { harvestAiSlots, reinjectAiSlots } from './ai-slots'
 import { MODELS } from './models/registry'
+import { selectPersistence } from '../app/persistence/registry'
 import type { ResourceGeneratorSchema } from './schema'
 
 
@@ -19,6 +20,7 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     : registered
 
   // los demás modelos registrados: de ahí salen las tablas relacionadas de la ficha
+  const persistence = selectPersistence(options.database)
   const substitutions = buildSubstitutions(model, Object.values(MODELS))
   const outputDir = options.directory ?? path.join('tmp', 'generated', model.plural)
 
@@ -34,6 +36,16 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   }
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
+
+  // persistencia del recurso: la manda el manifiesto del motor, no un if aquí (spec 23)
+  if (persistence.resourceFiles) {
+    generateFiles(tree, path.join(__dirname, persistence.resourceFiles), outputDir, substitutions)
+  } else {
+    console.warn(
+      `⚠ El motor '${persistence.engine}' todavía no emite persistencia por recurso: ` +
+        'el módulo saldrá sin entidad ni repositorio (pendiente en la spec 06).'
+    )
+  }
 
   // VOs: un fichero por campo con vo en forma objeto (plantilla única con ramas por kind)
   for (const vo of substitutions.vos) {
@@ -129,6 +141,12 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       ...substitutions,
       childFileName: comp.childFileName
     })
+    if (persistence.compositionFiles) {
+      generateFiles(tree, path.join(__dirname, persistence.compositionFiles), outputDir, {
+        ...substitutions,
+        childFileName: comp.childFileName
+      })
+    }
     generateFiles(
       tree,
       path.join(__dirname, '..', 'resource', 'files-composition-app'),
@@ -190,11 +208,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
         tree.delete(path.join(appTests, `remove-${substitutions.fileName}-usecase.test.ts`))
       }
     }
-    // test de integración del repositorio (corre contra el Postgres del compose de test)
-    if (substitutions.entry.emit) {
+    // test de integración del repositorio (corre contra la base real del compose de test)
+    if (substitutions.entry.emit && persistence.integrationTestFiles) {
       generateFiles(
         tree,
-        path.join(__dirname, '..', 'resource', 'files-tests-integration'),
+        path.join(__dirname, persistence.integrationTestFiles),
         path.join(outputDir, 'backend-tests-integration'),
         substitutions
       )

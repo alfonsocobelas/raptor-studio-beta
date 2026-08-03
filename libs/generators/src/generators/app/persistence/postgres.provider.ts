@@ -14,6 +14,9 @@ const ENVIRONMENTS = {
 export const postgresPersistence = definePersistence({
   engine: 'postgres',
   kernelFiles: 'files-postgres',
+  resourceFiles: 'files-persistence-typeorm',
+  compositionFiles: 'files-composition-persistence-typeorm',
+  integrationTestFiles: 'files-tests-integration',
 
   alignEnvironment(tree: Tree, configPath: string, environment: 'local' | 'test'): void {
     const raw = tree.read(configPath, 'utf-8')

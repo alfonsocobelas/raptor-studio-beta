@@ -14,6 +14,12 @@ export interface PersistenceProvider {
   engine: DatabaseEngine
   /** Subárbol de plantillas del kernel con la config y la persistencia compartida del motor */
   kernelFiles: string
+  /** Subárbol de la persistencia POR RECURSO (entidad/schema, mapper, repositorio) */
+  resourceFiles?: string
+  /** Ídem para los hijos de un agregado con composición */
+  compositionFiles?: string
+  /** Subárbol del test de integración del repositorio (corre contra la base real del compose) */
+  integrationTestFiles?: string
   /**
    * Deja un environment emitido coherente con la base que levanta el compose;
    * sin esto `make local-setup` arrancaría contra una base que no existe.

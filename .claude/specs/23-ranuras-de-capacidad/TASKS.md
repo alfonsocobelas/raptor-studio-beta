@@ -28,7 +28,7 @@
       composeService, patchLocalConfig, testRepositoryImport) — datos movidos, aún sin consumidores
 - [x] **TASK-06**: `kernel.ts` consume el proveedor (árbol `files-<engine>` desde el manifiesto);
       golden postgres vacío
-- [ ] **TASK-07**: `resource.ts` consume el proveedor (selección typeorm/mongoose en un punto único);
+- [x] **TASK-07**: `resource.ts` consume el proveedor (selección typeorm/mongoose en un punto único);
       golden postgres vacío
 - [ ] **TASK-08**: `app.ts` consume el proveedor: deps, compose, parche de config local y wiring de
       test-repositories desde el manifiesto — desaparecen los literales typeorm de `app.ts`
