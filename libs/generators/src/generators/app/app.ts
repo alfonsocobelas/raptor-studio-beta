@@ -15,6 +15,7 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
+import { validateCombination } from './plugins/slots'
 import { selectDatabase, type DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -83,8 +84,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const modelNames = models.map(m => m.name).join(',')
   const ui = options.ui ?? 'spartan'
   const database = selectDatabase(options.database)
-  // valida la combinación plugins×motor antes de emitir un solo fichero
-  const plugins = [migrationsPlugin, ...selectPlugins(options.plugins, database)]
+  // valida la combinación plugins×ranuras antes de emitir un solo fichero
+  const chosenPlugins = selectPlugins(options.plugins)
+  validateCombination({ database: options.database, ui: options.ui }, chosenPlugins)
+  const plugins = [migrationsPlugin, ...chosenPlugins]
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')

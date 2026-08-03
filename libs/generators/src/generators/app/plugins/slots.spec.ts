@@ -1,4 +1,7 @@
-import { SLOTS, selectProvider } from './slots'
+import { SLOTS, selectProvider, validateCombination } from './slots'
+import { authPlugin } from './auth.plugin'
+import { emailPlugin } from './email.plugin'
+import { observabilityPlugin } from './observability.plugin'
 
 /**
  * TASK-01 (spec 22): las decisiones excluyentes del generador (elige-un-proveedor)
@@ -52,5 +55,34 @@ describe('selectProvider', () => {
 
   it('throws for an unknown slot listing the registered slots', () => {
     expect(() => selectProvider('flavour', 'vanilla')).toThrow(/Unknown slot 'flavour'.*database, ui/)
+  })
+})
+
+/**
+ * TASK-02 (spec 22): las restricciones entre ranuras se declaran (`requires`) en el
+ * manifiesto del proveedor o del plugin aditivo, y un único validador las aplica
+ * antes de emitir nada. Sustituye al guard `requiresDatabase` ad-hoc de selectPlugins.
+ */
+describe('validateCombination', () => {
+  it('accepts a valid selection with no plugins', () => {
+    expect(() => validateCombination({ database: 'mongo', ui: 'material' })).not.toThrow()
+  })
+
+  it('validates the selected values against the registry (unknown value throws)', () => {
+    expect(() => validateCombination({ database: 'oracle' })).toThrow(/Unknown database 'oracle'/)
+  })
+
+  it('rejects an additive plugin whose requires contradicts the selection', () => {
+    // v1: auth emite persistencia TypeORM; adaptarlo a mongo es una spec posterior
+    expect(() => validateCombination({ database: 'mongo' }, [authPlugin])).toThrow(/auth.*postgres.*mongo/)
+  })
+
+  it('allows requirement-free plugins with any engine', () => {
+    expect(() => validateCombination({ database: 'mongo' }, [emailPlugin, observabilityPlugin])).not.toThrow()
+  })
+
+  it('resolves unstated slots to their default before checking requirements', () => {
+    // sin database explícita la selección es postgres, que es lo que auth exige
+    expect(() => validateCombination({}, [authPlugin])).not.toThrow()
   })
 })

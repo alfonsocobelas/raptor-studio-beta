@@ -9,7 +9,7 @@
 
 - [x] **TASK-01**: Tests + tipos `Slot`/`SlotProvider` y registro `SLOTS` con `database` y `ui`
       (proveedores actuales, defaults, sin emisión aún) + `selectProvider` con error genérico listando disponibles
-- [ ] **TASK-02**: Tests + `validateCombination` (restricciones `requires` entre ranuras); migrar el
+- [x] **TASK-02**: Tests + `validateCombination` (restricciones `requires` entre ranuras); migrar el
       guard `requiresDatabase` de `selectPlugins` a `requires: { database: 'postgres' }` del proveedor auth
 - [ ] **TASK-03**: Tests + ranura `auth` (`none`/`single-tenant`, reutilizando el manifiesto del plugin
       actual) y ranura `infra` (solo `none`); compat `--plugins=auth` → warning + `auth=single-tenant`

@@ -14,7 +14,7 @@ export const PLUGINS: Record<string, AppPlugin> = {
   observability: observabilityPlugin
 }
 
-export function selectPlugins(names: string | undefined, database: 'postgres' | 'mongo' = 'postgres'): AppPlugin[] {
+export function selectPlugins(names: string | undefined): AppPlugin[] {
   if (!names?.trim()) {
     return []
   }
@@ -35,12 +35,7 @@ export function selectPlugins(names: string | undefined, database: 'postgres' | 
       if (!plugin) {
         throw new Error(`Unknown plugin '${n}'. Available: ${Object.keys(PLUGINS).join(', ')}`)
       }
-      if (plugin.requiresDatabase && plugin.requiresDatabase !== database) {
-        throw new Error(
-          `Plugin '${plugin.name}' requires ${plugin.requiresDatabase} and the app targets ${database}. ` +
-            'Drop the plugin or use --database=postgres.'
-        )
-      }
+      // las restricciones plugin×ranura (p.ej. auth exige postgres) las aplica validateCombination
       return plugin
     })
 }

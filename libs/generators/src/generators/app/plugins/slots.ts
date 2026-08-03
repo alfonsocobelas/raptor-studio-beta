@@ -45,6 +45,34 @@ export const SLOTS: Record<string, Slot> = {
   }
 }
 
+/** Portador de restricciones: proveedor de ranura o plugin aditivo con manifiesto `requires`. */
+interface Requirer {
+  name: string
+  requires?: Record<string, string>
+}
+
+/**
+ * Resuelve la selección completa (aplicando defaults) y aplica las restricciones
+ * `requires` de los plugins aditivos ANTES de emitir un solo fichero. Los proveedores
+ * de ranura declararán las suyas igual cuando las tengan (spec 22, TASK-03).
+ */
+export function validateCombination(selection: Record<string, string | undefined>, plugins: Requirer[] = []): void {
+  const resolved: Record<string, string> = {}
+  for (const slot of Object.values(SLOTS)) {
+    resolved[slot.name] = selectProvider(slot.name, selection[slot.name]).value
+  }
+  for (const requirer of plugins) {
+    for (const [slotName, required] of Object.entries(requirer.requires ?? {})) {
+      if (resolved[slotName] !== required) {
+        throw new Error(
+          `Plugin '${requirer.name}' requires ${slotName}=${required} and the selection targets ${resolved[slotName]}. ` +
+            `Drop the plugin or use --${slotName}=${required}.`
+        )
+      }
+    }
+  }
+}
+
 export function selectProvider(slotName: string, value: string | undefined): SlotProvider {
   const slot = SLOTS[slotName]
   if (!slot) {
