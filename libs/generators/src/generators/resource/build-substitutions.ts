@@ -68,6 +68,10 @@ export interface ResourceSubstitutions {
   features: { view: boolean; delete: boolean; edit: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
+  /** Comentario de las acciones de fila en el listado con ficha */
+  rowActionsComment: string[]
+  /** Spread de las acciones de escritura (editar/borrar) en el listado con ficha */
+  rowWriteActions: string[]
   deleteLabelField: string
   dtoName: string
   api: string
@@ -300,6 +304,8 @@ export function buildSubstitutions(definition: ResourceDefinition, others: Resou
     ],
     features: resolveFeatures(definition),
     icons: renderIcons(resolveFeatures(definition)),
+    rowActionsComment: renderRowActionsComment(resolveFeatures(definition)),
+    rowWriteActions: renderRowWriteActions(resolveFeatures(definition)),
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
     api: definition.api ?? `/api/v1/${definition.plural}`,
@@ -703,6 +709,47 @@ function resolveFeatures(definition: ResourceDefinition): { view: boolean; delet
     delete: definition.list?.features?.delete ?? false,
     edit: definition.list?.features?.edit ?? true
   }
+}
+
+/**
+ * El comentario de las acciones de fila cuando la entidad tiene ficha. La papelera la manda
+ * `features.delete`, no la presencia de ficha: `customers` del canon no borra porque lo gobierna
+ * un sincronismo externo (spec 32 de la referencia), y eso lo dice su schema, no la plantilla.
+ */
+function renderRowActionsComment(features: { delete: boolean }): string[] {
+  if (!features.delete) {
+    return [
+      '  // Editar solo para quien puede escribir: el backend responde 403 al viewer, así que ofrecer la',
+      '  // acción solo llevaría a un error.'
+    ]
+  }
+  return [
+    '  // Editar y borrar solo para quien puede escribir: el backend responde 403 al viewer, así que',
+    '  // ofrecer la acción solo llevaría a un error. La ficha no sustituye a la papelera: si el schema',
+    '  // declara la entidad borrable, se borra desde la fila igual que sin ficha.'
+  ]
+}
+
+/**
+ * El `...(this.canWrite() ? … : [])` de las acciones de escritura. Se arma aquí y no en la
+ * plantilla porque la FORMA depende del número de acciones: con una sola, el canon castea el
+ * elemento; con dos, el array. Emitir siempre la forma de dos ensuciaría el diff de oro.
+ */
+function renderRowWriteActions(features: { edit: boolean; delete: boolean }): string[] {
+  const entries: string[] = []
+  if (features.edit) entries.push("{ icon: 'lucidePencil', label: 'Editar', action: 'edit' }")
+  if (features.delete) {
+    entries.push("{ icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }")
+  }
+  if (entries.length === 0) return []
+  if (entries.length === 1) return [`    ...(this.canWrite() ? [${entries[0]} as TableAction] : [])`]
+  return [
+    '    ...(this.canWrite()',
+    '      ? ([',
+    ...entries.map((entry, index) => `          ${entry}${index < entries.length - 1 ? ',' : ''}`),
+    '        ] as TableAction[])',
+    '      : [])'
+  ]
 }
 
 function renderIcons(features: { view: boolean; delete: boolean; edit: boolean }): string[] {

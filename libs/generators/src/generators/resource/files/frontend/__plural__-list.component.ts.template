@@ -178,11 +178,14 @@ export class <%- className %>sListComponent {
 <%_ if (!features.edit && !features.delete) { _%>
   readonly actions: TableAction[] = [{ icon: 'lucideEye', label: '<%- ui.viewLabel %>', action: 'view' }]
 <%_ } else if (features.view) { _%>
-  // Editar solo para quien puede escribir: el backend responde 403 al viewer, así que ofrecer la
-  // acción solo llevaría a un error.
+<%_ rowActionsComment.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
   readonly actions = computed<TableAction[]>(() => [
     { icon: 'lucideEye', label: '<%- ui.viewLabel %>', action: 'view' },
-    ...(this.canWrite() ? [{ icon: 'lucidePencil', label: 'Editar', action: 'edit' } as TableAction] : [])
+<%_ rowWriteActions.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
   ])
 <%_ } else { _%>
   // Un viewer no ve ninguna: son escrituras que el backend rechazaría con 403.
