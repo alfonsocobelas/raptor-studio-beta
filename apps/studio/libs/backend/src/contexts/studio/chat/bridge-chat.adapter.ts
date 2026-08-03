@@ -16,7 +16,9 @@ export class BridgeChatAdapter extends ChatPort {
 
   constructor(
     private readonly dir: string,
-    private readonly timeoutMs = 180_000,
+    // 15 min: componer un diseño real (entidades, relaciones y 10 ejemplos por
+    // campo) lleva minutos, y a los 3 el cliente abandonaba una respuesta válida.
+    private readonly timeoutMs = 900_000,
     private readonly pollMs = 500
   ) {
     super()
