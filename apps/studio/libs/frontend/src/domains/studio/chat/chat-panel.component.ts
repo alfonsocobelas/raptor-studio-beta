@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideArrowUp } from '@ng-icons/lucide'
+import { autosize, shouldSubmit } from './chat-input'
 import { StudioChatService } from './studio-chat.service'
 
 /**
@@ -9,7 +12,8 @@ import { StudioChatService } from './studio-chat.service'
 @Component({
   selector: 'studio-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, NgIcon],
+  providers: [provideIcons({ lucideArrowUp })],
   template: `
     <section class="flex h-full flex-col" data-testid="chat-panel">
       <h2 class="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
@@ -47,23 +51,34 @@ import { StudioChatService } from './studio-chat.service'
           <p class="text-destructive text-xs" data-testid="chat-error">{{ error }}</p>
         }
       </div>
-      <form class="flex gap-2" (ngSubmit)="submit()">
-        <input
-          class="border-input min-w-0 flex-1 rounded-md border px-3 py-2 text-sm"
+      <!-- el botón vive DENTRO de la caja, así acompaña al textarea cuando crece -->
+      <form
+        class="border-input focus-within:border-ring flex flex-col rounded-2xl border px-3 py-2 shadow-sm"
+        (ngSubmit)="submit(input)"
+      >
+        <textarea
+          #input
+          rows="1"
+          class="w-full resize-none overflow-y-auto bg-transparent text-sm outline-none"
           name="draft"
           placeholder="Describe tu aplicación…"
           [disabled]="chat.pending()"
           [(ngModel)]="draft"
+          (input)="grow(input)"
+          (keydown)="onKeydown($event, input)"
           data-testid="chat-input"
-        />
-        <button
-          type="submit"
-          class="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm disabled:opacity-50"
-          [disabled]="chat.pending() || !draft().trim()"
-          data-testid="chat-send"
-        >
-          Enviar
-        </button>
+        ></textarea>
+        <div class="flex items-center justify-end pt-1">
+          <button
+            type="submit"
+            class="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-full disabled:opacity-40"
+            [disabled]="chat.pending() || !draft().trim()"
+            aria-label="Enviar"
+            data-testid="chat-send"
+          >
+            <ng-icon name="lucideArrowUp" size="15" />
+          </button>
+        </div>
       </form>
     </section>
   `
@@ -72,9 +87,23 @@ export class ChatPanelComponent {
   protected readonly chat = inject(StudioChatService)
   protected readonly draft = signal('')
 
-  protected submit(): void {
-    const text = this.draft()
+  protected submit(input?: HTMLTextAreaElement): void {
+    const text = this.draft().trim()
+    if (!text || this.chat.pending()) return
     this.draft.set('')
+    if (input) {
+      input.style.height = ''
+    }
     void this.chat.send(text)
+  }
+
+  protected grow(input: HTMLTextAreaElement): void {
+    autosize(input)
+  }
+
+  protected onKeydown(event: KeyboardEvent, input: HTMLTextAreaElement): void {
+    if (!shouldSubmit(event)) return
+    event.preventDefault()
+    this.submit(input)
   }
 }
