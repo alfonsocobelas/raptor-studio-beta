@@ -72,12 +72,25 @@ const BLOCK_TOOLS: BlockTool[] = [
   template: `
     <div class="flex h-screen flex-col">
       <header class="flex items-center gap-3 border-b px-4 py-2">
-        <input
-          class="hover:border-input w-40 rounded-md border border-transparent px-2 py-1 text-sm font-semibold"
-          [ngModel]="store.appName()"
-          (ngModelChange)="store.setAppName($event)"
-          data-testid="app-name"
-        />
+        <!-- marca del producto -->
+        <div class="flex shrink-0 items-center gap-2" data-testid="product-logo">
+          <svg class="size-7" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
+            <rect width="32" height="32" rx="9" fill="#1c1917" />
+            <text
+              x="16"
+              y="17"
+              text-anchor="middle"
+              dominant-baseline="central"
+              font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+              font-size="17"
+              font-weight="700"
+              fill="#f97316"
+            >
+              R
+            </text>
+          </svg>
+          <span class="text-[15px] font-semibold tracking-tight">Raptor Studio</span>
+        </div>
         <div class="bg-border h-6 w-px"></div>
 
         <!-- crear vista -->
