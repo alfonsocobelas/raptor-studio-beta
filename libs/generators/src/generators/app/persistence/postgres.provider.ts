@@ -16,6 +16,11 @@ export const postgresPersistence = definePersistence({
   kernelFiles: 'files-postgres',
   skeletonFiles: 'files-engine-postgres',
   healthIndicator: 'TypeOrmHealthIndicator',
+  dependencies: {
+    '@nestjs/typeorm': '^11.0.1',
+    pg: '^8.21.0',
+    typeorm: '^0.3.30'
+  },
   resourceFiles: 'files-persistence-typeorm',
   compositionFiles: 'files-composition-persistence-typeorm',
   integrationTestFiles: 'files-tests-integration',

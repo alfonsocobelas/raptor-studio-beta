@@ -92,8 +92,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const selection = { database: options.database, ui: options.ui, auth: legacy.auth }
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
-  // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth
-  const plugins = [migrationsPlugin, ...slotPlugins(selection), ...chosenPlugins]
+  // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth.
+  // Los plugins de fábrica que el motor no admite se quedan fuera (Mongo no migra: sincroniza).
+  const excluded = persistence.excludesPlugins ?? []
+  const plugins = [migrationsPlugin, ...slotPlugins(selection), ...chosenPlugins].filter(
+    plugin => !excluded.includes(plugin.name)
+  )
 
   const backendSrc = path.join(root, 'libs/backend/src')
   const frontendSrc = path.join(root, 'libs/frontend/src')
@@ -234,7 +238,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     }
     plugin.apply?.(tree, pluginContext)
   }
-  applyPluginManifests(tree, root, plugins)
+  applyPluginManifests(tree, root, plugins, persistence.dependencies)
 
   await formatFiles(tree)
 
@@ -253,9 +257,18 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   }
 }
 
-/** Vuelca en package.json y Makefile lo que cada plugin declara en su manifiesto. */
-export function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugin[]): void {
-  if (!plugins.length) {
+/**
+ * Vuelca en package.json y Makefile lo que declaran los manifiestos: los plugins y el
+ * proveedor de persistencia (su driver, que ya no viaja en el esqueleto: tenerlo ahí
+ * obligaba a toda app a arrastrar el driver del otro motor).
+ */
+export function applyPluginManifests(
+  tree: Tree,
+  root: string,
+  plugins: AppPlugin[],
+  engineDependencies: Record<string, string> = {}
+): void {
+  if (!plugins.length && !Object.keys(engineDependencies).length) {
     return
   }
 
@@ -265,6 +278,7 @@ export function applyPluginManifests(tree: Tree, root: string, plugins: AppPlugi
     dependencies?: Record<string, string>
     devDependencies?: Record<string, string>
   }
+  pkg.dependencies = sortKeys({ ...pkg.dependencies, ...engineDependencies })
   for (const plugin of plugins) {
     pkg.scripts = { ...pkg.scripts, ...plugin.scripts }
     pkg.dependencies = sortKeys({ ...pkg.dependencies, ...plugin.dependencies })

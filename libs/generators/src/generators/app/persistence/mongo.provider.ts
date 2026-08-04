@@ -17,6 +17,12 @@ export const mongoPersistence = definePersistence({
   kernelFiles: 'files-mongo',
   skeletonFiles: 'files-engine-mongo',
   healthIndicator: 'MongooseHealthIndicator',
+  dependencies: {
+    '@nestjs/mongoose': '^11.0.3',
+    mongoose: '^8.9.5'
+  },
+  // las migraciones son de TypeORM: aquí los índices se materializan con syncIndexes()
+  excludesPlugins: ['migrations'],
   resourceFiles: 'files-persistence-mongoose',
   integrationTestFiles: 'files-tests-integration-mongoose',
 

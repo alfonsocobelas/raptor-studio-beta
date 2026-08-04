@@ -21,6 +21,13 @@ export interface PersistenceProvider {
   skeletonFiles?: string
   /** Indicador de @nestjs/terminus con el que el readiness comprueba la base */
   healthIndicator: string
+  /** Dependencias que el motor añade al package.json emitido (driver + integración Nest) */
+  dependencies: Record<string, string>
+  /**
+   * Plugins de fábrica que este motor NO admite (p.ej. las migraciones son de TypeORM:
+   * en Mongo los índices se sincronizan desde los schemas, no hay nada que migrar).
+   */
+  excludesPlugins?: string[]
   /** Subárbol de la persistencia POR RECURSO (entidad/schema, mapper, repositorio) */
   resourceFiles?: string
   /** Ídem para los hijos de un agregado con composición */

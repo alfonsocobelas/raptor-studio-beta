@@ -69,7 +69,7 @@
       `integrationArrangerFiles`) y que el ensamblador los pida, como ya hace con lo demás.
 - [x] **TASK-09b**: Health check por motor: `health.controller.ts` comprueba TypeORM siempre
       (detectado en el refactor de la spec 23).
-- [ ] **TASK-10**: Ensamblaje app mongo: deps (`mongoose`, `@nestjs/mongoose`), fuera `typeorm`/`pg`
+- [x] **TASK-10**: Ensamblaje app mongo: deps (`mongoose`, `@nestjs/mongoose`), fuera `typeorm`/`pg`
       — declaradas en el manifiesto (`dependencies`/`removeDependencies`), no con `if`s en `app.ts` —,
       Makefile sin targets de migración, migraciones de fábrica omitidas, `syncIndexes()` en bootstrap.
 
