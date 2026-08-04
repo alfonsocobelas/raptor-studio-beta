@@ -1,0 +1,16 @@
+{
+  "env": "test",
+  "app": {
+    "port": 3000,
+    "baseUrl": "http://localhost:4200"
+  },
+  "cors": {
+    "origin": "http://localhost:4200"
+  },
+  "logger": {
+    "level": "error"
+  },
+  "mongo": {
+    "uri": "mongodb://localhost:27018/sap_licensing_test?replicaSet=rs0&directConnection=true"
+  }
+}

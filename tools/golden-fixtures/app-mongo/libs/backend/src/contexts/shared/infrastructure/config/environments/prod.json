@@ -1,0 +1,16 @@
+{
+  "env": "prod",
+  "app": {
+    "port": 3000,
+    "baseUrl": "vault.app.base-url"
+  },
+  "cors": {
+    "origin": "vault.cors.origin"
+  },
+  "logger": {
+    "level": "info"
+  },
+  "mongo": {
+    "uri": "vault.mongo.uri"
+  }
+}

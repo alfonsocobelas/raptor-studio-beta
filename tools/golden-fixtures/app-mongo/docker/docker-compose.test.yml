@@ -1,0 +1,17 @@
+# Mongo efímero para integración: sin volumen y con los datos en tmpfs.
+# Single-node replica set igual que el local (las transacciones lo exigen).
+services:
+  mongo-test:
+    image: mongo:7
+    container_name: app-mongo-test
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27018:27017'
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate().ok }"']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+    tmpfs:
+      - /data/db
