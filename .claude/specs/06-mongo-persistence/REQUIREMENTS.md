@@ -46,7 +46,8 @@ Decisiones cerradas en brainstorming (2026-07-31):
 - [ ] `nx g @acc/generators:app` (sin opción) produce salida idéntica a la baseline actual: `/golden-diff`
       de la fixture Postgres queda vacío
 - [ ] Nueva fixture golden mongo congelada e incorporada a `tools/golden-diff.sh`
-- [ ] IDs `_id` string UUIDv7 (no ObjectId) en todos los documentos
+- [x] IDs `_id` string UUIDv7 (no ObjectId) en todos los documentos — **decisión revisada y
+      reafirmada por Alfonso el 2026-08-04**, ver "Identidad del documento" abajo
 - [ ] Unicidad `ifPresent` de campos opcionales cubierta por test de integración emitido
 - [ ] Combinación `database=mongo` + plugin incompatible → error claro del generador (con test)
 
@@ -74,6 +75,44 @@ Decisiones cerradas en brainstorming (2026-07-31):
 - mongodb-memory-server u otros arranges alternativos — solo docker compose
 - Migraciones de datos Mongo (migrate-mongo etc.) — los índices se sincronizan al bootstrap
 - Piel frontend: cero cambios en frontend
+
+## Identidad del documento (decisión reafirmada 2026-08-04)
+
+`_id` **es** el UUIDv7 del dominio. Ni ObjectId, ni un campo `id` adicional. Se debatieron las tres
+opciones y se descartaron dos:
+
+```
+  A) _id = UUIDv7            ✅ elegida: UNA identidad, cero campos extra
+  B) _id = ObjectId + id     ✗ dos identidades, un índice más, get() por índice secundario,
+                               y _id se filtra a la API con un lean() descuidado
+  C) _id = ObjectId, sin más ✗ el id del dominio pasaría a ser ObjectId: cambia el CONTRATO
+                               (el cliente manda el id en el POST validado con @IsUUID('7'),
+                               los VOs de id, los DTOs compartidos, las rutas del frontend,
+                               la PK `uuid` de Postgres, las relaciones y el ADR de CLAUDE.md).
+                               El mismo resource-schema daría dos APIs según el motor.
+```
+
+Razón de fondo: el agregado **tiene identidad antes de persistirse** — `register()` recibe un
+agregado ya identificado, y el id lo genera el dominio (UUIDv7). Si lo generase la base, habría un
+id de dominio y otro de base que no significan lo mismo.
+
+Lo que se acepta perder al no usar ObjectId:
+
+- **Espacio**: 41 bytes en BSON frente a 12 (~29 por documento, y el índice `_id` crece igual).
+- **Comparación**: 36 bytes de string comparan más lento que 12 de ObjectId.
+- **La fecha de creación no se lee sola**: Compass/mongosh decodifican el timestamp del ObjectId de
+  serie; el del UUIDv7 hay que parsearlo. Mitigado con `timestamps: true` (`createdAt` explícito).
+- **No se puede apuntar a colecciones existentes con `_id` de ObjectId**: el emitido asume base
+  nueva. Integrar con una base heredada exigiría otra decisión.
+- **Nadie autogenera el id**: un `insert` a mano sin `_id` falla (el dominio siempre lo pone).
+
+Lo que NO se pierde, y hace viable la decisión: **la localidad de escritura**. UUIDv7 es ordenado en
+el tiempo, así que los inserts van al extremo derecho del índice igual que con ObjectId (con UUIDv4
+sí sería un problema serio).
+
+Válvula de escape si el espacio llegara a doler: guardar el UUID como `BinData` subtipo 4 (16 bytes),
+manteniendo una sola identidad y el contrato intacto; precio, ids ilegibles en mongosh y conversión
+en el mapper. No se hace ahora (YAGNI).
 
 ---
 
