@@ -155,7 +155,7 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 
 ```
   RANURA      PROVEEDORES HOY                 PENDIENTE (spec que lo rellena)
-  database    postgres ✅ | mongo 🚧          spec 06 (rellenar mongo.provider.ts)
+  database    postgres ✅ | mongo ✅          spec 06: falta golden mongo + suite integración
   ui          spartan ✅ | material ✅         —
   infra       none ✅                          C1 azure · C2 lowcost · C3 aws · C4 gcp
   auth        none ✅ | single-tenant ✅       D multi-tenant (¡ojo: ya hay código, ver abajo)
@@ -183,6 +183,16 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     parte a 80 columnas, contra la convención del proyecto — y las 624 fuentes del
     estudio están escritas en estilo raíz. Además el `--config` de prettier NO gana
     al `.prettierrc` más cercano. Arreglarlo reformatea medio estudio: decisión de Alfonso.
-20. **`build-mongo.spec.ts` sin `build-mongo.ts`**: la suite de `generators` tiene
-    una suite que no compila desde antes de la spec 23 (TASK-06 de la spec 06 a medias).
+20. ~~**`build-mongo.spec.ts` sin `build-mongo.ts`**~~ — resuelto 2026-08-04 (spec 06 TASK-06):
+    la suite de `generators` está entera en verde (43 suites).
 21. **Los 2 tests rojos de `TenantScopedSessionStore`** (ver spec D arriba).
+22. **El generador NO emite los VOs compartidos que sus modelos referencian** (⚠️ el emitido no
+    compila con esos modelos): `voShared` apunta a `phone.vo`, `customer-name.vo`,
+    `sync-timestamp.vo` y `shared/domain/constants`, y esos ficheros no se emiten ni están en la
+    fixture golden. Medido con el typecheck de la app emitida (2026-08-04): app `customer`
+    postgres 11 errores, mongo 9 — todos de este hueco. Con los modelos de demo (boutique) la app
+    compila limpia en los DOS motores (0 errores), así que el hueco es de los modelos
+    heredados de sap-licenses, no del pipeline.
+23. **El typecheck de la app emitida no está en ningún gate.** El golden compara ficheros y la
+    suite del plugin no compila lo emitido: los 5 defectos de `5232994` sobrevivieron a ambos.
+    Vale la pena un gate que genere una app y le pase `tsc` (lento, pero es el único que ve esto).
