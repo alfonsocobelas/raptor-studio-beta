@@ -109,7 +109,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     sharedDomainAlias: SHARED_DOMAIN_ALIAS,
     database: persistence.engine
   })
-  await rootGenerator(tree, { directory: backendSrc, models: modelNames })
+  await rootGenerator(tree, { directory: backendSrc, models: modelNames, persistenceDir: persistence.persistenceDir })
   // el arranque vive en apps/backend-api; la config por entorno la emite el kernel
   tree.delete(path.join(backendSrc, 'main.ts'))
   tree.delete(path.join(backendSrc, 'environments'))
@@ -134,7 +134,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       database: persistence.engine
     })
 
-    relocate(tree, path.join(staging, 'backend'), path.join(backendSrc, 'contexts', model.context, 'modules', model.plural))
+    relocate(
+      tree,
+      path.join(staging, 'backend'),
+      path.join(backendSrc, 'contexts', model.context, 'modules', model.plural)
+    )
     // El canon separa el servicio del recurso (core/services, compartido) de su
     // pantalla (domains/…/features): los listados importan el servicio desde core.
     const staged = path.join(staging, 'frontend')
@@ -158,14 +162,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       if (!tree.isFile(path.join(stagedTests, file))) {
         continue
       }
-      const target = file.includes('.repository.mock.') ? path.join(testsRoot, 'mocks') : path.join(testsRoot, 'domain/mothers')
+      const target = file.includes('.repository.mock.')
+        ? path.join(testsRoot, 'mocks')
+        : path.join(testsRoot, 'domain/mothers')
       move(tree, path.join(stagedTests, file), path.join(target, file))
     }
-    relocate(
-      tree,
-      path.join(staging, 'backend-tests-application'),
-      path.join(testsRoot, 'application/use-cases')
-    )
+    relocate(tree, path.join(staging, 'backend-tests-application'), path.join(testsRoot, 'application/use-cases'))
     relocate(
       tree,
       path.join(staging, 'backend-tests-integration'),
@@ -194,6 +196,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])
   generateFiles(tree, path.join(__dirname, 'files'), root, {
     ...shellSubstitutions(composition),
+    persistenceDir: persistence.persistenceDir,
     themeClass: theme.themeClass,
     seedImports: models
       .map(model => {
@@ -209,9 +212,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       .join('\n'),
     seedModules: models.map(model => `${names(model.plural).className}Module`).join(', '),
     // los repositorios concretos los nombra el manifiesto del motor: aquí no se sabe de motores
-    repoImports: testRepositories
-      .map(repo => `import { ${repo.className} } from '${repo.importPath}'`)
-      .join('\n'),
+    repoImports: testRepositories.map(repo => `import { ${repo.className} } from '${repo.importPath}'`).join('\n'),
     repoList: testRepositories.map(repo => `  ${repo.className}`).join(',\n'),
     seedRuns: models
       .map(model => {
@@ -311,7 +312,6 @@ export function applyPluginManifests(
 function sortKeys(record: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)))
 }
-
 
 function run(command: string, cwd: string): void {
   try {
@@ -472,9 +472,7 @@ export function shellSubstitutions(composition: AppComposition): {
     routeEntries: routes.join(',\n'),
     // Una entrada por VISTA: si el mismo recurso tiene tabla y galería, son dos
     // vistas y por tanto dos entradas, cada una con su propio título.
-    navItems: composition.pages
-      .map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`)
-      .join(',\n')
+    navItems: composition.pages.map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`).join(',\n')
   }
 }
 

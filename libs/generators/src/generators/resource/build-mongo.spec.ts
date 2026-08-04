@@ -2,6 +2,7 @@ import { renderMongo } from './build-mongo'
 import { customer } from './models/customer.model'
 import { contract } from './models/contract.model'
 import { license } from './models/license.model'
+import { movement } from './models/movement.model'
 
 describe('renderMongo', () => {
   describe('doc fields', () => {
@@ -34,6 +35,17 @@ describe('renderMongo', () => {
       const archivedAt = mongo.docFields.find(f => f.name === 'archivedAt')
       expect(archivedAt?.defSrc).toBe('{ type: Date, default: null }')
       expect(archivedAt?.tsType).toBe('Nullable<Date>')
+    })
+
+    it('mapea date a String, porque su primitive es una fecha ISO igual que en Postgres', () => {
+      // WHEN
+      const mongo = renderMongo(movement)
+
+      // THEN — con `type: Date` el documento guardaría un Date y el shape de primitives
+      // dejaría de cuadrar (`movementDate: string`): el contrato no cambia con el motor
+      const movementDate = mongo.docFields.find(f => f.name === 'movementDate')
+      expect(movementDate?.defSrc).toBe('{ type: String, required: true }')
+      expect(movementDate?.tsType).toBe('string')
     })
 
     it('maps timestamptz to Date and numeric flags to Number without transformers', () => {

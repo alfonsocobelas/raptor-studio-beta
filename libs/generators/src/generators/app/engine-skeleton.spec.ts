@@ -61,12 +61,18 @@ describe('app generator — el esqueleto específico del motor', () => {
       expect(setup).toContain('syncIndexes')
     })
 
-    it('no deja ni un fichero con TypeORM en el árbol emitido', async () => {
+    it('no deja ni un rastro de TypeORM en el árbol emitido', async () => {
       const tree = await emit('mongo')
 
+      // Se mira el CÓDIGO, no la prosa: rutas de import y identificadores. Buscar solo
+      // 'TypeOrm' dejaba escapar '…/persistence/typeorm/shared-persistence.module', que es
+      // justo por donde una app mongo dejaba de compilar.
       const offenders = tree
         .listChanges()
-        .filter(change => (change.content?.toString('utf-8') ?? '').includes('TypeOrm'))
+        .filter(change => {
+          const content = change.content?.toString('utf-8') ?? ''
+          return /from '[^']*typeorm[^']*'/i.test(content) || /\bTypeOrm[A-Z]/.test(content)
+        })
         .map(change => change.path)
 
       expect(offenders).toEqual([])

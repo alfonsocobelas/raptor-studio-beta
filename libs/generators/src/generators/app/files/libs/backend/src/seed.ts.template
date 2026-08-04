@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { CoreConfigModule } from './contexts/shared/infrastructure/config/config.module'
 import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.module'
-import { SharedPersistenceModule } from './contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
+import { SharedPersistenceModule } from './contexts/shared/infrastructure/persistence/<%- persistenceDir %>/shared-persistence.module'
 <%- seedImports %>
 
 @Module({

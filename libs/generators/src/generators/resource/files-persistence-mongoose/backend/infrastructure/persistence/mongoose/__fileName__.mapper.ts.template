@@ -18,9 +18,11 @@ export class <%- className %>Mapper {
 <%_ }) _%>
       }<% if (child) { %>,
       (doc.<%- child.childrenProp %> ?? []).map(<%- child.childProp %> => ({
-<%_ child.toDomainProps.forEach((line, i) => { _%>
-        <%- line.replace('doc.', child.childProp + '.') %><%- i < child.toDomainProps.length - 1 ? ',' : '' %>
+<%_ child.toDomainProps.forEach(line => { _%>
+        <%- line.replace('doc.', child.childProp + '.') %>,
 <%_ }) _%>
+        // la clave del padre no vive en el subdocumento: se repone desde el _id del agregado
+        <%- child.parentField %>: doc._id
       }))<% } %>
     )
   }

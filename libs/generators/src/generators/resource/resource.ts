@@ -7,7 +7,6 @@ import { MODELS } from './models/registry'
 import { selectPersistence } from '../app/persistence/registry'
 import type { ResourceGeneratorSchema } from './schema'
 
-
 export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSchema) {
   const registered = MODELS[options.name]
   if (!registered) {
@@ -15,9 +14,7 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   }
 
   // La app manda sobre el alias: un mismo modelo se emite en proyectos con scopes distintos.
-  const model = options.sharedDomainAlias
-    ? { ...registered, sharedDomainAlias: options.sharedDomainAlias }
-    : registered
+  const model = options.sharedDomainAlias ? { ...registered, sharedDomainAlias: options.sharedDomainAlias } : registered
 
   // los demás modelos registrados: de ahí salen las tablas relacionadas de la ficha
   const persistence = selectPersistence(options.database)
@@ -120,7 +117,7 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree,
       path.join(__dirname, '..', 'resource', 'files-seed'),
       path.join(outputDir, 'backend/infrastructure/seed'),
-      substitutions
+      { ...substitutions, persistenceDir: persistence.persistenceDir }
     )
   }
 
@@ -187,7 +184,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-types.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-repository.ts`))
     tree.delete(
-      path.join(outputDir, 'backend/infrastructure/persistence/typeorm', `typeorm-${substitutions.fileName}.repository.ts`)
+      path.join(
+        outputDir,
+        'backend/infrastructure/persistence/typeorm',
+        `typeorm-${substitutions.fileName}.repository.ts`
+      )
     )
   } else {
     // artefactos de test de dominio (mother, builder, repository mock)

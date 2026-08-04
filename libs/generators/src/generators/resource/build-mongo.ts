@@ -22,7 +22,9 @@ const MONGOOSE_TYPE: Record<FieldType, string> = {
   number: 'Number',
   integer: 'Number',
   boolean: 'Boolean',
-  date: 'Date',
+  // date guarda la fecha ISO tal cual ('YYYY-MM-DD'), como la columna `date` de Postgres:
+  // su primitive es un string en ambos motores, y un Date aquí desalinearía el contrato
+  date: 'String',
   timestamptz: 'Date'
 }
 
@@ -53,6 +55,8 @@ export interface MongoChildBindings {
   childrenProp: string
   /** Nombre en singular para variables de plantilla (p.ej. `contact`) */
   childProp: string
+  /** Clave del padre que el subdocumento NO guarda y el mapper debe reponer (p.ej. `customerId`) */
+  parentField: string
   docFields: MongoDocField[]
   toDomainProps: string[]
   toPersistenceProps: string[]
@@ -174,7 +178,10 @@ function renderChild(definition: ResourceDefinition): MongoChildBindings | null 
     schemaConst: `${child.className}Schema`,
     childrenProp: composition.plural,
     childProp: child.propertyName,
+    parentField: composition.parentField,
     docFields: fields.map(([name, field]) => renderChildDocField(name, field)),
+    // Al volver al dominio hay que REPONER la clave del padre: no está en el subdocumento
+    // (el documento padre ya lo contiene), pero los primitives del hijo la exigen.
     toDomainProps: fields.map(([name]) => `${name}: doc.${name}`),
     toPersistenceProps: fields.map(([name, field]) => renderChildPersistenceProp(name, field))
   }

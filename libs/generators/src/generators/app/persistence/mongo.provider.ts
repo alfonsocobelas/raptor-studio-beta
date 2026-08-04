@@ -15,6 +15,7 @@ import { definePersistence } from './provider'
 export const mongoPersistence = definePersistence({
   engine: 'mongo',
   kernelFiles: 'files-mongo',
+  persistenceDir: 'mongoose',
   skeletonFiles: 'files-engine-mongo',
   healthIndicator: 'MongooseHealthIndicator',
   dependencies: {
@@ -28,6 +29,14 @@ export const mongoPersistence = definePersistence({
 
   resourceSubstitutions(model: ResourceDefinition): Record<string, unknown> {
     return { mongo: renderMongo(model) }
+  },
+
+  testRepository(model: ResourceDefinition): { className: string; importPath: string } {
+    const n = names(model.name)
+    return {
+      className: `Mongoose${n.className}Repository`,
+      importPath: `../../src/contexts/${model.context}/modules/${model.plural}/infrastructure/persistence/mongoose/mongoose-${n.fileName}.repository`
+    }
   },
 
   moduleRepository(model: ResourceDefinition): { className: string; importPath: string } {

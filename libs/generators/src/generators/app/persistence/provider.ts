@@ -15,6 +15,12 @@ export interface PersistenceProvider {
   /** Subárbol de plantillas del kernel con la config y la persistencia compartida del motor */
   kernelFiles: string
   /**
+   * Carpeta del motor bajo `infrastructure/persistence/` en el código emitido. La usan los
+   * ficheros que importan el SharedPersistenceModule (root.module, seed, test-repositories):
+   * tenerla fija dejaba a una app mongo importando un módulo que no existe.
+   */
+  persistenceDir: string
+  /**
    * Lo que el motor añade al esqueleto de la app: su docker-compose y el arranque de la
    * suite de integración (arranger + jest.setup). Se copia verbatim, como el esqueleto.
    */

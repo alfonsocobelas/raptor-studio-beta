@@ -87,9 +87,14 @@ describe('postgres manifest', () => {
 describe('mongo manifest', () => {
   const mongo = PERSISTENCE['mongo']
 
-  it('declares no environment alignment nor concrete repository yet (spec 06 pending)', () => {
-    // honestidad del manifiesto: lo que el motor todavía no emite se ve como hueco, no se inventa
+  it('declares its concrete repositories (spec 06 TASK-07/10)', () => {
+    expect(mongo.moduleRepository?.(customer).className).toBe('MongooseCustomerRepository')
+    expect(mongo.testRepository?.(customer).className).toBe('MongooseCustomerRepository')
+  })
+
+  it('no necesita alinear environments: su URI ya sale con el puerto del compose', () => {
+    // Postgres SÍ lo necesita porque su compose se copia verbatim y la config no se templa;
+    // la config mongo del kernel ya trae 27017 (local) y 27018 (test)
     expect(mongo.alignEnvironment).toBeUndefined()
-    expect(mongo.testRepository).toBeUndefined()
   })
 })

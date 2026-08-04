@@ -6,8 +6,9 @@ export interface RootGeneratorSchema {
   /** Comma-separated model names to include; defaults to the whole registry */
   models?: string
   directory?: string
+  /** Carpeta del motor bajo infrastructure/persistence (la dicta el manifiesto de persistencia) */
+  persistenceDir?: string
 }
-
 
 /**
  * Composition root del backend: root.module.ts (core + un módulo por recurso
@@ -33,7 +34,8 @@ export async function rootGenerator(tree: Tree, options: RootGeneratorSchema) {
     // el módulo de almacenamiento solo existe si algún recurso declara adjuntos
     attachments: MODEL_LIST.some(model => model.attachments),
     schemaList: schemas.join(', '),
-    databaseName: `${schemas[0] ?? 'app'}_local`
+    databaseName: `${schemas[0] ?? 'app'}_local`,
+    persistenceDir: options.persistenceDir ?? 'typeorm'
   })
 
   await formatFiles(tree)

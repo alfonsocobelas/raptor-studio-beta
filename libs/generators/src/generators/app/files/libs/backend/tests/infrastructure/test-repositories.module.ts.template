@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { SharedPersistenceModule } from '../../src/contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
+import { SharedPersistenceModule } from '../../src/contexts/shared/infrastructure/persistence/<%- persistenceDir %>/shared-persistence.module'
 <%- repoImports %>
 
 const repositories = [
