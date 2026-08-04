@@ -29,9 +29,28 @@
 
 ## Verificación end-to-end
 
-- [ ] **TASK-06**: Subida real contra la app generada (`infra=none`, adapter de disco local, sin
-      cuenta de Azure): `POST` multipart, binario en el almacenamiento, metadatos en la tabla, y el
-      camino de error sin dejar huérfanos. Anotar el resultado en esta spec.
+- [x] **TASK-06**: Subida real contra la app generada. **Hecha 2026-08-04, 4/4 en verde** contra
+      Postgres real (compose emitido) y disco real (`LocalFileStorage`), sin dobles:
+      · el binario llega al disco con su contenido y los metadatos a su tabla; el listado lo devuelve
+      · un MIME fuera de la allowlist se rechaza y NO deja rastro (ni fila ni fichero)
+      · un fichero por encima del máximo se rechaza
+      · forzando el fallo de los metadatos, el binario se borra: sin huérfanos
+      · **no se pudo verificar por HTTP ni con el arranque de integración emitido**: ambos importan
+      el repositorio del agregado, y el dominio emitido de `project` NO COMPILA por dos defectos
+      ajenos a los adjuntos (ver más abajo). El servicio de adjuntos sí es autocontenido, así que
+      la verificación se montó con un DataSource propio sobre la app generada
+      · el arnés usado quedó en `tmp/upload-check` (desechable); el aprendizaje es que **este test
+      debería emitirlo el generador**: hoy la pieza de adjuntos no tiene ningún test emitido
+
+## Defectos del generador que bloquearon la verificación (reportados, no arreglados)
+
+1. **VOs compartidos sin emitir** (ya era la obs. 22 del ROADMAP): el dominio de `project` importa
+   `customer-id.vo`, `contract-date.vo`, `customer-name.vo` y `period.vo`, que el generador no emite.
+   28 errores de tipos en la app generada. Es la SEGUNDA vez en esta sesión que bloquea una
+   verificación real.
+2. **Desajuste optional/nullable en el agregado emitido** (nuevo): `project.ts` asigna
+   `props.waveStage` (`string | null | undefined`) a `ProjectAggregateProps.waveStage`
+   (`Nullable<string>`), y lo mismo con `waveStatus`. Falla también en el builder emitido.
 
 ---
 
