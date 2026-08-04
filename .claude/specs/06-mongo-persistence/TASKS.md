@@ -3,13 +3,35 @@
 > Cada tarea = un commit atómico en develop. Implementar UNA, commitear, esperar revisión, siguiente.
 > Gate permanente: en TODOS los commits el golden Postgres actual queda con diff vacío.
 
+> ⚠️ **RE-ENCAJE (spec 23, 2026-08-04)**: el motor ya no se enhebra como parámetro. Cada motor tiene
+> un **manifiesto** en `libs/generators/src/generators/app/persistence/` que declara qué emite
+> (`kernelFiles`, `resourceFiles`, `compositionFiles`, `integrationTestFiles`, `alignEnvironment`,
+> `testRepository`) y kernel/resource/app solo lo consultan. Las tareas de abajo se implementan
+> **rellenando `mongo.provider.ts`**, no añadiendo `if`s: cada campo que hoy falta en ese manifiesto
+> es exactamente uno de estos huecos. El generador ya **avisa por consola** de que mongo no emite
+> persistencia por recurso, así que el estado incompleto es visible en vez de silencioso.
+>
+> Huecos adicionales detectados al hacer el refactor (una app `--database=mongo` HOY no compila):
+>
+> - `customers.module.ts` bindea `useClass: TypeOrmXxxRepository`: **el binding de DI está hardcodeado
+>   en la plantilla del módulo** (`files-module`). Debe salir del manifiesto (añadir a TASK-07).
+> - `typeorm-environment-arranger.ts` + `jest.setup.integration.ts`: el arranque de la suite de
+>   integración es específico de motor y se emite siempre (TASK-09).
+> - `health.controller.ts` comprueba salud vía TypeORM siempre (nuevo, ver TASK-09b).
+> - `package.json` emitido lleva `typeorm`/`pg` y ningún contenedor de mongo en el compose (TASK-09/10):
+>   esos datos NO se declararon en el manifiesto a propósito, porque hoy viven en el esqueleto
+>   copiado verbatim y habría que inventarse el lado mongo.
+
 ---
 
 ## Contrato y guard
 
 - [x] **TASK-01**: Opción `database: 'postgres' | 'mongo'` en `app/schema.json` (default postgres,
       x-prompt) + propagación tipada a `kernel` y `resource`. Test: sin opción, la salida no cambia.
+      · spec 23: la validación es ahora del registro de ranuras (`selectEngine`), no de `selectDatabase`
 - [x] **TASK-02**: Guard de plugins incompatibles: `database=mongo` + `auth` → error claro (con test).
+      · spec 23: reimplementado como restricción declarativa `requires: { database: 'postgres' }` del
+      proveedor `auth=single-tenant`, aplicada por `validateCombination`
 
 ## Kernel — infra compartida
 
@@ -23,19 +45,28 @@
 ## Resource — persistencia por módulo
 
 - [ ] **TASK-06**: Plantillas `__fileName__.schema.ts` (UUIDv7, índices únicos + partialFilterExpression
-      en opcionales) y `__fileName__.mapper.ts`; selección de directorio por motor en `resource.ts`
-      (TDD en `resource.spec.ts`).
+      en opcionales) y `__fileName__.mapper.ts` en un árbol propio (`files-persistence-mongoose/`)
+      declarado como `resourceFiles` del manifiesto mongo; ídem `compositionFiles` para los hijos
+      embebidos. `renderMongo` (su spec ya existe en rojo: `build-mongo.spec.ts` sin `build-mongo.ts`).
 - [ ] **TASK-07**: Plantilla `mongoose-__fileName__.repository.ts` (port completo del dominio,
-      composición como subdocumentos embebidos, mapeo E11000 → error de dominio).
+      composición como subdocumentos embebidos, mapeo E11000 → error de dominio) **+ el binding de DI
+      del módulo emitido**: hoy `files-module` hardcodea `useClass: TypeOrmXxxRepository`, así que el
+      manifiesto debe declarar clase e import del repositorio que registra el módulo del recurso.
 - [ ] **TASK-08**: Plantilla de test de integración `mongoose-__fileName__.repository.test.ts`
-      (espejo del de TypeORM: register/get, unique finders, criteria, ifPresent).
+      (espejo del de TypeORM: register/get, unique finders, criteria, ifPresent), declarada como
+      `integrationTestFiles` del manifiesto mongo.
 
 ## App skeleton — arrange
 
 - [ ] **TASK-09**: Compose mongo (`mongo:7` single-node replSet + healthcheck) en
       `docker-compose.{test,local}.yml` emitidos + variante mongoose de `jest.setup.integration` y
-      arranger.
-- [ ] **TASK-10**: Ensamblaje app mongo: deps (`mongoose`, `@nestjs/mongoose`), fuera `typeorm`/`pg`,
+      arranger (hoy `typeorm-environment-arranger.ts` se emite siempre). El compose y el arranger
+      salen del esqueleto verbatim ⇒ hay que declararlos en el manifiesto (`composeService`,
+      `integrationArrangerFiles`) y que el ensamblador los pida, como ya hace con lo demás.
+- [ ] **TASK-09b**: Health check por motor: `health.controller.ts` comprueba TypeORM siempre
+      (detectado en el refactor de la spec 23).
+- [ ] **TASK-10**: Ensamblaje app mongo: deps (`mongoose`, `@nestjs/mongoose`), fuera `typeorm`/`pg`
+      — declaradas en el manifiesto (`dependencies`/`removeDependencies`), no con `if`s en `app.ts` —,
       Makefile sin targets de migración, migraciones de fábrica omitidas, `syncIndexes()` en bootstrap.
 
 ## Gate y verificación end-to-end

@@ -16,10 +16,10 @@
 - [x] **TASK-04**: `--auth` en `app/schema.json` (x-prompt list, default `none`); `selectDatabase`
       eliminado en favor de `selectProvider`
       · nota: el cableado de `auth` en `app.ts` se adelantó a TASK-03 — sacar auth de `PLUGINS` sin
-        cablear la ranura habría dejado el commit rojo (la fixture golden usa `--plugins=auth`)
+      cablear la ranura habría dejado el commit rojo (la fixture golden usa `--plugins=auth`)
       · el gate de oro cazó aquí un bug real: Nx rellena los defaults del `schema.json`, así que
-        `options.auth` llega `'none'` y nunca `undefined` ⇒ la compat del nombre heredado no
-        disparaba y la app salía sin autenticación. Cubierto con test; `ui` también se valida ahora
+      `options.auth` llega `'none'` y nunca `undefined` ⇒ la compat del nombre heredado no
+      disparaba y la app salía sin autenticación. Cubierto con test; `ui` también se valida ahora
       · añadido `slots-schema.spec.ts`: candado de paridad entre `schema.json` y `SLOTS`
 
 ## Proveedor de persistencia dueño de la emisión
@@ -49,12 +49,12 @@
 - [x] **TASK-13**: Wizard dibujado desde el endpoint: radios por ranura (ocultas las de un solo
       proveedor), checkboxes de aditivos, combinaciones inválidas deshabilitadas en vivo
       · el endpoint real es `/api/v1/studio/generate/slots` (prefijo del controller), no
-        `/api/v1/studio/slots`: el smoke lo tapaba interceptando la ruta ⇒ ahora consume el
-        endpoint real por defecto y sólo mockea con `STUB_SLOTS=1`
+      `/api/v1/studio/slots`: el smoke lo tapaba interceptando la ruta ⇒ ahora consume el
+      endpoint real por defecto y sólo mockea con `STUB_SLOTS=1`
 - [x] **TASK-14**: Smoke Playwright: ranuras pintadas desde el endpoint + `mongo`+`single-tenant`
       deshabilitado; suite completa del workspace verde
 
 ## Cierre
 
-- [ ] **TASK-15**: Re-encajar la spec 06: reformular TASK-06..12 sobre `mongooseProvider` y anotar el
+- [x] **TASK-15**: Re-encajar la spec 06: reformular TASK-06..12 sobre `mongooseProvider` y anotar el
       ROADMAP (spec 23 hecha, specs C1–C4/D como huecos de las ranuras)
