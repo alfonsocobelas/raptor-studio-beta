@@ -76,6 +76,15 @@
 ## Gate y verificación end-to-end
 
 - [ ] **TASK-11**: Fixture golden `--database=mongo` en `tools/golden-fixtures`: revisión manual del
-      emitido, congelar baseline, incorporar a `golden-diff.sh`.
+      emitido, congelar baseline, incorporar a `golden-diff.sh`. **Exige OK de Alfonso** (re-baseline).
+      Procedimiento: generar `--app=boutique --database=mongo`, revisar el diff a mano, copiar a
+      `tools/golden-fixtures/app-mongo/`, añadir el bloque al script y commitear aparte
+      (`chore(golden): …`), como manda la skill `golden-diff`.
 - [ ] **TASK-12**: Demo generada con `--database=mongo`: suite completa verde (unit + integración
       contra mongo docker + e2e) y arranque real verificado.
+      · ⚠️ `tools/golden-diff.sh` empieza con `rm -rf tmp/generated`: **borra cualquier app en
+      pruebas** que viva ahí (con su `node_modules`). Para verificar a mano, genera fuera de
+      `tmp/generated` o no corras el gate hasta acabar.
+      · el typecheck de la app emitida ya está verificado (boutique mongo y postgres: 0 errores,
+      2026-08-04); lo que falta aquí es la suite de integración contra el Mongo del compose
+      · al cerrarla, añadir el caso **ifPresent** que quedó pendiente en TASK-08
