@@ -39,17 +39,14 @@ export function reinjectAiSlots(tree: Tree, dir: string, harvest: AiSlotHarvest)
     let content = tree.read(file, 'utf-8') ?? ''
     let touched = false
 
-    content = content.replace(
-      SLOT_REGEX,
-      (whole, beginLine: string, id: string, body: string, endLine: string) => {
-        const kept = slots.get(id)
-        // solo se rellena un hueco vacío: si el regenerado ya trae contenido, se respeta
-        if (!kept || body.trim() !== '') return whole
+    content = content.replace(SLOT_REGEX, (whole, beginLine: string, id: string, body: string, endLine: string) => {
+      const kept = slots.get(id)
+      // solo se rellena un hueco vacío: si el regenerado ya trae contenido, se respeta
+      if (!kept || body.trim() !== '') return whole
 
-        touched = true
-        return `${beginLine}${kept}${endLine}`
-      }
-    )
+      touched = true
+      return `${beginLine}${kept}${endLine}`
+    })
 
     if (touched) tree.write(file, content)
   }

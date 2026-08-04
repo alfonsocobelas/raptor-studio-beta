@@ -18,7 +18,6 @@ export const customer = defineResource({
   ],
   constraintsConst: 'CUSTOMER_CONSTRAINTS',
   audit: true,
-  skipEmit: ['mapper'],
   constraints: {
     SAP_ID: { MIN: 3, MAX: 20 },
     NAME: { shared: 'CUSTOMER_NAME' },
@@ -203,10 +202,19 @@ export const customer = defineResource({
           constraintKey: 'CONTACT.NAME'
         }
       },
-      role: { type: 'string', vo: { name: 'ContactRole', fieldName: 'Contact role', lengthRule: 'max', constraintKey: 'CONTACT.ROLE' } },
+      role: {
+        type: 'string',
+        vo: { name: 'ContactRole', fieldName: 'Contact role', lengthRule: 'max', constraintKey: 'CONTACT.ROLE' }
+      },
       email: {
         type: 'string',
-        vo: { name: 'ContactEmail', fieldName: 'Contact email', lengthRule: 'max', email: true, constraintKey: 'CONTACT.EMAIL' }
+        vo: {
+          name: 'ContactEmail',
+          fieldName: 'Contact email',
+          lengthRule: 'max',
+          email: true,
+          constraintKey: 'CONTACT.EMAIL'
+        }
       },
       phone: { type: 'string', voShared: { name: 'Phone' } },
       isPrimary: { type: 'boolean', vo: { name: 'IsPrimary', fieldName: 'Is primary' } }

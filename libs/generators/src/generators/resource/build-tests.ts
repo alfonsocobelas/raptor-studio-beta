@@ -8,7 +8,14 @@ import { FieldDefinition, ResourceDefinition } from '@acc/schema'
  */
 export interface DomainTestBindings {
   emit: boolean
-  uniqueFinders: { method: string; param: string; voName: string; voFileName: string; shared: boolean; givenName: string }[]
+  uniqueFinders: {
+    method: string
+    param: string
+    voName: string
+    voFileName: string
+    shared: boolean
+    givenName: string
+  }[]
   portImports: string[]
   builderImports: string[]
   builderDefaultLines: string[]
@@ -19,7 +26,14 @@ export interface DomainTestBindings {
   voTests: {
     enums: { voName: string; valuesList: string; comment?: string }[]
     numbers: { voName: string; integer: boolean; unset: boolean; minKey: string }[]
-    texts: { voName: string; maxKey: string; minKey: string | null; required: boolean; noInner: boolean; email: boolean }[]
+    texts: {
+      voName: string
+      maxKey: string
+      minKey: string | null
+      required: boolean
+      noInner: boolean
+      email: boolean
+    }[]
     exacts: { voName: string; lengthKey: string }[]
     arrays: { voName: string }[]
     booleans: { voName: string }[]
@@ -167,7 +181,11 @@ function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestB
     // los VOs de email quedan fuera: su regex rechaza el texto libre que usa este grupo
     sanitizations: owned
       .filter(c => c.field.type === 'string' && !voOf(c).values?.length && voOf(c).email !== true)
-      .map(c => ({ voName: c.voName, inner: voOf(c).noInnerWhitespace === true, minKey: voOf(c).minLength === true ? key(c) : null }))
+      .map(c => ({
+        voName: c.voName,
+        inner: voOf(c).noInnerWhitespace === true,
+        minKey: voOf(c).minLength === true ? key(c) : null
+      }))
   }
 }
 
@@ -207,7 +225,10 @@ function builderDefault(definition: ResourceDefinition, c: Ctx): string {
   if (c.field.type === 'boolean') return 'false'
   if (c.field.type === 'number' || c.field.type === 'integer') {
     // y un numérico con MIN declarado debe arrancar en el MIN, no en 0
-    const min = vo?.min === true ? constraintMin(definition, vo?.constraintKey ?? c.name.replace(/([A-Z])/g, '_$1').toUpperCase()) : 0
+    const min =
+      vo?.min === true
+        ? constraintMin(definition, vo?.constraintKey ?? c.name.replace(/([A-Z])/g, '_$1').toUpperCase())
+        : 0
     return String(min)
   }
   if (c.nullable) return 'null'

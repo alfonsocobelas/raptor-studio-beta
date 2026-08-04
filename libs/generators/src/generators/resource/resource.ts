@@ -164,15 +164,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     )
   }
 
-  // C2: los módulos de oro llevan extensiones a mano que el canon no cubre; se omiten por dato
-  const skipPaths: Record<string, string> = {
-    mapper: path.join('backend/infrastructure/persistence/typeorm', `${substitutions.fileName}.mapper.ts`),
-    constants: path.join('backend/domain', `${substitutions.fileName}-constants.ts`),
-    frontendList: path.join('frontend', `${model.plural}-list.component.ts`)
-  }
-  for (const skip of model.skipEmit ?? []) {
-    tree.delete(path.join(outputDir, skipPaths[skip]))
-  }
   // el diálogo solo se emite cuando el modelo declara su formulario
   if (!model.formSections?.length) {
     tree.delete(path.join(outputDir, 'frontend', `${substitutions.fileName}-dialog.component.ts`))

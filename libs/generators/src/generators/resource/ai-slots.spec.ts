@@ -9,7 +9,15 @@ describe('ai slots', () => {
       const tree = createTreeWithEmptyWorkspace()
       tree.write(
         'out/domain/customer.ts',
-        ['class Customer {', '  // @ai:begin domain-extra', '  hasTaxId(): boolean {', '    return true', '  }', '  // @ai:end', '}'].join('\n')
+        [
+          'class Customer {',
+          '  // @ai:begin domain-extra',
+          '  hasTaxId(): boolean {',
+          '    return true',
+          '  }',
+          '  // @ai:end',
+          '}'
+        ].join('\n')
       )
 
       const harvest = harvestAiSlots(tree, 'out')
@@ -49,7 +57,10 @@ describe('ai slots', () => {
 
       tree.write(
         file,
-        emitted.replace('// @ai:begin domain-extra', '// @ai:begin domain-extra\n  hasTaxId(): boolean {\n    return !this._taxId.isEmpty()\n  }')
+        emitted.replace(
+          '// @ai:begin domain-extra',
+          '// @ai:begin domain-extra\n  hasTaxId(): boolean {\n    return !this._taxId.isEmpty()\n  }'
+        )
       )
 
       await resourceGenerator(tree, { name: 'customer' })

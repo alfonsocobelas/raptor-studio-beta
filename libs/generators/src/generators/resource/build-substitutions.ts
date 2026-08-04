@@ -252,7 +252,10 @@ const DEFAULT_TS_TYPE: Record<FieldType, string> = {
 }
 
 // All rendering logic lives here on purpose: templates stay dumb (project rule #8).
-export function buildSubstitutions(definition: ResourceDefinition, others: ResourceDefinition[] = []): ResourceSubstitutions {
+export function buildSubstitutions(
+  definition: ResourceDefinition,
+  others: ResourceDefinition[] = []
+): ResourceSubstitutions {
   const n = names(definition.name)
   const fields = Object.entries(definition.fields)
   const columns = fields.map(([name, field]) => renderColumn(name, field))
@@ -840,10 +843,7 @@ function renderGallery(definition: ResourceDefinition): GallerySubstitution | nu
   const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
   // el decimal manda sobre el entero: en una tarjeta el importe pesa más que
   // una duración o un contador
-  const numbers = [
-    ...fields.filter(([, f]) => f.type === 'number'),
-    ...fields.filter(([, f]) => f.type === 'integer')
-  ]
+  const numbers = [...fields.filter(([, f]) => f.type === 'number'), ...fields.filter(([, f]) => f.type === 'integer')]
 
   const titleField = gallery.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
   const subtitleField = gallery.subtitle ?? texts.map(([name]) => name).find(name => name !== titleField) ?? null

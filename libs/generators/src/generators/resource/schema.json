@@ -29,7 +29,5 @@
       "description": "Persistence engine of the emitted app"
     }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }

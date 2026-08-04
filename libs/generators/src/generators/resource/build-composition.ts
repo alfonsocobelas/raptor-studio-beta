@@ -62,7 +62,7 @@ export function renderComposition(definition: ResourceDefinition, parentClass: s
   const primary = comp.primaryFlag
   // 'isPrimary' → markAsPrimary/unmarkAsPrimary
   const primaryMethod = primary ? names(primary.replace(/^is/, '')).className : ''
-  const primaryVo = primary ? fields.find(f => f.name === primary)?.voName ?? '' : ''
+  const primaryVo = primary ? (fields.find(f => f.name === primary)?.voName ?? '') : ''
   const editable = fields.filter(f => f.name !== primary)
 
   const localVos = fields.filter(f => typeof f.field.vo === 'object').map(f => f.voName)
@@ -75,7 +75,10 @@ export function renderComposition(definition: ResourceDefinition, parentClass: s
       path: `./value-objects/${names(vo).fileName}.vo`
     })),
     { vo: parentIdClass, path: `../../../../shared/domain/value-objects/${definition.plural}/${parentFile}-id.vo` },
-    ...[...new Set(sharedVos)].map(vo => ({ vo, path: `../../../shared/domain/value-objects/${names(vo).fileName}.vo` }))
+    ...[...new Set(sharedVos)].map(vo => ({
+      vo,
+      path: `../../../shared/domain/value-objects/${names(vo).fileName}.vo`
+    }))
   ].sort((a, b) => a.vo.localeCompare(b.vo))
 
   const childImports = [
@@ -194,7 +197,8 @@ export function renderComposition(definition: ResourceDefinition, parentClass: s
       ...fields.map(f => `${f.name}: this._${f.name}.value`)
     ],
     childUpdateGuards: editable.map(
-      f => `    if (updates.${f.name} !== undefined) {\n      this._${f.name} = ${f.voName}.create(updates.${f.name})\n    }`
+      f =>
+        `    if (updates.${f.name} !== undefined) {\n      this._${f.name} = ${f.voName}.create(updates.${f.name})\n    }`
     ),
     childPrimaryMethods: primary
       ? [

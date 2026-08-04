@@ -17,9 +17,12 @@
 
 ## Familia C — el generador deja de contradecirse
 
-- [ ] **TASK-02**: `skipEmit` deja de borrar el fichero: el mapper se emite siempre y `golden-diff.sh`
-      no compara las rutas que el modelo declara. Test: con `skipEmit: ['mapper']` el mapper existe
-      en el árbol emitido y el gate de oro sigue vacío.
+- [x] **TASK-02**: el mapper se emite siempre. `skipEmit` **desaparece del contrato del modelo**
+      (`libs/schema`) porque no era una decisión del modelo sino del gate: ahora las rutas no
+      comparadas viven en `tools/golden-skip.txt`, con el motivo escrito al lado, y `golden-diff.sh`
+      las salta (también en la comprobación inversa).
+      · medido: la app de las 4 entidades de oro baja de **75 a 72** errores
+      · `customers` pasa de 77 a 78 ficheros emitidos y `licenses` de 43 a 44
 - [ ] **TASK-03**: Los imports del `seed.ts` emitido se filtran a los modelos que de verdad emiten
       seeder (`entry.emit && app.writes`). Test con `license`, que no escribe.
 

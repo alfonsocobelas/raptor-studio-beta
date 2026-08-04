@@ -308,8 +308,6 @@ export interface ResourceDefinition {
   auditComment?: boolean
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
-  /** Files NOT to emit for this resource (C2: golden modules carry hand extensions the canon does not cover) */
-  skipEmit?: ('mapper' | 'constants' | 'frontendList')[]
   /** Emit a DeleteDateColumn soft-delete column (deletedAt) */
   softDelete?: boolean
   /** Comment lines emitted above ALLOWED_ORDERS in the search-config */

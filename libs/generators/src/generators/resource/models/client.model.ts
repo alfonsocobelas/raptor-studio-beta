@@ -77,7 +77,13 @@ export const client = defineResource({
     taxId: {
       type: 'string',
       unique: true,
-      vo: { name: 'ClientTaxId', fieldName: 'Tax ID', noInnerWhitespace: true, lengthRule: 'max', constraintKey: 'TAX_ID' },
+      vo: {
+        name: 'ClientTaxId',
+        fieldName: 'Tax ID',
+        noInnerWhitespace: true,
+        lengthRule: 'max',
+        constraintKey: 'TAX_ID'
+      },
       form: { control: 'text', label: 'DNI / CIF', section: 'general', order: 3 },
       query: { filterable: 4, sortable: 3, searchable: 2 },
       table: { show: true, order: 3, label: 'DNI / CIF', minWidth: 120 },

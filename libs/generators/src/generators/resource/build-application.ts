@@ -86,11 +86,7 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     if (!s.optional) {
       return check.map(line => (line ? `    ${line}` : line)).join('\n')
     }
-    return [
-      `    if (${prop}.has${cap}()) {`,
-      ...check.map(line => (line ? `      ${line}` : line)),
-      `    }`
-    ].join('\n')
+    return [`    if (${prop}.has${cap}()) {`, ...check.map(line => (line ? `      ${line}` : line)), `    }`].join('\n')
   })
 
   const updateCheckBlocks = uniqueSpecs.map(s => {

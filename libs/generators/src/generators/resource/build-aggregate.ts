@@ -30,8 +30,6 @@ export interface AggregateBindings {
   composition: CompositionBindings | null
 }
 
-
-
 interface FieldCtx {
   name: string
   field: FieldDefinition
@@ -74,9 +72,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
   // El par de fechas del period se pliega en un solo miembro `period`
   const periodFields = period ? [period.start, period.end] : []
   const members = ctxs.filter(c => !periodFields.includes(c.name))
-  const editable = ctxs.filter(
-    c => !c.sync && (!c.maint || c.field.updatable) && !periodFields.includes(c.name)
-  )
+  const editable = ctxs.filter(c => !c.sync && (!c.maint || c.field.updatable) && !periodFields.includes(c.name))
 
   const sharedVoNames = new Set<string>()
   for (const c of ctxs) if (c.field.voShared) sharedVoNames.add(c.field.voShared.name)

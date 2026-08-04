@@ -10,6 +10,13 @@ OUT="$ROOT/tmp/generated"
 FIX="$ROOT/tools/golden-fixtures"
 failures=0
 summary=""
+SKIP_LIST="$ROOT/tools/golden-skip.txt"
+
+# ¿Está esta ruta declarada como no comparable para esta fixture? (ver tools/golden-skip.txt)
+is_skipped() {                     # <fixture> <ruta relativa>
+  [[ -f "$SKIP_LIST" ]] || return 1
+  grep -v '^#' "$SKIP_LIST" | grep -qF "$1|$2|"
+}
 
 rm -rf "$OUT"
 for entry in "${MODELS[@]}"; do
@@ -21,6 +28,9 @@ for entry in "${MODELS[@]}"; do
   while IFS= read -r -d '' file; do
     rel="${file#"$OUT/$plural/"}"
     covered=$((covered+1))
+    if is_skipped "$plural" "$rel"; then
+      continue
+    fi
     if [[ ! -f "$FIX/$plural/$rel" ]]; then
       echo "❌ $name: sin homólogo en fixture: $rel"; entity_fail=1; continue
     fi
@@ -56,6 +66,9 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
   while IFS= read -r -d '' file; do
     rel="${file#"$out/"}"
     covered=$((covered+1))
+    if is_skipped "$fixture" "$rel"; then
+      continue
+    fi
     if [[ ! -f "$FIX/$fixture/$rel" ]]; then
       echo "❌ $label: sin homólogo en fixture: $rel"; app_fail=1; continue
     fi
@@ -67,7 +80,7 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
   # un fichero congelado que el generador ya no emite también es una regresión
   while IFS= read -r -d '' fixed; do
     rel="${fixed#"$FIX/$fixture/"}"
-    if [[ ! -f "$out/$rel" ]]; then
+    if [[ ! -f "$out/$rel" ]] && ! is_skipped "$fixture" "$rel"; then
       echo "❌ $label: la fixture tiene un fichero que ya no se emite: $rel"; app_fail=1
     fi
   done < <(find "$FIX/$fixture" -type f -print0)

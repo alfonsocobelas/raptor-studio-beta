@@ -117,7 +117,7 @@ describe('resource generator — ficha', () => {
     const detail = tree.read('out/frontend/paciente-detail.component.ts', 'utf-8') ?? ''
 
     expect(detail).toContain('app-related-table')
-    expect(detail).toContain("field=\"pacienteId\"")
+    expect(detail).toContain('field="pacienteId"')
     expect(detail).toContain('Citas')
   })
 

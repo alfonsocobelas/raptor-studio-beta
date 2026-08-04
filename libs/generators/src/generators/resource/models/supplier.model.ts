@@ -42,7 +42,13 @@ export const supplier = defineResource({
     taxId: {
       type: 'string',
       unique: true,
-      vo: { name: 'SupplierTaxId', fieldName: 'Tax ID', noInnerWhitespace: true, lengthRule: 'max', constraintKey: 'TAX_ID' },
+      vo: {
+        name: 'SupplierTaxId',
+        fieldName: 'Tax ID',
+        noInnerWhitespace: true,
+        lengthRule: 'max',
+        constraintKey: 'TAX_ID'
+      },
       form: { control: 'text', label: 'CIF', section: 'general', order: 2 },
       query: { filterable: 3, searchable: 2 },
       table: { show: true, order: 2, label: 'CIF', minWidth: 120 },
@@ -50,7 +56,13 @@ export const supplier = defineResource({
     },
     email: {
       type: 'string',
-      vo: { name: 'SupplierEmail', fieldName: 'Supplier email', lengthRule: 'max', email: true, constraintKey: 'EMAIL' },
+      vo: {
+        name: 'SupplierEmail',
+        fieldName: 'Supplier email',
+        lengthRule: 'max',
+        email: true,
+        constraintKey: 'EMAIL'
+      },
       form: { control: 'text', label: 'Email', section: 'general', order: 3 },
       query: { searchable: 3 },
       table: { show: true, order: 3, label: 'Email', sortable: false, minWidth: 220 },

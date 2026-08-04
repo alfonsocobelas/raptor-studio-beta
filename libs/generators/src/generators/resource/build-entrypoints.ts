@@ -71,7 +71,9 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   const childDtoFields = comp ? [idDtoField('id'), ...childCtxs.map(c => dtoField(c, definition, false))] : null
   const childUpdateDtoFields = comp ? childCtxs.map(c => dtoField(c, definition, true)) : null
 
-  const badgeCols = Object.entries(definition.fields).filter(([, f]) => f.table?.show && f.table.badgeMap && !f.syncManaged)
+  const badgeCols = Object.entries(definition.fields).filter(
+    ([, f]) => f.table?.show && f.table.badgeMap && !f.syncManaged
+  )
   const labelMaps = badgeCols.map(([name, f]) => ({
     constName: `${names(name).constantName}_LABELS`,
     entries: Object.entries(f.table?.badgeMap ?? {})
@@ -102,12 +104,15 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   const childOps = comp ? ['Add', 'Update', 'Remove'].map(op => `${op}${names(comp.name).className}`) : []
 
   const moduleHandlerImports = [
-    ...ops.map(([op, t]) => `import { ${op}${t}Handler } from './application/handlers/${names(op + t).fileName}.handler'`),
+    ...ops.map(
+      ([op, t]) => `import { ${op}${t}Handler } from './application/handlers/${names(op + t).fileName}.handler'`
+    ),
     ...childOps.map(c => `import { ${c}Handler } from './application/handlers/${names(c).fileName}.handler'`)
   ]
   const moduleUseCaseImports = [
     ...ops.map(
-      ([op, t]) => `import { ${op}${t}UseCase } from './application/use-cases/${names(op + t).fileName}-usecase.service'`
+      ([op, t]) =>
+        `import { ${op}${t}UseCase } from './application/use-cases/${names(op + t).fileName}-usecase.service'`
     ),
     ...childOps.map(c => `import { ${c}UseCase } from './application/use-cases/${names(c).fileName}-usecase.service'`)
   ]
@@ -167,7 +172,14 @@ function renderSampleValue(sample: string | number | boolean, field: FieldDefini
     return String(truthy)
   }
   if (field.type === 'number' || field.type === 'integer') {
-    const value = typeof sample === 'number' ? sample : Number(String(sample).replace(',', '.').replace(/[^0-9.-]/g, ''))
+    const value =
+      typeof sample === 'number'
+        ? sample
+        : Number(
+            String(sample)
+              .replace(',', '.')
+              .replace(/[^0-9.-]/g, '')
+          )
     return String(Number.isFinite(value) ? value : 0)
   }
   const text = String(sample)
@@ -188,7 +200,11 @@ function seedUuid(plural: string, n: number): string {
  * MIN declarado para un campo numérico en las constraints del recurso. Sin él las filas
  * derivadas (1, 2) violarían el invariante del VO y el seed abortaría en el primer insert.
  */
-function seedMin(definition: ResourceDefinition, fieldName: string, vo?: { constraintKey?: string; min?: boolean }): number {
+function seedMin(
+  definition: ResourceDefinition,
+  fieldName: string,
+  vo?: { constraintKey?: string; min?: boolean }
+): number {
   if (!vo?.min) {
     return 0
   }
@@ -209,10 +225,7 @@ const MAX_SEED_ROWS = 10
  * Sin ejemplos se mantienen las dos de siempre.
  */
 function seedRowNumbers(definition: ResourceDefinition): number[] {
-  const richest = Math.max(
-    0,
-    ...Object.values(definition.fields).map(field => field.samples?.length ?? 0)
-  )
+  const richest = Math.max(0, ...Object.values(definition.fields).map(field => field.samples?.length ?? 0))
   const rows = Math.min(Math.max(richest, 2), MAX_SEED_ROWS)
   return Array.from({ length: rows }, (_, index) => index + 1)
 }
@@ -304,10 +317,15 @@ function dtoField(c: Ctx, definition: ResourceDefinition, forceOptional: boolean
       ...(optional ? ['@IsOptional()'] : []),
       "@ValidateIf((_obj, value) => value !== '')",
       '@IsEmail()',
-      ...(vo.lengthRule === 'max' && hasConstraint(definition, limitsKey) ? [`@MaxLength(LIMITS.${limitsKey}.MAX)`] : [])
+      ...(vo.lengthRule === 'max' && hasConstraint(definition, limitsKey)
+        ? [`@MaxLength(LIMITS.${limitsKey}.MAX)`]
+        : [])
     ]
     return {
-      decorators: ['// Vacio permitido (coherente con el dominio); si viene con valor, validar formato.', ...emailDecorators],
+      decorators: [
+        '// Vacio permitido (coherente con el dominio); si viene con valor, validar formato.',
+        ...emailDecorators
+      ],
       declaration: decl(c.name, optional, 'string', false)
     }
   }

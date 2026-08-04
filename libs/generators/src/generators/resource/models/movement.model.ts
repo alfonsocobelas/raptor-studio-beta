@@ -120,7 +120,11 @@ export const movement = defineResource({
     reason: {
       type: 'string',
       required: true,
-      vo: { name: 'MovementReason', fieldName: 'Movement reason', values: ['purchase', 'sale', 'return', 'adjustment'] },
+      vo: {
+        name: 'MovementReason',
+        fieldName: 'Movement reason',
+        values: ['purchase', 'sale', 'return', 'adjustment']
+      },
       form: {
         control: 'select',
         label: 'Motivo',

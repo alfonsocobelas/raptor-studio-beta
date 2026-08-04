@@ -1,0 +1,9 @@
+# Ficheros que el gate de oro NO compara, y por qué.
+#
+# Antes esto vivía en el modelo (`skipEmit`), que mezclaba dos cosas distintas: no comparar un
+# fichero en el golden (lo que se quiere) y no emitirlo (lo que hacía, dejando al código emitido
+# importando ficheros inexistentes). Comparar no es asunto del modelo: es de este gate.
+#
+# Formato:  <directorio de fixture>|<ruta relativa>|<motivo>
+customers|backend/infrastructure/persistence/typeorm/customer.mapper.ts|el mapper de la referencia resuelve la composición a mano (recibe contactEntities); el canon no lo cubre
+licenses|backend/infrastructure/persistence/typeorm/license.mapper.ts|el mapper de la referencia lleva los métodos de composición de consumption-record a mano

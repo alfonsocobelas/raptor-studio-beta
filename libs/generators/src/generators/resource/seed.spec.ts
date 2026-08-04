@@ -33,8 +33,10 @@ describe('local seed emission', () => {
     await resourceGenerator(tree, { name: 'contract' })
     await resourceGenerator(tree, { name: 'customer' })
 
-    const contractSeed = tree.read('tmp/generated/contracts/backend/infrastructure/seed/local-seed.fixtures.ts', 'utf-8') ?? ''
-    const customerSeed = tree.read('tmp/generated/customers/backend/infrastructure/seed/local-seed.fixtures.ts', 'utf-8') ?? ''
+    const contractSeed =
+      tree.read('tmp/generated/contracts/backend/infrastructure/seed/local-seed.fixtures.ts', 'utf-8') ?? ''
+    const customerSeed =
+      tree.read('tmp/generated/customers/backend/infrastructure/seed/local-seed.fixtures.ts', 'utf-8') ?? ''
 
     const customerIdInContract = contractSeed.match(/customerId: '([^']+)'/)?.[1]
     expect(customerIdInContract).toBeDefined()
