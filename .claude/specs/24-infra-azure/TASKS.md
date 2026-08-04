@@ -34,10 +34,10 @@
       las cuatro dependencias `@azure/*` declaradas + secciones de config (`vault`, `storage.azure`,
       `applicationInsights`). `--infra` aparece en `schema.json` (su test de paridad lo exige) y en
       `slots.json`.
-- [ ] **TASK-05**: Telemetría en el proveedor: `instrument.ts`/`init-telemetry.ts` y el `apply()` que
+- [x] **TASK-05**: Telemetría en el proveedor: `instrument.ts`/`init-telemetry.ts` y el `apply()` que
       los pone como primer import de `main.ts`. `observability` sale de `PLUGINS` y
       `--plugins=observability` mapea a `--infra=azure` con aviso de deprecación.
-- [ ] **TASK-06**: Storage: el proveedor emite `azure-blob-file-storage.ts` y su `apply()` enlaza el
+- [x] **TASK-06**: Storage: el proveedor emite `azure-blob-file-storage.ts` y su `apply()` enlaza el
       adapter en el `StorageModule` **por sección de config** (`storage.azure` presente → Blob; si no,
       disco local), igual que ya hace el plugin de email.
 

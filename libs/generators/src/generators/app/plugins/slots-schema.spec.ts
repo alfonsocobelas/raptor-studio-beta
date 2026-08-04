@@ -18,9 +18,9 @@ interface SchemaProperty {
  * que se desincronice: mismos proveedores, mismo orden, mismos defaults y etiquetas.
  */
 describe('app/schema.json frente al registro de ranuras', () => {
-  const schema = JSON.parse(
-    readFileSync(path.join(__dirname, '..', 'schema.json'), 'utf-8')
-  ) as { properties: Record<string, SchemaProperty> }
+  const schema = JSON.parse(readFileSync(path.join(__dirname, '..', 'schema.json'), 'utf-8')) as {
+    properties: Record<string, SchemaProperty>
+  }
 
   const choosableSlots = Object.values(SLOTS).filter(slot => slot.providers.length > 1)
 

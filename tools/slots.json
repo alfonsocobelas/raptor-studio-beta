@@ -69,10 +69,6 @@
     {
       "name": "email",
       "description": "Adaptadores de email: Azure ACS, Amazon SES y Brevo (gratuito)"
-    },
-    {
-      "name": "observability",
-      "description": "Azure Monitor (App Insights): trazas, métricas y logs OTel en dev/prod"
     }
   ]
 }

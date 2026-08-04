@@ -151,28 +151,43 @@ export function slotPlugins(selection: Record<string, string | undefined>): AppP
     .filter((plugin): plugin is AppPlugin => plugin !== undefined)
 }
 
+/** Nombres de plugin que hoy son ranuras: se traducen para no romper comandos guardados. */
+const LEGACY_SLOT_NAMES: Record<string, { slot: string; provider: string }> = {
+  auth: { slot: 'auth', provider: 'single-tenant' },
+  observability: { slot: 'infra', provider: 'azure' }
+}
+
 /**
- * Compatibilidad: `--plugins=auth` era la forma antigua de pedir autenticación.
- * Se traduce a la ranura con aviso de deprecación para no romper comandos guardados.
+ * Compatibilidad: `--plugins=auth` y `--plugins=observability` eran la forma antigua de pedir
+ * autenticación y telemetría. Se traducen a su ranura con aviso de deprecación.
  *
- * Un `--auth` distinto del default manda sobre el nombre heredado. El default NO cuenta
- * como elección: Nx rellena los defaults del `schema.json` antes de llamar al generador,
- * así que por CLI la opción llega siempre con valor y `undefined` solo se ve en tests.
- * Consecuencia asumida: `--plugins=auth --auth=none` emite auth (indistinguible del default).
+ * Un valor de ranura distinto del default manda sobre el nombre heredado. El default NO cuenta
+ * como elección: Nx rellena los defaults del `schema.json` antes de llamar al generador, así que
+ * por CLI la opción llega siempre con valor y `undefined` solo se ve en tests. Consecuencia
+ * asumida: `--plugins=auth --auth=none` emite auth (indistinguible del default).
  */
 export function normalizeLegacyPlugins(
   plugins: string | undefined,
-  auth: string | undefined
-): { plugins: string | undefined; auth: string | undefined } {
-  if (!plugins?.includes('auth')) {
-    return { plugins, auth }
-  }
-  const remaining = plugins
+  selection: Record<string, string | undefined> = {}
+): { plugins: string | undefined; selection: Record<string, string | undefined> } {
+  const names = (plugins ?? '')
     .split(',')
-    .map(n => n.trim())
-    .filter(n => n !== 'auth')
-    .join(',')
-  console.warn('ℹ --plugins=auth está deprecado: auth es una ranura. Usa --auth=single-tenant.')
-  const chosenExplicitly = auth !== undefined && auth !== SLOTS['auth'].default
-  return { plugins: remaining, auth: chosenExplicitly ? auth : 'single-tenant' }
+    .map(name => name.trim())
+    .filter(Boolean)
+  const legacy = names.filter(name => name in LEGACY_SLOT_NAMES)
+  if (!legacy.length) {
+    return { plugins, selection }
+  }
+
+  const translated = { ...selection }
+  for (const name of legacy) {
+    const { slot, provider } = LEGACY_SLOT_NAMES[name]
+    console.warn(`ℹ --plugins=${name} está deprecado: ${slot} es una ranura. Usa --${slot}=${provider}.`)
+    const chosenExplicitly = translated[slot] !== undefined && translated[slot] !== SLOTS[slot].default
+    if (!chosenExplicitly) {
+      translated[slot] = provider
+    }
+  }
+
+  return { plugins: names.filter(name => !(name in LEGACY_SLOT_NAMES)).join(','), selection: translated }
 }

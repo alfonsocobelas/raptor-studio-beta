@@ -50,7 +50,9 @@ export const migrationsPlugin = definePlugin({
     const stamp = 1790000000000
     const className = `InitialSchema${stamp}`
     const body = context.models
-      .map(model => (model.attachments ? [renderTable(model), renderAttachmentsTable(model)].join('\n\n') : renderTable(model)))
+      .map(model =>
+        model.attachments ? [renderTable(model), renderAttachmentsTable(model)].join('\n\n') : renderTable(model)
+      )
       .join('\n\n')
     const drops = [...context.models]
       .reverse()
@@ -86,10 +88,7 @@ ${drops}
 function renderTable(model: ResourceDefinition): string {
   const columns = Object.entries(model.fields).map(([name, field]) => renderColumn(model, name, field))
   if (model.audit) {
-    columns.push(
-      'created_at TIMESTAMPTZ NOT NULL DEFAULT now()',
-      'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()'
-    )
+    columns.push('created_at TIMESTAMPTZ NOT NULL DEFAULT now()', 'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()')
   }
   if (model.softDelete) {
     columns.push('deleted_at TIMESTAMPTZ NULL')
@@ -118,7 +117,9 @@ function renderTable(model: ResourceDefinition): string {
   }
 
   const width = Math.max(...columns.map(c => c.split(' ')[0].length))
-  const rendered = columns.map(c => `        ${c.split(' ')[0].padEnd(width)} ${c.split(' ').slice(1).join(' ')}`).join(',\n')
+  const rendered = columns
+    .map(c => `        ${c.split(' ')[0].padEnd(width)} ${c.split(' ').slice(1).join(' ')}`)
+    .join(',\n')
 
   return [
     `    await queryRunner.query(\`CREATE SCHEMA IF NOT EXISTS ${model.schemaName}\`)

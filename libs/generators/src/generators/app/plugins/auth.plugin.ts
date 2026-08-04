@@ -110,7 +110,10 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
           "import { apiBaseUrlInterceptor } from '@app/frontend/core/http/api-base-url.interceptor'",
           "import { apiBaseUrlInterceptor } from '@app/frontend/core/http/api-base-url.interceptor'\nimport { authInterceptor } from '@app/frontend/core/http/auth.interceptor'"
         )
-        .replace('withInterceptors([apiBaseUrlInterceptor])', 'withInterceptors([apiBaseUrlInterceptor, authInterceptor])')
+        .replace(
+          'withInterceptors([apiBaseUrlInterceptor])',
+          'withInterceptors([apiBaseUrlInterceptor, authInterceptor])'
+        )
     )
     tree.delete(path.join(app, 'dev-auth.ts'))
   }
@@ -130,7 +133,10 @@ function brandEmailTemplates(tree: Tree, context: PluginContext): void {
   if (!source) {
     return
   }
-  tree.write(templatesPath, source.replace("PRODUCT_NAME = 'la aplicación'", `PRODUCT_NAME = '${names(context.appName).className}'`))
+  tree.write(
+    templatesPath,
+    source.replace("PRODUCT_NAME = 'la aplicación'", `PRODUCT_NAME = '${names(context.appName).className}'`)
+  )
 }
 
 /**
@@ -190,10 +196,7 @@ function registerEntities(tree: Tree, context: PluginContext): void {
 
 /** Migración del schema iam, solo cuando el plugin de migraciones está activo. */
 function addSchemaMigration(tree: Tree, context: PluginContext): void {
-  const migrationsDir = path.join(
-    context.backendSrc,
-    'contexts/shared/infrastructure/persistence/typeorm/migrations'
-  )
+  const migrationsDir = path.join(context.backendSrc, 'contexts/shared/infrastructure/persistence/typeorm/migrations')
   if (!tree.children(migrationsDir).length) {
     return
   }

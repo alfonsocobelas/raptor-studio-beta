@@ -90,10 +90,15 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const modelNames = models.map(m => m.name).join(',')
   const ui = selectUi(options.ui)
   const persistence = selectPersistence(options.database)
-  const infra = selectInfra(options.infra)
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
-  const legacy = normalizeLegacyPlugins(options.plugins, options.auth)
-  const selection = { database: options.database, ui: options.ui, auth: legacy.auth, infra: options.infra }
+  const legacy = normalizeLegacyPlugins(options.plugins, {
+    database: options.database,
+    ui: options.ui,
+    auth: options.auth,
+    infra: options.infra
+  })
+  const selection = legacy.selection
+  const infra = selectInfra(selection['infra'])
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
   // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth.

@@ -79,9 +79,9 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
   fi
 }
 
-# postgres: contract+project ejercitan composición, período, lookups y delete; los 3
-# plugins opcionales y el dashboard van activados
-gate_app "app" "app-golden" "app" --models=contract,project --ui=spartan --plugins=auth,email,observability --dashboard
+# postgres: la app "todo encendido" — contract+project ejercitan composición, período, lookups y
+# delete; auth y email como plugins, infra=azure como proveedor (observability la absorbió, spec 24)
+gate_app "app" "app-golden" "app" --models=contract,project --ui=spartan --plugins=auth,email --infra=azure --dashboard
 
 # mongo: se añade customer porque es el único modelo con COMPOSICIÓN (contacts embebidos),
 # y trae además el único opcional (taxId → índice parcial) y fechas nullable; project aporta

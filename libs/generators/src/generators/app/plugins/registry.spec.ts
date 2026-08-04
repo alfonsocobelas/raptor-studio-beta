@@ -9,9 +9,9 @@ describe('selectPlugins', () => {
   })
 
   it('resolves registered plugins by name, trimming whitespace', () => {
-    const plugins = selectPlugins(' email , observability ')
+    const plugins = selectPlugins(' email ')
 
-    expect(plugins.map(p => p.name)).toEqual(['email', 'observability'])
+    expect(plugins.map(p => p.name)).toEqual(['email'])
   })
 
   it('throws for an unknown plugin listing the available ones', () => {
@@ -29,14 +29,14 @@ describe('selectPlugins', () => {
     warn.mockRestore()
   })
 
-  it('offers only the additive capabilities: migrations is built in and auth is a slot now', () => {
-    // TASK-03 (spec 23): auth es decisión excluyente ⇒ vive en SLOTS, no en la bolsa aditiva
-    expect(Object.keys(PLUGINS)).toEqual(['email', 'observability'])
+  it('offers only the additive capabilities: migrations is built in, auth and observability are slots', () => {
+    // spec 23: auth es decisión excluyente ⇒ SLOTS. spec 24: observability la absorbe infra=azure
+    expect(Object.keys(PLUGINS)).toEqual(['email'])
   })
 
   it('resolves plugins without judging the engine (combination rules live in validateCombination)', () => {
     // TASK-02 (spec 23): el guard requiresDatabase migró a requires + validateCombination
-    expect(selectPlugins('email,observability').map(p => p.name)).toEqual(['email', 'observability'])
+    expect(selectPlugins('email').map(p => p.name)).toEqual(['email'])
   })
 })
 

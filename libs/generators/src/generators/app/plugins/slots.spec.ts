@@ -1,7 +1,6 @@
 import { SLOTS, normalizeLegacyPlugins, selectEngine, selectProvider, slotPlugins, validateCombination } from './slots'
 import { authPlugin } from './auth.plugin'
 import { emailPlugin } from './email.plugin'
-import { observabilityPlugin } from './observability.plugin'
 
 /**
  * TASK-01 (spec 23): las decisiones excluyentes del generador (elige-un-proveedor)
@@ -102,40 +101,67 @@ describe('slotPlugins', () => {
 })
 
 describe('normalizeLegacyPlugins', () => {
-  it('maps the legacy --plugins=auth to the auth slot with a deprecation notice', () => {
+  const silenced = <T>(run: () => T): T => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      return run()
+    } finally {
+      warn.mockRestore()
+    }
+  }
+
+  it('traduce el heredado --plugins=auth a su ranura con aviso de deprecación', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    const normalized = normalizeLegacyPlugins('auth,email', undefined)
+    const normalized = normalizeLegacyPlugins('auth,email', {})
 
-    expect(normalized).toEqual({ plugins: 'email', auth: 'single-tenant' })
+    expect(normalized).toEqual({ plugins: 'email', selection: { auth: 'single-tenant' } })
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('--auth=single-tenant'))
     warn.mockRestore()
   })
 
-  it('leaves additive-only lists and an explicit auth choice untouched', () => {
-    expect(normalizeLegacyPlugins('email,observability', 'none')).toEqual({
-      plugins: 'email,observability',
-      auth: 'none'
+  it('traduce --plugins=observability a la ranura de infraestructura (spec 24)', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const normalized = normalizeLegacyPlugins('observability,email', {})
+
+    expect(normalized).toEqual({ plugins: 'email', selection: { infra: 'azure' } })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('--infra=azure'))
+    warn.mockRestore()
+  })
+
+  it('traduce los dos nombres heredados a la vez', () => {
+    const normalized = silenced(() => normalizeLegacyPlugins('auth,email,observability', {}))
+
+    expect(normalized).toEqual({ plugins: 'email', selection: { auth: 'single-tenant', infra: 'azure' } })
+  })
+
+  it('deja intactas las listas sólo-aditivas', () => {
+    expect(normalizeLegacyPlugins('email', { auth: 'none' })).toEqual({
+      plugins: 'email',
+      selection: { auth: 'none' }
     })
-    expect(normalizeLegacyPlugins(undefined, undefined)).toEqual({ plugins: undefined, auth: undefined })
+    expect(normalizeLegacyPlugins(undefined, {})).toEqual({ plugins: undefined, selection: {} })
   })
 
-  it('keeps an explicit non-default --auth when the legacy name is also present', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
-
-    expect(normalizeLegacyPlugins('auth', 'single-tenant')).toEqual({ plugins: '', auth: 'single-tenant' })
-
-    warn.mockRestore()
+  it('respeta un valor de ranura elegido explícitamente frente al nombre heredado', () => {
+    expect(silenced(() => normalizeLegacyPlugins('auth', { auth: 'single-tenant' }))).toEqual({
+      plugins: '',
+      selection: { auth: 'single-tenant' }
+    })
   })
 
-  it('maps the legacy name even when Nx has filled auth with the slot default', () => {
-    // Nx rellena los defaults del schema.json, así que por CLI auth llega 'none', nunca undefined:
-    // sin esto el nombre heredado se ignoraba en silencio y la app salía sin autenticación
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
-
-    expect(normalizeLegacyPlugins('auth,email', 'none')).toEqual({ plugins: 'email', auth: 'single-tenant' })
-
-    warn.mockRestore()
+  it('traduce aunque Nx haya rellenado la ranura con su default', () => {
+    // Nx rellena los defaults del schema.json, así que por CLI la opción llega siempre con valor:
+    // sin esto el nombre heredado se ignoraba en silencio y la app salía sin la capacidad
+    expect(silenced(() => normalizeLegacyPlugins('auth,email', { auth: 'none' }))).toEqual({
+      plugins: 'email',
+      selection: { auth: 'single-tenant' }
+    })
+    expect(silenced(() => normalizeLegacyPlugins('observability', { infra: 'none' }))).toEqual({
+      plugins: '',
+      selection: { infra: 'azure' }
+    })
   })
 })
 
@@ -166,7 +192,7 @@ describe('validateCombination', () => {
   })
 
   it('allows requirement-free plugins with any engine', () => {
-    expect(() => validateCombination({ database: 'mongo' }, [emailPlugin, observabilityPlugin])).not.toThrow()
+    expect(() => validateCombination({ database: 'mongo' }, [emailPlugin])).not.toThrow()
   })
 
   it('resolves unstated slots to their default before checking requirements', () => {
