@@ -46,7 +46,14 @@
 - [ ] **TASK-07**: Re-baseline de la fixture de app como "todo encendido"
       (`--plugins=auth,email --infra=azure`), revisión del diff a mano, y commit propio
       `chore(golden): …`. Los 6 gates en verde.
-- [ ] **TASK-08**: Verificación que el golden NO puede dar: generar una app sin infra y una app azure
-      **fuera del árbol del acelerador**, `npm install` + `tsc` en ambas. Es el único sitio donde se
-      ve el fallo que motiva la spec (dentro del monorepo el hoisting lo tapa). Anotar el resultado
-      en esta spec y, si procede, proponer el gate automatizado en el ROADMAP.
+- [x] **TASK-08**: Verificación fuera del árbol del acelerador. **Hecha 2026-08-04**: las dos apps
+      (`--app=boutique` sin infra y con `--infra=azure`) se generaron, se movieron FUERA del
+      monorepo, y allí `npm install` + `tsc` dan **0 errores** en ambas. La azure instala y usa sus
+      4 dependencias `@azure/*` declaradas.
+      · **y encontró un bug real que ningún otro gate veía**: al renombrar el logger en TASK-01, sus
+      tres imports del dominio quedaron un nivel demasiado arriba y **ninguna app emitida compilaba**.
+      No lo cazó el golden (compara ficheros, y la fixture se congeló con los imports roteros), ni la
+      suite del plugin (no compila lo emitido), ni un typecheck previo (el último fue anterior al
+      renombre). Arreglado en `ea6031d` + re-baseline `a296f65`.
+      · conclusión para el ROADMAP: este typecheck **debería ser un gate**, no una verificación
+      manual. Es el único que ve esta clase de fallo (imports roteros, deps no declaradas).

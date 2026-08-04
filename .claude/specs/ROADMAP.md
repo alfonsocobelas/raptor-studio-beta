@@ -193,6 +193,10 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     postgres 11 errores, mongo 9 — todos de este hueco. Con los modelos de demo (boutique) la app
     compila limpia en los DOS motores (0 errores), así que el hueco es de los modelos
     heredados de sap-licenses, no del pipeline.
-23. **El typecheck de la app emitida no está en ningún gate.** El golden compara ficheros y la
-    suite del plugin no compila lo emitido: los 5 defectos de `5232994` sobrevivieron a ambos.
-    Vale la pena un gate que genere una app y le pase `tsc` (lento, pero es el único que ve esto).
+23. **El typecheck de la app emitida no está en ningún gate** (⚠️ ya ha mordido DOS veces). El golden
+    compara ficheros y la suite del plugin no compila lo emitido: así pasaron los 5 defectos de
+    `5232994` y, peor, el renombre del logger de la spec 24, que dejó **todas** las apps emitidas sin
+    compilar y se congeló en las fixturas sin que nadie lo notara (`ea6031d`). Hace falta un gate que
+    genere una app FUERA del árbol, instale y le pase `tsc`: fuera, porque dentro del monorepo el
+    hoisting tapa las dependencias no declaradas. Es lento (~2 min por app), así que probablemente
+    va en un target aparte del golden, no en cada commit.
