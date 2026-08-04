@@ -75,11 +75,19 @@
 
 ## Gate y verificación end-to-end
 
-- [ ] **TASK-11**: Fixture golden `--database=mongo` en `tools/golden-fixtures`: revisión manual del
-      emitido, congelar baseline, incorporar a `golden-diff.sh`. **Exige OK de Alfonso** (re-baseline).
-      Procedimiento: generar `--app=boutique --database=mongo`, revisar el diff a mano, copiar a
-      `tools/golden-fixtures/app-mongo/`, añadir el bloque al script y commitear aparte
-      (`chore(golden): …`), como manda la skill `golden-diff`.
+- [x] **TASK-11**: Fixture golden `--database=mongo` en `tools/golden-fixtures/app-mongo`
+      (`--models=customer,contract,project --database=mongo --dashboard`, 594 ficheros).
+      **Hecha 2026-08-04 con OK de Alfonso.**
+      · `customer` entra porque es el ÚNICO modelo con composición: sin él la fixture no cubriría
+      los subdocumentos embebidos, que es la parte más novedosa de las plantillas mongo. Aporta
+      además el único opcional (`taxId` → índice parcial) y las fechas nullable; `project`, softDelete
+      · sin plugins: `auth` exige postgres y `email` depende de `auth`
+      · `golden-diff.sh` refactorizado: el gate de app es ahora una función y hay **un gate por motor**
+      · el gate gana la comprobación INVERSA que no tenía: una fixture con un fichero que el
+      generador ya no emite también es regresión (antes un borrado de plantilla pasaba inadvertido)
+      · `tools/golden-fixtures` va a `.nxignore`: las fixtures traen `libs/ui` vendorizado y Nx
+      inferría sus proyectos, con nombres duplicados entre las dos fixtures de app (rompía TODO nx)
+      · verificado que el gate nuevo puede fallar: se alteró la fixture a mano y se puso rojo
 - [x] **TASK-12**: Demo generada con `--database=mongo`: suite completa verde (unit + integración
       contra mongo docker + e2e) y arranque real verificado. **Hecha 2026-08-04** con `--app=boutique`:
       · typecheck de la app emitida: **0 errores** (y 0 también en su equivalente postgres)

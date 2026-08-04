@@ -2,3 +2,7 @@
 apps/studio
 tmp
 tmp/generated/app-golden
+tmp/generated/app-mongo-golden
+# las fixtures de oro son DATOS congelados, no proyectos: sin esto Nx infiere sus libs/ui
+# vendorizadas como proyectos y las dos fixtures de app chocan por nombre duplicado
+tools/golden-fixtures

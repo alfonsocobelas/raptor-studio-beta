@@ -38,31 +38,55 @@ done
 # ── Gate del generador de APP ────────────────────────────────────────────────
 # La capa de composición (esqueleto, plugins, recolocaciones, cableado del root)
 # no la cubren los módulos: se genera una app canónica completa y se compara.
-# contract+project ejercitan composición, período, lookups y delete; los 3
-# plugins opcionales y el dashboard van activados. skipInstall: el gate no toca la red.
-APP_OUT="$ROOT/tmp/generated/app-golden"
-if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app app-golden \
-      --models=contract,project --ui=spartan --plugins=auth,email,observability --dashboard \
-      --directory=tmp/generated/app-golden --skipInstall --no-interactive >/dev/null 2>&1; then
-  summary+=" app: ❌ generación falló |"; failures=$((failures+1))
-else
-  app_fail=0; covered=0
-  while IFS= read -r -d '' file; do
-    rel="${file#"$APP_OUT/"}"
-    covered=$((covered+1))
-    if [[ ! -f "$FIX/app/$rel" ]]; then
-      echo "❌ app: sin homólogo en fixture: $rel"; app_fail=1; continue
-    fi
-    if ! diff -u "$FIX/app/$rel" "$file" > /tmp/golden-diff-out 2>&1; then
-      echo "❌ app: diff en $rel"; cat /tmp/golden-diff-out; app_fail=1
-    fi
-  done < <(find "$APP_OUT" -type f -print0)
-  if [[ $app_fail -eq 0 ]]; then
-    summary+=" app: ✅ vacío ($covered ficheros) |"
-  else
-    summary+=" app: ❌ con diffs |"; failures=$((failures+1))
+# Un gate por MOTOR de persistencia: el mismo pipeline emite árboles distintos y
+# el golden postgres no ve nada de lo que emite mongo (ni al revés).
+# skipInstall: el gate no toca la red.
+gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args del generador…>
+  local label="$1"; shift
+  local app="$1"; shift
+  local fixture="$1"; shift
+  local out="$ROOT/tmp/generated/$app"
+
+  if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app "$app" \
+        "$@" --directory="tmp/generated/$app" --skipInstall --no-interactive >/dev/null 2>&1; then
+    summary+=" $label: ❌ generación falló |"; failures=$((failures+1)); return
   fi
-fi
+
+  local app_fail=0 covered=0 rel
+  while IFS= read -r -d '' file; do
+    rel="${file#"$out/"}"
+    covered=$((covered+1))
+    if [[ ! -f "$FIX/$fixture/$rel" ]]; then
+      echo "❌ $label: sin homólogo en fixture: $rel"; app_fail=1; continue
+    fi
+    if ! diff -u "$FIX/$fixture/$rel" "$file" > /tmp/golden-diff-out 2>&1; then
+      echo "❌ $label: diff en $rel"; cat /tmp/golden-diff-out; app_fail=1
+    fi
+  done < <(find "$out" -type f -print0)
+
+  # un fichero congelado que el generador ya no emite también es una regresión
+  while IFS= read -r -d '' fixed; do
+    rel="${fixed#"$FIX/$fixture/"}"
+    if [[ ! -f "$out/$rel" ]]; then
+      echo "❌ $label: la fixture tiene un fichero que ya no se emite: $rel"; app_fail=1
+    fi
+  done < <(find "$FIX/$fixture" -type f -print0)
+
+  if [[ $app_fail -eq 0 ]]; then
+    summary+=" $label: ✅ vacío ($covered ficheros) |"
+  else
+    summary+=" $label: ❌ con diffs |"; failures=$((failures+1))
+  fi
+}
+
+# postgres: contract+project ejercitan composición, período, lookups y delete; los 3
+# plugins opcionales y el dashboard van activados
+gate_app "app" "app-golden" "app" --models=contract,project --ui=spartan --plugins=auth,email,observability --dashboard
+
+# mongo: se añade customer porque es el único modelo con COMPOSICIÓN (contacts embebidos),
+# y trae además el único opcional (taxId → índice parcial) y fechas nullable; project aporta
+# softDelete. Sin plugins: auth exige postgres y email depende de auth.
+gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,project --database=mongo --dashboard
 
 echo
 echo "🏅 Golden diff —$summary"
