@@ -81,11 +81,4 @@ export interface RegisterProjectProps {
   endDate?: string | null
   status?: string
   implementer?: string
-  sapProjectId?: string | null
-  atRisk?: string | null
-  inEscalation?: string | null
-  nbrOfWaves?: number | null
-  waveStage?: string | null
-  waveStatus?: string | null
-  planToGoLive?: string | null
 }

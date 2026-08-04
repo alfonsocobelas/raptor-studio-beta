@@ -101,7 +101,7 @@ export class LicenseBuilder {
       licensedUnits: LicensedUnits.create(this.props.licensedUnits),
       pricePerUnit: PricePerUnit.create(this.props.pricePerUnit),
       status: LicenseStatus.create(this.props.status),
-      materialId: this.props.materialId,
+      materialId: this.props.materialId ?? '',
       currentUnits: this.props.currentUnits,
       consumptionPct: this.props.consumptionPct,
       excessUnits: this.props.excessUnits,

@@ -91,13 +91,12 @@ export class ProjectBuilder {
       description: ProjectDescription.create(this.props.description),
       status: ProjectStatus.create(this.props.status),
       implementer: ProjectImplementer.create(this.props.implementer),
-      sapProjectId:
-        this.props.sapProjectId != null ? SapProjectId.create(this.props.sapProjectId) : SapProjectId.unset(),
-      atRisk: this.props.atRisk,
-      inEscalation: this.props.inEscalation,
-      nbrOfWaves: this.props.nbrOfWaves,
-      waveStage: this.props.waveStage,
-      waveStatus: this.props.waveStatus,
+      sapProjectId: this.props.sapProjectId != null ? SapProjectId.create(this.props.sapProjectId) : null,
+      atRisk: this.props.atRisk ?? null,
+      inEscalation: this.props.inEscalation ?? null,
+      nbrOfWaves: this.props.nbrOfWaves ?? null,
+      waveStage: this.props.waveStage ?? null,
+      waveStatus: this.props.waveStatus ?? null,
       planToGoLive: this.props.planToGoLive
         ? ContractDate.create(new Date(this.props.planToGoLive))
         : ContractDate.unset(),

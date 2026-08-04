@@ -184,7 +184,7 @@ export class Contract extends AggregateRoot {
       isFavorite: IsFavorite.create(props.isFavorite ?? false),
       status: ContractStatus.create(props.status ?? 'active'),
       source: ContractSource.create(props.source ?? 'AVVALE_SOLD'),
-      totalValue: props.totalValue != null ? ContractValue.create(props.totalValue) : ContractValue.unset(),
+      totalValue: ContractValue.create(props.totalValue ?? 0),
       currency: ContractCurrency.create(props.currency ?? 'EUR'),
       billingFrequency: BillingFrequency.create(props.billingFrequency ?? 'yearly'),
       renewalType: RenewalType.create(props.renewalType ?? 'manual'),

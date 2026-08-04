@@ -155,13 +155,13 @@ export class License extends AggregateRoot {
       metricName: MetricName.create(props.metricName ?? ''),
       subSolutionAreaName: SubSolutionAreaName.create(props.subSolutionAreaName ?? ''),
       metric: LicenseMetric.create(props.metric ?? ''),
-      licensedUnits: LicensedUnits.create(props.licensedUnits ?? ''),
+      licensedUnits: LicensedUnits.create(props.licensedUnits ?? 0),
       pricePerUnit: PricePerUnit.create(props.pricePerUnit ?? 0),
       status: LicenseStatus.create(props.status ?? 'active'),
-      materialId: props.materialId,
-      currentUnits: props.currentUnits,
-      consumptionPct: props.consumptionPct,
-      excessUnits: props.excessUnits,
+      materialId: props.materialId ?? '',
+      currentUnits: props.currentUnits ?? 0,
+      consumptionPct: props.consumptionPct ?? 0,
+      excessUnits: props.excessUnits ?? 0,
       annualValue: AnnualValue.create(props.annualValue ?? 0)
     })
   }
