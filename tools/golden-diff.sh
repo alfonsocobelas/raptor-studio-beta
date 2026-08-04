@@ -86,7 +86,9 @@ gate_app "app" "app-golden" "app" --models=contract,project --ui=spartan --plugi
 # mongo: se añade customer porque es el único modelo con COMPOSICIÓN (contacts embebidos),
 # y trae además el único opcional (taxId → índice parcial) y fechas nullable; project aporta
 # softDelete. Sin plugins: auth exige postgres y email depende de auth.
-gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,project --database=mongo --dashboard
+# mongo: license sustituye a project (spec 25) — project lleva adjuntos y los adjuntos emiten
+# persistencia TypeORM, que en una app mongo no pinta nada; license conserva el softDelete
+gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,license --database=mongo --dashboard
 
 echo
 echo "🏅 Golden diff —$summary"

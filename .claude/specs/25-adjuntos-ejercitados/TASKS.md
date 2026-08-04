@@ -21,7 +21,7 @@
 
 ## Ejercitarlo
 
-- [ ] **TASK-04**: `attachments: true` en `project.model.ts` y la fixture mongo pasa a
+- [x] **TASK-04**: `attachments: true` en `project.model.ts` y la fixture mongo pasa a
       `customer,contract,license` (conserva softDelete, se queda sin adjuntos). Golden con diff
       **esperado** en las dos fixturas → se congela en TASK-05.
 - [ ] **TASK-05**: Re-baseline de las dos fixturas de app, revisión del diff a mano, commit propio
