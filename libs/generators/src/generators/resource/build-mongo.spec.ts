@@ -80,6 +80,24 @@ describe('renderMongo', () => {
     })
   })
 
+  describe('optional uniques (ifPresent)', () => {
+    it('lista los únicos opcionales, que son los que necesitan índice parcial', () => {
+      // WHEN
+      const mongo = renderMongo(customer)
+
+      // THEN — sapId es unique+required (índice normal); taxId es el opcional
+      expect(mongo.optionalUniques).toEqual(['taxId'])
+    })
+
+    it('no lista ninguno cuando todos los únicos son obligatorios', () => {
+      // WHEN
+      const mongo = renderMongo(movement)
+
+      // THEN
+      expect(mongo.optionalUniques).toEqual([])
+    })
+  })
+
   describe('mapper lines', () => {
     it('maps the pk through _id in both directions', () => {
       // WHEN

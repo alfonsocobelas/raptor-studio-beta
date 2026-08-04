@@ -80,8 +80,21 @@
       Procedimiento: generar `--app=boutique --database=mongo`, revisar el diff a mano, copiar a
       `tools/golden-fixtures/app-mongo/`, añadir el bloque al script y commitear aparte
       (`chore(golden): …`), como manda la skill `golden-diff`.
-- [ ] **TASK-12**: Demo generada con `--database=mongo`: suite completa verde (unit + integración
-      contra mongo docker + e2e) y arranque real verificado.
+- [x] **TASK-12**: Demo generada con `--database=mongo`: suite completa verde (unit + integración
+      contra mongo docker + e2e) y arranque real verificado. **Hecha 2026-08-04** con `--app=boutique`:
+      · typecheck de la app emitida: **0 errores** (y 0 también en su equivalente postgres)
+      · suites de la app emitida: **26 integración** (contra `mongo:7` del compose emitido) +
+      **163 unit** + **42 front** = 231 en verde. No hay proyecto `e2e` en la app emitida
+      (el `jest.config` emitido solo define `unit` e `integration`), así que esa parte no aplica
+      · arranque real: la API levanta contra el contenedor, `readiness` da `database: up` por el
+      `MongooseHealthIndicator`, y POST+GET de un recurso funciona end-to-end
+      · dentro del contenedor: `_id` es UUIDv7 string (no ObjectId), `createdAt`/`updatedAt` de
+      `timestamps: true`, y los índices materializados por `MongooseIndexSync` al arrancar
+      · caso **ifPresent** cerrado: `taxId` de supplier lleva `partialFilterExpression { $gt: '' }`
+      verificado en la base; dos documentos con el campo vacío coexisten y con valor chocan (409)
+      · ⚠️ ojo al verificar a mano: hay un **mongod nativo** en la máquina escuchando en
+      127.0.0.1:27017 que gana el loopback al contenedor local — la primera verificación fue
+      contra él sin darme cuenta. Se repitió apuntando al contenedor (27018)
       · ⚠️ `tools/golden-diff.sh` empieza con `rm -rf tmp/generated`: **borra cualquier app en
       pruebas** que viva ahí (con su `node_modules`). Para verificar a mano, genera fuera de
       `tmp/generated` o no corras el gate hasta acabar.

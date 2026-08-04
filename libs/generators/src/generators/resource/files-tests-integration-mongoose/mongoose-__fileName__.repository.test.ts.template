@@ -11,6 +11,9 @@ import { <%- f.voName %> } from '../../../src/contexts/<%- context %>/modules/<%
 <%_ } _%>
 <%_ }) _%>
 import { <%- className %>Mother } from '../../modules/<%- plural %>/domain/mothers/<%- fileName %>.mother'
+<%_ if (mongo.optionalUniques.length) { _%>
+import { <%- className %>Builder } from '../../modules/<%- plural %>/domain/mothers/<%- fileName %>.builder'
+<%_ } _%>
 
 let repository: Mongoose<%- className %>Repository
 
@@ -96,6 +99,33 @@ describe('Mongoose<%- className %>Repository (integration)', () => {
     })
   })
 
+<%_ if (mongo.optionalUniques.length) { _%>
+  describe('unique opcional (partialFilterExpression)', () => {
+<%_ mongo.optionalUniques.forEach(field => { _%>
+    it('admite varios <%- fileName %> con <%- field %> vacío sin que choque el índice único', async () => {
+      // el índice de <%- field %> es parcial: solo indexa los documentos que lo traen con valor,
+      // así que los vacíos no compiten entre sí (equivalente al partial unique index de Postgres)
+      const first = <%- className %>Builder.a<%- className %>().withProps({ <%- field %>: '' }).create()
+      const second = <%- className %>Builder.a<%- className %>().withProps({ <%- field %>: '' }).create()
+
+      await repository.register(first)
+      await repository.register(second)
+
+      expect((await repository.get(second.id))?.toPrimitives().<%- field %>).toBe('')
+    })
+
+    it('sigue rechazando dos <%- fileName %> con el mismo <%- field %> con valor', async () => {
+      const value = <%- className %>Mother.random().toPrimitives().<%- field %>
+      await repository.register(<%- className %>Builder.a<%- className %>().withProps({ <%- field %>: value }).create())
+
+      await expect(
+        repository.register(<%- className %>Builder.a<%- className %>().withProps({ <%- field %>: value }).create())
+      ).rejects.toThrow(/already exists/i)
+    })
+<%_ }) _%>
+  })
+
+<%_ } _%>
   describe('save', () => {
     it('replaces the whole document instead of inserting a second one', async () => {
       const <%- propertyName %> = <%- className %>Mother.random()

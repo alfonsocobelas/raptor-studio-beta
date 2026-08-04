@@ -68,6 +68,11 @@ export interface MongoBindings {
   docFields: MongoDocField[]
   /** Índices únicos, uno por línea, listos para interpolar tras el schema */
   indexLines: string[]
+  /**
+   * Campos únicos OPCIONALES: son los que llevan `partialFilterExpression`, así que dos
+   * documentos que los traen vacíos no deben chocar. El test de integración emitido lo prueba.
+   */
+  optionalUniques: string[]
   toDomainProps: string[]
   toPersistenceProps: string[]
   /** Hijos de composición: subdocumentos embebidos. Null si el agregado no compone. */
@@ -85,6 +90,9 @@ export function renderMongo(definition: ResourceDefinition): MongoBindings {
     collection: definition.plural,
     docFields,
     indexLines: renderIndexLines(definition),
+    optionalUniques: Object.entries(definition.fields)
+      .filter(([, field]) => field.unique && !field.required)
+      .map(([name]) => name),
     toDomainProps: fields.map(([name, field]) => renderToDomainProp(name, field)),
     toPersistenceProps: fields.map(([name, field]) => renderToPersistenceProp(name, field)),
     child,
