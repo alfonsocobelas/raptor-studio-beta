@@ -16,7 +16,8 @@ import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
 import { normalizeLegacyPlugins, selectUi, slotPlugins, validateCombination, type UiLibrary } from './plugins/slots'
-import { selectPersistence } from './persistence/registry'
+import { PERSISTENCE, selectPersistence } from './persistence/registry'
+import type { PersistenceProvider } from './persistence/provider'
 import { selectInfra } from './infra/registry'
 import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
@@ -101,6 +102,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const infra = selectInfra(selection['infra'])
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
+  ensureAttachmentsFitTheEngine(models, persistence)
   // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth.
   // Los plugins de fábrica que el motor no admite se quedan fuera (Mongo no migra: sincroniza).
   const excluded = persistence.excludesPlugins ?? []
@@ -537,3 +539,28 @@ function relocate(tree: Tree, from: string, to: string): void {
 }
 
 export default appGenerator
+
+/**
+ * Los adjuntos emiten hoy una entidad TypeORM, así que solo el motor que declara soportarlos puede
+ * emitirlos. Se comprueba aquí y no como `requires` de una ranura porque el disparador es una
+ * propiedad del MODELO, no de la selección del usuario; qué motor los soporta lo dice su manifiesto.
+ */
+function ensureAttachmentsFitTheEngine(models: ResourceDefinition[], persistence: PersistenceProvider): void {
+  if (persistence.supportsAttachments) {
+    return
+  }
+  const offender = models.find(model => model.attachments)
+  if (!offender) {
+    return
+  }
+  // los motores que sí los soportan salen del registro: el ensamblador no los nombra a mano y el
+  // mensaje sigue siendo correcto el día que otro motor los emita
+  const supported = Object.values(PERSISTENCE)
+    .filter(candidate => candidate.supportsAttachments)
+    .map(candidate => candidate.engine)
+
+  throw new Error(
+    `Attachments on '${offender.name}' need a persistence engine that emits them (${supported.join(', ')}) ` +
+      `and the app targets ${persistence.engine}. Drop attachments from the model or use --database=${supported[0]}.`
+  )
+}

@@ -62,9 +62,9 @@ describe('app generator — opción appFile', () => {
     const tree: Tree = createTreeWithEmptyWorkspace()
     const file = writeAppJson(APPS['boutique'])
 
-    await expect(
-      appGenerator(tree, { name: 'x', appFile: file, app: 'boutique', skipInstall: true })
-    ).rejects.toThrow(/mutually exclusive/)
+    await expect(appGenerator(tree, { name: 'x', appFile: file, app: 'boutique', skipInstall: true })).rejects.toThrow(
+      /mutually exclusive/
+    )
     await expect(
       appGenerator(tree, { name: 'x', appFile: file, models: 'garment', skipInstall: true })
     ).rejects.toThrow(/mutually exclusive/)

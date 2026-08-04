@@ -20,5 +20,5 @@ export const SPARTAN_COMPONENTS = [
   'sonner',
   'table',
   'tooltip',
-  'utils',
+  'utils'
 ]

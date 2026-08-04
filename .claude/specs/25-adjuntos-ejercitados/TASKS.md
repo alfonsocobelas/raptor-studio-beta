@@ -15,7 +15,7 @@
 
 ## Contrato del generador
 
-- [ ] **TASK-03**: Guard `attachments` + `--database=mongo` → error claro antes de emitir nada, con
+- [x] **TASK-03**: Guard `attachments` + `--database=mongo` → error claro antes de emitir nada, con
       test. Los adjuntos emiten una entidad TypeORM, así que en Mongo romperían el candado de la
       spec 23.
 

@@ -25,6 +25,7 @@ export const postgresPersistence = definePersistence({
   resourceFiles: 'files-persistence-typeorm',
   compositionFiles: 'files-composition-persistence-typeorm',
   integrationTestFiles: 'files-tests-integration',
+  supportsAttachments: true,
 
   alignEnvironment(tree: Tree, configPath: string, environment: 'local' | 'test'): void {
     const raw = tree.read(configPath, 'utf-8')

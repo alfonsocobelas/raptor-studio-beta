@@ -52,7 +52,14 @@ describe('app generator — opción app (app-schema)', () => {
     const tree: Tree = createTreeWithEmptyWorkspace()
 
     await expect(
-      appGenerator(tree, { name: 'x', app: 'demo', dashboard: false, plugins: 'none', ui: 'spartan', skipInstall: true })
+      appGenerator(tree, {
+        name: 'x',
+        app: 'demo',
+        dashboard: false,
+        plugins: 'none',
+        ui: 'spartan',
+        skipInstall: true
+      })
     ).resolves.toBeDefined()
   }, 120000)
 

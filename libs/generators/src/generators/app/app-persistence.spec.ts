@@ -45,7 +45,10 @@ describe('app generator — el ensamblador no nombra motores', () => {
     const tree = await emit('postgres')
     const read = (env: string) =>
       JSON.parse(
-        tree.read(`apps/demo/libs/backend/src/contexts/shared/infrastructure/config/environments/${env}.json`, 'utf-8') ?? '{}'
+        tree.read(
+          `apps/demo/libs/backend/src/contexts/shared/infrastructure/config/environments/${env}.json`,
+          'utf-8'
+        ) ?? '{}'
       )
 
     // synchronize no se comprueba aquí: lo apaga después el plugin de migraciones, que es su dueño
@@ -67,7 +70,8 @@ describe('app generator — el ensamblador no nombra motores', () => {
     const tree = await emit('mongo')
 
     const local = JSON.parse(
-      tree.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/config/environments/local.json', 'utf-8') ?? '{}'
+      tree.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/config/environments/local.json', 'utf-8') ??
+        '{}'
     )
     expect(local.typeorm).toBeUndefined()
     expect(local.mongo.uri).toContain('mongodb://')

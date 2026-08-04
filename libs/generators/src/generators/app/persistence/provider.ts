@@ -41,6 +41,11 @@ export interface PersistenceProvider {
   /** Subárbol del test de integración del repositorio (corre contra la base real del compose) */
   integrationTestFiles?: string
   /**
+   * ¿Puede el motor emitir la pieza de adjuntos? Hoy los adjuntos emiten una entidad TypeORM, así
+   * que solo Postgres la soporta; con otro motor el generador falla antes de emitir (spec 25).
+   */
+  supportsAttachments?: boolean
+  /**
    * Deja un environment emitido coherente con la base que levanta el compose;
    * sin esto `make local-setup` arrancaría contra una base que no existe.
    */
