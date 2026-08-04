@@ -58,7 +58,7 @@ fi
 
 echo
 echo "❌ $errors error(es) de TypeScript en el código emitido:"
-head -30 "$OUTSIDE/tsc.log"
+grep "error TS" "$OUTSIDE/tsc.log"
 echo
 echo "Resumen por tipo de error:"
 grep "error TS" "$OUTSIDE/tsc.log" | sed 's/.*error \(TS[0-9]*\).*/\1/' | sort | uniq -c | sort -rn

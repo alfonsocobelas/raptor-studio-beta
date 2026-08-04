@@ -161,6 +161,11 @@ export interface FieldDefinition {
   optionalPrimitive?: boolean
   /** optionalPrimitive fields default to non-updatable (sync-populated); set true for user-editable ones */
   updatable?: boolean
+  /** El ALTA no pide este campo: lo rellena otro proceso (el sync) después. `register` lo inicializa
+   *  al valor «sin dato» (`unset()` si el VO lo declara, `null` si no) y desaparece de RegisterProps.
+   *  No es inferible: `project.waveStage` (no lo pide) y `contract.upcomingMaintenanceEnd` (sí lo
+   *  pide) llevan exactamente las mismas banderas en el canon. Lo sabe quien conoce el negocio. */
+  omitAtRegister?: boolean
   /** Valores de ejemplo del dominio (los aporta quien conoce el negocio: el chat del estudio).
    *  Alimentan el mockup del lienzo y las filas de semilla del código emitido. */
   samples?: (string | number | boolean)[]

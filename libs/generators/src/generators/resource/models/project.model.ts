@@ -234,6 +234,7 @@ export const project = defineResource({
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       vo: {
         name: 'SapProjectId',
         fieldName: 'SAP project ID',
@@ -249,36 +250,42 @@ export const project = defineResource({
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       column: { type: 'varchar', length: 50, tsType: 'Nullable<string>' }
     },
     inEscalation: {
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       column: { type: 'varchar', length: 50, tsType: 'Nullable<string>' }
     },
     nbrOfWaves: {
       type: 'integer',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       column: { type: 'int', tsType: 'Nullable<number>' }
     },
     waveStage: {
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       column: { type: 'varchar', length: 50, tsType: 'Nullable<string>' }
     },
     waveStatus: {
       type: 'string',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       column: { type: 'varchar', length: 50, tsType: 'Nullable<string>' }
     },
     planToGoLive: {
       type: 'date',
       nullable: true,
       optionalPrimitive: true,
+      omitAtRegister: true,
       voShared: { name: 'ContractDate' },
       column: { type: 'date', tsType: 'Nullable<string>' }
     }

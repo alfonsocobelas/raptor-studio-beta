@@ -113,7 +113,9 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     ],
     registerArgs: [
       `id: ${idClass}.create(props.id)`,
-      ...members.filter(c => !c.sync).map(c => `${c.name}: ${registerArg(c)}`),
+      ...members
+        .filter(c => !c.sync)
+        .map(c => `${c.name}: ${isUnknownAtRegister(c) ? unknownAtRegisterValue(c) : registerArg(c)}`),
       ...(period ? [`period: ${periodCreate(period, 'props')}`] : [])
     ],
     fromPrimitivesArgs: [
@@ -142,7 +144,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     registerPropsLines: [
       'id: string',
       ...ctxs
-        .filter(c => !c.sync)
+        .filter(c => !c.sync && !isUnknownAtRegister(c))
         .map(c =>
           c.field.required
             ? `${c.name}: ${c.nullable ? `Nullable<${primitiveType(c)}>` : primitiveType(c)}`
@@ -227,8 +229,15 @@ function isTimestamp(c: FieldCtx): boolean {
 function defaultLiteral(c: FieldCtx): string {
   const d = c.field.column?.default
   if (c.isArray) return '[]'
-  if (d === undefined) return c.field.type === 'boolean' ? 'false' : "''"
+  if (d === undefined) return emptyForType(c)
   return typeof d === 'string' ? `'${d}'` : String(d)
+}
+
+/** El «vacío» de cada tipo. Sin esto un entero recibía `''` y el agregado emitido no compilaba. */
+function emptyForType(c: FieldCtx): string {
+  if (c.field.type === 'boolean') return 'false'
+  if (c.field.type === 'number' || c.field.type === 'integer') return '0'
+  return "''"
 }
 
 function syncCreateDefault(c: FieldCtx): string {
@@ -236,15 +245,48 @@ function syncCreateDefault(c: FieldCtx): string {
   return `${c.voName}.create(${defaultLiteral(c)})`
 }
 
+/**
+ * ¿Es un campo que el ALTA no conoce? El canon inicializa así los campos que rellena después el
+ * sync (`docs/referencia/.../project.ts:116`: `atRisk: null`, `waveStage: null`…) en vez de
+ * pedirlos al llamante. Lo declara el modelo: medido contra el canon, NINGUNA combinación de
+ * banderas lo distingue — `project.waveStage` y `contract.upcomingMaintenanceEnd` son idénticas y
+ * el canon trata una como desconocida y la otra como dato del alta.
+ */
+function isUnknownAtRegister(c: FieldCtx): boolean {
+  return c.field.omitAtRegister === true
+}
+
+/**
+ * Cómo se escribe «sin valor» en el alta: con el `unset()` del VO si lo tiene, y `null` si no.
+ * Es literalmente lo que hace el canon: `planToGoLive: ContractDate.unset()` (el VO compartido
+ * declara unset) frente a `sapProjectId: null` (su VO no lo declara).
+ */
+function unknownAtRegisterValue(c: FieldCtx): string {
+  return c.voName && hasUnset(c) ? `${c.voName}.unset()` : 'null'
+}
+
+/** Un VO expone `unset()` cuando algún campo que lo usa declara que puede quedar sin valor. */
+function hasUnset(c: FieldCtx): boolean {
+  return c.unset || isDateShared(c)
+}
+
 function registerArg(c: FieldCtx): string {
-  if (!c.voName) return `props.${c.name}`
+  // los campos sin VO reciben el mismo relleno que en `fromPrimitives`: si el alta no los exige,
+  // su prop es opcional y el agregado los pide siempre. Canon: `.../license.builder.ts:91`.
+  if (!c.voName) {
+    if (c.field.required) return `props.${c.name}`
+    return `props.${c.name} ?? ${c.nullable ? 'null' : defaultLiteral(c)}`
+  }
   if (c.nullable && !isDateShared(c)) {
     return `props.${c.name} === null ? null : ${c.voName}.create(props.${c.name})`
   }
   if (isDateShared(c) && c.unset) {
     return `props.${c.name} ? ContractDate.create(new Date(props.${c.name})) : ContractDate.unset()`
   }
-  if (c.unset) return `props.${c.name} != null ? ${c.voName}.create(props.${c.name}) : ${c.voName}.unset()`
+  // `unset` describe la clase del VO; que el campo pueda quedar sin valor lo dice `nullable`
+  if (c.unset && c.nullable) {
+    return `props.${c.name} != null ? ${c.voName}.create(props.${c.name}) : ${c.voName}.unset()`
+  }
   if (c.field.required) return `${c.voName}.create(props.${c.name})`
   return `${c.voName}.create(props.${c.name} ?? ${defaultLiteral(c)})`
 }

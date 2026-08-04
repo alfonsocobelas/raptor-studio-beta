@@ -49,6 +49,7 @@ interface Ctx {
   sync: boolean
   maint: boolean
   unique: boolean
+  unset: boolean
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -68,7 +69,11 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
       nullable: field.nullable ?? false,
       sync: field.syncManaged ?? false,
       maint: (field.optionalPrimitive ?? false) && !(field.syncManaged ?? false),
-      unique: field.unique ?? false
+      unique: field.unique ?? false,
+      unset:
+        (typeof field.vo === 'object' && field.vo.unset === true) ||
+        field.voShared?.unset === true ||
+        field.voRef?.unset === true
     }))
 
   if (!ctxs.some(c => typeof c.field.vo === 'object')) {
@@ -243,7 +248,13 @@ function builderWithType(c: Ctx): string {
 
 function createArg(c: Ctx): string {
   const isDate = c.field.voShared?.name === 'ContractDate'
-  if (!c.voName) return `this.props.${c.name}`
+  // el builder SÍ toma estos campos del llamante (a diferencia del alta), así que necesitan
+  // fallback: sus props son los primitives, donde son opcionales. Canon:
+  // docs/referencia/.../mothers/project.builder.ts:73 → `atRisk: this.props.atRisk ?? null`
+  if (!c.voName) {
+    if (c.nullable) return `this.props.${c.name} ?? null`
+    return c.maint ? `this.props.${c.name} ?? ${emptyForType(c)}` : `this.props.${c.name}`
+  }
   if (c.nullable && !isDate && !c.maint) {
     return `this.props.${c.name} === null ? null : ${c.voName}.create(this.props.${c.name})`
   }
@@ -251,10 +262,21 @@ function createArg(c: Ctx): string {
     return `this.props.${c.name} ? ContractDate.create(new Date(this.props.${c.name})) : ContractDate.unset()`
   }
   if (c.maint && c.nullable) {
-    return `this.props.${c.name} != null ? ${c.voName}.create(this.props.${c.name}) : ${c.voName}.unset()`
+    // `unset()` sólo en los VOs que lo declaran; el resto, `null` (canon: `sapProjectId: … : null`)
+    const absent = c.unset ? `${c.voName}.unset()` : 'null'
+    return `this.props.${c.name} != null ? ${c.voName}.create(this.props.${c.name}) : ${absent}`
   }
-  if (c.maint) return `${c.voName}.create(this.props.${c.name} ?? '')`
+  if (c.maint) return `${c.voName}.create(this.props.${c.name} ?? ${emptyForType(c)})`
   return `${c.voName}.create(this.props.${c.name})`
+}
+
+/** El «vacío» de cada tipo, igual que en el agregado: un entero no se rellena con `''`. */
+function emptyForType(c: Ctx): string {
+  const d = c.field.column?.default
+  if (d !== undefined) return typeof d === 'string' ? `'${d}'` : String(d)
+  if (c.field.type === 'boolean') return 'false'
+  if (c.field.type === 'number' || c.field.type === 'integer') return '0'
+  return "''"
 }
 
 function renderPortImports(definition: ResourceDefinition, uniques: Ctx[]): string[] {
