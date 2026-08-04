@@ -30,7 +30,7 @@
       golden postgres vacío
 - [x] **TASK-07**: `resource.ts` consume el proveedor (selección typeorm/mongoose en un punto único);
       golden postgres vacío
-- [ ] **TASK-08**: `app.ts` consume el proveedor: deps, compose, parche de config local y wiring de
+- [x] **TASK-08**: `app.ts` consume el proveedor: deps, compose, parche de config local y wiring de
       test-repositories desde el manifiesto — desaparecen los literales typeorm de `app.ts`
       (líneas 201 y 307 actuales); golden postgres vacío + salida mongo sin restos TypeORM
 

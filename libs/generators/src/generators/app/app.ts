@@ -15,14 +15,8 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
-import {
-  normalizeLegacyPlugins,
-  selectEngine,
-  selectUi,
-  slotPlugins,
-  validateCombination,
-  type UiLibrary
-} from './plugins/slots'
+import { normalizeLegacyPlugins, selectUi, slotPlugins, validateCombination, type UiLibrary } from './plugins/slots'
+import { selectPersistence } from './persistence/registry'
 import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -92,7 +86,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // los sub-generadores siguen recibiendo la lista por nombre, venga de donde venga la composición
   const modelNames = models.map(m => m.name).join(',')
   const ui = selectUi(options.ui)
-  const database = selectEngine(options.database)
+  const persistence = selectPersistence(options.database)
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
   const legacy = normalizeLegacyPlugins(options.plugins, options.auth)
   const selection = { database: options.database, ui: options.ui, auth: legacy.auth }
@@ -109,28 +103,18 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     directory: backendSrc,
     models: modelNames,
     sharedDomainAlias: SHARED_DOMAIN_ALIAS,
-    database
+    database: persistence.engine
   })
   await rootGenerator(tree, { directory: backendSrc, models: modelNames })
   // el arranque vive en apps/backend-api; la config por entorno la emite el kernel
   tree.delete(path.join(backendSrc, 'main.ts'))
   tree.delete(path.join(backendSrc, 'environments'))
 
-  // la config local debe apuntar al Postgres que levanta el compose emitido,
-  // o `make local-setup` arrancaría contra una base que no existe
-  alignDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/local.json'), {
-    port: 5433,
-    password: 'local_only_not_a_secret',
-    database: 'app_local',
-    synchronize: true
-  })
-  // la suite de integración corre contra el Postgres efímero del compose de test
-  alignDatabase(tree, path.join(backendSrc, 'contexts/shared/infrastructure/config/environments/test.json'), {
-    port: 5434,
-    password: 'test_only_not_a_secret',
-    database: 'app_test',
-    synchronize: false
-  })
+  // la config debe apuntar a la base que levanta el compose emitido, o `make local-setup`
+  // arrancaría contra una que no existe. Qué significa "alinear" lo sabe el motor, no el ensamblador
+  const environments = path.join(backendSrc, 'contexts/shared/infrastructure/config/environments')
+  persistence.alignEnvironment?.(tree, path.join(environments, 'local.json'), 'local')
+  persistence.alignEnvironment?.(tree, path.join(environments, 'test.json'), 'test')
 
   // 2. DTOs compartidos + kernel Angular
   await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: modelNames })
@@ -139,7 +123,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 3. un módulo por recurso, repartido al layout canónico
   for (const model of models) {
     const staging = path.join(root, '.gen', model.name)
-    await resourceGenerator(tree, { name: model.name, directory: staging, sharedDomainAlias: SHARED_DOMAIN_ALIAS, database })
+    await resourceGenerator(tree, {
+      name: model.name,
+      directory: staging,
+      sharedDomainAlias: SHARED_DOMAIN_ALIAS,
+      database: persistence.engine
+    })
 
     relocate(tree, path.join(staging, 'backend'), path.join(backendSrc, 'contexts', model.context, 'modules', model.plural))
     // El canon separa el servicio del recurso (core/services, compartido) de su
@@ -194,6 +183,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
+  const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])
   generateFiles(tree, path.join(__dirname, 'files'), root, {
     ...shellSubstitutions(composition),
     themeClass: theme.themeClass,
@@ -210,13 +200,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       })
       .join('\n'),
     seedModules: models.map(model => `${names(model.plural).className}Module`).join(', '),
-    repoImports: models
-      .map(model => {
-        const n = names(model.name)
-        return `import { TypeOrm${n.className}Repository } from '../../src/contexts/${model.context}/modules/${model.plural}/infrastructure/persistence/typeorm/typeorm-${n.fileName}.repository'`
-      })
+    // los repositorios concretos los nombra el manifiesto del motor: aquí no se sabe de motores
+    repoImports: testRepositories
+      .map(repo => `import { ${repo.className} } from '${repo.importPath}'`)
       .join('\n'),
-    repoList: models.map(model => `  TypeOrm${names(model.name).className}Repository`).join(',\n'),
+    repoList: testRepositories.map(repo => `  ${repo.className}`).join(',\n'),
     seedRuns: models
       .map(model => {
         const n = names(model.name)
@@ -306,24 +294,6 @@ function sortKeys(record: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)))
 }
 
-/**
- * Deja cada environment coherente con su docker-compose. Los nombres de BD son fijos
- * (app_local/app_test) porque el esqueleto se copia verbatim: el compose no se templa.
- */
-function alignDatabase(
-  tree: Tree,
-  configPath: string,
-  overrides: { port: number; password: string; database: string; synchronize: boolean }
-): void {
-  const raw = tree.read(configPath, 'utf-8')
-  if (!raw) {
-    return
-  }
-  const config = JSON.parse(raw) as { typeorm: Record<string, unknown> }
-  config.typeorm = { ...config.typeorm, username: 'app', ...overrides }
-  tree.write(configPath, `${JSON.stringify(config, null, 2)}
-`)
-}
 
 function run(command: string, cwd: string): void {
   try {
