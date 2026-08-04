@@ -42,13 +42,16 @@
 
 ## Estudio (studio-api + wizard)
 
-- [ ] **TASK-11**: Tests + `GET /studio/slots` en studio-api (lee el manifiesto desde ACELERADOR_ROOT)
+- [x] **TASK-11**: Tests + `GET /studio/slots` en studio-api (lee el manifiesto desde ACELERADOR_ROOT)
       y validación de `POST /studio/generate` contra él; fuera `UI_VALUES`/`DATABASE_VALUES`/`PLUGIN_VALUES`
-- [ ] **TASK-12**: Tests + `wizard-command.ts` genérico (`slots: Record<string,string>`, flag por ranura);
+- [x] **TASK-12**: Tests + `wizard-command.ts` genérico (`slots: Record<string,string>`, flag por ranura);
       fuera las listas hardcodeadas
-- [ ] **TASK-13**: Wizard dibujado desde el endpoint: radios por ranura (ocultas las de un solo
+- [x] **TASK-13**: Wizard dibujado desde el endpoint: radios por ranura (ocultas las de un solo
       proveedor), checkboxes de aditivos, combinaciones inválidas deshabilitadas en vivo
-- [ ] **TASK-14**: Smoke Playwright: ranuras pintadas desde el endpoint + `mongo`+`single-tenant`
+      · el endpoint real es `/api/v1/studio/generate/slots` (prefijo del controller), no
+        `/api/v1/studio/slots`: el smoke lo tapaba interceptando la ruta ⇒ ahora consume el
+        endpoint real por defecto y sólo mockea con `STUB_SLOTS=1`
+- [x] **TASK-14**: Smoke Playwright: ranuras pintadas desde el endpoint + `mongo`+`single-tenant`
       deshabilitado; suite completa del workspace verde
 
 ## Cierre

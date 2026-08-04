@@ -1,5 +1,5 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common'
-import { IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString } from 'class-validator'
+import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common'
+import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator'
 import { execFile } from 'child_process'
 import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
@@ -8,25 +8,19 @@ import { buildAppFile } from './build-app-file'
 import { describeGenerationFailure } from './generation-failure'
 import { validateDesign } from '../chat/validate-proposal'
 import type { DesignPayload } from '../chat/chat.types'
-import {
-  DATABASE_VALUES,
-  PLUGIN_VALUES,
-  UI_VALUES,
-  buildGeneratorArgs
-} from './generator-args'
+import { buildGeneratorArgs } from './generator-args'
+import { loadSlotsManifest, type SlotsManifest } from './slots-manifest'
 
 class GenerateRequestDto {
   @IsString()
   name!: string
 
-  @IsIn(UI_VALUES as readonly string[])
-  ui!: string
-
-  @IsIn(DATABASE_VALUES as readonly string[])
-  database!: string
+  /** Ranura → proveedor. Los valores se validan contra el manifiesto, no con un @IsIn fijo */
+  @IsObject()
+  slots!: Record<string, string>
 
   @IsArray()
-  @IsIn(PLUGIN_VALUES as readonly string[], { each: true })
+  @IsString({ each: true })
   plugins!: string[]
 
   @IsObject()
@@ -56,7 +50,19 @@ export interface GenerateResult {
  */
 @Controller('studio/generate')
 export class StudioGenerateController {
-  private readonly acceleratorRoot = process.env['ACELERADOR_ROOT'] ?? path.resolve(__dirname, '../../../../../../../..')
+  private readonly acceleratorRoot =
+    process.env['ACELERADOR_ROOT'] ?? path.resolve(__dirname, '../../../../../../../..')
+
+  /**
+   * Las opciones que ofrece el generador, tal cual las publica su registro de ranuras.
+   * El wizard se dibuja con esto: si el acelerador gana un proveedor, aparece sin tocar
+   * el estudio. Se lee en cada petición a propósito — regenerar el manifiesto durante
+   * el desarrollo no debe exigir reiniciar el servidor.
+   */
+  @Get('slots')
+  slots(): SlotsManifest {
+    return loadSlotsManifest(this.acceleratorRoot)
+  }
 
   @Post()
   async generate(@Body() body: GenerateRequestDto): Promise<GenerateResult> {
@@ -72,7 +78,11 @@ export class StudioGenerateController {
     const appFile = path.join(mkdtempSync(path.join(tmpdir(), 'studio-gen-')), `${body.name}.app.json`)
     let args: string[]
     try {
-      args = buildGeneratorArgs({ ...body, appFile })
+      args = buildGeneratorArgs({
+        ...body,
+        appFile,
+        manifest: loadSlotsManifest(this.acceleratorRoot)
+      })
     } catch (e) {
       throw new BadRequestException(e instanceof Error ? e.message : String(e))
     }
@@ -83,7 +93,11 @@ export class StudioGenerateController {
       execFile(
         'npx',
         args,
-        { cwd: this.acceleratorRoot, timeout: 15 * 60 * 1000, maxBuffer: 32 * 1024 * 1024 },
+        {
+          cwd: this.acceleratorRoot,
+          timeout: 15 * 60 * 1000,
+          maxBuffer: 32 * 1024 * 1024
+        },
         (error, stdout, stderr) => {
           const elapsedMs = Number((process.hrtime.bigint() - startedAt) / 1_000_000n)
           const output = `$ npx ${args.join(' ')}\n\n${stdout}${stderr}`

@@ -6,11 +6,12 @@ import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
 import {
-  DATABASE_OPTIONS,
-  PLUGIN_OPTIONS,
-  UI_OPTIONS,
   buildCommand,
-  type WizardOptions
+  choosableSlots,
+  defaultSelection,
+  isDisabled,
+  type ManifestProvider,
+  type SlotsManifest
 } from './wizard-command'
 
 const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -49,47 +50,54 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             data-testid="wizard-name"
           />
 
-          <div class="mb-3 grid grid-cols-2 gap-4">
-            <div>
-              <span class="mb-1 block text-sm font-medium">Componentes</span>
-              @for (option of uiOptions; track option) {
-                <label class="flex items-center gap-2 text-sm">
-                  <input type="radio" name="ui" [value]="option" [(ngModel)]="ui" [attr.data-testid]="'ui-' + option" />
-                  {{ option }}
-                </label>
+          @if (manifest(); as slots) {
+            <!-- una ranura = una decisión excluyente; las opciones las publica el generador -->
+            <div class="mb-3 grid grid-cols-2 gap-4" data-testid="wizard-slots">
+              @for (slot of choosable(); track slot.name) {
+                <div>
+                  <span class="mb-1 block text-sm font-medium">{{ slot.label }}</span>
+                  @for (provider of slot.providers; track provider.value) {
+                    <label
+                      class="flex items-center gap-2 text-sm"
+                      [class.opacity-40]="disabled(provider)"
+                      [title]="disabled(provider) ? requirementOf(provider) : (provider.description ?? '')"
+                    >
+                      <input
+                        type="radio"
+                        [name]="slot.name"
+                        [checked]="selection()[slot.name] === provider.value"
+                        [disabled]="disabled(provider)"
+                        (change)="choose(slot.name, provider.value)"
+                        [attr.data-testid]="'slot-' + slot.name + '-' + provider.value"
+                      />
+                      {{ provider.label }}
+                    </label>
+                  }
+                </div>
               }
             </div>
-            <div>
-              <span class="mb-1 block text-sm font-medium">Base de datos</span>
-              @for (option of databaseOptions; track option) {
-                <label class="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="database"
-                    [value]="option"
-                    [(ngModel)]="database"
-                    [attr.data-testid]="'db-' + option"
-                  />
-                  {{ option }}
-                </label>
-              }
-            </div>
-          </div>
 
-          <span class="mb-1 block text-sm font-medium">Plugins</span>
-          <div class="mb-4 flex gap-4">
-            @for (plugin of pluginOptions; track plugin) {
-              <label class="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  [checked]="plugins().includes(plugin)"
-                  (change)="togglePlugin(plugin)"
-                  [attr.data-testid]="'plugin-' + plugin"
-                />
-                {{ plugin }}
-              </label>
+            @if (slots.plugins.length) {
+              <span class="mb-1 block text-sm font-medium">Plugins</span>
+              <div class="mb-4 flex gap-4">
+                @for (plugin of slots.plugins; track plugin.name) {
+                  <label class="flex items-center gap-2 text-sm" [title]="plugin.description">
+                    <input
+                      type="checkbox"
+                      [checked]="plugins().includes(plugin.name)"
+                      (change)="togglePlugin(plugin.name)"
+                      [attr.data-testid]="'plugin-' + plugin.name"
+                    />
+                    {{ plugin.name }}
+                  </label>
+                }
+              </div>
             }
-          </div>
+          } @else {
+            <p class="text-muted-foreground mb-4 text-sm" data-testid="wizard-slots-error">
+              {{ manifestError() ?? 'Cargando opciones del generador…' }}
+            </p>
+          }
 
           <details class="mb-3">
             <summary class="text-muted-foreground cursor-pointer text-xs">Avanzado</summary>
@@ -164,7 +172,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             <pre
               class="bg-muted mt-4 max-h-48 overflow-auto rounded-md p-3 text-xs"
               [attr.data-testid]="generateOk() ? 'generate-ok' : 'generate-error'"
-            >{{ out }}</pre>
+              >{{ out }}</pre>
           }
         </div>
       </div>
@@ -176,14 +184,13 @@ export class GenerateWizardComponent {
   private readonly http = inject(HttpClient)
   private readonly preview = inject(PreviewSettings)
 
-  protected readonly uiOptions = UI_OPTIONS
-  protected readonly databaseOptions = DATABASE_OPTIONS
-  protected readonly pluginOptions = PLUGIN_OPTIONS
+  /** Las opciones del generador, tal cual las publica su registro de ranuras (spec 23) */
+  protected readonly manifest = signal<SlotsManifest | null>(null)
+  protected readonly manifestError = signal<string | null>(null)
+  protected readonly selection = signal<Record<string, string>>({})
 
   protected readonly open = signal(false)
   protected readonly name = signal('')
-  protected readonly ui = signal<WizardOptions['ui']>('spartan')
-  protected readonly database = signal<WizardOptions['database']>('postgres')
   protected readonly plugins = signal<string[]>([])
   protected readonly copied = signal(false)
   protected readonly install = signal(true)
@@ -193,12 +200,66 @@ export class GenerateWizardComponent {
   protected readonly generateOk = signal(false)
   protected readonly elapsed = signal<number | null>(null)
 
-  protected readonly valid = computed(() => KEBAB.test(this.name()))
-  protected readonly command = computed(() =>
-    this.valid()
-      ? buildCommand({ name: this.name(), ui: this.ui(), database: this.database(), plugins: this.plugins() })
+  protected readonly choosable = computed(() => {
+    const manifest = this.manifest()
+    return manifest ? choosableSlots(manifest) : []
+  })
+  protected readonly valid = computed(() => KEBAB.test(this.name()) && this.manifest() !== null)
+  protected readonly command = computed(() => {
+    const manifest = this.manifest()
+    return manifest && KEBAB.test(this.name())
+      ? buildCommand(manifest, {
+          name: this.name(),
+          slots: this.selection(),
+          plugins: this.plugins()
+        })
       : null
-  )
+  })
+
+  constructor() {
+    void this.loadManifest()
+  }
+
+  /** Sin manifiesto no hay formulario: el estudio no se inventa las opciones del generador. */
+  private async loadManifest(): Promise<void> {
+    try {
+      const manifest = await firstValueFrom(this.http.get<SlotsManifest>('/api/v1/studio/generate/slots'))
+      this.manifest.set(manifest)
+      this.selection.set(defaultSelection(manifest))
+    } catch {
+      this.manifestError.set(
+        'No se pudieron cargar las opciones del generador. Arranca el backend local: npm run studio:api'
+      )
+    }
+  }
+
+  protected choose(slot: string, provider: string): void {
+    this.selection.update(current => ({ ...current, [slot]: provider }))
+    // cambiar de ranura puede invalidar lo elegido en otra (mongo deja fuera auth single-tenant)
+    const manifest = this.manifest()
+    if (!manifest) {
+      return
+    }
+    for (const candidate of manifest.slots) {
+      const chosen = candidate.providers.find(p => p.value === this.selection()[candidate.name])
+      if (chosen && isDisabled(chosen, this.selection())) {
+        this.selection.update(current => ({
+          ...current,
+          [candidate.name]: candidate.default
+        }))
+      }
+    }
+  }
+
+  protected disabled(provider: ManifestProvider): boolean {
+    return isDisabled(provider, this.selection())
+  }
+
+  protected requirementOf(provider: ManifestProvider): string {
+    return Object.entries(provider.requires ?? {})
+      .map(([slot, value]) => `Requiere ${slot}=${value}`)
+      .join(', ')
+  }
 
   protected togglePlugin(plugin: string): void {
     this.plugins.update(list => (list.includes(plugin) ? list.filter(p => p !== plugin) : [...list, plugin]))
@@ -206,7 +267,10 @@ export class GenerateWizardComponent {
 
   protected download(): void {
     // el artefacto de --appFile: app-schema + resource-schemas expandidos, con el nombre elegido
-    const design = { ...(JSON.parse(this.store.exportJson()) as Record<string, unknown>), name: this.name() }
+    const design = {
+      ...(JSON.parse(this.store.exportJson()) as Record<string, unknown>),
+      name: this.name()
+    }
     downloadBlob(new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' }), `${this.name()}.app.json`)
   }
 
@@ -217,10 +281,14 @@ export class GenerateWizardComponent {
     this.elapsed.set(null)
     try {
       const result = await firstValueFrom(
-        this.http.post<{ ok: boolean; output: string; root: string; elapsedMs: number }>('/api/v1/studio/generate', {
+        this.http.post<{
+          ok: boolean
+          output: string
+          root: string
+          elapsedMs: number
+        }>('/api/v1/studio/generate', {
           name: this.name(),
-          ui: this.ui(),
-          database: this.database(),
+          slots: this.selection(),
           plugins: this.plugins(),
           design: {
             appName: this.name(),
@@ -242,7 +310,9 @@ export class GenerateWizardComponent {
         typeof e === 'object' && e !== null && 'error' in e
           ? ((e as { error?: { message?: string } }).error?.message ?? 'backend local no disponible')
           : String(e)
-      this.generateOutput.set(`✗ ${detail}\nSi el backend no está arrancado: npm run studio:api (o usa descarga + comando).`)
+      this.generateOutput.set(
+        `✗ ${detail}\nSi el backend no está arrancado: npm run studio:api (o usa descarga + comando).`
+      )
     } finally {
       this.generating.set(false)
     }

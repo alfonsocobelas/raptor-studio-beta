@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { AppDefinition } from '@acc/schema'
-import { buildAppFile, buildCommand, type WizardOptions } from './wizard-command'
+import {
+  buildAppFile,
+  buildCommand,
+  defaultSelection,
+  isDisabled,
+  type SlotsManifest,
+  type WizardOptions
+} from './wizard-command'
 
 const definition: AppDefinition = {
   schemaVersion: 1,
@@ -8,32 +15,107 @@ const definition: AppDefinition = {
   pages: [{ kind: 'resource', resource: 'garment' }]
 }
 
+/** El mismo manifiesto que sirve /studio/slots, en pequeño. */
+const manifest: SlotsManifest = {
+  slots: [
+    {
+      name: 'database',
+      label: 'Base de datos',
+      default: 'postgres',
+      providers: [
+        { value: 'postgres', label: 'PostgreSQL' },
+        { value: 'mongo', label: 'MongoDB' }
+      ]
+    },
+    {
+      name: 'ui',
+      label: 'Componentes',
+      default: 'spartan',
+      providers: [
+        { value: 'spartan', label: 'Spartan' },
+        { value: 'material', label: 'Material' }
+      ]
+    },
+    {
+      name: 'infra',
+      label: 'Infraestructura',
+      default: 'none',
+      providers: [{ value: 'none', label: 'Ninguna' }]
+    },
+    {
+      name: 'auth',
+      label: 'Autenticación',
+      default: 'none',
+      providers: [
+        { value: 'none', label: 'Ninguna' },
+        {
+          value: 'single-tenant',
+          label: 'Single-tenant',
+          requires: { database: 'postgres' }
+        }
+      ]
+    }
+  ],
+  plugins: [
+    { name: 'email', description: 'Emails' },
+    { name: 'observability', description: 'Telemetría' }
+  ]
+}
+
 const options: WizardOptions = {
   name: 'tienda-sur',
-  ui: 'material',
-  database: 'mongo',
-  plugins: ['auth', 'email']
+  slots: { ui: 'material', database: 'mongo' },
+  plugins: ['email']
 }
 
 describe('buildAppFile', () => {
   it('reescribe el name del schema al elegido en el wizard', () => {
     const file = buildAppFile(definition, 'tienda-sur')
 
-    expect(JSON.parse(file.content)).toMatchObject({ name: 'tienda-sur', schemaVersion: 1 })
+    expect(JSON.parse(file.content)).toMatchObject({
+      name: 'tienda-sur',
+      schemaVersion: 1
+    })
     expect(file.filename).toBe('tienda-sur.app.json')
   })
 })
 
-describe('buildCommand', () => {
-  it('monta el comando completo con todas las opciones', () => {
-    const command = buildCommand(options)
+describe('defaultSelection', () => {
+  it('parte de los defaults que publica el manifiesto', () => {
+    expect(defaultSelection(manifest)).toEqual({
+      database: 'postgres',
+      ui: 'spartan',
+      infra: 'none',
+      auth: 'none'
+    })
+  })
+})
 
-    expect(command).toBe(
-      'npx nx g @acc/generators:app tienda-sur --appFile=tienda-sur.app.json --ui=material --database=mongo --plugins=auth,email'
+describe('buildCommand', () => {
+  it('monta un flag por ranura elegible, en el orden del manifiesto', () => {
+    expect(buildCommand(manifest, options)).toBe(
+      'npx nx g @acc/generators:app tienda-sur --appFile=tienda-sur.app.json --database=mongo --ui=material --auth=none --plugins=email'
     )
   })
 
+  it('no emite flag para una ranura con un solo proveedor', () => {
+    expect(buildCommand(manifest, options)).not.toContain('--infra=')
+  })
+
   it('sin plugins emite plugins=none', () => {
-    expect(buildCommand({ ...options, plugins: [] })).toContain('--plugins=none')
+    expect(buildCommand(manifest, { ...options, plugins: [] })).toContain('--plugins=none')
+  })
+})
+
+describe('isDisabled', () => {
+  it('deshabilita el proveedor cuyo requires choca con la selección actual', () => {
+    const singleTenant = manifest.slots[3].providers[1]
+
+    expect(isDisabled(singleTenant, { database: 'mongo' })).toBe(true)
+    expect(isDisabled(singleTenant, { database: 'postgres' })).toBe(false)
+  })
+
+  it('un proveedor sin requires nunca se deshabilita', () => {
+    expect(isDisabled(manifest.slots[0].providers[1], { auth: 'single-tenant' })).toBe(false)
   })
 })
