@@ -53,7 +53,7 @@ export class MongooseCriteriaConverter {
   }
 
   // Paginación keyset. El cursor lleva el valor de la última fila por cada columna de orden
-  // (siempre cerrando con el desempate no nulo "_id"). Se construye el predicado lexicográfico
+  // (siempre cerrando con el desempate no nulo "id"). Se construye el predicado lexicográfico
   // "fila estrictamente posterior al cursor" honrando ASC/DESC y la colocación NATIVA de nulls
   // de Mongo (asc → nulls primero, desc → nulls al final; la inversa de Postgres). El predicado
   // debe casar con el sort que aplica el repositorio base, no con el canon SQL.
@@ -64,13 +64,13 @@ export class MongooseCriteriaConverter {
     const clauses: MongoCondition[] = []
 
     position.forEach((field, level) => {
-      const mongoField = this.fieldOf(field.field)
-      const equalities = position.slice(0, level).map(prev => ({ [this.fieldOf(prev.field)]: prev.value }))
+      const mongoField = field.field
+      const equalities = position.slice(0, level).map(prev => ({ [prev.field]: prev.value }))
       const isAsc = isAscByField.get(field.field) ?? true
 
       const advance =
         level === lastIndex
-          ? { [mongoField]: { [isAsc ? '$gt' : '$lt']: field.value } } // desempate _id, nunca nulo
+          ? { [mongoField]: { [isAsc ? '$gt' : '$lt']: field.value } } // desempate por id, nunca nulo
           : this.afterInColumn(mongoField, field, isAsc)
 
       if (!advance) {
@@ -104,7 +104,7 @@ export class MongooseCriteriaConverter {
   // OR de regex case-insensitive sobre los campos buscables del módulo (equivalente al ILIKE).
   private generateSearch(search: GlobalSearch): MongoCondition {
     const pattern = this.escapeRegex(String(search.term))
-    return { $or: search.fields.map(field => ({ [this.fieldOf(field)]: { $regex: pattern, $options: 'i' } })) }
+    return { $or: search.fields.map(field => ({ [field]: { $regex: pattern, $options: 'i' } })) }
   }
 
   private generateFilter(filters: Filters): MongoCondition[] {
@@ -117,7 +117,7 @@ export class MongooseCriteriaConverter {
   }
 
   private transformFilter(filter: Filter): MongoCondition {
-    const field = this.fieldOf(filter.field.value)
+    const field = filter.field.value
     const value = filter.value.value as MongoFilterValue
     const pattern = typeof value === 'string' ? this.escapeRegex(value) : String(value)
 
@@ -147,13 +147,9 @@ export class MongooseCriteriaConverter {
   private generateSort(orders: Orders): MongoSort {
     const sort: MongoSort = {}
     orders.orders.forEach(order => {
-      sort[this.fieldOf(order.orderBy.value)] = order.orderType.isAsc() ? 1 : -1
+      sort[order.orderBy.value] = order.orderType.isAsc() ? 1 : -1
     })
     return sort
   }
 
-  // El dominio ordena/pagina por "id" (el identificador de negocio); en Mongo vive en _id.
-  private fieldOf(field: string): string {
-    return field === 'id' ? '_id' : field
-  }
 }

@@ -6,12 +6,12 @@ import { movement } from './models/movement.model'
 
 describe('renderMongo', () => {
   describe('doc fields', () => {
-    it('maps field types to mongoose types and skips the pk (lives in _id)', () => {
+    it('mapea los tipos del modelo a tipos mongoose e incluye el id del dominio como campo', () => {
       // WHEN
       const mongo = renderMongo(customer)
 
-      // THEN
-      expect(mongo.docFields.find(f => f.name === 'id')).toBeUndefined()
+      // THEN — el _id del documento lo genera Mongo (ObjectId); el id del dominio es un campo más
+      expect(mongo.docFields.find(f => f.name === 'id')?.defSrc).toBe('{ type: String, required: true }')
       const name = mongo.docFields.find(f => f.name === 'name')
       expect(name?.defSrc).toBe('{ type: String, required: true }')
       expect(name?.tsType).toBe('string')
@@ -60,6 +60,14 @@ describe('renderMongo', () => {
   })
 
   describe('unique indexes', () => {
+    it('indexa el id del dominio como único: es la identidad de negocio, no la del documento', () => {
+      // WHEN
+      const mongo = renderMongo(customer)
+
+      // THEN — sin este índice dos documentos podrían compartir id de dominio
+      expect(mongo.indexLines[0]).toBe('CustomerSchema.index({ id: 1 }, { unique: true })')
+    })
+
     it('renders a plain unique index for required uniques and a partial one for ifPresent uniques', () => {
       // WHEN
       const mongo = renderMongo(customer)
@@ -71,12 +79,12 @@ describe('renderMongo', () => {
       )
     })
 
-    it('renders no index lines when the model has no uniques', () => {
+    it('sin únicos de negocio queda solo el índice del id del dominio', () => {
       // WHEN
       const mongo = renderMongo(license)
 
       // THEN
-      expect(mongo.indexLines).toEqual([])
+      expect(mongo.indexLines).toEqual(['LicenseSchema.index({ id: 1 }, { unique: true })'])
     })
   })
 
@@ -99,13 +107,15 @@ describe('renderMongo', () => {
   })
 
   describe('mapper lines', () => {
-    it('maps the pk through _id in both directions', () => {
+    it('el id del dominio viaja como campo propio, sin tocar el _id del documento', () => {
       // WHEN
       const mongo = renderMongo(customer)
 
-      // THEN
-      expect(mongo.toDomainProps).toContain('id: doc._id')
-      expect(mongo.toPersistenceProps).toContain('_id: primitives.id')
+      // THEN — el _id es de Mongo y NO debe asomar por el mapper (se filtraría a la API)
+      expect(mongo.toDomainProps).toContain('id: doc.id')
+      expect(mongo.toPersistenceProps).toContain('id: primitives.id')
+      expect(mongo.toDomainProps.join('\n')).not.toContain('_id')
+      expect(mongo.toPersistenceProps.join('\n')).not.toContain('_id')
     })
 
     it('keeps the optionalPrimitive fallback of the typeorm mapper', () => {

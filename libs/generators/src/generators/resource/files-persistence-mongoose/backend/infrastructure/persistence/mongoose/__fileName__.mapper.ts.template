@@ -21,8 +21,8 @@ export class <%- className %>Mapper {
 <%_ child.toDomainProps.forEach(line => { _%>
         <%- line.replace('doc.', child.childProp + '.') %>,
 <%_ }) _%>
-        // la clave del padre no vive en el subdocumento: se repone desde el _id del agregado
-        <%- child.parentField %>: doc._id
+        // la clave del padre no vive en el subdocumento: se repone desde el id del agregado
+        <%- child.parentField %>: doc.id
       }))<% } %>
     )
   }

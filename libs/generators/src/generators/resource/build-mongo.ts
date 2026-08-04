@@ -12,7 +12,10 @@ import type { FieldDefinition, FieldType, ResourceDefinition } from '@acc/schema
  *   nullable          → { default: null }        (y tsType Nullable<…>)
  *   column.default    → { default: <literal> }
  *   required          → { required: true }
- *   pk                → no es campo del doc: vive en _id
+ *
+ * Identidad (decisión de Alfonso, 2026-08-04): el `_id` del documento lo genera Mongo
+ * (ObjectId) y el id del DOMINIO viaja como un campo `id` más, con índice único. El `_id`
+ * no asoma por el mapper a propósito: un `lean()` descuidado lo filtraría a la API.
  */
 
 const MONGOOSE_TYPE: Record<FieldType, string> = {
@@ -82,7 +85,8 @@ export interface MongoBindings {
 
 export function renderMongo(definition: ResourceDefinition): MongoBindings {
   const fields = Object.entries(definition.fields)
-  const docFields = fields.filter(([, field]) => !field.pk).map(([name, field]) => renderDocField(name, field))
+  // el id del dominio es un campo del documento como cualquier otro (su unicidad, un índice)
+  const docFields = fields.map(([name, field]) => renderDocField(name, field))
   const child = renderChild(definition)
 
   return {
@@ -109,6 +113,9 @@ function renderDocField(name: string, field: FieldDefinition): MongoDocField {
 }
 
 function renderDocOptions(field: FieldDefinition): string[] {
+  if (field.pk) {
+    return ['required: true']
+  }
   if (field.nullable) {
     return ['default: null']
   }
@@ -128,10 +135,11 @@ function renderDocOptions(field: FieldDefinition): string[] {
  */
 function renderIndexLines(definition: ResourceDefinition): string[] {
   const schemaConst = `${names(definition.name).className}Schema`
+  // El id del dominio va primero: es la identidad por la que busca el repositorio
   return Object.entries(definition.fields)
-    .filter(([, field]) => field.unique)
+    .filter(([, field]) => field.unique || field.pk)
     .map(([name, field]) => {
-      if (field.required) {
+      if (field.required || field.pk) {
         return `${schemaConst}.index({ ${name}: 1 }, { unique: true })`
       }
       const present = MONGOOSE_TYPE[field.type] === 'String' ? "{ $gt: '' }" : '{ $ne: null }'
@@ -144,9 +152,6 @@ function isNullableDate(field: FieldDefinition): boolean {
 }
 
 function renderToDomainProp(name: string, field: FieldDefinition): string {
-  if (field.pk) {
-    return `id: doc._id`
-  }
   if (isNullableDate(field)) {
     return `${name}: doc.${name}?.toISOString() ?? null`
   }
@@ -154,9 +159,6 @@ function renderToDomainProp(name: string, field: FieldDefinition): string {
 }
 
 function renderToPersistenceProp(name: string, field: FieldDefinition): string {
-  if (field.pk) {
-    return `_id: primitives.${name}`
-  }
   if (isNullableDate(field)) {
     return `${name}: primitives.${name} ? new Date(primitives.${name}) : null`
   }

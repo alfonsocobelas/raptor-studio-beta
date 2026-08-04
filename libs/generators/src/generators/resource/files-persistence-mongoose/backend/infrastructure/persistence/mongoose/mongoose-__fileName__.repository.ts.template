@@ -57,7 +57,7 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
 
     try {
       await this.model()
-        .replaceOne({ _id: doc._id }, doc, { upsert: true })
+        .replaceOne({ id: doc.id }, doc, { upsert: true })
         .session(this.session())
         .exec()
     } catch (error) {
@@ -70,12 +70,12 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
 <%_ if (softDelete) { _%>
     // soft-delete: el documento se marca y ninguna consulta base lo vuelve a ver
     await this.model()
-      .updateOne({ _id: <%- propertyName %>Id.value }, { $set: { deletedAt: new Date() } })
+      .updateOne({ id: <%- propertyName %>Id.value }, { $set: { deletedAt: new Date() } })
       .session(this.session())
       .exec()
 <%_ } else { _%>
     await this.model()
-      .deleteOne({ _id: <%- propertyName %>Id.value })
+      .deleteOne({ id: <%- propertyName %>Id.value })
       .session(this.session())
       .exec()
 <%_ } _%>
@@ -83,7 +83,7 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
 <%_ } _%>
 
   async get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
-    return this.findOne({ _id: <%- propertyName %>Id.value })
+    return this.findOne({ id: <%- propertyName %>Id.value })
   }
 
   async matching(criteria: Criteria): Promise<<%- className %>[]> {

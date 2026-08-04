@@ -12,9 +12,9 @@ export interface <%- child.className %>Doc {
 }
 <%_ } _%>
 
+// El _id del documento lo genera Mongo (ObjectId) y NO se declara aquí a propósito: así
+// el mapper no puede filtrarlo a la API. La identidad de negocio es el campo `id`.
 export interface <%- className %>Doc {
-  // _id es el id del agregado: UUIDv7 string, no ObjectId
-  _id: string
 <%_ mongo.docFields.forEach(f => { _%>
   <%- f.name %>: <%- f.tsType %>
 <%_ }) _%>
@@ -44,7 +44,6 @@ const <%- child.schemaConst %> = new Schema<<%- child.className %>Doc>(
 
 export const <%- mongo.schemaConst %> = new Schema<<%- className %>Doc>(
   {
-    _id: { type: String, required: true },
 <%_ mongo.docFields.forEach(f => { _%>
     <%- f.name %>: <%- f.defSrc %>,
 <%_ }) _%>

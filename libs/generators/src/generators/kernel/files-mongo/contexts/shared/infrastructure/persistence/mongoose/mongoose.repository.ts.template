@@ -24,9 +24,10 @@ export abstract class MongooseRepository<T> {
       .find(this.excludeSoftDeleted(query.filter))
       .session(this.session())
       // Desempate determinista: la paginación por offset sin orden estable repite/salta filas
-      // entre páginas. _id es UUIDv7 (ordenado en el tiempo), así que además da un orden por
-      // defecto razonable cuando no se pide sort explícito.
-      .sort({ ...query.sort, _id: 1 })
+      // entre páginas. Se desempata por `id` (el UUIDv7 del dominio, ordenado en el tiempo) y NO
+      // por el _id de Mongo: el predicado del cursor compara el id de dominio, y ordenar por otro
+      // campo haría que sort y predicado siguieran órdenes distintos — saltando o repitiendo filas.
+      .sort({ ...query.sort, id: 1 })
 
     if (query.skip) {
       cursor = cursor.skip(query.skip)
