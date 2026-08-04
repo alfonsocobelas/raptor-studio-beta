@@ -2,9 +2,9 @@
 import * as winston from 'winston'
 import { ConfigService } from '@nestjs/config'
 import { Inject, Injectable, LoggerService, Optional } from '@nestjs/common'
-import { AppLogger } from '../../../domain/logger/logger'
-import { LoggerSanitizer } from '../../../domain/logger/logger-sanitizer'
-import { LOG_LEVEL_PRIORITY, LogLevel } from '../../../domain/logger/logger-enums'
+import { AppLogger } from '../../domain/logger/logger'
+import { LoggerSanitizer } from '../../domain/logger/logger-sanitizer'
+import { LOG_LEVEL_PRIORITY, LogLevel } from '../../domain/logger/logger-enums'
 
 // Los entornos desplegados emiten JSON parseable por máquina; el resto (local/test/qa),
 // texto legible en stdout.
