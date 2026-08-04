@@ -8,7 +8,7 @@ import { GlobalExceptionFilter } from './contexts/shared/infrastructure/filters/
 import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
 import { CustomersModule } from './contexts/sap-licensing/modules/customers/customers.module'
 import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
-import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
+import { LicensesModule } from './contexts/sap-licensing/modules/licenses/licenses.module'
 
 @Module({
   imports: [
@@ -18,7 +18,7 @@ import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projec
     HealthModule,
     CustomersModule,
     ContractsModule,
-    ProjectsModule
+    LicensesModule
   ],
   providers: [
     {

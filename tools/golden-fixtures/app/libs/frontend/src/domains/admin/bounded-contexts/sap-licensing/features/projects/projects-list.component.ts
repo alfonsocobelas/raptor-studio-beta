@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
-import { lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
+import { lucideEye, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
@@ -22,7 +23,7 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
 @Component({
   selector: 'app-projects-list',
   imports: [DataTable, AppDialog, AppConfirmDialog, ProjectDialogComponent],
-  providers: [provideIcons({ lucidePencil, lucideTrash2 })],
+  providers: [provideIcons({ lucideEye, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -82,6 +83,7 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
 })
 export class ProjectsListComponent {
   private readonly _service = inject(ProjectService)
+  private readonly _router = inject(Router)
   protected readonly canWrite = inject(AuthService).canWrite
   private readonly _notify = inject(NotificationService)
 
@@ -169,15 +171,18 @@ export class ProjectsListComponent {
     }
   ]
 
-  // Un viewer no ve ninguna: son escrituras que el backend rechazaría con 403.
-  readonly actions = computed<TableAction[]>(() =>
-    this.canWrite()
-      ? [
+  // Editar y borrar solo para quien puede escribir: el backend responde 403 al viewer, así que
+  // ofrecer la acción solo llevaría a un error. La ficha no sustituye a la papelera: si el schema
+  // declara la entidad borrable, se borra desde la fila igual que sin ficha.
+  readonly actions = computed<TableAction[]>(() => [
+    { icon: 'lucideEye', label: 'Ver ficha', action: 'view' },
+    ...(this.canWrite()
+      ? ([
           { icon: 'lucidePencil', label: 'Editar', action: 'edit' },
           { icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }
-        ]
-      : []
-  )
+        ] as TableAction[])
+      : [])
+  ])
 
   onPage(page: number): void {
     this._service.request.update(r => ({ ...r, page }))
@@ -211,7 +216,9 @@ export class ProjectsListComponent {
 
   onAction(event: { action: string; row: Record<string, unknown> }): void {
     const project = event.row as unknown as ProjectDto
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this._router.navigate(['/sap-licensing/projects', project.id])
+    } else if (event.action === 'edit') {
       this.editingProject.set(project)
       this.dialogOpen.set(true)
     } else if (event.action === 'delete') {

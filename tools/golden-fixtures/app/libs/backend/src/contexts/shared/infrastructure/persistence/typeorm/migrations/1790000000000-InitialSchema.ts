@@ -73,9 +73,33 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         CONSTRAINT           uq_projects_name UNIQUE (name)
       )
     `)
+
+    await queryRunner.query(`
+      CREATE TABLE sap_licensing.projects_attachments (
+        id          UUID         NOT NULL,
+        project_id UUID         NOT NULL,
+        file_name   VARCHAR(255) NOT NULL,
+        mime_type   VARCHAR(128) NOT NULL,
+        size_bytes  INT          NOT NULL,
+        storage_key UUID         NOT NULL,
+        uploaded_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        CONSTRAINT pk_projects_attachments PRIMARY KEY (id),
+        CONSTRAINT fk_projects_attachments_project FOREIGN KEY (project_id)
+          REFERENCES sap_licensing.projects (id) ON DELETE CASCADE
+      )
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_projects_attachments_project_id ON sap_licensing.projects_attachments (project_id)
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_projects_attachments_file_name ON sap_licensing.projects_attachments (file_name)
+    `)
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects_attachments`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.contracts`)
   }

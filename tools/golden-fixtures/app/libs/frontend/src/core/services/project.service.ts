@@ -41,6 +41,11 @@ export class ProjectService {
       )
   })
 
+  /** Carga un registro por id: lo que necesita la ficha (spec 16). */
+  findOne(id: string): Promise<ProjectDto> {
+    return firstValueFrom(this._http.get<ProjectDto>(`${API_URL}/${id}`))
+  }
+
   create(dto: RegisterProjectDto): Promise<void> {
     return firstValueFrom(this._http.post<void>(API_URL, dto)).then(() => {
       this.projects.reload()

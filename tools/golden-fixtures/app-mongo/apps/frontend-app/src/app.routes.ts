@@ -22,10 +22,10 @@ export const routes: Routes = [
       )
   },
   {
-    path: 'sap-licensing/projects',
+    path: 'sap-licensing/licenses',
     loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-list.component').then(
-        m => m.ProjectsListComponent
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/licenses/licenses-list.component').then(
+        m => m.LicensesListComponent
       )
   }
 ]

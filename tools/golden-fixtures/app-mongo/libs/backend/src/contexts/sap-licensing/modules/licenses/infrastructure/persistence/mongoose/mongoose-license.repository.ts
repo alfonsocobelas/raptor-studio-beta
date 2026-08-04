@@ -1,0 +1,95 @@
+import { Injectable } from '@nestjs/common'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
+import { Nullable } from '../../../../../../shared/domain/types'
+import { Criteria } from '../../../../../../shared/domain/query/criteria'
+import { LicenseId } from '../../../../../../shared/domain/value-objects/licenses/license-id.vo'
+import { MongooseCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-criteria-converter'
+import { MongooseRepository } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose.repository'
+import { MongooseTransactionManager } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-transaction-manager'
+import { License } from '../../../domain/license'
+import { LicenseRepository } from '../../../domain/license-repository'
+import { LicenseMapper } from './license.mapper'
+import { LicenseDoc } from './license.schema'
+
+@Injectable()
+export class MongooseLicenseRepository extends MongooseRepository<LicenseDoc> implements LicenseRepository {
+  constructor(
+    @InjectModel('License') private readonly licenseModel: Model<LicenseDoc>,
+    transactionManager: MongooseTransactionManager,
+    criteriaConverter: MongooseCriteriaConverter
+  ) {
+    super(transactionManager, criteriaConverter)
+  }
+
+  protected model(): Model<LicenseDoc> {
+    return this.licenseModel
+  }
+
+  async register(license: License): Promise<void> {
+    const doc = LicenseMapper.toPersistence(license)
+
+    try {
+      await this.model().create([doc], { session: this.session() ?? undefined })
+    } catch (error) {
+      throw this.asDomainError(error)
+    }
+  }
+
+  // Reemplazo del documento completo: el agregado es la unidad de escritura.
+  async save(license: License): Promise<void> {
+    const doc = LicenseMapper.toPersistence(license)
+
+    try {
+      await this.model().replaceOne({ id: doc.id }, doc, { upsert: true }).session(this.session()).exec()
+    } catch (error) {
+      throw this.asDomainError(error)
+    }
+  }
+
+  async get(licenseId: LicenseId): Promise<Nullable<License>> {
+    return this.findOne({ id: licenseId.value })
+  }
+
+  async matching(criteria: Criteria): Promise<License[]> {
+    const docs = await this.searchByCriteria(criteria)
+
+    return docs.map(LicenseMapper.toDomain)
+  }
+
+  async exists(criteria: Criteria): Promise<boolean> {
+    return this.existsByCriteria(criteria)
+  }
+
+  async count(criteria: Criteria): Promise<number> {
+    return this.countByCriteria(criteria)
+  }
+
+  // @ai:begin repository-extra — implementación de los finders del port-extra
+  // @ai:end
+
+  // Los borrados en suave no existen para el dominio: mismo criterio que el repo base.
+  private async findOne(filter: Record<string, unknown>): Promise<Nullable<License>> {
+    const doc = await this.model()
+      .findOne({ ...filter, deletedAt: null })
+      .session(this.session())
+      .lean<LicenseDoc>()
+      .exec()
+
+    return doc ? LicenseMapper.toDomain(doc) : null
+  }
+
+  // E11000 es el choque de un índice único. Sin esto el error del driver se escaparía
+  // tal cual a la capa de aplicación; traducido, es el mismo conflicto que ya conoce.
+  private asDomainError(error: unknown): unknown {
+    if (typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000) {
+      const key = Object.keys((error as { keyValue?: Record<string, unknown> }).keyValue ?? {})[0] ?? 'unique field'
+      const value = String((error as { keyValue?: Record<string, unknown> }).keyValue?.[key] ?? '')
+
+      return new AlreadyExistsError('License', key, value, error)
+    }
+
+    return error
+  }
+}

@@ -36,10 +36,10 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
             testId="kpi-contracts"
           />
           <app-kpi-card
-            title="Proyectos"
-            [value]="service.projectsTotal()"
-            subtitle="Proyectos de implementación SAP asociados a clientes"
-            testId="kpi-projects"
+            title="Licencias"
+            [value]="service.licensesTotal()"
+            subtitle="Observabilidad del parque de licencias SAP"
+            testId="kpi-licenses"
           />
         </div>
 

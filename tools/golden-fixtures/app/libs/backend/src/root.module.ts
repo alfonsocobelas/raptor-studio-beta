@@ -7,11 +7,21 @@ import { LoggerInterceptor } from './contexts/shared/infrastructure/interceptors
 import { GlobalExceptionFilter } from './contexts/shared/infrastructure/filters/global-exception.filter'
 import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
 import { AuthModule } from './contexts/iam/modules/auth/auth.module'
+import { StorageModule } from './contexts/shared/infrastructure/storage/storage.module'
 import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
 import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
 
 @Module({
-  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, HealthModule, ContractsModule, ProjectsModule],
+  imports: [
+    CoreConfigModule,
+    LoggerModule,
+    SharedPersistenceModule,
+    HealthModule,
+    AuthModule,
+    StorageModule,
+    ContractsModule,
+    ProjectsModule
+  ],
   providers: [
     {
       provide: APP_FILTER,

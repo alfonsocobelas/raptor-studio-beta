@@ -12,13 +12,13 @@ import { ContractsModule } from './contexts/sap-licensing/modules/contracts/cont
 import { RegisterContractUseCase } from './contexts/sap-licensing/modules/contracts/application/use-cases/register-contract-usecase.service'
 import { SEED_CONTRACTS } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seed.fixtures'
 import { ContractLocalSeeder } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seeder'
-import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
-import { RegisterProjectUseCase } from './contexts/sap-licensing/modules/projects/application/use-cases/register-project-usecase.service'
-import { SEED_PROJECTS } from './contexts/sap-licensing/modules/projects/infrastructure/seed/local-seed.fixtures'
-import { ProjectLocalSeeder } from './contexts/sap-licensing/modules/projects/infrastructure/seed/local-seeder'
+import { LicensesModule } from './contexts/sap-licensing/modules/licenses/licenses.module'
+import { RegisterLicenseUseCase } from './contexts/sap-licensing/modules/licenses/application/use-cases/register-license-usecase.service'
+import { SEED_LICENSES } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seed.fixtures'
+import { LicenseLocalSeeder } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seeder'
 
 @Module({
-  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule, ContractsModule, ProjectsModule]
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule, ContractsModule, LicensesModule]
 })
 class SeedModule {}
 
@@ -42,9 +42,9 @@ async function bootstrap(): Promise<void> {
     console.log(
       `[seed] contracts: +${contractsSummary.contractsCreated} created, ${contractsSummary.contractsSkipped} skipped`
     )
-    const projectsSummary = await new ProjectLocalSeeder(context.get(RegisterProjectUseCase)).seed(SEED_PROJECTS)
+    const licensesSummary = await new LicenseLocalSeeder(context.get(RegisterLicenseUseCase)).seed(SEED_LICENSES)
     console.log(
-      `[seed] projects: +${projectsSummary.projectsCreated} created, ${projectsSummary.projectsSkipped} skipped`
+      `[seed] licenses: +${licensesSummary.licensesCreated} created, ${licensesSummary.licensesSkipped} skipped`
     )
   } finally {
     await context.close()

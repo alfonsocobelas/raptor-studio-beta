@@ -40,5 +40,12 @@ export const routes: Routes = [
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-list.component').then(
         m => m.ProjectsListComponent
       )
+  },
+  {
+    path: 'sap-licensing/projects/:id',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/project-detail.component').then(
+        m => m.ProjectDetailComponent
+      )
   }
 ]

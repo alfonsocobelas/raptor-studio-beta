@@ -21,17 +21,17 @@ export class DashboardService {
   readonly contracts = this._total('/api/v1/contracts')
   readonly contractsTotal = computed(() => (this.contracts.hasValue() ? this.contracts.value().total : 0))
 
-  readonly projects = this._total('/api/v1/projects')
-  readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
+  readonly licenses = this._total('/api/v1/licenses')
+  readonly licensesTotal = computed(() => (this.licenses.hasValue() ? this.licenses.value().total : 0))
 
   readonly loading = computed(
-    () => this.customers.isLoading() || this.contracts.isLoading() || this.projects.isLoading()
+    () => this.customers.isLoading() || this.contracts.isLoading() || this.licenses.isLoading()
   )
   readonly loadError = computed(
     () =>
       this.customers.error() !== undefined ||
       this.contracts.error() !== undefined ||
-      this.projects.error() !== undefined
+      this.licenses.error() !== undefined
   )
 
   private _total(api: string) {

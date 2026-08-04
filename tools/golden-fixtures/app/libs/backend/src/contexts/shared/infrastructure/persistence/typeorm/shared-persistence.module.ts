@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { join } from 'path'
 import { TypeOrmContractEntity } from '../../../../sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity'
 import { TypeOrmProjectEntity } from '../../../../sap-licensing/modules/projects/infrastructure/persistence/typeorm/typeorm-project.entity'
+import { TypeOrmProjectAttachmentEntity } from '../../../../sap-licensing/modules/projects/infrastructure/attachments/project-attachment.entity'
 import { TransactionManager } from '../../../domain/persistence/transaction-manager'
 import { TypeOrmCriteriaConverter } from './typeorm-criteria-converter'
 import { TypeOrmTransactionManager } from './typeorm-transaction-manager'
@@ -25,7 +26,8 @@ import { SnakeNamingStrategy } from './snake-naming.strategy'
           TypeOrmSessionEntity,
           TypeOrmAuthTokenEntity,
           TypeOrmContractEntity,
-          TypeOrmProjectEntity
+          TypeOrmProjectEntity,
+          TypeOrmProjectAttachmentEntity
         ],
         migrations: [join(__dirname, './migrations/*.{ts,js}')]
       })

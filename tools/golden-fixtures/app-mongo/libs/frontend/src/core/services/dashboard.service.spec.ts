@@ -9,7 +9,7 @@ import { DashboardService } from './dashboard.service'
 const TOTALS: Record<string, number> = {
   '/api/v1/customers': 7,
   '/api/v1/contracts': 14,
-  '/api/v1/projects': 21
+  '/api/v1/licenses': 21
 }
 
 describe('DashboardService — totales por recurso', () => {
@@ -38,19 +38,19 @@ describe('DashboardService — totales por recurso', () => {
     await load()
     expect(httpGet).toHaveBeenCalledWith('/api/v1/customers', { params: { page: '1', pageSize: '1' } })
     expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', { params: { page: '1', pageSize: '1' } })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/licenses', { params: { page: '1', pageSize: '1' } })
   })
 
   it('exposes zero totals while there is no data', () => {
     expect(service.customersTotal()).toBe(0)
     expect(service.contractsTotal()).toBe(0)
-    expect(service.projectsTotal()).toBe(0)
+    expect(service.licensesTotal()).toBe(0)
   })
 
   it('exposes the total of every resource once loaded', async () => {
     await load()
     expect(service.customersTotal()).toBe(7)
     expect(service.contractsTotal()).toBe(14)
-    expect(service.projectsTotal()).toBe(21)
+    expect(service.licensesTotal()).toBe(21)
   })
 })
