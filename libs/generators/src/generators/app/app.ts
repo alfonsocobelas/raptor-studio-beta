@@ -4,6 +4,7 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
+import { emitsSeeder } from '../resource/emits'
 import { ignoreNestedWorkspace } from './nxignore'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
@@ -213,11 +214,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
   const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])
+  // el seed siembra por el Register use case: sólo los modelos que lo emiten entran (spec 26)
+  const seedable = models.filter(emitsSeeder)
   generateFiles(tree, path.join(__dirname, 'files'), root, {
     ...shellSubstitutions(composition),
     persistenceDir: persistence.persistenceDir,
     themeClass: theme.themeClass,
-    seedImports: models
+    seedImports: seedable
       .map(model => {
         const n = names(model.name)
         const dir = `./contexts/${model.context}/modules/${model.plural}`
@@ -229,11 +232,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
         ].join('\n')
       })
       .join('\n'),
-    seedModules: models.map(model => `${names(model.plural).className}Module`).join(', '),
+    seedModules: seedable.map(model => `${names(model.plural).className}Module`).join(', '),
     // los repositorios concretos los nombra el manifiesto del motor: aquí no se sabe de motores
     repoImports: testRepositories.map(repo => `import { ${repo.className} } from '${repo.importPath}'`).join('\n'),
     repoList: testRepositories.map(repo => `  ${repo.className}`).join(',\n'),
-    seedRuns: models
+    seedRuns: seedable
       .map(model => {
         const n = names(model.name)
         const seeder = `new ${n.className}LocalSeeder(context.get(Register${n.className}UseCase))`

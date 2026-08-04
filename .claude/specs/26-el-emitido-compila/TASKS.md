@@ -23,8 +23,12 @@
       las salta (también en la comprobación inversa).
       · medido: la app de las 4 entidades de oro baja de **75 a 72** errores
       · `customers` pasa de 77 a 78 ficheros emitidos y `licenses` de 43 a 44
-- [ ] **TASK-03**: Los imports del `seed.ts` emitido se filtran a los modelos que de verdad emiten
-      seeder (`entry.emit && app.writes`). Test con `license`, que no escribe.
+- [x] **TASK-03**: el `seed.ts` emitido sólo importa lo que existe. La condición se extrae a
+      `resource/emits.ts` (`emitsAggregate` / `emitsWrites` / `emitsSeeder`) para que el generador de
+      recurso y el ensamblador **no puedan discrepar**: el bug nació de que cada uno decidía por su
+      cuenta.
+      · medido: **72 → 69 errores**, y los `TS2307` quedan en 49 = exactamente la familia A
+      · re-baseline del `seed.ts` de la fixture mongo (desaparecen los 4 imports de `license`)
 
 ## Familia B — el fallback, para todos los campos
 
