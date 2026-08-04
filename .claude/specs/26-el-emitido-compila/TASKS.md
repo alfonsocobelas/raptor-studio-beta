@@ -7,9 +7,13 @@
 
 ## El gate primero (la red antes del trapecio)
 
-- [ ] **TASK-01**: Target `generators:typecheck-emitted`: genera una app, la mueve FUERA del árbol
-      del acelerador, instala y le pasa `tsc`. Falla con el recuento de errores y limpia siempre.
-      Alcance inicial: `--app=boutique`. **Verificar que puede fallar** inyectando un import roto.
+- [x] **TASK-01**: `tools/typecheck-emitted.sh` + target `generators:typecheck-emitted` + script
+      `npm run typecheck:emitted`. Genera, mueve FUERA del árbol, instala y compila; limpia siempre.
+      · verde con la app de demo: **0 errores**
+      · **verificado que sabe fallar**: inyectando en la plantilla del logger el mismo import roto
+      que se nos escapó en la spec 24, el gate lo caza (1 × TS2307) con el fichero y la línea
+      · acepta argumentos, así que sirve para cualquier combinación:
+      `bash tools/typecheck-emitted.sh --app=boutique --infra=azure`
 
 ## Familia C — el generador deja de contradecirse
 

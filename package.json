@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "golden:diff": "bash tools/golden-diff.sh",
     "slots": "tsx --tsconfig tsconfig.base.json tools/emit-slots.ts",
-    "new": "tsx --tsconfig tsconfig.base.json tools/cli/new-app.ts"
+    "new": "tsx --tsconfig tsconfig.base.json tools/cli/new-app.ts",
+    "typecheck:emitted": "bash tools/typecheck-emitted.sh"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "3.1098.0",
