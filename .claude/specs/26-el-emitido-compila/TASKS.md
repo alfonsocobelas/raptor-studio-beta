@@ -37,6 +37,24 @@
 
 ## Cierre
 
-- [ ] **TASK-05**: Medición final: la app de las 4 entidades de oro baja de **75 a 49** errores y
-      **todos** los restantes son de familia A (clasificación adjunta). Anotar el resultado aquí y
-      abrir la spec 27 con la familia A ya medida.
+- [x] **TASK-05**: medición final. La app de las 4 entidades de oro baja de **75 a 49** errores y
+      **todos** los restantes son `TS2307` de familia A: 7 módulos que el emitido importa y nadie
+      emite — la capa **shared del contexto**. No queda ni un error de tipos.
+
+      | módulo que falta                                   | sitios | canon (líneas) |
+      | -------------------------------------------------- | -----: | -------------: |
+      | `shared/domain/value-objects/customer-name.vo`      |     12 |            111 |
+      | `shared/domain/value-objects/contract-number.vo`    |     11 |             31 |
+      | `shared/domain/value-objects/contract-date.vo`      |      9 |             19 |
+      | `shared/domain/value-objects/period.vo`             |      6 |             25 |
+      | `shared/domain/value-objects/sync-timestamp.vo`     |      4 |             28 |
+      | `shared/domain/value-objects/phone.vo`              |      4 |             32 |
+      | `shared/domain/constants`                           |      3 |              5 |
+
+      Dos hallazgos que acortan la spec 27:
+      · el kernel **ya emite** todo lo que estas piezas necesitan por debajo (`DateValueObject`,
+        `StringValueObject`, `spanish-title-case`, `errors`, `types`): falta sólo la capa de contexto
+      · `period.vo` arrastra `shared/domain/period-error.ts`, que no aparece en el recuento porque
+        nadie más lo importa (251 líneas en total, 8 ficheros)
+
+      La app de demo (`--app=boutique`) sigue compilando con **0 errores**: el gate no ha aflojado.
