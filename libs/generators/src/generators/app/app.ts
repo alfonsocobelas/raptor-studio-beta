@@ -195,6 +195,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   if (persistence.skeletonFiles) {
     copyVerbatim(tree, path.join(__dirname, persistence.skeletonFiles), root)
   }
+  // los tests de los VOs de adjunto viven fuera de src, donde el jest emitido los busca
+  if (models.some(model => model.attachments)) {
+    copyVerbatim(tree, path.join(__dirname, 'files-attachments-tests'), root)
+  }
   // lo que añade el proveedor de infraestructura elegido (adapters de su nube, IaC…)
   if (infra.files) {
     copyVerbatim(tree, path.join(__dirname, infra.files), root)
