@@ -1,18 +1,18 @@
 import { Module, Logger, Global } from '@nestjs/common'
-import { AzureLoggerService } from './azure/azure-logger.service'
+import { AppLoggerService } from './app-logger.service'
 import { AppLogger } from '../../domain/logger/logger'
 
 @Global()
 @Module({
   providers: [
-    AzureLoggerService,
+    AppLoggerService,
     {
       provide: AppLogger,
-      useExisting: AzureLoggerService
+      useExisting: AppLoggerService
     },
     {
       provide: Logger,
-      useExisting: AzureLoggerService
+      useExisting: AppLoggerService
     }
   ],
   exports: [AppLogger, Logger]

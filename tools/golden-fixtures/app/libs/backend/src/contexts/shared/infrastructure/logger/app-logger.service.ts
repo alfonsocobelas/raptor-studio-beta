@@ -1,22 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as winston from 'winston'
-import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport'
 import { ConfigService } from '@nestjs/config'
-import { Injectable, LoggerService } from '@nestjs/common'
+import { Inject, Injectable, LoggerService, Optional } from '@nestjs/common'
 import { AppLogger } from '../../../domain/logger/logger'
 import { LoggerSanitizer } from '../../../domain/logger/logger-sanitizer'
 import { LOG_LEVEL_PRIORITY, LogLevel } from '../../../domain/logger/logger-enums'
 
-// Deployed environments ship to Azure Monitor (see telemetry/init-telemetry.ts) and get
-// machine-parseable JSON + the OpenTelemetry transport. Everywhere else (local/test/qa)
-// logs stay human-readable in stdout and skip OTel (there is no LoggerProvider there).
+// Los entornos desplegados emiten JSON parseable por máquina; el resto (local/test/qa),
+// texto legible en stdout.
 const DEPLOYED_ENVS = ['dev', 'prod']
 
+/**
+ * Costura de extensión: un proveedor de infraestructura puede añadir transportes de winston
+ * (p. ej. el de OpenTelemetry con Azure Monitor) sin tocar este fichero. Sin proveedor, la
+ * app registra en stdout y nada más — no arrastra el SDK de ninguna nube.
+ */
+export const EXTRA_LOG_TRANSPORTS = 'EXTRA_LOG_TRANSPORTS'
+
 @Injectable()
-export class AzureLoggerService extends AppLogger implements LoggerService {
+export class AppLoggerService extends AppLogger implements LoggerService {
   private readonly winstonLogger: winston.Logger
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() @Inject(EXTRA_LOG_TRANSPORTS) extraTransports: winston.transport[] = []
+  ) {
     super()
 
     const env = this.configService.get<string>('env') ?? 'prod'
@@ -24,7 +32,7 @@ export class AzureLoggerService extends AppLogger implements LoggerService {
     const transports: winston.transport[] = []
 
     if (DEPLOYED_ENVS.includes(env)) {
-      transports.push(new winston.transports.Console({ format: winston.format.json() }), new OpenTelemetryTransportV3())
+      transports.push(new winston.transports.Console({ format: winston.format.json() }))
     } else {
       transports.push(
         new winston.transports.Console({
@@ -42,7 +50,7 @@ export class AzureLoggerService extends AppLogger implements LoggerService {
 
     this.winstonLogger = winston.createLogger({
       level: activeLevel === LogLevel.ALL ? 'debug' : activeLevel,
-      transports
+      transports: [...transports, ...extraTransports]
     })
   }
 

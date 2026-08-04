@@ -1,7 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm'
 import { join } from 'path'
 import { SnakeNamingStrategy } from './snake-naming.strategy'
-import loadConfig from '../../config/loaders/azure/azure-config-loader'
+import loadConfig from '../../config/loaders/config-loader'
 import { TypeOrmConfig } from '../../config/config-types'
 
 // Solo los campos de conexión que el DataSource necesita: desacopla el builder del
@@ -12,9 +12,8 @@ type DataSourceConfig = Pick<
 >
 
 /**
- * Pure builder so the DataSource options (in particular `ssl`, which Azure
- * Postgres Flexible Server requires) are unit-testable without resolving the
- * config from Key Vault or opening a connection.
+ * Pure builder so the DataSource options (in particular `ssl`, which a managed Postgres
+ * requires) are unit-testable without resolving secrets or opening a connection.
  */
 export function buildDataSourceOptions(typeorm: DataSourceConfig): DataSourceOptions {
   return {
@@ -37,7 +36,7 @@ export function buildDataSourceOptions(typeorm: DataSourceConfig): DataSourceOpt
 
 /**
  * The TypeORM CLI awaits the exported value, so we can resolve the config
- * (including `vault.*` secrets from Azure Key Vault for cloud environments)
+ * (con los secretos `vault.*` ya resueltos por el proveedor de infra, si hay)
  * before instantiating the DataSource.
  */
 export const AppDataSource = loadConfig().then(config => new DataSource(buildDataSourceOptions(config.typeorm)))

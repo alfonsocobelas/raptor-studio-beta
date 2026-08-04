@@ -78,7 +78,8 @@ export class ExportTooLargeError extends BaseCustomError {
   }
 }
 
-export class AzureKeyVaultError extends BaseCustomError {
+/** Fallo al resolver un secreto en el proveedor de infraestructura (Key Vault, Bitwarden…). */
+export class SecretResolutionError extends BaseCustomError {
   constructor(message: string, status: number = http.INTERNAL_SERVER_ERROR, cause?: unknown) {
     super(message, status, cause)
   }

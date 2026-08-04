@@ -2,12 +2,12 @@ import helmet from 'helmet'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common'
-import { AzureLoggerService } from '../logger/azure/azure-logger.service'
+import { AppLoggerService } from '../logger/app-logger.service'
 
 export function setupApp(app: INestApplication): void {
   // Sin esto, los logs internos de Nest (y cualquier `new Logger`) irían por el
   // logger de consola por defecto, saltándose winston/OTel y el sanitizador.
-  app.useLogger(app.get(AzureLoggerService))
+  app.useLogger(app.get(AppLoggerService))
   app.use(helmet())
   app.use(compression())
   app.use(cookieParser())
