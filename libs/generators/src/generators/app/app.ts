@@ -176,6 +176,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // la app es un workspace anidado: el padre no debe escanearla (colisión de proyectos)
   ignoreNestedWorkspace(tree, root)
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton'), root)
+  // lo que el motor añade al esqueleto (su compose y el arranque de la integración)
+  if (persistence.skeletonFiles) {
+    copyVerbatim(tree, path.join(__dirname, persistence.skeletonFiles), root)
+  }
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)

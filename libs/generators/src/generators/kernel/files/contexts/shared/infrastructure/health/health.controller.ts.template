@@ -8,7 +8,7 @@ import {
   HealthCheckResult,
   HealthCheckService,
   HttpHealthIndicator,
-  TypeOrmHealthIndicator
+  <%- health.indicatorClass %>
 } from '@nestjs/terminus'
 
 // El ping a SAP comprueba alcanzabilidad de red, NO validez de la sesión (el login
@@ -33,7 +33,7 @@ interface AppInfo {
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly db: TypeOrmHealthIndicator,
+    private readonly db: <%- health.indicatorClass %>,
     private readonly http: HttpHealthIndicator,
     private readonly configService: ConfigService
   ) {}

@@ -15,6 +15,8 @@ import { definePersistence } from './provider'
 export const mongoPersistence = definePersistence({
   engine: 'mongo',
   kernelFiles: 'files-mongo',
+  skeletonFiles: 'files-engine-mongo',
+  healthIndicator: 'MongooseHealthIndicator',
   resourceFiles: 'files-persistence-mongoose',
   integrationTestFiles: 'files-tests-integration-mongoose',
 

@@ -1,0 +1,21 @@
+# Mongo local. Single-node REPLICA SET a propósito: las transacciones de Mongo solo
+# existen sobre un replica set, y el TransactionManager del kernel las usa.
+services:
+  mongo-local:
+    image: mongo:7
+    container_name: app-mongo-local
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27017:27017'
+    healthcheck:
+      # el healthcheck ADEMÁS inicia el replica set: es idempotente, así que repetirlo no molesta
+      test: ['CMD-SHELL', 'mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate().ok }"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - app-mongo-local-data:/data/db
+
+volumes:
+  app-mongo-local-data:

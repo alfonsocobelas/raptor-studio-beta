@@ -59,7 +59,9 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
     databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
     entities,
-    mongooseModels
+    mongooseModels,
+    // el readiness comprueba la base con el indicador del motor elegido
+    health: { indicatorClass: persistence.healthIndicator }
   }
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
   // puerto + adapter de almacenamiento: solo si algún recurso declara adjuntos

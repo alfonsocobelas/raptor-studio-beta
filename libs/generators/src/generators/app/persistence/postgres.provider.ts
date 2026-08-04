@@ -14,6 +14,8 @@ const ENVIRONMENTS = {
 export const postgresPersistence = definePersistence({
   engine: 'postgres',
   kernelFiles: 'files-postgres',
+  skeletonFiles: 'files-engine-postgres',
+  healthIndicator: 'TypeOrmHealthIndicator',
   resourceFiles: 'files-persistence-typeorm',
   compositionFiles: 'files-composition-persistence-typeorm',
   integrationTestFiles: 'files-tests-integration',

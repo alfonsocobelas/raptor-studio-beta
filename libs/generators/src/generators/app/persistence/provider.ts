@@ -14,6 +14,13 @@ export interface PersistenceProvider {
   engine: DatabaseEngine
   /** Subárbol de plantillas del kernel con la config y la persistencia compartida del motor */
   kernelFiles: string
+  /**
+   * Lo que el motor añade al esqueleto de la app: su docker-compose y el arranque de la
+   * suite de integración (arranger + jest.setup). Se copia verbatim, como el esqueleto.
+   */
+  skeletonFiles?: string
+  /** Indicador de @nestjs/terminus con el que el readiness comprueba la base */
+  healthIndicator: string
   /** Subárbol de la persistencia POR RECURSO (entidad/schema, mapper, repositorio) */
   resourceFiles?: string
   /** Ídem para los hijos de un agregado con composición */

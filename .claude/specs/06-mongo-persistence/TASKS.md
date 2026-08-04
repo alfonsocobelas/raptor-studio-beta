@@ -62,12 +62,12 @@
 
 ## App skeleton — arrange
 
-- [ ] **TASK-09**: Compose mongo (`mongo:7` single-node replSet + healthcheck) en
+- [x] **TASK-09**: Compose mongo (`mongo:7` single-node replSet + healthcheck) en
       `docker-compose.{test,local}.yml` emitidos + variante mongoose de `jest.setup.integration` y
       arranger (hoy `typeorm-environment-arranger.ts` se emite siempre). El compose y el arranger
       salen del esqueleto verbatim ⇒ hay que declararlos en el manifiesto (`composeService`,
       `integrationArrangerFiles`) y que el ensamblador los pida, como ya hace con lo demás.
-- [ ] **TASK-09b**: Health check por motor: `health.controller.ts` comprueba TypeORM siempre
+- [x] **TASK-09b**: Health check por motor: `health.controller.ts` comprueba TypeORM siempre
       (detectado en el refactor de la spec 23).
 - [ ] **TASK-10**: Ensamblaje app mongo: deps (`mongoose`, `@nestjs/mongoose`), fuera `typeorm`/`pg`
       — declaradas en el manifiesto (`dependencies`/`removeDependencies`), no con `if`s en `app.ts` —,
