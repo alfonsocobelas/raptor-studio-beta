@@ -1,3 +1,4 @@
+import { names } from '@nx/devkit'
 import type { ResourceDefinition } from '@acc/schema'
 import { renderMongo } from '../../resource/build-mongo'
 import { definePersistence } from './provider'
@@ -18,5 +19,13 @@ export const mongoPersistence = definePersistence({
 
   resourceSubstitutions(model: ResourceDefinition): Record<string, unknown> {
     return { mongo: renderMongo(model) }
+  },
+
+  moduleRepository(model: ResourceDefinition): { className: string; importPath: string } {
+    const n = names(model.name)
+    return {
+      className: `Mongoose${n.className}Repository`,
+      importPath: `./infrastructure/persistence/mongoose/mongoose-${n.fileName}.repository`
+    }
   }
 })

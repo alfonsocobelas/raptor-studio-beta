@@ -34,5 +34,13 @@ export const postgresPersistence = definePersistence({
       className: `TypeOrm${n.className}Repository`,
       importPath: `../../src/contexts/${model.context}/modules/${model.plural}/infrastructure/persistence/typeorm/typeorm-${n.fileName}.repository`
     }
+  },
+
+  moduleRepository(model: ResourceDefinition): { className: string; importPath: string } {
+    const n = names(model.name)
+    return {
+      className: `TypeOrm${n.className}Repository`,
+      importPath: `./infrastructure/persistence/typeorm/typeorm-${n.fileName}.repository`
+    }
   }
 })

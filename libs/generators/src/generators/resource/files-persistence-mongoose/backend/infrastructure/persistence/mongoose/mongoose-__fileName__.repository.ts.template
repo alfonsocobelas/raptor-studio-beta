@@ -1,0 +1,136 @@
+<%_ if (aggregate.emitAggregate) { _%>
+<%_ const child = mongo.child _%>
+import { Injectable } from '@nestjs/common'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
+import { Nullable } from '../../../../../../shared/domain/types'
+import { Criteria } from '../../../../../../shared/domain/query/criteria'
+import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { MongooseCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-criteria-converter'
+import { MongooseRepository } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose.repository'
+import { MongooseTransactionManager } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-transaction-manager'
+import { <%- className %> } from '../../../domain/<%- fileName %>'
+import { <%- className %>Repository } from '../../../domain/<%- fileName %>-repository'
+<%_ app.uniqueSpecs.forEach(spec => { _%>
+<%_ if (spec.voLocal) { _%>
+import { <%- spec.voName %> } from '../../../domain/value-objects/<%- spec.voFileName %>.vo'
+<%_ } else { _%>
+import { <%- spec.voName %> } from '../../../../../shared/domain/value-objects/<%- spec.voFileName %>.vo'
+<%_ } _%>
+<%_ }) _%>
+import { <%- className %>Mapper } from './<%- fileName %>.mapper'
+import { <%- className %>Doc } from './<%- fileName %>.schema'
+
+@Injectable()
+export class Mongoose<%- className %>Repository extends MongooseRepository<<%- className %>Doc> implements <%- className %>Repository {
+  constructor(
+    @InjectModel('<%- className %>') private readonly <%- propertyName %>Model: Model<<%- className %>Doc>,
+    transactionManager: MongooseTransactionManager,
+    criteriaConverter: MongooseCriteriaConverter
+  ) {
+    super(transactionManager, criteriaConverter)
+  }
+
+  protected model(): Model<<%- className %>Doc> {
+    return this.<%- propertyName %>Model
+  }
+
+  async register(<%- propertyName %>: <%- className %>): Promise<void> {
+    const doc = <%- className %>Mapper.toPersistence(<%- propertyName %>)
+
+    try {
+      await this.model().create([doc], { session: this.session() ?? undefined })
+    } catch (error) {
+      throw this.asDomainError(error)
+    }
+  }
+
+<%_ if (child) { _%>
+  // Un solo write: los <%- child.childrenProp %> van embebidos en el documento, así que el agregado se
+  // reemplaza entero y no hay dos escrituras que coordinar (ni huérfanos que soft-borrar).
+<%_ } else { _%>
+  // Reemplazo del documento completo: el agregado es la unidad de escritura.
+<%_ } _%>
+  async save(<%- propertyName %>: <%- className %>): Promise<void> {
+    const doc = <%- className %>Mapper.toPersistence(<%- propertyName %>)
+
+    try {
+      await this.model()
+        .replaceOne({ _id: doc._id }, doc, { upsert: true })
+        .session(this.session())
+        .exec()
+    } catch (error) {
+      throw this.asDomainError(error)
+    }
+  }
+<%_ if (app.removes) { _%>
+
+  async remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
+<%_ if (softDelete) { _%>
+    // soft-delete: el documento se marca y ninguna consulta base lo vuelve a ver
+    await this.model()
+      .updateOne({ _id: <%- propertyName %>Id.value }, { $set: { deletedAt: new Date() } })
+      .session(this.session())
+      .exec()
+<%_ } else { _%>
+    await this.model()
+      .deleteOne({ _id: <%- propertyName %>Id.value })
+      .session(this.session())
+      .exec()
+<%_ } _%>
+  }
+<%_ } _%>
+
+  async get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>> {
+    return this.findOne({ _id: <%- propertyName %>Id.value })
+  }
+
+  async matching(criteria: Criteria): Promise<<%- className %>[]> {
+    const docs = await this.searchByCriteria(criteria)
+
+    return docs.map(<%- className %>Mapper.toDomain)
+  }
+<%_ app.uniqueSpecs.forEach(spec => { _%>
+
+  async findBy<%- spec.field.charAt(0).toUpperCase() + spec.field.slice(1) %>(<%- spec.field %>: <%- spec.voName %>): Promise<Nullable<<%- className %>>> {
+    return this.findOne({ <%- spec.field %>: <%- spec.field %>.value })
+  }
+<%_ }) _%>
+
+  async exists(criteria: Criteria): Promise<boolean> {
+    return this.existsByCriteria(criteria)
+  }
+
+  async count(criteria: Criteria): Promise<number> {
+    return this.countByCriteria(criteria)
+  }
+
+  // @ai:begin repository-extra — implementación de los finders del port-extra
+  // @ai:end
+
+  // Los borrados en suave no existen para el dominio: mismo criterio que el repo base.
+  private async findOne(filter: Record<string, unknown>): Promise<Nullable<<%- className %>>> {
+    const doc = await this.model()
+      .findOne({ ...filter, deletedAt: null })
+      .session(this.session())
+      .lean<<%- className %>Doc>()
+      .exec()
+
+    return doc ? <%- className %>Mapper.toDomain(doc) : null
+  }
+
+  // E11000 es el choque de un índice único. Sin esto el error del driver se escaparía
+  // tal cual a la capa de aplicación; traducido, es el mismo conflicto que ya conoce.
+  private asDomainError(error: unknown): unknown {
+    if (typeof error === 'object' && error !== null && (error as { code?: number }).code === 11000) {
+      const key = Object.keys((error as { keyValue?: Record<string, unknown> }).keyValue ?? {})[0] ?? 'unique field'
+      const value = String((error as { keyValue?: Record<string, unknown> }).keyValue?.[key] ?? '')
+
+      return new AlreadyExistsError('<%- className %>', key, value, error)
+    }
+
+    return error
+  }
+}
+<%_ } _%>

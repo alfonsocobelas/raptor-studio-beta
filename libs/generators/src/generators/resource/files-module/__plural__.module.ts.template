@@ -10,7 +10,7 @@ import { <%- pluralClassName %>Controller } from './infrastructure/entrypoints/<
 <%_ if (aggregate.composition) { _%>
 import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/<%- entry.childControllerFile %>.controller'
 <%_ } _%>
-import { TypeOrm<%- className %>Repository } from './infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
+import { <%- repository.className %> } from '<%- repository.importPath %>'
 <%_ if (attachments) { _%>
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { StorageModule } from '../../../shared/infrastructure/storage/storage.module'
@@ -37,7 +37,7 @@ import { <%- className %>AttachmentsService } from './infrastructure/attachments
 <%_ entry.moduleProviderNames.forEach(name => { _%>
     <%- name %>,
 <%_ }) _%>
-    { provide: <%- className %>Repository, useClass: TypeOrm<%- className %>Repository }
+    { provide: <%- className %>Repository, useClass: <%- repository.className %> }
   ],
   exports: [<%- className %>Repository]
 })

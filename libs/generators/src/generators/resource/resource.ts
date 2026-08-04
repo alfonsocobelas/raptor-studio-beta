@@ -102,7 +102,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend/infrastructure/entrypoints'),
       substitutions
     )
-    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-module'), path.join(outputDir, 'backend'), substitutions)
+    // el módulo enlaza el puerto del dominio con el repositorio del motor: lo dice el manifiesto
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-module'), path.join(outputDir, 'backend'), {
+      ...substitutions,
+      repository: persistence.moduleRepository?.(model)
+    })
     const entry = path.join(outputDir, 'backend/infrastructure/entrypoints')
     if (!substitutions.app.writes) {
       tree.delete(path.join(entry, 'dtos', `register-${substitutions.fileName}.dto.ts`))
