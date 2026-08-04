@@ -1,0 +1,89 @@
+import { MODEL_LIST } from './registry'
+import { SHARED_VOS, sharedVosOf } from './shared-vos'
+
+/**
+ * El guard que nos habría ahorrado 49 errores de compilación (spec 26, TASK-05).
+ *
+ * Un modelo que declara `voShared: { name: 'X' }` está diciendo «este VO no es mío, vive en la capa
+ * compartida del contexto». El generador se lo creía: usaba el tipo y lo importaba sin comprobar que
+ * alguien lo emitiera. El resultado sólo aparecía compilando el emitido FUERA del monorepo, semanas
+ * después. Aquí es suite roja.
+ */
+describe('SHARED_VOS — el registro cubre todo lo que los modelos referencian', () => {
+  it('cada voShared de cada modelo registrado está declarado', () => {
+    const missing = new Set<string>()
+
+    for (const model of MODEL_LIST) {
+      for (const field of Object.values(model.fields)) {
+        const name = field.voShared?.name
+        if (name && !SHARED_VOS[name]) missing.add(`${model.name}.${name}`)
+      }
+    }
+
+    expect([...missing]).toEqual([])
+  })
+
+  it('un modelo con período arrastra Period, que no se declara por campo', () => {
+    const withPeriod = MODEL_LIST.filter(m => m.period)
+
+    expect(withPeriod.length).toBeGreaterThan(0)
+    for (const model of withPeriod) {
+      expect(sharedVosOf([model])).toContain('Period')
+    }
+  })
+})
+
+describe('sharedVosOf — sólo lo que la app elige', () => {
+  it('devuelve la unión de los modelos seleccionados, sin repetir', () => {
+    const contract = MODEL_LIST.find(m => m.name === 'contract')
+    const license = MODEL_LIST.find(m => m.name === 'license')
+    if (!contract || !license) throw new Error('fixture de modelos incompleta')
+
+    const names = sharedVosOf([contract, license])
+
+    expect(names).toEqual([...new Set(names)])
+    expect(names).toContain('ContractNumber')
+    expect(names).toContain('CustomerName')
+    expect(names).toContain('ContractDate')
+    expect(names).toContain('SyncTimestamp')
+  })
+
+  it('una app que no los usa no arrastra ninguno', () => {
+    const garment = MODEL_LIST.find(m => m.name === 'garment')
+    if (!garment) throw new Error('fixture de modelos incompleta')
+
+    expect(sharedVosOf([garment])).toEqual([])
+  })
+
+  it('Period arrastra su error de regla de negocio y nada más lo hace', () => {
+    const contract = MODEL_LIST.find(m => m.name === 'contract')
+    if (!contract) throw new Error('fixture de modelos incompleta')
+
+    expect(SHARED_VOS['Period'].kind).toBe('period')
+    expect(sharedVosOf([contract])).toContain('Period')
+  })
+})
+
+describe('SHARED_VOS — declaraciones medidas contra el canon', () => {
+  it('las constantes coinciden con las del canon (shared/domain/constants.ts)', () => {
+    // docs/referencia/.../sap-licensing/shared/domain/constants.ts
+    expect(SHARED_VOS['CustomerName']).toMatchObject({ constraintKey: 'CUSTOMER_NAME', min: 2, max: 200 })
+    expect(SHARED_VOS['ContractNumber']).toMatchObject({ constraintKey: 'CONTRACT_NUMBER', min: 5, max: 50 })
+    expect(SHARED_VOS['Phone']).toMatchObject({ constraintKey: 'PHONE', max: 30 })
+  })
+
+  it('los VOs de fecha declaran su null con nombre, como el canon', () => {
+    // contract-date.vo.ts:17 `static unset()` · sync-timestamp.vo.ts:22 `static never()`
+    expect(SHARED_VOS['ContractDate']).toMatchObject({ kind: 'date', unset: true })
+    expect(SHARED_VOS['SyncTimestamp']).toMatchObject({ kind: 'timestamp', namedNull: 'never' })
+  })
+
+  it('ningún VO compartido declara min/max sin la clave de constante que los aloja', () => {
+    for (const [name, vo] of Object.entries(SHARED_VOS)) {
+      if (vo.min !== undefined || vo.max !== undefined) {
+        expect(vo.constraintKey).toBeDefined()
+      }
+      expect(name).toMatch(/^[A-Z]/)
+    }
+  })
+})

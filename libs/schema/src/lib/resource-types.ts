@@ -35,6 +35,46 @@ export interface VoDefinition {
   values?: string[]
 }
 
+/**
+ * Un VO de la capa COMPARTIDA del contexto: no es de ningún módulo (`CustomerName` la usan cuatro),
+ * así que lo emite el ensamblador de app y no el generador de recurso. Los modelos lo referencian
+ * por nombre con `voShared`; su declaración completa vive en el registro de VOs compartidos.
+ *
+ * Los cuatro `kind` están medidos contra el canon (`docs/referencia/.../sap-licensing/shared/domain/`):
+ * en sus 258 líneas no hay un quinto caso.
+ */
+export interface SharedVoDefinition {
+  kind: 'string' | 'date' | 'timestamp' | 'period'
+  /** Nombre humano de los mensajes de error ('Contract number') */
+  fieldName?: string
+  /** Clave dentro de SHARED_CONSTRAINTS; obligatoria si se declara min o max */
+  constraintKey?: string
+  /** Longitud mínima (string) — alimenta constants.ts, no se emite en el VO */
+  min?: number
+  /** Longitud máxima (string) — alimenta constants.ts, no se emite en el VO */
+  max?: number
+  /** Guarda base del string: ensureIsDefined (por defecto) o ensureIsString */
+  ensure?: 'defined' | 'string'
+  noInnerWhitespace?: boolean
+  /** Emite `static unset(): Nullable<X> { return null }` (kind date) */
+  unset?: boolean
+  /** Nombre del null con nombre para kind timestamp: `static never()` en el canon */
+  namedNull?: string
+  /** Juego de caracteres permitido, comprobado tras la longitud (canon: phone.vo.ts) */
+  charset?: { pattern: string; message: string }
+  /** Normalización que el VO aplica antes de validar */
+  normalize?: SharedVoNormalize
+  /** kind period: el VO de fecha con el que se construye el intervalo */
+  of?: string
+}
+
+/**
+ * `collapse-whitespace` lo hace el propio VO; `spanish-legal-name` delega en el helper del kernel
+ * (formas jurídicas S.L./S.A., conectores, title-case español) porque son 71 líneas de algoritmo que
+ * no se declaran en una spec — sólo sus tablas, que sí son del cliente.
+ */
+export type SharedVoNormalize = { rule: 'collapse-whitespace' } | { rule: 'spanish-legal-name'; acronyms: string[] }
+
 export interface FieldLookup {
   /** Resource whose service provides the options (e.g. 'customer' → CustomerService) */
   resource: string

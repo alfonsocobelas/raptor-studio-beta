@@ -7,11 +7,15 @@
 
 ## El guard primero (que un `voShared` sin declarar sea suite roja, no un import roto)
 
-- [ ] **TASK-01**: tipo `SharedVoDefinition` en `libs/schema` y registro `models/shared-vos.ts` con las
-      6 declaraciones **medidas del canon** (no inventadas: cada campo con la línea que lo justifica).
-      Test del plugin que recorre los modelos registrados, recoge cada `voShared.name` y exige que
-      exista en el registro. Todavía no se emite nada.
-      · RED: el test cae si se borra una entrada del registro
+- [x] **TASK-01**: tipo `SharedVoDefinition` en `libs/schema` y registro `models/shared-vos.ts` con las
+      6 declaraciones **medidas del canon** (cada una con el fichero y la línea que la justifica al
+      lado). `sharedVosOf(models)` da la unión determinista que necesita una app: el orden lo fija el
+      registro, no los modelos, y `Period` se deduce de `model.period` porque no se declara por campo.
+      · 8 tests; **verificado que el guard sabe fallar**: borrando `ContractDate` del registro, la
+        suite se pone roja nombrando `contract.ContractDate` y `license.ContractDate` — antes eso era
+        un import roto que sólo aparecía compilando el emitido fuera del monorepo
+      · una app que no los usa no arrastra ninguno (`sharedVosOf([garment]) === []`)
+      · todavía no se emite nada: 409 tests verdes y los 6 golden intactos
 
 ## Lo derivado antes que lo copiado
 
