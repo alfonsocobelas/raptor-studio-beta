@@ -1,12 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { v7 as uuidv7 } from 'uuid'
-import {
-  ALLOWED_ATTACHMENT_MIME_TYPES,
-  MAX_ATTACHMENT_SIZE_BYTES
-} from '../../../../../shared/domain/storage/attachment-constants'
 import { FileStoragePort } from '../../../../../shared/domain/storage/file-storage.port'
+import { AttachmentFileName } from '../../../../../shared/domain/storage/value-objects/attachment-file-name.vo'
+import { AttachmentMimeType } from '../../../../../shared/domain/storage/value-objects/attachment-mime-type.vo'
+import { AttachmentSizeBytes } from '../../../../../shared/domain/storage/value-objects/attachment-size-bytes.vo'
 import { TypeOrm<%= className %>AttachmentEntity } from './<%= fileName %>-attachment.entity'
 
 export interface <%= className %>AttachmentDto {
@@ -42,15 +41,14 @@ export class <%= className %>AttachmentsService {
   }
 
   async upload(<%= propertyName %>Id: string, file: Uploaded<%= className %>File): Promise<<%= className %>AttachmentDto> {
-    if (file.sizeBytes > MAX_ATTACHMENT_SIZE_BYTES) {
-      throw new BadRequestException(`El fichero supera el máximo de ${MAX_ATTACHMENT_SIZE_BYTES} bytes`)
-    }
-    if (!ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.mimeType as (typeof ALLOWED_ATTACHMENT_MIME_TYPES)[number])) {
-      throw new BadRequestException(`Tipo de fichero no permitido: ${file.mimeType}`)
-    }
+    // Las reglas de fichero son de DOMINIO: los VOs validan nombre, tipo y tamaño antes de
+    // tocar el almacenamiento, y el filtro global traduce su error al status HTTP.
+    const fileName = AttachmentFileName.create(file.originalName)
+    const mimeType = AttachmentMimeType.create(file.mimeType)
+    const sizeBytes = AttachmentSizeBytes.create(file.sizeBytes)
 
     const storageKey = uuidv7()
-    await this.fileStorage.upload(storageKey, file.buffer, file.mimeType)
+    await this.fileStorage.upload(storageKey, file.buffer, mimeType.value)
 
     // Si falla el guardado de metadatos se borra el binario: un blob huérfano es
     // inofensivo, una fila apuntando a un blob inexistente no.
@@ -59,9 +57,9 @@ export class <%= className %>AttachmentsService {
         this.repository.create({
           id: uuidv7(),
           <%= propertyName %>Id,
-          fileName: file.originalName,
-          mimeType: file.mimeType,
-          sizeBytes: file.sizeBytes,
+          fileName: fileName.value,
+          mimeType: mimeType.value,
+          sizeBytes: sizeBytes.value,
           storageKey
         })
       )

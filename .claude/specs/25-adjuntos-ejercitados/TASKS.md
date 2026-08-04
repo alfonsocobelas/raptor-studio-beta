@@ -10,7 +10,7 @@
 - [x] **TASK-01**: Tests + los tres VOs en el kernel (`attachment-file-name.vo.ts`,
       `attachment-mime-type.vo.ts`, `attachment-size-bytes.vo.ts`), espejo del canon `qbr` y sobre
       las clases base que el kernel ya emite. Sin consumidores todavía: salida sin cambios.
-- [ ] **TASK-02**: El servicio de adjuntos valida construyendo los VOs en vez de con `if`s. Se
+- [x] **TASK-02**: El servicio de adjuntos valida construyendo los VOs en vez de con `if`s. Se
       conservan el `storageKey` UUIDv7 de backend y el rollback del binario.
 
 ## Contrato del generador

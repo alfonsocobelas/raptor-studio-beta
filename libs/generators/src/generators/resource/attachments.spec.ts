@@ -11,7 +11,13 @@ import type { ResourceDefinition } from '@acc/schema'
  */
 describe('resource generator — adjuntos', () => {
   const withAttachments = (): ResourceDefinition =>
-    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
+    ({
+      ...MODELS['supplier'],
+      name: 'invoice',
+      plural: 'invoices',
+      attachments: true,
+      detail: {}
+    }) as ResourceDefinition
 
   const generate = async (model: ResourceDefinition): Promise<Tree> => {
     registerModels([model])
@@ -39,12 +45,12 @@ describe('resource generator — adjuntos', () => {
     expect(controller).toContain('@Delete')
   })
 
-  it('el servicio valida tamaño y MIME y compensa el binario si fallan los metadatos', async () => {
+  it('el servicio compensa el binario si fallan los metadatos', async () => {
+    // spec 25: la validación de tamaño y MIME se comprobaba aquí; ahora vive en los VOs del
+    // dominio y la cubre el bloque «validación en el dominio» de más abajo
     const tree = await generate(withAttachments())
     const service = tree.read('out/backend/infrastructure/attachments/invoice-attachments.service.ts', 'utf-8')
 
-    expect(service).toContain('MAX_ATTACHMENT_SIZE_BYTES')
-    expect(service).toContain('ALLOWED_ATTACHMENT_MIME_TYPES')
     expect(service).toContain('this.fileStorage.delete(storageKey)')
     // el key SIEMPRE lo genera el backend
     expect(service).toContain('const storageKey = uuidv7()')
@@ -81,11 +87,49 @@ describe('resource generator — adjuntos', () => {
     expect(withoutFiles.exists('k2/contexts/shared/infrastructure/storage/local-file-storage.ts')).toBe(false)
     expect(withoutFiles.exists('k2/contexts/shared/domain/storage/attachment-constants.ts')).toBe(false)
   })
+
+  /**
+   * TASK-02 (spec 25): las reglas de fichero son de dominio. El servicio construye los VOs y
+   * el borde traduce su error; sin `if`s de validación en infraestructura.
+   */
+  describe('validación en el dominio', () => {
+    it('el servicio valida construyendo los value objects', async () => {
+      const tree = await generate(withAttachments())
+      const service = tree.read('out/backend/infrastructure/attachments/invoice-attachments.service.ts', 'utf-8') ?? ''
+
+      expect(service).toContain('AttachmentFileName.create')
+      expect(service).toContain('AttachmentMimeType.create')
+      expect(service).toContain('AttachmentSizeBytes.create')
+    })
+
+    it('ya no valida con ifs ni conoce las constantes de límite', async () => {
+      const tree = await generate(withAttachments())
+      const service = tree.read('out/backend/infrastructure/attachments/invoice-attachments.service.ts', 'utf-8') ?? ''
+
+      expect(service).not.toContain('MAX_ATTACHMENT_SIZE_BYTES')
+      expect(service).not.toContain('ALLOWED_ATTACHMENT_MIME_TYPES')
+      expect(service).not.toMatch(/if \(file\.(sizeBytes|mimeType)/)
+    })
+
+    it('conserva lo que ya estaba bien: storageKey de backend y rollback del binario', async () => {
+      const tree = await generate(withAttachments())
+      const service = tree.read('out/backend/infrastructure/attachments/invoice-attachments.service.ts', 'utf-8') ?? ''
+
+      expect(service).toContain('const storageKey = uuidv7()')
+      expect(service).toContain('this.fileStorage.delete(storageKey)')
+    })
+  })
 })
 
 describe('adjuntos — persistencia y migración', () => {
   const invoice = () =>
-    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
+    ({
+      ...MODELS['supplier'],
+      name: 'invoice',
+      plural: 'invoices',
+      attachments: true,
+      detail: {}
+    }) as ResourceDefinition
 
   it('el DataSource del kernel registra la entidad de adjuntos', async () => {
     registerModels([invoice()])
@@ -137,7 +181,13 @@ describe('adjuntos — persistencia y migración', () => {
  */
 describe('resource generator — adjuntos por registro', () => {
   const withAttachments = (): ResourceDefinition =>
-    ({ ...MODELS['supplier'], name: 'invoice', plural: 'invoices', attachments: true, detail: {} }) as ResourceDefinition
+    ({
+      ...MODELS['supplier'],
+      name: 'invoice',
+      plural: 'invoices',
+      attachments: true,
+      detail: {}
+    }) as ResourceDefinition
 
   const generate = async (): Promise<Tree> => {
     registerModels([withAttachments()])
