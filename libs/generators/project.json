@@ -43,6 +43,14 @@
       "options": {
         "jestConfig": "libs/generators/jest.config.cts"
       }
+    },
+    "slots": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/tools/slots.json"],
+      "options": {
+        "command": "npm run slots",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

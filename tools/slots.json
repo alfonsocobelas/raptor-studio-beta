@@ -1,0 +1,74 @@
+{
+  "slots": [
+    {
+      "name": "database",
+      "label": "Base de datos",
+      "default": "postgres",
+      "providers": [
+        {
+          "value": "postgres",
+          "label": "PostgreSQL (TypeORM)"
+        },
+        {
+          "value": "mongo",
+          "label": "MongoDB (Mongoose)"
+        }
+      ]
+    },
+    {
+      "name": "ui",
+      "label": "Componentes",
+      "default": "spartan",
+      "providers": [
+        {
+          "value": "spartan",
+          "label": "Spartan NG (shadcn para Angular)"
+        },
+        {
+          "value": "material",
+          "label": "Angular Material"
+        }
+      ]
+    },
+    {
+      "name": "infra",
+      "label": "Infraestructura",
+      "default": "none",
+      "providers": [
+        {
+          "value": "none",
+          "label": "Ninguna (sin adapters de nube ni IaC)"
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "label": "Autenticación",
+      "default": "none",
+      "providers": [
+        {
+          "value": "none",
+          "label": "Ninguna (app abierta)"
+        },
+        {
+          "value": "single-tenant",
+          "label": "Single-tenant (sesión por cookie, invitaciones, roles)",
+          "description": "Login por sesión con cookie, invitaciones, reset de contraseña y roles",
+          "requires": {
+            "database": "postgres"
+          }
+        }
+      ]
+    }
+  ],
+  "plugins": [
+    {
+      "name": "email",
+      "description": "Adaptadores de email: Azure ACS, Amazon SES y Brevo (gratuito)"
+    },
+    {
+      "name": "observability",
+      "description": "Azure Monitor (App Insights): trazas, métricas y logs OTel en dev/prod"
+    }
+  ]
+}

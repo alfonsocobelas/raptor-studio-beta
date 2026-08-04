@@ -36,9 +36,9 @@
 
 ## Manifiesto slots.json
 
-- [ ] **TASK-09**: Tests + emisor del manifiesto (`SLOTS`+`PLUGINS` → JSON serializable) + target nx
+- [x] **TASK-09**: Tests + emisor del manifiesto (`SLOTS`+`PLUGINS` → JSON serializable) + target nx
       para regenerarlo + `tools/slots.json` commiteado
-- [ ] **TASK-10**: Test de paridad en la suite: regenerado ≠ commiteado ⇒ rojo con instrucción
+- [x] **TASK-10**: Test de paridad en la suite: regenerado ≠ commiteado ⇒ rojo con instrucción
 
 ## Estudio (studio-api + wizard)
 

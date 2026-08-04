@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "golden:diff": "bash tools/golden-diff.sh",
+    "slots": "tsx --tsconfig tsconfig.base.json tools/emit-slots.ts",
     "new": "tsx --tsconfig tsconfig.base.json tools/cli/new-app.ts"
   },
   "devDependencies": {
