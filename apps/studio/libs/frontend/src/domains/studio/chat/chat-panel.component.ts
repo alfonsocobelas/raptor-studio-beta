@@ -27,7 +27,9 @@ import { StudioChatService } from './studio-chat.service'
           @if (entry.role === 'user') {
             <div class="flex justify-end" [attr.data-testid]="'chat-user-' + $index">
               <div class="max-w-[85%]">
-                <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">Tú</p>
+                <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">
+                  Tú
+                </p>
                 <div class="bg-card rounded-2xl rounded-br-sm border px-3 py-2 text-sm">
                   {{ entry.text }}
                 </div>
@@ -36,9 +38,7 @@ import { StudioChatService } from './studio-chat.service'
           } @else {
             <div class="flex justify-start" [attr.data-testid]="'chat-assistant-' + $index">
               <div class="max-w-[90%]">
-                <p class="text-muted-foreground mb-0.5 text-[10px] font-medium uppercase tracking-wide">
-                  ✦ Asistente
-                </p>
+                <p class="text-muted-foreground mb-0.5 text-[10px] font-medium uppercase tracking-wide">✦ Asistente</p>
                 <div class="bg-muted rounded-2xl rounded-bl-sm px-3 py-2 text-sm">{{ entry.text }}</div>
               </div>
             </div>

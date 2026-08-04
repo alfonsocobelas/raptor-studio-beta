@@ -17,7 +17,9 @@ import { buildSampleRows } from './mock-data'
   template: `
     @if (view(); as v) {
       <div class="mb-4 flex items-center gap-2">
-        <div class="border-input text-muted-foreground flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-sm">
+        <div
+          class="border-input text-muted-foreground flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-sm"
+        >
           <ng-icon name="lucideSearch" size="14" /> Buscar {{ v.labelPlural.toLowerCase() }}…
         </div>
         <span class="chip-filter bg-primary text-primary-foreground">Todos</span>

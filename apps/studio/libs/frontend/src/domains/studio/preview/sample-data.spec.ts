@@ -30,7 +30,10 @@ const model = {
         order: 3,
         label: 'Estado',
         type: 'badge',
-        badgeMap: { in_stock: { label: 'En stock', variant: 'default' }, sold: { label: 'Vendida', variant: 'outline' } }
+        badgeMap: {
+          in_stock: { label: 'En stock', variant: 'default' },
+          sold: { label: 'Vendida', variant: 'outline' }
+        }
       }
     },
     receivedAt: {

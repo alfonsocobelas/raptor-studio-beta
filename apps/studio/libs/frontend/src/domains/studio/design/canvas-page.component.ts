@@ -63,7 +63,10 @@ import { mockTotal } from './mock-data'
                 <studio-canvas-cards [resource]="block.resource ?? ''" />
               }
               @case ('kpis') {
-                <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + kpiCols(block) + ', minmax(0, 1fr))'">
+                <div
+                  class="grid gap-4"
+                  [style.grid-template-columns]="'repeat(' + kpiCols(block) + ', minmax(0, 1fr))'"
+                >
                   @for (kpi of kpis(block); track kpi.testId) {
                     <app-kpi-card
                       [title]="kpi.title"

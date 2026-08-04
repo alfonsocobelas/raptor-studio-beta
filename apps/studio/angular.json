@@ -14,9 +14,7 @@
             "browser": "apps/frontend-app/src/main.ts",
             "index": "apps/frontend-app/src/index.html",
             "tsConfig": "apps/frontend-app/tsconfig.app.json",
-            "styles": [
-              "apps/frontend-app/src/styles.css"
-            ],
+            "styles": ["apps/frontend-app/src/styles.css"],
             "polyfills": [],
             "preserveSymlinks": true
           },

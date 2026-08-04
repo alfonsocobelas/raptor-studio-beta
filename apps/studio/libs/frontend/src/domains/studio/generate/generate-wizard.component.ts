@@ -172,7 +172,8 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             <pre
               class="bg-muted mt-4 max-h-48 overflow-auto rounded-md p-3 text-xs"
               [attr.data-testid]="generateOk() ? 'generate-ok' : 'generate-error'"
-              >{{ out }}</pre>
+              >{{ out }}</pre
+            >
           }
         </div>
       </div>

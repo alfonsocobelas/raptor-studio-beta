@@ -96,5 +96,11 @@ function camel(raw: string): string {
     .trim()
     .split(' ')
     .filter(Boolean)
-  return parts.length ? parts[0] + parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') : ''
+  return parts.length
+    ? parts[0] +
+        parts
+          .slice(1)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join('')
+    : ''
 }

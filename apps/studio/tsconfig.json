@@ -5,9 +5,5 @@
     "moduleResolution": "node",
     "noEmit": true
   },
-  "include": [
-    "libs/backend/**/*.ts",
-    "libs/shared/**/*.ts",
-    "apps/backend-api/**/*.ts"
-  ]
+  "include": ["libs/backend/**/*.ts", "libs/shared/**/*.ts", "apps/backend-api/**/*.ts"]
 }

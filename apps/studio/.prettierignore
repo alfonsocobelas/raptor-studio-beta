@@ -4,3 +4,6 @@
 /.nx/cache
 /.nx/workspace-data
 .angular
+# componentes Spartan materializados por @spartan-ng/cli: código vendorizado, su estilo
+# no es nuestro y reformatearlo pelea con cada `nx g @spartan-ng/cli:ui`
+/libs/ui

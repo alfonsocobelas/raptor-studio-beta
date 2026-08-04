@@ -9,8 +9,7 @@ import {
   type DesignBlock,
   type DesignPage,
   type DraftField,
-  type DraftResource
-,
+  type DraftResource,
   designPagesToAppPages
 } from '@app/shared/domain'
 
@@ -104,10 +103,10 @@ export class DesignStore {
       block.kind === 'attachments' && block.resource
         ? this._resources().map(r => (r.name === block.resource ? { ...r, attachments: true } : r))
         : block.kind === 'fields' && block.resource
-        ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
-        : block.kind === 'cards' && block.resource
-        ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
-        : this._resources()
+          ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
+          : block.kind === 'cards' && block.resource
+            ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
+            : this._resources()
     return this.mutate(resources, pages)
   }
 
@@ -132,9 +131,7 @@ export class DesignStore {
         : [...this._pages(), { title: `Ficha de ${label.toLowerCase()}`, blocks: [entry], drillDown: true }]
 
     const resources = this._resources().map(r =>
-      r.name === resource
-        ? { ...r, detail: true, ...(block.kind === 'attachments' ? { attachments: true } : {}) }
-        : r
+      r.name === resource ? { ...r, detail: true, ...(block.kind === 'attachments' ? { attachments: true } : {}) } : r
     )
     return this.mutate(resources, pages)
   }
@@ -167,10 +164,10 @@ export class DesignStore {
       removed?.kind === 'attachments' && removed.resource
         ? this._resources().map(r => (r.name === removed.resource ? { ...r, attachments: false } : r))
         : removed?.kind === 'fields' && removed.resource
-        ? this._resources().map(r => (r.name === removed.resource ? { ...r, detail: false } : r))
-        : removed?.kind === 'cards' && removed.resource
-        ? this._resources().map(r => (r.name === removed.resource ? { ...r, gallery: false } : r))
-        : this._resources()
+          ? this._resources().map(r => (r.name === removed.resource ? { ...r, detail: false } : r))
+          : removed?.kind === 'cards' && removed.resource
+            ? this._resources().map(r => (r.name === removed.resource ? { ...r, gallery: false } : r))
+            : this._resources()
     return this.mutate(resources, pages)
   }
 
@@ -246,7 +243,6 @@ export class DesignStore {
   toAppSchema(): AppDefinition {
     return { schemaVersion: 1, name: this._appName(), pages: designPagesToAppPages(this._pages()) }
   }
-
 
   /**
    * Vistas con bloques que el generador aún no emite. Un texto NO cuenta si la

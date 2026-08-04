@@ -207,7 +207,9 @@ export function draftToResource(
     constraints,
     fields,
     list: {
-      ...(firstString ? { deleteLabelField: firstString.name, defaultSort: { field: firstString.name, dir: 'asc' as const } } : {}),
+      ...(firstString
+        ? { deleteLabelField: firstString.name, defaultSort: { field: firstString.name, dir: 'asc' as const } }
+        : {}),
       // la acción «ver» solo se ofrece si hay ficha a la que ir (spec 16)
       features: {
         create: true,
@@ -275,8 +277,5 @@ function pascal(s: string): string {
 }
 
 function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }

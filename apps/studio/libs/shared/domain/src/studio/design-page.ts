@@ -42,7 +42,13 @@ export interface BlockPreset {
 
 /** Presets de vista: puntos de partida, todos editables después. */
 export const VIEW_PRESETS: BlockPreset[] = [
-  { id: 'blank', label: 'En blanco', icon: 'lucideSquareDashed', description: 'Vista vacía; añade los bloques que quieras', blocks: () => [] },
+  {
+    id: 'blank',
+    label: 'En blanco',
+    icon: 'lucideSquareDashed',
+    description: 'Vista vacía; añade los bloques que quieras',
+    blocks: () => []
+  },
   {
     id: 'list',
     label: 'Listado',

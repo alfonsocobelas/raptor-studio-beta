@@ -65,7 +65,11 @@ export class FakeChatAdapter extends ChatPort {
       const dashboard = design.pages.find(p => p.blocks.some(b => b.kind === 'kpis'))
       const kpiBlock = dashboard?.blocks.find(b => b.kind === 'kpis')
       if (kpiBlock) kpiBlock.resources = [...new Set([...(kpiBlock.resources ?? []), target.name])]
-      else design.pages.unshift({ title: 'Dashboard', blocks: [{ kind: 'kpis', resources: [target.name], width: 'full' }] })
+      else
+        design.pages.unshift({
+          title: 'Dashboard',
+          blocks: [{ kind: 'kpis', resources: [target.name], width: 'full' }]
+        })
       return { reply: `Añadido el KPI de ${target.labelPlural}.`, design }
     }
 
@@ -106,10 +110,7 @@ function inferType(raw: string): DraftFieldType {
 }
 
 function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
 function capitalize(s: string): string {

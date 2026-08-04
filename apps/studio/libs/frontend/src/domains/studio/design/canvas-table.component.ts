@@ -46,7 +46,9 @@ const PAGE_SIZE = 5
     @if (draft(); as resource) {
       <!-- chrome del listado (mock estático, mismo aspecto que el emitido) -->
       <div class="mb-3 flex items-center justify-between gap-3">
-        <div class="border-input text-muted-foreground flex w-72 items-center gap-2 rounded-md border px-3 py-2 text-sm">
+        <div
+          class="border-input text-muted-foreground flex w-72 items-center gap-2 rounded-md border px-3 py-2 text-sm"
+        >
           <ng-icon name="lucideSearch" size="14" />
           Buscar en todas las columnas...
         </div>
@@ -219,9 +221,7 @@ export class CanvasTableComponent {
   }
 
   /** Candidatas a ser referenciadas: cualquier entidad menos la propia. */
-  protected readonly otherResources = computed(() =>
-    this.store.resources().filter(r => r.name !== this.resource())
-  )
+  protected readonly otherResources = computed(() => this.store.resources().filter(r => r.name !== this.resource()))
   protected readonly pageSize = PAGE_SIZE
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
@@ -290,5 +290,11 @@ function camel(raw: string): string {
     .trim()
     .split(' ')
     .filter(Boolean)
-  return parts.length ? parts[0] + parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') : ''
+  return parts.length
+    ? parts[0] +
+        parts
+          .slice(1)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join('')
+    : ''
 }

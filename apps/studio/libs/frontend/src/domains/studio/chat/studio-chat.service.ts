@@ -54,7 +54,8 @@ export class StudioChatService {
     } catch (e) {
       const detail =
         typeof e === 'object' && e !== null && 'error' in e
-          ? ((e as { error?: { message?: string } }).error?.message ?? 'backend local no disponible (npm run studio:api)')
+          ? ((e as { error?: { message?: string } }).error?.message ??
+            'backend local no disponible (npm run studio:api)')
           : String(e)
       this.error.set(detail)
     } finally {

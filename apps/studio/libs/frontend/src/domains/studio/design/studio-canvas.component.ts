@@ -103,14 +103,23 @@ const BLOCK_TOOLS: BlockTool[] = [
               [(ngModel)]="pageTitle"
               data-testid="new-page-title"
             />
-            <button type="submit" class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-sm" data-testid="new-page-ok">
+            <button
+              type="submit"
+              class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-sm"
+              data-testid="new-page-ok"
+            >
               Crear {{ presetLabel() }}
             </button>
             <button type="button" class="text-muted-foreground text-sm" (click)="creating.set(null)">✕</button>
           </form>
         } @else {
           <div class="relative">
-            <button type="button" class="toolbar-item font-medium" data-testid="tool-new-view" (click)="viewMenu.set(!viewMenu())">
+            <button
+              type="button"
+              class="toolbar-item font-medium"
+              data-testid="tool-new-view"
+              (click)="viewMenu.set(!viewMenu())"
+            >
               + Nueva vista
             </button>
             @if (viewMenu()) {
@@ -228,7 +237,10 @@ const BLOCK_TOOLS: BlockTool[] = [
       <div class="flex min-h-0 flex-1">
         <main class="canvas-surface min-w-0 flex-1 overflow-auto p-10">
           @if (showSchema()) {
-            <pre class="bg-muted mb-4 max-h-64 overflow-auto rounded-md border p-4 text-xs" data-testid="schema-json"><code>{{ store.exportJson() }}</code></pre>
+            <pre
+              class="bg-muted mb-4 max-h-64 overflow-auto rounded-md border p-4 text-xs"
+              data-testid="schema-json"
+            ><code>{{ store.exportJson() }}</code></pre>
           }
           @if (!pages().length) {
             <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
@@ -274,7 +286,9 @@ const BLOCK_TOOLS: BlockTool[] = [
             >
               <aside class="bg-card flex w-56 shrink-0 flex-col border-r p-4" data-testid="mock-sidebar">
                 <div class="mb-6 flex items-center gap-2 px-1">
-                  <div class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase">
+                  <div
+                    class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase"
+                  >
                     {{ store.appName().slice(0, 2) }}
                   </div>
                   <div>
@@ -285,26 +299,26 @@ const BLOCK_TOOLS: BlockTool[] = [
                 <nav class="flex flex-col gap-1">
                   @for (page of pages(); track $index) {
                     @if (!page.drillDown) {
-                    <div class="group relative">
-                      <button
-                        type="button"
-                        class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
-                        [class.bg-accent]="$index === clampedTab()"
-                        [class.font-semibold]="$index === clampedTab()"
-                        [attr.data-testid]="'nav-page-' + $index"
-                        (click)="activeTab.set($index)"
-                      >
-                        {{ page.title }}
-                      </button>
-                      <button
-                        type="button"
-                        class="bg-destructive absolute -right-1 top-1/2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white group-hover:flex"
-                        [attr.data-testid]="'nav-close-' + $index"
-                        (click)="store.removePage($index)"
-                      >
-                        <ng-icon name="lucideX" size="11" />
-                      </button>
-                    </div>
+                      <div class="group relative">
+                        <button
+                          type="button"
+                          class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
+                          [class.bg-accent]="$index === clampedTab()"
+                          [class.font-semibold]="$index === clampedTab()"
+                          [attr.data-testid]="'nav-page-' + $index"
+                          (click)="activeTab.set($index)"
+                        >
+                          {{ page.title }}
+                        </button>
+                        <button
+                          type="button"
+                          class="bg-destructive absolute -right-1 top-1/2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white group-hover:flex"
+                          [attr.data-testid]="'nav-close-' + $index"
+                          (click)="store.removePage($index)"
+                        >
+                          <ng-icon name="lucideX" size="11" />
+                        </button>
+                      </div>
                     }
                   }
                 </nav>

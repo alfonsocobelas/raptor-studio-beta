@@ -9,9 +9,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
   })
 
   it('una vista con KPIs se emite como dashboard con un widget por entidad', () => {
-    const pages: DesignPage[] = [
-      { title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente', 'cita'] }] }
-    ]
+    const pages: DesignPage[] = [{ title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente', 'cita'] }] }]
 
     expect(designPagesToAppPages(pages)).toEqual([
       {
@@ -47,9 +45,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
   it('una vista de galería se emite como página de tarjetas', () => {
     const pages: DesignPage[] = [{ title: 'Tratamientos', blocks: [{ kind: 'cards', resource: 'tratamiento' }] }]
 
-    expect(designPagesToAppPages(pages)).toEqual([
-      { kind: 'cards', resource: 'tratamiento', label: 'Tratamientos' }
-    ])
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'cards', resource: 'tratamiento', label: 'Tratamientos' }])
   })
 
   it('descarta los bloques aún no generables (texto)', () => {

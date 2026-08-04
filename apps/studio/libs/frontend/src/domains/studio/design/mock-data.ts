@@ -7,7 +7,18 @@ import type { DraftField, DraftResource } from '@app/shared/domain'
  * fechas legibles). Determinista siempre.
  */
 
-const CIUDADES = ['Valencia', 'Murcia', 'Sevilla', 'Almería', 'Huelva', 'Zaragoza', 'Bilbao', 'Madrid', 'Girona', 'Lugo']
+const CIUDADES = [
+  'Valencia',
+  'Murcia',
+  'Sevilla',
+  'Almería',
+  'Huelva',
+  'Zaragoza',
+  'Bilbao',
+  'Madrid',
+  'Girona',
+  'Lugo'
+]
 const PERSONAS = [
   'María López',
   'Juan Pérez',
@@ -81,7 +92,13 @@ function sampleValue(field: DraftField, i: number, draft: DraftResource, others:
       return [12, 7, 23, 5, 18, 31, 9, 14, 27, 3][i % 10]
     }
     case 'text':
-      return ['Entrega preferente por la mañana.', 'Cliente habitual, aplicar descuento.', 'Revisar antes de enviar.', 'Sin observaciones.', 'Confirmado por teléfono.'][i % 5]
+      return [
+        'Entrega preferente por la mañana.',
+        'Cliente habitual, aplicar descuento.',
+        'Revisar antes de enviar.',
+        'Sin observaciones.',
+        'Confirmado por teléfono.'
+      ][i % 5]
     default:
       return stringSample(key, i, draft)
   }
@@ -89,14 +106,21 @@ function sampleValue(field: DraftField, i: number, draft: DraftResource, others:
 
 function stringSample(key: string, i: number, draft: DraftResource): string {
   if (/email|correo/.test(key)) {
-    return ['a.garcia', 'jlopez', 'm.ruiz', 'csanz', 'e.navarro', 'p.ortega', 'l.romero', 'd.mora', 'c.vidal', 's.gil'][i % 10] + '@gmail.com'
+    return (
+      ['a.garcia', 'jlopez', 'm.ruiz', 'csanz', 'e.navarro', 'p.ortega', 'l.romero', 'd.mora', 'c.vidal', 's.gil'][
+        i % 10
+      ] + '@gmail.com'
+    )
   }
   if (/telefono|movil/.test(key)) {
-    return `6${String(12 + i).padStart(2, '0').slice(-2)} ${String(345 + i * 11).slice(-3)} ${String(678 + i * 7).slice(-3)}`
+    return `6${String(12 + i)
+      .padStart(2, '0')
+      .slice(-2)} ${String(345 + i * 11).slice(-3)} ${String(678 + i * 7).slice(-3)}`
   }
   if (/origen|ciudad|localidad|provincia|lugar/.test(key)) return CIUDADES[i % CIUDADES.length]
   if (/pais/.test(key)) return ['España', 'Portugal', 'Francia', 'Italia', 'Marruecos'][i % 5]
-  if (/referencia|codigo|numero|expediente/.test(key)) return `${draft.name.slice(0, 3).toUpperCase()}-${String(1041 + i * 13)}`
+  if (/referencia|codigo|numero|expediente/.test(key))
+    return `${draft.name.slice(0, 3).toUpperCase()}-${String(1041 + i * 13)}`
   if (/empresa|proveedor|razon/.test(key)) return EMPRESAS[i % EMPRESAS.length]
   if (/nombre|titular|contacto|responsable|cliente|dueno/.test(key)) return PERSONAS[i % PERSONAS.length]
   if (/direccion/.test(key)) return `C/ ${CIUDADES[i % 10]} ${3 + i}, ${1 + (i % 5)}º`
@@ -105,10 +129,7 @@ function stringSample(key: string, i: number, draft: DraftResource): string {
 }
 
 function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
 function capitalize(s: string): string {

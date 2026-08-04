@@ -45,12 +45,7 @@ export function sampleRows(model: ResourceDefinition, count: number): Record<str
   )
 }
 
-function sampleValue(
-  field: FieldDefinition,
-  col: PreviewColumn,
-  singular: string,
-  index: number
-): unknown {
+function sampleValue(field: FieldDefinition, col: PreviewColumn, singular: string, index: number): unknown {
   if (col.badgeMap) {
     const keys = Object.keys(col.badgeMap)
     return keys[index % keys.length]

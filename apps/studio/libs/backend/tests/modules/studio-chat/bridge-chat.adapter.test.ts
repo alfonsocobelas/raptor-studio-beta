@@ -18,10 +18,7 @@ describe('BridgeChatAdapter — arnés request/response por ficheros', () => {
     expect(requestFile).toBeDefined()
     const request = JSON.parse(readFileSync(path.join(dir, requestFile as string), 'utf-8'))
     expect(request.messages[0].text).toBe('hola')
-    writeFileSync(
-      path.join(dir, `response-${request.id}.json`),
-      JSON.stringify({ reply: 'diseñado', design })
-    )
+    writeFileSync(path.join(dir, `response-${request.id}.json`), JSON.stringify({ reply: 'diseñado', design }))
 
     const proposal = await pending
     expect(proposal.reply).toBe('diseñado')
