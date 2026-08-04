@@ -7,14 +7,24 @@
 
 ## Base honesta (el bug primero)
 
-- [ ] **TASK-01**: El logger base deja de llamarse Azure y de traer el transporte OTel:
-      `logger/azure/azure-logger.service.ts` → `logger/app-logger.service.ts` (winston a stdout,
-      JSON en dev/prod y legible en local/test). El transporte OTel sale a un fichero aparte que
-      hoy no se emite. Golden de app con diff **esperado** en el logger → se congela en TASK-07;
-      hasta entonces el gate de app queda rojo a propósito y se anota en cada commit.
-- [ ] **TASK-02**: Fuera del kernel base los loaders `config/loaders/azure/` y
-      `storage/azure-blob-file-storage.ts`. `config-sources.ts` se queda con JSON por entorno +
-      variables de entorno. Test: el árbol emitido sin infra no importa `@azure/*`.
+- [x] **TASK-01+02** (juntas: el candado es lo que las hace una unidad) — `de04f3f` + re-baseline
+      `9b98898`. El logger pasa a `logger/app-logger.service.ts` (winston, sin OTel) con una costura
+      `EXTRA_LOG_TRANSPORTS` para que un proveedor añada transportes sin tocar el fichero. Salen del
+      kernel base los loaders de Azure y el adapter de Blob (a `files-infra-azure`, dormidos hasta
+      TASK-04), y `AzureKeyVaultError` se generaliza a `SecretResolutionError` (todo proveedor de
+      secretos lo necesitará). Nuevo `config-loader.ts` base.
+      · **alcance recortado y declarado**: TASK-02 decía «JSON por entorno + variables de entorno».
+      El overlay por variables de entorno exige inventar una sintaxis de marcadores, así que NO se
+      hizo: el loader base valida el JSON y **falla con mensaje claro** si encuentra `vault.*` sin
+      proveedor de secretos, en vez de arrancar con la cadena literal. El overlay queda para C2,
+      que lo necesita de verdad (lowcost con Bitwarden/env).
+      · **cambio de plan sobre el re-baseline**: el cambio es de la BASE, así que afecta a las dos
+      fixturas de app (la spec sólo preveía `app`). Y en vez de arrastrar el gate rojo hasta
+      TASK-07, se re-baselinea aquí el cambio de base (19 ficheros, diff pequeño y revisable) y en
+      TASK-07 se re-baselineará la vuelta de Azure como proveedor. Dos re-baselines pequeños en vez
+      de uno grande y mezclado; el gate nunca queda rojo.
+      · candado nuevo (`infra-free.spec.ts`): una app sin infra no nombra ninguna clase, ruta ni
+      dependencia de Azure
 
 ## Ranura y proveedor
 
