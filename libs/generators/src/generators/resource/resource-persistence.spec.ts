@@ -46,6 +46,13 @@ describe('resource generator — persistencia por motor', () => {
 
     expect(files).toContain('out/backend/infrastructure/persistence/mongoose/mongoose-customer.repository.ts')
   })
+
+  it('mongo emite su test de integración, no el de TypeORM (TASK-08)', async () => {
+    const files = await emit('mongo')
+
+    expect(files).toContain('out/backend-tests-integration/mongoose-customer.repository.test.ts')
+    expect(files).not.toContain('out/backend-tests-integration/typeorm-customer.repository.test.ts')
+  })
 })
 
 /**

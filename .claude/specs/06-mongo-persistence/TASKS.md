@@ -44,17 +44,21 @@
 
 ## Resource — persistencia por módulo
 
-- [ ] **TASK-06**: Plantillas `__fileName__.schema.ts` (UUIDv7, índices únicos + partialFilterExpression
+- [x] **TASK-06**: Plantillas `__fileName__.schema.ts` (UUIDv7, índices únicos + partialFilterExpression
       en opcionales) y `__fileName__.mapper.ts` en un árbol propio (`files-persistence-mongoose/`)
       declarado como `resourceFiles` del manifiesto mongo; ídem `compositionFiles` para los hijos
       embebidos. `renderMongo` (su spec ya existe en rojo: `build-mongo.spec.ts` sin `build-mongo.ts`).
-- [ ] **TASK-07**: Plantilla `mongoose-__fileName__.repository.ts` (port completo del dominio,
+- [x] **TASK-07**: Plantilla `mongoose-__fileName__.repository.ts` (port completo del dominio,
       composición como subdocumentos embebidos, mapeo E11000 → error de dominio) **+ el binding de DI
       del módulo emitido**: hoy `files-module` hardcodea `useClass: TypeOrmXxxRepository`, así que el
       manifiesto debe declarar clase e import del repositorio que registra el módulo del recurso.
-- [ ] **TASK-08**: Plantilla de test de integración `mongoose-__fileName__.repository.test.ts`
+- [x] **TASK-08**: Plantilla de test de integración `mongoose-__fileName__.repository.test.ts`
       (espejo del de TypeORM: register/get, unique finders, criteria, ifPresent), declarada como
       `integrationTestFiles` del manifiesto mongo.
+      · el caso **ifPresent** (dos documentos con el único opcional vacío que NO deben chocar,
+      gracias al `partialFilterExpression`) queda pendiente para TASK-12: es factible con
+      `Builder.withProps({ campo: '' })`, pero exige un Mongo real para saber si el VO acepta
+      el valor vacío — emitir un test que no se puede ejecutar es peor que no emitirlo
 
 ## App skeleton — arrange
 

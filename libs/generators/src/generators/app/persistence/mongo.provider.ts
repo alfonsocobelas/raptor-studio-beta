@@ -16,6 +16,7 @@ export const mongoPersistence = definePersistence({
   engine: 'mongo',
   kernelFiles: 'files-mongo',
   resourceFiles: 'files-persistence-mongoose',
+  integrationTestFiles: 'files-tests-integration-mongoose',
 
   resourceSubstitutions(model: ResourceDefinition): Record<string, unknown> {
     return { mongo: renderMongo(model) }

@@ -1,0 +1,122 @@
+import { v7 as uuidv7 } from 'uuid'
+import { moduleFixture } from '../jest.setup.integration'
+import { Mongoose<%- className %>Repository } from '../../../src/contexts/<%- context %>/modules/<%- plural %>/infrastructure/persistence/mongoose/mongoose-<%- fileName %>.repository'
+import { <%- className %>WithIdSpecification } from '../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/specifications/<%- fileName %>-with-id.specification'
+import { <%- className %>Id } from '../../../src/contexts/shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+<%_ if (f.shared) { _%>
+import { <%- f.voName %> } from '../../../src/contexts/<%- context %>/shared/domain/value-objects/<%- f.voFileName %>.vo'
+<%_ } else { _%>
+import { <%- f.voName %> } from '../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/value-objects/<%- f.voFileName %>.vo'
+<%_ } _%>
+<%_ }) _%>
+import { <%- className %>Mother } from '../../modules/<%- plural %>/domain/mothers/<%- fileName %>.mother'
+
+let repository: Mongoose<%- className %>Repository
+
+beforeAll(() => {
+  repository = moduleFixture.get(Mongoose<%- className %>Repository)
+})
+
+// Espejo del test de integración TypeORM: mismo puerto, mismas garantías. Corre contra un
+// Mongo real (el del compose de test), no contra un doble.
+describe('Mongoose<%- className %>Repository (integration)', () => {
+  describe('register / get', () => {
+    it('persists a new <%- fileName %> and reads it back', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+
+      await repository.register(<%- propertyName %>)
+      const found = await repository.get(<%- propertyName %>.id)
+
+      expect(found?.toPrimitives()).toEqual(<%- propertyName %>.toPrimitives())
+    })
+
+    it('returns null for a non-existent id', async () => {
+      const found = await repository.get(<%- className %>Id.create(uuidv7()))
+      expect(found).toBeNull()
+    })
+<%_ if (mongo.child) { _%>
+
+    it('keeps the embedded <%- mongo.child.childrenProp %> inside the aggregate document', async () => {
+      // la composición viaja EMBEBIDA: un solo documento, sin segunda colección
+      const <%- propertyName %> = <%- className %>Mother.random()
+
+      await repository.register(<%- propertyName %>)
+      const found = await repository.get(<%- propertyName %>.id)
+
+      expect(found?.<%- mongo.child.childrenProp %>).toHaveLength(<%- propertyName %>.<%- mongo.child.childrenProp %>.length)
+    })
+<%_ } _%>
+  })
+<%_ domainTests.uniqueFinders.forEach(f => { _%>
+
+  describe('<%- f.method %>', () => {
+    it('finds a persisted <%- fileName %> by its <%- f.param %>', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const found = await repository.<%- f.method %>(<%- f.voName %>.create(<%- propertyName %>.toPrimitives().<%- f.param %>))
+
+      expect(found?.toPrimitives()).toEqual(<%- propertyName %>.toPrimitives())
+    })
+
+    it('returns null when no <%- fileName %> has that <%- f.param %>', async () => {
+      // los valores de la mother son aleatorios: este nunca se registró
+      const unregistered = <%- className %>Mother.random()
+
+      const found = await repository.<%- f.method %>(<%- f.voName %>.create(unregistered.toPrimitives().<%- f.param %>))
+
+      expect(found).toBeNull()
+    })
+  })
+<%_ }) _%>
+
+  describe('matching / exists / count', () => {
+    it('matching returns the <%- fileName %> selected by criteria', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const results = await repository.matching(<%- className %>WithIdSpecification.withId(<%- propertyName %>.id))
+
+      expect(results).toHaveLength(1)
+      expect(results[0].toPrimitives()).toEqual(<%- propertyName %>.toPrimitives())
+    })
+
+    it('exists / count reflect the persisted documents', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const spec = <%- className %>WithIdSpecification.withId(<%- propertyName %>.id)
+      expect(await repository.exists(spec)).toBe(true)
+      expect(await repository.count(spec)).toBe(1)
+
+      const absent = <%- className %>WithIdSpecification.withId(<%- className %>Id.create(uuidv7()))
+      expect(await repository.exists(absent)).toBe(false)
+      expect(await repository.count(absent)).toBe(0)
+    })
+  })
+
+  describe('save', () => {
+    it('replaces the whole document instead of inserting a second one', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      await repository.save(<%- propertyName %>)
+
+      expect(await repository.count(<%- className %>WithIdSpecification.withId(<%- propertyName %>.id))).toBe(1)
+    })
+  })
+<%_ if (app.removes) { _%>
+
+  describe('remove', () => {
+    it('removes a persisted <%- fileName %>', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      await repository.remove(<%- propertyName %>.id)
+
+      expect(await repository.get(<%- propertyName %>.id)).toBeNull()
+    })
+  })
+<%_ } _%>
+})

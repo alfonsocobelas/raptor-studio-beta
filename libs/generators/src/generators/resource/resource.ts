@@ -220,7 +220,7 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
         tree,
         path.join(__dirname, persistence.integrationTestFiles),
         path.join(outputDir, 'backend-tests-integration'),
-        substitutions
+        persistenceSubstitutions
       )
     }
     // una suite sin tests es un fallo para jest: si el modelo no tiene VOs de un
