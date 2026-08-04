@@ -16,7 +16,7 @@ describe('renderMongo', () => {
       expect(name?.tsType).toBe('string')
     })
 
-    it('gives nullable fields a null default and optional-unique strings their empty-string default', () => {
+    it('gives nullable fields a null default and optional strings their column default', () => {
       // WHEN
       const mongo = renderMongo(customer)
 
@@ -24,9 +24,16 @@ describe('renderMongo', () => {
       const taxId = mongo.docFields.find(f => f.name === 'taxId')
       expect(taxId?.defSrc).toBe("{ type: String, default: '' }")
 
+      // notes NO es nullable en el canon (`@Column('varchar', {…, default: '' }) notes!: string`),
+      // así que el motor no puede hacerlo nullable: el contrato del dominio es el mismo en ambos
       const notes = mongo.docFields.find(f => f.name === 'notes')
-      expect(notes?.defSrc).toBe('{ type: String, default: null }')
-      expect(notes?.tsType).toBe('Nullable<string>')
+      expect(notes?.defSrc).toBe("{ type: String, default: '' }")
+      expect(notes?.tsType).toBe('string')
+
+      // los nullable de verdad del modelo son los timestamps de sync
+      const archivedAt = mongo.docFields.find(f => f.name === 'archivedAt')
+      expect(archivedAt?.defSrc).toBe('{ type: Date, default: null }')
+      expect(archivedAt?.tsType).toBe('Nullable<Date>')
     })
 
     it('maps timestamptz to Date and numeric flags to Number without transformers', () => {
@@ -46,7 +53,7 @@ describe('renderMongo', () => {
       const mongo = renderMongo(customer)
 
       // THEN
-      expect(mongo.indexLines).toContain("CustomerSchema.index({ sapId: 1 }, { unique: true })")
+      expect(mongo.indexLines).toContain('CustomerSchema.index({ sapId: 1 }, { unique: true })')
       expect(mongo.indexLines).toContain(
         "CustomerSchema.index({ taxId: 1 }, { unique: true, partialFilterExpression: { taxId: { $gt: '' } } })"
       )
@@ -75,8 +82,22 @@ describe('renderMongo', () => {
       // WHEN
       const mongo = renderMongo(customer)
 
-      // THEN — taxId: primitives opcionales caen al default de columna ('')
-      expect(mongo.toPersistenceProps).toContain("taxId: primitives.taxId ?? ''")
+      // THEN — los primitives OPCIONALES (optionalPrimitive) caen al default de su columna;
+      // city y country son los del canon, no taxId (que es obligatorio en el mapper emitido)
+      expect(mongo.toPersistenceProps).toContain("city: primitives.city ?? ''")
+      expect(mongo.toPersistenceProps).toContain("country: primitives.country ?? ''")
+      expect(mongo.toPersistenceProps).toContain('taxId: primitives.taxId')
+    })
+
+    it('mirrors the nullable-date handling of the typeorm mapper in both directions', () => {
+      // WHEN
+      const mongo = renderMongo(customer)
+
+      // THEN — Nullable<Date>: se serializa a ISO al salir y se reconstruye Date al entrar
+      expect(mongo.toDomainProps).toContain('archivedAt: doc.archivedAt?.toISOString() ?? null')
+      expect(mongo.toPersistenceProps).toContain(
+        'archivedAt: primitives.archivedAt ? new Date(primitives.archivedAt) : null'
+      )
     })
   })
 
@@ -87,6 +108,10 @@ describe('renderMongo', () => {
 
       // THEN
       expect(mongo.child?.schemaConst).toBe('ContactSchema')
+      // la propiedad del padre que los contiene: el array embebido del documento
+      expect(mongo.child?.childrenProp).toBe('contacts')
+      // el hijo NO lleva la clave del padre: el documento del padre ya lo contiene
+      expect(mongo.child?.docFields.find(f => f.name === 'customerId')).toBeUndefined()
       expect(mongo.child?.docFields.find(f => f.name === 'id')?.defSrc).toBe('{ type: String, required: true }')
       // el hijo embebido conserva el shape completo de sus primitives (id incluido, sin _id propio)
       expect(mongo.child?.toPersistenceProps).toContain('id: primitives.id')

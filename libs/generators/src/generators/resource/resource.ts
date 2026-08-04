@@ -37,9 +37,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
-  // persistencia del recurso: la manda el manifiesto del motor, no un if aquí (spec 23)
+  // persistencia del recurso: la manda el manifiesto del motor, no un if aquí (spec 23).
+  // Los bindings que necesitan sus plantillas los aporta el propio manifiesto.
+  const persistenceSubstitutions = { ...substitutions, ...persistence.resourceSubstitutions?.(model) }
   if (persistence.resourceFiles) {
-    generateFiles(tree, path.join(__dirname, persistence.resourceFiles), outputDir, substitutions)
+    generateFiles(tree, path.join(__dirname, persistence.resourceFiles), outputDir, persistenceSubstitutions)
   } else {
     console.warn(
       `⚠ El motor '${persistence.engine}' todavía no emite persistencia por recurso: ` +

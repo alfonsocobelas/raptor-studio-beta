@@ -1,0 +1,57 @@
+<%_ const child = mongo.child _%>
+<%_ if (child) { _%>
+import { <%- child.className %> } from '../../../domain/<%- child.fileName %>'
+<%_ } _%>
+import { <%- className %> } from '../../../domain/<%- fileName %>'
+<%_ if (child) { _%>
+import { <%- child.className %>Doc, <%- className %>Doc } from './<%- fileName %>.schema'
+<%_ } else { _%>
+import { <%- className %>Doc } from './<%- fileName %>.schema'
+<%_ } _%>
+
+export class <%- className %>Mapper {
+  static toDomain(doc: <%- className %>Doc): <%- className %> {
+    return <%- className %>.fromPrimitives(
+      {
+<%_ mongo.toDomainProps.forEach(line => { _%>
+        <%- line %>,
+<%_ }) _%>
+      }<% if (child) { %>,
+      (doc.<%- child.childrenProp %> ?? []).map(<%- child.childProp %> => ({
+<%_ child.toDomainProps.forEach((line, i) => { _%>
+        <%- line.replace('doc.', child.childProp + '.') %><%- i < child.toDomainProps.length - 1 ? ',' : '' %>
+<%_ }) _%>
+      }))<% } %>
+    )
+  }
+
+  // El documento se reemplaza entero en cada save: los hijos embebidos viajan dentro,
+  // así que no hay dos escrituras que coordinar (esa es la ventaja del agregado embebido)
+  static toPersistence(domain: <%- className %>): <%- className %>Doc {
+    const primitives = domain.toPrimitives()
+
+    return {
+<%_ mongo.toPersistenceProps.forEach(line => { _%>
+      <%- line %>,
+<%_ }) _%>
+<%_ if (child) { _%>
+      <%- child.childrenProp %>: domain.<%- child.childrenProp %>.map(<%- className %>Mapper.<%- child.childProp %>ToPersistence)
+<%_ } _%>
+    }
+  }
+
+  // @ai:begin mapper-extra — transformaciones a medida (denormalizaciones, derivados)
+  // @ai:end
+<%_ if (child) { _%>
+
+  static <%- child.childProp %>ToPersistence(<%- child.childProp %>: <%- child.className %>): <%- child.className %>Doc {
+    const primitives = <%- child.childProp %>.toPrimitives()
+
+    return {
+<%_ child.toPersistenceProps.forEach((line, i) => { _%>
+      <%- line %><%- i < child.toPersistenceProps.length - 1 ? ',' : '' %>
+<%_ }) _%>
+    }
+  }
+<%_ } _%>
+}

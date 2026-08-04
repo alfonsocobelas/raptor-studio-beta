@@ -1,0 +1,74 @@
+<%_ const child = mongo.child _%>
+import { Schema } from 'mongoose'
+<%_ if (mongo.needsNullable) { _%>
+import { Nullable } from '../../../../../../shared/domain/types'
+<%_ } _%>
+<%_ if (child) { _%>
+
+export interface <%- child.className %>Doc {
+<%_ child.docFields.forEach(f => { _%>
+  <%- f.name %>: <%- f.tsType %>
+<%_ }) _%>
+}
+<%_ } _%>
+
+export interface <%- className %>Doc {
+  // _id es el id del agregado: UUIDv7 string, no ObjectId
+  _id: string
+<%_ mongo.docFields.forEach(f => { _%>
+  <%- f.name %>: <%- f.tsType %>
+<%_ }) _%>
+<%_ if (child) { _%>
+  <%- child.childrenProp %>: <%- child.className %>Doc[]
+<%_ } _%>
+<%_ if (audit) { _%>
+  createdAt?: Date
+  updatedAt?: Date
+<%_ } _%>
+<%_ if (softDelete) { _%>
+  deletedAt?: Nullable<Date>
+<%_ } _%>
+}
+<%_ if (child) { _%>
+
+// Subdocumento embebido: sin _id propio — su identidad es el `id` del agregado hijo
+const <%- child.schemaConst %> = new Schema<<%- child.className %>Doc>(
+  {
+<%_ child.docFields.forEach((f, i) => { _%>
+    <%- f.name %>: <%- f.defSrc %><%- i < child.docFields.length - 1 ? ',' : '' %>
+<%_ }) _%>
+  },
+  { _id: false }
+)
+<%_ } _%>
+
+export const <%- mongo.schemaConst %> = new Schema<<%- className %>Doc>(
+  {
+    _id: { type: String, required: true },
+<%_ mongo.docFields.forEach(f => { _%>
+    <%- f.name %>: <%- f.defSrc %>,
+<%_ }) _%>
+<%_ if (child) { _%>
+    <%- child.childrenProp %>: { type: [<%- child.schemaConst %>], default: [] },
+<%_ } _%>
+<%_ if (softDelete) { _%>
+    deletedAt: { type: Date, default: null }
+<%_ } _%>
+  },
+  {
+    collection: '<%- mongo.collection %>',
+<%_ if (audit) { _%>
+    // equivalente a las columnas de auditoría de TypeORM
+    timestamps: true,
+<%_ } _%>
+    versionKey: false
+  }
+)
+<%_ if (mongo.indexLines.length) { _%>
+
+// Unicidad: el índice parcial es el equivalente al partial unique index de Postgres
+// (los documentos que traen el campo vacío no chocan entre sí)
+<%_ mongo.indexLines.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+<%_ } _%>

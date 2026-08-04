@@ -34,13 +34,10 @@ describe('resource generator — persistencia por motor', () => {
     expect(files.filter(f => f.toLowerCase().includes('typeorm'))).toEqual([])
   })
 
-  it('mongo avisa de que su persistencia por recurso está pendiente en vez de callar', async () => {
-    // el hueco se ve: mejor un aviso explícito que una app a la que le falta el repositorio en silencio
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+  it('mongo emite el schema del documento y su mapper (TASK-06)', async () => {
+    const files = await emit('mongo')
 
-    await emit('mongo')
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('mongo'))
-    warn.mockRestore()
+    expect(files).toContain('out/backend/infrastructure/persistence/mongoose/customer.schema.ts')
+    expect(files).toContain('out/backend/infrastructure/persistence/mongoose/customer.mapper.ts')
   })
 })

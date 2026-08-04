@@ -27,6 +27,12 @@ export interface PersistenceProvider {
   alignEnvironment?(tree: Tree, configPath: string, environment: 'local' | 'test'): void
   /** El repositorio concreto que el módulo de test-repositories debe registrar por recurso */
   testRepository?(model: ResourceDefinition): { className: string; importPath: string }
+  /**
+   * Bindings extra que necesitan las plantillas del motor (p.ej. el shape del documento
+   * Mongoose). Se fusionan con las sustituciones del recurso: así el generador de recursos
+   * no tiene que saber qué necesita cada motor.
+   */
+  resourceSubstitutions?(model: ResourceDefinition): Record<string, unknown>
 }
 
 export function definePersistence(provider: PersistenceProvider): PersistenceProvider {
