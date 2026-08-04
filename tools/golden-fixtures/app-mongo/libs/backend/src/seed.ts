@@ -12,13 +12,9 @@ import { ContractsModule } from './contexts/sap-licensing/modules/contracts/cont
 import { RegisterContractUseCase } from './contexts/sap-licensing/modules/contracts/application/use-cases/register-contract-usecase.service'
 import { SEED_CONTRACTS } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seed.fixtures'
 import { ContractLocalSeeder } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seeder'
-import { LicensesModule } from './contexts/sap-licensing/modules/licenses/licenses.module'
-import { RegisterLicenseUseCase } from './contexts/sap-licensing/modules/licenses/application/use-cases/register-license-usecase.service'
-import { SEED_LICENSES } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seed.fixtures'
-import { LicenseLocalSeeder } from './contexts/sap-licensing/modules/licenses/infrastructure/seed/local-seeder'
 
 @Module({
-  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule, ContractsModule, LicensesModule]
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule, ContractsModule]
 })
 class SeedModule {}
 
@@ -41,10 +37,6 @@ async function bootstrap(): Promise<void> {
     const contractsSummary = await new ContractLocalSeeder(context.get(RegisterContractUseCase)).seed(SEED_CONTRACTS)
     console.log(
       `[seed] contracts: +${contractsSummary.contractsCreated} created, ${contractsSummary.contractsSkipped} skipped`
-    )
-    const licensesSummary = await new LicenseLocalSeeder(context.get(RegisterLicenseUseCase)).seed(SEED_LICENSES)
-    console.log(
-      `[seed] licenses: +${licensesSummary.licensesCreated} created, ${licensesSummary.licensesSkipped} skipped`
     )
   } finally {
     await context.close()
