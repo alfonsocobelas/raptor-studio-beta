@@ -17,6 +17,7 @@ import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
 import { normalizeLegacyPlugins, selectUi, slotPlugins, validateCombination, type UiLibrary } from './plugins/slots'
 import { selectPersistence } from './persistence/registry'
+import { selectInfra } from './infra/registry'
 import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -36,6 +37,8 @@ export interface AppGeneratorSchema {
   database?: DatabaseEngine
   /** Authentication slot of the emitted app (default none) */
   auth?: string
+  /** Infrastructure slot of the emitted app (default none) */
+  infra?: string
   /** Comma-separated additive plugins to assemble (email, observability) */
   plugins?: string
   /** Emit a KPI dashboard (one total per resource) as the home screen */
@@ -87,9 +90,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const modelNames = models.map(m => m.name).join(',')
   const ui = selectUi(options.ui)
   const persistence = selectPersistence(options.database)
+  const infra = selectInfra(options.infra)
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
   const legacy = normalizeLegacyPlugins(options.plugins, options.auth)
-  const selection = { database: options.database, ui: options.ui, auth: legacy.auth }
+  const selection = { database: options.database, ui: options.ui, auth: legacy.auth, infra: options.infra }
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
   // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth.
@@ -185,6 +189,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // lo que el motor añade al esqueleto (su compose y el arranque de la integración)
   if (persistence.skeletonFiles) {
     copyVerbatim(tree, path.join(__dirname, persistence.skeletonFiles), root)
+  }
+  // lo que añade el proveedor de infraestructura elegido (adapters de su nube, IaC…)
+  if (infra.files) {
+    copyVerbatim(tree, path.join(__dirname, infra.files), root)
   }
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
 

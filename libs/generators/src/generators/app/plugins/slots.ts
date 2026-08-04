@@ -1,4 +1,5 @@
 import { authPlugin } from './auth.plugin'
+import { INFRA_PROVIDERS } from '../infra/providers'
 import type { AppPlugin } from './plugin'
 import type { DatabaseEngine } from '../database'
 
@@ -64,8 +65,8 @@ export const SLOTS: Record<string, Slot> = {
     name: 'infra',
     label: 'Infraestructura',
     default: 'none',
-    // los proveedores reales (azure, lowcost, aws, gcp) llegan en las specs C1-C4
-    providers: [{ value: 'none', label: 'Ninguna (sin adapters de nube ni IaC)' }]
+    // los proveedores salen de sus manifiestos (app/infra/providers.ts): añadir uno allí basta
+    providers: INFRA_PROVIDERS.map(({ value, label, description }) => ({ value, label, description }))
   },
   auth: {
     name: 'auth',
