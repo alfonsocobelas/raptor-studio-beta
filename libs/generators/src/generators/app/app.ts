@@ -247,7 +247,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     }
     plugin.apply?.(tree, pluginContext)
   }
-  applyPluginManifests(tree, root, plugins, persistence.dependencies)
+  // el proveedor de infra cablea lo suyo (loader de secretos, telemetría, binding de storage)
+  infra.apply?.(tree, pluginContext)
+  applyPluginManifests(tree, root, plugins, { ...persistence.dependencies, ...infra.dependencies })
 
   await formatFiles(tree)
 

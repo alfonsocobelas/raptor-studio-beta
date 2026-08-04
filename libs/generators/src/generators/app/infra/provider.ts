@@ -19,8 +19,6 @@ export interface InfraProvider {
   files?: string
   /** Dependencias que añade al package.json emitido (los SDK de su nube) */
   dependencies?: Record<string, string>
-  /** Secciones que añade a la config por entorno (p.ej. `vault`, `storage.azure`) */
-  configSections?: string[]
   /** Cableado libre sobre el árbol: primer import de main.ts, binding del StorageModule… */
   apply?(tree: Tree, context: PluginContext): void
 }

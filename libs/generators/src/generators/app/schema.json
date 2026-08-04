@@ -96,6 +96,26 @@
         ]
       }
     },
+    "infra": {
+      "type": "string",
+      "default": "none",
+      "description": "Infrastructure provider of the emitted app (exclusive slot)",
+      "enum": ["none", "azure"],
+      "x-prompt": {
+        "message": "\u00bfQu\u00e9 infraestructura?",
+        "type": "list",
+        "items": [
+          {
+            "value": "none",
+            "label": "Ninguna (sin adapters de nube ni IaC)"
+          },
+          {
+            "value": "azure",
+            "label": "Azure (Key Vault, Blob Storage, App Insights)"
+          }
+        ]
+      }
+    },
     "dashboard": {
       "type": "boolean",
       "default": false,
@@ -109,7 +129,5 @@
       "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (email, observability \u2014 separados por comas; 'none' para ninguno)"
     }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }

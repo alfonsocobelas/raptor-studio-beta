@@ -8,7 +8,7 @@ import { SLOTS } from '../plugins/slots'
  */
 describe('INFRA', () => {
   it('registra un manifiesto por proveedor y cada uno declara su valor', () => {
-    expect(Object.keys(INFRA)).toEqual(['none'])
+    expect(Object.keys(INFRA)).toEqual(['none', 'azure'])
     for (const [value, provider] of Object.entries(INFRA)) {
       expect(provider.value).toBe(value)
       expect(provider.label.length).toBeGreaterThan(0)
@@ -19,12 +19,11 @@ describe('INFRA', () => {
     expect(SLOTS['infra'].providers.map(provider => provider.value)).toEqual(Object.keys(INFRA))
   })
 
-  it('none no emite nada: ni ficheros, ni dependencias, ni secciones de config', () => {
+  it('none no emite nada: ni ficheros, ni dependencias, ni cableado', () => {
     const none = INFRA['none']
 
     expect(none.files).toBeUndefined()
     expect(none.dependencies).toBeUndefined()
-    expect(none.configSections).toBeUndefined()
     expect(none.apply).toBeUndefined()
   })
 })
@@ -36,6 +35,6 @@ describe('selectInfra', () => {
   })
 
   it('rechaza un proveedor desconocido listando los disponibles', () => {
-    expect(() => selectInfra('nube-de-mi-primo')).toThrow(/Unknown infra 'nube-de-mi-primo'.*none/)
+    expect(() => selectInfra('nube-de-mi-primo')).toThrow(/Unknown infra 'nube-de-mi-primo'.*none, azure/)
   })
 })

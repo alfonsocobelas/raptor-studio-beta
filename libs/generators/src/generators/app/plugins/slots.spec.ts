@@ -41,9 +41,10 @@ describe('SLOTS', () => {
     expect(SLOTS['auth'].providers.find(p => p.value === 'single-tenant')?.requires).toEqual({ database: 'postgres' })
   })
 
-  it('infra is declared with only the none provider (real providers land in later specs)', () => {
+  it('infra ofrece none (default) y azure; sus proveedores salen de los manifiestos', () => {
+    // spec 24: los proveedores reales entran por app/infra/providers.ts, no aquí
     expect(SLOTS['infra'].default).toBe('none')
-    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none'])
+    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure'])
   })
 
   it('every slot declares label, a default that exists and labelled providers (what the form shows)', () => {

@@ -30,7 +30,7 @@
 
 - [x] **TASK-03**: Tests + tipo `InfraProvider` y proveedor `none`; la ranura `infra` pasa a
       resolverse por manifiesto (hoy sólo declara el valor). Sin cambio de salida.
-- [ ] **TASK-04**: Proveedor `azure`: subárbol `files-infra-azure` con los loaders de Key Vault +
+- [x] **TASK-04**: Proveedor `azure`: subárbol `files-infra-azure` con los loaders de Key Vault +
       las cuatro dependencias `@azure/*` declaradas + secciones de config (`vault`, `storage.azure`,
       `applicationInsights`). `--infra` aparece en `schema.json` (su test de paridad lo exige) y en
       `slots.json`.

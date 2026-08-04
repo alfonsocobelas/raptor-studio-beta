@@ -38,6 +38,10 @@
         {
           "value": "none",
           "label": "Ninguna (sin adapters de nube ni IaC)"
+        },
+        {
+          "value": "azure",
+          "label": "Azure (Key Vault, Blob Storage, App Insights)"
         }
       ]
     },
