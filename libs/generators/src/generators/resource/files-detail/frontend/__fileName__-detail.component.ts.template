@@ -35,6 +35,8 @@ interface DetailRow {
   key: string
   label: string
   type?: 'date' | 'number' | 'boolean'
+  /** Etiquetas de un conjunto cerrado: el valor guardado se lee como en el listado */
+  labels?: Record<string, string>
 }
 
 /**
@@ -199,6 +201,7 @@ export class <%- className %>DetailComponent {
   format(item: <%- dtoName %>, row: DetailRow): string {
     const value = (item as unknown as Record<string, unknown>)[row.key]
     if (value === null || value === undefined || value === '') return '—'
+    if (row.labels) return row.labels[String(value)] ?? String(value)
     if (row.type === 'boolean') return value ? 'Sí' : 'No'
     if (row.type === 'date') return new DatePipe('es-ES').transform(value as string, 'dd/MM/yyyy') ?? '—'
     if (row.type === 'number') return NUMBER_FORMAT.format(value as number)

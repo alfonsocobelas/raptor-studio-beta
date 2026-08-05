@@ -160,4 +160,30 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain('useGrouping: false')
     expect(detail).not.toContain('DecimalPipe')
   })
+
+  it('la ficha muestra la ETIQUETA de un enum, no el valor de la base', async () => {
+    const conEnum = {
+      ...withDetail(),
+      fields: {
+        ...withDetail().fields,
+        estado: {
+          type: 'string',
+          required: true,
+          vo: { name: 'InvoiceEstado', fieldName: 'Estado', values: ['abierta', 'en_curso'] },
+          table: {
+            show: true,
+            label: 'Estado',
+            type: 'badge',
+            badgeMap: { abierta: { label: 'Abierta', variant: 'default' }, en_curso: { label: 'En curso', variant: 'secondary' } }
+          }
+        }
+      }
+    } as unknown as ResourceDefinition
+    const tree = await generate(conEnum)
+    const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
+
+    // el listado pinta «En curso»; la ficha no puede decir «en_curso»
+    expect(detail).toContain("labels: { abierta: 'Abierta', en_curso: 'En curso' }")
+    expect(detail).toContain('row.labels')
+  })
 })

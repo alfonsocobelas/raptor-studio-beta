@@ -824,7 +824,15 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
       const field = definition.fields[name]
       const label = field?.table?.label ?? field?.form?.label ?? name
       const type = field?.table?.type === 'date' || field?.type === 'date' ? 'date' : detailValueType(field)
-      return `{ key: '${name}', label: '${label}'${type ? `, type: '${type}'` : ''} }`
+      // Un enum se lee por su ETIQUETA, igual que en el listado: la ficha no puede
+      // decir «en_curso» donde la tabla dice «En curso».
+      const badges = field?.table?.badgeMap
+      const labels = badges
+        ? `, labels: { ${Object.entries(badges)
+            .map(([value, badge]) => `${value}: '${badge.label}'`)
+            .join(', ')} }`
+        : ''
+      return `{ key: '${name}', label: '${label}'${type ? `, type: '${type}'` : ''}${labels} }`
     })
 
   return { titleField, rows }
