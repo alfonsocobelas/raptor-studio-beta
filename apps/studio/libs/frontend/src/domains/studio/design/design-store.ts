@@ -8,10 +8,34 @@ import {
   newDraftResource,
   type DesignBlock,
   type DesignPage,
+  type DraftEnumValue,
   type DraftField,
   type DraftResource,
   designPagesToAppPages
 } from '@app/shared/domain'
+
+/** Valores de partida al convertir una columna en enum: un enum vacío no se genera. */
+const STARTER_ENUM_VALUES: DraftEnumValue[] = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'en_curso', label: 'En curso' },
+  { value: 'cerrado', label: 'Cerrado' }
+]
+
+/**
+ * Aplica el cambio a un campo cuidando lo que el TIPO arrastra: al pasar a enum
+ * hace falta un conjunto con el que empezar, y al dejar de serlo los valores no
+ * pueden quedar colgando en el schema.
+ */
+function applyFieldPatch(field: DraftField, patch: Partial<DraftField>): DraftField {
+  const merged = { ...field, ...patch }
+  if (patch.type === undefined) return merged
+
+  if (patch.type === 'enum') {
+    return { ...merged, values: merged.values?.length ? merged.values : [...STARTER_ENUM_VALUES] }
+  }
+  const { values: _discarded, ...withoutValues } = merged
+  return withoutValues
+}
 
 /** El diseño completo: nombre de app + entidades dibujadas + vistas con sus bloques. */
 export interface Design {
@@ -224,7 +248,7 @@ export class DesignStore {
   updateField(resource: string, index: number, patch: Partial<DraftField>): boolean {
     return this.updateResource(resource, draft => ({
       ...draft,
-      fields: draft.fields.map((f, i) => (i === index ? { ...f, ...patch } : f))
+      fields: draft.fields.map((f, i) => (i === index ? applyFieldPatch(f, patch) : f))
     }))
   }
 

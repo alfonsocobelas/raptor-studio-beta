@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DesignStore } from './design-store'
+import { DRAFT_FIELD_TYPES } from '@app/shared/domain'
 
 describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
   it('arranca VACÍO: sin recursos, sin vistas', () => {
@@ -221,5 +222,61 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
 
     expect(store.pages()[0].drillDown).toBe(true)
     expect(store.menuPages()).toEqual([])
+  })
+
+  it('al pasar una columna a enum se le dan valores de partida: un enum vacío no se genera', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Propiedades')
+
+    const entity = store.resources()[0].name
+    store.updateField(entity, 0, { type: 'enum' })
+
+    const field = store.resources()[0].fields[0]
+    expect(field.type).toBe('enum')
+    expect(field.values?.length).toBeGreaterThan(0)
+  })
+
+  it('los valores de un enum se editan sin tocar el resto del campo', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Propiedades')
+    const entity = store.resources()[0].name
+    store.updateField(entity, 0, { type: 'enum' })
+
+    store.updateField(entity, 0, {
+      values: [
+        { value: 'disponible', label: 'Disponible' },
+        { value: 'vendida', label: 'Vendida' }
+      ]
+    })
+
+    const field = store.resources()[0].fields[0]
+    expect(field.values).toEqual([
+      { value: 'disponible', label: 'Disponible' },
+      { value: 'vendida', label: 'Vendida' }
+    ])
+    expect(field.label).toBe('Nombre')
+  })
+
+  it('al dejar de ser enum se olvidan los valores: no quedan colgando en el schema', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Propiedades')
+    const entity = store.resources()[0].name
+    store.updateField(entity, 0, { type: 'enum' })
+
+    store.updateField(entity, 0, { type: 'string' })
+
+    expect(store.resources()[0].fields[0].values).toBeUndefined()
+  })
+})
+
+describe('etiquetas de tipo de columna', () => {
+  it('cada tipo del contrato tiene su etiqueta: un tipo nuevo no puede salir en blanco', async () => {
+    // el editor vive en el componente, pero la regla es del contrato: si mañana se
+    // añade un tipo y nadie le pone nombre, el desplegable aparecía vacío sin avisar
+    const { TYPE_LABELS } = await import('./field-type-labels')
+
+    for (const type of DRAFT_FIELD_TYPES) {
+      expect(TYPE_LABELS[type]).toBeTruthy()
+    }
   })
 })

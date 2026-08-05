@@ -14,12 +14,23 @@ import {
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
 import { DesignStore } from './design-store'
+import { labelOfType } from './field-type-labels'
 import { buildSampleRows, mockTotal } from './mock-data'
 
 // 5 filas: en el lienzo la tabla convive con otros bloques y no debe comérselos
 const PAGE_SIZE = 5
 
 /** Las cuatro variantes de badge del canon, en el mismo orden que el generador. */
+/** «En curso» → «en_curso»: el valor va a la base, la etiqueta a la pantalla. */
+function slug(label: string): string {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+}
+
 const BADGE_CLASSES = [
   'bg-primary text-primary-foreground',
   'bg-secondary text-secondary-foreground',
@@ -120,10 +131,28 @@ const BADGE_CLASSES = [
                         data-testid="col-editor-type"
                       >
                         @for (type of types; track type) {
-                          <option [value]="type">{{ typeLabels[type] }}</option>
+                          <option [value]="type">{{ labelOfType(type) }}</option>
                         }
                       </select>
 
+                      @if (field.type === 'enum') {
+                        <label class="text-muted-foreground mb-1 mt-2 block text-xs">
+                          Valores posibles (uno por línea)
+                        </label>
+                        <textarea
+                          class="border-input w-full rounded border px-2 py-1 text-sm"
+                          rows="4"
+                          [ngModel]="valuesText(field)"
+                          (ngModelChange)="revalue($index, $event)"
+                          data-testid="col-editor-values"
+                        ></textarea>
+                        <p class="text-muted-foreground mt-1 text-xs">
+                          Se pintan como etiquetas de color, en el orden que escribas.
+                        </p>
+                        @if (!field.values?.length) {
+                          <p class="text-destructive mt-1 text-xs">Un conjunto sin valores no se genera.</p>
+                        }
+                      }
                       @if (field.type === 'ref') {
                         <label class="text-muted-foreground mb-1 mt-2 block text-xs">Entidad referenciada</label>
                         <select
@@ -224,15 +253,7 @@ export class CanvasTableComponent {
 
   protected readonly store = inject(DesignStore)
   protected readonly types = DRAFT_FIELD_TYPES
-  protected readonly typeLabels: Record<string, string> = {
-    string: 'texto',
-    text: 'texto largo',
-    number: 'número',
-    integer: 'entero',
-    boolean: 'sí/no',
-    date: 'fecha',
-    ref: 'referencia a…'
-  }
+  protected readonly labelOfType = labelOfType
 
   /** Candidatas a ser referenciadas: cualquier entidad menos la propia. */
   protected readonly otherResources = computed(() => this.store.resources().filter(r => r.name !== this.resource()))
@@ -281,6 +302,26 @@ export class CanvasTableComponent {
   protected retype(index: number, type: string): void {
     const draft = this.draft()
     if (draft) this.store.updateField(draft.name, index, { type: type as (typeof DRAFT_FIELD_TYPES)[number] })
+  }
+
+  /** Las etiquetas, una por línea: es la forma más rápida de escribir un conjunto. */
+  protected valuesText(field: DraftField): string {
+    return (field.values ?? []).map(value => value.label).join('\n')
+  }
+
+  /**
+   * El VALOR se deriva de la etiqueta (minúsculas, sin acentos, con guiones bajos)
+   * porque es lo que viaja a la base; la etiqueta se queda como se escribió.
+   */
+  protected revalue(index: number, text: string): void {
+    const draft = this.draft()
+    if (!draft) return
+    const values = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(label => ({ value: slug(label), label }))
+    this.store.updateField(draft.name, index, { values })
   }
 
   protected retarget(index: number, refTo: string): void {
