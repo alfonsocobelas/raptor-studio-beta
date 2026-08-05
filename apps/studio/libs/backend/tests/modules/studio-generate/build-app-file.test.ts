@@ -53,4 +53,14 @@ describe('buildAppFile — el artefacto que consume el generador', () => {
   it('un fallo normal no se disfraza de timeout', () => {
     expect(describeGenerationFailure({ killed: false, message: 'boom' })).toContain('boom')
   })
+
+  it('los puertos elegidos viajan al artefacto', () => {
+    const file = buildAppFile({ ...design, ports: { api: 3010, web: 4341, postgres: 5443 } }, 'clinica')
+
+    expect(file.ports).toEqual({ api: 3010, web: 4341, postgres: 5443 })
+  })
+
+  it('sin puertos elegidos no declara nada: la app sale con los del esqueleto', () => {
+    expect(buildAppFile(design, 'clinica').ports).toBeUndefined()
+  })
 })

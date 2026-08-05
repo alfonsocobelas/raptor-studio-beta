@@ -20,6 +20,7 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
     schemaVersion: 1,
     name,
     ...(themeId ? { theme: { id: themeId } } : {}),
+    ...(design.ports ? { ports: design.ports } : {}),
     pages: designPagesToAppPages(design.pages),
     resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }
