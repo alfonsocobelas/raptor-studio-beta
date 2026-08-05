@@ -1,11 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
-import { DatePipe } from '@angular/common'
 import { RouterLink } from '@angular/router'
 import { firstValueFrom } from 'rxjs'
-
-/** Sin agrupar, como el listado: un año no es «2.019». */
-const NUMBER_FORMAT = new Intl.NumberFormat('es-ES', { useGrouping: false, maximumFractionDigits: 2 })
+import { formatValue } from '../utils/format-value'
 
 export interface RelatedColumn {
   key: string
@@ -115,12 +112,6 @@ export class RelatedTable {
   }
 
   protected format(value: unknown): string {
-    if (value === null || value === undefined || value === '') return '—'
-    if (typeof value === 'boolean') return value ? 'Sí' : 'No'
-    if (typeof value === 'number') return NUMBER_FORMAT.format(value)
-    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-      return new DatePipe('es-ES').transform(value, 'dd/MM/yyyy') ?? value
-    }
-    return String(value)
+    return formatValue(value)
   }
 }

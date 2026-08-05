@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { DatePipe } from '@angular/common'
 import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
@@ -11,13 +10,8 @@ import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
 import { ProjectDto } from '@sap-licenses/shared/domain'
 import { ProjectService } from '../../../../../../core/services/project.service'
+import { formatValue } from '../../../../../../shared/utils/format-value'
 import { ProjectAttachmentsComponent } from './project-attachments.component'
-
-/**
- * Sin separador de miles, como el listado: agrupar convierte un año (2019) en
- * «2.019». El mismo dato debe leerse igual en toda la app.
- */
-const NUMBER_FORMAT = new Intl.NumberFormat('es-ES', { useGrouping: false, maximumFractionDigits: 2 })
 
 /** Una fila de la ficha: qué campo, cómo se llama y cómo se formatea. */
 interface DetailRow {
@@ -35,7 +29,7 @@ interface DetailRow {
  */
 @Component({
   selector: 'app-project-detail',
-  imports: [NgIcon, DatePipe, AppDialog, ProjectDialogComponent, AppConfirmDialog, ProjectAttachmentsComponent],
+  imports: [NgIcon, AppDialog, ProjectDialogComponent, AppConfirmDialog, ProjectAttachmentsComponent],
   providers: [provideIcons({ lucideArrowLeft, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -163,15 +157,10 @@ export class ProjectDetailComponent {
     void this._router.navigate(['/sap-licensing/projects'])
   }
 
-  /** Un solo formateador: la ficha no debe inventar formatos que la tabla no use. */
+  /** Un valor se lee igual aquí que en el listado: mismo formateador (kernel). */
   format(item: ProjectDto, row: DetailRow): string {
     const value = (item as unknown as Record<string, unknown>)[row.key]
-    if (value === null || value === undefined || value === '') return '—'
-    if (row.labels) return row.labels[String(value)] ?? String(value)
-    if (row.type === 'boolean') return value ? 'Sí' : 'No'
-    if (row.type === 'date') return new DatePipe('es-ES').transform(value as string, 'dd/MM/yyyy') ?? '—'
-    if (row.type === 'number') return NUMBER_FORMAT.format(value as number)
-    return String(value)
+    return formatValue(value, { type: row.type, labels: row.labels })
   }
 
   openEdit(item: ProjectDto): void {
