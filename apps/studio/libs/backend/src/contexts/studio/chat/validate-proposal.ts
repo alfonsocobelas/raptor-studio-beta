@@ -8,6 +8,22 @@ import type { DesignPayload } from './chat.types'
  * app-schema (y su defineApp) ocurre al generar, con lo que sea generable.
  */
 export function validateDesign(design: DesignPayload): DesignPayload {
+  for (const resource of design.resources) {
+    for (const field of resource.fields) {
+      if (field.type !== 'enum') continue
+      // Un conjunto cerrado sin valores no cierra nada, y dos valores iguales
+      // harían un badge inalcanzable y una opción duplicada en el desplegable.
+      const values = field.values ?? []
+      if (!values.length) {
+        throw new Error(`El campo «${field.name}» de ${resource.name} es un enum sin valores declarados`)
+      }
+      const unique = new Set(values.map(value => value.value))
+      if (unique.size !== values.length) {
+        throw new Error(`El campo «${field.name}» de ${resource.name} tiene valores repetidos`)
+      }
+    }
+  }
+
   const clean: DesignPayload = JSON.parse(JSON.stringify(design)) as DesignPayload
 
   // Las referencias se validan sobre el DRAFT: una vez expandido, un destino

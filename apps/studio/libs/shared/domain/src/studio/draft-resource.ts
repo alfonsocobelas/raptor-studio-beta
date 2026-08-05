@@ -5,7 +5,7 @@ import type { FieldDefinition, ResourceDefinition } from '@acc/schema'
  * draftToResource la expande a un ResourceDefinition completo siguiendo los
  * patrones canónicos (VOs, constraints, columnas) — el usuario nunca ve esto.
  */
-export type DraftFieldType = 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'date' | 'ref'
+export type DraftFieldType = 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'date' | 'ref' | 'enum'
 
 export interface DraftField {
   name: string
@@ -13,8 +13,16 @@ export interface DraftField {
   type: DraftFieldType
   /** Entidad referenciada cuando `type` es 'ref' (spec 15) */
   refTo?: string
+  /** Conjunto cerrado de valores cuando `type` es 'enum' (spec 22) */
+  values?: DraftEnumValue[]
   /** Valores de ejemplo REALISTAS para el mockup del lienzo (los aporta la IA; solo diseño) */
   samples?: (string | number | boolean)[]
+}
+
+/** Un valor de enum: el `value` va a la base, el `label` a la pantalla. */
+export interface DraftEnumValue {
+  value: string
+  label: string
 }
 
 export interface DraftResource {
@@ -34,7 +42,23 @@ export interface DraftResource {
   subtitle?: string
 }
 
-export const DRAFT_FIELD_TYPES: DraftFieldType[] = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref']
+export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
+  'string',
+  'text',
+  'number',
+  'integer',
+  'boolean',
+  'date',
+  'ref',
+  'enum'
+]
+
+/**
+ * Variantes de badge por POSICIÓN: el mismo diseño produce siempre los mismos
+ * colores. Asignarlos por nombre de valor los haría depender del idioma, y al
+ * azar rompería el determinismo del generador.
+ */
+const BADGE_VARIANTS = ['default', 'secondary', 'outline', 'destructive'] as const
 
 /**
  * «Vehículo» → vehiculo/vehiculos · «Empleados» → empleado/empleados.
@@ -82,6 +106,13 @@ export function draftToResource(
         const labelField = target?.fields.find(f => f.type === 'string')?.name ?? 'nombre'
         Object.assign(fields, relationFields(field, field.refTo, index + 1, labelField))
         constraints[`${snake(field.name)}_NAME`] = { MAX: 200 }
+      }
+      return
+    }
+    if (field.type === 'enum') {
+      // Sin valores no hay conjunto que cerrar; el gate lo rechaza antes de generar
+      if (field.values?.length) {
+        fields[field.name] = enumField(field, field.values, className, index + 1)
       }
       return
     }
@@ -224,6 +255,51 @@ export function draftToResource(
 }
 
 /** El par id + nombre denormalizado de una referencia (canon de contract.model.ts). */
+/**
+ * Enum (spec 22) al par canónico que ya emiten los módulos de oro: VO con la
+ * union de valores, columna badge con su mapa y desplegable tipado con el primer
+ * valor por defecto.
+ */
+function enumField(
+  field: DraftField,
+  values: DraftEnumValue[],
+  className: string,
+  order: number
+): FieldDefinition {
+  const voName = `${className}${pascal(field.name)}`
+
+  return {
+    type: 'string',
+    required: true,
+    vo: { name: voName, fieldName: field.label, values: values.map(v => v.value) },
+    column: { type: 'varchar', length: 40 },
+    query: { sortable: order, filterable: order + 1 },
+    table: {
+      show: true,
+      order,
+      label: field.label,
+      type: 'badge',
+      filterable: true,
+      minWidth: 140,
+      badgeMap: Object.fromEntries(
+        values.map((value, position) => [
+          value.value,
+          { label: value.label, variant: BADGE_VARIANTS[position % BADGE_VARIANTS.length] }
+        ])
+      )
+    },
+    form: {
+      control: 'select',
+      label: field.label,
+      section: 'general',
+      order,
+      options: values.map(v => ({ value: v.value, label: v.label })),
+      default: `'${values[0].value}'`
+    },
+    ...(field.samples?.length ? { samples: field.samples } : {})
+  }
+}
+
 function relationFields(
   field: DraftField,
   refTo: string,

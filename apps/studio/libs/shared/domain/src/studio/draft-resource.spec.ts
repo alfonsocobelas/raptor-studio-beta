@@ -224,3 +224,62 @@ describe('draftToResource — referencias entre entidades', () => {
     expect(fields()['paciente']).toBeUndefined()
   })
 })
+
+describe('draftToResource — enum (spec 22)', () => {
+  const propiedad = (): DraftResource => ({
+    ...newDraftResource('Propiedades'),
+    fields: [
+      { name: 'titulo', label: 'Título', type: 'string' },
+      {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum',
+        values: [
+          { value: 'disponible', label: 'Disponible' },
+          { value: 'reservada', label: 'Reservada' },
+          { value: 'vendida', label: 'Vendida' }
+        ]
+      }
+    ]
+  })
+
+  it('el VO declara el conjunto cerrado de valores', () => {
+    const field = draftToResource(propiedad(), 'inmo').fields['estado']
+
+    expect(field.vo).toMatchObject({ values: ['disponible', 'reservada', 'vendida'] })
+  })
+
+  it('la columna es un badge con su mapa de etiquetas', () => {
+    const field = draftToResource(propiedad(), 'inmo').fields['estado']
+
+    expect(field.table?.type).toBe('badge')
+    expect(field.table?.badgeMap?.['disponible']).toMatchObject({ label: 'Disponible' })
+    expect(field.table?.badgeMap?.['vendida']).toMatchObject({ label: 'Vendida' })
+  })
+
+  it('los colores se asignan por posición: mismo diseño, mismos colores', () => {
+    const first = draftToResource(propiedad(), 'inmo').fields['estado'].table?.badgeMap
+    const second = draftToResource(propiedad(), 'inmo').fields['estado'].table?.badgeMap
+
+    expect(first?.['disponible'].variant).toBe(second?.['disponible'].variant)
+    expect(first?.['disponible'].variant).not.toBe(first?.['vendida'].variant)
+  })
+
+  it('el formulario ofrece un desplegable con las opciones y el primer valor por defecto', () => {
+    const field = draftToResource(propiedad(), 'inmo').fields['estado']
+
+    expect(field.form?.control).toBe('select')
+    expect(field.form?.options).toEqual([
+      { value: 'disponible', label: 'Disponible' },
+      { value: 'reservada', label: 'Reservada' },
+      { value: 'vendida', label: 'Vendida' }
+    ])
+    expect(field.form?.default).toContain('disponible')
+  })
+
+  it('el enum es filtrable y ordenable como cualquier columna del listado', () => {
+    const field = draftToResource(propiedad(), 'inmo').fields['estado']
+
+    expect(field.query?.filterable).toBeDefined()
+  })
+})

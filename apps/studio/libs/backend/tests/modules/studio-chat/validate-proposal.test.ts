@@ -97,4 +97,41 @@ describe('validateDesign — gate determinista del diseño', () => {
 
     expect(() => validateDesign(design)).toThrow(/sí misma|itself/i)
   })
+
+  it('rechaza un enum sin valores: un conjunto cerrado vacío no cierra nada', () => {
+    const design: DesignPayload = {
+      appName: 'inmo',
+      resources: [
+        { ...vehiculo, fields: [{ name: 'estado', label: 'Estado', type: 'enum' as const, values: [] }] }
+      ],
+      pages: []
+    }
+
+    expect(() => validateDesign(design)).toThrow(/estado.*valores|values/i)
+  })
+
+  it('rechaza un enum con valores repetidos', () => {
+    const design: DesignPayload = {
+      appName: 'inmo',
+      resources: [
+        {
+          ...vehiculo,
+          fields: [
+            {
+              name: 'estado',
+              label: 'Estado',
+              type: 'enum' as const,
+              values: [
+                { value: 'alta', label: 'Alta' },
+                { value: 'alta', label: 'Alta duplicada' }
+              ]
+            }
+          ]
+        }
+      ],
+      pages: []
+    }
+
+    expect(() => validateDesign(design)).toThrow(/repetid|duplicad/i)
+  })
 })
