@@ -12,12 +12,20 @@ import {
   lucideX
 } from '@ng-icons/lucide'
 import { FormsModule } from '@angular/forms'
-import { DRAFT_FIELD_TYPES, type DraftResource } from '@app/shared/domain'
+import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
 import { DesignStore } from './design-store'
 import { buildSampleRows, mockTotal } from './mock-data'
 
 // 5 filas: en el lienzo la tabla convive con otros bloques y no debe comérselos
 const PAGE_SIZE = 5
+
+/** Las cuatro variantes de badge del canon, en el mismo orden que el generador. */
+const BADGE_CLASSES = [
+  'bg-primary text-primary-foreground',
+  'bg-secondary text-secondary-foreground',
+  'border border-input',
+  'bg-destructive text-white'
+]
 
 /**
  * Réplica CONTROLADA de la tabla emitida, pensada para diseñar: réplica fiel
@@ -172,7 +180,13 @@ const PAGE_SIZE = 5
                     [class.bg-accent]="hovered() === $index2(field)"
                     [class.text-right]="field.type === 'number' || field.type === 'integer'"
                   >
-                    {{ row[field.name] }}
+                    @if (field.type === 'enum') {
+                      <span class="rounded-full px-2 py-0.5 text-xs" [class]="badgeClass(field, row)">
+                        {{ row[field.name] }}
+                      </span>
+                    } @else {
+                      {{ row[field.name] }}
+                    }
                   </td>
                 }
                 <td></td>
@@ -223,6 +237,15 @@ export class CanvasTableComponent {
   /** Candidatas a ser referenciadas: cualquier entidad menos la propia. */
   protected readonly otherResources = computed(() => this.store.resources().filter(r => r.name !== this.resource()))
   protected readonly pageSize = PAGE_SIZE
+
+  /**
+   * Mismo criterio que el generador (spec 22): la variante se asigna por
+   * POSICIÓN del valor, así que el color del lienzo es el de la app emitida.
+   */
+  protected badgeClass(field: DraftField, row: Record<string, unknown>): string {
+    const position = field.values?.findIndex(value => value.label === row[field.name]) ?? -1
+    return BADGE_CLASSES[(position < 0 ? 0 : position) % BADGE_CLASSES.length]
+  }
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
 

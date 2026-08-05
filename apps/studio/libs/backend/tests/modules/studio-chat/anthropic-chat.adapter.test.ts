@@ -78,4 +78,32 @@ describe('AnthropicChatAdapter', () => {
     expect(system).toMatch(/relaci/i)
     expect(system).toContain('refTo')
   })
+
+  it('el esquema de salida admite enums con sus valores', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const schema = JSON.stringify(createMock.mock.calls[0][0].output_config.format.schema)
+
+    expect(schema).toContain('enum')
+    expect(schema).toContain('values')
+  })
+
+  it('el prompt pide declarar enums cuando el dominio tiene estados', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const system = createMock.mock.calls[0][0].system as string
+
+    expect(system).toMatch(/enum/i)
+    expect(system).toMatch(/estado|prioridad/i)
+  })
 })

@@ -68,12 +68,18 @@ const SYSTEM_PROMPT = [
   'debe nombrar una entidad de resources, nunca la propia. Sin relaciones la app son tablas',
   'sueltas: un pedido SIN cliente o una cita SIN paciente están mal diseñados.',
   '',
+  'ENUMS: un campo con un conjunto CERRADO de valores (estado, prioridad, tipo, categoría',
+  'fija) es type:"enum" con values:[{value:"disponible",label:"Disponible"},…] — nunca texto',
+  'libre. El valor va en minúsculas sin acentos (viaja a la base) y la etiqueta como se lee',
+  'en pantalla. Sus samples son ETIQUETAS del conjunto. Si los valores no están acotados',
+  '(un nombre, una dirección), es string, no enum.',
+  '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
   'reply es una frase breve en español explicando qué cambiaste.'
 ].join('\n')
 
-const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref']
+const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref', 'enum']
 
 const RESPONSE_SCHEMA: Record<string, unknown> = {
   type: 'object',
@@ -103,7 +109,16 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
                     label: { type: 'string' },
                     type: { type: 'string', enum: FIELD_TYPES },
                     samples: { type: 'array', items: { type: 'string' } },
-                    refTo: { type: 'string' }
+                    refTo: { type: 'string' },
+                    values: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: { value: { type: 'string' }, label: { type: 'string' } },
+                        required: ['value', 'label'],
+                        additionalProperties: false
+                      }
+                    }
                   },
                   required: ['name', 'label', 'type', 'samples'],
                   additionalProperties: false

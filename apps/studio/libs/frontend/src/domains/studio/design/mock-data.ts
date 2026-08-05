@@ -60,6 +60,11 @@ export function mockTotal(index: number): number {
 }
 
 function sampleValue(field: DraftField, i: number, draft: DraftResource, others: DraftResource[] = []): unknown {
+  // Un enum solo puede mostrar valores de SU conjunto: unos samples que se
+  // salgan de él pintarían un badge que la app nunca podría pintar.
+  if (field.type === 'enum' && field.values?.length) {
+    return field.values[i % field.values.length].label
+  }
   if (field.samples?.length) return field.samples[i % field.samples.length]
 
   // Una referencia se ve como el NOMBRE del padre: es lo que mostrará la tabla
