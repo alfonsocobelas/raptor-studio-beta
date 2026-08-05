@@ -239,3 +239,10 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     (regla 2 del protocolo): **cortar por exit code, nunca por grep**. El riesgo
     real no era la herramienta sino la verificación declarada.
 
+20. **La singularización del estudio es ingenua**: «Propiedades» → `propiedade`
+    (quita la «s» final). Los nombres de entidad salen mal en castellano para
+    plurales en «-es». No rompe la generación (el nombre es interno y consistente)
+    pero se lee fatal en el schema y en las rutas. Recomendación: que el chat
+    declare singular y plural —ya lo hace— y que `newDraftResource` solo se use
+    para entidades creadas a mano desde el lienzo, con edición del nombre.
+
