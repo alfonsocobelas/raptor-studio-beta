@@ -203,7 +203,11 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 
 ## Hallazgos de la demo de validación (2026-08-03)
 
-13. **El diseño no sabe declarar un enum.** `DraftFieldType` es
+13. ~~El diseño no sabe declarar un enum~~ — **en marcha** (spec 22): contrato,
+    expansión, chat y badges del lienzo hechos; quedan el editor del lienzo y el
+    e2e. Texto original del hallazgo:
+
+    **El diseño no sabe declarar un enum.** `DraftFieldType` es
     `string|text|number|integer|boolean|date|ref`: no hay forma de decir «estado:
     disponible / reservada / vendida». El resource-schema SÍ lo soporta
     (`vo.values`, `table.badgeMap`, `form.control: 'select'` con `optionsType`) y
