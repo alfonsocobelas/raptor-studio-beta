@@ -51,7 +51,9 @@ export const migrationsPlugin = definePlugin({
     const className = `InitialSchema${stamp}`
     const body = context.models
       .map(model =>
-        model.attachments ? [renderTable(model), renderAttachmentsTable(model)].join('\n\n') : renderTable(model)
+        model.attachments
+          ? [renderTable(model, context.models), renderAttachmentsTable(model)].join('\n\n')
+          : renderTable(model, context.models)
       )
       .join('\n\n')
     const drops = [...context.models]
@@ -85,7 +87,7 @@ ${drops}
   }
 })
 
-function renderTable(model: ResourceDefinition): string {
+function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []): string {
   const columns = Object.entries(model.fields).map(([name, field]) => renderColumn(model, name, field))
   if (model.audit) {
     columns.push('created_at TIMESTAMPTZ NOT NULL DEFAULT now()', 'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()')
@@ -97,6 +99,28 @@ function renderTable(model: ResourceDefinition): string {
   const table = `${model.schemaName}.${model.plural}`
   const pk = Object.entries(model.fields).find(([, f]) => f.pk)?.[0] ?? 'id'
   columns.push(`CONSTRAINT pk_${model.plural} PRIMARY KEY (${snake(pk)})`)
+
+  // Claves ajenas de las referencias (spec 15): sin ellas la base acepta hijos de
+  // padres inexistentes. RESTRICT y no CASCADE: borrar un agente con propiedades
+  // debe fallar, no llevárselas por delante — eso es decisión de negocio.
+  const foreignKeys: string[] = []
+  for (const [name, field] of Object.entries(model.fields)) {
+    if (field.relation?.kind !== 'reference') {
+      continue
+    }
+    const parent = all.find(candidate => candidate.name === field.relation?.to)
+    if (!parent) {
+      continue
+    }
+    const column = snake(name)
+    columns.push(
+      `CONSTRAINT fk_${model.plural}_${snake(parent.name)} FOREIGN KEY (${column}) ` +
+        `REFERENCES ${parent.schemaName}.${parent.plural} (id) ON DELETE RESTRICT`
+    )
+    foreignKeys.push(`    await queryRunner.query(\`
+      CREATE INDEX idx_${model.plural}_${column} ON ${table} (${column})
+    \`)`)
+  }
 
   // unicidad ifPresent (decisión 2026-07-30): los uniques opcionales van como índice único
   // parcial (canon uq_customers_tax_id) para que dos filas con el valor vacío convivan.
@@ -129,6 +153,7 @@ function renderTable(model: ResourceDefinition): string {
 ${rendered}
       )
     \`)`,
+    ...foreignKeys,
     ...partialIndexes
   ].join('\n\n')
 }

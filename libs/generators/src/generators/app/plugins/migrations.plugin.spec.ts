@@ -87,4 +87,32 @@ describe('migrationsPlugin.apply', () => {
     expect(migration).toContain('ON DELETE CASCADE')
     expect(migration).toContain('idx_suppliers_attachments_supplier_id')
   })
+
+  /**
+   * Defecto 18 (visto en fincaraiz): `agente_id` y `propiedad_id` salían como
+   * UUID sueltos. Sin FK, la base acepta visitas de propiedades que no existen y
+   * borrar un padre deja huérfanos — la integridad no es opcional.
+   */
+  it('una referencia emite su clave ajena, con índice y sin borrado en cascada', () => {
+    const agente = { ...supplier, name: 'agente', plural: 'agentes' } as typeof supplier
+    const propiedad = {
+      ...supplier,
+      name: 'propiedad',
+      plural: 'propiedades',
+      fields: {
+        ...supplier.fields,
+        agenteId: { type: 'uuid', required: true, relation: { to: 'agente', kind: 'reference' } }
+      }
+    } as unknown as typeof supplier
+
+    migrationsPlugin.apply?.(tree, { ...contextFor(tree), models: [agente, propiedad] })
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+
+    // el renderizado alinea la primera palabra, así que se comprueba sin el espaciado
+    expect(migration).toMatch(/fk_propiedades_agente FOREIGN KEY \(agente_id\)/)
+    expect(migration).toMatch(/REFERENCES \w+\.agentes \(id\)/)
+    // un agente con propiedades NO se borra en silencio: la cascada es de adjuntos, no de negocio
+    expect(migration).toContain('ON DELETE RESTRICT')
+    expect(migration).toContain('CREATE INDEX idx_propiedades_agente_id')
+  })
 })
