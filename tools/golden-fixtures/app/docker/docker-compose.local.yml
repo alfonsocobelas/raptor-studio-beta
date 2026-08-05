@@ -14,7 +14,7 @@ services:
       timeout: 3s
       retries: 10
     volumes:
-      - app-postgres-local-data:/var/lib/postgresql/data
+      - app-golden-postgres-local-data:/var/lib/postgresql/data
 
 volumes:
-  app-postgres-local-data:
+  app-golden-postgres-local-data:

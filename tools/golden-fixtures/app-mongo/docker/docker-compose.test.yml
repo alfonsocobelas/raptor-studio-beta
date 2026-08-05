@@ -3,7 +3,7 @@
 services:
   mongo-test:
     image: mongo:7
-    container_name: app-mongo-test
+    container_name: app-mongo-golden-mongo-test
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
       - '27018:27017'

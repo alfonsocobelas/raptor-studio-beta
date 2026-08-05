@@ -100,4 +100,20 @@ describe('applyPorts', () => {
   it('publica los valores por defecto que documenta el README', () => {
     expect(DEFAULT_PORTS).toEqual({ api: 3000, web: 4321, postgres: 5433, postgresTest: 5434 })
   })
+
+  it('el volumen lleva el nombre de la app: la demo nueva no hereda las tablas de la anterior', () => {
+    const tree = withApp()
+    tree.write(
+      'docker/docker-compose.local.yml',
+      "services:\n  postgres-local:\n    container_name: app-postgres-local\n" +
+        '    volumes:\n      - app-postgres-local-data:/var/lib/postgresql/data\n' +
+        'volumes:\n  app-postgres-local-data:\n'
+    )
+
+    applyPorts(tree, '', 'fincaraiz', undefined)
+    const compose = read(tree, 'docker/docker-compose.local.yml')
+
+    expect(compose).toContain('fincaraiz-postgres-local-data')
+    expect(compose).not.toContain('app-postgres-local-data')
+  })
 })

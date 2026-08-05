@@ -57,12 +57,23 @@ export function applyPorts(tree: Tree, root: string, appName: string, ports: App
 }
 
 /**
- * El contenedor lleva el nombre de la app. Con `app-postgres-local` fijo, dos
- * demos vivas comparten volumen y la segunda hereda las tablas de la primera.
+ * Contenedor Y VOLUMEN llevan el nombre de la app. Renombrar solo el contenedor
+ * no basta: con el volumen fijo (`app-postgres-local-data`) la demo nueva arranca
+ * con las tablas de la anterior y su tabla de migraciones, así que las migraciones
+ * se dan por aplicadas y las semillas fallan contra un esquema que no existe.
  */
 function renameContainers(tree: Tree, root: string, appName: string): void {
-  replace(tree, path.join(root, COMPOSE_LOCAL), 'container_name: app-postgres-local', `container_name: ${appName}-postgres-local`)
-  replace(tree, path.join(root, COMPOSE_TEST), 'container_name: app-postgres-test', `container_name: ${appName}-postgres-test`)
+  for (const [file, suffix] of [
+    [COMPOSE_LOCAL, 'local'],
+    [COMPOSE_TEST, 'test']
+  ] as const) {
+    const target = path.join(root, file)
+    replace(tree, target, `container_name: app-postgres-${suffix}`, `container_name: ${appName}-postgres-${suffix}`)
+    replace(tree, target, `container_name: app-mongo-${suffix}`, `container_name: ${appName}-mongo-${suffix}`)
+    for (const engine of ['postgres', 'mongo']) {
+      replace(tree, target, `app-${engine}-${suffix}-data`, `${appName}-${engine}-${suffix}-data`)
+    }
+  }
 }
 
 /** Sustitución literal sobre un fichero del Tree; si no existe, no hay nada que hacer. */
