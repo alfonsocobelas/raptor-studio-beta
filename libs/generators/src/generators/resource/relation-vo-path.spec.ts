@@ -46,4 +46,32 @@ describe('resource generator — ruta del VO de una referencia', () => {
       expect(emitted).not.toContain('value-objects/propiedads/')
     }
   })
+
+  it('el builder de test del dominio también usa el plural real', async () => {
+    registerModels([propiedad, visita])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'visita', directory: 'out' })
+
+    const builderPath = tree
+      .listChanges()
+      .map(change => change.path)
+      .find(path => path.endsWith('visita.builder.ts'))
+    const builder = builderPath ? (tree.read(builderPath, 'utf-8') ?? '') : ''
+
+    expect(builderPath).toBeDefined()
+
+    expect(builder).toContain('value-objects/propiedades/propiedad-id.vo')
+    expect(builder).not.toContain('value-objects/propiedads/')
+  })
+
+  it('las semillas apuntan al id del padre por su plural real', async () => {
+    registerModels([propiedad, visita])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'visita', directory: 'out' })
+
+    // el uuid de semilla se deriva del plural: con «propiedads» apuntaría a filas que no existen
+    const fixtures = tree.read('out/backend/infrastructure/seed/local-seed.fixtures.ts', 'utf-8') ?? ''
+
+    expect(fixtures).toContain('propiedadId')
+  })
 })

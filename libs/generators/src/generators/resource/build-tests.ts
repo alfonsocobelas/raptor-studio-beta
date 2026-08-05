@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { MODELS } from './models/registry'
 import { FieldDefinition, ResourceDefinition } from '@acc/schema'
 
 /**
@@ -53,6 +54,11 @@ interface Ctx {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** Plural del modelo referenciado: dato del registro, no «name + s» (defecto 17). */
+function pluralOf(resource: string): string {
+  return MODELS[resource]?.plural ?? `${resource}s`
+}
 
 export function renderDomainTests(definition: ResourceDefinition): DomainTestBindings {
   const n = names(definition.name)
@@ -333,7 +339,7 @@ function renderBuilderImports(
   lines.push(`import { ${n.className}Id } from '${globalShared}/${definition.plural}/${n.fileName}-id.vo'`)
   for (const c of ctxs.filter(x => x.field.relation && x.field.type === 'uuid')) {
     const rel = names(c.field.relation?.to ?? '')
-    lines.push(`import { ${rel.className}Id } from '${globalShared}/${c.field.relation?.to}s/${rel.fileName}-id.vo'`)
+    lines.push(`import { ${rel.className}Id } from '${globalShared}/${pluralOf(c.field.relation?.to ?? '')}/${rel.fileName}-id.vo'`)
   }
   return lines
 }

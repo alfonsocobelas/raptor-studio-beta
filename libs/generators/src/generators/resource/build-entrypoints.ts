@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { MODELS } from './models/registry'
 import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
 
 /**
@@ -191,6 +192,11 @@ function renderSampleValue(sample: string | number | boolean, field: FieldDefini
 }
 
 // UUIDv7-like determinista: categoría estable por recurso (hash del plural) + índice
+/** Plural del modelo referenciado: el uuid de semilla del padre se deriva de él. */
+function pluralOf(resource: string): string {
+  return MODELS[resource]?.plural ?? `${resource}s`
+}
+
 function seedUuid(plural: string, n: number): string {
   const category = [...plural].reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 0xffff, 7)
   return `019eb800-${category.toString(16).padStart(4, '0')}-7000-8000-${n.toString().padStart(12, '0')}`
@@ -238,7 +244,7 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
     const label = names(c.name).className
 
     if (c.field.relation && c.field.type === 'uuid') {
-      lines.push(`${c.name}: '${seedUuid(`${c.field.relation.to}s`, i)}'`)
+      lines.push(`${c.name}: '${seedUuid(pluralOf(c.field.relation.to), i)}'`)
       continue
     }
     if (vo?.values?.length) {
