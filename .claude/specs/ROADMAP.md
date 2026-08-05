@@ -228,9 +228,10 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     el gate los viera. Mitigado con `plural-guard.spec.ts`, que barre TODO lo
     emitido para una entidad `propiedad→propiedades` buscando el plural ingenuo.
     Queda pendiente decidir si además merece un quinto modelo de oro.
-19. **`npm test` del estudio enmascara suites que no compilan**: una suite con
-    error de TypeScript se reporta como «failed to run» pero el total sigue
-    saliendo en verde, así que un rojo pasa desapercibido. Recomendación:
-    revisar la configuración de jest para que el exit code refleje las suites
-    que no arrancan.
+19. ~~`npm test` enmascara suites que no compilan~~ — **era un error mío, no de
+    jest**: el exit code SÍ es 1 cuando una suite no compila (verificado con una
+    suite rota a propósito). Lo que engañaba era mi forma de comprobarlo: leer la
+    línea «Tests: 210 passed» en lugar del código de salida. Lección aplicada
+    (regla 2 del protocolo): **cortar por exit code, nunca por grep**. El riesgo
+    real no era la herramienta sino la verificación declarada.
 
