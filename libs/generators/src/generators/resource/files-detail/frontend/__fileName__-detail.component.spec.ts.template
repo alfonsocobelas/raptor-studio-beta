@@ -2,13 +2,18 @@ import { provideZonelessChangeDetection } from '@angular/core'
 import { TestBed } from '@angular/core/testing'
 import { ActivatedRoute } from '@angular/router'
 import { vi } from 'vitest'
+import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>DetailComponent } from './<%- fileName %>-detail.component'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
-import { <%- test.mockConst %> } from './mocks/<%- fileName %>.mock'
 
 const routeWith = (id: string | null) => ({ snapshot: { paramMap: { get: () => id } } })
 
-const record = () => <%- test.mockConst %>.data[0]
+/**
+ * Registro mínimo declarado aquí y no importado de mocks/: el generador de app
+ * reubica los mocks junto al servicio (core/services/mocks), así que una ruta
+ * relativa desde la pantalla se rompe según el layout.
+ */
+const record = () => ({ id: '019eb800-0000-7000-8000-000000000001', <%- detail.titleField %>: 'Registro de prueba' }) as unknown as <%- dtoName %>
 
 describe('<%- className %>DetailComponent — ficha', () => {
   const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
