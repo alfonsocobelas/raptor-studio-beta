@@ -66,18 +66,59 @@ const BADGE_VARIANTS = ['default', 'secondary', 'outline', 'destructive'] as con
  */
 export function newDraftResource(label: string): DraftResource {
   const raw = kebab(label)
-  const alreadyPlural = raw.endsWith('s') && raw.length > 2
-  const name = alreadyPlural ? raw.slice(0, -1) : raw
-  const plural = alreadyPlural ? raw : `${raw}s`
-  const singularLabel = alreadyPlural ? label.trim().slice(0, -1) : label.trim()
+  const { singular, plural } = spanishForms(raw)
+  const trimmed = label.trim()
+  const name = singular
+  const singularLabel = looksPlural(raw) ? capitalizeLike(trimmed, singular) : trimmed
+
   return {
     name,
     plural,
     labelSingular: singularLabel,
-    labelPlural: alreadyPlural ? label.trim() : `${label.trim()}s`,
+    labelPlural: looksPlural(raw) ? trimmed : capitalizeLike(trimmed, plural),
     gender: 'm',
     fields: [{ name: 'nombre', label: 'Nombre', type: 'string' }]
   }
+}
+
+/**
+ * Consonantes con las que una palabra castellana puede acabar en singular. Sirven
+ * para decidir si un plural en «-es» viene de quitar «es» (propiedades →
+ * propiedad) o solo la «s» (coches → coche): «coch» no es un final posible.
+ */
+const FINAL_CONSONANTS = ['d', 'l', 'n', 'r', 's', 'z', 'j', 'y']
+
+/** Un texto que acaba en «s» se toma por plural (heurística, no gramática completa). */
+function looksPlural(kebab: string): boolean {
+  return kebab.endsWith('s') && kebab.length > 3
+}
+
+/**
+ * Singular y plural en castellano (hallazgo 20). Antes se quitaba o añadía una
+ * «s» a secas, y «Propiedades» daba la entidad `propiedade`. La regla real es la
+ * inversa de cómo se forma el plural: «-es» tras consonante, «-s» tras vocal.
+ */
+function spanishForms(kebab: string): { singular: string; plural: string } {
+  if (looksPlural(kebab)) {
+    if (kebab.endsWith('es')) {
+      const stem = kebab.slice(0, -2)
+      // «propiedad», «animal», «mes» son finales válidos; «coch» no lo es
+      if (FINAL_CONSONANTS.includes(stem.slice(-1))) {
+        return { singular: stem, plural: kebab }
+      }
+    }
+    return { singular: kebab.slice(0, -1), plural: kebab }
+  }
+  const last = kebab.slice(-1)
+  const isVowel = ['a', 'e', 'i', 'o', 'u'].includes(last)
+  return { singular: kebab, plural: isVowel ? `${kebab}s` : `${kebab}es` }
+}
+
+/** Recorta o alarga la etiqueta escrita para que case con la forma calculada. */
+function capitalizeLike(label: string, form: string): string {
+  const head = label.slice(0, 1).toUpperCase()
+  const rest = form.slice(1)
+  return `${head}${rest}`
 }
 
 export function draftToResource(

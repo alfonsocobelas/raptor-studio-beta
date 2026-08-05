@@ -283,3 +283,32 @@ describe('draftToResource — enum (spec 22)', () => {
     expect(field.query?.filterable).toBeDefined()
   })
 })
+
+describe('newDraftResource — singular y plural en castellano (hallazgo 20)', () => {
+  const casos: [string, string, string][] = [
+    // etiqueta escrita, nombre singular esperado, plural esperado
+    ['Propiedades', 'propiedad', 'propiedades'],
+    ['Reparaciones', 'reparacion', 'reparaciones'],
+    ['Animales', 'animal', 'animales'],
+    ['Meses', 'mes', 'meses'],
+    ['Coches', 'coche', 'coches'],
+    ['Clientes', 'cliente', 'clientes'],
+    ['Pacientes', 'paciente', 'pacientes'],
+    // singular escrito: el plural se forma según la última letra
+    ['Cliente', 'cliente', 'clientes'],
+    ['Propiedad', 'propiedad', 'propiedades'],
+    ['Animal', 'animal', 'animales']
+  ]
+
+  it.each(casos)('«%s» → %s / %s', (label, name, plural) => {
+    const draft = newDraftResource(label)
+
+    expect(draft.name).toBe(name)
+    expect(draft.plural).toBe(plural)
+  })
+
+  it('la etiqueta singular respeta lo escrito por el usuario', () => {
+    expect(newDraftResource('Propiedades').labelSingular).toBe('Propiedad')
+    expect(newDraftResource('Coches').labelSingular).toBe('Coche')
+  })
+})
