@@ -200,3 +200,25 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     genere una app FUERA del árbol, instale y le pase `tsc`: fuera, porque dentro del monorepo el
     hoisting tapa las dependencias no declaradas. Es lento (~2 min por app), así que probablemente
     va en un target aparte del golden, no en cada commit.
+
+## Hallazgos de la demo de validación (2026-08-03)
+
+13. **El diseño no sabe declarar un enum.** `DraftFieldType` es
+    `string|text|number|integer|boolean|date|ref`: no hay forma de decir «estado:
+    disponible / reservada / vendida». El resource-schema SÍ lo soporta
+    (`vo.values`, `table.badgeMap`, `form.control: 'select'` con `optionsType`) y
+    los cuatro módulos de oro lo usan, así que el canon de emisión está probado —
+    falta el tramo del diseño, igual que le faltaba a las relaciones antes de la
+    spec 15. **Recomendación: spec propia** (misma forma que `ref`: tipo nuevo +
+    expansión + badges + select tipado). Sin ella, cualquier «estado» sale como
+    texto libre, sin colores ni validación.
+14. **Los puertos del docker-compose emitido están fijos** (5433 local, 5434 test).
+    Dos demos vivas comparten base y la segunda pisa a la primera; y no se pueden
+    reservar puertos propios por demo como pide el protocolo de validación.
+    Recomendación: línea de roadmap → parametrizar por `appName` u opción.
+15. **El puente del chat esperaba 180 s** y descartaba respuestas válidas que
+    tardaban más (componer un diseño real lleva minutos). Arreglado: 900 s.
+16. **El modo del arnés era una variable de entorno olvidable**: al fijar el
+    puerto en el script, la API arrancó en modo `fake` sin avisar. Arreglado:
+    script `studio:api:bridge` explícito + traza del modo al arrancar.
+
