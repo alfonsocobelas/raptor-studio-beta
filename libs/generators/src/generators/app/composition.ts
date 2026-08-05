@@ -1,5 +1,5 @@
 import { DEFAULT_THEME_ID, resolveThemeId } from '@acc/schema'
-import type { AppDefinition, PageDefinition, ResourceDefinition } from '@acc/schema'
+import type { AppDefinition, PageDefinition, PortsDefinition, ResourceDefinition } from '@acc/schema'
 
 /**
  * Composición normalizada de una app: el único vocabulario del que el generador
@@ -19,6 +19,8 @@ export interface AppComposition {
   kpiModels: ResourceDefinition[]
   /** Tema declarado por el app-schema (spec 20); siempre resuelto, 'neutral' por defecto */
   themeId: string
+  /** Puertos declarados en el app-schema; ausente = los del esqueleto */
+  ports?: PortsDefinition
 }
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
@@ -76,7 +78,8 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     pages,
     dashboard: kpiModels.length > 0,
     kpiModels,
-    themeId: resolveThemeId(definition.theme)
+    themeId: resolveThemeId(definition.theme),
+    ports: definition.ports
   }
 }
 

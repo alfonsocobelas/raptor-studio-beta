@@ -6,6 +6,7 @@ import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
 import { emitsSeeder } from '../resource/emits'
 import { ignoreNestedWorkspace } from './nxignore'
+import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
 import { selectApp } from './apps/registry'
@@ -207,6 +208,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     copyVerbatim(tree, path.join(__dirname, infra.files), root)
   }
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
+  // los puertos y el nombre del contenedor se ajustan sobre lo ya copiado (hallazgo 14)
+  applyPorts(tree, root, options.name, composition.ports)
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
   const theme = themeSubstitutions(composition.themeId)

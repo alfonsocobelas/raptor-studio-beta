@@ -52,10 +52,24 @@ export interface ThemeDefinition {
   palette?: string
 }
 
+/**
+ * Puertos que ocupará la app al ejecutarse en local. Se declaran porque quien
+ * genera casi siempre tiene otros proyectos abiertos: 3000 y 4200 rara vez están
+ * libres, y dos demos vivas compartían la misma base (hallazgo 14).
+ */
+export interface PortsDefinition {
+  api?: number
+  web?: number
+  postgres?: number
+  postgresTest?: number
+}
+
 export interface AppDefinition {
   schemaVersion: 1
   name: string
   theme?: ThemeDefinition
+  /** Puertos locales; sin declarar se emiten los del esqueleto */
+  ports?: PortsDefinition
   /** El orden de páginas gobierna nav, rutas y ruta por defecto (la primera) */
   pages: PageDefinition[]
 }
