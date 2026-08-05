@@ -66,12 +66,16 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 
 ## Observaciones abiertas (2026-08-01, sesión del estudio) — atajar más adelante
 
-1. **Adapter de Azure emitido siempre y sin dependencia** (⚠️ bug latente, mismo patrón que el de
+1. ~~Adapter de Azure emitido siempre y sin dependencia~~ — **resuelto**: vive tras la ranura `infra` con sus dependencias declaradas en el proveedor. Verificado: una app con `infra=none` no emite ningún fichero de Azure.
+
+   Texto original: **Adapter de Azure emitido siempre y sin dependencia** (⚠️ bug latente, mismo patrón que el de
    winston): el kernel copia `azure-blob-file-storage.ts` en TODAS las apps, nadie lo referencia y
    `@azure/storage-blob` NO está en el `package.json` emitido — compila aquí solo por hoisting del
    monorepo; en máquina de cliente reventaría. Arreglo: sacarlo del kernel siempre-emitido (plugin
    de storage) → **exige re-baseline deliberado del golden de app; requiere OK de Alfonso**.
-2. **Adjuntos: alcance por página, no por registro.** Hoy `attachments: true` da un área de
+2. ~~Adjuntos: alcance por página~~ — **resuelto** (spec 16): cuelgan del registro, con FK en cascada y rutas anidadas.
+
+   Texto original: **Adjuntos: alcance por página, no por registro.** Hoy `attachments: true` da un área de
    documentos de la entidad (albaranes, catálogos). Los adjuntos POR FILA necesitan el arquetipo
    `detail` (spec 15) — se añadirá allí.
 3. **Sin fixture de oro para `attachments`** (TASK-05 de la spec 14): cubierto por 8 tests unitarios
@@ -80,13 +84,17 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
    editar cabeceras). WYSIWYG estricto exigiría un «modo diseño» en el DataTable emitido.
 5. **Puerto 3000 ocupado** por sap-licences en el entorno de Alfonso: el estudio arranca con
    `PORT=3400 npm run studio:api` (documentar en el README del estudio).
-6. **Vista de generación con animación** (petición de Alfonso, 2026-08-01): al pulsar «Generar
+6. ~~Vista de generación con animación~~ — **resuelto**: progreso real en NDJSON (etapa, ficheros escritos, último fichero y cronómetro).
+
+   Texto original: **Vista de generación con animación** (petición de Alfonso, 2026-08-01): al pulsar «Generar
    aquí» el diálogo debería dar paso a una **pantalla de progreso animada** (spinner/pasos con
    estados: validando diseño → generando módulos → instalando dependencias → listo), no al
    estado «Generando…» de un botón. La generación puede tardar minutos con instalación, así que
    necesita feedback de progreso real (idealmente streaming del log del generador, hoy se
    devuelve entero al terminar).
-7. **Pluralización naïf** en el lienzo (`newDraftResource`): «Vehículo» → vehiculos. Suficiente para
+7. ~~Pluralización naïf en el lienzo~~ — **resuelto** (hallazgo 20): regla del castellano con diez casos en tests.
+
+   Texto original: **Pluralización naïf** en el lienzo (`newDraftResource`): «Vehículo» → vehiculos. Suficiente para
    diseñar (el chat real produce singular/plural correctos y se puede editar), pero conviene una
    lista de irregulares si se usa mucho a mano.
 
@@ -120,7 +128,9 @@ el starter original las tenía cerradas pero no llegó a este repo.
 10. **Tema del estudio no se persiste** entre recargas (el de la app generada
     sí, vía localStorage en ThemeService).
 
-11. **Booleanos en la tabla emitida se ven como `true`/`false`** (visto en la
+11. ~~Booleanos como true/false en la tabla~~ — **resuelto**: `type: 'boolean'` emitido y pintado Sí/No en las dos pieles; después llegó el formateador único del kernel.
+
+    Texto original: **Booleanos en la tabla emitida se ven como `true`/`false`** (visto en la
     clínica generada). La ficha ya los formatea como Sí/No; la columna del
     listado debería hacer lo mismo — es el mismo formateo, en dos sitios.
 12. **La app generada no persiste la paleta por usuario**: el tema claro/oscuro
@@ -244,4 +254,16 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     palabra válidos, con diez casos fijados en tests. Queda como mejora poder
     editar el nombre de la entidad a mano en el lienzo, para los irregulares que
     ninguna regla acierta (luces → luz).
+
+## Abiertos de verdad (revisado 2026-08-05)
+
+- **Fixture de oro para adjuntos** (punto 3): cubierto por tests unitarios, sin diff congelado.
+- **La tabla del lienzo es una réplica** (punto 4), no el DataTable emitido.
+- **Piel Material del lienzo es una aproximación** (punto 8).
+- **El tema del estudio no se persiste entre recargas** (punto 10).
+- **La app generada no persiste la paleta por usuario** (punto 12).
+- **El oro no cubre plurales irregulares** (punto 18): mitigado con `plural-guard.spec.ts`;
+  queda decidir si merece un quinto modelo de oro.
+- **Spec 19 (código de negocio)**: en pausa, pendiente de decidir el formato.
+- **Cinco tareas e2e** (specs 15, 16, 17, 20, 22): bloqueadas por Docker, no por código.
 
