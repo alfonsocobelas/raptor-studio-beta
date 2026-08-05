@@ -24,6 +24,8 @@ interface DetailRow {
   key: string
   label: string
   type?: 'date' | 'number' | 'boolean'
+  /** Etiquetas de un conjunto cerrado: el valor guardado se lee como en el listado */
+  labels?: Record<string, string>
 }
 
 /**
@@ -126,9 +128,13 @@ export class ProjectDetailComponent {
     { key: 'description', label: 'Descripción' },
     { key: 'startDate', label: 'Fecha inicio', type: 'date' },
     { key: 'endDate', label: 'Fecha fin', type: 'date' },
-    { key: 'status', label: 'Estado' },
-    { key: 'implementer', label: 'Implementador' },
-    { key: 'origin', label: 'Origen' }
+    {
+      key: 'status',
+      label: 'Estado',
+      labels: { planning: 'Planificación', active: 'Activo', onhold: 'En pausa', closed: 'Cerrado' }
+    },
+    { key: 'implementer', label: 'Implementador', labels: { AVVALE: 'AVVALE', THIRD_PARTY: 'Tercero' } },
+    { key: 'origin', label: 'Origen', labels: { MANUAL: 'Manual', ME_SAP: 'SAP' } }
   ]
 
   constructor() {
@@ -161,6 +167,7 @@ export class ProjectDetailComponent {
   format(item: ProjectDto, row: DetailRow): string {
     const value = (item as unknown as Record<string, unknown>)[row.key]
     if (value === null || value === undefined || value === '') return '—'
+    if (row.labels) return row.labels[String(value)] ?? String(value)
     if (row.type === 'boolean') return value ? 'Sí' : 'No'
     if (row.type === 'date') return new DatePipe('es-ES').transform(value as string, 'dd/MM/yyyy') ?? '—'
     if (row.type === 'number') return NUMBER_FORMAT.format(value as number)
