@@ -22,7 +22,10 @@ describe('ProjectDetailComponent — ficha', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: ActivatedRoute, useValue: routeWith(id) },
-        { provide: ProjectService, useValue: { findOne, update: vi.fn(), remove: vi.fn() } }
+        { provide: ProjectService, useValue: { findOne, update: vi.fn(), remove: vi.fn() } },
+        // el componente se declara como proveedor: sin plantilla que renderizar,
+        // TestBed.inject basta para ejercitar su lógica de carga
+        ProjectDetailComponent
       ]
     })
     return { component: TestBed.inject(ProjectDetailComponent), findOne }

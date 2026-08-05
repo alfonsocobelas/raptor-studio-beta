@@ -21,7 +21,10 @@ describe('<%- className %>DetailComponent — ficha', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: ActivatedRoute, useValue: routeWith(id) },
-        { provide: <%- className %>Service, useValue: { findOne, update: vi.fn(), remove: vi.fn() } }
+        { provide: <%- className %>Service, useValue: { findOne, update: vi.fn(), remove: vi.fn() } },
+        // el componente se declara como proveedor: sin plantilla que renderizar,
+        // TestBed.inject basta para ejercitar su lógica de carga
+        <%- className %>DetailComponent
       ]
     })
     return { component: TestBed.inject(<%- className %>DetailComponent), findOne }

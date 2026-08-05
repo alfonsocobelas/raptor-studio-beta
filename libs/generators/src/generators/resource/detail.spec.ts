@@ -187,4 +187,12 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain("labels: { abierta: 'Abierta', en_curso: 'En curso' }")
     expect(detail).toContain('row.labels')
   })
+
+  it('el test emitido declara el componente como proveedor: TestBed no lo inventa', async () => {
+    const tree = await generate(withDetail())
+    const spec = tree.read('out/frontend/invoice-detail.component.spec.ts', 'utf-8') ?? ''
+
+    // sin esta línea el spec emitido falla con NG0201 en cualquier app generada
+    expect(spec).toMatch(/providers: \[[\s\S]*InvoiceDetailComponent[\s\S]*\]/)
+  })
 })
