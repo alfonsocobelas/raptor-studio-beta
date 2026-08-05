@@ -2,13 +2,19 @@ import { provideZonelessChangeDetection } from '@angular/core'
 import { TestBed } from '@angular/core/testing'
 import { ActivatedRoute } from '@angular/router'
 import { vi } from 'vitest'
+import { ProjectDto } from '@sap-licenses/shared/domain'
 import { ProjectDetailComponent } from './project-detail.component'
 import { ProjectService } from '../../../../../../core/services/project.service'
-import { MOCK_PROJECTS_PAGINATED } from './mocks/project.mock'
 
 const routeWith = (id: string | null) => ({ snapshot: { paramMap: { get: () => id } } })
 
-const record = () => MOCK_PROJECTS_PAGINATED.data[0]
+/**
+ * Registro mínimo declarado aquí y no importado de mocks/: el generador de app
+ * reubica los mocks junto al servicio (core/services/mocks), así que una ruta
+ * relativa desde la pantalla se rompe según el layout.
+ */
+const record = () =>
+  ({ id: '019eb800-0000-7000-8000-000000000001', customerName: 'Registro de prueba' }) as unknown as ProjectDto
 
 describe('ProjectDetailComponent — ficha', () => {
   const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
