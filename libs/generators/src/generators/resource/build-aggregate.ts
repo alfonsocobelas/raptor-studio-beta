@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { MODELS } from './models/registry'
 import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
 import { CompositionBindings, renderComposition } from './build-composition'
 
@@ -40,6 +41,14 @@ interface FieldCtx {
   unique: boolean
   isArray: boolean
   unset: boolean
+}
+
+/**
+ * Plural del modelo REFERENCIADO: sale del registro, porque «propiedad» pluraliza
+ * a «propiedades» y añadir una «s» daba rutas inexistentes (defecto 17).
+ */
+function pluralOf(resource: string): string {
+  return MODELS[resource]?.plural ?? `${resource}s`
 }
 
 export function renderAggregate(definition: ResourceDefinition): AggregateBindings {
@@ -414,7 +423,7 @@ function renderAggImports(
   for (const c of otherIds) {
     const rel = names(c.field.relation?.to ?? '')
     lines.push(
-      `import { ${rel.className}Id } from '../../../../shared/domain/value-objects/${c.field.relation?.to}s/${rel.fileName}-id.vo'`
+      `import { ${rel.className}Id } from '../../../../shared/domain/value-objects/${pluralOf(c.field.relation?.to ?? '')}/${rel.fileName}-id.vo'`
     )
   }
   for (const shared of [...sharedVoNames].sort()) {
@@ -461,7 +470,7 @@ function renderTypesImports(
   for (const c of otherIds) {
     const rel = names(c.field.relation?.to ?? '')
     lines.push(
-      `import { ${rel.className}Id } from '../../../../shared/domain/value-objects/${c.field.relation?.to}s/${rel.fileName}-id.vo'`
+      `import { ${rel.className}Id } from '../../../../shared/domain/value-objects/${pluralOf(c.field.relation?.to ?? '')}/${rel.fileName}-id.vo'`
     )
   }
   for (const shared of [...sharedVoNames].sort()) {
