@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } fr
 <%_ if (detail) { _%>
 import { Router } from '@angular/router'
 <%_ } _%>
-import { DecimalPipe } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
+import { formatValue } from '../../../../../../shared/utils/format-value'
 
 /**
  * Galería de <%- ui.title %>: la MISMA lectura del listado pintada como tarjetas.
@@ -13,7 +13,7 @@ import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../.
  */
 @Component({
   selector: 'app-<%- plural %>-gallery',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -64,7 +64,7 @@ import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../.
 <%_ } _%>
 <%_ if (gallery.metricField) { _%>
               <p class="mt-auto pt-2 text-xl font-bold">
-                {{ number(item, cardMetric) | number: '1.0-2' }}
+                {{ text(item, cardMetric) }}
                 <span class="text-muted-foreground text-xs font-normal"><%- gallery.metricLabel %></span>
               </p>
 <%_ } _%>
@@ -138,14 +138,7 @@ export class <%- pluralClassName %>GalleryComponent {
   readonly search = computed(() => this._service.request().search ?? '')
 
   text(item: <%- dtoName %>, key: string): string {
-    const value = (item as unknown as Record<string, unknown>)[key]
-    if (value === null || value === undefined || value === '') return '—'
-    if (typeof value === 'boolean') return value ? 'Sí' : 'No'
-    return String(value)
-  }
-
-  number(item: <%- dtoName %>, key: string): number {
-    return Number((item as unknown as Record<string, unknown>)[key] ?? 0)
+    return formatValue((item as unknown as Record<string, unknown>)[key])
   }
 
   onSearch(search: string): void {

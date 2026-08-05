@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { DatePipe } from '@angular/common'
 import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> } from '@ng-icons/lucide'
@@ -17,18 +16,13 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 <%_ } _%>
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+import { formatValue } from '../../../../../../shared/utils/format-value'
 <%_ if (related.length) { _%>
 import { RelatedTable } from '../../../../../../shared/components/related-table'
 <%_ } _%>
 <%_ if (attachments) { _%>
 import { <%- className %>AttachmentsComponent } from './<%- fileName %>-attachments.component'
 <%_ } _%>
-
-/**
- * Sin separador de miles, como el listado: agrupar convierte un año (2019) en
- * «2.019». El mismo dato debe leerse igual en toda la app.
- */
-const NUMBER_FORMAT = new Intl.NumberFormat('es-ES', { useGrouping: false, maximumFractionDigits: 2 })
 
 /** Una fila de la ficha: qué campo, cómo se llama y cómo se formatea. */
 interface DetailRow {
@@ -46,7 +40,7 @@ interface DetailRow {
  */
 @Component({
   selector: 'app-<%- fileName %>-detail',
-  imports: [NgIcon, DatePipe<%- related.length ? ', RelatedTable' : '' %><%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
+  imports: [NgIcon<%- related.length ? ', RelatedTable' : '' %><%- features.edit ? ', AppDialog, ' + className + 'DialogComponent' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- attachments ? ', ' + className + 'AttachmentsComponent' : '' %>],
   providers: [provideIcons({ lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -197,16 +191,12 @@ export class <%- className %>DetailComponent {
     void this._router.navigate(['<%- route %>'])
   }
 
-  /** Un solo formateador: la ficha no debe inventar formatos que la tabla no use. */
+  /** Un valor se lee igual aquí que en el listado: mismo formateador (kernel). */
   format(item: <%- dtoName %>, row: DetailRow): string {
     const value = (item as unknown as Record<string, unknown>)[row.key]
-    if (value === null || value === undefined || value === '') return '—'
-    if (row.labels) return row.labels[String(value)] ?? String(value)
-    if (row.type === 'boolean') return value ? 'Sí' : 'No'
-    if (row.type === 'date') return new DatePipe('es-ES').transform(value as string, 'dd/MM/yyyy') ?? '—'
-    if (row.type === 'number') return NUMBER_FORMAT.format(value as number)
-    return String(value)
+    return formatValue(value, { type: row.type, labels: row.labels })
   }
+
 <%_ if (features.edit) { _%>
 
   openEdit(item: <%- dtoName %>): void {

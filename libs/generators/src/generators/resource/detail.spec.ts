@@ -152,13 +152,14 @@ describe('resource generator — ficha', () => {
     expect(detail).not.toContain("key: 'propietarioId'")
   })
 
-  it('un número se lee igual en la ficha que en el listado: sin separador de miles', async () => {
+  it('la ficha no formatea por su cuenta: delega en el formateador del kernel', async () => {
     const tree = await generate(withDetail())
     const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
 
-    // 2019 es un año, 84300 unos kilómetros: agrupar convierte el año en «2.019»
-    expect(detail).toContain('useGrouping: false')
+    // el «2.019» del año salió justo de tener aquí un formateador propio
+    expect(detail).toContain('formatValue')
     expect(detail).not.toContain('DecimalPipe')
+    expect(detail).not.toContain('useGrouping')
   })
 
   it('la ficha muestra la ETIQUETA de un enum, no el valor de la base', async () => {
