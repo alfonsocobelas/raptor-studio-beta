@@ -212,13 +212,25 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     spec 15. **Recomendación: spec propia** (misma forma que `ref`: tipo nuevo +
     expansión + badges + select tipado). Sin ella, cualquier «estado» sale como
     texto libre, sin colores ni validación.
-14. **Los puertos del docker-compose emitido están fijos** (5433 local, 5434 test).
-    Dos demos vivas comparten base y la segunda pisa a la primera; y no se pueden
-    reservar puertos propios por demo como pide el protocolo de validación.
-    Recomendación: línea de roadmap → parametrizar por `appName` u opción.
+14. ~~Los puertos del docker-compose emitido están fijos~~ — **resuelto**:
+    `ports` en el app-schema (api, web, postgres, postgresTest) y contenedor
+    con el nombre de la app. El estudio los envía en el artefacto.
 15. **El puente del chat esperaba 180 s** y descartaba respuestas válidas que
     tardaban más (componer un diseño real lleva minutos). Arreglado: 900 s.
 16. **El modo del arnés era una variable de entorno olvidable**: al fijar el
     puerto en el script, la API arrancó en modo `fake` sin avisar. Arreglado:
     script `studio:api:bridge` explícito + traza del modo al arrancar.
+
+17. **Las relaciones no emitían clave ajena** (visto en fincaraiz): `agente_id`
+    era un UUID suelto. Resuelto con `FOREIGN KEY … ON DELETE RESTRICT` + índice.
+18. **El oro no cubre plurales irregulares**: los cuatro modelos pluralizan en
+    «+s», así que tres bugs de pluralización a mano llegaron a una demo sin que
+    el gate los viera. Mitigado con `plural-guard.spec.ts`, que barre TODO lo
+    emitido para una entidad `propiedad→propiedades` buscando el plural ingenuo.
+    Queda pendiente decidir si además merece un quinto modelo de oro.
+19. **`npm test` del estudio enmascara suites que no compilan**: una suite con
+    error de TypeScript se reporta como «failed to run» pero el total sigue
+    saliendo en verde, así que un rojo pasa desapercibido. Recomendación:
+    revisar la configuración de jest para que el exit code refleje las suites
+    que no arrancan.
 
