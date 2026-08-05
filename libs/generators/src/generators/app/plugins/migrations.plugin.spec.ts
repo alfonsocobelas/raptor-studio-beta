@@ -115,4 +115,52 @@ describe('migrationsPlugin.apply', () => {
     expect(migration).toContain('ON DELETE RESTRICT')
     expect(migration).toContain('CREATE INDEX idx_propiedades_agente_id')
   })
+
+  /**
+   * Defecto: el orden de las tablas venía del orden de las PÁGINAS, así que si el
+   * panel mencionaba antes al hijo, la migración creaba la tabla con la FK antes
+   * que la del padre y fallaba con «relation does not exist». Las dependencias
+   * mandan sobre el orden de aparición.
+   */
+  it('crea las tablas padre antes que las hijas, aunque el diseño las liste al revés', () => {
+    const agente = { ...supplier, name: 'agente', plural: 'agentes' } as typeof supplier
+    const propiedad = {
+      ...supplier,
+      name: 'propiedad',
+      plural: 'propiedades',
+      fields: {
+        ...supplier.fields,
+        agenteId: { type: 'uuid', required: true, relation: { to: 'agente', kind: 'reference' } }
+      }
+    } as unknown as typeof supplier
+
+    // hijo primero, como llega desde un panel que menciona propiedades antes que agentes
+    migrationsPlugin.apply?.(tree, { ...contextFor(tree), models: [propiedad, agente] })
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+
+    expect(migration.search(/CREATE TABLE \w+\.agentes/)).toBeLessThan(
+      migration.search(/CREATE TABLE \w+\.propiedades/)
+    )
+  })
+
+  it('las borra en orden inverso: el hijo antes que el padre', () => {
+    const agente = { ...supplier, name: 'agente', plural: 'agentes' } as typeof supplier
+    const propiedad = {
+      ...supplier,
+      name: 'propiedad',
+      plural: 'propiedades',
+      fields: {
+        ...supplier.fields,
+        agenteId: { type: 'uuid', required: true, relation: { to: 'agente', kind: 'reference' } }
+      }
+    } as unknown as typeof supplier
+
+    migrationsPlugin.apply?.(tree, { ...contextFor(tree), models: [propiedad, agente] })
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+    const down = migration.slice(migration.indexOf('async down'))
+
+    expect(down.search(/DROP TABLE IF EXISTS \w+\.propiedades/)).toBeLessThan(
+      down.search(/DROP TABLE IF EXISTS \w+\.agentes/)
+    )
+  })
 })

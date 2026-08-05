@@ -49,14 +49,15 @@ export const migrationsPlugin = definePlugin({
     // Timestamp fijo (los generadores no pueden usar Date.now(): rompería la reproducibilidad)
     const stamp = 1790000000000
     const className = `InitialSchema${stamp}`
-    const body = context.models
+    const ordered = byDependency(context.models)
+    const body = ordered
       .map(model =>
         model.attachments
           ? [renderTable(model, context.models), renderAttachmentsTable(model)].join('\n\n')
           : renderTable(model, context.models)
       )
       .join('\n\n')
-    const drops = [...context.models]
+    const drops = [...ordered]
       .reverse()
       .flatMap(model => [
         ...(model.attachments
@@ -86,6 +87,36 @@ ${drops}
     )
   }
 })
+
+/**
+ * Orden topológico: un padre se crea antes que sus hijos porque la FK del hijo lo
+ * exige. El orden de llegada es el de las PÁGINAS, que no sabe nada de
+ * dependencias — si el panel menciona propiedades antes que agentes, la migración
+ * fallaba con «relation does not exist».
+ */
+function byDependency(models: ResourceDefinition[]): ResourceDefinition[] {
+  const pending = [...models]
+  const ordered: ResourceDefinition[] = []
+  const emitted = new Set<string>()
+
+  while (pending.length) {
+    const ready = pending.findIndex(model =>
+      Object.values(model.fields)
+        .filter(field => field.relation?.kind === 'reference')
+        .every(field => {
+          const parent = field.relation?.to
+          // una referencia a algo que no está en la app no bloquea (no emite FK)
+          return !parent || parent === model.name || emitted.has(parent) || !models.some(m => m.name === parent)
+        })
+    )
+    // ciclo entre entidades: se emite en el orden de llegada y la FK avisará
+    const next = pending.splice(ready >= 0 ? ready : 0, 1)[0]
+    emitted.add(next.name)
+    ordered.push(next)
+  }
+
+  return ordered
+}
 
 function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []): string {
   const columns = Object.entries(model.fields).map(([name, field]) => renderColumn(model, name, field))
