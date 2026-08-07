@@ -14,10 +14,28 @@
 
 ## Fase 3 — Tipografía
 
-- [ ] TASK-07 — `--font-sans` por tema, self-hosted en la app emitida
-- [ ] TASK-08 — el lienzo carga la misma fuente que la app emitirá
+- [x] TASK-07 — `--font-sans` por tema, self-hosted en la app emitida
+      · mismo patrón que el radio (TASK-06): MECANISMO listo, catálogo intacto hasta decidir la
+        tipografía por tema (decisión de diseño de Alfonso). Un tema con `font` añade el `@import`
+        de su paquete fontsource al styles.css, antepone la familia a la pila del esqueleto y mete
+        el paquete en las dependencias emitidas (self-hosted, sin CDNs — como el Roboto de material)
+      · sin fuente el css emitido es byte a byte el de siempre: golden intacto
+- [x] TASK-08 — el lienzo carga la misma fuente que la app emitirá
+      · `previewThemeVars` antepone `--font-sans: '<familia>', var(--font-sans)` sólo si el tema la
+        declara. El día que el catálogo declare una, el estudio debe instalar su paquete fontsource
+        para renderizarla de verdad (anotado en el código)
 
 ## Fase 4 — Tema de cliente
 
-- [ ] TASK-09 — `theme.seed`: tema completo derivado del color de marca del cliente
+- [x] TASK-09 — `theme.seed`: tema completo derivado del color de marca del cliente
+      · del hex sólo se toma el TONO; croma y luz los fija la receta medida del catálogo
+        (primaria clara L .53, oscura L .72, ring L .62, superficies 0.016 con tarjeta blanca),
+        con el croma recortado hasta caber en sRGB — un flúor corporativo a pelo no es un tema
+      · `theme.seed` y `theme.id` son mutuamente excluyentes (gate en defineApp); la clase del
+        body delata la semilla (`theme-seed-1a6dff`)
+      · property-test con 5 colores de marca: ningún token derivado se sale de sRGB
+      · verificación estática: app generada con `#1a6dff` → tokens teñidos al tono 261 y clase
+        correcta en el index.html
 - [ ] TASK-10 — e2e: dos apps lado a lado, una de catálogo y otra con semilla
+      · BLOQUEADA por lo mismo que las otras e2e: hace falta Docker (postgres) y navegador para
+        levantar las dos apps. La parte estática está verificada en TASK-09
