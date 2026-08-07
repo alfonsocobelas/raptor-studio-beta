@@ -199,6 +199,25 @@ describe('deriveTheme', () => {
       }
     })
 
+    it('a theme without radius keeps the skeleton radius (frozen fixtures intact)', () => {
+      // GIVEN el tema neutro, que no declara radio
+      const tokens = deriveTheme(neutral())
+
+      // THEN el radio es el del esqueleto
+      expect(tokens.radius).toBe('0.625rem')
+    })
+
+    it('a theme with radius carries it into its tokens', () => {
+      // GIVEN un tema que declara su radio
+      const theme = { ...tinted(), radius: '0.25rem' }
+
+      // WHEN se deriva
+      const tokens = deriveTheme(theme)
+
+      // THEN el radio viaja con el resto de tokens
+      expect(tokens.radius).toBe('0.25rem')
+    })
+
     it('does not touch the ramp of other themes', () => {
       // GIVEN un tema que retoca la rampa
       deriveTheme(tinted())

@@ -13,6 +13,8 @@ export interface ThemeSubstitutions {
   themeClass: string
   lightTokens: string
   darkTokens: string
+  /** Radio de esquinas del tema (fase 2); sin declarar, el del esqueleto */
+  radius: string
 }
 
 const block = (tokens: Record<string, string>): string =>
@@ -29,6 +31,7 @@ export function themeSubstitutions(themeId: string): ThemeSubstitutions {
   return {
     themeClass: `theme-${theme.id}`,
     lightTokens: block(tokens.light),
-    darkTokens: block(tokens.dark)
+    darkTokens: block(tokens.dark),
+    radius: tokens.radius
   }
 }

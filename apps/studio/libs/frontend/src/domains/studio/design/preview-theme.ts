@@ -15,5 +15,10 @@ export function previewThemeVars(themeId: string, mode: PreviewTheme): Record<st
 
   const tokens = deriveTheme(theme)[mode]
 
-  return Object.fromEntries(Object.entries(tokens).map(([name, value]) => [`--${name}`, value]))
+  return {
+    ...Object.fromEntries(Object.entries(tokens).map(([name, value]) => [`--${name}`, value])),
+    // el radio solo se pisa si el tema lo DECLARA: inline gana a las reglas del
+    // preview-scope, y sin esto la piel material perdería su redondeo propio
+    ...(theme.radius ? { '--radius': theme.radius } : {})
+  }
 }

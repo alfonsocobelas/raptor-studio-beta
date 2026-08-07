@@ -64,6 +64,33 @@ describe('previewThemeVars — el lienzo pinta con los tokens que se van a emiti
     }
   })
 
+  it('un tema sin radio declarado NO pisa el radio del lienzo (la piel material redondea más)', () => {
+    // GIVEN el neutro, que no declara radio
+    // WHEN se piden sus variables
+    const vars = previewThemeVars('neutral', 'light')
+
+    // THEN no hay --radius inline: mandan las reglas de la piel del preview-scope
+    expect(vars['--radius']).toBeUndefined()
+  })
+
+  it('un tema CON radio declarado lo lleva al lienzo', () => {
+    // GIVEN un tema del catálogo al que se le fija un radio
+    const theme = findTheme('ocean')
+    if (!theme) throw new Error('ocean no está en el catálogo')
+    const original = theme.radius
+    theme.radius = '0.25rem'
+
+    try {
+      // WHEN se piden sus variables
+      const vars = previewThemeVars('ocean', 'light')
+
+      // THEN el lienzo redondea exactamente lo que la app emitirá
+      expect(vars['--radius']).toBe('0.25rem')
+    } finally {
+      theme.radius = original
+    }
+  })
+
   it('un tema desconocido se dibuja neutro en vez de dejar el lienzo en blanco', () => {
     // GIVEN un id fuera del catálogo
     // WHEN se piden sus variables

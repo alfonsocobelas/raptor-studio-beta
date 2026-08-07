@@ -75,7 +75,12 @@ export interface Theme {
   dark: ThemeAction
   /** El rojo de error rara vez es de marca; por defecto, el de shadcn. */
   destructive?: { light: string; dark: string }
+  /** Radio de esquinas (fase 2). Sin declarar → el del esqueleto, fixtures intactas. */
+  radius?: string
 }
+
+/** El radio que styles.css lleva escrito desde el esqueleto. */
+export const DEFAULT_RADIUS = '0.625rem'
 
 /**
  * Orden de los tokens en el fichero emitido. NO es cosmético: la fixture de oro
@@ -113,6 +118,8 @@ export const TOKEN_ORDER: string[] = [
 export interface ThemeTokens {
   light: Record<string, string>
   dark: Record<string, string>
+  /** No es por modo: la esquina redondea igual en claro y en oscuro. */
+  radius: string
 }
 
 const DEFAULT_DESTRUCTIVE = {
@@ -212,6 +219,7 @@ export function deriveTheme(theme: Theme): ThemeTokens {
       border: DARK_BORDER,
       input: DARK_INPUT,
       'sidebar-border': DARK_BORDER
-    }
+    },
+    radius: theme.radius ?? DEFAULT_RADIUS
   }
 }

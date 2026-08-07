@@ -118,6 +118,17 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
     })
   })
 
+  describe('el radio del tema (fase 2)', () => {
+    it('sin radio declarado emite el del esqueleto: fixture congelada intacta', () => {
+      // GIVEN el catálogo actual, donde ningún tema declara radio
+      // WHEN se preparan las sustituciones
+      const subs = themeSubstitutions('neutral')
+
+      // THEN el radio es el que styles.css lleva escrito hoy
+      expect(subs.radius).toBe('0.625rem')
+    })
+  })
+
   describe('un tema desconocido', () => {
     it('cae al neutro en vez de romper la generación a medias', () => {
       // GIVEN un id que el catálogo no conoce (el gate del schema ya lo rechazó antes)

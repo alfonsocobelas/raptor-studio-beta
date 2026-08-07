@@ -10,7 +10,7 @@
 
 ## Fase 2 — Forma
 
-- [ ] TASK-06 — `--radius` por tema: schema, emisión y lienzo
+- [x] TASK-06 — `--radius` por tema: schema, emisión y lienzo (mecanismo; el catálogo sigue en el radio del esqueleto hasta decidir forma por tema)
 
 ## Fase 3 — Tipografía
 
