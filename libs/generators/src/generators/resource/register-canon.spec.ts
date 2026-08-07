@@ -2,6 +2,8 @@ import { renderAggregate } from './build-aggregate'
 import { project } from './models/project.model'
 import { contract } from './models/contract.model'
 import { license } from './models/license.model'
+import { customer } from './models/customer.model'
+import { renderApplication } from './build-application'
 import { renderDomainTests } from './build-tests'
 
 /**
@@ -84,7 +86,9 @@ describe('renderDomainTests — unset() sólo donde existe', () => {
   it('project: el builder usa null cuando el VO no declara unset()', () => {
     const args = renderDomainTests(project).builderCreateArgs.join('\n')
 
-    expect(args).toContain('sapProjectId: this.props.sapProjectId != null ? SapProjectId.create(this.props.sapProjectId) : null')
+    expect(args).toContain(
+      'sapProjectId: this.props.sapProjectId != null ? SapProjectId.create(this.props.sapProjectId) : null'
+    )
   })
 
   it('project: y usa unset() en el VO que sí lo declara', () => {
@@ -114,5 +118,91 @@ describe('renderAggregate — unset() sólo en campos nulables', () => {
 
     expect(args).toContain('totalValue: ContractValue.create(props.totalValue ?? 0)')
     expect(args).not.toContain('totalValue: props.totalValue')
+  })
+})
+
+/**
+ * Spec 27, TASK-07: el check de unicidad de un unique NULLABLE va con guard, como el canon
+ * (`register-contract-usecase.service.ts:15`: `if (contract.contractNumber) {`). Sin él, el
+ * getter Nullable no compila con strictNullChecks. El unique OPCIONAL (ifPresent) ya tenía el
+ * suyo (`hasTaxId()`); son dos semánticas distintas.
+ */
+describe('renderApplication — el check de unicidad respeta el Nullable', () => {
+  it('contract: el check del contractNumber va dentro de `if (contract.contractNumber)`', () => {
+    const blocks = renderApplication(contract, true).registerCheckBlocks.join('\n')
+
+    expect(blocks).toContain('if (contract.contractNumber) {')
+    expect(blocks).toContain(
+      'const contractNumberExists = await this.contractRepository.exists(withContractNumber(contract.contractNumber))'
+    )
+  })
+
+  it('customer: el unique requerido no lleva guard de nulidad; el opcional conserva su ifPresent', () => {
+    const blocks = renderApplication(customer, true).registerCheckBlocks.join('\n')
+
+    expect(blocks).not.toContain('if (customer.sapCustomerId)')
+    expect(blocks).toContain('if (customer.hasTaxId()) {')
+  })
+})
+
+/**
+ * Y el test de integración emitido: `toPrimitives().contractNumber` es Nullable — la mother
+ * siempre lo rellena, pero el tipo no lo sabe. Cae a '' para que compile sin mentir.
+ */
+describe('renderDomainTests — el finder del unique nullable compila', () => {
+  it('contract: el acceso al primitive lleva el fallback', () => {
+    const finders = renderDomainTests(contract).uniqueFinders
+
+    expect(finders).toEqual([expect.objectContaining({ param: 'contractNumber', nullable: true })])
+  })
+
+  it('customer: los uniques no nullables no lo llevan', () => {
+    const finders = renderDomainTests(customer).uniqueFinders
+
+    expect(finders.map(f => f.nullable)).toEqual([false, false])
+  })
+})
+
+/**
+ * Spec 27, TASK-07: `upcomingMaintenanceFee` (nullable + unset). Su prop del alta es opcional
+ * (`?: Nullable<number>`), así que `=== null` deja pasar undefined a create() y no compila. El
+ * canon usa `!= null … : ContractValue.unset()` (contract.ts:194). La rama existía pero era
+ * inalcanzable: la de nullable simple la eclipsaba.
+ */
+describe('renderAggregate — nullable con unset en el alta', () => {
+  it('contract: el fee cae al null con nombre y cubre null y undefined', () => {
+    const args = renderAggregate(contract).registerArgs
+
+    expect(args).toContain(
+      'upcomingMaintenanceFee: props.upcomingMaintenanceFee != null ? ContractValue.create(props.upcomingMaintenanceFee) : ContractValue.unset()'
+    )
+  })
+})
+
+/**
+ * Spec 27, TASK-07 — los tests emitidos SE EJECUTAN por primera vez, y tres defectos latentes
+ * salieron a la luz. Los defaults de la mother deben satisfacer los VOs que ahora validan de
+ * verdad; el grupo de sanitización no puede alimentar texto libre a un VO de longitud exacta; y
+ * el detalle de un agregado con composición añade los hijos a los primitives.
+ */
+describe('renderDomainTests — los defaults de la mother respetan al VO compartido', () => {
+  it('license: el contractNumber por defecto no lleva espacios (noInnerWhitespace)', () => {
+    const lines = renderDomainTests(license).builderDefaultLines.join('\n')
+
+    expect(lines).toContain("contractNumber: 'ContractNumber-1'")
+  })
+
+  it('contract: idem para el suyo, que es unique y ya salía aleatorio sin espacios', () => {
+    const lines = renderDomainTests(contract).builderDefaultLines.join('\n')
+
+    expect(lines).toContain('contractNumber: randomContractNumber()')
+  })
+})
+
+describe('renderDomainTests — sanitización sólo donde el texto libre es válido', () => {
+  it('contract: el VO de longitud exacta (currency) queda fuera del grupo', () => {
+    const sanitizations = renderDomainTests(contract).voTests.sanitizations
+
+    expect(sanitizations.map(s => s.voName)).not.toContain('ContractCurrency')
   })
 })

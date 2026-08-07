@@ -15,6 +15,8 @@ export interface UniqueSpecBinding {
   voName: string
   /** true → VO import from ../value-objects, false → context-shared */
   voLocal: boolean
+  /** el getter del agregado es Nullable: el check de unicidad va con guard */
+  nullable: boolean
   /** kebab file of the VO ('sap-id') */
   voFileName: string
   /** <fileName>-with-<field-kebab> (no extension) */
@@ -60,6 +62,7 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
       specClass: `${className}With${cap}Specification`,
       voName: voNameOf(field),
       voLocal: !field.voShared,
+      nullable: field.nullable ?? false,
       voFileName: names(voNameOf(field)).fileName,
       specFileName: `${n.fileName}-with-${names(name).fileName}`,
       field: name,
@@ -83,10 +86,13 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
       `  throw new AlreadyExistsError('${className}', '${s.field}', ${prop}.${s.field}.value)`,
       `}`
     ]
-    if (!s.optional) {
+    // el unique NULLABLE va con guard de nulidad (canon: register-contract-usecase.service.ts:15);
+    // el OPCIONAL con su ifPresent (hasTaxId). Son dos semánticas distintas y no se mezclan.
+    const wrap = s.optional ? `${prop}.has${cap}()` : s.nullable ? `${prop}.${s.field}` : null
+    if (!wrap) {
       return check.map(line => (line ? `    ${line}` : line)).join('\n')
     }
-    return [`    if (${prop}.has${cap}()) {`, ...check.map(line => (line ? `      ${line}` : line)), `    }`].join('\n')
+    return [`    if (${wrap}) {`, ...check.map(line => (line ? `      ${line}` : line)), `    }`].join('\n')
   })
 
   const updateCheckBlocks = uniqueSpecs.map(s => {

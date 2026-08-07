@@ -4,7 +4,7 @@ import { FilterField } from '../../../../../shared/domain/query/filter-field'
 import { FilterOperator, Operator } from '../../../../../shared/domain/query/filter-operator'
 import { FilterValue } from '../../../../../shared/domain/query/filter-value'
 import { Filters } from '../../../../../shared/domain/query/filters'
-import { ContractNumber } from '../../../shared/domain/value-objects/contract-number.vo'
+import { ContractNumber } from '../../../../shared/domain/value-objects/contract-number.vo'
 
 export class ContractWithContractNumberSpecification extends Criteria {
   private constructor(contractNumber: ContractNumber) {

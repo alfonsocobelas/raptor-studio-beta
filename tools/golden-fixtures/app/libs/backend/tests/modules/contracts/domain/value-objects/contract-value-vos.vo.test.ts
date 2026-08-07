@@ -195,18 +195,6 @@ describe('BusinessModel — sanitization', () => {
   })
 })
 
-describe('ContractCurrency — sanitization', () => {
-  it('should trim leading and trailing whitespace', () => {
-    const sample = '12345'
-    expect(ContractCurrency.create(`  ${sample}  `).value).toBe(sample)
-  })
-
-  it('should throw for inner whitespace (code field)', () => {
-    const sample = '12345'
-    expect(() => ContractCurrency.create(`${sample} ${sample}`)).toThrow(InvalidArgumentError)
-  })
-})
-
 describe('ContractNotes — sanitization', () => {
   it('should trim edges and keep inner whitespace (free text)', () => {
     expect(ContractNotes.create('  Sample text  ').value).toBe('Sample text')

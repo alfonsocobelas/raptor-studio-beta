@@ -58,7 +58,7 @@ describe('Mongoose<%- className %>Repository (integration)', () => {
       const <%- propertyName %> = <%- className %>Mother.random()
       await repository.register(<%- propertyName %>)
 
-      const found = await repository.<%- f.method %>(<%- f.voName %>.create(<%- propertyName %>.toPrimitives().<%- f.param %>))
+      const found = await repository.<%- f.method %>(<%- f.voName %>.create(<%- propertyName %>.toPrimitives().<%- f.param %><% if (f.nullable) { %> ?? ''<% } %>))
 
       expect(found?.toPrimitives()).toEqual(<%- propertyName %>.toPrimitives())
     })
@@ -67,7 +67,7 @@ describe('Mongoose<%- className %>Repository (integration)', () => {
       // los valores de la mother son aleatorios: este nunca se registró
       const unregistered = <%- className %>Mother.random()
 
-      const found = await repository.<%- f.method %>(<%- f.voName %>.create(unregistered.toPrimitives().<%- f.param %>))
+      const found = await repository.<%- f.method %>(<%- f.voName %>.create(unregistered.toPrimitives().<%- f.param %><% if (f.nullable) { %> ?? ''<% } %>))
 
       expect(found).toBeNull()
     })

@@ -34,7 +34,9 @@ describe('TypeOrmContractRepository (integration)', () => {
       const contract = ContractMother.random()
       await repository.register(contract)
 
-      const found = await repository.findByContractNumber(ContractNumber.create(contract.toPrimitives().contractNumber))
+      const found = await repository.findByContractNumber(
+        ContractNumber.create(contract.toPrimitives().contractNumber ?? '')
+      )
 
       expect(found?.toPrimitives()).toEqual(contract.toPrimitives())
     })
@@ -44,7 +46,7 @@ describe('TypeOrmContractRepository (integration)', () => {
       const unregistered = ContractMother.random()
 
       const found = await repository.findByContractNumber(
-        ContractNumber.create(unregistered.toPrimitives().contractNumber)
+        ContractNumber.create(unregistered.toPrimitives().contractNumber ?? '')
       )
 
       expect(found).toBeNull()

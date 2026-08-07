@@ -286,15 +286,19 @@ function registerArg(c: FieldCtx): string {
     if (c.field.required) return `props.${c.name}`
     return `props.${c.name} ?? ${c.nullable ? 'null' : defaultLiteral(c)}`
   }
-  if (c.nullable && !isDateShared(c)) {
-    return `props.${c.name} === null ? null : ${c.voName}.create(props.${c.name})`
+  // el primitive de una fecha es string: se construye con `new Date(...)` y el vacío es null
+  // (o el null con nombre si el campo declara `unset`). Canon: license.ts:151, contract.ts:194
+  if (isDateShared(c)) {
+    return `props.${c.name} ? ${c.voName}.create(new Date(props.${c.name})) : ${dateEmpty(c)}`
   }
-  if (isDateShared(c) && c.unset) {
-    return `props.${c.name} ? ContractDate.create(new Date(props.${c.name})) : ContractDate.unset()`
-  }
-  // `unset` describe la clase del VO; que el campo pueda quedar sin valor lo dice `nullable`
+  // `unset` describe la clase del VO; que el campo pueda quedar sin valor lo dice `nullable`.
+  // Va ANTES que el nullable simple (lo eclipsaba): la prop del alta es opcional, y `=== null`
+  // dejaba pasar undefined a create(). Canon: contract.ts:194 (`!= null … : ContractValue.unset()`)
   if (c.unset && c.nullable) {
     return `props.${c.name} != null ? ${c.voName}.create(props.${c.name}) : ${c.voName}.unset()`
+  }
+  if (c.nullable) {
+    return `props.${c.name} === null ? null : ${c.voName}.create(props.${c.name})`
   }
   if (c.field.required) return `${c.voName}.create(props.${c.name})`
   return `${c.voName}.create(props.${c.name} ?? ${defaultLiteral(c)})`
@@ -306,8 +310,8 @@ function fromPrimitivesArg(c: FieldCtx): string {
     return `props.${c.name} ? SyncTimestamp.fromISOString(props.${c.name}) : null`
   }
   if (c.sync) return `props.${c.name} ? ${c.voName}.create(props.${c.name}) : ${c.voName}.create(${defaultLiteral(c)})`
-  if (c.maint && isDateShared(c)) {
-    return `props.${c.name} ? ContractDate.create(new Date(props.${c.name})) : ContractDate.${c.unset ? 'unset()' : 'unset()'}`
+  if (isDateShared(c)) {
+    return `props.${c.name} ? ${c.voName}.create(new Date(props.${c.name})) : ${dateEmpty(c)}`
   }
   if (c.maint && c.unset) {
     return `props.${c.name} != null ? ${c.voName}.create(props.${c.name}) : ${c.voName}.unset()`
@@ -341,10 +345,20 @@ function updateGuard(c: FieldCtx): string {
   // campos sin VO (snapshots numéricos): asignación cruda, como en toPrimitives
   const assign = !c.voName
     ? `this._${c.name} = updates.${c.name}`
-    : c.nullable
-      ? `this._${c.name} = updates.${c.name} === null ? null : ${c.voName}.create(updates.${c.name})`
-      : `this._${c.name} = ${c.voName}.create(updates.${c.name})`
+    : isDateShared(c)
+      ? `this._${c.name} = updates.${c.name} ? ${c.voName}.create(new Date(updates.${c.name})) : ${dateEmpty(c)}`
+      : c.nullable
+        ? `this._${c.name} = updates.${c.name} === null ? null : ${c.voName}.create(updates.${c.name})`
+        : `this._${c.name} = ${c.voName}.create(updates.${c.name})`
   return `    if (updates.${c.name} !== undefined) {\n      ${assign}\n    }`
+}
+
+/**
+ * El vacío de una fecha compartida: el null con nombre si el campo declara `unset` o es de oleada
+ * (canon: planToGoLive usa `ContractDate.unset()` sin declararlo; contractEndDate usa `null`).
+ */
+function dateEmpty(c: FieldCtx): string {
+  return c.unset || c.maint ? `${c.voName}.unset()` : 'null'
 }
 
 function periodUpdateGuard(period: { start: string; end: string }): string {

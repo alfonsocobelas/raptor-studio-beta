@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { SHARED_VOS } from './models/shared-vos'
 import { MODELS } from './models/registry'
 import { FieldDefinition, ResourceDefinition } from '@acc/schema'
 
@@ -16,6 +17,8 @@ export interface DomainTestBindings {
     voFileName: string
     shared: boolean
     givenName: string
+    /** el primitive del campo es Nullable (spec 44): el test emitido cae a '' para compilar */
+    nullable: boolean
   }[]
   portImports: string[]
   builderImports: string[]
@@ -105,7 +108,8 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     voFileName: c.voName.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()),
     // el import del mock debe apuntar a donde vive el VO: módulo (vo) o shared del contexto (voShared)
     shared: Boolean(c.field.voShared),
-    givenName: `givenBy${cap(c.name)}`
+    givenName: `givenBy${cap(c.name)}`,
+    nullable: c.nullable
   }))
 
   // withX canónicos: id + únicos + relaciones + enums de dominio (vo con values)
@@ -189,9 +193,16 @@ function renderVoTests(definition: ResourceDefinition, ctxs: Ctx[]): DomainTestB
     exacts: owned.filter(c => voOf(c).lengthRule === 'exact').map(c => ({ voName: c.voName, lengthKey: key(c) })),
     arrays: owned.filter(c => c.field.column?.array).map(c => ({ voName: c.voName })),
     booleans: owned.filter(c => c.field.type === 'boolean').map(c => ({ voName: c.voName })),
-    // los VOs de email quedan fuera: su regex rechaza el texto libre que usa este grupo
+    // fuera del grupo: emails (su regex rechaza el texto libre) y longitudes exactas (el
+    // '  Sample text  ' del test no mide lo que el VO exige)
     sanitizations: owned
-      .filter(c => c.field.type === 'string' && !voOf(c).values?.length && voOf(c).email !== true)
+      .filter(
+        c =>
+          c.field.type === 'string' &&
+          !voOf(c).values?.length &&
+          voOf(c).email !== true &&
+          voOf(c).lengthRule !== 'exact'
+      )
       .map(c => ({
         voName: c.voName,
         inner: voOf(c).noInnerWhitespace === true,
@@ -220,6 +231,12 @@ function voName(field: FieldDefinition): string {
 
 function builderDefault(definition: ResourceDefinition, c: Ctx): string {
   if (c.unique && c.field.type === 'string') return `random${cap(c.name)}()`
+  // el default de un voShared debe SATISFACER su declaración: ahora que la capa compartida se
+  // emite, sus guardas corren de verdad y 'ContractNumber 1' (con espacio) tira la suite emitida
+  const shared = c.field.voShared ? SHARED_VOS[c.field.voShared.name] : undefined
+  if (shared?.kind === 'string' && shared.noInnerWhitespace) {
+    return `'${names(c.name).className}-1'`
+  }
   if (c.field.type === 'uuid') return 'uuidv7()'
   if (c.sync && (c.nullable || c.field.voShared)) {
     const d = c.field.column?.default
@@ -261,11 +278,14 @@ function createArg(c: Ctx): string {
     if (c.nullable) return `this.props.${c.name} ?? null`
     return c.maint ? `this.props.${c.name} ?? ${emptyForType(c)}` : `this.props.${c.name}`
   }
-  if (c.nullable && !isDate && !c.maint) {
-    return `this.props.${c.name} === null ? null : ${c.voName}.create(this.props.${c.name})`
+  // el primitive de una fecha es string: se construye con `new Date(...)` y el vacío es null
+  // (o el null con nombre si el VO lo declara). Canon: license.builder.ts:82
+  if (isDate) {
+    const absent = c.unset || c.maint ? `${c.voName}.unset()` : 'null'
+    return `this.props.${c.name} ? ${c.voName}.create(new Date(this.props.${c.name})) : ${absent}`
   }
-  if (c.maint && isDate) {
-    return `this.props.${c.name} ? ContractDate.create(new Date(this.props.${c.name})) : ContractDate.unset()`
+  if (c.nullable && !c.maint) {
+    return `this.props.${c.name} === null ? null : ${c.voName}.create(this.props.${c.name})`
   }
   if (c.maint && c.nullable) {
     // `unset()` sólo en los VOs que lo declaran; el resto, `null` (canon: `sapProjectId: … : null`)
@@ -339,7 +359,9 @@ function renderBuilderImports(
   lines.push(`import { ${n.className}Id } from '${globalShared}/${definition.plural}/${n.fileName}-id.vo'`)
   for (const c of ctxs.filter(x => x.field.relation && x.field.type === 'uuid')) {
     const rel = names(c.field.relation?.to ?? '')
-    lines.push(`import { ${rel.className}Id } from '${globalShared}/${pluralOf(c.field.relation?.to ?? '')}/${rel.fileName}-id.vo'`)
+    lines.push(
+      `import { ${rel.className}Id } from '${globalShared}/${pluralOf(c.field.relation?.to ?? '')}/${rel.fileName}-id.vo'`
+    )
   }
   return lines
 }

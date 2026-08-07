@@ -20,7 +20,10 @@ describe('GetCustomerUseCase', () => {
 
       const result = await useCase.invoke({ id: customer.id.value })
 
-      expect(result).toEqual(customer.toPrimitives())
+      expect(result).toEqual({
+        ...customer.toPrimitives(),
+        contacts: customer.contacts.map(child => child.toPrimitives())
+      })
     })
   })
 

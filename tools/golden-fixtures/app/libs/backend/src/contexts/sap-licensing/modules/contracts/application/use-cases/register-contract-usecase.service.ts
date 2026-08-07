@@ -11,10 +11,12 @@ export class RegisterContractUseCase {
 
   async invoke(input: RegisterContractInput): Promise<void> {
     const contract = Contract.register(input)
-    const contractNumberExists = await this.contractRepository.exists(withContractNumber(contract.contractNumber))
+    if (contract.contractNumber) {
+      const contractNumberExists = await this.contractRepository.exists(withContractNumber(contract.contractNumber))
 
-    if (contractNumberExists) {
-      throw new AlreadyExistsError('Contract', 'contractNumber', contract.contractNumber.value)
+      if (contractNumberExists) {
+        throw new AlreadyExistsError('Contract', 'contractNumber', contract.contractNumber.value)
+      }
     }
 
     await this.contractRepository.register(contract)

@@ -91,7 +91,25 @@
 
 ## Cierre
 
-- [ ] **TASK-07**: los tests emitidos **se ejecutan** en la app generada y pasan; el gate
+- [x] **TASK-07**: los tests emitidos **se ejecutan** en la app generada y pasan; el gate
       `typecheck-emitted.sh` pasa a medir la app de oro por defecto (`--models=customer,contract,
     license,project`) y sale **0 errores**. Re-baseline de las fixtures de app y app-mongo con las
       piezas nuevas. Anotar aquí la medición final.
+      · **medición final: 49 → 0 errores.** `bash tools/typecheck-emitted.sh` (sin args, nuevo
+        default = app de oro) → «el código emitido compila fuera del acelerador: 0 errores»
+      · **los tests emitidos corren y pasan: 383/383 en 34 suites** (jest, fuera del monorepo, con
+        `npm install` real), incluidos los 6 de la capa compartida y las 216 líneas de la
+        normalización española — el contrato de la divergencia asumida queda demostrado
+      · los últimos 9 errores eran CINCO defectos del emisor de módulo, no de la capa compartida:
+        (1) la specification única importaba el VO compartido a 3 niveles, canon usa 4 — la fixture
+        se congeló con el mismo defecto y el golden nunca lo vio; (2) date voShared nullable
+        tratado como string en register/fromPrimitives/update/builder (falta `new Date(...)`);
+        (3) el check de unicidad de un unique NULLABLE sin guard (canon: `if (contract.contractNumber)`);
+        (4) la rama `unset && nullable` del alta era inalcanzable — el fee pasaba undefined a create;
+        (5) `toPrimitives().contractNumber` es Nullable en el test de integración → `?? ''`
+      · y al EJECUTAR los tests por primera vez salieron 3 defectos latentes más de los tests
+        emitidos: el default de la mother violaba `noInnerWhitespace` ('ContractNumber 1'),
+        el grupo de sanitización alimentaba texto libre a un VO de longitud exacta (currency), y
+        el test del get no sabía de composición (el detalle añade `contacts`)
+      · regla confirmada dos veces en esta tarea: compilar no basta — el gate de compilación no ve
+        lo que sólo se rompe en runtime, y el golden no ve lo que se congeló ya roto

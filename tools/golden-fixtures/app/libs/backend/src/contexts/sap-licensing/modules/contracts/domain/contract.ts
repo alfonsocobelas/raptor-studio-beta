@@ -194,7 +194,9 @@ export class Contract extends AggregateRoot {
         ? ContractDate.create(new Date(props.upcomingMaintenanceEnd))
         : ContractDate.unset(),
       upcomingMaintenanceFee:
-        props.upcomingMaintenanceFee === null ? null : ContractValue.create(props.upcomingMaintenanceFee),
+        props.upcomingMaintenanceFee != null
+          ? ContractValue.create(props.upcomingMaintenanceFee)
+          : ContractValue.unset(),
       period: Period.create(
         props.startDate ? ContractDate.create(new Date(props.startDate)) : null,
         props.endDate ? ContractDate.create(new Date(props.endDate)) : null

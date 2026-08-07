@@ -7,7 +7,7 @@ import { Filters } from '../../../../../shared/domain/query/filters'
 <%_ if (spec.voLocal) { _%>
 import { <%- spec.voName %> } from '../value-objects/<%- spec.voFileName %>.vo'
 <%_ } else { _%>
-import { <%- spec.voName %> } from '../../../shared/domain/value-objects/<%- spec.voFileName %>.vo'
+import { <%- spec.voName %> } from '../../../../shared/domain/value-objects/<%- spec.voFileName %>.vo'
 <%_ } _%>
 
 export class <%- spec.specClass %> extends Criteria {

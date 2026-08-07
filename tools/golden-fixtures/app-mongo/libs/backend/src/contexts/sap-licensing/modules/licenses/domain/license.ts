@@ -150,7 +150,7 @@ export class License extends AggregateRoot {
       customerId: CustomerId.create(props.customerId ?? ''),
       customerName: CustomerName.create(props.customerName),
       contractNumber: ContractNumber.create(props.contractNumber ?? ''),
-      contractEndDate: ContractDate.create(props.contractEndDate ?? ''),
+      contractEndDate: props.contractEndDate ? ContractDate.create(new Date(props.contractEndDate)) : null,
       metricId: MetricId.create(props.metricId ?? ''),
       metricName: MetricName.create(props.metricName ?? ''),
       subSolutionAreaName: SubSolutionAreaName.create(props.subSolutionAreaName ?? ''),
@@ -173,7 +173,7 @@ export class License extends AggregateRoot {
       CustomerId.create(props.customerId),
       CustomerName.create(props.customerName),
       ContractNumber.create(props.contractNumber),
-      props.contractEndDate === null ? null : ContractDate.create(props.contractEndDate),
+      props.contractEndDate ? ContractDate.create(new Date(props.contractEndDate)) : null,
       MetricId.create(props.metricId),
       MetricName.create(props.metricName),
       SubSolutionAreaName.create(props.subSolutionAreaName),
@@ -236,7 +236,7 @@ export class License extends AggregateRoot {
       this._contractNumber = ContractNumber.create(updates.contractNumber)
     }
     if (updates.contractEndDate !== undefined) {
-      this._contractEndDate = updates.contractEndDate === null ? null : ContractDate.create(updates.contractEndDate)
+      this._contractEndDate = updates.contractEndDate ? ContractDate.create(new Date(updates.contractEndDate)) : null
     }
     if (updates.metricId !== undefined) {
       this._metricId = MetricId.create(updates.metricId)

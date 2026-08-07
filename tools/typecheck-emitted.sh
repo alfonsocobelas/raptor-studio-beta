@@ -9,14 +9,16 @@
 #
 # Lento (~2 min por app): no va en el golden de cada commit. Se corre al cerrar una spec y en CI.
 #
-#   bash tools/typecheck-emitted.sh                      # app de demo (boutique)
+#   bash tools/typecheck-emitted.sh                      # la app de oro (spec 27: debe dar 0 errores)
 #   bash tools/typecheck-emitted.sh --app=boutique --infra=azure
 #   bash tools/typecheck-emitted.sh --models=customer,contract,license,project
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ARGS=("$@")
-[[ ${#ARGS[@]} -eq 0 ]] && ARGS=(--app=boutique)
+# por defecto se mide la app de ORO: los cuatro módulos del canon ejercitan todos los kind de VO
+# compartido, el período, la composición y los uniques — es donde los 49 errores vivían (spec 27)
+[[ ${#ARGS[@]} -eq 0 ]] && ARGS=(--models=customer,contract,license,project)
 
 NAME="typecheck-emitted"
 STAGING="$ROOT/tmp/$NAME"

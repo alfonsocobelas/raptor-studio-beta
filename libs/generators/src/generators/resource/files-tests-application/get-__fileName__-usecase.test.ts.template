@@ -20,7 +20,14 @@ describe('Get<%- className %>UseCase', () => {
 
       const result = await useCase.invoke({ id: <%- propertyName %>.id.value })
 
+<%_ if (aggregate.composition) { _%>
+      expect(result).toEqual({
+        ...<%- propertyName %>.toPrimitives(),
+        <%- aggregate.composition.childrenProp %>: <%- propertyName %>.<%- aggregate.composition.childrenProp %>.map(child => child.toPrimitives())
+      })
+<%_ } else { _%>
       expect(result).toEqual(<%- propertyName %>.toPrimitives())
+<%_ } _%>
     })
   })
 
