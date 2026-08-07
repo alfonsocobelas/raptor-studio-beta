@@ -43,9 +43,13 @@
 
 ## Cierre
 
-- [ ] **TASK-07**: Re-baseline de la fixture de app como "todo encendido"
+- [x] **TASK-07**: Re-baseline de la fixture de app como "todo encendido"
       (`--plugins=auth,email --infra=azure`), revisión del diff a mano, y commit propio
       `chore(golden): …`. Los 6 gates en verde.
+      · **hecha de facto en `47aa445`** (TASK-05/06): el gate `app` de `golden-diff.sh` corre desde
+        entonces con `--plugins=auth,email --infra=azure --dashboard` y la fixture lleva las piezas
+        azure (logger, storage, config loaders). Verificado hoy (2026-08-07): 6 gates en verde con
+        635 ficheros en `app`. Sólo faltaba cerrar esta casilla
 - [x] **TASK-08**: Verificación fuera del árbol del acelerador. **Hecha 2026-08-04**: las dos apps
       (`--app=boutique` sin infra y con `--infra=azure`) se generaron, se movieron FUERA del
       monorepo, y allí `npm install` + `tsc` dan **0 errores** en ambas. La azure instala y usa sus
