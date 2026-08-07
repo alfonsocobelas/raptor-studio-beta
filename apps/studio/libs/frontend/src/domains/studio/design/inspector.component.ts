@@ -58,6 +58,15 @@ import { DesignStore } from './design-store'
         >
           + Añadir columna
         </button>
+        <label class="text-muted-foreground mt-3 block text-xs font-semibold">Para qué existe</label>
+        <textarea
+          class="border-input mt-1 w-full rounded border px-2 py-1 text-xs"
+          rows="2"
+          placeholder="Una frase de negocio (viaja con el diseño y aterriza en la app)"
+          [ngModel]="resource.brief ?? ''"
+          (change)="saveBrief(resource.name, $event)"
+          data-testid="resource-brief"
+        ></textarea>
         @if (store.lastError(); as error) {
           <p class="text-destructive mt-2 text-xs">{{ error }}</p>
         }
@@ -78,6 +87,10 @@ export class InspectorComponent {
     const resource = this.draft()
     if (!resource) return
     this.store.updateField(resource.name, index, { label, name: camel(label) || `campo${index + 1}` })
+  }
+
+  protected saveBrief(name: string, event: Event): void {
+    this.store.setResourceBrief(name, (event.target as HTMLTextAreaElement).value)
   }
 
   protected retype(index: number, type: string): void {

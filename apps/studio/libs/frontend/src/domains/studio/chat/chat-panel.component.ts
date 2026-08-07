@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp } from '@ng-icons/lucide'
 import { autosize, shouldSubmit } from './chat-input'
 import { StudioChatService } from './studio-chat.service'
+import { DesignStore } from '../design/design-store'
 
 /**
  * Panel de chat del estudio: el usuario describe la app y la IA muta el
@@ -22,6 +23,49 @@ import { StudioChatService } from './studio-chat.service'
           <span class="text-amber-600" data-testid="chat-mode-fake">· demo sin IA</span>
         }
       </h2>
+      <!-- Contexto que no puedes ver ni editar es contexto en el que no puedes confiar (spec 22) -->
+      <details class="bg-card mb-2 rounded-lg border" data-testid="brief-panel" [open]="briefOpen()">
+        <summary
+          class="text-muted-foreground cursor-pointer select-none px-3 py-2 text-xs font-semibold"
+          (click)="briefOpen.set(!briefOpen()); $event.preventDefault()"
+        >
+          Contexto del negocio
+          @if (!store.brief()) {
+            <span class="font-normal">· aún vacío: la IA lo destila de lo que cuentes</span>
+          }
+        </summary>
+        <div class="space-y-2 px-3 pb-3">
+          <textarea
+            class="border-input w-full rounded border px-2 py-1 text-xs"
+            rows="3"
+            placeholder="Qué hace este negocio"
+            [ngModel]="store.brief()?.business ?? ''"
+            (change)="saveBrief($event)"
+            data-testid="brief-business"
+          ></textarea>
+          <textarea
+            class="border-input w-full rounded border px-2 py-1 text-xs"
+            rows="3"
+            placeholder="Reglas (una por línea)"
+            [ngModel]="rulesText()"
+            (change)="saveRules($event)"
+            data-testid="brief-rules"
+          ></textarea>
+          @if (store.brief()?.glossary?.length) {
+            <ul class="text-muted-foreground space-y-0.5 text-xs" data-testid="brief-glossary">
+              @for (entry of store.brief()?.glossary; track entry.term) {
+                <li>
+                  <span class="text-foreground font-medium">{{ entry.term }}</span
+                  >: {{ entry.means }}
+                </li>
+              }
+            </ul>
+          }
+          @if (store.lastError(); as error) {
+            <p class="text-destructive text-xs">{{ error }}</p>
+          }
+        </div>
+      </details>
       <div class="mb-2 flex-1 space-y-2 overflow-auto" data-testid="chat-history">
         @for (entry of chat.history(); track $index) {
           @if (entry.role === 'user') {
@@ -84,6 +128,33 @@ import { StudioChatService } from './studio-chat.service'
   `
 })
 export class ChatPanelComponent {
+  protected readonly store = inject(DesignStore)
+  protected readonly briefOpen = signal(false)
+
+  protected readonly rulesText = computed(() => (this.store.brief()?.rules ?? []).join('\n'))
+
+  /** Editar a mano manda: lo que se guarda aquí es lo que el turno siguiente recibe. */
+  protected saveBrief(event: Event): void {
+    const business = (event.target as HTMLTextAreaElement).value.trim()
+    const current = this.store.brief()
+    if (!business) {
+      // sin negocio no hay brief; las reglas sueltas no se sostienen sin él
+      this.store.setBrief(undefined)
+      return
+    }
+    this.store.setBrief({ ...(current ?? {}), business })
+  }
+
+  protected saveRules(event: Event): void {
+    const rules = (event.target as HTMLTextAreaElement).value
+      .split('\n')
+      .map(rule => rule.trim())
+      .filter(Boolean)
+    const current = this.store.brief()
+    if (!current) return
+    this.store.setBrief({ ...current, ...(rules.length ? { rules } : { rules: undefined }) })
+  }
+
   protected readonly chat = inject(StudioChatService)
   protected readonly draft = signal('')
 

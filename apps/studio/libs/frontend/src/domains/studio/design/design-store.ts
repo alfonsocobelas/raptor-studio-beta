@@ -1,9 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core'
 import {
+  BRIEF_LIMITS,
   FLOW_LIMITS,
+  briefProblems,
   defineApp,
   defineResource,
   type AppDefinition,
+  type BusinessBrief,
   type BusinessFlow,
   type FlowNode,
   type FlowNodeKind,
@@ -118,6 +121,8 @@ export interface Design {
   pages: DesignPage[]
   /** Procesos de negocio (spec 28); opcional para no romper diseños anteriores */
   flows?: BusinessFlow[]
+  /** Contexto de negocio destilado del chat (spec 22); el usuario lo ve y lo corrige */
+  brief?: BusinessBrief
 }
 
 /**
@@ -131,12 +136,14 @@ export class DesignStore {
   private readonly _resources = signal<DraftResource[]>([])
   private readonly _pages = signal<DesignPage[]>([])
   private readonly _flows = signal<BusinessFlow[]>([])
+  private readonly _brief = signal<BusinessBrief | undefined>(undefined)
   private readonly _lastError = signal<string | null>(null)
 
   readonly appName = this._appName.asReadonly()
   readonly resources = this._resources.asReadonly()
   readonly pages = this._pages.asReadonly()
   readonly flows = this._flows.asReadonly()
+  readonly brief = this._brief.asReadonly()
   readonly lastError = this._lastError.asReadonly()
 
   /** Resource-schemas canónicos derivados de las entidades del diseño. */
@@ -150,6 +157,34 @@ export class DesignStore {
 
   setAppName(name: string): void {
     if (name.trim()) this._appName.set(name.trim())
+  }
+
+  /** El brief de la app pasa por los MISMOS topes que el schema (spec 22). */
+  setBrief(brief: BusinessBrief | undefined): boolean {
+    const problems = briefProblems(brief)
+    if (problems.length) {
+      this._lastError.set(`El brief no pasa el gate: ${problems.join('; ')}`)
+      return false
+    }
+    this._brief.set(brief)
+    this._lastError.set(null)
+    return true
+  }
+
+  /** La frase de negocio de una entidad; el texto vacío la quita. */
+  setResourceBrief(name: string, text: string): boolean {
+    const trimmed = text.trim()
+    if (trimmed.length > BRIEF_LIMITS.entity) {
+      this._lastError.set(`El brief de ${name} excede ${BRIEF_LIMITS.entity} caracteres`)
+      return false
+    }
+    return this.updateResource(name, draft => {
+      if (!trimmed) {
+        const { brief: _gone, ...rest } = draft
+        return rest
+      }
+      return { ...draft, brief: trimmed }
+    })
   }
 
   /** Crea una vista a partir de un preset; los presets con datos crean su entidad. */
@@ -474,7 +509,8 @@ export class DesignStore {
       schemaVersion: 1,
       name: this._appName(),
       pages: designPagesToAppPages(this._pages()),
-      ...(this._flows().length ? { flows: this._flows() } : {})
+      ...(this._flows().length ? { flows: this._flows() } : {}),
+      ...(this._brief() ? { brief: this._brief() } : {})
     }
   }
 
@@ -508,8 +544,16 @@ export class DesignStore {
       this._lastError.set(problem)
       return false
     }
+    // el brief externo pasa el mismo gate ANTES de mutar nada: rechazado entero o aplicado entero
+    const briefIssues = briefProblems(clone.brief)
+    if (briefIssues.length) {
+      this._lastError.set(`El brief no pasa el gate: ${briefIssues.join('; ')}`)
+      return false
+    }
     if (!this.mutate(clone.resources, clone.pages, clone.appName)) return false
     this._flows.set(flows)
+    // sin brief en el diseño externo, se borra: el diseño aplicado es la verdad completa
+    this._brief.set(clone.brief)
     return true
   }
 

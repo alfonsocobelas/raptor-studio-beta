@@ -42,7 +42,9 @@ export class StudioChatService {
           design: {
             appName: this.store.appName(),
             resources: this.store.resources(),
-            pages: this.store.pages()
+            pages: this.store.pages(),
+            // la memoria del negocio viaja en cada turno: el siguiente no repregunta (spec 22)
+            ...(this.store.brief() ? { brief: this.store.brief() } : {})
           }
         })
       )
