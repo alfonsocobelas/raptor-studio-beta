@@ -1,4 +1,5 @@
 import { names } from '@nx/devkit'
+import { MODELS } from './models/registry'
 import { AggregateBindings, renderAggregate } from './build-aggregate'
 import { ApplicationBindings, renderApplication } from './build-application'
 import { EntrypointBindings, renderEntrypoints } from './build-entrypoints'
@@ -525,9 +526,9 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
       f => `private readonly _${f.lookup?.resource}Service = inject(${cap(f.lookup?.resource ?? '')}Service)`
     ),
     lookupComputedLines: lookups.flatMap(f => [
-      `readonly ${f.lookup?.resource}s = computed(() => this._${f.lookup?.resource}Service.${f.lookup?.resource}s.value()?.items ?? [])`,
+      `readonly ${pluralOfResource(f.lookup?.resource)} = computed(() => this._${f.lookup?.resource}Service.${pluralOfResource(f.lookup?.resource)}.value()?.items ?? [])`,
       `protected readonly ${f.name}Options = computed<AppSelectOption[]>(() =>`,
-      `  this.${f.lookup?.resource}s().map(item => ({ value: item.id, label: item.${f.lookup?.labelField} }))`,
+      `  this.${pluralOfResource(f.lookup?.resource)}().map(item => ({ value: item.id, label: item.${f.lookup?.labelField} }))`,
       `)`
     ]),
     lookupServiceImports: [...new Set(lookups.map(f => f.lookup?.resource ?? ''))],
@@ -581,7 +582,7 @@ function renderHelpers(
     const resource = f.lookup?.resource ?? ''
     const labelField = f.lookup?.labelField ?? 'name'
     lines.push(
-      `protected readonly ${f.name}ToLabel = (value: unknown): string => this.${resource}s().find(item => item.id === value)?.${labelField} ?? ''`
+      `protected readonly ${f.name}ToLabel = (value: unknown): string => this.${pluralOfResource(resource)}().find(item => item.id === value)?.${labelField} ?? ''`
     )
   }
   return lines
@@ -609,7 +610,7 @@ function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormField
     .filter(f => f.lookup?.denormalizes)
     .map(
       f =>
-        `${f.lookup?.denormalizes}: this.${f.lookup?.resource}s().find(item => item.id === raw.${f.name})?.${f.lookup?.labelField} ?? ''`
+        `${f.lookup?.denormalizes}: this.${pluralOfResource(f.lookup?.resource)}().find(item => item.id === raw.${f.name})?.${f.lookup?.labelField} ?? ''`
     )
   const dateNulls = formFields
     .filter(f => f.control === 'date' && !f.required)
@@ -928,6 +929,12 @@ export function renderFrontendColumns(definition: ResourceDefinition): string[] 
         ...table
       })
     )
+}
+
+/** Plural REAL del recurso apuntado por un lookup: del registro, nunca «+s». */
+function pluralOfResource(resource: string | undefined): string {
+  if (!resource) return ''
+  return MODELS[resource]?.plural ?? `${resource}s`
 }
 
 function renderFrontendColumn(name: string, table: FieldTable): string {

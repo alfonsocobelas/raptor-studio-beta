@@ -35,8 +35,15 @@ describe('guard de pluralización — nada emite «name + s»', () => {
         type: 'uuid',
         required: true,
         relation: { to: 'propiedad', kind: 'reference' },
-        vo: { name: 'PropiedadId', fieldName: 'Propiedad' }
-      }
+        vo: { name: 'PropiedadId', fieldName: 'Propiedad' },
+        form: {
+          control: 'select',
+          label: 'Propiedad',
+          section: 'general',
+          lookup: { resource: 'propiedad', labelField: 'name', denormalizes: 'propiedadName' }
+        }
+      },
+      propiedadName: { type: 'string', table: { show: true, label: 'Propiedad' } }
     }
   } as unknown as ResourceDefinition
 
