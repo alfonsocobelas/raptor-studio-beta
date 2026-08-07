@@ -22,7 +22,7 @@ describe('resource generator — papelera (spec 29)', () => {
     const port = read(tree, 'out/backend/domain/project-repository.ts')
     expect(port).toContain('abstract matchingDeleted(criteria: Criteria): Promise<Project[]>')
     expect(port).toContain('abstract countDeleted(criteria: Criteria): Promise<number>')
-    expect(port).toContain('abstract restore(projectId: ProjectId): Promise<void>')
+    expect(port).toContain('abstract restore(projectId: ProjectId): Promise<boolean>')
   })
 
   it('el repositorio TypeORM de project implementa la papelera sobre el criteria del kernel', async () => {
@@ -33,8 +33,9 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
     expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
     expect(repo).toContain('this.countDeletedByCriteria(criteria)')
-    expect(repo).toContain('async restore(projectId: ProjectId): Promise<void>')
-    expect(repo).toContain(".restore({ id: projectId.value })")
+    expect(repo).toContain('async restore(projectId: ProjectId): Promise<boolean>')
+    // solo se restaura lo que está borrado: restaurar un vivo (o un id inexistente) devuelve false
+    expect(repo).toContain('.restore({ id: projectId.value, deletedAt: Not(IsNull()) })')
   })
 
   it('el repositorio TypeORM de customer (sin papelera) no cambia', async () => {
@@ -53,8 +54,32 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
     expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
     expect(repo).toContain('this.countDeletedByCriteria(criteria)')
-    expect(repo).toContain('async restore(projectId: ProjectId): Promise<void>')
+    expect(repo).toContain('async restore(projectId: ProjectId): Promise<boolean>')
+    expect(repo).toContain('{ id: projectId.value, deletedAt: { $ne: null } }')
     expect(repo).toContain('{ $set: { deletedAt: null } }')
+  })
+
+  it('project emite el use case de restore con su 404, el input y el handler', async () => {
+    const tree = await emit('project')
+
+    const useCase = read(tree, 'out/backend/application/use-cases/restore-project-usecase.service.ts')
+    expect(useCase).toContain('export class RestoreProjectUseCase')
+    expect(useCase).toContain('const restored = await this.projectRepository.restore(ProjectId.create(input.id))')
+    expect(useCase).toContain("throw new EntityNotFoundError('Project', input.id)")
+    expect(read(tree, 'out/backend/application/dtos/restore-project-input.dto.ts')).toContain(
+      'export interface RestoreProjectInput'
+    )
+    expect(read(tree, 'out/backend/application/handlers/restore-project.handler.ts')).toContain(
+      'export class RestoreProjectHandler'
+    )
+  })
+
+  it('customer no emite ningún fichero de restore', async () => {
+    const tree = await emit('customer')
+
+    expect(tree.exists('out/backend/application/use-cases/restore-customer-usecase.service.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/dtos/restore-customer-input.dto.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/handlers/restore-customer.handler.ts')).toBe(false)
   })
 
   it('license (softDelete SIN delete en la lista) no lleva papelera', async () => {

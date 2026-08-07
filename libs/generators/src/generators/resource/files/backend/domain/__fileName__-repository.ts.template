@@ -19,7 +19,7 @@ export abstract class <%- className %>Repository {
 <%_ if (app.trash) { _%>
   abstract matchingDeleted(criteria: Criteria): Promise<<%- className %>[]>
   abstract countDeleted(criteria: Criteria): Promise<number>
-  abstract restore(<%- propertyName %>Id: <%- className %>Id): Promise<void>
+  abstract restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean>
 <%_ } _%>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end

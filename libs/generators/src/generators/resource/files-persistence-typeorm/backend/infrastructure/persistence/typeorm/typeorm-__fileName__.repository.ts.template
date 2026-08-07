@@ -4,8 +4,12 @@
 <%_ const kids = comp ? comp.childrenProp : '' _%>
 <%_ const KidsCap = comp ? kids.charAt(0).toUpperCase() + kids.slice(1) : '' _%>
 import { Injectable } from '@nestjs/common'
-<%_ if (comp) { _%>
+<%_ if (comp && app.trash) { _%>
+import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
+<%_ } else if (comp) { _%>
 import { FindOptionsWhere, In, Not } from 'typeorm'
+<%_ } else if (app.trash) { _%>
+import { IsNull, Not } from 'typeorm'
 <%_ } _%>
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -112,8 +116,10 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
     return this.countDeletedByCriteria(criteria)
   }
 
-  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
-    await this.repository().restore({ id: <%- propertyName %>Id.value })
+  // Solo se restaura lo borrado: un id vivo (o inexistente) devuelve false y el use case da 404.
+  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean> {
+    const result = await this.repository().restore({ id: <%- propertyName %>Id.value, deletedAt: Not(IsNull()) })
+    return (result.affected ?? 0) > 0
   }
 <%_ } _%>
 

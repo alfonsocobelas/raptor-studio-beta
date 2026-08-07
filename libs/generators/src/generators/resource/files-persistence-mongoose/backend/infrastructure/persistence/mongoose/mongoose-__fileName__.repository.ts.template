@@ -117,11 +117,14 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
     return this.countDeletedByCriteria(criteria)
   }
 
-  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
-    await this.model()
-      .updateOne({ id: <%- propertyName %>Id.value }, { $set: { deletedAt: null } })
+  // Solo se restaura lo borrado: un id vivo (o inexistente) devuelve false y el use case da 404.
+  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean> {
+    const result = await this.model()
+      .updateOne({ id: <%- propertyName %>Id.value, deletedAt: { $ne: null } }, { $set: { deletedAt: null } })
       .session(this.session())
       .exec()
+
+    return result.matchedCount > 0
   }
 <%_ } _%>
 

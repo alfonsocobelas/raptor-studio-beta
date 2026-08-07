@@ -89,6 +89,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(app, 'use-cases', `remove-${substitutions.fileName}-usecase.service.ts`))
       tree.delete(path.join(app, 'handlers', `remove-${substitutions.fileName}.handler.ts`))
     }
+    if (!substitutions.app.trash) {
+      tree.delete(path.join(app, 'dtos', `restore-${substitutions.fileName}-input.dto.ts`))
+      tree.delete(path.join(app, 'use-cases', `restore-${substitutions.fileName}-usecase.service.ts`))
+      tree.delete(path.join(app, 'handlers', `restore-${substitutions.fileName}.handler.ts`))
+    }
   }
 
   // entrypoints REST + module wiring

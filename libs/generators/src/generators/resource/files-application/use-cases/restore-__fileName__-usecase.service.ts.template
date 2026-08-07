@@ -1,0 +1,18 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { Restore<%- className %>Input } from '../dtos/restore-<%- fileName %>-input.dto'
+
+@Injectable()
+export class Restore<%- className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: Restore<%- className %>Input): Promise<void> {
+    const restored = await this.<%- propertyName %>Repository.restore(<%- className %>Id.create(input.id))
+
+    if (!restored) {
+      throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+  }
+}
