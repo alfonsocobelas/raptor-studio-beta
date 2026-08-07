@@ -64,6 +64,30 @@ diseño libre traducido. Fases (cada una útil por sí sola, ejecutar tras el tr
 | E    | Wizard de plugins (db, infra, auth…)                          | ✅ 2026-07-31 (spec 11: `--appFile` en el generador + wizard en /studio con descarga del schema y comando exacto; verificado end-to-end)                                                                                                                   |
 | F    | Escritorio (Electron/Tauri) — solo si hace falta              | ✅ 2026-07-31 resuelta como **generación in situ sin empaquetar** (spec 12, decisión de Alfonso): botón «Generar aquí» vía `studio-api` local (chat+generate sin Postgres). Electron queda instalado como devDep del estudio para la comparativa opcional. |
 
+## Fase 5 — Ampliación del catálogo de vistas (brainstorming 2026-08-07)
+
+Principio rector acordado: **añadir componentes poco a poco**, priorizando las vistas que se
+DERIVAN de flags que el resource-schema ya declara (el schema sabe más de lo que las vistas
+explotan). El schema NO aprende a describir procesos (workflows, transiciones, permisos por
+estado): ahí empieza el inner-platform effect (regla 7) y lo raro se edita a mano.
+
+Orden acordado: **tanda A (latente) → tanda C (analítica) → tanda B (import)**, siempre por
+detrás del trabajo activo (spec 15). Una spec por componente, cada una con su gate de oro.
+
+| Nº  | Spec                 | Objetivo                                                                                                                                                              | Estado    |
+| --- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| A1  | `vista-papelera`     | `softDelete: true` habilita listado de borrados + restaurar (el `deletedAt` ya se emite; hoy nadie lo ve)                                                             | Pendiente |
+| A2  | `vista-gantt`        | `{ kind: 'gantt', resource }` sobre recursos con `period`: cronograma derivable al 100%                                                                                | Pendiente |
+| A3  | `historial-cambios`  | `audit: true` habilita timeline de cambios en la ficha (pieza cara: tabla de eventos + captura en escritura)                                                          | Pendiente |
+| C1v | `widgets-analiticos` | Dashboard: conteo por enum (donut/barras), conteo filtrado, suma/media de campo numérico, serie temporal por mes. Pide agregaciones nuevas en el Criteria del backend | Pendiente |
+| B1v | `import-csv-validado`| Wizard de import: cada fila construye el agregado con los VOs generados → errores de negocio por celda → alta en lote. La vertical más diferencial; spec grande       | Pendiente |
+
+Banco de ideas aparcadas (YAGNI hasta demanda real): listados derivados/vistas guardadas (canon
+`licenses-overused`), kanban por enum, master-detail split, vista árbol (self-relation),
+calendario, comparador de registros, QR del código de negocio, semáforos por umbral, columnas
+moneda/porcentaje/progreso, controles radio/multi-select/autocomplete, pivote enum×enum, mapa,
+bandeja de trabajo, aprobaciones (descartada: workflow = inner-platform), PDF/informes.
+
 ## Observaciones abiertas (2026-08-01, sesión del estudio) — atajar más adelante
 
 1. ~~Adapter de Azure emitido siempre y sin dependencia~~ — **resuelto**: vive tras la ranura `infra` con sus dependencias declaradas en el proveedor. Verificado: una app con `infra=none` no emite ningún fichero de Azure.
