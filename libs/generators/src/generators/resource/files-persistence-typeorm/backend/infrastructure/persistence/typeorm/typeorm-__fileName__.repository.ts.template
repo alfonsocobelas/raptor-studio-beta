@@ -101,6 +101,21 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
   }
+<%_ if (app.trash) { _%>
+
+  async matchingDeleted(criteria: Criteria): Promise<<%- className %>[]> {
+    const entities = await this.searchDeletedByCriteria(criteria)
+    return <%- comp ? 'this.hydrate(entities)' : `entities.map(${className}Mapper.toDomain)` %>
+  }
+
+  async countDeleted(criteria: Criteria): Promise<number> {
+    return this.countDeletedByCriteria(criteria)
+  }
+
+  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
+    await this.repository().restore({ id: <%- propertyName %>Id.value })
+  }
+<%_ } _%>
 
   // @ai:begin repository-extra — implementación de los finders del port-extra
   // @ai:end

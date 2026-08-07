@@ -25,6 +25,26 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(port).toContain('abstract restore(projectId: ProjectId): Promise<void>')
   })
 
+  it('el repositorio TypeORM de project implementa la papelera sobre el criteria del kernel', async () => {
+    const tree = await emit('project')
+
+    const repo = read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-project.repository.ts')
+    expect(repo).toContain('async matchingDeleted(criteria: Criteria): Promise<Project[]>')
+    expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
+    expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
+    expect(repo).toContain('this.countDeletedByCriteria(criteria)')
+    expect(repo).toContain('async restore(projectId: ProjectId): Promise<void>')
+    expect(repo).toContain(".restore({ id: projectId.value })")
+  })
+
+  it('el repositorio TypeORM de customer (sin papelera) no cambia', async () => {
+    const tree = await emit('customer')
+
+    const repo = read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-customer.repository.ts')
+    expect(repo).not.toContain('Deleted')
+    expect(repo).not.toContain('restore')
+  })
+
   it('license (softDelete SIN delete en la lista) no lleva papelera', async () => {
     const tree = await emit('license')
 
