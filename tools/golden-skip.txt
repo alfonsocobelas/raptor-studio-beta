@@ -5,5 +5,11 @@
 # importando ficheros inexistentes). Comparar no es asunto del modelo: es de este gate.
 #
 # Formato:  <directorio de fixture>|<ruta relativa>|<motivo>
+#
+# Divergencia asumida SIN skip (spec 27, TASK-06): el customer-name.vo.ts emitido NO es el del canon
+# — las 71 líneas de normalización española se mudaron al helper del kernel (spanish-legal-name.ts)
+# y el VO delega con sus acrónimos como dato. Las fixtures de app llevan la versión emitida, así que
+# el gate SÍ las compara (saltarlas taparía regresiones); lo que ya no atestigua el gate es la
+# igualdad con el canon, que la demuestra el test emitido de 216 líneas.
 customers|backend/infrastructure/persistence/typeorm/customer.mapper.ts|el mapper de la referencia resuelve la composición a mano (recibe contactEntities); el canon no lo cubre
 licenses|backend/infrastructure/persistence/typeorm/license.mapper.ts|el mapper de la referencia lleva los métodos de composición de consumption-record a mano

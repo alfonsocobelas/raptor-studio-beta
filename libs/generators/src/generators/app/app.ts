@@ -10,7 +10,13 @@ import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
-import { canEmitSharedVo, contextSharedGroups, sharedConstraintEntries, sharedVoSubstitutions } from './context-shared'
+import {
+  canEmitSharedVo,
+  contextSharedGroups,
+  sharedConstraintEntries,
+  sharedVoSubstitutions,
+  sharedVoTestKind
+} from './context-shared'
 import { SHARED_VOS } from '../resource/models/shared-vos'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
@@ -226,7 +232,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       }
       generateFiles(
         tree,
-        path.join(__dirname, 'files-shared-vo-tests', vo.kind),
+        path.join(__dirname, 'files-shared-vo-tests', sharedVoTestKind(vo)),
         path.join(sharedTests, 'value-objects'),
         substitutions
       )

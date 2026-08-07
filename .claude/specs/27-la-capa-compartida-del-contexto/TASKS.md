@@ -71,9 +71,23 @@
       · medición: **27 → 21 errores** (13 TS2307 + 7 TS2345 + 1 TS18047); los 6 previstos, exactos
       · **hallazgo del arnés**: probando el RED, `nx test` devolvió verde con la plantilla borrada —
         caché de Nx. Para comprobar que un test sabe fallar hay que pasar `--skip-nx-cache`
-- [ ] **TASK-06**: `spanish-legal-name.ts` en el **kernel** (el algoritmo de las 71 líneas, con las
+- [x] **TASK-06**: `spanish-legal-name.ts` en el **kernel** (el algoritmo de las 71 líneas, con las
       tablas del cliente como argumento) + `normalize: 'spanish-legal-name'` → `customer-name.vo.ts` + su test (216 líneas, el que de verdad demuestra la normalización). 12 errores, los últimos.
-      · entrada en `golden-skip.txt` con el motivo: el algoritmo se mudó al kernel
+      · el helper del kernel es fiel al canon salvo el reparto: CONNECTORS/LEGAL_FORMS/CANONICAL
+        (España) dentro, ACRONYMS (cliente) como argumento. Se emite incondicional, como
+        `spanish-title-case`: condicionarlo exigiría que el kernel supiera de `voShared`
+      · el VO emitido delega (`normalizeName → normalizeSpanishLegalName(raw, ACRONYMS)`);
+        `create` NO normaliza heurísticamente — rehidratar no reescribe, como en el canon
+      · el test emitido conserva los casos del canon (formas jurídicas, D'Andorra, idempotencia);
+        los casos de ACRÓNIMO se derivan de la tabla declarada (los de 1-2 letras no sirven de
+        muestra: cualquier palabra corta sube a mayúsculas, listada o no)
+      · en `golden-skip.txt` la divergencia va como COMENTARIO, no como skip: las fixtures llevan
+        la versión emitida y el gate SÍ las compara — saltarlas taparía regresiones. Lo que ya no
+        atestigua el gate (igualdad con el canon) lo demuestra el test de 216 líneas
+      · medición: **21 → 9 errores** (los 12 previstos). El único TS2307 restante NO es de esta
+        spec: la plantilla de la specification única importa el VO compartido con 3 niveles
+        (`../../../`) donde el canon usa 4 — el golden no lo vio porque la fixture se congeló con
+        el mismo defecto. A TASK-07
 
 ## Cierre
 

@@ -166,9 +166,59 @@ export class SyncTimestamp extends DateValueObject {
     expect(read(`${tests}/contract-date.vo.test.ts`)).toContain('unset() should return null')
     expect(read(`${tests}/sync-timestamp.vo.test.ts`)).toContain('via never()')
   })
+})
 
-  it('lo que todavía no tiene plantilla no se emite (la normalización española)', () => {
-    expect(tree.exists(`apps/demo/libs/backend/${src}/customer-name.vo.ts`)).toBe(false)
+/**
+ * TASK-06. La normalización española se parte en dos: el ALGORITMO (formas jurídicas, conectores,
+ * title-case — España, no un cliente) va al kernel; las tablas que sí son del cliente (acrónimos)
+ * viajan como dato desde la declaración. Divergencia asumida con el canon: el VO emitido delega en
+ * el helper en vez de llevar las 71 líneas dentro.
+ */
+describe('app generator — la normalización española (spanish-legal-name)', () => {
+  let tree: Tree
+
+  beforeAll(async () => {
+    tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'customer', skipInstall: true })
+  })
+
+  const read = (file: string): string => tree.read(`apps/demo/libs/backend/${file}`, 'utf-8') ?? ''
+
+  it('el algoritmo vive en el kernel, junto al title-case que reutiliza', () => {
+    const helper = read('src/contexts/shared/domain/value-objects/spanish-legal-name.ts')
+
+    expect(helper).toContain(`import { capitalizeSpanishWord } from './spanish-title-case'`)
+    expect(helper).toContain('export function normalizeSpanishLegalName(raw: string, acronyms: readonly string[])')
+    // las formas jurídicas son de España, no del cliente: viven en el helper
+    expect(helper).toContain(`[/,?\\s+sociedad\\s+limitada\\s*$/i, ' S.L.']`)
+    // los acrónimos NO: son la tabla del cliente y llegan como argumento
+    expect(helper).not.toContain('SAP')
+  })
+
+  it('el VO emitido delega en el helper con los acrónimos de su declaración', () => {
+    const vo = read('src/contexts/sap-licensing/shared/domain/value-objects/customer-name.vo.ts')
+
+    expect(vo).toContain(
+      `import { normalizeSpanishLegalName } from '../../../../shared/domain/value-objects/spanish-legal-name'`
+    )
+    expect(vo).toContain(`const ACRONYMS: readonly string[] = ['SAP', 'AG', 'NTT', 'ELIX', 'IBM', 'ERP']`)
+    expect(vo).toContain(`  static normalizeName(raw: string): string {
+    return normalizeSpanishLegalName(raw, ACRONYMS)
+  }`)
+    expect(vo).toContain('if (value.length < SHARED_CONSTRAINTS.CUSTOMER_NAME.MIN) {')
+    // create NO normaliza heurísticamente: eso es del borde (el sync), como en el canon
+    expect(vo).not.toContain('this.normalizeName')
+  })
+
+  it('el test emitido demuestra la normalización con los casos del canon', () => {
+    const test = read('tests/modules/sap-licensing/shared/domain/value-objects/customer-name.vo.test.ts')
+
+    expect(test).toContain(`['ACME GESTION SOCIEDAD LIMITADA', 'Acme Gestion S.L.']`)
+    expect(test).toContain(`["GOVERN D'ANDORRA", "Govern D'Andorra"]`)
+    expect(test).toContain('SA CONSULTORES REUNIDOS')
+    expect(test).toContain('should be idempotent for arbitrary strings')
+    // los casos de acrónimo se derivan de la tabla declarada, no de valores a mano
+    expect(test).toContain(`expect(CustomerName.normalizeName('acme sap services')).toBe('Acme SAP Services')`)
   })
 })
 

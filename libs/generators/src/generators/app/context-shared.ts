@@ -67,7 +67,7 @@ export function sharedConstraintEntries(vos: string[]): string[] {
 export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp', 'string', 'period']
 
 /** Las normalizaciones que ya tienen plantilla; `spanish-legal-name` espera al helper del kernel. */
-const EMITTED_NORMALIZE_RULES = ['collapse-whitespace']
+const EMITTED_NORMALIZE_RULES = ['collapse-whitespace', 'spanish-legal-name']
 
 /**
  * Un VO se emite cuando su kind Y su normalización tienen plantilla. Mientras la spec avanza, lo que
@@ -120,6 +120,12 @@ export interface SharedVoSubstitutions {
   disallowedSamples: string
   ofClass: string
   ofFile: string
+  spanishLegalName: boolean
+  acronymsList: string
+  acronym0: string
+  acronym0Lower: string
+  acronym1: string
+  acronym1Lower: string
   tmpl: ''
 }
 
@@ -132,6 +138,12 @@ export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, cont
   const n = names(name)
   const namedNull = vo.namedNull ?? ''
   const allows = charsetFilter(vo.charset?.pattern)
+  const legal = vo.normalize?.rule === 'spanish-legal-name' ? vo.normalize : null
+  // los casos de acrónimo del test emitido se derivan de la tabla declarada; los de 1-2 letras no
+  // sirven de muestra (cualquier palabra corta se sube a mayúsculas, listada o no)
+  const longAcronyms = (legal?.acronyms ?? []).filter(a => a.length >= 3)
+  const acronym0 = longAcronyms[0] ?? ''
+  const acronym1 = longAcronyms[1] ?? acronym0
   const [fillChar, altChar] = FILL_CANDIDATES.filter(allows)
   const alphabet = vo.charset ? [...CHARSET_ALPHABET].filter(allows).join('') : DEFAULT_ALPHABET
 
@@ -166,8 +178,22 @@ export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, cont
       .join(', '),
     ofClass: vo.of ? names(vo.of).className : '',
     ofFile: vo.of ? names(vo.of).fileName : '',
+    spanishLegalName: legal !== null,
+    acronymsList: (legal?.acronyms ?? []).map(a => `'${a}'`).join(', '),
+    acronym0,
+    acronym0Lower: acronym0.toLocaleLowerCase('es-ES'),
+    acronym1,
+    acronym1Lower: acronym1.toLocaleLowerCase('es-ES'),
     tmpl: ''
   }
+}
+
+/**
+ * Qué carpeta de plantillas de TEST le toca a un VO: la normalización española tiene la suya —
+ * su test es la demostración del algoritmo, no el de un string normal.
+ */
+export function sharedVoTestKind(vo: SharedVoDefinition): string {
+  return vo.normalize?.rule === 'spanish-legal-name' ? 'string-legal-name' : vo.kind
 }
 
 /** ¿Admite el juego de caracteres declarado este carácter suelto? Sin `charset`, todo vale. */

@@ -1,7 +1,14 @@
 import { InvalidArgumentError } from '../../../../shared/domain/errors'
+<% if (spanishLegalName) { -%>
+import { normalizeSpanishLegalName } from '../../../../shared/domain/value-objects/spanish-legal-name'
+<% } -%>
 import { StringValueObject } from '../../../../shared/domain/value-objects/string-value-object'
 <% if (constraintKey) { -%>
 import { SHARED_CONSTRAINTS } from '../constants'
+<% } -%>
+<% if (spanishLegalName) { -%>
+
+const ACRONYMS: readonly string[] = [<%- acronymsList %>]
 <% } -%>
 
 export class <%= className %> extends StringValueObject {
@@ -42,6 +49,13 @@ export class <%= className %> extends StringValueObject {
 
     return new <%= className %>(value)
   }
+<% if (spanishLegalName) { -%>
+
+  /** Canonización del borde (el sync, el alta): create NO la aplica — rehidratar no reescribe. */
+  static normalizeName(raw: string): string {
+    return normalizeSpanishLegalName(raw, ACRONYMS)
+  }
+<% } -%>
 <% if (collapsesWhitespace) { -%>
 
   protected static override normalize(value: string): string {

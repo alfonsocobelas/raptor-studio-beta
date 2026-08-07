@@ -1,0 +1,218 @@
+import fc from 'fast-check'
+import { InvalidArgumentError } from '../../../../../../src/contexts/shared/domain/errors'
+import { <%= className %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= fileName %>.vo'
+import { SHARED_CONSTRAINTS } from '../../../../../../src/contexts/<%= context %>/shared/domain/constants'
+
+const MAX = SHARED_CONSTRAINTS.<%= constraintKey %>.MAX
+const MIN = SHARED_CONSTRAINTS.<%= constraintKey %>.MIN
+
+describe('<%= className %> (shared)', () => {
+  describe('create — invalid inputs', () => {
+    it('should throw InvalidArgumentError for null', () => {
+      expect(() => <%= className %>.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for undefined', () => {
+      expect(() => <%= className %>.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for empty string', () => {
+      expect(() => <%= className %>.create('')).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for whitespace-only string', () => {
+      expect(() => <%= className %>.create('   ')).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for strings shorter than MIN chars', () => {
+      expect(() => <%= className %>.create('a'.repeat(MIN - 1))).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for strings exceeding MAX chars', () => {
+      fc.assert(
+        fc.property(
+          fc.string({ minLength: MAX + 1, maxLength: MAX + 100 }).map(s => s.replace(/\s/g, 'x')),
+          value => {
+            expect(() => <%= className %>.create(value)).toThrow(InvalidArgumentError)
+          }
+        ),
+        { numRuns: 100 }
+      )
+    })
+  })
+
+  describe('create — valid inputs', () => {
+    it('should create <%= className %> for a typical company name', () => {
+      expect(<%= className %>.create('Acme Ibérica S.L.').value).toBe('Acme Ibérica S.L.')
+    })
+
+    it('should accept strings with exactly MIN chars', () => {
+      const value = 'A'.repeat(MIN)
+      expect(<%= className %>.create(value).value).toBe(value)
+    })
+
+    it('should accept strings with exactly MAX chars', () => {
+      const value = 'A'.repeat(MAX)
+      expect(<%= className %>.create(value).value).toBe(value)
+    })
+
+    it('should preserve value for any valid string within bounds', () => {
+      fc.assert(
+        fc.property(
+          fc.string({ minLength: MIN, maxLength: MAX }).filter(s => s.trim().length >= MIN),
+          value => {
+            expect(<%= className %>.create(value).value).toBe(value.trim())
+          }
+        ),
+        { numRuns: 200 }
+      )
+    })
+  })
+
+  describe('create — does NOT apply heuristic normalization (boundary concern)', () => {
+    it('keeps raw casing and legal form untouched, only trimming (normalization is a caller concern)', () => {
+      const raw = 'ACME GESTION SOCIEDAD LIMITADA'
+      expect(<%= className %>.create(raw).value).toBe(raw)
+    })
+
+    it('rehydrates a stored value without rewriting it (fromPrimitives-style construction)', () => {
+      const stored = 'ACME GESTION, SOCIEDAD LIMITADA'
+      expect(<%= className %>.create(stored).value).toBe(stored)
+    })
+  })
+
+  describe('equals', () => {
+    it('should return true for same value', () => {
+      expect(<%= className %>.create('Acme').equals(<%= className %>.create('Acme'))).toBe(true)
+    })
+
+    it('should return false for different values', () => {
+      expect(<%= className %>.create('Acme').equals(<%= className %>.create('Umbrella'))).toBe(false)
+    })
+  })
+
+  describe('toString', () => {
+    it('should return the raw string', () => {
+      expect(<%= className %>.create('Acme Ibérica').toString()).toBe('Acme Ibérica')
+    })
+  })
+
+  describe('normalizeName (boundary canonicalization)', () => {
+    describe('whitespace', () => {
+      it('should trim and collapse inner whitespace', () => {
+        expect(<%= className %>.normalizeName('  ACME   GESTION  ')).toBe('Acme Gestion')
+      })
+    })
+
+    // Capitalizar solo la inicial de cada palabra bajaría la mayúscula tras el guion
+    // (Antolin-Irausa) y tras el apóstrofe catalán (D'Andorra).
+    describe('inner separators', () => {
+      it.each([
+        ['GRUPO ANTOLIN-IRAUSA', 'Grupo Antolin-Irausa'],
+        ['MUTUA UNIVERSAL-MUGENAT', 'Mutua Universal-Mugenat'],
+        ["GOVERN D'ANDORRA", "Govern D'Andorra"],
+        ["institut municipal d'informatica", "Institut Municipal D'Informatica"]
+      ])('should capitalize after inner separators: %s -> %s', (raw, expected) => {
+        expect(<%= className %>.normalizeName(raw)).toBe(expected)
+      })
+    })
+
+    describe('legal forms', () => {
+      it.each([
+        ['ACME GESTION SOCIEDAD LIMITADA', 'Acme Gestion S.L.'],
+        ['ACME GESTION, SOCIEDAD LIMITADA', 'Acme Gestion S.L.'],
+        ['ACME GESTION SOCIEDAD ANONIMA', 'Acme Gestion S.A.'],
+        ['ACME SL', 'Acme S.L.'],
+        ['ACME S.L', 'Acme S.L.'],
+        ['ACME SL.', 'Acme S.L.'],
+        ['ACME S.L.', 'Acme S.L.'],
+        ['ACME SA', 'Acme S.A.'],
+        ['ACME SLU', 'Acme S.L.U.'],
+        ['ACME S.L.U.', 'Acme S.L.U.'],
+        ['ACME SAU', 'Acme S.A.U.'],
+        ['ACME SC', 'Acme S.C.'],
+        ['ACME LEGAL SLP', 'Acme Legal S.L.P.'],
+        ['ACME LEGAL S.L.P.', 'Acme Legal S.L.P.'],
+        ['ACME SGPS', 'Acme S.G.P.S.'],
+        ['ACME S.G.P.S.', 'Acme S.G.P.S.'],
+        ['ACME SCOOP', 'Acme S.Coop.'],
+        ['ACME S.COOP.', 'Acme S.Coop.']
+      ])('should canonicalize "%s" → "%s"', (raw, expected) => {
+        expect(<%= className %>.normalizeName(raw)).toBe(expected)
+      })
+
+      it('should canonicalize a holding form (S.G.P.S) followed by its legal form (S.A.)', () => {
+        expect(<%= className %>.normalizeName('Gescartão, S.g.p.s S.A.')).toBe('Gescartão S.G.P.S. S.A.')
+      })
+
+      it('should drop the trailing period of the word preceding the legal form', () => {
+        expect(<%= className %>.normalizeName('Facme. S.A.')).toBe('Facme S.A.')
+      })
+
+      it('should not touch legal-form-like tokens in the middle of the name', () => {
+        expect(<%= className %>.normalizeName('SA CONSULTORES REUNIDOS')).toBe('SA Consultores Reunidos')
+      })
+    })
+
+    describe('title-case and connectors', () => {
+      it('should title-case words and lowercase connectors', () => {
+        expect(<%= className %>.normalizeName('GESTORA DE INFRAESTRUCTURAS Y SERVICIOS DEL NORTE')).toBe(
+          'Gestora de Infraestructuras y Servicios del Norte'
+        )
+      })
+
+      it('should capitalize a connector when it is the first word', () => {
+        expect(<%= className %>.normalizeName('LA COMERCIAL DEL SUR')).toBe('La Comercial del Sur')
+      })
+
+      it('should keep ampersand as-is', () => {
+        expect(<%= className %>.normalizeName('SMITH & SONS IBERIA')).toBe('Smith & Sons Iberia')
+      })
+
+      it('should preserve accented characters while title-casing', () => {
+        expect(<%= className %>.normalizeName('GESTIÓN AÉREA ESPAÑOLA')).toBe('Gestión Aérea Española')
+      })
+    })
+
+    describe('acronyms and short words', () => {
+<% if (acronym0) { -%>
+      it('should preserve listed acronyms in uppercase', () => {
+        expect(<%= className %>.normalizeName('acme <%= acronym0Lower %> services')).toBe('Acme <%= acronym0 %> Services')
+        expect(<%= className %>.normalizeName('<%= acronym1Lower %> data iberia')).toBe('<%= acronym1 %> Data Iberia')
+      })
+
+<% } -%>
+      it('should uppercase unlisted 1-2 letter words (likely acronyms)', () => {
+        expect(<%= className %>.normalizeName('ab consulting')).toBe('AB Consulting')
+      })
+    })
+
+    describe('totality and idempotence', () => {
+      it('should return empty string for empty input (validation belongs to create)', () => {
+        expect(<%= className %>.normalizeName('')).toBe('')
+        expect(<%= className %>.normalizeName('   ')).toBe('')
+      })
+
+      it('should be idempotent for arbitrary strings', () => {
+        fc.assert(
+          fc.property(fc.string({ maxLength: 80 }), value => {
+            const once = <%= className %>.normalizeName(value)
+            expect(<%= className %>.normalizeName(once)).toBe(once)
+          }),
+          { numRuns: 200 }
+        )
+      })
+
+      it('should be idempotent for already-normalized names', () => {
+        const normalized = <%= className %>.normalizeName('ACME GESTION, SOCIEDAD LIMITADA')
+        expect(<%= className %>.normalizeName(normalized)).toBe(normalized)
+      })
+    })
+  })
+})
+
+describe('<%= className %> — sanitization', () => {
+  it('should trim edges and keep inner whitespace (free text)', () => {
+    expect(<%= className %>.create('  AZBIL TELSTAR SL  ').value).toBe('AZBIL TELSTAR SL')
+  })
+})
