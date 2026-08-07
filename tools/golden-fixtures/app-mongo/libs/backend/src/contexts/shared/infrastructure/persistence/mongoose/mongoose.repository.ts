@@ -52,9 +52,40 @@ export abstract class MongooseRepository<T> {
     return found !== null
   }
 
+  // La papelera (spec 29): mismas queries del criteria, pero SOLO sobre lo soft-borrado.
+  // Únicamente las llaman los repositorios de entidades con softDelete.
+  protected async searchDeletedByCriteria(criteria: Criteria): Promise<T[]> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    let cursor = this.model()
+      .find(this.onlySoftDeleted(query.filter))
+      .session(this.session())
+      .sort({ ...query.sort, id: 1 })
+
+    if (query.skip) {
+      cursor = cursor.skip(query.skip)
+    }
+    if (query.limit) {
+      cursor = cursor.limit(query.limit)
+    }
+
+    return cursor.lean<T[]>().exec()
+  }
+
+  protected async countDeletedByCriteria(criteria: Criteria): Promise<number> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    return this.model().countDocuments(this.onlySoftDeleted(query.filter)).session(this.session()).exec()
+  }
+
   // Paridad con el soft-delete de la referencia: los documentos borrados llevan deletedAt
   // y ninguna consulta base los ve. $eq null casa tanto null como campo ausente.
   private excludeSoftDeleted(filter: FilterQuery<T>): FilterQuery<T> {
     return { ...filter, deletedAt: null } as FilterQuery<T>
+  }
+
+  // Inversa de excludeSoftDeleted: solo documentos con marca de borrado.
+  private onlySoftDeleted(filter: FilterQuery<T>): FilterQuery<T> {
+    return { ...filter, deletedAt: { $ne: null } } as FilterQuery<T>
   }
 }
