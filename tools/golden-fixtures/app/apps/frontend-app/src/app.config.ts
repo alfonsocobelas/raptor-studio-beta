@@ -16,7 +16,7 @@ import { API_BASE_URL } from '@app/frontend/core/http/api-base-url.token'
 import { AuthService } from '@app/frontend/core/services/auth.service'
 import { routes } from './app.routes'
 
-// Locale es-ES: fechas dd-MM-yyyy y formato de moneda/número español en toda la app.
+// Locale es-ES: fechas dd/MM/yyyy y formato de moneda/número español en toda la app.
 registerLocaleData(localeEs)
 
 export const appConfig: ApplicationConfig = {

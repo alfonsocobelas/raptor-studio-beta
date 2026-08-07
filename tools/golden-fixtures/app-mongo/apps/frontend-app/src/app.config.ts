@@ -16,7 +16,7 @@ import { AuthService } from '@app/frontend/core/services/auth.service'
 import { routes } from './app.routes'
 import { devAuthProvider } from './dev-auth'
 
-// Locale es-ES: fechas dd-MM-yyyy y formato de moneda/número español en toda la app.
+// Locale es-ES: fechas dd/MM/yyyy y formato de moneda/número español en toda la app.
 registerLocaleData(localeEs)
 
 export const appConfig: ApplicationConfig = {

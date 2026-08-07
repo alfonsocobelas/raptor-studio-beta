@@ -295,7 +295,9 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     `renderRelated` deriva el tipo de la columna (table.type o el tipo del campo)
     y `RelatedTable` lo pasa a `formatValue`. Una fecha se lee igual en la ficha
     y en su tabla de hijos.
-22. **El separador de fecha difiere entre listado y ficha**: el DataTable emite
-    «09-01-2026» (dd-MM-yyyy) y la ficha «09/01/2026» (dd/MM/yyyy). Mismo dato,
-    dos separadores. Decidir el canónico y unificar.
+22. ~~El separador de fecha difiere entre listado y ficha~~ — **resuelto**: el
+    canónico es dd/MM/yyyy (lo que produce Intl es-ES, el formateador único, y lo
+    que ya usaba la piel material — el dd-MM venía de sap-licenses). Unificados el
+    DataTable spartan, la réplica del lienzo del estudio y el comentario del
+    skeleton.
 

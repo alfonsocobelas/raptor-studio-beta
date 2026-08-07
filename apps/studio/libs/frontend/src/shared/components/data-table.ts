@@ -886,12 +886,13 @@ export class DataTable implements OnDestroy {
 
   private readonly locale = inject(LOCALE_ID)
 
-  // Celdas 'date' (spec 40): ISO → dd-MM-yyyy con el locale de la app; vacío/nulo → guion (contrato abierto)
+  // Celdas 'date': ISO → dd/MM/yyyy con el locale de la app (el mismo separador que la ficha y la
+  // piel material — defecto 22); vacío/nulo → guion (contrato abierto)
   formatDateCell(value: string): string {
     if (!value) {
       return '—'
     }
-    return formatDate(value, 'dd-MM-yyyy', this.locale)
+    return formatDate(value, 'dd/MM/yyyy', this.locale)
   }
 
   // Celdas 'badges': resuelve cada elemento del array contra el badgeMap (los desconocidos se omiten)
