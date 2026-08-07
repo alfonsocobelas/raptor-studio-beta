@@ -10,6 +10,7 @@ import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
+import { renderClaudeMd } from './brief-doc'
 import {
   canEmitSharedVo,
   contextSharedGroups,
@@ -273,6 +274,15 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
   // los puertos y el nombre del contenedor se ajustan sobre lo ya copiado (hallazgo 14)
   applyPorts(tree, root, options.name, composition.ports)
+
+  // 4a-bis. la memoria del negocio aterriza en la raíz (spec 22): markdown construido aquí
+  //          (regla 8), plantilla tonta; sin brief no hay fichero y las fixtures no cambian
+  if (composition.brief) {
+    generateFiles(tree, path.join(__dirname, 'files-brief'), root, {
+      claudeMd: renderClaudeMd(options.name, composition.brief, models),
+      tmpl: ''
+    })
+  }
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
   const theme = themeSubstitutions(composition.themeId)

@@ -1,5 +1,5 @@
 import { DEFAULT_THEME_ID, resolveThemeId } from '@acc/schema'
-import type { AppDefinition, PageDefinition, PortsDefinition, ResourceDefinition } from '@acc/schema'
+import type { AppDefinition, BusinessBrief, PageDefinition, PortsDefinition, ResourceDefinition } from '@acc/schema'
 
 /**
  * Composición normalizada de una app: el único vocabulario del que el generador
@@ -21,6 +21,8 @@ export interface AppComposition {
   themeId: string
   /** Puertos declarados en el app-schema; ausente = los del esqueleto */
   ports?: PortsDefinition
+  /** Brief de negocio del app-schema (spec 22); aterriza como CLAUDE.md en la app generada */
+  brief?: BusinessBrief
 }
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
@@ -78,6 +80,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     pages,
     dashboard: kpiModels.length > 0,
     kpiModels,
+    ...(definition.brief ? { brief: definition.brief } : {}),
     themeId: resolveThemeId(definition.theme),
     ports: definition.ports
   }
