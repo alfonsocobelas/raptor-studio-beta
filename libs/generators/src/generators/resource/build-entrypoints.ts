@@ -230,6 +230,12 @@ const MAX_SEED_ROWS = 10
  * (los declara quien conoce el negocio, vía el chat del estudio), con un tope.
  * Sin ejemplos se mantienen las dos de siempre.
  */
+/** Filas que sembrará otro modelo del registro (para no apuntar más allá). */
+function seedRowCount(resource: string): number {
+  const parent = MODELS[resource]
+  return parent ? seedRowNumbers(parent).length : 2
+}
+
 function seedRowNumbers(definition: ResourceDefinition): number[] {
   const richest = Math.max(0, ...Object.values(definition.fields).map(field => field.samples?.length ?? 0))
   const rows = Math.min(Math.max(richest, 2), MAX_SEED_ROWS)
@@ -244,7 +250,10 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
     const label = names(c.name).className
 
     if (c.field.relation && c.field.type === 'uuid') {
-      lines.push(`${c.name}: '${seedUuid(pluralOf(c.field.relation.to), i)}'`)
+      // El padre puede sembrar menos filas que el hijo: ciclar sobre SUS filas
+      // evita apuntar a un id que no existe y violar la clave ajena.
+      const parentRows = seedRowCount(c.field.relation.to)
+      lines.push(`${c.name}: '${seedUuid(pluralOf(c.field.relation.to), ((i - 1) % parentRows) + 1)}'`)
       continue
     }
     if (vo?.values?.length) {

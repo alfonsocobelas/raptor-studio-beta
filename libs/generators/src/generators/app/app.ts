@@ -6,6 +6,7 @@ import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
 import { emitsSeeder } from '../resource/emits'
 import { ignoreNestedWorkspace } from './nxignore'
+import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
@@ -218,7 +219,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 5. lo único que depende de la composición (páginas) y de los modelos
   const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])
   // el seed siembra por el Register use case: sólo los modelos que lo emiten entran (spec 26)
-  const seedable = models.filter(emitsSeeder)
+  // Mismo orden topológico que la migración: sembrar un hijo antes que su padre
+  // viola la clave ajena (visto en fincaraiz).
+  const seedable = byDependency(models.filter(emitsSeeder))
   generateFiles(tree, path.join(__dirname, 'files'), root, {
     ...shellSubstitutions(composition),
     persistenceDir: persistence.persistenceDir,
