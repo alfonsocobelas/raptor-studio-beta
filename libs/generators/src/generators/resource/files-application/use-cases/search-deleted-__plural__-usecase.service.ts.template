@@ -1,0 +1,31 @@
+import { Injectable } from '@nestjs/common'
+import { OffsetPaginatedOutput } from '../../../../../shared/application/dtos/search-output.dto'
+import { Criteria, OffsetInput } from '../../../../../shared/domain/query/criteria'
+import { getTotalPages } from '../../../../../shared/utils/pagination'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { <%- className %>PrimitiveProps } from '../../domain/<%- fileName %>-types'
+import search<%- className %>Config from '../config/search-<%- fileName %>-config'
+
+// La papelera: el mismo search (config, filtros, paginación), sobre lo soft-borrado.
+@Injectable()
+export class SearchDeleted<%- pluralClassName %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: OffsetInput): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
+    const { allowedFilters, allowedOrders, searchableFields } = search<%- className %>Config
+    const criteria = Criteria.fromOffset(input, allowedFilters, allowedOrders, searchableFields)
+
+    const [<%- plural %>, total] = await Promise.all([
+      this.<%- propertyName %>Repository.matchingDeleted(criteria),
+      this.<%- propertyName %>Repository.countDeleted(criteria)
+    ])
+
+    return {
+      total,
+      page: input.page,
+      pageSize: input.pageSize,
+      totalPages: getTotalPages({ pageSize: input.pageSize, total }),
+      items: <%- plural %>.map(<%- propertyName %> => <%- propertyName %>.toPrimitives())
+    }
+  }
+}

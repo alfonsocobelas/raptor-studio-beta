@@ -93,6 +93,8 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(app, 'dtos', `restore-${substitutions.fileName}-input.dto.ts`))
       tree.delete(path.join(app, 'use-cases', `restore-${substitutions.fileName}-usecase.service.ts`))
       tree.delete(path.join(app, 'handlers', `restore-${substitutions.fileName}.handler.ts`))
+      tree.delete(path.join(app, 'use-cases', `search-deleted-${substitutions.plural}-usecase.service.ts`))
+      tree.delete(path.join(app, 'handlers', `search-deleted-${substitutions.plural}.handler.ts`))
     }
   }
 

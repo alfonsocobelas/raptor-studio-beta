@@ -82,6 +82,26 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(tree.exists('out/backend/application/handlers/restore-customer.handler.ts')).toBe(false)
   })
 
+  it('project emite el search de borrados como espejo del search (mismo config y paginación)', async () => {
+    const tree = await emit('project')
+
+    const useCase = read(tree, 'out/backend/application/use-cases/search-deleted-projects-usecase.service.ts')
+    expect(useCase).toContain('export class SearchDeletedProjectsUseCase')
+    expect(useCase).toContain('searchProjectConfig')
+    expect(useCase).toContain('this.projectRepository.matchingDeleted(criteria)')
+    expect(useCase).toContain('this.projectRepository.countDeleted(criteria)')
+    expect(read(tree, 'out/backend/application/handlers/search-deleted-projects.handler.ts')).toContain(
+      'export class SearchDeletedProjectsHandler'
+    )
+  })
+
+  it('customer no emite el search de borrados', async () => {
+    const tree = await emit('customer')
+
+    expect(tree.exists('out/backend/application/use-cases/search-deleted-customers-usecase.service.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/handlers/search-deleted-customers.handler.ts')).toBe(false)
+  })
+
   it('license (softDelete SIN delete en la lista) no lleva papelera', async () => {
     const tree = await emit('license')
 
