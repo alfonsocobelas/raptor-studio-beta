@@ -275,6 +275,7 @@ export function draftToResource(
       gender: draft.gender,
       ...(draft.subtitle ? { subtitle: draft.subtitle } : {})
     },
+    ...(draft.brief ? { brief: draft.brief } : {}),
     formSections: [{ id: 'general', title: `Datos de ${draft.labelSingular.toLowerCase()}` }],
     constraintsConst: `${snake(draft.name)}_CONSTRAINTS`,
     audit: true,

@@ -21,6 +21,8 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
     name,
     ...(themeId ? { theme: { id: themeId } } : {}),
     ...(design.ports ? { ports: design.ports } : {}),
+    // la memoria del negocio cruza la frontera: la app generada nace sabiendo su porqué (spec 22)
+    ...(design.brief ? { brief: design.brief } : {}),
     pages: designPagesToAppPages(design.pages),
     resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }

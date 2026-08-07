@@ -64,3 +64,36 @@ describe('buildAppFile — el artefacto que consume el generador', () => {
     expect(buildAppFile(design, 'clinica').ports).toBeUndefined()
   })
 })
+
+/** Spec 22, TASK-04: la frontera copia el brief — la app generada nace con memoria del negocio. */
+describe('buildAppFile — el brief cruza la frontera (spec 22)', () => {
+  it('copia el brief de la app y el de cada entidad expandida', () => {
+    const design = {
+      appName: 'vetcare',
+      resources: [
+        {
+          name: 'paciente',
+          plural: 'pacientes',
+          labelSingular: 'Paciente',
+          labelPlural: 'Pacientes',
+          gender: 'm' as const,
+          fields: [{ name: 'nombre', label: 'Nombre', type: 'string' as const }],
+          brief: 'Un paciente de la clínica; su historial vive aquí.'
+        }
+      ],
+      pages: [],
+      brief: { business: 'Clínica veterinaria de barrio.', rules: ['Las citas duran 30 minutos'] }
+    }
+
+    const file = buildAppFile(design, 'vetcare')
+
+    expect(file.brief?.business).toBe('Clínica veterinaria de barrio.')
+    expect(file.resources[0].brief).toBe('Un paciente de la clínica; su historial vive aquí.')
+  })
+
+  it('sin brief no aparece la clave: ningún schema existente cambia', () => {
+    const design = { appName: 'x', resources: [], pages: [] }
+
+    expect('brief' in buildAppFile(design, 'x')).toBe(false)
+  })
+})
