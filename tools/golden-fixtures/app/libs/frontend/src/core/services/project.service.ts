@@ -64,6 +64,30 @@ export class ProjectService {
     })
   }
 
+  // La papelera (spec 29): el mismo listado, sobre lo soft-borrado.
+  readonly trashRequest = signal<ProjectRequest>(defaultRequest())
+
+  resetTrashRequest(): void {
+    this.trashRequest.set(defaultRequest())
+  }
+
+  readonly deleted = resource<OffsetPaginatedOutput<ProjectDto>, ProjectRequest>({
+    params: () => this.trashRequest(),
+    loader: ({ params: req }) =>
+      firstValueFrom(
+        this._http.get<OffsetPaginatedOutput<ProjectDto>>(`${API_URL}/deleted`, {
+          params: this.buildParams(req)
+        })
+      )
+  })
+
+  restore(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/restore`, {})).then(() => {
+      this.projects.reload()
+      this.deleted.reload()
+    })
+  }
+
   // Downloads the full filtered project set from the backend, matching the current filters and order.
   async export(format: ExportFormat): Promise<{ blob: Blob; filename: string }> {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }
