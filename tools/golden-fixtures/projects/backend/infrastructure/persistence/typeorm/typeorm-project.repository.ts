@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { IsNull, Not } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { ProjectId } from '../../../../../../shared/domain/value-objects/projects/project-id.vo'
@@ -65,8 +66,10 @@ export class TypeOrmProjectRepository extends TypeOrmRepository<TypeOrmProjectEn
     return this.countDeletedByCriteria(criteria)
   }
 
-  async restore(projectId: ProjectId): Promise<void> {
-    await this.repository().restore({ id: projectId.value })
+  // Solo se restaura lo borrado: un id vivo (o inexistente) devuelve false y el use case da 404.
+  async restore(projectId: ProjectId): Promise<boolean> {
+    const result = await this.repository().restore({ id: projectId.value, deletedAt: Not(IsNull()) })
+    return (result.affected ?? 0) > 0
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra
