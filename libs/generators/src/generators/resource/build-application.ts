@@ -33,6 +33,8 @@ export interface ApplicationBindings {
   writes: boolean
   /** remove emitted (list.features.delete) */
   removes: boolean
+  /** papelera emitida (spec 29): borrado lógico Y listado con borrado */
+  trash: boolean
   uniqueSpecs: UniqueSpecBinding[]
   registerSpecImports: string[]
   registerCheckBlocks: string[]
@@ -114,6 +116,7 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     emit: emitAggregate,
     writes: (definition.formSections?.length ?? 0) > 0,
     removes: definition.list?.features?.delete === true,
+    trash: definition.list?.features?.delete === true && definition.softDelete === true,
     uniqueSpecs,
     registerSpecImports,
     registerCheckBlocks,
