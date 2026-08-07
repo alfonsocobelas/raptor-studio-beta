@@ -45,6 +45,18 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(repo).not.toContain('restore')
   })
 
+  it('el repositorio Mongoose de project implementa la papelera (borrados $ne null y restore)', async () => {
+    const tree = await emit('project', 'mongo')
+
+    const repo = read(tree, 'out/backend/infrastructure/persistence/mongoose/mongoose-project.repository.ts')
+    expect(repo).toContain('async matchingDeleted(criteria: Criteria): Promise<Project[]>')
+    expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
+    expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
+    expect(repo).toContain('this.countDeletedByCriteria(criteria)')
+    expect(repo).toContain('async restore(projectId: ProjectId): Promise<void>')
+    expect(repo).toContain('{ $set: { deletedAt: null } }')
+  })
+
   it('license (softDelete SIN delete en la lista) no lleva papelera', async () => {
     const tree = await emit('license')
 
