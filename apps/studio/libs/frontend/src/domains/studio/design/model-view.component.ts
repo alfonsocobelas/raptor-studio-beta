@@ -36,6 +36,7 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
     @if (!nodes().length) {
       <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-model">
@@ -51,6 +52,7 @@ interface DiagramEdge {
         [style.width.px]="surface().width"
         [style.height.px]="surface().height"
         data-testid="model-surface"
+        (click)="selected.set(null)"
       >
         <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
           <defs>
@@ -59,21 +61,34 @@ interface DiagramEdge {
             </marker>
           </defs>
           @for (item of edges(); track item.edge.from + '-' + item.edge.fieldIndex) {
-            <g [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to">
+            <g
+              class="cursor-pointer"
+              [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to"
+              (click)="selectEdge($event, item.edge)"
+            >
+              <!-- zona de clic ancha e invisible: la línea de 1.5px es imposible de acertar -->
               <line
                 [attr.x1]="item.line.x1"
                 [attr.y1]="item.line.y1"
                 [attr.x2]="item.line.x2"
                 [attr.y2]="item.line.y2"
-                class="stroke-muted-foreground"
-                stroke-width="1.5"
+                stroke="transparent"
+                stroke-width="12"
+              />
+              <line
+                [attr.x1]="item.line.x1"
+                [attr.y1]="item.line.y1"
+                [attr.x2]="item.line.x2"
+                [attr.y2]="item.line.y2"
+                [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-muted-foreground'"
+                [attr.stroke-width]="isSelected(item.edge) ? 2.5 : 1.5"
                 marker-end="url(#model-arrow)"
               />
               <text
                 [attr.x]="(item.line.x1 + item.line.x2) / 2"
                 [attr.y]="(item.line.y1 + item.line.y2) / 2 - 6"
                 text-anchor="middle"
-                class="fill-muted-foreground text-[10px]"
+                [class]="'text-[10px] ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')"
               >
                 {{ item.edge.label }}
               </text>
@@ -94,6 +109,21 @@ interface DiagramEdge {
             />
           }
         </svg>
+
+        <!-- botón de borrado de la flecha seleccionada (también responde la tecla Supr) -->
+        @if (selectedEdge(); as sel) {
+          <button
+            type="button"
+            class="bg-destructive text-destructive-foreground absolute z-10 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs leading-none shadow"
+            [style.left.px]="(sel.line.x1 + sel.line.x2) / 2"
+            [style.top.px]="(sel.line.y1 + sel.line.y2) / 2 + 10"
+            data-testid="delete-edge"
+            title="Eliminar relación (Supr)"
+            (click)="$event.stopPropagation(); deleteSelected()"
+          >
+            ×
+          </button>
+        }
 
         @for (node of nodes(); track node.name) {
           <div
@@ -171,6 +201,44 @@ export class ModelViewComponent {
 
   /** Enlace en curso: origen + segmento de la flecha fantasma (coords del lienzo). */
   protected readonly linking = signal<{ from: string; x1: number; y1: number; x2: number; y2: number } | null>(null)
+
+  /** Flecha seleccionada, por identidad del campo ref que la origina. */
+  protected readonly selected = signal<{ from: string; fieldIndex: number } | null>(null)
+
+  /** La selección resuelta contra las aristas vivas: si la flecha ya no existe, no hay selección. */
+  protected readonly selectedEdge = computed(() => {
+    const sel = this.selected()
+    return sel ? (this.edges().find(e => this.matches(e.edge, sel)) ?? null) : null
+  })
+
+  /** Supr borra la flecha seleccionada — salvo que el usuario esté escribiendo en un campo. */
+  protected onDeleteKey(event: Event): void {
+    const target = event.target as HTMLElement | null
+    if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+    this.deleteSelected()
+  }
+
+  protected selectEdge(event: MouseEvent, edge: ModelEdge): void {
+    event.stopPropagation()
+    this.selected.set({ from: edge.from, fieldIndex: edge.fieldIndex })
+  }
+
+  protected isSelected(edge: ModelEdge): boolean {
+    const sel = this.selected()
+    return sel !== null && this.matches(edge, sel)
+  }
+
+  /** Borrar la flecha es borrar su campo ref: la mutación (y su gate) ya viven en el store. */
+  protected deleteSelected(): void {
+    const sel = this.selectedEdge()
+    if (!sel) return
+    this.store.removeRelation(sel.edge.from, sel.edge.fieldIndex)
+    this.selected.set(null)
+  }
+
+  private matches(edge: ModelEdge, sel: { from: string; fieldIndex: number }): boolean {
+    return edge.from === sel.from && edge.fieldIndex === sel.fieldIndex
+  }
 
   /**
    * Crear relación arrastrando: el asa captura el puntero, la flecha fantasma
