@@ -19,9 +19,16 @@
 
 ## Lo derivado antes que lo copiado
 
-- [ ] **TASK-02**: `constants.ts` derivado del registro (unión de `constraintKey` → MIN/MAX de los VOs
+- [x] **TASK-02**: `constants.ts` derivado del registro (unión de `constraintKey` → MIN/MAX de los VOs
       realmente emitidos) + el ensamblador emite la carpeta `<contexto>/shared/domain/`. Fixture de app
       con el fichero del canon primero (RED).
+      · `contextSharedGroups` agrupa por CONTEXTO, no por app: `<contexto>/shared/domain/` es la ruta
+        que ya importan los módulos emitidos (`'../../../shared/domain/constants'`). Una app con dos
+        contextos emite dos carpetas; un contexto sin VOs compartidos no emite nada
+      · **derivado, no copiado**: la app de oro (contract+project) emite el canon SIN `PHONE`, que
+        sólo aparece cuando entra `customer` (visible en el diff de las dos fixtures)
+      · RED verificado en los dos frentes: la suite no compilaba y el gate decía «sin homólogo en
+        fixture» en `app` y `app-mongo`. Ahora 371 tests verdes y los 6 golden vacíos
 
 ## Un kind por tarea, del más simple al más caro
 

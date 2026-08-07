@@ -10,6 +10,7 @@ import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
+import { contextSharedGroups, sharedConstraintEntries } from './context-shared'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
 import rootGenerator from '../root/root'
@@ -190,6 +191,25 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     tree.delete(staging)
   }
   tree.delete(path.join(root, '.gen'))
+
+  // 3b. la capa compartida de cada contexto: los VOs que no son de ningún módulo (spec 27).
+  //     No la emite el generador de recurso porque `CustomerName` la usan cuatro módulos y el
+  //     último en generar ganaría; aquí sí se sabe qué modelos entran.
+  for (const group of contextSharedGroups(models)) {
+    const constraintLines = sharedConstraintEntries(group.vos)
+    if (constraintLines.length === 0) {
+      continue
+    }
+    generateFiles(
+      tree,
+      path.join(__dirname, 'files-context-shared'),
+      path.join(backendSrc, 'contexts', group.context, 'shared/domain'),
+      {
+        constraintLines: constraintLines.map(line => `  ${line}`).join(',\n'),
+        tmpl: ''
+      }
+    )
+  }
 
   // 4. esqueleto: copia literal, sin plantillas. La capa por librería va después
   //    para que pueda sobrescribir lo que dependa de la piel (hoja de estilos).
