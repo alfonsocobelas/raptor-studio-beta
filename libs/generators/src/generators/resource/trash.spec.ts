@@ -216,6 +216,23 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     expect(test).toContain('repository.restore(')
   })
 
+  it('el servicio frontend de project consulta /deleted y restaura recargando ambos', async () => {
+    const tree = await emit('project')
+
+    const service = read(tree, 'out/frontend/project.service.ts')
+    expect(service).toContain('trashRequest')
+    expect(service).toContain('`${API_URL}/deleted`')
+    expect(service).toContain('restore(id: string): Promise<void>')
+    expect(service).toContain('`${API_URL}/${id}/restore`')
+    expect(service).toContain('this.deleted.reload()')
+  })
+
+  it('el servicio de customer no sabe de la papelera', async () => {
+    const tree = await emit('customer')
+
+    expect(read(tree, 'out/frontend/customer.service.ts')).not.toContain('deleted')
+  })
+
   it('las integraciones de customer no cambian', async () => {
     const typeorm = await emit('customer')
     const mongo = await emit('customer', 'mongo')

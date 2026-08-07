@@ -66,7 +66,7 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
-  features: { view: boolean; delete: boolean; edit: boolean }
+  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
   /** Comentario de las acciones de fila en el listado con ficha */
@@ -707,11 +707,19 @@ function renderAngularCoreImports(features: { edit: boolean; delete: boolean }):
   return base.join(', ')
 }
 
-function resolveFeatures(definition: ResourceDefinition): { view: boolean; delete: boolean; edit: boolean } {
+function resolveFeatures(definition: ResourceDefinition): {
+  view: boolean
+  delete: boolean
+  edit: boolean
+  trash: boolean
+} {
+  const canDelete = definition.list?.features?.delete ?? false
   return {
     view: definition.list?.features?.view ?? true,
-    delete: definition.list?.features?.delete ?? false,
-    edit: definition.list?.features?.edit ?? true
+    delete: canDelete,
+    edit: definition.list?.features?.edit ?? true,
+    // la papelera (spec 29) se DERIVA: borrado lógico + listado que borra
+    trash: canDelete && definition.softDelete === true
   }
 }
 
