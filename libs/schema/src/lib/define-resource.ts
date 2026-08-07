@@ -1,3 +1,4 @@
+import { BRIEF_LIMITS } from './app-types'
 import { FieldDefinition, ResourceDefinition } from './resource-types'
 import { SchemaValidationError } from './validation-errors'
 
@@ -11,7 +12,8 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateFields(definition),
     ...validateDetail(definition),
     ...validateGallery(definition),
-    ...validateCode(definition)
+    ...validateCode(definition),
+    ...validateBrief(definition.brief)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -53,7 +55,9 @@ function validateDetail(definition: ResourceDefinition): string[] {
   const { detail } = definition
   if (!detail) {
     // los adjuntos cuelgan de un registro y solo se ven en su ficha (spec 16)
-    return definition.attachments ? ['attachments: requires detail (files belong to a record, shown in its detail)'] : []
+    return definition.attachments
+      ? ['attachments: requires detail (files belong to a record, shown in its detail)']
+      : []
   }
 
   const problems: string[] = []
@@ -128,4 +132,12 @@ function validateField(name: string, field: FieldDefinition): string[] {
   }
 
   return problems
+}
+
+/** El brief de entidad es una frase (spec 22): tope corto, se reenvía en cada turno del chat. */
+function validateBrief(brief: ResourceDefinition['brief']): string[] {
+  if (brief === undefined) return []
+  if (typeof brief !== 'string' || !brief.trim()) return ['brief: must be a non-empty string']
+  if (brief.length > BRIEF_LIMITS.entity) return [`brief: exceeds ${BRIEF_LIMITS.entity} characters`]
+  return []
 }

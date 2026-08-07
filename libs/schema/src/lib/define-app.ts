@@ -1,4 +1,4 @@
-import { AppDefinition, PageDefinition } from './app-types'
+import { AppDefinition, BRIEF_LIMITS, PageDefinition } from './app-types'
 import { THEME_IDS } from './themes'
 import { validateFlows } from './validate-flows'
 import { SchemaValidationError } from './validation-errors'
@@ -12,7 +12,8 @@ export function defineApp(definition: AppDefinition): AppDefinition {
     ...validateIdentity(definition),
     ...validateTheme(definition),
     ...validatePages(definition.pages),
-    ...validateFlows(definition.flows)
+    ...validateFlows(definition.flows),
+    ...validateBrief(definition.brief)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -79,6 +80,41 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
     }
     if (seen.has(widget.resource)) problems.push(`pages[${index}]: duplicated widget for resource '${widget.resource}'`)
     seen.add(widget.resource)
+  })
+
+  return problems
+}
+
+/** Topes del brief (spec 22): se reenvía en cada turno del chat; sin tope degrada el prompt. */
+function validateBrief(brief: AppDefinition['brief']): string[] {
+  if (brief === undefined) return []
+  const problems: string[] = []
+
+  if (typeof brief.business !== 'string' || !brief.business.trim()) {
+    problems.push('brief.business: must be a non-empty string')
+  } else if (brief.business.length > BRIEF_LIMITS.business) {
+    problems.push(`brief.business: exceeds ${BRIEF_LIMITS.business} characters`)
+  }
+
+  const rules = brief.rules ?? []
+  if (rules.length > BRIEF_LIMITS.rules) problems.push(`brief.rules: at most ${BRIEF_LIMITS.rules} rules`)
+  rules.forEach((rule, i) => {
+    if (typeof rule !== 'string' || !rule.trim()) problems.push(`brief.rules[${i}]: must be a non-empty string`)
+    else if (rule.length > BRIEF_LIMITS.ruleLength)
+      problems.push(`brief.rules[${i}]: exceeds ${BRIEF_LIMITS.ruleLength} characters`)
+  })
+
+  const glossary = brief.glossary ?? []
+  if (glossary.length > BRIEF_LIMITS.glossary) problems.push(`brief.glossary: at most ${BRIEF_LIMITS.glossary} entries`)
+  glossary.forEach((entry, i) => {
+    if (typeof entry.term !== 'string' || !entry.term.trim()) {
+      problems.push(`brief.glossary[${i}].term: must be a non-empty string`)
+    } else if (entry.term.length > BRIEF_LIMITS.termLength) {
+      problems.push(`brief.glossary[${i}].term: exceeds ${BRIEF_LIMITS.termLength} characters`)
+    }
+    if (typeof entry.means !== 'string' || !entry.means.trim()) {
+      problems.push(`brief.glossary[${i}].means: must be a non-empty string`)
+    }
   })
 
   return problems

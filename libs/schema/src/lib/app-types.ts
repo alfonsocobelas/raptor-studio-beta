@@ -106,6 +106,32 @@ export const FLOW_LIMITS = {
   description: 300
 } as const
 
+/**
+ * Brief de negocio (spec 22): lo destila la IA de la conversación, lo corrige el usuario y viaja
+ * con el diseño hasta aterrizar como CLAUDE.md en la app generada. NO genera código (regla 7):
+ * es la memoria del negocio que el chat relee cada turno. Con topes porque se reenvía entero en
+ * cada turno — sin ellos degrada el prompt con el uso.
+ */
+export interface BusinessBrief {
+  /** Prosa: qué hace este negocio */
+  business: string
+  /** Reglas que la IA debe respetar al diseñar */
+  rules?: string[]
+  /** Jerga del cliente: cómo llama a las cosas */
+  glossary?: { term: string; means: string }[]
+}
+
+/** Topes del brief: se reenvía en cada turno del chat (brainstorming 2026-08-03). */
+export const BRIEF_LIMITS = {
+  business: 1200,
+  rules: 20,
+  ruleLength: 240,
+  glossary: 30,
+  termLength: 40,
+  /** brief de entidad (ResourceDefinition.brief) */
+  entity: 500
+} as const
+
 export interface AppDefinition {
   schemaVersion: 1
   name: string
@@ -116,4 +142,6 @@ export interface AppDefinition {
   pages: PageDefinition[]
   /** Procesos de negocio dibujados en el estudio; contexto, nunca fuente de código (spec 28) */
   flows?: BusinessFlow[]
+  /** Contexto de negocio destilado del chat; documentación que viaja, nunca fuente de código */
+  brief?: BusinessBrief
 }

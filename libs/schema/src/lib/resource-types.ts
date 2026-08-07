@@ -374,4 +374,6 @@ export interface ResourceDefinition {
   gallery?: GalleryDefinition
   /** Código de negocio autogenerado y legible (spec 19) */
   code?: CodeDefinition
+  /** Frase de negocio de la entidad (spec 22): documentación que viaja, nunca fuente de código */
+  brief?: string
 }

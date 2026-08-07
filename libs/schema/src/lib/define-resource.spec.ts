@@ -219,9 +219,7 @@ describe('gallery — tarjetas en vez de tabla (spec 17)', () => {
   })
 
   it('rechaza una galería cuyo título apunta a un campo inexistente', () => {
-    expect(() => defineResource({ ...validDefinition(), gallery: { title: 'fantasma' } })).toThrow(
-      /gallery.*fantasma/i
-    )
+    expect(() => defineResource({ ...validDefinition(), gallery: { title: 'fantasma' } })).toThrow(/gallery.*fantasma/i)
   })
 
   it('rechaza una galería cuya métrica apunta a un campo inexistente', () => {
@@ -256,5 +254,27 @@ describe('code — código de negocio autogenerado (spec 19)', () => {
     definition.fields['code'] = { type: 'string' }
 
     expect(() => defineResource({ ...definition, code: {} })).toThrow(/code.*already|ya existe/i)
+  })
+})
+
+/** Spec 22: en la entidad no hay glosario ni reglas — hay una frase (tope 500). */
+describe('brief — la frase de negocio de la entidad (spec 22)', () => {
+  it('acepta una frase y la conserva', () => {
+    const definition = {
+      ...validDefinition(),
+      brief: 'Una propiedad en cartera; su estado gobierna qué se puede hacer con ella.'
+    }
+
+    expect(() => defineResource(definition)).not.toThrow()
+  })
+
+  it('rechaza el brief en blanco', () => {
+    expect(() => defineResource({ ...validDefinition(), brief: '   ' })).toThrow(/brief: must be a non-empty string/)
+  })
+
+  it('corta por el tope (500)', () => {
+    expect(() => defineResource({ ...validDefinition(), brief: 'x'.repeat(501) })).toThrow(
+      /brief: exceeds 500 characters/
+    )
   })
 })

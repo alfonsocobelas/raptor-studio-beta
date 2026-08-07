@@ -100,7 +100,10 @@ describe('defineApp', () => {
   describe('dashboard widgets', () => {
     it('rejects a dashboard without widgets', () => {
       const definition = validDefinition()
-      definition.pages = [{ kind: 'dashboard', widgets: [] }, { kind: 'resource', resource: 'customer' }]
+      definition.pages = [
+        { kind: 'dashboard', widgets: [] },
+        { kind: 'resource', resource: 'customer' }
+      ]
 
       expect(problemsOf(definition)).toContain('pages[0]: dashboard requires at least one widget')
     })
@@ -173,5 +176,68 @@ describe('theme — tema de la app (spec 20)', () => {
 
   it('neutral es el primer tema: es el defecto y coincide con lo emitido hoy', () => {
     expect(THEMES[0].id).toBe('neutral')
+  })
+})
+
+/**
+ * Spec 22: el brief de negocio viaja con el diseño y se reenvía en cada turno del chat — sin topes,
+ * degrada el prompt con el uso. Los topes son los del brainstorming 2026-08-03.
+ */
+describe('brief — el contexto de negocio de la app (spec 22)', () => {
+  const withBrief = (brief: unknown): AppDefinition => ({ ...validDefinition(), brief }) as unknown as AppDefinition
+
+  it('acepta un brief completo válido', () => {
+    const definition = withBrief({
+      business: 'Inmobiliaria de costa: capta propiedades y agenda visitas.',
+      rules: ['Una visita nunca se solapa con otra del mismo agente'],
+      glossary: [{ term: 'ficha', means: 'el historial completo de la propiedad' }]
+    })
+
+    expect(() => defineApp(definition)).not.toThrow()
+  })
+
+  it('acepta un brief con solo el negocio', () => {
+    expect(() => defineApp(withBrief({ business: 'Taller de motos.' }))).not.toThrow()
+  })
+
+  it('rechaza business vacío o en blanco', () => {
+    expect(problemsOf(withBrief({ business: '' }))).toContain('brief.business: must be a non-empty string')
+    expect(problemsOf(withBrief({ business: '   ' }))).toContain('brief.business: must be a non-empty string')
+  })
+
+  it('corta business por el tope (1200)', () => {
+    expect(problemsOf(withBrief({ business: 'x'.repeat(1201) }))).toContain('brief.business: exceeds 1200 characters')
+    expect(() => defineApp(withBrief({ business: 'x'.repeat(1200) }))).not.toThrow()
+  })
+
+  it('corta rules por cantidad (20) y por longitud (240)', () => {
+    const many = withBrief({ business: 'ok', rules: Array.from({ length: 21 }, () => 'r') })
+    expect(problemsOf(many)).toContain('brief.rules: at most 20 rules')
+
+    const long = withBrief({ business: 'ok', rules: ['x'.repeat(241)] })
+    expect(problemsOf(long)).toContain('brief.rules[0]: exceeds 240 characters')
+  })
+
+  it('corta glossary por entradas (30) y term por longitud (40)', () => {
+    const many = withBrief({
+      business: 'ok',
+      glossary: Array.from({ length: 31 }, (_, i) => ({ term: `t${i}`, means: 'm' }))
+    })
+    expect(problemsOf(many)).toContain('brief.glossary: at most 30 entries')
+
+    const long = withBrief({ business: 'ok', glossary: [{ term: 'x'.repeat(41), means: 'm' }] })
+    expect(problemsOf(long)).toContain('brief.glossary[0].term: exceeds 40 characters')
+  })
+
+  it('una regla o un término vacíos también son problema', () => {
+    expect(problemsOf(withBrief({ business: 'ok', rules: [' '] }))).toContain(
+      'brief.rules[0]: must be a non-empty string'
+    )
+    expect(problemsOf(withBrief({ business: 'ok', glossary: [{ term: '', means: 'm' }] }))).toContain(
+      'brief.glossary[0].term: must be a non-empty string'
+    )
+    expect(problemsOf(withBrief({ business: 'ok', glossary: [{ term: 't', means: ' ' }] }))).toContain(
+      'brief.glossary[0].means: must be a non-empty string'
+    )
   })
 })
