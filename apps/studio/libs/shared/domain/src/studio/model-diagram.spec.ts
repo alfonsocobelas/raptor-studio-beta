@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DraftResource } from './draft-resource'
-import { autoLayout, edgeLine, modelEdges, MODEL_GRID, type NodeBox } from './model-diagram'
+import { autoLayout, edgeLine, modelEdges, nodeBox, MODEL_GRID, MODEL_NODE, type NodeBox } from './model-diagram'
 
 const entity = (name: string, fields: DraftResource['fields'] = []): DraftResource => ({
   name,
@@ -61,6 +61,25 @@ describe('autoLayout', () => {
     expect(positions['d']).toEqual({ x: MODEL_GRID.margin, y: MODEL_GRID.margin + MODEL_GRID.rowHeight })
     const keys = Object.values(positions).map(p => `${p.x},${p.y}`)
     expect(new Set(keys).size).toBe(4)
+  })
+})
+
+describe('nodeBox', () => {
+  it('el alto crece con los campos: cabecera + una fila por campo', () => {
+    const box = nodeBox({ x: 40, y: 40 }, 3)
+
+    expect(box).toEqual({
+      x: 40,
+      y: 40,
+      width: MODEL_NODE.width,
+      height: MODEL_NODE.headerHeight + 3 * MODEL_NODE.rowHeight
+    })
+  })
+
+  it('una entidad sin campos conserva al menos la cabecera', () => {
+    const box = nodeBox({ x: 0, y: 0 }, 0)
+
+    expect(box.height).toBe(MODEL_NODE.headerHeight)
   })
 })
 

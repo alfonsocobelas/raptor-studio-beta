@@ -40,6 +40,22 @@ export const MODEL_GRID = {
   margin: 40
 } as const
 
+/** Dimensiones de una caja del diagrama: el alto lo dictan los campos. */
+export const MODEL_NODE = {
+  width: 240,
+  headerHeight: 40,
+  rowHeight: 24
+} as const
+
+export function nodeBox(position: NodePosition, fieldCount: number): NodeBox {
+  return {
+    x: position.x,
+    y: position.y,
+    width: MODEL_NODE.width,
+    height: MODEL_NODE.headerHeight + fieldCount * MODEL_NODE.rowHeight
+  }
+}
+
 export function modelEdges(resources: DraftResource[]): ModelEdge[] {
   return resources.flatMap(resource =>
     resource.fields.flatMap((field, fieldIndex) =>

@@ -40,6 +40,7 @@ const STUDIO_ICONS = {
 }
 import { DesignStore } from './design-store'
 import { CanvasPageComponent } from './canvas-page.component'
+import { ModelViewComponent } from './model-view.component'
 import { InspectorComponent } from './inspector.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
@@ -67,7 +68,15 @@ const BLOCK_TOOLS: BlockTool[] = [
 @Component({
   selector: 'studio-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon, CanvasPageComponent, InspectorComponent, ChatPanelComponent, GenerateWizardComponent],
+  imports: [
+    FormsModule,
+    NgIcon,
+    CanvasPageComponent,
+    InspectorComponent,
+    ChatPanelComponent,
+    GenerateWizardComponent,
+    ModelViewComponent
+  ],
   providers: [provideIcons(STUDIO_ICONS)],
   template: `
     <div class="flex h-screen flex-col">
@@ -90,6 +99,31 @@ const BLOCK_TOOLS: BlockTool[] = [
             </text>
           </svg>
           <span class="text-[15px] font-semibold tracking-tight">Raptor Studio</span>
+        </div>
+        <div class="bg-border h-6 w-px"></div>
+
+        <!-- conmutador Vistas / Modelo (spec 15, fase 4) -->
+        <div class="flex items-center gap-0.5 rounded-md border p-0.5">
+          <button
+            type="button"
+            class="rounded px-2 py-0.5 text-xs font-medium"
+            [class.bg-primary]="mode() === 'views'"
+            [class.text-primary-foreground]="mode() === 'views'"
+            data-testid="mode-views"
+            (click)="mode.set('views')"
+          >
+            Vistas
+          </button>
+          <button
+            type="button"
+            class="rounded px-2 py-0.5 text-xs font-medium"
+            [class.bg-primary]="mode() === 'model'"
+            [class.text-primary-foreground]="mode() === 'model'"
+            data-testid="mode-model"
+            (click)="mode.set('model')"
+          >
+            Modelo
+          </button>
         </div>
         <div class="bg-border h-6 w-px"></div>
 
@@ -242,7 +276,9 @@ const BLOCK_TOOLS: BlockTool[] = [
               data-testid="schema-json"
             ><code>{{ store.exportJson() }}</code></pre>
           }
-          @if (!pages().length) {
+          @if (mode() === 'model') {
+            <studio-model-view />
+          } @else if (!pages().length) {
             <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
               <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
               <p class="text-muted-foreground max-w-md text-sm">
@@ -414,6 +450,7 @@ export class StudioCanvasComponent {
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 
+  protected readonly mode = signal<'views' | 'model'>('views')
   protected readonly viewMenu = signal(false)
   protected readonly blockMenu = signal<BlockKind | null>(null)
   protected readonly creating = signal<string | null>(null)
