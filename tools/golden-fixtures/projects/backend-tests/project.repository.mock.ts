@@ -39,6 +39,18 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
     return this.getMock('count')(criteria)
   }
 
+  matchingDeleted(criteria: Criteria): Promise<Project[]> {
+    return this.getMock('matchingDeleted')(criteria)
+  }
+
+  countDeleted(criteria: Criteria): Promise<number> {
+    return this.getMock('countDeleted')(criteria)
+  }
+
+  restore(projectId: ProjectId): Promise<boolean> {
+    return this.getMock('restore')(projectId)
+  }
+
   // helpers
   givenFound(project: Project): void {
     this.setMockResult('get', project)
@@ -94,6 +106,22 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   whenRemoveSuccess(): void {
     this.setMockResult('remove', undefined)
+  }
+
+  givenDeleted(projects: Project[]): void {
+    this.setMockResult('matchingDeleted', projects)
+  }
+
+  givenDeletedCount(count: number): void {
+    this.setMockResult('countDeleted', count)
+  }
+
+  whenRestoreSucceeds(): void {
+    this.setMockResult('restore', true)
+  }
+
+  whenRestoreFindsNothing(): void {
+    this.setMockResult('restore', false)
   }
 
   matchingCriteria(): Criteria {
