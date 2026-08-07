@@ -60,7 +60,18 @@ y `buildAppFile`), contra los nombres de recurso del diseño.
 
 ### DesignStore
 
-Signal `flows` con mutaciones que pasan por `mutate()` (el gate valida gratis):
+**Decisión de implementación (2026-08-07, TASK-03).** El gate completo de
+`defineApp` (aridad por kind, alcanzabilidad) haría imposible la edición
+incremental: un nodo recién soltado de la paleta aún no tiene salidas y
+`mutate()` lo revertiría. Se sigue el precedente `DraftResource`: el store
+aplica un **gate ligero** en cada mutación (nombres/ids únicos, aristas a
+nodos existentes, sin auto-bucle, topes) y el **gate completo** se aplica en
+la frontera (chat `validateDesign`, wizard/generación), donde los flujos ya
+deben estar terminados. Consecuencia asumida: un export a mitad de dibujo
+puede llevar un flujo incompleto — el generador lo rechaza con el error
+accionable del gate.
+
+Signal `flows` con mutaciones que pasan por `mutate()`:
 
 - `addFlow(name)` / `removeFlow(name)` / `renameFlow(name, next)`
 - `addFlowNode(flow, kind, text)` — id derivado del texto (slug + sufijo si colisiona)

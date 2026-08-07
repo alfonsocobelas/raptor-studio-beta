@@ -1,5 +1,14 @@
 import { Injectable, computed, signal } from '@angular/core'
-import { defineApp, defineResource, type AppDefinition, type ResourceDefinition } from '@acc/schema'
+import {
+  FLOW_LIMITS,
+  defineApp,
+  defineResource,
+  type AppDefinition,
+  type BusinessFlow,
+  type FlowNode,
+  type FlowNodeKind,
+  type ResourceDefinition
+} from '@acc/schema'
 import {
   DETAIL_BLOCKS,
   GENERABLE_BLOCKS,
@@ -17,6 +26,66 @@ import {
 /** «orden-compra» → «ordenCompra»: los nombres de entidad son kebab y los de campo camel. */
 function camel(kebab: string): string {
   return kebab.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())
+}
+
+/** «¿Reservar depósito?» → «reservar-deposito»: el id de nodo de flujo es un slug del texto. */
+function slug(text: string): string {
+  return (
+    text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'nodo'
+  )
+}
+
+/**
+ * Gate ligero de los flujos MIENTRAS se dibujan (spec 28): identidad,
+ * referencias y topes. Un nodo suelto o una decisión con una sola salida son
+ * legales aquí; la forma completa (aridad, alcanzabilidad) la exige defineApp
+ * en la frontera, igual que DraftResource respecto a defineResource.
+ */
+function flowDraftProblem(flows: BusinessFlow[]): string | null {
+  if (flows.length > FLOW_LIMITS.flows) return `Como mucho ${FLOW_LIMITS.flows} flujos por diseño`
+
+  const names = new Set<string>()
+  for (const flow of flows) {
+    if (names.has(flow.name)) return `Ya existe el flujo «${flow.name}»`
+    names.add(flow.name)
+    if (!flow.name.length || flow.name.length > FLOW_LIMITS.name) {
+      return `El nombre del flujo debe tener entre 1 y ${FLOW_LIMITS.name} caracteres`
+    }
+    if (flow.description !== undefined && flow.description.length > FLOW_LIMITS.description) {
+      return `La descripción de «${flow.name}» supera los ${FLOW_LIMITS.description} caracteres`
+    }
+    if (flow.nodes.length > FLOW_LIMITS.nodes) return `«${flow.name}» supera los ${FLOW_LIMITS.nodes} nodos`
+    if (flow.edges.length > FLOW_LIMITS.edges) return `«${flow.name}» supera las ${FLOW_LIMITS.edges} conexiones`
+
+    const ids = new Set<string>()
+    for (const node of flow.nodes) {
+      if (ids.has(node.id)) return `Nodo duplicado «${node.id}» en «${flow.name}»`
+      ids.add(node.id)
+      if (!node.text.length || node.text.length > FLOW_LIMITS.text) {
+        return `El texto de un nodo debe tener entre 1 y ${FLOW_LIMITS.text} caracteres`
+      }
+    }
+
+    const seen = new Set<string>()
+    for (const edge of flow.edges) {
+      if (edge.from === edge.to) return `Un nodo no puede conectarse consigo mismo («${edge.from}»)`
+      if (!ids.has(edge.from) || !ids.has(edge.to)) {
+        return `Una conexión de «${flow.name}» apunta a un nodo inexistente`
+      }
+      const key = `${edge.from}→${edge.to}→${edge.label ?? ''}`
+      if (seen.has(key)) return `Ya existe la conexión ${edge.from} → ${edge.to}`
+      seen.add(key)
+      if (edge.label !== undefined && (!edge.label.length || edge.label.length > FLOW_LIMITS.label)) {
+        return `La etiqueta de una conexión debe tener entre 1 y ${FLOW_LIMITS.label} caracteres`
+      }
+    }
+  }
+  return null
 }
 
 /** Valores de partida al convertir una columna en enum: un enum vacío no se genera. */
@@ -47,6 +116,8 @@ export interface Design {
   appName: string
   resources: DraftResource[]
   pages: DesignPage[]
+  /** Procesos de negocio (spec 28); opcional para no romper diseños anteriores */
+  flows?: BusinessFlow[]
 }
 
 /**
@@ -59,11 +130,13 @@ export class DesignStore {
   private readonly _appName = signal('mi-app')
   private readonly _resources = signal<DraftResource[]>([])
   private readonly _pages = signal<DesignPage[]>([])
+  private readonly _flows = signal<BusinessFlow[]>([])
   private readonly _lastError = signal<string | null>(null)
 
   readonly appName = this._appName.asReadonly()
   readonly resources = this._resources.asReadonly()
   readonly pages = this._pages.asReadonly()
+  readonly flows = this._flows.asReadonly()
   readonly lastError = this._lastError.asReadonly()
 
   /** Resource-schemas canónicos derivados de las entidades del diseño. */
@@ -305,12 +378,104 @@ export class DesignStore {
   }
 
   /**
+   * Flujos de negocio (spec 28). El store es PERMISIVO mientras se dibuja
+   * (un nodo suelto es legal); la forma completa —aridad, alcanzabilidad—
+   * la exige defineApp en la frontera, como con DraftResource.
+   */
+  addFlow(name: string): boolean {
+    return this.mutateFlows([
+      ...this._flows(),
+      {
+        name,
+        nodes: [
+          { id: 'inicio', kind: 'start', text: 'Inicio' },
+          { id: 'fin', kind: 'end', text: 'Fin' }
+        ],
+        edges: [{ from: 'inicio', to: 'fin' }]
+      }
+    ])
+  }
+
+  removeFlow(name: string): boolean {
+    return this.mutateFlows(this._flows().filter(f => f.name !== name))
+  }
+
+  renameFlow(name: string, next: string): boolean {
+    return this.mutateFlows(this._flows().map(f => (f.name === name ? { ...f, name: next.trim() || f.name } : f)))
+  }
+
+  addFlowNode(flowName: string, kind: FlowNodeKind, text: string): boolean {
+    return this.updateFlow(flowName, flow => {
+      const taken = new Set(flow.nodes.map(n => n.id))
+      const base = slug(text)
+      let id = base
+      for (let i = 2; taken.has(id); i++) id = `${base}-${i}`
+      return { ...flow, nodes: [...flow.nodes, { id, kind, text }] }
+    })
+  }
+
+  updateFlowNode(flowName: string, id: string, patch: Partial<Omit<FlowNode, 'id'>>): boolean {
+    return this.updateFlow(flowName, flow => ({
+      ...flow,
+      nodes: flow.nodes.map(n => (n.id === id ? { ...n, ...patch } : n))
+    }))
+  }
+
+  /** Quitar un nodo arrastra sus aristas: nada puede quedar apuntando al hueco. */
+  removeFlowNode(flowName: string, id: string): boolean {
+    return this.updateFlow(flowName, flow => ({
+      ...flow,
+      nodes: flow.nodes.filter(n => n.id !== id),
+      edges: flow.edges.filter(e => e.from !== id && e.to !== id)
+    }))
+  }
+
+  addFlowEdge(flowName: string, from: string, to: string, label?: string): boolean {
+    return this.updateFlow(flowName, flow => ({
+      ...flow,
+      edges: [...flow.edges, { from, to, ...(label !== undefined ? { label } : {}) }]
+    }))
+  }
+
+  removeFlowEdge(flowName: string, from: string, to: string, label?: string): boolean {
+    return this.updateFlow(flowName, flow => ({
+      ...flow,
+      edges: flow.edges.filter(e => !(e.from === from && e.to === to && e.label === label))
+    }))
+  }
+
+  private updateFlow(name: string, fn: (flow: BusinessFlow) => BusinessFlow): boolean {
+    if (!this._flows().some(f => f.name === name)) {
+      this._lastError.set(`No existe el flujo «${name}»`)
+      return false
+    }
+    return this.mutateFlows(this._flows().map(f => (f.name === name ? fn(f) : f)))
+  }
+
+  private mutateFlows(flows: BusinessFlow[]): boolean {
+    const problem = flowDraftProblem(flows)
+    if (problem) {
+      this._lastError.set(problem)
+      return false
+    }
+    this._flows.set(flows)
+    this._lastError.set(null)
+    return true
+  }
+
+  /**
    * Traduce las vistas al app-schema que consume el generador: solo viajan las
    * composiciones que sabe emitir hoy (tabla → página de recurso; solo KPIs →
-   * dashboard). El resto se reporta en notGenerable().
+   * dashboard). El resto se reporta en notGenerable(). Los flujos viajan tal
+   * cual; su forma completa la valida la frontera.
    */
   toAppSchema(): AppDefinition {
-    return { schemaVersion: 1, name: this._appName(), pages: designPagesToAppPages(this._pages()) }
+    return {
+      schemaVersion: 1,
+      name: this._appName(),
+      pages: designPagesToAppPages(this._pages()),
+      ...(this._flows().length ? { flows: this._flows() } : {})
+    }
   }
 
   /**
@@ -337,7 +502,15 @@ export class DesignStore {
 
   applyExternal(design: Design): boolean {
     const clone = structuredClone(design)
-    return this.mutate(clone.resources, clone.pages, clone.appName)
+    const flows = clone.flows ?? []
+    const problem = flowDraftProblem(flows)
+    if (problem) {
+      this._lastError.set(problem)
+      return false
+    }
+    if (!this.mutate(clone.resources, clone.pages, clone.appName)) return false
+    this._flows.set(flows)
+    return true
   }
 
   private updateResource(name: string, fn: (draft: DraftResource) => DraftResource): boolean {
@@ -366,7 +539,8 @@ export class DesignStore {
       this._appName.set(name)
       this._resources.set(resources)
       this._pages.set(pages)
-      const schema = this.toAppSchema()
+      // sin los flujos: pueden estar a medio dibujar y su forma completa es cosa de la frontera
+      const { flows: _drafts, ...schema } = this.toAppSchema()
       if (schema.pages.length) defineApp(structuredClone(schema))
       this._lastError.set(null)
       return true

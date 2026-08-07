@@ -17,7 +17,7 @@
 
 ## Fase 2 — el estudio
 
-- [ ] TASK-03 — `DesignStore`: signal `flows` + mutaciones (`addFlow`,
+- [x] TASK-03 — `DesignStore`: signal `flows` + mutaciones (`addFlow`,
       `removeFlow`, `addFlowNode`, `updateFlowNode`, `removeFlowNode` con
       limpieza de aristas, `addFlowEdge`, `removeFlowEdge`) vía `mutate()`;
       `exportJson`/`importJson`/`applyExternal` incluyen flujos (TDD).
