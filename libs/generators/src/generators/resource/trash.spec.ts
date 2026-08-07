@@ -95,6 +95,35 @@ describe('resource generator — papelera (spec 29)', () => {
     )
   })
 
+  it('el controller de project expone GET /deleted ANTES de :id y POST /:id/restore', async () => {
+    const tree = await emit('project')
+
+    const controller = read(tree, 'out/backend/infrastructure/entrypoints/projects.controller.ts')
+    expect(controller).toContain("@Get('deleted')")
+    expect(controller).toContain("@Post(':id/restore')")
+    expect(controller).toContain('searchDeleted(')
+    expect(controller).toContain('restore(')
+    // el orden de declaración ES el orden de matching en Nest: 'deleted' no puede caer en ':id'
+    expect(controller.indexOf("@Get('deleted')")).toBeLessThan(controller.indexOf("@Get(':id')"))
+  })
+
+  it('el module de project registra el handler y el use case de la papelera', async () => {
+    const tree = await emit('project')
+
+    const module = read(tree, 'out/backend/projects.module.ts')
+    expect(module).toContain('SearchDeletedProjectsHandler')
+    expect(module).toContain('SearchDeletedProjectsUseCase')
+    expect(module).toContain('RestoreProjectHandler')
+    expect(module).toContain('RestoreProjectUseCase')
+  })
+
+  it('el controller y el module de customer no saben nada de la papelera', async () => {
+    const tree = await emit('customer')
+
+    expect(read(tree, 'out/backend/infrastructure/entrypoints/customers.controller.ts')).not.toContain('deleted')
+    expect(read(tree, 'out/backend/customers.module.ts')).not.toContain('Restore')
+  })
+
   it('customer no emite el search de borrados', async () => {
     const tree = await emit('customer')
 

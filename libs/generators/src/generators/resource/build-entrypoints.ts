@@ -101,6 +101,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   ops.push(['Search', pluralClass], ['Get', n.className])
   if (writes) ops.push(['Update', n.className])
   if (removes) ops.push(['Remove', n.className])
+  // la papelera (spec 29) cuelga del borrado: sin softDelete no hay nada que listar ni restaurar
+  if (removes && definition.softDelete === true) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
   ops.push(['Export', pluralClass])
   const childOps = comp ? ['Add', 'Update', 'Remove'].map(op => `${op}${names(comp.name).className}`) : []
 

@@ -2,6 +2,7 @@
 const nest = ['Controller', 'Get', 'Param', 'Query', 'StreamableFile']
 if (app.writes) nest.push('Body', 'Post', 'Put', 'HttpCode', 'HttpStatus')
 if (app.removes) nest.push('Delete', 'HttpCode', 'HttpStatus')
+if (app.trash) nest.push('Post', 'HttpCode', 'HttpStatus')
 const nestList = [...new Set(nest)].sort()
 _%>
 import { <%- nestList.join(', ') %> } from '@nestjs/common'
@@ -19,6 +20,10 @@ import { Register<%- className %>Handler } from '../../application/handlers/regi
 <%_ } _%>
 <%_ if (app.removes) { _%>
 import { Remove<%- className %>Handler } from '../../application/handlers/remove-<%- fileName %>.handler'
+<%_ } _%>
+<%_ if (app.trash) { _%>
+import { Restore<%- className %>Handler } from '../../application/handlers/restore-<%- fileName %>.handler'
+import { SearchDeleted<%- pluralClassName %>Handler } from '../../application/handlers/search-deleted-<%- plural %>.handler'
 <%_ } _%>
 import { Search<%- pluralClassName %>Handler } from '../../application/handlers/search-<%- plural %>.handler'
 <%_ if (app.writes) { _%>
@@ -51,6 +56,10 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.removes) { _%>
     private readonly remove<%- className %>Handler: Remove<%- className %>Handler,
 <%_ } _%>
+<%_ if (app.trash) { _%>
+    private readonly searchDeleted<%- pluralClassName %>Handler: SearchDeleted<%- pluralClassName %>Handler,
+    private readonly restore<%- className %>Handler: Restore<%- className %>Handler,
+<%_ } _%>
     private readonly export<%- pluralClassName %>Handler: Export<%- pluralClassName %>Handler
   ) {}
 <%_ if (app.writes) { _%>
@@ -78,6 +87,17 @@ export class <%- pluralClassName %>Controller {
     return buildExportFile(rows, <%- constantName %>_EXPORT_COLUMNS, query.format, '<%- entry.exportFileName %>')
   }
 
+<%_ if (app.trash) { _%>
+  // La papelera: el mismo search sobre lo soft-borrado. Declarada antes de `:id`.
+  @Get('deleted')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  searchDeleted(
+    @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
+  ): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
+    return this.searchDeleted<%- pluralClassName %>Handler.handle(query)
+  }
+
+<%_ } _%>
   @Get(':id')
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
   getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<<%- className %><%- aggregate.composition ? 'DetailOutput' : 'PrimitiveProps' %>> {
@@ -99,6 +119,15 @@ export class <%- pluralClassName %>Controller {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.remove<%- className %>Handler.handle({ id })
+  }
+<%_ } _%>
+<%_ if (app.trash) { _%>
+
+  @Post(':id/restore')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  restore(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.restore<%- className %>Handler.handle({ id })
   }
 <%_ } _%>
 }
