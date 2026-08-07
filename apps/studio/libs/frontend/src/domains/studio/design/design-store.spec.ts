@@ -325,6 +325,30 @@ describe('DesignStore.addRelation — la flecha del diagrama es un campo ref rea
     expect(store.resources()[0].fields.some(f => f.type === 'ref')).toBe(false)
   })
 
+  it('removeRelation borra el campo ref (la flecha) y el schema deja de expandirlo', () => {
+    const store = storeWith('Cita', 'Paciente')
+    store.addRelation('cita', 'paciente')
+    const index = store
+      .resources()
+      .find(r => r.name === 'cita')!
+      .fields.findIndex(f => f.type === 'ref')
+
+    const ok = store.removeRelation('cita', index)
+
+    expect(ok).toBe(true)
+    expect(store.resources().find(r => r.name === 'cita')?.fields.some(f => f.type === 'ref')).toBe(false)
+    expect(store.registry()['cita'].fields['pacienteId']).toBeUndefined()
+  })
+
+  it('removeRelation NO borra un campo que no sea una relación', () => {
+    const store = storeWith('Cita')
+
+    const ok = store.removeRelation('cita', 0)
+
+    expect(ok).toBe(false)
+    expect(store.resources()[0].fields).toHaveLength(1)
+  })
+
   it('rechaza relaciones con entidades que no existen', () => {
     const store = storeWith('Cita')
 

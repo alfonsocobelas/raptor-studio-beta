@@ -287,6 +287,16 @@ export class DesignStore {
     }))
   }
 
+  /** Borrar una flecha del diagrama: solo puede tocar campos `ref`, nunca otro campo por error. */
+  removeRelation(resource: string, fieldIndex: number): boolean {
+    const field = this._resources().find(r => r.name === resource)?.fields[fieldIndex]
+    if (field?.type !== 'ref') {
+      this._lastError.set(`El campo ${fieldIndex} de «${resource}» no es una relación`)
+      return false
+    }
+    return this.removeField(resource, fieldIndex)
+  }
+
   removeField(resource: string, index: number): boolean {
     return this.updateResource(resource, draft => ({
       ...draft,
