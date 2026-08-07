@@ -13,5 +13,11 @@
 ## Fase 3 — la ficha se llena
 - [x] TASK-07 — bloque «registros relacionados» en la ficha (drill-down derivado)
 
-## Fase 4 — el diagrama (posterior)
-- [ ] TASK-08 — vista de entidades con flechas
+## Fase 4 — el diagrama (diseño aprobado 2026-08-07, ver DESIGN.md)
+- [ ] TASK-08.1 — helpers puros: `modelEdges` + `autoLayout` + geometría de anclajes (TDD)
+- [ ] TASK-08.2 — `DesignStore.addRelation`: colisión de nombres con sufijo, auto-ref rechazada (TDD)
+- [ ] TASK-08.3 — conmutador Vistas/Modelo + diagrama solo lectura (cajas y flechas derivadas)
+- [ ] TASK-08.4 — arrastre de cajas (posiciones solo en memoria)
+- [ ] TASK-08.5 — crear relación arrastrando de caja a caja (flecha fantasma)
+- [ ] TASK-08.6 — seleccionar y borrar flecha (botón + tecla Supr)
+- [ ] TASK-08.7 — e2e con captura: la relación dibujada aparece en la app generada
