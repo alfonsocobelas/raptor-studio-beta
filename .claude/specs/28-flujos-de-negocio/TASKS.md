@@ -21,7 +21,7 @@
       `removeFlow`, `addFlowNode`, `updateFlowNode`, `removeFlowNode` con
       limpieza de aristas, `addFlowEdge`, `removeFlowEdge`) vía `mutate()`;
       `exportJson`/`importJson`/`applyExternal` incluyen flujos (TDD).
-- [ ] TASK-04 — Vista **Flujos** solo lectura: conmutador a tres posiciones
+- [x] TASK-04 — Vista **Flujos** solo lectura: conmutador a tres posiciones
       (Vistas/Modelo/Flujos), selector de flujo activo, cajas por kind
       (píldora/rectángulo/rombo), flechas con etiqueta a mitad de camino.
 - [ ] TASK-05 — Edición visual: paleta de nodos, arrastre (posiciones en

@@ -41,6 +41,7 @@ const STUDIO_ICONS = {
 import { DesignStore } from './design-store'
 import { CanvasPageComponent } from './canvas-page.component'
 import { ModelViewComponent } from './model-view.component'
+import { FlowViewComponent } from './flow-view.component'
 import { InspectorComponent } from './inspector.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
@@ -75,7 +76,8 @@ const BLOCK_TOOLS: BlockTool[] = [
     InspectorComponent,
     ChatPanelComponent,
     GenerateWizardComponent,
-    ModelViewComponent
+    ModelViewComponent,
+    FlowViewComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
   template: `
@@ -123,6 +125,16 @@ const BLOCK_TOOLS: BlockTool[] = [
             (click)="mode.set('model')"
           >
             Modelo
+          </button>
+          <button
+            type="button"
+            class="rounded px-2 py-0.5 text-xs font-medium"
+            [class.bg-primary]="mode() === 'flows'"
+            [class.text-primary-foreground]="mode() === 'flows'"
+            data-testid="mode-flows"
+            (click)="mode.set('flows')"
+          >
+            Flujos
           </button>
         </div>
         <div class="bg-border h-6 w-px"></div>
@@ -278,6 +290,8 @@ const BLOCK_TOOLS: BlockTool[] = [
           }
           @if (mode() === 'model') {
             <studio-model-view />
+          } @else if (mode() === 'flows') {
+            <studio-flow-view />
           } @else if (!pages().length) {
             <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
               <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
@@ -450,7 +464,7 @@ export class StudioCanvasComponent {
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 
-  protected readonly mode = signal<'views' | 'model'>('views')
+  protected readonly mode = signal<'views' | 'model' | 'flows'>('views')
   protected readonly viewMenu = signal(false)
   protected readonly blockMenu = signal<BlockKind | null>(null)
   protected readonly creating = signal<string | null>(null)
