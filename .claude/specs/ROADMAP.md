@@ -267,3 +267,12 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 - **Spec 19 (código de negocio)**: en pausa, pendiente de decidir el formato.
 - **Cinco tareas e2e** (specs 15, 16, 17, 20, 22): bloqueadas por Docker, no por código.
 
+21. **La tabla relacionada muestra las fechas en ISO crudo** (visto en el e2e de
+    fincaraiz): la ficha dice «09/01/2026» pero su tabla de visitas dice
+    «2026-08-04». Al delegar en el formateador único, `RelatedColumn` perdió el
+    tipo — las columnas viajan solo con key/label. Arreglo: que `renderRelated`
+    emita el tipo y la tabla lo pase a `formatValue`.
+22. **El separador de fecha difiere entre listado y ficha**: el DataTable emite
+    «09-01-2026» (dd-MM-yyyy) y la ficha «09/01/2026» (dd/MM/yyyy). Mismo dato,
+    dos separadores. Decidir el canónico y unificar.
+

@@ -5,4 +5,4 @@
 - [x] TASK-03 — el chat declara enums cuando el dominio lo pide (prompt + fake)
 - [x] TASK-04 — editor de columna del lienzo: declarar y editar valores
 - [x] TASK-05 — el mockup pinta los badges con los colores emitidos
-- [ ] TASK-06 — e2e: badges en el listado, select en el alta, valor inválido rechazado
+- [x] TASK-06 — e2e: badges en el listado, select en el alta, valor inválido rechazado
