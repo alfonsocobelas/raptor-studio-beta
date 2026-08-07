@@ -56,6 +56,19 @@ export class TypeOrmProjectRepository extends TypeOrmRepository<TypeOrmProjectEn
     return this.countByCriteria(criteria)
   }
 
+  async matchingDeleted(criteria: Criteria): Promise<Project[]> {
+    const entities = await this.searchDeletedByCriteria(criteria)
+    return entities.map(ProjectMapper.toDomain)
+  }
+
+  async countDeleted(criteria: Criteria): Promise<number> {
+    return this.countDeletedByCriteria(criteria)
+  }
+
+  async restore(projectId: ProjectId): Promise<void> {
+    await this.repository().restore({ id: projectId.value })
+  }
+
   // @ai:begin repository-extra — implementación de los finders del port-extra
   // @ai:end
 }

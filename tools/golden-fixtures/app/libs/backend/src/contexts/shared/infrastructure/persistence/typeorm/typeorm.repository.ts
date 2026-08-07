@@ -74,6 +74,46 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
     return qb.select('1').getExists()
   }
 
+  // La papelera (spec 29): mismas queries del criteria, pero SOLO sobre lo soft-borrado.
+  // Únicamente las llaman los repositorios de entidades con softDelete.
+  protected async searchDeletedByCriteria(criteria: Criteria): Promise<T[]> {
+    const qb = this.repository().createQueryBuilder('entity')
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    if (query.filter) {
+      qb.where(query.filter.query, query.filter.params)
+    }
+    if (!this.onlySoftDeleted(qb)) {
+      return []
+    }
+    if (query.sort) {
+      qb.orderBy(query.sort)
+    }
+    qb.addOrderBy('entity.id', 'ASC')
+    if (query.skip) {
+      qb.skip(query.skip)
+    }
+    if (query.limit) {
+      qb.take(query.limit)
+    }
+
+    return qb.getMany()
+  }
+
+  protected async countDeletedByCriteria(criteria: Criteria): Promise<number> {
+    const qb = this.repository().createQueryBuilder('entity')
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    if (query.filter) {
+      qb.where(query.filter.query, query.filter.params)
+    }
+    if (!this.onlySoftDeleted(qb)) {
+      return 0
+    }
+
+    return qb.getCount()
+  }
+
   // createQueryBuilder does not auto-apply the soft-delete filter to the root entity
   // (only to joined relations / find() options), so we add it explicitly when the
   // entity has a delete date column. Safe for entities without soft-delete.
@@ -82,5 +122,15 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
     if (deleteColumn) {
       qb.andWhere(`entity.${deleteColumn.propertyName} IS NULL`)
     }
+  }
+
+  // Inversa de excludeSoftDeleted; sin columna de borrado no existe "lo borrado" (false).
+  private onlySoftDeleted(qb: SelectQueryBuilder<T>): boolean {
+    const deleteColumn = this.repository().metadata.deleteDateColumn
+    if (!deleteColumn) {
+      return false
+    }
+    qb.withDeleted().andWhere(`entity.${deleteColumn.propertyName} IS NOT NULL`)
+    return true
   }
 }
