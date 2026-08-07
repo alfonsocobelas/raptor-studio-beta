@@ -241,3 +241,22 @@ describe('brief — el contexto de negocio de la app (spec 22)', () => {
     )
   })
 })
+
+/** Fase 4 (spec 20): el color de marca deriva un tema completo; catálogo y semilla no se mezclan. */
+describe('theme.seed — el tema del color de marca (spec 20, fase 4)', () => {
+  const app = (theme: Record<string, string>): AppDefinition => ({ ...validDefinition(), theme })
+
+  it('acepta un hex de marca', () => {
+    expect(() => defineApp(app({ seed: '#1a6dff' }))).not.toThrow()
+  })
+
+  it('rechaza lo que no es un hex', () => {
+    expect(problemsOf(app({ seed: 'azulito' }))).toContain("theme.seed: 'azulito' is not a hex colour (#RRGGBB)")
+  })
+
+  it('semilla y catálogo a la vez es ambigüedad, no flexibilidad', () => {
+    expect(problemsOf(app({ seed: '#1a6dff', id: 'hydrangea' }))).toContain(
+      'theme.seed: mutually exclusive with theme.id/palette'
+    )
+  })
+})

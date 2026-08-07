@@ -203,3 +203,19 @@ describe('la fuente en la app emitida (fase 3)', () => {
     expect(JSON.parse(tree.read('out/package.json', 'utf-8') ?? '{}')).toEqual({ dependencies: {} })
   })
 })
+
+describe('el tema de semilla en la emisión (fase 4)', () => {
+  it('la semilla gana: tokens teñidos con el tono de la marca y clase que la delata', () => {
+    const subs = themeSubstitutions('neutral', '#1a6dff')
+
+    expect(subs.themeClass).toBe('theme-seed-1a6dff')
+    // la página clara lleva el tono de la marca (croma de superficie del catálogo)
+    expect(subs.lightTokens).toMatch(/--background: oklch\(0\.965 0\.016 \d/)
+    // y la primaria sigue la receta (L .53)
+    expect(subs.lightTokens).toMatch(/--primary: oklch\(0\.53 /)
+  })
+
+  it('sin semilla todo sigue igual', () => {
+    expect(themeSubstitutions('neutral').themeClass).toBe('theme-neutral')
+  })
+})

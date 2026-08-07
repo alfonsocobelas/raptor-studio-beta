@@ -285,7 +285,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   }
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
-  const theme = themeSubstitutions(composition.themeId)
+  const theme = themeSubstitutions(composition.themeId, composition.themeSeed)
   generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
   // la fuente del tema viaja como dependencia (fase 3): self-hosted, la trae el npm install
   addFontDependency(tree, path.join(root, 'package.json'), theme.fontPackage)
@@ -539,6 +539,14 @@ export function shellSubstitutions(composition: AppComposition): {
       ).then(m => m.${names(model.plural).className}GalleryComponent)
   }`
 
+  const trashRoute = (model: ResourceDefinition): string => `  {
+    path: '${routeOf(model)}/papelera',
+    loadComponent: () =>
+      import(
+        '${featureOf(model)}/${model.plural}-trash.component'
+      ).then(m => m.${names(model.plural).className}TrashComponent)
+  }`
+
   const detailRoute = (model: ResourceDefinition): string => `  {
     path: '${routeOf(model)}/:id',
     loadComponent: () =>
@@ -566,8 +574,11 @@ export function shellSubstitutions(composition: AppComposition): {
 
     const wantsList = composition.pages.some(p => p.kind === 'resource' && p.resource === model.name)
     const wantsGallery = Boolean(model.gallery)
+    // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
+    const wantsTrash = model.softDelete === true && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
+    if (wantsTrash) routes.push(trashRoute(model))
     if (model.detail) routes.push(detailRoute(model))
   }
 

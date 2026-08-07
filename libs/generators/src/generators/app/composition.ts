@@ -19,6 +19,8 @@ export interface AppComposition {
   kpiModels: ResourceDefinition[]
   /** Tema declarado por el app-schema (spec 20); siempre resuelto, 'neutral' por defecto */
   themeId: string
+  /** Color de marca (fase 4); presente, gana al themeId */
+  themeSeed?: string
   /** Puertos declarados en el app-schema; ausente = los del esqueleto */
   ports?: PortsDefinition
   /** Brief de negocio del app-schema (spec 22); aterriza como CLAUDE.md en la app generada */
@@ -82,6 +84,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     kpiModels,
     ...(definition.brief ? { brief: definition.brief } : {}),
     themeId: resolveThemeId(definition.theme),
+    ...(definition.theme?.seed ? { themeSeed: definition.theme.seed } : {}),
     ports: definition.ports
   }
 }

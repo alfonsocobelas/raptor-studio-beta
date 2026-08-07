@@ -50,6 +50,8 @@ export interface ThemeDefinition {
   id?: string
   /** @deprecated nombre que usó la spec 18; se sigue leyendo como alias de `id` */
   palette?: string
+  /** Color de marca del cliente (#RRGGBB): deriva un tema COMPLETO con la receta del catálogo (fase 4) */
+  seed?: string
 }
 
 /**

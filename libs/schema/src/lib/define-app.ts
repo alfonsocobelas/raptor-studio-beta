@@ -30,9 +30,24 @@ function validateIdentity(definition: AppDefinition): string[] {
   return problems
 }
 
-/** El catálogo es cerrado a propósito: sin colores libres (spec 20). */
+/**
+ * El catálogo es cerrado (spec 20)… salvo la puerta de la fase 4: `seed` deriva un tema completo
+ * del color de marca con la receta del catálogo. Sigue sin haber colores libres por token.
+ */
 function validateTheme(definition: AppDefinition): string[] {
   const declared = definition.theme?.id ?? definition.theme?.palette
+  const seed = definition.theme?.seed
+
+  if (seed !== undefined) {
+    const problems: string[] = []
+    if (!/^#?[0-9a-fA-F]{6}$/.test(seed)) {
+      problems.push(`theme.seed: '${seed}' is not a hex colour (#RRGGBB)`)
+    }
+    if (declared !== undefined) {
+      problems.push('theme.seed: mutually exclusive with theme.id/palette')
+    }
+    return problems
+  }
   if (declared === undefined) return []
 
   return THEME_IDS.includes(declared)

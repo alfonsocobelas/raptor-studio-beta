@@ -1,6 +1,6 @@
 import type { Tree } from '@nx/devkit'
 import { updateJson } from '@nx/devkit'
-import { DEFAULT_THEME_ID, TOKEN_ORDER, deriveTheme, findTheme } from '@acc/schema'
+import { DEFAULT_THEME_ID, TOKEN_ORDER, deriveTheme, findTheme, seedTheme } from '@acc/schema'
 
 /**
  * Sustituciones del tema para el styles.css y el index.html emitidos (spec 20).
@@ -26,10 +26,11 @@ export interface ThemeSubstitutions {
 const block = (tokens: Record<string, string>): string =>
   TOKEN_ORDER.map(name => `  --${name}: ${tokens[name]};`).join('\n')
 
-export function themeSubstitutions(themeId: string): ThemeSubstitutions {
+export function themeSubstitutions(themeId: string, seed?: string): ThemeSubstitutions {
   // un id desconocido no puede reventar la generación: el gate del schema ya lo
-  // rechazó antes, y aquí un fallo dejaría media app en disco
-  const theme = findTheme(themeId) ?? findTheme(DEFAULT_THEME_ID)
+  // rechazó antes, y aquí un fallo dejaría media app en disco.
+  // La semilla gana (fase 4): del color de marca se deriva el tema completo
+  const theme = seed ? seedTheme(seed) : (findTheme(themeId) ?? findTheme(DEFAULT_THEME_ID))
   if (!theme) throw new Error(`missing default theme '${DEFAULT_THEME_ID}'`)
 
   const tokens = deriveTheme(theme)
