@@ -9,6 +9,7 @@ export const contract = defineResource({
   name: 'contract',
   plural: 'contracts',
   context: 'sap-licensing',
+  brief: 'Un contrato de licencias con un cliente; su vigencia gobierna qué licencias están activas.',
   schemaName: 'sap_licensing',
   route: '/sap-licensing/contracts',
   sharedDomainAlias: '@sap-licenses/shared/domain',

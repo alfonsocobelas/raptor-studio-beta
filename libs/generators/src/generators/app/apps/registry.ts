@@ -1,6 +1,7 @@
 import type { AppDefinition } from '@acc/schema'
 import { demo } from './demo.app'
 import { boutique } from './boutique.app'
+import { golden } from './golden.app'
 
 /**
  * Registro estático de app-schemas — el lugar único donde se declara la composición
@@ -9,7 +10,8 @@ import { boutique } from './boutique.app'
  */
 export const APPS: Record<string, AppDefinition> = {
   demo,
-  boutique
+  boutique,
+  golden
 }
 
 export function selectApp(name: string): AppDefinition {

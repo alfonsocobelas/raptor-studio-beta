@@ -7,6 +7,7 @@ export const project = defineResource({
   name: 'project',
   plural: 'projects',
   context: 'sap-licensing',
+  brief: 'Un proyecto de implantación para un cliente; las oleadas las rellena el sync, no el alta.',
   schemaName: 'sap_licensing',
   route: '/sap-licensing/projects',
   sharedDomainAlias: '@sap-licenses/shared/domain',
