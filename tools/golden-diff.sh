@@ -6,11 +6,16 @@ set -uo pipefail
 
 MODELS=("contract:contracts" "customer:customers" "license:licenses" "project:projects")   # <name>:<plural> — crece con los modelos registrados
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT/tmp/generated"
+# Área de trabajo ÚNICA por ejecución: dos gates concurrentes (sesiones paralelas) se pisaban
+# el rm -rf y reportaban "generación falló" falsos. PID basta: no hay dos runs con el mismo.
+RUN_REL="tmp/generated-$$"
+OUT="$ROOT/$RUN_REL"
+DIFF_OUT="$OUT/.golden-diff-out"
 FIX="$ROOT/tools/golden-fixtures"
 failures=0
 summary=""
 SKIP_LIST="$ROOT/tools/golden-skip.txt"
+trap 'rm -rf "$OUT"' EXIT
 
 # ¿Está esta ruta declarada como no comparable para esta fixture? (ver tools/golden-skip.txt)
 is_skipped() {                     # <fixture> <ruta relativa>
@@ -18,10 +23,10 @@ is_skipped() {                     # <fixture> <ruta relativa>
   grep -v '^#' "$SKIP_LIST" | grep -qF "$1|$2|"
 }
 
-rm -rf "$OUT"
+rm -rf "$OUT" && mkdir -p "$OUT"
 for entry in "${MODELS[@]}"; do
   name="${entry%%:*}"; plural="${entry##*:}"
-  if ! npx nx generate @acc/generators:resource "$name" >/dev/null 2>&1; then
+  if ! npx nx generate @acc/generators:resource "$name" --directory="$RUN_REL/$plural" >/dev/null 2>&1; then
     summary+=" $name: ❌ generación falló |"; failures=$((failures+1)); continue
   fi
   entity_fail=0; covered=0
@@ -34,8 +39,8 @@ for entry in "${MODELS[@]}"; do
     if [[ ! -f "$FIX/$plural/$rel" ]]; then
       echo "❌ $name: sin homólogo en fixture: $rel"; entity_fail=1; continue
     fi
-    if ! diff -u "$FIX/$plural/$rel" "$file" > /tmp/golden-diff-out 2>&1; then
-      echo "❌ $name: diff en $rel"; cat /tmp/golden-diff-out; entity_fail=1
+    if ! diff -u "$FIX/$plural/$rel" "$file" > "$DIFF_OUT" 2>&1; then
+      echo "❌ $name: diff en $rel"; cat "$DIFF_OUT"; entity_fail=1
     fi
   done < <(find "$OUT/$plural" -type f -print0)
   if [[ $entity_fail -eq 0 ]]; then
@@ -55,10 +60,10 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
   local label="$1"; shift
   local app="$1"; shift
   local fixture="$1"; shift
-  local out="$ROOT/tmp/generated/$app"
+  local out="$OUT/$app"
 
   if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app "$app" \
-        "$@" --directory="tmp/generated/$app" --skipInstall --no-interactive >/dev/null 2>&1; then
+        "$@" --directory="$RUN_REL/$app" --skipInstall --no-interactive >/dev/null 2>&1; then
     summary+=" $label: ❌ generación falló |"; failures=$((failures+1)); return
   fi
 
@@ -72,8 +77,8 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
     if [[ ! -f "$FIX/$fixture/$rel" ]]; then
       echo "❌ $label: sin homólogo en fixture: $rel"; app_fail=1; continue
     fi
-    if ! diff -u "$FIX/$fixture/$rel" "$file" > /tmp/golden-diff-out 2>&1; then
-      echo "❌ $label: diff en $rel"; cat /tmp/golden-diff-out; app_fail=1
+    if ! diff -u "$FIX/$fixture/$rel" "$file" > "$DIFF_OUT" 2>&1; then
+      echo "❌ $label: diff en $rel"; cat "$DIFF_OUT"; app_fail=1
     fi
   done < <(find "$out" -type f -print0)
 
