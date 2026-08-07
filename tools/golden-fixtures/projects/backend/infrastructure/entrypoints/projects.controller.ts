@@ -22,6 +22,8 @@ import { ExportProjectsHandler } from '../../application/handlers/export-project
 import { GetProjectHandler } from '../../application/handlers/get-project.handler'
 import { RegisterProjectHandler } from '../../application/handlers/register-project.handler'
 import { RemoveProjectHandler } from '../../application/handlers/remove-project.handler'
+import { RestoreProjectHandler } from '../../application/handlers/restore-project.handler'
+import { SearchDeletedProjectsHandler } from '../../application/handlers/search-deleted-projects.handler'
 import { SearchProjectsHandler } from '../../application/handlers/search-projects.handler'
 import { UpdateProjectHandler } from '../../application/handlers/update-project.handler'
 import { ProjectPrimitiveProps, ProjectUpdateProps } from '../../domain/project-types'
@@ -38,6 +40,8 @@ export class ProjectsController {
     private readonly getProjectHandler: GetProjectHandler,
     private readonly updateProjectHandler: UpdateProjectHandler,
     private readonly removeProjectHandler: RemoveProjectHandler,
+    private readonly searchDeletedProjectsHandler: SearchDeletedProjectsHandler,
+    private readonly restoreProjectHandler: RestoreProjectHandler,
     private readonly exportProjectsHandler: ExportProjectsHandler
   ) {}
 
@@ -63,6 +67,15 @@ export class ProjectsController {
     return buildExportFile(rows, PROJECT_EXPORT_COLUMNS, query.format, 'proyectos')
   }
 
+  // La papelera: el mismo search sobre lo soft-borrado. Declarada antes de `:id`.
+  @Get('deleted')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  searchDeleted(
+    @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
+  ): Promise<OffsetPaginatedOutput<ProjectPrimitiveProps>> {
+    return this.searchDeletedProjectsHandler.handle(query)
+  }
+
   @Get(':id')
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
   getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<ProjectPrimitiveProps> {
@@ -81,5 +94,12 @@ export class ProjectsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.removeProjectHandler.handle({ id })
+  }
+
+  @Post(':id/restore')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  restore(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.restoreProjectHandler.handle({ id })
   }
 }
