@@ -4,6 +4,7 @@ import {
   autoLayout,
   edgeLine,
   modelEdges,
+  nodeAt,
   nodeBox,
   overlayLayout,
   MODEL_GRID,
@@ -116,6 +117,24 @@ describe('nodeBox', () => {
     const box = nodeBox({ x: 0, y: 0 }, 0)
 
     expect(box.height).toBe(MODEL_NODE.headerHeight)
+  })
+})
+
+describe('nodeAt — sobre qué caja se suelta el puntero', () => {
+  const boxes: Record<string, NodeBox> = {
+    cita: { x: 0, y: 0, width: 100, height: 60 },
+    paciente: { x: 200, y: 0, width: 100, height: 60 }
+  }
+
+  it('devuelve la caja que contiene el punto (bordes incluidos)', () => {
+    expect(nodeAt({ x: 50, y: 30 }, boxes)).toBe('cita')
+    expect(nodeAt({ x: 200, y: 0 }, boxes)).toBe('paciente')
+    expect(nodeAt({ x: 300, y: 60 }, boxes)).toBe('paciente')
+  })
+
+  it('devuelve null si el punto cae en el vacío', () => {
+    expect(nodeAt({ x: 150, y: 30 }, boxes)).toBeNull()
+    expect(nodeAt({ x: 50, y: 500 }, boxes)).toBeNull()
   })
 })
 

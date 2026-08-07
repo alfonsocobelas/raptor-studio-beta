@@ -56,6 +56,16 @@ export function overlayLayout(
   )
 }
 
+/** Caja bajo un punto del lienzo (bordes incluidos), o null si cae en el vacío. */
+export function nodeAt(point: NodePosition, boxes: Record<string, NodeBox>): string | null {
+  for (const [name, box] of Object.entries(boxes)) {
+    if (point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height) {
+      return name
+    }
+  }
+  return null
+}
+
 /** Dimensiones de una caja del diagrama: el alto lo dictan los campos. */
 export const MODEL_NODE = {
   width: 240,

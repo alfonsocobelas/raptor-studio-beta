@@ -5,6 +5,7 @@ import {
   autoLayout,
   edgeLine,
   modelEdges,
+  nodeAt,
   nodeBox,
   overlayLayout,
   type EdgeSegment,
@@ -44,7 +45,13 @@ interface DiagramEdge {
         </p>
       </div>
     } @else {
-      <div class="relative" [style.width.px]="surface().width" [style.height.px]="surface().height">
+      <div
+        #surfaceEl
+        class="relative"
+        [style.width.px]="surface().width"
+        [style.height.px]="surface().height"
+        data-testid="model-surface"
+      >
         <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
           <defs>
             <marker id="model-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
@@ -72,16 +79,40 @@ interface DiagramEdge {
               </text>
             </g>
           }
+          <!-- flecha fantasma mientras se arrastra un enlace -->
+          @if (linking(); as ghost) {
+            <line
+              [attr.x1]="ghost.x1"
+              [attr.y1]="ghost.y1"
+              [attr.x2]="ghost.x2"
+              [attr.y2]="ghost.y2"
+              class="stroke-primary"
+              stroke-width="1.5"
+              stroke-dasharray="5 4"
+              marker-end="url(#model-arrow)"
+              data-testid="ghost-edge"
+            />
+          }
         </svg>
 
         @for (node of nodes(); track node.name) {
           <div
-            class="bg-card absolute rounded-md border shadow-sm"
+            class="bg-card group absolute rounded-md border shadow-sm"
+            [class.ring-2]="linking()?.from === node.name"
             [style.left.px]="node.box.x"
             [style.top.px]="node.box.y"
             [style.width.px]="node.box.width"
             [attr.data-testid]="'model-node-' + node.name"
           >
+            <!-- asa de enlace: arrastrar hasta otra caja crea la relación -->
+            <button
+              type="button"
+              class="bg-primary absolute -right-1.5 z-10 h-3 w-3 cursor-crosshair rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+              [style.top.px]="headerHeight / 2 - 6"
+              [attr.data-testid]="'link-handle-' + node.name"
+              title="Arrastra hasta otra entidad para crear una relación"
+              (pointerdown)="startLink($event, node.name)"
+            ></button>
             <header
               class="flex cursor-move select-none items-center border-b px-3 text-sm font-semibold"
               [style.height.px]="headerHeight"
@@ -137,6 +168,45 @@ export class ModelViewComponent {
       return from && to ? [{ edge, line: edgeLine(from, to) }] : []
     })
   })
+
+  /** Enlace en curso: origen + segmento de la flecha fantasma (coords del lienzo). */
+  protected readonly linking = signal<{ from: string; x1: number; y1: number; x2: number; y2: number } | null>(null)
+
+  /**
+   * Crear relación arrastrando: el asa captura el puntero, la flecha fantasma
+   * sigue al cursor y al soltar sobre otra caja se llama a addRelation — el
+   * campo `ref` real. Soltar en el vacío (o sobre la misma caja) cancela.
+   */
+  protected startLink(down: PointerEvent, from: string): void {
+    down.preventDefault()
+    down.stopPropagation()
+    const handle = down.currentTarget as HTMLElement
+    const surface = handle.closest('[data-testid="model-surface"]') as HTMLElement
+    handle.setPointerCapture(down.pointerId)
+
+    const box = this.nodes().find(n => n.name === from)?.box
+    if (!box || !surface) return
+    const originX = box.x + box.width
+    const originY = box.y + MODEL_NODE.headerHeight / 2
+
+    const toSurface = (e: PointerEvent) => {
+      const rect = surface.getBoundingClientRect()
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    }
+    const onMove = (move: PointerEvent) => {
+      const point = toSurface(move)
+      this.linking.set({ from, x1: originX, y1: originY, x2: point.x, y2: point.y })
+    }
+    const onUp = (up: PointerEvent) => {
+      handle.removeEventListener('pointermove', onMove)
+      handle.removeEventListener('pointerup', onUp)
+      this.linking.set(null)
+      const target = nodeAt(toSurface(up), Object.fromEntries(this.nodes().map(n => [n.name, n.box])))
+      if (target && target !== from) this.store.addRelation(from, target)
+    }
+    handle.addEventListener('pointermove', onMove)
+    handle.addEventListener('pointerup', onUp)
+  }
 
   /**
    * Arrastre con pointer capture: la cabecera captura el puntero y las
