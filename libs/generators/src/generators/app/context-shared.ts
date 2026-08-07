@@ -1,4 +1,5 @@
-import type { ResourceDefinition } from '@acc/schema'
+import { names } from '@nx/devkit'
+import type { ResourceDefinition, SharedVoDefinition } from '@acc/schema'
 import { SHARED_VOS, sharedVosOf } from '../resource/models/shared-vos'
 
 /** Los VOs compartidos que un contexto necesita, con el contexto que los aloja. */
@@ -56,4 +57,44 @@ export function sharedConstraintEntries(vos: string[]): string[] {
   }
 
   return entries
+}
+
+/**
+ * Los `kind` que ya tienen plantilla. La spec 27 los va abriendo de uno en uno (TASK-03 date y
+ * timestamp, TASK-04 string, TASK-05 period): un VO de un kind todavía sin plantilla se salta en
+ * vez de romper la emisión, y lo delata el gate de compilación, no una excepción del generador.
+ */
+export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp']
+
+/** Lo que las plantillas de un VO compartido necesitan, ya masticado. */
+export interface SharedVoSubstitutions {
+  className: string
+  fileName: string
+  fieldName: string
+  context: string
+  needsNullable: boolean
+  hasUnset: boolean
+  namedNull: string
+  tmpl: ''
+}
+
+/**
+ * `Nullable` sólo se importa si algo lo usa: el `unset()` de una fecha o el null con nombre de un
+ * timestamp. Emitir el import «por si acaso» dejaría un unused en el emitido, que compila con
+ * `noUnusedLocals` en la app generada.
+ */
+export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, context: string): SharedVoSubstitutions {
+  const n = names(name)
+  const namedNull = vo.namedNull ?? ''
+
+  return {
+    className: n.className,
+    fileName: n.fileName,
+    fieldName: vo.fieldName ?? n.className,
+    context,
+    needsNullable: vo.unset === true || namedNull !== '',
+    hasUnset: vo.unset === true,
+    namedNull,
+    tmpl: ''
+  }
 }

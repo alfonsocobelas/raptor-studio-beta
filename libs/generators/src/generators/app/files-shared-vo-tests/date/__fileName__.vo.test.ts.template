@@ -1,0 +1,37 @@
+import { InvalidArgumentError } from '../../../../../../src/contexts/shared/domain/errors'
+import { <%= className %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= fileName %>.vo'
+
+describe('<%= className %> (shared)', () => {
+  it('should throw InvalidArgumentError for an invalid date', () => {
+    expect(() => <%= className %>.create(new Date('not-a-date'))).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw InvalidArgumentError for a non-Date value', () => {
+    expect(() => <%= className %>.create('2026-01-15' as unknown as Date)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw InvalidArgumentError for null', () => {
+    expect(() => <%= className %>.create(null as unknown as Date)).toThrow(InvalidArgumentError)
+  })
+
+  it('should throw InvalidArgumentError for undefined', () => {
+    expect(() => <%= className %>.create(undefined as unknown as Date)).toThrow(InvalidArgumentError)
+  })
+
+  it('should preserve a valid date', () => {
+    const date = new Date('2026-01-15')
+    expect(<%= className %>.create(date).value).toEqual(date)
+  })
+
+  it('should be equal for the same date value', () => {
+    expect(<%= className %>.create(new Date('2026-01-15')).equals(<%= className %>.create(new Date('2026-01-15')))).toBe(
+      true
+    )
+  })
+<% if (hasUnset) { -%>
+
+  it('unset() should return null', () => {
+    expect(<%= className %>.unset()).toBeNull()
+  })
+<% } -%>
+})

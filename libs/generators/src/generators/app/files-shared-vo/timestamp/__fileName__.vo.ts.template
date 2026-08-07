@@ -1,0 +1,32 @@
+<% if (needsNullable) { -%>
+import { Nullable } from '../../../../shared/domain/types'
+<% } -%>
+import { DateValueObject } from '../../../../shared/domain/value-objects/date-value-object'
+
+export class <%= className %> extends DateValueObject {
+  protected static override fieldName = '<%= fieldName %>'
+
+  private constructor(value: Date) {
+    super(value)
+  }
+
+  static create(value: Date): <%= className %> {
+    this.ensureIsValidDate(value)
+    return new <%= className %>(value)
+  }
+
+  static fromISOString(value: string): <%= className %> {
+    return this.create(new Date(value))
+  }
+<% if (namedNull) { -%>
+
+  /** Named null: the timestamped event has never happened. */
+  static <%= namedNull %>(): Nullable<<%= className %>> {
+    return null
+  }
+<% } -%>
+
+  toISOString(): string {
+    return this._value.toISOString()
+  }
+}

@@ -10,7 +10,8 @@ import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
-import { contextSharedGroups, sharedConstraintEntries } from './context-shared'
+import { contextSharedGroups, sharedConstraintEntries, sharedVoSubstitutions, EMITTED_VO_KINDS } from './context-shared'
+import { SHARED_VOS } from '../resource/models/shared-vos'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
 import rootGenerator from '../root/root'
@@ -196,6 +197,31 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   //     No la emite el generador de recurso porque `CustomerName` la usan cuatro módulos y el
   //     último en generar ganaría; aquí sí se sabe qué modelos entran.
   for (const group of contextSharedGroups(models)) {
+    const sharedDomain = path.join(backendSrc, 'contexts', group.context, 'shared/domain')
+    // los tests emitidos son parte del entregable (spec 27, DESIGN §5): van donde el jest de la
+    // app los busca, a la profundidad de import del canon
+    const sharedTests = path.join(root, 'libs/backend/tests/modules', group.context, 'shared/domain')
+
+    for (const name of group.vos) {
+      const vo = SHARED_VOS[name]
+      if (!EMITTED_VO_KINDS.includes(vo.kind)) {
+        continue
+      }
+      const substitutions = sharedVoSubstitutions(name, vo, group.context)
+      generateFiles(
+        tree,
+        path.join(__dirname, 'files-shared-vo', vo.kind),
+        path.join(sharedDomain, 'value-objects'),
+        substitutions
+      )
+      generateFiles(
+        tree,
+        path.join(__dirname, 'files-shared-vo-tests', vo.kind),
+        path.join(sharedTests, 'value-objects'),
+        substitutions
+      )
+    }
+
     const constraintLines = sharedConstraintEntries(group.vos)
     if (constraintLines.length === 0) {
       continue

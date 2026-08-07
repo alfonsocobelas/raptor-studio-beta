@@ -83,3 +83,92 @@ describe('app generator — la carpeta compartida del contexto', () => {
     expect(tree.exists('apps/demo/libs/backend/src/contexts/warehouse/shared')).toBe(false)
   })
 })
+
+/**
+ * TASK-03. El contenido esperado es el del canon (`docs/referencia/…/shared/domain/value-objects/`)
+ * salvo el orden de sus imports, que el canon escribe distinto en cada fichero.
+ */
+describe('app generator — VOs compartidos de fecha y timestamp', () => {
+  let tree: Tree
+
+  beforeAll(async () => {
+    tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'contract,project', skipInstall: true })
+  })
+
+  const read = (file: string): string => tree.read(`apps/demo/libs/backend/${file}`, 'utf-8') ?? ''
+  const src = 'src/contexts/sap-licensing/shared/domain/value-objects'
+  const tests = 'tests/modules/sap-licensing/shared/domain/value-objects'
+
+  it('kind date emite el VO del canon, con su unset()', () => {
+    expect(read(`${src}/contract-date.vo.ts`)).toBe(
+      `import { Nullable } from '../../../../shared/domain/types'
+import { DateValueObject } from '../../../../shared/domain/value-objects/date-value-object'
+
+export class ContractDate extends DateValueObject {
+  protected static override fieldName = 'Contract date'
+
+  private constructor(value: Date) {
+    super(value)
+  }
+
+  static create(value: Date): ContractDate {
+    this.ensureIsValidDate(value)
+    return new ContractDate(value)
+  }
+
+  static unset(): Nullable<ContractDate> {
+    return null
+  }
+}
+`
+    )
+  })
+
+  it('kind timestamp emite fromISOString, el null con nombre y toISOString', () => {
+    expect(read(`${src}/sync-timestamp.vo.ts`)).toBe(
+      `import { Nullable } from '../../../../shared/domain/types'
+import { DateValueObject } from '../../../../shared/domain/value-objects/date-value-object'
+
+export class SyncTimestamp extends DateValueObject {
+  protected static override fieldName = 'Sync timestamp'
+
+  private constructor(value: Date) {
+    super(value)
+  }
+
+  static create(value: Date): SyncTimestamp {
+    this.ensureIsValidDate(value)
+    return new SyncTimestamp(value)
+  }
+
+  static fromISOString(value: string): SyncTimestamp {
+    return this.create(new Date(value))
+  }
+
+  /** Named null: the timestamped event has never happened. */
+  static never(): Nullable<SyncTimestamp> {
+    return null
+  }
+
+  toISOString(): string {
+    return this._value.toISOString()
+  }
+}
+`
+    )
+  })
+
+  it('los tests del VO se emiten donde el jest de la app los busca', () => {
+    expect(read(`${tests}/contract-date.vo.test.ts`)).toContain(
+      `import { ContractDate } from '../../../../../../src/contexts/sap-licensing/shared/domain/value-objects/contract-date.vo'`
+    )
+    expect(read(`${tests}/contract-date.vo.test.ts`)).toContain('unset() should return null')
+    expect(read(`${tests}/sync-timestamp.vo.test.ts`)).toContain('via never()')
+  })
+
+  it('los kind todavía sin plantilla no se emiten (string, period)', () => {
+    expect(tree.exists(`apps/demo/libs/backend/${src}/customer-name.vo.ts`)).toBe(false)
+    expect(tree.exists(`apps/demo/libs/backend/${src}/period.vo.ts`)).toBe(false)
+  })
+})

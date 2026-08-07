@@ -1,0 +1,36 @@
+import { InvalidArgumentError } from '../../../../../../src/contexts/shared/domain/errors'
+import { <%= className %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= fileName %>.vo'
+
+describe('<%= className %>', () => {
+  it('should create from a valid date and expose the ISO string', () => {
+    const date = new Date('2026-07-12T06:00:00.000Z')
+
+    const timestamp = <%= className %>.create(date)
+
+    expect(timestamp.toISOString()).toBe('2026-07-12T06:00:00.000Z')
+  })
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['invalid date', new Date('not-a-date')]
+  ])('should throw InvalidArgumentError for %s', (_label, value) => {
+    expect(() => <%= className %>.create(value as unknown as Date)).toThrow(InvalidArgumentError)
+  })
+
+  it('should create from a valid ISO string via fromISOString', () => {
+    const timestamp = <%= className %>.fromISOString('2026-07-12T06:00:00.000Z')
+
+    expect(timestamp.toISOString()).toBe('2026-07-12T06:00:00.000Z')
+  })
+
+  it('should throw InvalidArgumentError for an unparseable string', () => {
+    expect(() => <%= className %>.fromISOString('no-date')).toThrow(InvalidArgumentError)
+  })
+<% if (namedNull) { -%>
+
+  it('should represent an event that never happened as null via <%= namedNull %>()', () => {
+    expect(<%= className %>.<%= namedNull %>()).toBeNull()
+  })
+<% } -%>
+})

@@ -32,7 +32,17 @@
 
 ## Un kind por tarea, del más simple al más caro
 
-- [ ] **TASK-03**: `kind: 'date'` y `kind: 'timestamp'` → `contract-date.vo.ts` y `sync-timestamp.vo.ts` + sus tests emitidos (33 y 34 líneas en el canon). 13 de los 49 errores desaparecen.
+- [x] **TASK-03**: `kind: 'date'` y `kind: 'timestamp'` → `contract-date.vo.ts` y `sync-timestamp.vo.ts` + sus tests emitidos (33 y 34 líneas en el canon). 13 de los 49 errores desaparecen.
+      · medición real: **49 → 38 errores** (11, no 13; 33 TS2307 + 5 TS2345 siguen vivos y son de los
+        kind que faltan y de la spec 26). `bash tools/typecheck-emitted.sh --models=customer,contract,license,project`
+      · 3 de los 4 ficheros salen **byte a byte idénticos al canon**; `sync-timestamp.vo.ts` sólo
+        difiere en el ORDEN de sus dos imports — el canon los escribe al revés que en
+        `contract-date.vo.ts`, y una plantilla no puede ser incoherente consigo misma. Se emite
+        siempre `Nullable` primero
+      · `Nullable` sólo se importa si el VO lo usa (`unset()` o el null con nombre): la app emitida
+        compila con `noUnusedLocals`
+      · `EMITTED_VO_KINDS` deja fuera los kind sin plantilla todavía — se saltan, no rompen la emisión
+      · 375 tests verdes y los 6 golden vacíos (app 627 ficheros, app-mongo 580)
 - [ ] **TASK-04**: `kind: 'string'` con las variantes del canon (min/max por `constraintKey`,
       `noInnerWhitespace`, `charset`, `normalize: collapse-whitespace`) → `contract-number.vo.ts` y
       `phone.vo.ts` + sus tests (89 y 100 líneas). 15 errores más.
