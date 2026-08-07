@@ -116,4 +116,17 @@ describe('applyPorts', () => {
     expect(compose).toContain('fincaraiz-postgres-local-data')
     expect(compose).not.toContain('app-postgres-local-data')
   })
+
+  it('la API emitida escucha en el puerto de SU config, no en el 3000 fijo', () => {
+    const template = fsReadTemplate('apps/backend-api/src/main.ts.template')
+
+    expect(template).toContain("get<number>('app.port')")
+  })
 })
+
+import * as fs from 'fs'
+import * as nodePath from 'path'
+
+function fsReadTemplate(relative: string): string {
+  return fs.readFileSync(nodePath.join(__dirname, 'files-skeleton', relative), 'utf-8')
+}
