@@ -40,6 +40,22 @@ export const MODEL_GRID = {
   margin: 40
 } as const
 
+/**
+ * Posiciones manuales (arrastre) por encima del auto-layout: solo cuentan las
+ * de entidades vivas y ninguna caja puede salirse del lienzo por arriba/izquierda.
+ */
+export function overlayLayout(
+  auto: Record<string, NodePosition>,
+  manual: Record<string, NodePosition>
+): Record<string, NodePosition> {
+  return Object.fromEntries(
+    Object.entries(auto).map(([name, position]) => {
+      const dragged = manual[name]
+      return [name, dragged ? { x: Math.max(0, dragged.x), y: Math.max(0, dragged.y) } : position]
+    })
+  )
+}
+
 /** Dimensiones de una caja del diagrama: el alto lo dictan los campos. */
 export const MODEL_NODE = {
   width: 240,

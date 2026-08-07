@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import {
   MODEL_GRID,
   MODEL_NODE,
@@ -6,9 +6,11 @@ import {
   edgeLine,
   modelEdges,
   nodeBox,
+  overlayLayout,
   type EdgeSegment,
   type ModelEdge,
-  type NodeBox
+  type NodeBox,
+  type NodePosition
 } from '@app/shared/domain'
 import { DesignStore } from './design-store'
 import { TYPE_LABELS } from './field-type-labels'
@@ -81,8 +83,10 @@ interface DiagramEdge {
             [attr.data-testid]="'model-node-' + node.name"
           >
             <header
-              class="flex items-center border-b px-3 text-sm font-semibold"
+              class="flex cursor-move select-none items-center border-b px-3 text-sm font-semibold"
               [style.height.px]="headerHeight"
+              [attr.data-testid]="'model-node-header-' + node.name"
+              (pointerdown)="startDrag($event, node.name)"
             >
               {{ node.label }}
             </header>
@@ -106,7 +110,12 @@ export class ModelViewComponent {
   protected readonly headerHeight = MODEL_NODE.headerHeight
   protected readonly rowHeight = MODEL_NODE.rowHeight
 
-  private readonly positions = computed(() => autoLayout(this.store.resources().map(r => r.name)))
+  /** Posiciones arrastradas: SOLO memoria de la sesión — el layout es cosmético (spec 15 §4). */
+  private readonly manual = signal<Record<string, NodePosition>>({})
+
+  private readonly positions = computed(() =>
+    overlayLayout(autoLayout(this.store.resources().map(r => r.name)), this.manual())
+  )
 
   protected readonly nodes = computed<DiagramNode[]>(() =>
     this.store.resources().map(resource => ({
@@ -128,6 +137,29 @@ export class ModelViewComponent {
       return from && to ? [{ edge, line: edgeLine(from, to) }] : []
     })
   })
+
+  /**
+   * Arrastre con pointer capture: la cabecera captura el puntero y las
+   * posiciones se acumulan en `manual` — nunca tocan el diseño ni el store.
+   */
+  protected startDrag(down: PointerEvent, name: string): void {
+    down.preventDefault()
+    const handle = down.currentTarget as HTMLElement
+    handle.setPointerCapture(down.pointerId)
+    const origin = this.positions()[name]
+
+    const onMove = (move: PointerEvent) =>
+      this.manual.update(manual => ({
+        ...manual,
+        [name]: { x: origin.x + move.clientX - down.clientX, y: origin.y + move.clientY - down.clientY }
+      }))
+    const onUp = () => {
+      handle.removeEventListener('pointermove', onMove)
+      handle.removeEventListener('pointerup', onUp)
+    }
+    handle.addEventListener('pointermove', onMove)
+    handle.addEventListener('pointerup', onUp)
+  }
 
   /** El lienzo abarca todas las cajas; con margen para que la última respire. */
   protected readonly surface = computed(() => ({

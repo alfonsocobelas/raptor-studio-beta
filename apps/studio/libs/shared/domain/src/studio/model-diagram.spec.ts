@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { DraftResource } from './draft-resource'
-import { autoLayout, edgeLine, modelEdges, nodeBox, MODEL_GRID, MODEL_NODE, type NodeBox } from './model-diagram'
+import {
+  autoLayout,
+  edgeLine,
+  modelEdges,
+  nodeBox,
+  overlayLayout,
+  MODEL_GRID,
+  MODEL_NODE,
+  type NodeBox
+} from './model-diagram'
 
 const entity = (name: string, fields: DraftResource['fields'] = []): DraftResource => ({
   name,
@@ -61,6 +70,33 @@ describe('autoLayout', () => {
     expect(positions['d']).toEqual({ x: MODEL_GRID.margin, y: MODEL_GRID.margin + MODEL_GRID.rowHeight })
     const keys = Object.values(positions).map(p => `${p.x},${p.y}`)
     expect(new Set(keys).size).toBe(4)
+  })
+})
+
+describe('overlayLayout — lo arrastrado gana al auto-layout', () => {
+  it('una posición manual sustituye a la calculada; el resto se conserva', () => {
+    const auto = autoLayout(['a', 'b'])
+
+    const merged = overlayLayout(auto, { a: { x: 500, y: 120 } })
+
+    expect(merged['a']).toEqual({ x: 500, y: 120 })
+    expect(merged['b']).toEqual(auto['b'])
+  })
+
+  it('ignora posiciones manuales de entidades que ya no existen', () => {
+    const auto = autoLayout(['a'])
+
+    const merged = overlayLayout(auto, { borrada: { x: 10, y: 10 } })
+
+    expect(merged).toEqual(auto)
+  })
+
+  it('recorta a coordenadas no negativas: no se puede sacar una caja del lienzo', () => {
+    const auto = autoLayout(['a'])
+
+    const merged = overlayLayout(auto, { a: { x: -30, y: -5 } })
+
+    expect(merged['a']).toEqual({ x: 0, y: 0 })
   })
 })
 
