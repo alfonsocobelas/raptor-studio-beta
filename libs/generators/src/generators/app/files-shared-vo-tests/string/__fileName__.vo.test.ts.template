@@ -1,0 +1,116 @@
+import fc from 'fast-check'
+import { InvalidArgumentError } from '../../../../../../src/contexts/shared/domain/errors'
+import { <%= className %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= fileName %>.vo'
+<% if (constraintKey) { -%>
+import { SHARED_CONSTRAINTS } from '../../../../../../src/contexts/<%= context %>/shared/domain/constants'
+<% } -%>
+
+<% if (hasMin) { -%>
+const MIN = SHARED_CONSTRAINTS.<%= constraintKey %>.MIN
+<% } -%>
+<% if (hasMax) { -%>
+const MAX = SHARED_CONSTRAINTS.<%= constraintKey %>.MAX
+<% } -%>
+const VALID = <%- validExpr %>
+
+describe('<%= className %> (shared)', () => {
+  describe('create — invalid inputs', () => {
+    it('should throw InvalidArgumentError for null', () => {
+      expect(() => <%= className %>.create(null as unknown as string)).toThrow(InvalidArgumentError)
+    })
+
+    it('should throw InvalidArgumentError for undefined', () => {
+      expect(() => <%= className %>.create(undefined as unknown as string)).toThrow(InvalidArgumentError)
+    })
+<% if (requiresContent) { -%>
+
+    it('should throw InvalidArgumentError for an empty or whitespace-only string', () => {
+      expect(() => <%= className %>.create('')).toThrow(InvalidArgumentError)
+      expect(() => <%= className %>.create('   ')).toThrow(InvalidArgumentError)
+    })
+<% } -%>
+<% if (hasMin) { -%>
+
+    it('should throw InvalidArgumentError for strings shorter than MIN chars', () => {
+      expect(() => <%= className %>.create('<%= fillChar %>'.repeat(MIN - 1))).toThrow(InvalidArgumentError)
+    })
+<% } -%>
+<% if (hasMax) { -%>
+
+    it('should throw InvalidArgumentError for strings exceeding MAX chars', () => {
+      expect(() => <%= className %>.create('<%= fillChar %>'.repeat(MAX + 1))).toThrow(InvalidArgumentError)
+    })
+<% } -%>
+  })
+
+  describe('create — valid inputs', () => {
+<% if (!requiresContent) { -%>
+    it('should accept an empty string', () => {
+      expect(<%= className %>.create('').value).toBe('')
+    })
+
+<% } -%>
+    it('should preserve a valid value', () => {
+      expect(<%= className %>.create(VALID).value).toBe(VALID)
+    })
+<% if (hasMax) { -%>
+
+    it('should accept strings with exactly MAX chars', () => {
+      const value = '<%= fillChar %>'.repeat(MAX)
+      expect(<%= className %>.create(value).value).toBe(value)
+    })
+<% } -%>
+
+    it('should preserve any allowed value within bounds', () => {
+      // fc.array + join en vez de stringOf: la API es idéntica en fast-check 3 y 4
+      const allowed = fc
+        .array(fc.constantFrom(...'<%- alphabet %>'.split('')), { minLength: <%- minExpr %>, maxLength: <%- maxExpr %> })
+        .map(chars => chars.join(''))
+      fc.assert(
+        fc.property(allowed, value => {
+          expect(<%= className %>.create(value).value).toBe(value)
+        }),
+        { numRuns: 100 }
+      )
+    })
+  })
+<% if (charsetPattern) { -%>
+
+  describe('create — character allowlist', () => {
+    it('should throw for characters outside the allowed set', () => {
+      for (const bad of [<%- disallowedSamples %>]) {
+        expect(() => <%= className %>.create(`${VALID}${bad}`)).toThrow(InvalidArgumentError)
+      }
+    })
+  })
+<% } -%>
+
+  describe('sanitization', () => {
+    it('should trim leading and trailing whitespace', () => {
+      expect(<%= className %>.create(`  ${VALID}  `).value).toBe(VALID)
+    })
+<% if (noInnerWhitespace) { -%>
+
+    it('should throw for inner whitespace (code field)', () => {
+      expect(() => <%= className %>.create(`${VALID} ${VALID}`)).toThrow(InvalidArgumentError)
+    })
+<% } -%>
+<% if (collapsesWhitespace) { -%>
+
+    it('should collapse multiple inner spaces to one', () => {
+      expect(<%= className %>.create(`${VALID}   ${VALID}`).value).toBe(`${VALID} ${VALID}`)
+    })
+<% } -%>
+  })
+
+  describe('equals', () => {
+    it('should return true for the same value', () => {
+      expect(<%= className %>.create(VALID).equals(<%= className %>.create(VALID))).toBe(true)
+    })
+
+    it('should return false for different values', () => {
+      const other = <%- otherExpr %>
+      expect(<%= className %>.create(VALID).equals(<%= className %>.create(other))).toBe(false)
+    })
+  })
+})

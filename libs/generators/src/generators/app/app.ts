@@ -10,7 +10,7 @@ import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
-import { contextSharedGroups, sharedConstraintEntries, sharedVoSubstitutions, EMITTED_VO_KINDS } from './context-shared'
+import { canEmitSharedVo, contextSharedGroups, sharedConstraintEntries, sharedVoSubstitutions } from './context-shared'
 import { SHARED_VOS } from '../resource/models/shared-vos'
 import { selectApp } from './apps/registry'
 import kernelGenerator from '../kernel/kernel'
@@ -204,7 +204,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
     for (const name of group.vos) {
       const vo = SHARED_VOS[name]
-      if (!EMITTED_VO_KINDS.includes(vo.kind)) {
+      if (!canEmitSharedVo(vo)) {
         continue
       }
       const substitutions = sharedVoSubstitutions(name, vo, group.context)

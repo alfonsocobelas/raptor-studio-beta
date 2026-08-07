@@ -167,8 +167,72 @@ export class SyncTimestamp extends DateValueObject {
     expect(read(`${tests}/sync-timestamp.vo.test.ts`)).toContain('via never()')
   })
 
-  it('los kind todavía sin plantilla no se emiten (string, period)', () => {
-    expect(tree.exists(`apps/demo/libs/backend/${src}/customer-name.vo.ts`)).toBe(false)
+  it('lo que todavía no tiene plantilla no se emite (period, la normalización española)', () => {
     expect(tree.exists(`apps/demo/libs/backend/${src}/period.vo.ts`)).toBe(false)
+    expect(tree.exists(`apps/demo/libs/backend/${src}/customer-name.vo.ts`)).toBe(false)
+  })
+})
+
+/**
+ * TASK-04. Las cuatro variantes del canon en `kind: 'string'`: guarda base, longitudes por
+ * `constraintKey`, whitespace interior, juego de caracteres y normalización propia.
+ */
+describe('app generator — VOs compartidos de texto', () => {
+  let tree: Tree
+
+  beforeAll(async () => {
+    tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'customer,contract', skipInstall: true })
+  })
+
+  const read = (file: string): string => tree.read(`apps/demo/libs/backend/${file}`, 'utf-8') ?? ''
+  const src = 'src/contexts/sap-licensing/shared/domain/value-objects'
+  const tests = 'tests/modules/sap-licensing/shared/domain/value-objects'
+
+  // La fidelidad byte a byte con el canon la firma el gate de oro, que corre el generador de verdad
+  // (con prettier); el árbol virtual de este test no formatea. Aquí se comprueba lo que decide el
+  // registro: qué guarda, en qué orden y con qué piezas.
+  it('min/max por constraintKey + whitespace interior (contract-number)', () => {
+    const vo = read(`${src}/contract-number.vo.ts`)
+
+    expect(vo).toContain(`import { SHARED_CONSTRAINTS } from '../constants'`)
+    expect(vo).toContain(`export class ContractNumber extends StringValueObject`)
+    expect(vo).toContain(`protected static override fieldName = 'Contract number'`)
+    expect(vo).toContain('this.ensureIsString(value)')
+    expect(vo).toContain('this.ensureHasNoInnerWhitespace(value)')
+    expect(vo).toContain('if (value.length < SHARED_CONSTRAINTS.CONTRACT_NUMBER.MIN) {')
+    expect(vo).toContain('if (value.length > SHARED_CONSTRAINTS.CONTRACT_NUMBER.MAX) {')
+    expect(vo).not.toContain('ALLOWED')
+    expect(vo).not.toContain('override normalize')
+  })
+
+  it('juego de caracteres + normalize propio (phone)', () => {
+    const vo = read(`${src}/phone.vo.ts`)
+
+    expect(vo).toContain('private static readonly ALLOWED = /^[0-9+()\\-/.\\s]+$/')
+    expect(vo).toContain('this.ensureIsDefined(value)')
+    expect(vo).toContain('if (value.length > 0 && !this.ALLOWED.test(value)) {')
+    expect(vo).toContain(
+      `throw new InvalidArgumentError('Phone may only contain digits and the symbols + ( ) - / . and spaces')`
+    )
+    expect(vo).toContain(`  protected static override normalize(value: string): string {
+    return value.trim().replace(/\\s+/g, ' ')
+  }`)
+    expect(vo).not.toContain('MIN')
+    expect(vo).not.toContain('ensureHasNoInnerWhitespace')
+  })
+
+  it('el test emitido ejercita lo que el VO declara, no lo que otro VO declara', () => {
+    const number = read(`${tests}/contract-number.vo.test.ts`)
+    const phone = read(`${tests}/phone.vo.test.ts`)
+
+    expect(number).toContain('const MIN = SHARED_CONSTRAINTS.CONTRACT_NUMBER.MIN')
+    expect(number).toContain('inner whitespace')
+    expect(number).not.toContain('allowlist')
+
+    expect(phone).not.toContain('const MIN')
+    expect(phone).toContain('allowlist')
+    expect(phone).toContain('should collapse multiple inner spaces to one')
+    expect(phone).not.toContain('inner whitespace')
   })
 })

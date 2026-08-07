@@ -1,0 +1,51 @@
+import { InvalidArgumentError } from '../../../../shared/domain/errors'
+import { StringValueObject } from '../../../../shared/domain/value-objects/string-value-object'
+<% if (constraintKey) { -%>
+import { SHARED_CONSTRAINTS } from '../constants'
+<% } -%>
+
+export class <%= className %> extends StringValueObject {
+  protected static override fieldName = '<%= fieldName %>'
+<% if (charsetPattern) { -%>
+
+  private static readonly ALLOWED = /<%- charsetPattern %>/
+<% } -%>
+
+  private constructor(value: string) {
+    super(value)
+  }
+
+  static create(value: string): <%= className %> {
+    this.<%= ensureGuard %>(value)
+    value = this.normalize(value)
+<% if (noInnerWhitespace) { -%>
+    this.ensureHasNoInnerWhitespace(value)
+<% } -%>
+<% if (hasMin) { -%>
+
+    if (value.length < SHARED_CONSTRAINTS.<%= constraintKey %>.MIN) {
+      throw new InvalidArgumentError(`<%= fieldName %> must be at least ${SHARED_CONSTRAINTS.<%= constraintKey %>.MIN} characters`)
+    }
+<% } -%>
+<% if (hasMax) { -%>
+
+    if (value.length > SHARED_CONSTRAINTS.<%= constraintKey %>.MAX) {
+      throw new InvalidArgumentError(`<%= fieldName %> must be at most ${SHARED_CONSTRAINTS.<%= constraintKey %>.MAX} characters`)
+    }
+<% } -%>
+<% if (charsetPattern) { -%>
+
+    if (value.length > 0 && !this.ALLOWED.test(value)) {
+      throw new InvalidArgumentError('<%= charsetMessage %>')
+    }
+<% } -%>
+
+    return new <%= className %>(value)
+  }
+<% if (collapsesWhitespace) { -%>
+
+  protected static override normalize(value: string): string {
+    return value.trim().replace(/\s+/g, ' ')
+  }
+<% } -%>
+}

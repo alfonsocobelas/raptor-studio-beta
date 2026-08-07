@@ -64,7 +64,33 @@ export function sharedConstraintEntries(vos: string[]): string[] {
  * timestamp, TASK-04 string, TASK-05 period): un VO de un kind todavía sin plantilla se salta en
  * vez de romper la emisión, y lo delata el gate de compilación, no una excepción del generador.
  */
-export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp']
+export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp', 'string']
+
+/** Las normalizaciones que ya tienen plantilla; `spanish-legal-name` espera al helper del kernel. */
+const EMITTED_NORMALIZE_RULES = ['collapse-whitespace']
+
+/**
+ * Un VO se emite cuando su kind Y su normalización tienen plantilla. Mientras la spec avanza, lo que
+ * falta se salta en vez de emitir código que no compila: quien lo delata es el gate de compilación.
+ */
+export function canEmitSharedVo(vo: SharedVoDefinition): boolean {
+  if (!EMITTED_VO_KINDS.includes(vo.kind)) {
+    return false
+  }
+  return !vo.normalize || EMITTED_NORMALIZE_RULES.includes(vo.normalize.rule)
+}
+
+/**
+ * Candidatos con los que se construyen los valores de los tests emitidos: los dos primeros que el
+ * juego de caracteres admita son el relleno y su alternativa; los que rechace son los ejemplos de
+ * carácter prohibido. Todo derivado del `charset` declarado — el test no trae valores a mano.
+ */
+const FILL_CANDIDATES = ['1', '2', '3', 'a', 'b']
+const BAD_CANDIDATES = ['@', '#', '_', ',', ';', 'a']
+const DEFAULT_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
+const CHARSET_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz+()-/.'
+/** Tope del test de propiedad cuando el VO no declara MAX: no hay longitud que respetar, sólo forma. */
+const UNBOUNDED_SAMPLE_LENGTH = 20
 
 /** Lo que las plantillas de un VO compartido necesitan, ya masticado. */
 export interface SharedVoSubstitutions {
@@ -75,6 +101,23 @@ export interface SharedVoSubstitutions {
   needsNullable: boolean
   hasUnset: boolean
   namedNull: string
+  constraintKey: string
+  hasMin: boolean
+  hasMax: boolean
+  minExpr: string
+  validExpr: string
+  otherExpr: string
+  maxExpr: string
+  ensureGuard: string
+  requiresContent: boolean
+  noInnerWhitespace: boolean
+  collapsesWhitespace: boolean
+  charsetPattern: string
+  charsetMessage: string
+  fillChar: string
+  altChar: string
+  alphabet: string
+  disallowedSamples: string
   tmpl: ''
 }
 
@@ -86,6 +129,9 @@ export interface SharedVoSubstitutions {
 export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, context: string): SharedVoSubstitutions {
   const n = names(name)
   const namedNull = vo.namedNull ?? ''
+  const allows = charsetFilter(vo.charset?.pattern)
+  const [fillChar, altChar] = FILL_CANDIDATES.filter(allows)
+  const alphabet = vo.charset ? [...CHARSET_ALPHABET].filter(allows).join('') : DEFAULT_ALPHABET
 
   return {
     className: n.className,
@@ -95,6 +141,36 @@ export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, cont
     needsNullable: vo.unset === true || namedNull !== '',
     hasUnset: vo.unset === true,
     namedNull,
+    constraintKey: vo.constraintKey ?? '',
+    hasMin: vo.min !== undefined,
+    hasMax: vo.max !== undefined,
+    // el test referencia la constante, no el número: si mañana cambia MIN, el test sigue diciendo
+    // la verdad. Sin MIN declarado, un carácter basta para tener un valor válido
+    minExpr: vo.min !== undefined ? 'MIN' : '1',
+    validExpr: vo.min !== undefined ? `'${fillChar}'.repeat(MIN)` : `'${fillChar}'`,
+    otherExpr: vo.min !== undefined ? `'${altChar}'.repeat(MIN)` : `'${altChar}'`,
+    maxExpr: vo.max !== undefined ? 'MAX' : String(UNBOUNDED_SAMPLE_LENGTH),
+    ensureGuard: vo.ensure === 'string' ? 'ensureIsString' : 'ensureIsDefined',
+    requiresContent: vo.ensure === 'string',
+    noInnerWhitespace: vo.noInnerWhitespace === true,
+    collapsesWhitespace: vo.normalize?.rule === 'collapse-whitespace',
+    charsetPattern: vo.charset?.pattern ?? '',
+    charsetMessage: vo.charset?.message ?? '',
+    fillChar,
+    altChar,
+    alphabet,
+    disallowedSamples: BAD_CANDIDATES.filter(char => !allows(char))
+      .map(char => `'${char}'`)
+      .join(', '),
     tmpl: ''
   }
+}
+
+/** ¿Admite el juego de caracteres declarado este carácter suelto? Sin `charset`, todo vale. */
+function charsetFilter(pattern?: string): (char: string) => boolean {
+  if (!pattern) {
+    return () => true
+  }
+  const allowed = new RegExp(pattern)
+  return char => allowed.test(char)
 }

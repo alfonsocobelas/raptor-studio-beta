@@ -43,9 +43,24 @@
         compila con `noUnusedLocals`
       · `EMITTED_VO_KINDS` deja fuera los kind sin plantilla todavía — se saltan, no rompen la emisión
       · 375 tests verdes y los 6 golden vacíos (app 627 ficheros, app-mongo 580)
-- [ ] **TASK-04**: `kind: 'string'` con las variantes del canon (min/max por `constraintKey`,
+- [x] **TASK-04**: `kind: 'string'` con las variantes del canon (min/max por `constraintKey`,
       `noInnerWhitespace`, `charset`, `normalize: collapse-whitespace`) → `contract-number.vo.ts` y
       `phone.vo.ts` + sus tests (89 y 100 líneas). 15 errores más.
+      · los dos VOs de producción salen **byte a byte idénticos al canon**
+      · los TESTS emitidos NO reproducen los del canon: se **derivan** de la declaración (relleno,
+        alfabeto y caracteres prohibidos salen de filtrar candidatos contra el `charset`), igual que
+        ya hacen los tests de VO de módulo (`__fileName__-value-vos.vo.test.ts.template`). Los
+        valores a mano del canon ('0062064065', '+34 91 123 45 67') no se pueden derivar de nada
+      · `canEmitSharedVo` sustituye a la lista de kinds: un kind soportado con una normalización
+        que aún no lo está (`spanish-legal-name`) tampoco se emite. `CustomerName` espera a TASK-06
+      · **la aserción byte a byte no cabe en el test unitario**: el árbol virtual de
+        `createTreeWithEmptyWorkspace` no pasa prettier, y el canon está prettificado. El unitario
+        comprueba qué piezas decide el registro; la fidelidad la firma el gate de oro, que corre el
+        generador de verdad
+      · medición: **38 → 27 errores**. Aparecen 3 errores NUEVOS que estaban tapados (con el módulo
+        sin resolver el tipo era `any`): `register-contract-usecase.service.ts:17` usa
+        `contract.contractNumber` posiblemente null, y dos iguales en
+        `typeorm-contract.repository.test.ts`. Son deuda real que TASK-07 tendrá que cerrar
 - [ ] **TASK-05**: `kind: 'period'` → `period.vo.ts` + `period-error.ts` + test (44 líneas). 6 errores.
 - [ ] **TASK-06**: `spanish-legal-name.ts` en el **kernel** (el algoritmo de las 71 líneas, con las
       tablas del cliente como argumento) + `normalize: 'spanish-legal-name'` → `customer-name.vo.ts` + su test (216 líneas, el que de verdad demuestra la normalización). 12 errores, los últimos.
