@@ -212,6 +212,10 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       if (!substitutions.app.removes) {
         tree.delete(path.join(appTests, `remove-${substitutions.fileName}-usecase.test.ts`))
       }
+      if (!substitutions.app.trash) {
+        tree.delete(path.join(appTests, `restore-${substitutions.fileName}-usecase.test.ts`))
+        tree.delete(path.join(appTests, `search-deleted-${substitutions.plural}-usecase.test.ts`))
+      }
     }
     // test de integración del repositorio (corre contra la base real del compose de test)
     if (substitutions.entry.emit && persistence.integrationTestFiles) {

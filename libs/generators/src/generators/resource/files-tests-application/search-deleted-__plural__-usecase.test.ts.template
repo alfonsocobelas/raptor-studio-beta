@@ -1,0 +1,29 @@
+import { SearchDeleted<%- pluralClassName %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/search-deleted-<%- plural %>-usecase.service'
+import { OffsetInput } from '../../../../../src/contexts/shared/domain/query/criteria'
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('SearchDeleted<%- pluralClassName %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: SearchDeleted<%- pluralClassName %>UseCase
+
+  const baseInput: OffsetInput = { page: 1, pageSize: 10 }
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+    useCase = new SearchDeleted<%- pluralClassName %>UseCase(repositoryMock)
+  })
+
+  it('returns the deleted rows, paginated like the regular search', async () => {
+    const <%- plural %> = <%- className %>Mother.randomList(2)
+    repositoryMock.givenDeleted(<%- plural %>)
+    repositoryMock.givenDeletedCount(2)
+
+    const result = await useCase.invoke(baseInput)
+
+    expect(result.total).toBe(2)
+    expect(result.totalPages).toBe(1)
+    expect(result.items).toHaveLength(2)
+    expect(result.items[0]).toEqual(<%- plural %>[0].toPrimitives())
+  })
+})

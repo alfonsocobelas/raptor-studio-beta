@@ -94,4 +94,35 @@ describe('TypeOrm<%- className %>Repository (integration)', () => {
     })
   })
 <%_ } _%>
+<%_ if (app.trash) { _%>
+
+  describe('trash', () => {
+    it('a removed <%- fileName %> leaves matching and shows up in matchingDeleted', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+      await repository.remove(<%- propertyName %>.id)
+
+      const spec = <%- className %>WithIdSpecification.withId(<%- propertyName %>.id)
+      expect(await repository.matching(spec)).toHaveLength(0)
+
+      const deleted = await repository.matchingDeleted(spec)
+      expect(deleted).toHaveLength(1)
+      expect(deleted[0].toPrimitives()).toEqual(<%- propertyName %>.toPrimitives())
+      expect(await repository.countDeleted(spec)).toBe(1)
+    })
+
+    it('restore brings it back; a live or unknown id restores nothing', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+      await repository.remove(<%- propertyName %>.id)
+
+      expect(await repository.restore(<%- propertyName %>.id)).toBe(true)
+      expect(await repository.get(<%- propertyName %>.id)).not.toBeNull()
+
+      // ya está vivo: restaurarlo otra vez no encuentra nada borrado
+      expect(await repository.restore(<%- propertyName %>.id)).toBe(false)
+      expect(await repository.restore(<%- className %>Id.create(uuidv7()))).toBe(false)
+    })
+  })
+<%_ } _%>
 })

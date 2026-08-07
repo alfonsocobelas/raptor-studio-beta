@@ -147,3 +147,82 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(port).not.toContain('restore(')
   })
 })
+
+describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)', () => {
+  const emit = async (name: string, database?: 'postgres' | 'mongo'): Promise<Tree> => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name, directory: 'out', database })
+    return tree
+  }
+  const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
+
+  it('el mock del repositorio de project implementa y ayuda con los métodos de papelera', async () => {
+    const tree = await emit('project')
+
+    const mock = read(tree, 'out/backend-tests/project.repository.mock.ts')
+    expect(mock).toContain("this.getMock('matchingDeleted')(criteria)")
+    expect(mock).toContain("this.getMock('countDeleted')(criteria)")
+    expect(mock).toContain("this.getMock('restore')(projectId)")
+    expect(mock).toContain('givenDeleted(')
+    expect(mock).toContain('givenDeletedCount(')
+    expect(mock).toContain('whenRestoreSucceeds(')
+    expect(mock).toContain('whenRestoreFindsNothing(')
+  })
+
+  it('el mock de customer no crece', async () => {
+    const tree = await emit('customer')
+
+    expect(read(tree, 'out/backend-tests/customer.repository.mock.ts')).not.toContain('Deleted')
+  })
+
+  it('emite el test del restore con su rama de 404', async () => {
+    const tree = await emit('project')
+
+    const test = read(tree, 'out/backend-tests-application/restore-project-usecase.test.ts')
+    expect(test).toContain('RestoreProjectUseCase')
+    expect(test).toContain('whenRestoreSucceeds')
+    expect(test).toContain('EntityNotFoundError')
+  })
+
+  it('emite el test del search de borrados', async () => {
+    const tree = await emit('project')
+
+    const test = read(tree, 'out/backend-tests-application/search-deleted-projects-usecase.test.ts')
+    expect(test).toContain('SearchDeletedProjectsUseCase')
+    expect(test).toContain('givenDeleted(')
+  })
+
+  it('customer no emite tests de papelera', async () => {
+    const tree = await emit('customer')
+
+    expect(tree.exists('out/backend-tests-application/restore-customer-usecase.test.ts')).toBe(false)
+    expect(tree.exists('out/backend-tests-application/search-deleted-customers-usecase.test.ts')).toBe(false)
+  })
+
+  it('la integración TypeORM de project ejercita borrar → papelera → restaurar', async () => {
+    const tree = await emit('project')
+
+    const test = read(tree, 'out/backend-tests-integration/typeorm-project.repository.test.ts')
+    expect(test).toContain('matchingDeleted')
+    expect(test).toContain('countDeleted')
+    expect(test).toContain('repository.restore(')
+  })
+
+  it('la integración Mongoose de project ejercita borrar → papelera → restaurar', async () => {
+    const tree = await emit('project', 'mongo')
+
+    const test = read(tree, 'out/backend-tests-integration/mongoose-project.repository.test.ts')
+    expect(test).toContain('matchingDeleted')
+    expect(test).toContain('repository.restore(')
+  })
+
+  it('las integraciones de customer no cambian', async () => {
+    const typeorm = await emit('customer')
+    const mongo = await emit('customer', 'mongo')
+
+    expect(read(typeorm, 'out/backend-tests-integration/typeorm-customer.repository.test.ts')).not.toContain(
+      'Deleted'
+    )
+    expect(read(mongo, 'out/backend-tests-integration/mongoose-customer.repository.test.ts')).not.toContain('Deleted')
+  })
+})
