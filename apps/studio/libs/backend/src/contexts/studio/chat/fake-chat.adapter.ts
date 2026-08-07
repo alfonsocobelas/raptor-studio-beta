@@ -144,6 +144,11 @@ export class FakeChatAdapter extends ChatPort {
           .filter(Boolean)
           .map(raw => ({ name: camel(raw), label: capitalize(raw), type: inferType(raw) }))
       }
+      // brief de demostración (spec 22): destilar no borra lo contado — si ya hay brief, se conserva
+      draft.brief = `${draft.labelPlural} del negocio: cada ${draft.labelSingular.toLowerCase()} se da de alta y se consulta desde su listado.`
+      design.brief ??= {
+        business: `Aplicación de gestión (modo demo): controla ${draft.labelPlural.toLowerCase()} del día a día.`
+      }
       design.resources.push(draft)
       design.pages.push({ title: draft.labelPlural, blocks: [{ kind: 'table', resource: draft.name, width: 'full' }] })
       return { reply: `Creada la tabla de ${label} con ${draft.fields.length} campos.`, design }

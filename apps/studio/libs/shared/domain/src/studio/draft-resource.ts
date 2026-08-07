@@ -40,6 +40,8 @@ export interface DraftResource {
   gallery?: boolean
   /** Entradilla de la pantalla: el texto que la vista puso junto a la tabla (spec 18) */
   subtitle?: string
+  /** Frase de negocio de la entidad, destilada del chat (spec 22) */
+  brief?: string
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
@@ -301,12 +303,7 @@ export function draftToResource(
  * union de valores, columna badge con su mapa y desplegable tipado con el primer
  * valor por defecto.
  */
-function enumField(
-  field: DraftField,
-  values: DraftEnumValue[],
-  className: string,
-  order: number
-): FieldDefinition {
+function enumField(field: DraftField, values: DraftEnumValue[], className: string, order: number): FieldDefinition {
   const voName = `${className}${pascal(field.name)}`
 
   return {

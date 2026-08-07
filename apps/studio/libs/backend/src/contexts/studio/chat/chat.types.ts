@@ -1,4 +1,4 @@
-import type { PortsDefinition } from '@acc/schema'
+import type { BusinessBrief, PortsDefinition } from '@acc/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 export interface ChatMessage {
@@ -15,6 +15,8 @@ export interface DesignPayload {
   palette?: string
   /** Puertos elegidos para ejecutar la app en local (hallazgo 14) */
   ports?: PortsDefinition
+  /** Contexto de negocio destilado del chat; el usuario lo ve y lo corrige (spec 22) */
+  brief?: BusinessBrief
 }
 
 /** Lo que propone la IA: un reply breve y el diseño COMPLETO resultante (nunca código). */

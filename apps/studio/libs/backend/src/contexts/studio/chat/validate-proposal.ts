@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { BRIEF_LIMITS, briefProblems, defineResource } from '@acc/schema'
 import { draftToResource } from '@app/shared/domain'
 import type { DesignPayload } from './chat.types'
 
@@ -8,6 +8,22 @@ import type { DesignPayload } from './chat.types'
  * app-schema (y su defineApp) ocurre al generar, con lo que sea generable.
  */
 export function validateDesign(design: DesignPayload): DesignPayload {
+  // el brief pasa por los MISMOS topes que el schema (spec 22): se reenvía en cada turno del
+  // chat, y sin tope la IA puede degradar el prompt con el uso
+  const briefIssues = briefProblems(design.brief)
+  if (briefIssues.length) {
+    throw new Error(`El brief no pasa el gate: ${briefIssues.join('; ')}`)
+  }
+  for (const resource of design.resources) {
+    if (resource.brief !== undefined) {
+      if (!resource.brief.trim()) {
+        throw new Error(`El brief de ${resource.name} está vacío`)
+      }
+      if (resource.brief.length > BRIEF_LIMITS.entity) {
+        throw new Error(`El brief de ${resource.name} excede ${BRIEF_LIMITS.entity} caracteres`)
+      }
+    }
+  }
   for (const resource of design.resources) {
     for (const field of resource.fields) {
       if (field.type !== 'enum') continue

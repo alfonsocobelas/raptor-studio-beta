@@ -74,6 +74,13 @@ const SYSTEM_PROMPT = [
   'en pantalla. Sus samples son ETIQUETAS del conjunto. Si los valores no están acotados',
   '(un nombre, una dirección), es string, no enum.',
   '',
+  'BRIEF: design.brief es la memoria del negocio. DESTILA en él lo que el usuario cuente del',
+  'negocio (qué hace, reglas, jerga): business en prosa (≤1200), rules[] (≤20, cada una ≤240)',
+  'y glossary[] ({term ≤40, means}). Cada entidad lleva brief: UNA frase (≤500) de para qué',
+  'existe. CONSERVA lo ya presente — el usuario pudo editarlo a mano: destilar es añadir y',
+  'afinar, nunca borrar ni inventar lo que no se ha dicho. No repreguntes lo que el brief ya',
+  'responde.',
+  '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
   'reply es una frase breve en español explicando qué cambiaste.'
@@ -89,6 +96,24 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
       type: 'object',
       properties: {
         appName: { type: 'string' },
+        brief: {
+          type: 'object',
+          properties: {
+            business: { type: 'string' },
+            rules: { type: 'array', items: { type: 'string' } },
+            glossary: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: { term: { type: 'string' }, means: { type: 'string' } },
+                required: ['term', 'means'],
+                additionalProperties: false
+              }
+            }
+          },
+          required: ['business'],
+          additionalProperties: false
+        },
         resources: {
           type: 'array',
           items: {
@@ -99,6 +124,7 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
               labelSingular: { type: 'string' },
               labelPlural: { type: 'string' },
               gender: { type: 'string', enum: ['m', 'f'] },
+              brief: { type: 'string' },
               attachments: { type: 'boolean' },
               fields: {
                 type: 'array',

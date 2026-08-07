@@ -114,3 +114,32 @@ describe('FakeChatAdapter — modo demo determinista (lienzo en blanco)', () => 
     })
   })
 })
+
+/** Spec 22: el modo demo también destila un brief, para que el panel de contexto no parezca roto. */
+describe('fake adapter — brief de demostración (spec 22)', () => {
+  it('crear la primera entidad deja un brief de app y una frase en la entidad', async () => {
+    const adapter = new FakeChatAdapter()
+
+    const proposal = await adapter.propose(
+      [{ role: 'user', text: 'crea una tabla de empleados con nombre, puesto y salario' }],
+      { appName: 'demo', resources: [], pages: [] }
+    )
+
+    expect(proposal.design.brief?.business).toBeTruthy()
+    expect(proposal.design.resources[0].brief).toBeTruthy()
+  })
+
+  it('un brief ya presente se conserva: destilar no borra lo contado', async () => {
+    const adapter = new FakeChatAdapter()
+    const brief = { business: 'Negocio contado por el usuario.', rules: ['regla editada a mano'] }
+
+    const proposal = await adapter.propose([{ role: 'user', text: 'crea una tabla de clientes' }], {
+      appName: 'demo',
+      resources: [],
+      pages: [],
+      brief
+    })
+
+    expect(proposal.design.brief).toEqual(brief)
+  })
+})

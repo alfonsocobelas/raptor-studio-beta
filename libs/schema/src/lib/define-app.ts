@@ -13,7 +13,7 @@ export function defineApp(definition: AppDefinition): AppDefinition {
     ...validateTheme(definition),
     ...validatePages(definition.pages),
     ...validateFlows(definition.flows),
-    ...validateBrief(definition.brief)
+    ...briefProblems(definition.brief)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -85,8 +85,11 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
   return problems
 }
 
-/** Topes del brief (spec 22): se reenvía en cada turno del chat; sin tope degrada el prompt. */
-function validateBrief(brief: AppDefinition['brief']): string[] {
+/**
+ * Topes del brief (spec 22): se reenvía en cada turno del chat; sin tope degrada el prompt.
+ * Exportada para que el gate del estudio aplique EXACTAMENTE los mismos topes que el schema.
+ */
+export function briefProblems(brief: AppDefinition['brief']): string[] {
   if (brief === undefined) return []
   const problems: string[] = []
 
