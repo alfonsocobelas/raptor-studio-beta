@@ -230,3 +230,38 @@ describe('deriveTheme', () => {
     })
   })
 })
+
+/** Fase 3 (spec 20): tipografía por tema, mismo patrón que el radio — mecanismo, catálogo intacto. */
+const neutralTheme = (): Theme => ({
+  surface: { chroma: 0, hue: 0 },
+  light: {
+    primary: 'oklch(0.205 0 0)',
+    primaryForeground: 'oklch(0.985 0 0)',
+    ring: 'oklch(0.708 0 0)',
+    sidebarPrimary: 'oklch(0.205 0 0)',
+    sidebarPrimaryForeground: 'oklch(0.985 0 0)'
+  },
+  dark: {
+    primary: 'oklch(0.922 0 0)',
+    primaryForeground: 'oklch(0.205 0 0)',
+    ring: 'oklch(0.556 0 0)',
+    sidebarPrimary: 'oklch(0.985 0 0)',
+    sidebarPrimaryForeground: 'oklch(0.205 0 0)'
+  }
+})
+
+describe('la fuente del tema (fase 3)', () => {
+  it('un tema sin fuente no declara nada: la app emitida conserva la pila del esqueleto', () => {
+    const tokens = deriveTheme(neutralTheme())
+
+    expect(tokens.font).toBeUndefined()
+  })
+
+  it('un tema con fuente la lleva en sus tokens, con su paquete self-hosted', () => {
+    const theme = { ...neutralTheme(), font: { family: 'Inter Variable', package: '@fontsource-variable/inter' } }
+
+    const tokens = deriveTheme(theme)
+
+    expect(tokens.font).toEqual({ family: 'Inter Variable', package: '@fontsource-variable/inter' })
+  })
+})

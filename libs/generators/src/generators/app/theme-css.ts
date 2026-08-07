@@ -1,3 +1,5 @@
+import type { Tree } from '@nx/devkit'
+import { updateJson } from '@nx/devkit'
 import { DEFAULT_THEME_ID, TOKEN_ORDER, deriveTheme, findTheme } from '@acc/schema'
 
 /**
@@ -15,6 +17,10 @@ export interface ThemeSubstitutions {
   darkTokens: string
   /** Radio de esquinas del tema (fase 2); sin declarar, el del esqueleto */
   radius: string
+  /** Familia tipográfica del tema (fase 3); '' = la pila de sistema del esqueleto */
+  fontFamily: string
+  /** Paquete npm self-hosted que aporta la fuente; '' = ninguno */
+  fontPackage: string
 }
 
 const block = (tokens: Record<string, string>): string =>
@@ -32,6 +38,21 @@ export function themeSubstitutions(themeId: string): ThemeSubstitutions {
     themeClass: `theme-${theme.id}`,
     lightTokens: block(tokens.light),
     darkTokens: block(tokens.dark),
-    radius: tokens.radius
+    radius: tokens.radius,
+    fontFamily: tokens.font?.family ?? '',
+    fontPackage: tokens.font?.package ?? ''
   }
+}
+
+/**
+ * La fuente del tema es una dependencia MÁS de la app emitida: los ficheros los aporta su paquete
+ * fontsource (self-hosted, sin CDNs) y el npm install de la app los trae. La misma horquilla ^5 que
+ * el Roboto que la piel material ya declara en el esqueleto.
+ */
+export function addFontDependency(tree: Tree, packageJsonPath: string, fontPackage: string): void {
+  if (!fontPackage) return
+  updateJson(tree, packageJsonPath, json => {
+    json.dependencies = { ...json.dependencies, [fontPackage]: '^5.1.0' }
+    return json
+  })
 }

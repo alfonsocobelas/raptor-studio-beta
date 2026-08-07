@@ -77,6 +77,16 @@ export interface Theme {
   destructive?: { light: string; dark: string }
   /** Radio de esquinas (fase 2). Sin declarar → el del esqueleto, fixtures intactas. */
   radius?: string
+  /** Tipografía (fase 3). Sin declarar → la pila de sistema del esqueleto, fixtures intactas. */
+  font?: ThemeFont
+}
+
+/** Fuente self-hosted de un tema: la familia y el paquete npm que la aporta. */
+export interface ThemeFont {
+  /** Nombre de la familia tal y como la registra el paquete ('Inter Variable') */
+  family: string
+  /** Paquete npm que empaqueta los ficheros de fuente (p. ej. @fontsource-variable/inter) */
+  package: string
 }
 
 /** El radio que styles.css lleva escrito desde el esqueleto. */
@@ -120,6 +130,8 @@ export interface ThemeTokens {
   dark: Record<string, string>
   /** No es por modo: la esquina redondea igual en claro y en oscuro. */
   radius: string
+  /** Fuente del tema (fase 3); ausente = pila de sistema del esqueleto */
+  font?: ThemeFont
 }
 
 const DEFAULT_DESTRUCTIVE = {
@@ -220,6 +232,7 @@ export function deriveTheme(theme: Theme): ThemeTokens {
       input: DARK_INPUT,
       'sidebar-border': DARK_BORDER
     },
-    radius: theme.radius ?? DEFAULT_RADIUS
+    radius: theme.radius ?? DEFAULT_RADIUS,
+    ...(theme.font ? { font: theme.font } : {})
   }
 }

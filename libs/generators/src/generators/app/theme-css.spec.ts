@@ -1,4 +1,7 @@
-import { themeSubstitutions } from './theme-css'
+import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
+import { generateFiles } from '@nx/devkit'
+import { join } from 'path'
+import { addFontDependency, themeSubstitutions, type ThemeSubstitutions } from './theme-css'
 
 /**
  * El orden de los tokens en el fichero emitido. NO es cosmético: la fixture de
@@ -139,5 +142,64 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
       expect(subs.themeClass).toBe('theme-neutral')
       expect(subs.lightTokens).toBe(themeSubstitutions('neutral').lightTokens)
     })
+  })
+})
+
+/**
+ * Fase 3 (spec 20): la fuente del tema, self-hosted. Sin fuente declarada las sustituciones
+ * quedan vacías y el styles.css emitido es byte a byte el de siempre.
+ */
+describe('la fuente del tema (fase 3)', () => {
+  it('sin fuente declarada no hay familia ni import: fixture congelada intacta', () => {
+    const subs = themeSubstitutions('neutral')
+
+    expect(subs.fontFamily).toBe('')
+    expect(subs.fontPackage).toBe('')
+  })
+})
+
+describe('la fuente en la app emitida (fase 3)', () => {
+  // se renderiza la plantilla real con generateFiles, igual que el ensamblador
+  const render = (subs: ThemeSubstitutions): string => {
+    const tree = createTreeWithEmptyWorkspace()
+    generateFiles(tree, join(__dirname, 'files-theme/spartan'), 'out', { ...subs, tmpl: '' })
+    return tree.read('out/apps/frontend-app/src/styles.css', 'utf-8') ?? ''
+  }
+  const base = themeSubstitutions('neutral')
+
+  it('un tema con fuente añade su import self-hosted y antepone la familia a la pila', () => {
+    const css = render({ ...base, fontFamily: 'Inter Variable', fontPackage: '@fontsource-variable/inter' })
+
+    expect(css).toContain(`@import '@fontsource-variable/inter';`)
+    expect(css).toMatch(/--font-sans:\n\s+'Inter Variable',\n\s+-apple-system/)
+  })
+
+  it('sin fuente el css es EXACTAMENTE el de siempre: fixture congelada intacta', () => {
+    const css = render(base)
+
+    expect(css).not.toContain('fontsource')
+    expect(css).toMatch(/--font-sans:\n\s+-apple-system/)
+  })
+
+  it('addFontDependency añade el paquete a las dependencias de la app emitida', () => {
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('out/package.json', JSON.stringify({ dependencies: { rxjs: '^7' } }))
+
+    addFontDependency(tree, 'out/package.json', '@fontsource-variable/inter')
+    const pkg = JSON.parse(tree.read('out/package.json', 'utf-8') ?? '{}') as {
+      dependencies: Record<string, string>
+    }
+
+    expect(pkg.dependencies['@fontsource-variable/inter']).toBe('^5.1.0')
+    expect(pkg.dependencies['rxjs']).toBe('^7')
+  })
+
+  it('sin paquete no toca el package.json', () => {
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('out/package.json', JSON.stringify({ dependencies: {} }))
+
+    addFontDependency(tree, 'out/package.json', '')
+
+    expect(JSON.parse(tree.read('out/package.json', 'utf-8') ?? '{}')).toEqual({ dependencies: {} })
   })
 })

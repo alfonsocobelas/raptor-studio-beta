@@ -8,7 +8,7 @@ import { emitsSeeder } from '../resource/emits'
 import { ignoreNestedWorkspace } from './nxignore'
 import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
-import { themeSubstitutions } from './theme-css'
+import { addFontDependency, themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition } from './composition'
 import { renderClaudeMd } from './brief-doc'
 import {
@@ -287,6 +287,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
   const theme = themeSubstitutions(composition.themeId)
   generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
+  // la fuente del tema viaja como dependencia (fase 3): self-hosted, la trae el npm install
+  addFontDependency(tree, path.join(root, 'package.json'), theme.fontPackage)
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
   const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])
