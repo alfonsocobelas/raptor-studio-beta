@@ -11,7 +11,7 @@
       aristas válidas, un start / ≥1 end, aridad por kind, alcanzabilidad BFS,
       auto-bucle rechazado, topes). Tests: válido pasa, cada regla rechaza con
       mensaje accionable.
-- [ ] TASK-02 — Helper puro `flowLayout(flow)` en `@app/shared/domain`
+- [x] TASK-02 — Helper puro `flowLayout(flow)` en `@app/shared/domain`
       (niveles BFS desde start, orden estable, determinista) + reutilización
       verificada de `nodeBox`/`edgeLine` con cajas de flujo (TDD).
 
