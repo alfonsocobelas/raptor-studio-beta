@@ -32,8 +32,13 @@
 
 ## Familia B — el fallback, para todos los campos
 
-- [ ] **TASK-04**: `fromPrimitives` aplica `?? null` a los campos crudos cuyo primitive es opcional y
+- [x] **TASK-04**: `fromPrimitives` aplica `?? null` a los campos crudos cuyo primitive es opcional y
       cuyo agregado los exige `Nullable<…>`. Tests sobre `project` (5 campos) y `license` (2).
+      · el comportamiento ya estaba emitido al llegar aquí (la rama maint de `fromPrimitivesArg`);
+        lo que faltaba era FIJARLO: tests en `register-canon.spec.ts` sobre los 5 campos de oleada
+        de project (`?? null`) y el crudo no nullable de license (`materialId ?? ''`)
+      · la medición de cierre real la hizo la spec 27 TASK-07: **0 errores** y 383/383 tests
+        emitidos en verde con `typecheck-emitted.sh` midiendo la app de oro por defecto
 
 ## Cierre
 

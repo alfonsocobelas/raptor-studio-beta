@@ -206,3 +206,24 @@ describe('renderDomainTests — sanitización sólo donde el texto libre es vál
     expect(sanitizations.map(s => s.voName)).not.toContain('ContractCurrency')
   })
 })
+
+/**
+ * Spec 26, TASK-04 (cerrada desde la 27): los campos crudos cuyo primitive es opcional y cuyo
+ * agregado los exige `Nullable<...>` llevan fallback en fromPrimitives. Sin el `?? null`, el
+ * opcional (`atRisk?:`) no encaja en el constructor (`Nullable<string>`). Este test lo FIJA.
+ */
+describe('renderAggregate — fromPrimitives con fallback en los campos crudos', () => {
+  it('project: los 5 campos de oleada caen a null', () => {
+    const args = renderAggregate(project).fromPrimitivesArgs
+
+    for (const field of ['atRisk', 'inEscalation', 'nbrOfWaves', 'waveStage', 'waveStatus']) {
+      expect(args).toContain(`props.${field} ?? null`)
+    }
+  })
+
+  it('license: el campo crudo no nullable cae al vacío de su tipo, no a null', () => {
+    const args = renderAggregate(license).fromPrimitivesArgs
+
+    expect(args).toContain("props.materialId ?? ''")
+  })
+})
