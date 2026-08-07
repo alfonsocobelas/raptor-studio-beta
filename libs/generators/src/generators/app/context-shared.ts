@@ -64,7 +64,7 @@ export function sharedConstraintEntries(vos: string[]): string[] {
  * timestamp, TASK-04 string, TASK-05 period): un VO de un kind todavía sin plantilla se salta en
  * vez de romper la emisión, y lo delata el gate de compilación, no una excepción del generador.
  */
-export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp', 'string']
+export const EMITTED_VO_KINDS: SharedVoDefinition['kind'][] = ['date', 'timestamp', 'string', 'period']
 
 /** Las normalizaciones que ya tienen plantilla; `spanish-legal-name` espera al helper del kernel. */
 const EMITTED_NORMALIZE_RULES = ['collapse-whitespace']
@@ -118,6 +118,8 @@ export interface SharedVoSubstitutions {
   altChar: string
   alphabet: string
   disallowedSamples: string
+  ofClass: string
+  ofFile: string
   tmpl: ''
 }
 
@@ -162,6 +164,8 @@ export function sharedVoSubstitutions(name: string, vo: SharedVoDefinition, cont
     disallowedSamples: BAD_CANDIDATES.filter(char => !allows(char))
       .map(char => `'${char}'`)
       .join(', '),
+    ofClass: vo.of ? names(vo.of).className : '',
+    ofFile: vo.of ? names(vo.of).fileName : '',
     tmpl: ''
   }
 }

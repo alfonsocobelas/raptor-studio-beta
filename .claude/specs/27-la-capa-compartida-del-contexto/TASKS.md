@@ -61,7 +61,16 @@
         sin resolver el tipo era `any`): `register-contract-usecase.service.ts:17` usa
         `contract.contractNumber` posiblemente null, y dos iguales en
         `typeorm-contract.repository.test.ts`. Son deuda real que TASK-07 tendrá que cerrar
-- [ ] **TASK-05**: `kind: 'period'` → `period.vo.ts` + `period-error.ts` + test (44 líneas). 6 errores.
+- [x] **TASK-05**: `kind: 'period'` → `period.vo.ts` + `period-error.ts` + test (44 líneas). 6 errores.
+      · los dos ficheros de producción, **byte a byte idénticos al canon**
+      · el error de regla de negocio NO va en `value-objects/` sino un nivel por encima, en
+        `<contexto>/shared/domain/`. Carpeta de plantillas aparte (`files-shared-domain/<kind>/`),
+        opcional: el kind que no la traiga no emite nada ahí
+      · el test del período se salta si el VO de `of` no entra en la app: sin fecha con la que
+        construir el intervalo no hay test que valga
+      · medición: **27 → 21 errores** (13 TS2307 + 7 TS2345 + 1 TS18047); los 6 previstos, exactos
+      · **hallazgo del arnés**: probando el RED, `nx test` devolvió verde con la plantilla borrada —
+        caché de Nx. Para comprobar que un test sabe fallar hay que pasar `--skip-nx-cache`
 - [ ] **TASK-06**: `spanish-legal-name.ts` en el **kernel** (el algoritmo de las 71 líneas, con las
       tablas del cliente como argumento) + `normalize: 'spanish-legal-name'` → `customer-name.vo.ts` + su test (216 líneas, el que de verdad demuestra la normalización). 12 errores, los últimos.
       · entrada en `golden-skip.txt` con el motivo: el algoritmo se mudó al kernel

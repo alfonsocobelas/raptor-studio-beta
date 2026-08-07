@@ -1,0 +1,44 @@
+import { <%= className %>Error } from '../../../../../../src/contexts/<%= context %>/shared/domain/<%= fileName %>-error'
+import { <%= ofClass %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= ofFile %>.vo'
+import { <%= className %> } from '../../../../../../src/contexts/<%= context %>/shared/domain/value-objects/<%= fileName %>.vo'
+
+const date = (iso: string): <%= ofClass %> => <%= ofClass %>.create(new Date(iso))
+
+describe('<%= className %> (shared)', () => {
+  describe('create — valid', () => {
+    it('should create a period when end is after start', () => {
+      const period = <%= className %>.create(date('2026-01-01'), date('2026-12-31'))
+      expect(period.start?.equals(date('2026-01-01'))).toBe(true)
+      expect(period.end?.equals(date('2026-12-31'))).toBe(true)
+    })
+
+    it('should create a period when end equals start', () => {
+      const period = <%= className %>.create(date('2026-01-01'), date('2026-01-01'))
+      expect(period.end?.equals(date('2026-01-01'))).toBe(true)
+    })
+
+    it('should create an open-ended period when end is null', () => {
+      const period = <%= className %>.create(date('2026-01-01'), null)
+      expect(period.start?.equals(date('2026-01-01'))).toBe(true)
+      expect(period.end).toBeNull()
+    })
+
+    it('should create a start-less period: the source may only provide the end', () => {
+      const period = <%= className %>.create(null, date('2026-12-31'))
+      expect(period.start).toBeNull()
+      expect(period.end?.equals(date('2026-12-31'))).toBe(true)
+    })
+
+    it('should create an empty period when both dates are unknown', () => {
+      const period = <%= className %>.create(null, null)
+      expect(period.start).toBeNull()
+      expect(period.end).toBeNull()
+    })
+  })
+
+  describe('create — invalid', () => {
+    it('should throw <%= className %>Error when end is before start', () => {
+      expect(() => <%= className %>.create(date('2026-12-31'), date('2026-01-01'))).toThrow(<%= className %>Error)
+    })
+  })
+})

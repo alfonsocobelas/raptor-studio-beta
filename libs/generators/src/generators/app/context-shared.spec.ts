@@ -167,9 +167,76 @@ export class SyncTimestamp extends DateValueObject {
     expect(read(`${tests}/sync-timestamp.vo.test.ts`)).toContain('via never()')
   })
 
-  it('lo que todavía no tiene plantilla no se emite (period, la normalización española)', () => {
-    expect(tree.exists(`apps/demo/libs/backend/${src}/period.vo.ts`)).toBe(false)
+  it('lo que todavía no tiene plantilla no se emite (la normalización española)', () => {
     expect(tree.exists(`apps/demo/libs/backend/${src}/customer-name.vo.ts`)).toBe(false)
+  })
+})
+
+/**
+ * TASK-05. El período no extiende ValueObject: es una clase propia con su invariante y su error de
+ * regla de negocio, y ese error vive un nivel por encima de los VOs (`<contexto>/shared/domain/`).
+ */
+describe('app generator — el período compartido', () => {
+  let tree: Tree
+
+  beforeAll(async () => {
+    tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'contract', skipInstall: true })
+  })
+
+  const read = (file: string): string => tree.read(`apps/demo/libs/backend/${file}`, 'utf-8') ?? ''
+  const domain = 'src/contexts/sap-licensing/shared/domain'
+
+  it('emite el error de regla de negocio junto al dominio compartido, no en value-objects', () => {
+    expect(read(`${domain}/period-error.ts`)).toBe(
+      `import { BusinessRuleViolationError } from '../../../shared/domain/errors'
+
+export class PeriodError extends BusinessRuleViolationError {
+  constructor(message: string, cause?: unknown) {
+    super(message, 'Period', cause)
+  }
+}
+`
+    )
+  })
+
+  it('emite el período con su invariante inicio <= fin', () => {
+    expect(read(`${domain}/value-objects/period.vo.ts`)).toBe(
+      `import { Nullable } from '../../../../shared/domain/types'
+import { DateValueObject } from '../../../../shared/domain/value-objects/date-value-object'
+import { PeriodError } from '../period-error'
+
+export class Period {
+  private constructor(
+    private readonly _start: Nullable<DateValueObject>,
+    private readonly _end: Nullable<DateValueObject>
+  ) {}
+
+  static create(start: Nullable<DateValueObject>, end: Nullable<DateValueObject>): Period {
+    if (start && end && end.isBefore(start)) {
+      throw new PeriodError('End date must be on or after the start date')
+    }
+    return new Period(start, end)
+  }
+
+  get start(): Nullable<DateValueObject> {
+    return this._start
+  }
+
+  get end(): Nullable<DateValueObject> {
+    return this._end
+  }
+}
+`
+    )
+  })
+
+  it('el test emitido construye las fechas con el VO que declara `of`', () => {
+    const test = read('tests/modules/sap-licensing/shared/domain/value-objects/period.vo.test.ts')
+
+    expect(test).toContain(`const date = (iso: string): ContractDate => ContractDate.create(new Date(iso))`)
+    expect(test).toContain('should throw PeriodError when end is before start')
+    expect(test).toContain('should create an open-ended period when end is null')
   })
 })
 

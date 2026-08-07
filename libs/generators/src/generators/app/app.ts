@@ -214,6 +214,16 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
         path.join(sharedDomain, 'value-objects'),
         substitutions
       )
+      // hay kind que además ponen algo un nivel por encima de los VOs: el período, su error de
+      // regla de negocio. El kind que no lo necesite simplemente no trae esa carpeta
+      const alongside = path.join(__dirname, 'files-shared-domain', vo.kind)
+      if (fs.existsSync(alongside)) {
+        generateFiles(tree, alongside, sharedDomain, substitutions)
+      }
+      // el test del período construye fechas con el VO que declara `of`: sin él no hay test que valga
+      if (vo.of && !group.vos.includes(vo.of)) {
+        continue
+      }
       generateFiles(
         tree,
         path.join(__dirname, 'files-shared-vo-tests', vo.kind),
