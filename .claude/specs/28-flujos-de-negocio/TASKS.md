@@ -6,7 +6,7 @@
 
 ## Fase 1 — el contrato
 
-- [ ] TASK-01 — Contrato en `@acc/schema`: `FlowNode`/`FlowEdge`/`BusinessFlow` +
+- [x] TASK-01 — Contrato en `@acc/schema`: `FlowNode`/`FlowEdge`/`BusinessFlow` +
       `AppDefinition.flows` + gate estructural completo en `defineApp` (ids únicos,
       aristas válidas, un start / ≥1 end, aridad por kind, alcanzabilidad BFS,
       auto-bucle rechazado, topes). Tests: válido pasa, cada regla rechaza con

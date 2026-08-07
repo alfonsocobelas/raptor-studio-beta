@@ -1,5 +1,6 @@
 import { AppDefinition, PageDefinition } from './app-types'
 import { THEME_IDS } from './themes'
+import { validateFlows } from './validate-flows'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -7,7 +8,12 @@ const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 // Structural validation only (v1): the model registry lives in the generator,
 // so resource existence is checked there, not here.
 export function defineApp(definition: AppDefinition): AppDefinition {
-  const problems = [...validateIdentity(definition), ...validateTheme(definition), ...validatePages(definition.pages)]
+  const problems = [
+    ...validateIdentity(definition),
+    ...validateTheme(definition),
+    ...validatePages(definition.pages),
+    ...validateFlows(definition.flows)
+  ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
 

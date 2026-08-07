@@ -64,6 +64,48 @@ export interface PortsDefinition {
   postgresTest?: number
 }
 
+/**
+ * Flujos de negocio (spec 28): diagramas de proceso que viajan con el diseño
+ * y aterrizan como contexto en la app generada. NUNCA generan código —
+ * mismo precedente que el brief: metadatos que la IA post-generación lee.
+ */
+export type FlowNodeKind = 'start' | 'step' | 'decision' | 'end'
+
+export interface FlowNode {
+  /** Único dentro del flujo; slug corto en kebab-case ('llega-pedido') */
+  id: string
+  kind: FlowNodeKind
+  /** Lo que se lee dentro del nodo */
+  text: string
+  /** Recurso al que alude el paso; su existencia la valida la frontera, no defineApp */
+  entity?: string
+}
+
+export interface FlowEdge {
+  from: string
+  to: string
+  /** Obligatoria en las salidas de una decisión ('sí', 'no', …) */
+  label?: string
+}
+
+export interface BusinessFlow {
+  name: string
+  description?: string
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+}
+
+/** Topes del contrato: el diseño se reenvía en cada turno del chat (mismo motivo que el brief). */
+export const FLOW_LIMITS = {
+  flows: 10,
+  nodes: 30,
+  edges: 60,
+  name: 60,
+  text: 120,
+  label: 20,
+  description: 300
+} as const
+
 export interface AppDefinition {
   schemaVersion: 1
   name: string
@@ -72,4 +114,6 @@ export interface AppDefinition {
   ports?: PortsDefinition
   /** El orden de páginas gobierna nav, rutas y ruta por defecto (la primera) */
   pages: PageDefinition[]
+  /** Procesos de negocio dibujados en el estudio; contexto, nunca fuente de código (spec 28) */
+  flows?: BusinessFlow[]
 }
