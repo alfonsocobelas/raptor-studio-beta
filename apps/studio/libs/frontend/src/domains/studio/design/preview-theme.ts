@@ -19,6 +19,10 @@ export function previewThemeVars(themeId: string, mode: PreviewTheme): Record<st
     ...Object.fromEntries(Object.entries(tokens).map(([name, value]) => [`--${name}`, value])),
     // el radio solo se pisa si el tema lo DECLARA: inline gana a las reglas del
     // preview-scope, y sin esto la piel material perdería su redondeo propio
-    ...(theme.radius ? { '--radius': theme.radius } : {})
+    ...(theme.radius ? { '--radius': theme.radius } : {}),
+    // la fuente igual (fase 3): la familia se antepone a la pila, como en el styles.css emitido.
+    // El día que el catálogo declare una, el estudio debe instalar su paquete fontsource para
+    // que el lienzo la RENDERICE — sin él, el navegador cae a la pila y miente lo justo
+    ...(theme.font ? { '--font-sans': `'${theme.font.family}', var(--font-sans)` } : {})
   }
 }

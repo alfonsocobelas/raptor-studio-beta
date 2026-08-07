@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import * as schema from '@acc/schema'
 import { THEMES, deriveTheme, findTheme } from '@acc/schema'
 import { previewThemeVars } from './preview-theme'
 
@@ -99,5 +100,29 @@ describe('previewThemeVars — el lienzo pinta con los tokens que se van a emiti
     // THEN el lienzo sigue dibujándose
     expect(vars).toEqual(previewThemeVars('neutral', 'light'))
     expect(findTheme('fucsia-flúor')).toBeUndefined()
+  })
+})
+
+/** Fase 3 (spec 20): el lienzo antepone la fuente del tema, como hará el styles.css emitido. */
+describe('la fuente del tema en el lienzo', () => {
+  it('un tema sin fuente no pisa la pila del preview', () => {
+    const vars = previewThemeVars('neutral', 'light')
+
+    expect(vars['--font-sans']).toBeUndefined()
+  })
+
+  it('un tema con fuente la antepone, con la pila del preview de respaldo', () => {
+    const themed = findTheme('hydrangea')
+    if (!themed) throw new Error('falta hydrangea en el catálogo')
+    const spy = vi
+      .spyOn(schema, 'findTheme')
+      .mockReturnValue({ ...themed, font: { family: 'Inter Variable', package: '@fontsource-variable/inter' } })
+
+    try {
+      const vars = previewThemeVars('hydrangea', 'light')
+      expect(vars['--font-sans']).toBe(`'Inter Variable', var(--font-sans)`)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
