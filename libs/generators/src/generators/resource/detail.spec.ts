@@ -121,6 +121,32 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain('Citas')
   })
 
+  it('las columnas de la tabla relacionada viajan con su tipo: una fecha no se lee en ISO crudo (defecto 21)', async () => {
+    const paciente = { ...withDetail(), name: 'paciente', plural: 'pacientes' } as ResourceDefinition
+    const visita = {
+      ...MODELS['supplier'],
+      name: 'visita',
+      plural: 'visitas',
+      labels: { singular: 'Visita', plural: 'Visitas' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        motivo: { type: 'string', table: { show: true, label: 'Motivo' } },
+        fecha: { type: 'date', table: { show: true, label: 'Fecha', type: 'date' } },
+        importe: { type: 'number', table: { show: true, label: 'Importe' } },
+        pacienteId: { type: 'uuid', relation: { to: 'paciente', kind: 'reference' } }
+      }
+    } as unknown as ResourceDefinition
+
+    registerModels([paciente, visita])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'paciente', directory: 'out' })
+    const detail = tree.read('out/frontend/paciente-detail.component.ts', 'utf-8') ?? ''
+
+    expect(detail).toContain(`{ key: 'fecha', label: 'Fecha', type: 'date' }`)
+    expect(detail).toContain(`{ key: 'importe', label: 'Importe', type: 'number' }`)
+    expect(detail).toContain(`{ key: 'motivo', label: 'Motivo' }`)
+  })
+
   it('sin hijos que lo referencien, la ficha no monta tablas relacionadas', async () => {
     const tree = await generate(withDetail())
 

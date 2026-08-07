@@ -7,6 +7,8 @@ import { formatValue } from '../utils/format-value'
 export interface RelatedColumn {
   key: string
   label: string
+  /** Sin él, formatValue no sabe qué lee y una fecha sale en ISO crudo (defecto 21) */
+  type?: 'date' | 'number' | 'boolean'
 }
 
 interface PagedResponse {
@@ -52,7 +54,7 @@ interface PagedResponse {
               @for (row of rows(); track $index) {
                 <tr class="hover:bg-muted/50 border-b last:border-0">
                   @for (column of columns(); track column.key) {
-                    <td class="px-4 py-2">{{ format(row[column.key]) }}</td>
+                    <td class="px-4 py-2">{{ format(row[column.key], column) }}</td>
                   }
                 </tr>
               }
@@ -111,7 +113,7 @@ export class RelatedTable {
     }
   }
 
-  protected format(value: unknown): string {
-    return formatValue(value)
+  protected format(value: unknown, column: RelatedColumn): string {
+    return formatValue(value, { type: column.type })
   }
 }

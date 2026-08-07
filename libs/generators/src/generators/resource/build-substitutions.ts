@@ -892,7 +892,12 @@ function renderRelated(definition: ResourceDefinition, others: ResourceDefinitio
         .filter(([name, field]) => field.table?.show && name !== link[0])
         .sort(([, a], [, b]) => (a.table?.order ?? 99) - (b.table?.order ?? 99))
         .slice(0, 4)
-        .map(([name, field]) => `{ key: '${name}', label: '${field.table?.label ?? name}' }`)
+        .map(([name, field]) => {
+          // la columna viaja con su tipo o la tabla enseña la fecha en ISO crudo (defecto 21):
+          // key/label no bastan para que formatValue sepa qué está leyendo
+          const type = field.table?.type ?? detailValueType(field) ?? (field.type === 'date' ? 'date' : null)
+          return `{ key: '${name}', label: '${field.table?.label ?? name}'${type ? `, type: '${type}'` : ''} }`
+        })
 
       return [
         {
