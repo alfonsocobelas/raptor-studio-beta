@@ -269,6 +269,71 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
   })
 })
 
+describe('DesignStore.addRelation — la flecha del diagrama es un campo ref real', () => {
+  const storeWith = (...labels: string[]): DesignStore => {
+    const store = new DesignStore()
+    for (const label of labels) store.addResource(label)
+    return store
+  }
+
+  it('añade al origen un campo ref con nombre y label derivados del destino', () => {
+    const store = storeWith('Cita', 'Paciente')
+
+    const ok = store.addRelation('cita', 'paciente')
+
+    expect(ok).toBe(true)
+    expect(store.resources().find(r => r.name === 'cita')?.fields.at(-1)).toEqual({
+      name: 'paciente',
+      label: 'Paciente',
+      type: 'ref',
+      refTo: 'paciente'
+    })
+  })
+
+  it('la relación creada llega al resource-schema como par canónico id + nombre', () => {
+    const store = storeWith('Cita', 'Paciente')
+
+    store.addRelation('cita', 'paciente')
+
+    const cita = store.registry()['cita']
+    expect(cita.fields['pacienteId'].relation).toMatchObject({ to: 'paciente', kind: 'reference' })
+    expect(cita.fields['pacienteName']).toBeDefined()
+  })
+
+  it('una segunda relación al mismo destino no pisa la primera: sufija el nombre', () => {
+    const store = storeWith('Cita', 'Paciente')
+    store.addRelation('cita', 'paciente')
+
+    const ok = store.addRelation('cita', 'paciente')
+
+    expect(ok).toBe(true)
+    const names = store
+      .resources()
+      .find(r => r.name === 'cita')
+      ?.fields.filter(f => f.type === 'ref')
+      .map(f => f.name)
+    expect(names).toEqual(['paciente', 'paciente2'])
+  })
+
+  it('rechaza la auto-referencia sin tocar el diseño', () => {
+    const store = storeWith('Cita')
+
+    const ok = store.addRelation('cita', 'cita')
+
+    expect(ok).toBe(false)
+    expect(store.lastError()).toBeTruthy()
+    expect(store.resources()[0].fields.some(f => f.type === 'ref')).toBe(false)
+  })
+
+  it('rechaza relaciones con entidades que no existen', () => {
+    const store = storeWith('Cita')
+
+    expect(store.addRelation('cita', 'fantasma')).toBe(false)
+    expect(store.addRelation('fantasma', 'cita')).toBe(false)
+    expect(store.lastError()).toBeTruthy()
+  })
+})
+
 describe('etiquetas de tipo de columna', () => {
   it('cada tipo del contrato tiene su etiqueta: un tipo nuevo no puede salir en blanco', async () => {
     // el editor vive en el componente, pero la regla es del contrato: si mañana se

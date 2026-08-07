@@ -14,6 +14,11 @@ import {
   designPagesToAppPages
 } from '@app/shared/domain'
 
+/** «orden-compra» → «ordenCompra»: los nombres de entidad son kebab y los de campo camel. */
+function camel(kebab: string): string {
+  return kebab.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())
+}
+
 /** Valores de partida al convertir una columna en enum: un enum vacío no se genera. */
 const STARTER_ENUM_VALUES: DraftEnumValue[] = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -249,6 +254,36 @@ export class DesignStore {
     return this.updateResource(resource, draft => ({
       ...draft,
       fields: draft.fields.map((f, i) => (i === index ? applyFieldPatch(f, patch) : f))
+    }))
+  }
+
+  /**
+   * La flecha del diagrama (spec 15, fase 4): crea en `from` un campo `ref`
+   * real hacia `to` — exactamente el mismo que declararía el editor de columnas,
+   * así que draftToResource lo expande al par canónico id + nombre.
+   */
+  addRelation(from: string, to: string): boolean {
+    if (from === to) {
+      this._lastError.set(`Una entidad no puede referenciarse a sí misma («${from}»)`)
+      return false
+    }
+    const origin = this._resources().find(r => r.name === from)
+    const target = this._resources().find(r => r.name === to)
+    if (!origin || !target) {
+      this._lastError.set(`No existe la entidad «${origin ? to : from}»`)
+      return false
+    }
+
+    // el nombre del campo sale del destino; si ya hay otra ref con ese nombre, se sufija
+    const taken = new Set(origin.fields.map(f => f.name))
+    const base = camel(target.name)
+    let name = base
+    for (let i = 2; taken.has(name); i++) name = `${base}${i}`
+    const label = name === base ? target.labelSingular : `${target.labelSingular} ${name.slice(base.length)}`
+
+    return this.updateResource(from, draft => ({
+      ...draft,
+      fields: [...draft.fields, { name, label, type: 'ref', refTo: to }]
     }))
   }
 
