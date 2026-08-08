@@ -289,6 +289,15 @@ export interface GalleryDefinition {
   metric?: string
 }
 
+/**
+ * Cronograma / Gantt (spec 30): cada registro es una barra entre las fechas del
+ * `period`. Como la galería, su PRESENCIA es lo que lo emite; exige `period`.
+ */
+export interface GanttDefinition {
+  /** Campo que etiqueta cada barra; por defecto, el primer texto buscable */
+  title?: string
+}
+
 export interface DetailDefinition {
   /** Campo cuyo valor titula la ficha; por defecto, el primer campo de texto buscable */
   title?: string
@@ -372,6 +381,8 @@ export interface ResourceDefinition {
   detail?: DetailDefinition
   /** Galería de tarjetas sobre el mismo listado (spec 17) */
   gallery?: GalleryDefinition
+  /** Cronograma de barras sobre el mismo listado (spec 30); exige period */
+  gantt?: GanttDefinition
   /** Código de negocio autogenerado y legible (spec 19) */
   code?: CodeDefinition
   /** Frase de negocio de la entidad (spec 22): documentación que viaja, nunca fuente de código */

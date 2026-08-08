@@ -229,6 +229,35 @@ describe('gallery — tarjetas en vez de tabla (spec 17)', () => {
   })
 })
 
+describe('gantt — cronograma derivado del period (spec 30)', () => {
+  const withPeriod = (): ResourceDefinition => {
+    const base = validDefinition()
+    return {
+      ...base,
+      period: { start: 'startDate', end: 'endDate' },
+      fields: {
+        ...base.fields,
+        startDate: { type: 'date' },
+        endDate: { type: 'date', nullable: true }
+      }
+    }
+  }
+
+  it('acepta un recurso con period que declara cronograma', () => {
+    const model = defineResource({ ...withPeriod(), gantt: {} })
+
+    expect(model.gantt).toEqual({})
+  })
+
+  it('rechaza el cronograma sin period: no hay fechas con las que dibujar barras', () => {
+    expect(() => defineResource({ ...validDefinition(), gantt: {} })).toThrow(/gantt.*period/i)
+  })
+
+  it('rechaza un título que apunta a un campo inexistente', () => {
+    expect(() => defineResource({ ...withPeriod(), gantt: { title: 'fantasma' } })).toThrow(/gantt.*fantasma/i)
+  })
+})
+
 describe('code — código de negocio autogenerado (spec 19)', () => {
   it('acepta un recurso que declara código, con prefijo derivado', () => {
     expect(defineResource({ ...validDefinition(), code: {} }).code).toEqual({})

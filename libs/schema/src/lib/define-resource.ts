@@ -12,6 +12,7 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateFields(definition),
     ...validateDetail(definition),
     ...validateGallery(definition),
+    ...validateGantt(definition),
     ...validateCode(definition),
     ...validateBrief(definition.brief)
   ]
@@ -81,6 +82,21 @@ function validateGallery(definition: ResourceDefinition): string[] {
     .filter((name): name is string => name !== undefined)
     .filter(name => !definition.fields[name])
     .map(name => `gallery: unknown field '${name}'`)
+}
+
+/** El cronograma dibuja barras entre las fechas del period: sin period no hay barras (spec 30). */
+function validateGantt(definition: ResourceDefinition): string[] {
+  const { gantt } = definition
+  if (!gantt) return []
+
+  const problems: string[] = []
+  if (!definition.period) {
+    problems.push('gantt: requires period (start/end dates to draw the bars)')
+  }
+  if (gantt.title !== undefined && !definition.fields[gantt.title]) {
+    problems.push(`gantt: unknown field '${gantt.title}'`)
+  }
+  return problems
 }
 
 const CODE_PREFIX = /^[A-Z][A-Z0-9]{1,5}$/
