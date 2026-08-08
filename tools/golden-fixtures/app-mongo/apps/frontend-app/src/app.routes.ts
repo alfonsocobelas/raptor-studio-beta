@@ -22,6 +22,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sap-licensing/contracts/cronograma',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/contracts/contracts-gantt.component').then(
+        m => m.ContractsGanttComponent
+      )
+  },
+  {
     path: 'sap-licensing/licenses',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/licenses/licenses-list.component').then(
