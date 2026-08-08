@@ -6,15 +6,16 @@ import { loadStudioEnv } from '@app/backend/contexts/studio/shared/load-studio-e
 // Antes de construir los módulos: el adapter de chat se elige leyendo el entorno.
 const env = loadStudioEnv(path.resolve(__dirname, '..', '..', '..'))
 import { StudioChatModule } from '@app/backend/contexts/studio/chat/studio-chat.module'
+import { StudioDesignsModule } from '@app/backend/contexts/studio/designs/studio-designs.module'
 import { StudioGenerateModule } from '@app/backend/contexts/studio/generate/studio-generate.module'
 
 /**
- * API ligera del estudio: SOLO chat + generación. Sin TypeORM ni Postgres —
- * los CRUD de demo del backend completo no son un requisito del estudio.
- * Arranque: `npm run studio:api` (puerto 3000, mismo proxy que la web).
+ * API ligera del estudio: chat + generación + historial de diseños. Sin TypeORM
+ * ni Postgres — los CRUD de demo del backend completo no son un requisito del
+ * estudio. Arranque: `npm run studio:api` (puerto 3000, mismo proxy que la web).
  */
 @Module({
-  imports: [StudioChatModule, StudioGenerateModule]
+  imports: [StudioChatModule, StudioDesignsModule, StudioGenerateModule]
 })
 class StudioApiModule {}
 
