@@ -89,15 +89,31 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
 
   const seen = new Set<string>()
   page.widgets.forEach((widget, widgetIndex) => {
+    const at = `pages[${index}].widgets[${widgetIndex}]`
     if (!KEBAB_CASE.test(widget.resource)) {
-      problems.push(`pages[${index}].widgets[${widgetIndex}]: resource must be non-empty kebab-case`)
+      problems.push(`${at}: resource must be non-empty kebab-case`)
       return
     }
-    if (seen.has(widget.resource)) problems.push(`pages[${index}]: duplicated widget for resource '${widget.resource}'`)
-    seen.add(widget.resource)
+    // los analíticos (spec 32) exigen campo; el kpi-count además condición y etiqueta
+    if (widget.kind !== 'kpi-total' && !nonEmpty(widget.field)) {
+      problems.push(`${at}: ${widget.kind} requires a field`)
+      return
+    }
+    if (widget.kind === 'kpi-count') {
+      if (!nonEmpty(widget.equals)) problems.push(`${at}: kpi-count requires equals (the counted value)`)
+      if (!nonEmpty(widget.label)) problems.push(`${at}: kpi-count requires a label`)
+    }
+    // un recurso admite varios widgets; el duplicado EXACTO (kind+recurso+campo) no
+    const key = `${widget.kind}:${widget.resource}:${'field' in widget ? widget.field : ''}`
+    if (seen.has(key)) problems.push(`pages[${index}]: duplicated widget '${key}'`)
+    seen.add(key)
   })
 
   return problems
+}
+
+function nonEmpty(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0
 }
 
 /**

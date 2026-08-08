@@ -29,6 +29,62 @@ const problemsOf = (definition: AppDefinition): string[] => {
   }
 }
 
+describe('widgets analíticos — conteos con forma (spec 32)', () => {
+  const withWidgets = (widgets: object[]): AppDefinition =>
+    ({
+      ...validDefinition(),
+      pages: [{ kind: 'dashboard', widgets }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+
+  it('acepta count-by, kpi-count y series bien formados', () => {
+    const app = defineApp(
+      withWidgets([
+        { kind: 'kpi-total', resource: 'contract' },
+        { kind: 'count-by', resource: 'contract', field: 'contractType' },
+        { kind: 'kpi-count', resource: 'contract', field: 'status', equals: 'active', label: 'Activos' },
+        { kind: 'series', resource: 'contract', field: 'startDate' }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('rechaza count-by/series sin field y kpi-count sin equals o sin label', () => {
+    expect(problemsOf(withWidgets([{ kind: 'count-by', resource: 'contract' }]))).toContainEqual(
+      expect.stringContaining('field')
+    )
+    expect(problemsOf(withWidgets([{ kind: 'series', resource: 'contract' }]))).toContainEqual(
+      expect.stringContaining('field')
+    )
+    expect(
+      problemsOf(withWidgets([{ kind: 'kpi-count', resource: 'contract', field: 'status', label: 'X' }]))
+    ).toContainEqual(expect.stringContaining('equals'))
+    expect(
+      problemsOf(withWidgets([{ kind: 'kpi-count', resource: 'contract', field: 'status', equals: 'active' }]))
+    ).toContainEqual(expect.stringContaining('label'))
+  })
+
+  it('el mismo recurso admite varios widgets; el duplicado exacto no', () => {
+    expect(
+      problemsOf(
+        withWidgets([
+          { kind: 'kpi-total', resource: 'contract' },
+          { kind: 'count-by', resource: 'contract', field: 'contractType' }
+        ])
+      )
+    ).toEqual([])
+
+    expect(
+      problemsOf(
+        withWidgets([
+          { kind: 'count-by', resource: 'contract', field: 'contractType' },
+          { kind: 'count-by', resource: 'contract', field: 'contractType' }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('duplicated'))
+  })
+})
+
 describe('defineApp', () => {
   describe('valid definition', () => {
     it('returns the definition untouched and frozen', () => {
@@ -120,7 +176,7 @@ describe('defineApp', () => {
         }
       ]
 
-      expect(problemsOf(definition)).toContain("pages[0]: duplicated widget for resource 'customer'")
+      expect(problemsOf(definition)).toContain("pages[0]: duplicated widget 'kpi-total:customer:'")
     })
 
     it('rejects a non-kebab-case widget resource', () => {

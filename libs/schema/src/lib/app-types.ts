@@ -9,7 +9,33 @@ export interface KpiTotalWidget {
   resource: string
 }
 
-export type PageWidget = KpiTotalWidget
+/** Una barra por valor del enum, con su conteo (spec 32). Exige campo enum filterable. */
+export interface CountByWidget {
+  kind: 'count-by'
+  resource: string
+  field: string
+  /** Título del widget; por defecto, el label del campo */
+  label?: string
+}
+
+/** Tarjeta KPI con un conteo condicionado: cuántos cumplen field = equals (spec 32). */
+export interface KpiCountWidget {
+  kind: 'kpi-count'
+  resource: string
+  field: string
+  equals: string
+  label: string
+}
+
+/** Evolución mensual de altas (últimos 12 meses) sobre un campo fecha filterable (spec 32). */
+export interface SeriesWidget {
+  kind: 'series'
+  resource: string
+  field: string
+  label?: string
+}
+
+export type PageWidget = KpiTotalWidget | CountByWidget | KpiCountWidget | SeriesWidget
 
 export interface DashboardPage {
   kind: 'dashboard'
