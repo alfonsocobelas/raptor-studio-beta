@@ -24,7 +24,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
       } @else {
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-<%- gridCols %>">
 <%- kpiCards %>
-        </div>
+        </div><%- analyticSections %>
 
         <!-- @ai:begin dashboard-extra — secciones de dominio (gráficos, listados destacados) -->
         <!-- @ai:end -->
@@ -33,5 +33,5 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
   `
 })
 export class DashboardComponent {
-  protected readonly service = inject(DashboardService)
+  protected readonly service = inject(DashboardService)<%- analyticComponentHelpers %>
 }

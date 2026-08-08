@@ -24,7 +24,7 @@ export class DashboardService {
     return resource<PaginatedTotal, unknown>({
       loader: () => firstValueFrom(this._http.get<PaginatedTotal>(api, { params: { page: '1', pageSize: '1' } }))
     })
-  }
+  }<%- analyticHelpers %>
 
   // @ai:begin dashboard-service-extra — agregados de dominio (cargas propias, computed)
   // @ai:end

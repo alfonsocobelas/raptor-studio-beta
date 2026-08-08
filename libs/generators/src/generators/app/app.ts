@@ -9,7 +9,7 @@ import { ignoreNestedWorkspace } from './nxignore'
 import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { addFontDependency, themeSubstitutions } from './theme-css'
-import { composeApp, composeFlat, type AppComposition } from './composition'
+import { composeApp, composeFlat, type AppComposition, type ComposedAnalyticWidget } from './composition'
 import { renderClaudeMd } from './brief-doc'
 import {
   canEmitSharedVo,
@@ -329,7 +329,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     tmpl: ''
   })
   if (composition.dashboard) {
-    generateFiles(tree, path.join(__dirname, 'files-dashboard'), root, dashboardSubstitutions(composition.kpiModels))
+    generateFiles(
+      tree,
+      path.join(__dirname, 'files-dashboard'),
+      root,
+      dashboardSubstitutions(composition.kpiModels, composition.analytics ?? [])
+    )
   }
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
@@ -430,7 +435,10 @@ function run(command: string, cwd: string): void {
  * total por recurso y su KPI card. Los totales del spec son distintos por recurso
  * (deterministas, derivados del orden) para que un cruce de endpoints falle.
  */
-export function dashboardSubstitutions(models: ResourceDefinition[]): Record<string, string> {
+export function dashboardSubstitutions(
+  models: ResourceDefinition[],
+  analytics: ComposedAnalyticWidget[] = []
+): Record<string, string> {
   const entries = models.map((model, index) => ({
     property: names(model.plural).propertyName,
     api: model.api ?? `/api/v1/${model.plural}`,
@@ -438,15 +446,33 @@ export function dashboardSubstitutions(models: ResourceDefinition[]): Record<str
     subtitle: model.labels?.subtitle,
     total: (index + 1) * 7
   }))
+  const analyticEntries = analytics.map(widget => {
+    if (widget.kind === 'count-by') {
+      const values = (widget.values ?? []).map(v => `'${v.value}'`).join(', ')
+      return `  readonly ${widget.property} = this._counts('${widget.api}', '${widget.field}', [${values}])`
+    }
+    if (widget.kind === 'series') {
+      return `  readonly ${widget.property} = this._series('${widget.api}', '${widget.field}')`
+    }
+    return `  readonly ${widget.property} = this._countWhere('${widget.api}', '${widget.field}', '${widget.equals}')
+  readonly ${widget.property}Total = computed(() => (this.${widget.property}.hasValue() ? this.${widget.property}.value() : 0))`
+  })
+  const allProperties = [...entries.map(e => e.property), ...analytics.map(w => w.property)]
   return {
-    resourceEntries: entries
-      .map(
-        e => `  readonly ${e.property} = this._total('${e.api}')
+    resourceEntries: [
+      entries
+        .map(
+          e => `  readonly ${e.property} = this._total('${e.api}')
   readonly ${e.property}Total = computed(() => (this.${e.property}.hasValue() ? this.${e.property}.value().total : 0))`
-      )
-      .join('\n\n'),
-    loadingExpr: entries.map(e => `this.${e.property}.isLoading()`).join(' || '),
-    errorExpr: entries.map(e => `this.${e.property}.error() !== undefined`).join(' || '),
+        )
+        .join('\n\n'),
+      ...analyticEntries
+    ].join('\n\n'),
+    analyticHelpers: renderAnalyticServiceHelpers(analytics),
+    analyticSections: renderAnalyticSections(analytics),
+    analyticComponentHelpers: renderAnalyticComponentHelpers(analytics),
+    loadingExpr: allProperties.map(p => `this.${p}.isLoading()`).join(' || '),
+    errorExpr: allProperties.map(p => `this.${p}.error() !== undefined`).join(' || '),
     gridCols: String(Math.min(Math.max(entries.length, 2), 4)),
     kpiCards: entries
       .map(e => {
@@ -466,6 +492,142 @@ export function dashboardSubstitutions(models: ResourceDefinition[]): Record<str
     specTotalAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(${e.total})`).join('\n'),
     tmpl: ''
   }
+}
+
+/** Helpers del servicio (spec 32): solo los de los kinds presentes, o tsc acusa métodos muertos. */
+function renderAnalyticServiceHelpers(analytics: ComposedAnalyticWidget[]): string {
+  if (!analytics.length) return ''
+  const kinds = new Set(analytics.map(w => w.kind))
+  const blocks: string[] = []
+
+  if (kinds.has('count-by')) {
+    blocks.push(`  /** N conteos, uno por valor del enum: el listado ya sabe contar filtrado. */
+  private _counts(api: string, field: string, values: string[]) {
+    return resource<number[], unknown>({
+      loader: () =>
+        Promise.all(
+          values.map(value =>
+            firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
+              r => r.total
+            )
+          )
+        )
+    })
+  }`)
+  }
+  if (kinds.has('kpi-count')) {
+    blocks.push(`  /** Un conteo condicionado: cuántos cumplen field = value. */
+  private _countWhere(api: string, field: string, value: string) {
+    return resource<number, unknown>({
+      loader: () =>
+        firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
+          r => r.total
+        )
+    })
+  }`)
+  }
+  if (kinds.has('series')) {
+    blocks.push(`  /** Altas por mes, últimos 12 meses: dos filtros de rango por punto. */
+  private _series(api: string, field: string) {
+    const now = new Date()
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const start = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 1)
+      return { label: start.toLocaleDateString('es-ES', { month: 'short' }), start, end }
+    })
+    return resource<{ label: string; count: number }[], unknown>({
+      loader: () =>
+        Promise.all(
+          months.map(month =>
+            firstValueFrom(
+              this._http.get<PaginatedTotal>(api, {
+                params: {
+                  page: '1',
+                  pageSize: '1',
+                  filters: JSON.stringify([
+                    { field, operator: 'gte', value: this._day(month.start) },
+                    { field, operator: 'lt', value: this._day(month.end) }
+                  ])
+                }
+              })
+            ).then(r => ({ label: month.label, count: r.total }))
+          )
+        )
+    })
+  }
+
+  private _day(date: Date): string {
+    return date.toISOString().slice(0, 10)
+  }`)
+  }
+  blocks.push(`  private _countParams(field: string, operator: string, value: string) {
+    return { page: '1', pageSize: '1', filters: JSON.stringify([{ field, operator, value }]) }
+  }`)
+
+  return `\n\n${blocks.join('\n\n')}`
+}
+
+/** Secciones del dashboard (spec 32): barras horizontales, KPI condicionado y mini serie. */
+function renderAnalyticSections(analytics: ComposedAnalyticWidget[]): string {
+  if (!analytics.length) return ''
+  const cards = analytics.map(widget => {
+    if (widget.kind === 'kpi-count') {
+      return `          <app-kpi-card title="${widget.label}" [value]="service.${widget.property}Total()" testId="kpi-count-${widget.property}" />`
+    }
+    if (widget.kind === 'count-by') {
+      const labels = (widget.values ?? []).map(v => `'${v.label}'`).join(', ')
+      return `          <div class="bg-card rounded-lg border p-4" data-testid="count-by-${widget.property}">
+            <h2 class="mb-3 text-sm font-semibold">${widget.label}</h2>
+            @if (service.${widget.property}.hasValue()) {
+              <div class="space-y-2">
+                @for (bar of bars(service.${widget.property}.value(), [${labels}]); track bar.label) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="text-muted-foreground w-28 shrink-0 truncate">{{ bar.label }}</span>
+                    <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
+                      <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
+                    </div>
+                    <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>`
+    }
+    return `          <div class="bg-card rounded-lg border p-4" data-testid="series-${widget.property}">
+            <h2 class="mb-3 text-sm font-semibold">${widget.label}</h2>
+            @if (service.${widget.property}.hasValue()) {
+              <div class="flex h-28 items-end gap-1">
+                @for (point of points(service.${widget.property}.value()); track point.label) {
+                  <div class="flex flex-1 flex-col items-center gap-1">
+                    <div class="bg-primary w-full rounded-t-sm" [style.height.%]="point.height" [title]="point.count"></div>
+                    <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>`
+  })
+
+  return `\n\n        <div class="grid gap-4 lg:grid-cols-2">\n${cards.join('\n')}\n        </div>`
+}
+
+/** Escalado de barras en el componente: solo si hay widgets que lo usen. */
+function renderAnalyticComponentHelpers(analytics: ComposedAnalyticWidget[]): string {
+  const kinds = new Set(analytics.map(w => w.kind))
+  const blocks: string[] = []
+  if (kinds.has('count-by')) {
+    blocks.push(`  bars(counts: number[], labels: string[]): { label: string; count: number; width: number }[] {
+    const max = Math.max(...counts, 1)
+    return counts.map((count, index) => ({ label: labels[index], count, width: (count / max) * 100 }))
+  }`)
+  }
+  if (kinds.has('series')) {
+    blocks.push(`  points(values: { label: string; count: number }[]): { label: string; count: number; height: number }[] {
+    const max = Math.max(...values.map(v => v.count), 1)
+    return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
+  }`)
+  }
+  return blocks.length ? `\n\n${blocks.join('\n\n')}` : ''
 }
 
 /**
