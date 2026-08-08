@@ -1,5 +1,6 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
+import { sharedDomainGenerator } from '../shared-domain/shared-domain'
 import { resourceGenerator } from './resource'
 
 /**
@@ -79,6 +80,36 @@ describe('resource generator — historial en los use cases (spec 31)', () => {
 
     expect(tree.exists('out/backend/application/use-cases/get-customer-history-usecase.service.ts')).toBe(false)
     expect(read(tree, 'out/backend/infrastructure/entrypoints/customers.controller.ts')).not.toContain('history')
+  })
+
+  it('el shared-domain emite el AuditEventDto cuando algún modelo lleva history', async () => {
+    const withHistory: Tree = createTreeWithEmptyWorkspace()
+    await sharedDomainGenerator(withHistory, { models: 'project', directory: 'out' })
+    expect(withHistory.read('out/audit/audit-event.dto.ts', 'utf-8')).toContain('export interface AuditEventDto')
+    expect(withHistory.read('out/index.ts', 'utf-8')).toContain("export * from './audit/audit-event.dto'")
+
+    const without: Tree = createTreeWithEmptyWorkspace()
+    await sharedDomainGenerator(without, { models: 'customer', directory: 'out' })
+    expect(without.exists('out/audit/audit-event.dto.ts')).toBe(false)
+  })
+
+  it('el servicio de project lee el historial; el de customer no', async () => {
+    const project = await emit('project')
+    const customer = await emit('customer')
+
+    const service = read(project, 'out/frontend/project.service.ts')
+    expect(service).toContain('history(id: string): Promise<AuditEventDto[]>')
+    expect(service).toContain('`${API_URL}/${id}/history`')
+    expect(read(customer, 'out/frontend/customer.service.ts')).not.toContain('history')
+  })
+
+  it('la ficha de project pinta la timeline del historial', async () => {
+    const tree = await emit('project')
+
+    const detail = read(tree, 'out/frontend/project-detail.component.ts')
+    expect(detail).toContain('Historial')
+    expect(detail).toContain('this._service.history(')
+    expect(detail).toContain('actionLabel')
   })
 
   it('customer (sin history) queda exactamente igual que antes', async () => {

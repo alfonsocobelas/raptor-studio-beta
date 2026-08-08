@@ -61,6 +61,12 @@ export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGen
     }
   }
 
+  // el historial (spec 31) es transversal: un DTO, venga de los modelos que venga
+  if (MODEL_LIST.some(model => model.history)) {
+    generateFiles(tree, path.join(__dirname, 'files-audit'), outputDir, {})
+    exportLines.push(`export * from './audit/audit-event.dto'`)
+  }
+
   exportLines.push(`export * from './auth/auth-enums'`)
   for (const dto of [
     'user',

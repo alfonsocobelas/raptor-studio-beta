@@ -47,6 +47,13 @@ export class <%- className %>Service {
     return firstValueFrom(this._http.get<<%- dtoName %>>(`${API_URL}/${id}`))
   }
 <%_ } _%>
+<%_ if (features.history) { _%>
+
+  /** La timeline de la ficha (spec 31): los últimos eventos del registro. */
+  history(id: string): Promise<AuditEventDto[]> {
+    return firstValueFrom(this._http.get<AuditEventDto[]>(`${API_URL}/${id}/history`))
+  }
+<%_ } _%>
 <%_ if (features.edit) { _%>
 
   create(dto: Register<%- className %>Dto): Promise<void> {

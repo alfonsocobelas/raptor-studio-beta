@@ -66,7 +66,7 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
-  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean }
+  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean; history: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
   /** Comentario de las acciones de fila en el listado con ficha */
@@ -723,6 +723,7 @@ function renderServiceSharedImports(definition: ResourceDefinition, className: s
   const types = edit
     ? [dtoName, 'ExportFormat', `Register${className}Dto`, `Update${className}Dto`]
     : [dtoName, 'ExportFormat']
+  if (definition.history) types.push('AuditEventDto')
   return types.sort().join(', ')
 }
 
@@ -737,6 +738,7 @@ function resolveFeatures(definition: ResourceDefinition): {
   delete: boolean
   edit: boolean
   trash: boolean
+  history: boolean
 } {
   const canDelete = definition.list?.features?.delete ?? false
   return {
@@ -744,7 +746,9 @@ function resolveFeatures(definition: ResourceDefinition): {
     delete: canDelete,
     edit: definition.list?.features?.edit ?? true,
     // la papelera (spec 29) se DERIVA: borrado lógico + listado que borra
-    trash: canDelete && definition.softDelete === true
+    trash: canDelete && definition.softDelete === true,
+    // el historial (spec 31): timeline en la ficha
+    history: definition.history === true
   }
 }
 
