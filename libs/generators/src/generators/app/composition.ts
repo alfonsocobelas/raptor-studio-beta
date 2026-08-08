@@ -32,7 +32,9 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
   const pages: ComposedPage[] = models.flatMap(model => [
     { kind: 'resource' as const, resource: model.name, label: labelOf(model) },
     // una galería declarada sin vista que la muestre sería inalcanzable
-    ...(model.gallery ? [{ kind: 'cards' as const, resource: model.name, label: `${labelOf(model)} · galería` }] : [])
+    ...(model.gallery ? [{ kind: 'cards' as const, resource: model.name, label: `${labelOf(model)} · galería` }] : []),
+    // ídem para el cronograma (spec 30)
+    ...(model.gantt ? [{ kind: 'gantt' as const, resource: model.name, label: `${labelOf(model)} · cronograma` }] : [])
   ])
   if (dashboard) {
     pages.unshift({

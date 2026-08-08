@@ -39,7 +39,14 @@ export interface CardsPage {
   label?: string
 }
 
-export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage
+/** Cronograma: una barra por registro entre las fechas del period (spec 30). */
+export interface GanttPage {
+  kind: 'gantt'
+  resource: string
+  label?: string
+}
+
+export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage
 
 /** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
 export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource']

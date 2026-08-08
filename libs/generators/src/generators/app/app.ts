@@ -507,11 +507,14 @@ export function shellSubstitutions(composition: AppComposition): {
     return model
   }
   const galleryPath = (model: ResourceDefinition): string => `${routeOf(model)}/galeria`
-  // Una vista de tarjetas apunta a la galería; una de tabla, al listado.
+  const ganttPath = (model: ResourceDefinition): string => `${routeOf(model)}/cronograma`
+  // Una vista de tarjetas apunta a la galería; una de cronograma, al gantt; una de tabla, al listado.
   const pathOf = (page: AppComposition['pages'][number]): string => {
     if (page.kind === 'dashboard') return 'dashboard'
     const model = modelOf(page.resource)
-    return page.kind === 'cards' ? galleryPath(model) : routeOf(model)
+    if (page.kind === 'cards') return galleryPath(model)
+    if (page.kind === 'gantt') return ganttPath(model)
+    return routeOf(model)
   }
 
   const dashboardRoute = `  {
@@ -537,6 +540,14 @@ export function shellSubstitutions(composition: AppComposition): {
       import(
         '${featureOf(model)}/${model.plural}-gallery.component'
       ).then(m => m.${names(model.plural).className}GalleryComponent)
+  }`
+
+  const ganttRoute = (model: ResourceDefinition): string => `  {
+    path: '${ganttPath(model)}',
+    loadComponent: () =>
+      import(
+        '${featureOf(model)}/${model.plural}-gantt.component'
+      ).then(m => m.${names(model.plural).className}GanttComponent)
   }`
 
   const trashRoute = (model: ResourceDefinition): string => `  {
@@ -574,10 +585,12 @@ export function shellSubstitutions(composition: AppComposition): {
 
     const wantsList = composition.pages.some(p => p.kind === 'resource' && p.resource === model.name)
     const wantsGallery = Boolean(model.gallery)
+    const wantsGantt = Boolean(model.gantt)
     // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
     const wantsTrash = model.softDelete === true && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
+    if (wantsGantt) routes.push(ganttRoute(model))
     if (wantsTrash) routes.push(trashRoute(model))
     if (model.detail) routes.push(detailRoute(model))
   }
