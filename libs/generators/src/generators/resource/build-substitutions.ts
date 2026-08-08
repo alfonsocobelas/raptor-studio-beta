@@ -426,7 +426,10 @@ function renderTestBindings(definition: ResourceDefinition): TestBindings {
 
   const enums = [
     ...new Set(fields.map(([, f]) => f.form?.optionsType).filter((t): t is string => t !== undefined))
-  ].sort()
+  ]
+    // el mock solo importa lo que usa como valor: los enums reales (las unions van como literal)
+    .filter(t => t.endsWith('Enum'))
+    .sort()
 
   return {
     mockConst: `MOCK_${n.constantName}S_PAGINATED`,
@@ -443,7 +446,11 @@ function sampleScalar(name: string, field: FieldDefinition, index: number): stri
   const form = field.form
   if (form?.optionsType && form.options?.length) {
     const option = form.options[index % form.options.length]
-    return `${form.optionsType}.${option.value.toUpperCase()}`
+    // solo los '<X>Enum' son enums REALES (valores); una union como valor no compila al servir
+    if (form.optionsType.endsWith('Enum')) {
+      return `${form.optionsType}.${option.value.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
+    }
+    return `'${option.value}'`
   }
   if (form?.options?.length) return `'${form.options[index % form.options.length].value}'`
   if (form?.lookup || field.type === 'uuid') return `'${SAMPLE_UUIDS[1]}'`

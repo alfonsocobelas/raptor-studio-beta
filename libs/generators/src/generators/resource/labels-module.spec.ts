@@ -37,4 +37,18 @@ describe('resource generator — módulo de labels (spec 04)', () => {
 
     expect(tree.exists('out/frontend/customer-labels.ts')).toBe(false)
   })
+
+  it('el mock emitido solo usa como VALOR los enums reales; las unions van como literal', async () => {
+    const customer = await emit('customer')
+    const contract = await emit('contract')
+
+    // CustomerClassification es un type union (canon): usarlo como valor no compila al servir
+    const customerMock = customer.read('out/frontend/mocks/customer.mock.ts', 'utf-8') ?? ''
+    expect(customerMock).not.toContain('CustomerClassification.')
+    expect(customerMock).not.toContain('import { CustomerDto, CustomerClassification')
+    expect(customerMock).toMatch(/customerType: '(cloud|onprem|hybrid)'/)
+
+    const contractMock = contract.read('out/frontend/mocks/contract.mock.ts', 'utf-8') ?? ''
+    expect(contractMock).toContain('ContractTypeEnum.CLOUD')
+  })
 })
