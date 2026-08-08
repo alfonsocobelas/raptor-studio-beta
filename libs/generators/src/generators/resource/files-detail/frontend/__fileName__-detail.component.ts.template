@@ -240,7 +240,8 @@ export class <%- className %>DetailComponent {
   }
 
   when(event: AuditEventDto): string {
-    return formatValue(event.occurredAt)
+    // el instante lleva hora: formatValue solo cubre fechas de calendario
+    return new Date(event.occurredAt).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
   }
 
   changedFields(event: AuditEventDto): { field: string; from: string; to: string }[] {
