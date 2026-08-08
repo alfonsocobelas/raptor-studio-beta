@@ -9,7 +9,8 @@ const CONTRACT_ALLOWED_FILTERS: Array<ContractAllowedField> = [
   'source',
   'customerId',
   'customerName',
-  'contractNumber'
+  'contractNumber',
+  'startDate'
 ] as const
 
 const CONTRACT_ALLOWED_ORDERS: Array<ContractAllowedField> = [
