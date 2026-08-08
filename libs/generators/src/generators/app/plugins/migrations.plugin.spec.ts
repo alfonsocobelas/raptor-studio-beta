@@ -69,6 +69,8 @@ describe('migrationsPlugin.apply', () => {
 
     expect(migration).toContain("DEFAULT '{}'")
     expect(migration).not.toContain('DEFAULT "')
+    // column.array: sin el [] la columna guarda el texto plano y el VO rechaza la lectura
+    expect(migration).toMatch(/sub_solution_areas\s+TEXT\[\] NOT NULL/)
   })
 
   it('la composición emite la tabla del hijo: FK en cascada, deleted_at y tipos reales', () => {
@@ -79,11 +81,12 @@ describe('migrationsPlugin.apply', () => {
     const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
 
     expect(migration).toContain('CREATE TABLE sap_licensing.contacts')
+    // la FK del padre no viene en comp.fields: la entidad (y la tabla) la añaden aparte
+    expect(migration).toMatch(/customer_id\s+UUID NOT NULL/)
     // los hijos huérfanos se soft-borran en el diff del agregado: la columna es obligatoria
     expect(migration).toContain('deleted_at')
-    expect(migration).toContain(
-      'CONSTRAINT fk_contacts_customer FOREIGN KEY (customer_id) ' +
-        'REFERENCES sap_licensing.customers (id) ON DELETE CASCADE'
+    expect(migration).toMatch(
+      /CONSTRAINT\s+fk_contacts_customer FOREIGN KEY \(customer_id\) REFERENCES sap_licensing\.customers \(id\) ON DELETE CASCADE/
     )
     // el flag primario es BOOLEAN aunque el campo no declare column (fallback por tipo)
     expect(migration).toMatch(/is_primary\s+BOOLEAN/)

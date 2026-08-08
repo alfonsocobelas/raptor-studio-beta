@@ -16,6 +16,7 @@ export class TypeOrmEnvironmentArranger extends EnvironmentArranger {
   }
 
   async arrange(): Promise<void> {
+    await this.disableForeignKeys()
     await this.cleanDatabase()
   }
 
@@ -39,6 +40,16 @@ export class TypeOrmEnvironmentArranger extends EnvironmentArranger {
 
   async find<T>(entity: { new (): T }, query: Partial<T>): Promise<T[]> {
     return this.repository(entity).findBy(query as object) as Promise<T[]>
+  }
+
+  // Estos tests miden mapeos y queries del repositorio, no la integridad referencial:
+  // los mothers generan padres aleatorios a propósito. Las FK de Postgres son triggers
+  // de sistema y el usuario del compose de test es dueño de las tablas: se apagan.
+  private async disableForeignKeys(): Promise<void> {
+    for (const entity of this.dataSource.entityMetadatas) {
+      const table = entity.schema ? `"${entity.schema}"."${entity.tableName}"` : `"${entity.tableName}"`
+      await this.client().query(`ALTER TABLE ${table} DISABLE TRIGGER ALL`)
+    }
   }
 
   private async cleanDatabase(): Promise<void> {

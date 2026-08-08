@@ -179,6 +179,10 @@ function renderCompositionTable(model: ResourceDefinition): string {
   const parentColumn = snake(comp.parentField)
 
   const columns = Object.entries(comp.fields).map(([name, field]) => renderColumn(model, name, field))
+  // la FK del padre no viaja en comp.fields (la entidad la declara aparte): va tras el id
+  if (!comp.fields[comp.parentField]) {
+    columns.splice(1, 0, `${parentColumn} UUID NOT NULL`)
+  }
   columns.push('deleted_at TIMESTAMPTZ NULL')
   columns.push(`CONSTRAINT pk_${comp.plural} PRIMARY KEY (id)`)
   columns.push(
@@ -276,6 +280,7 @@ function sqlType(model: ResourceDefinition, field: FieldDefinition, column?: Col
         return 'VARCHAR(255)'
     }
   }
+  const array = column.array ? '[]' : ''
   switch (column.type) {
     case 'uuid':
       return 'UUID'
@@ -291,9 +296,9 @@ function sqlType(model: ResourceDefinition, field: FieldDefinition, column?: Col
     case 'boolean':
       return 'BOOLEAN'
     case 'text':
-      return 'TEXT'
+      return `TEXT${array}`
     default:
-      return `VARCHAR(${columnLength(model, column)})`
+      return `VARCHAR(${columnLength(model, column)})${array}`
   }
 }
 
