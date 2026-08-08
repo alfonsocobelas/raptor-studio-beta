@@ -1,5 +1,6 @@
 import { Tree } from '@nx/devkit'
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
+import { contract } from '../../resource/models/contract.model'
 import { supplier } from '../../resource/models/supplier.model'
 import { vehicle } from '../../resource/models/vehicle.model'
 import { migrationsPlugin } from './migrations.plugin'
@@ -55,6 +56,18 @@ describe('migrationsPlugin.apply', () => {
     expect(migration).toContain('CONSTRAINT pk_vehicles PRIMARY KEY (id)')
     // snake_case en columnas camelCase y down con DROP … IF EXISTS
     expect(migration).toContain('DROP TABLE IF EXISTS dealership.vehicles')
+  })
+
+  it('un defaultRaw escrito para TS pierde sus comillas dobles en el SQL de la migración', () => {
+    // contract.subSolutionAreas declara defaultRaw `"'{}'"` (listo para `default: () => "..."`
+    // en la entidad TypeORM); en SQL las comillas dobles son una REFERENCIA A COLUMNA y
+    // Postgres aborta la migración: cannot use column reference in DEFAULT expression.
+    migrationsPlugin.apply?.(tree, { ...contextFor(tree), models: [contract] })
+
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+
+    expect(migration).toContain("DEFAULT '{}'")
+    expect(migration).not.toContain('DEFAULT "')
   })
 
   it('emits a partial unique index for optional unique fields (ifPresent semantics)', () => {

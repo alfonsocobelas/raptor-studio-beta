@@ -202,7 +202,9 @@ function renderColumn(model: ResourceDefinition, name: string, field: FieldDefin
   const parts = [snake(name), type, nullable]
 
   if (column?.defaultRaw) {
-    parts.push(`DEFAULT ${column.defaultRaw}`)
+    // defaultRaw viaja listo para la entidad TS (`default: () => "'{}'"`); en SQL las comillas
+    // dobles del literal TS serían una referencia a columna y Postgres aborta la migración
+    parts.push(`DEFAULT ${column.defaultRaw.replace(/^"(.*)"$/, '$1')}`)
   } else if (column?.default !== undefined) {
     parts.push(`DEFAULT ${typeof column.default === 'string' ? `'${column.default}'` : String(column.default)}`)
   }
