@@ -149,6 +149,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gantt'), outputDir, substitutions)
   }
 
+  // el módulo de labels que dialog y listado ya importan cuando labelsModule (spec 04)
+  if (substitutions.labelsModule) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-labels'), outputDir, substitutions)
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     const comp = substitutions.aggregate.composition

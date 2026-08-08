@@ -1,0 +1,17 @@
+import {
+<%_ labelsModule.enumImports.forEach((name, i) => { _%>
+  <%- name %><%- i < labelsModule.enumImports.length - 1 ? ',' : '' %>
+<%_ }) _%>
+} from '<%- sharedDomainAlias %>'
+
+// Etiquetas de presentación en español; los valores de dominio/API se mantienen en inglés
+<%_ labelsModule.consts.forEach((c, i) => { _%>
+<%_ if (i > 0) { _%>
+
+<%_ } _%>
+export const <%- c.name %>: Record<<%- c.enumName %>, string> = {
+<%_ c.entries.forEach((entry, j) => { _%>
+  [<%- c.enumName %>.<%- entry.memberKey %>]: '<%- entry.label %>'<%- j < c.entries.length - 1 ? ',' : '' %>
+<%_ }) _%>
+}
+<%_ }) _%>

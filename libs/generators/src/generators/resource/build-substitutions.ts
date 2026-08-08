@@ -85,6 +85,7 @@ export interface ResourceSubstitutions {
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
   gallery: GallerySubstitution | null
   gantt: GanttSubstitution | null
+  labelsModule: LabelsModuleSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
   related: RelatedSubstitution[]
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
@@ -185,6 +186,13 @@ export interface DetailSubstitution {
 }
 
 /** Campos que pinta cada tarjeta, ya resueltos (regla 8). */
+/** Módulo <entity>-labels (spec 04): un Record exhaustivo por enum, con etiquetas del propio modelo. */
+export interface LabelsModuleSubstitution {
+  /** Enums importados del shared-domain, en orden alfabético */
+  enumImports: string[]
+  consts: { name: string; enumName: string; entries: { memberKey: string; label: string }[] }[]
+}
+
 /** Cronograma (spec 30): la barra se etiqueta y se sitúa con campos resueltos aquí, no en runtime. */
 export interface GanttSubstitution {
   titleField: string
@@ -326,6 +334,7 @@ export function buildSubstitutions(
     detail: renderDetail(definition),
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
+    labelsModule: renderLabelsModule(definition),
     related: renderRelated(definition, others),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
@@ -861,6 +870,39 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
  * métrica = primer número. Los chips son los dos campos restantes que la tabla
  * muestra — lo justo para que la tarjeta diga algo sin convertirse en una ficha.
  */
+/**
+ * Las etiquetas salen del PROPIO modelo, por prioridad: badgeMap del listado (cubre los valores
+ * que solo siembra el sync), options del formulario y el valor capitalizado como último recurso.
+ */
+function renderLabelsModule(definition: ResourceDefinition): LabelsModuleSubstitution | null {
+  if (!definition.labelsModule) return null
+
+  const consts = new Map<string, { name: string; enumName: string; entries: { memberKey: string; label: string }[] }>()
+
+  for (const field of Object.values(definition.fields)) {
+    const constName = field.form?.labelsConst ?? field.table?.valueMapConst
+    const enumName = field.form?.optionsType
+    const values = typeof field.vo === 'object' ? (field.vo.values ?? []) : []
+    if (!constName || !enumName || !values.length || consts.has(constName)) continue
+
+    const entries = values.map(value => ({
+      memberKey: value.toUpperCase().replace(/[^A-Z0-9]/g, '_'),
+      label:
+        field.table?.badgeMap?.[value]?.label ??
+        field.form?.options?.find(option => option.value === value)?.label ??
+        value.charAt(0).toUpperCase() + value.slice(1)
+    }))
+    consts.set(constName, { name: constName, enumName, entries })
+  }
+
+  if (!consts.size) return null
+
+  return {
+    enumImports: [...new Set([...consts.values()].map(c => c.enumName))].sort(),
+    consts: [...consts.values()]
+  }
+}
+
 function renderGantt(definition: ResourceDefinition): GanttSubstitution | null {
   const { gantt, period } = definition
   if (!gantt || !period) return null
