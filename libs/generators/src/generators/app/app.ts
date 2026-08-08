@@ -279,7 +279,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   //          (regla 8), plantilla tonta; sin brief no hay fichero y las fixtures no cambian
   if (composition.brief) {
     generateFiles(tree, path.join(__dirname, 'files-brief'), root, {
-      claudeMd: renderClaudeMd(options.name, composition.brief, models),
+      claudeMd: renderClaudeMd(options.name, composition.brief, models, composition.flows),
       tmpl: ''
     })
   }

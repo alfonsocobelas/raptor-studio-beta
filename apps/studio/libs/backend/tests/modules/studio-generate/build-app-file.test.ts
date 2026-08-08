@@ -97,3 +97,41 @@ describe('buildAppFile — el brief cruza la frontera (spec 22)', () => {
     expect('brief' in buildAppFile(design, 'x')).toBe(false)
   })
 })
+
+describe('buildAppFile — los flujos cruzan la frontera (spec 28)', () => {
+  const paciente = {
+    name: 'paciente',
+    plural: 'pacientes',
+    labelSingular: 'Paciente',
+    labelPlural: 'Pacientes',
+    gender: 'm' as const,
+    fields: [{ name: 'nombre', label: 'Nombre', type: 'string' as const }]
+  }
+  const flow = (entity?: string) => ({
+    name: 'Alta de paciente',
+    nodes: [
+      { id: 'llega', kind: 'start' as const, text: 'Llega el paciente', ...(entity ? { entity } : {}) },
+      { id: 'fin', kind: 'end' as const, text: 'Registrado' }
+    ],
+    edges: [{ from: 'llega', to: 'fin' }]
+  })
+
+  it('copia los flujos al app-schema', () => {
+    const design = { appName: 'vetcare', resources: [paciente], pages: [], flows: [flow('paciente')] }
+
+    const file = buildAppFile(design, 'vetcare')
+
+    expect(file.flows).toHaveLength(1)
+    expect(file.flows?.[0].name).toBe('Alta de paciente')
+  })
+
+  it('sin flujos no aparece la clave: ningún schema existente cambia', () => {
+    expect('flows' in buildAppFile({ appName: 'x', resources: [], pages: [] }, 'x')).toBe(false)
+  })
+
+  it('un nodo que alude a una entidad que no viaja en el diseño rompe en la frontera', () => {
+    const design = { appName: 'vetcare', resources: [paciente], pages: [], flows: [flow('fantasma')] }
+
+    expect(() => buildAppFile(design, 'vetcare')).toThrow(/fantasma/)
+  })
+})

@@ -45,10 +45,15 @@
 
 ## Fase 3 — la frontera y el aterrizaje
 
-- [ ] TASK-07 — `buildAppFile` copia `flows` (validando `entity` contra los
+- [x] TASK-07 — `buildAppFile` copia `flows` (validando `entity` contra los
       recursos) + `renderFlows(flows)` pura en el generador (esquema numerado
       con ramas, orden BFS; sin flujos → `''`) + sección «Procesos de negocio»
-      en el `CLAUDE.md` emitido. **BLOQUEADA por spec 22 TASK-05.**
+      en el `CLAUDE.md` emitido. (Desbloqueada: la 22-T05 emitió el CLAUDE.md.)
+      · el CLAUDE.md sigue emitiéndose solo con brief (regla de la 22); los flujos
+        entran como sección cuando existen — sin flujos el markdown es byte a byte
+        el de antes y los 6 golden quedan vacíos
+      · el esquema numera en BFS (el orden del lienzo), lista las ramas etiquetadas
+        de las decisiones y hace explícitos los saltos no secuenciales (→ 2)
 - [ ] TASK-08 — Validación final: `/golden-diff` vacío, suites de `@acc/schema`
       + estudio + generadores verdes, e2e con captura (flujo dibujado →
       `CLAUDE.md` de la app generada lo contiene).

@@ -16,6 +16,17 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
   // 'neutral' es exactamente lo que emite el esqueleto: declararlo sería ruido
   const themeId = design.palette && design.palette !== 'neutral' ? design.palette : undefined
 
+  // Un flujo que alude a una entidad que no viaja rompería AQUÍ, no en la app
+  // generada: la frontera es el último punto con contexto para explicarlo (spec 28).
+  const shipped = new Set(design.resources.map(r => r.name))
+  for (const flow of design.flows ?? []) {
+    for (const node of flow.nodes) {
+      if (node.entity !== undefined && !shipped.has(node.entity)) {
+        throw new Error(`El flujo «${flow.name}» alude a una entidad que no viaja en el diseño: ${node.entity}`)
+      }
+    }
+  }
+
   return {
     schemaVersion: 1,
     name,
@@ -23,6 +34,8 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
     ...(design.ports ? { ports: design.ports } : {}),
     // la memoria del negocio cruza la frontera: la app generada nace sabiendo su porqué (spec 22)
     ...(design.brief ? { brief: design.brief } : {}),
+    // los procesos dibujados acompañan al diseño: sección del CLAUDE.md emitido (spec 28)
+    ...(design.flows?.length ? { flows: design.flows } : {}),
     pages: designPagesToAppPages(design.pages),
     resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }
