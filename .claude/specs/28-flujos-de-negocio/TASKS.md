@@ -24,10 +24,16 @@
 - [x] TASK-04 — Vista **Flujos** solo lectura: conmutador a tres posiciones
       (Vistas/Modelo/Flujos), selector de flujo activo, cajas por kind
       (píldora/rectángulo/rombo), flechas con etiqueta a mitad de camino.
-- [ ] TASK-05 — Edición visual: paleta de nodos, arrastre (posiciones en
+- [x] TASK-05 — Edición visual: paleta de nodos, arrastre (posiciones en
       memoria sobre `flowLayout`), conexión con flecha fantasma (etiqueta
       pedida al salir de una decisión), doble clic edita texto, desplegable
       de `entity`, selección y borrado de nodo/arista (botón + Supr).
+      · toda mutación llama al store (T03): el componente no guarda nada salvo
+        las posiciones arrastradas (cosmético, memoria de sesión)
+      · smoke en navegador (e2e-15-flujo-editado.png): paleta → conexión
+        decisión→paso con etiqueta «sí» → conexión directa → borrado de arista
+      · pendiente cosmético anotado: dos aristas opuestas entre los mismos
+        nodos se pintan superpuestas (misma línea)
 - [x] TASK-06 — Chat de punta a punta: `DesignPayload.flows`, `RESPONSE_SCHEMA`,
       prompt («propón un flujo cuando el proceso tenga ramas; conserva los
       existentes»), fake adapter con flujo de demo, gate + existencia de
