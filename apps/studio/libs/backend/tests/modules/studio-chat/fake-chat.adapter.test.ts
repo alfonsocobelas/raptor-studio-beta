@@ -1,4 +1,5 @@
 import { FakeChatAdapter } from '@app/backend/contexts/studio/chat/fake-chat.adapter'
+import { validateDesign } from '@app/backend/contexts/studio/chat/validate-proposal'
 import type { DesignPayload } from '@app/backend/contexts/studio/chat/chat.types'
 
 const empty = (): DesignPayload => ({ appName: 'mi-app', resources: [], pages: [] })
@@ -141,5 +142,67 @@ describe('fake adapter — brief de demostración (spec 22)', () => {
     })
 
     expect(proposal.design.brief).toEqual(brief)
+  })
+})
+
+describe('fake adapter — flujo de demostración (spec 28)', () => {
+  it('«dibuja el flujo de pedidos» propone un flujo que pasa el gate completo', async () => {
+    const adapter = new FakeChatAdapter()
+    const pedido = {
+      name: 'pedido',
+      plural: 'pedidos',
+      labelSingular: 'Pedido',
+      labelPlural: 'Pedidos',
+      gender: 'm' as const,
+      fields: [{ name: 'nombre', label: 'Nombre', type: 'string' as const }]
+    }
+
+    const proposal = await adapter.propose([{ role: 'user', text: 'dibuja el flujo de pedidos' }], {
+      appName: 'demo',
+      resources: [pedido],
+      pages: []
+    })
+
+    expect(proposal.design.flows).toHaveLength(1)
+    const flow = proposal.design.flows?.[0]
+    expect(flow?.nodes.some(n => n.entity === 'pedido')).toBe(true)
+    // el gate REAL: el flujo de demo no puede violar lo que defineApp exige
+    expect(() => validateDesign(proposal.design)).not.toThrow()
+  })
+
+  it('sin la entidad creada, pide crearla antes en vez de inventarla', async () => {
+    const adapter = new FakeChatAdapter()
+
+    const proposal = await adapter.propose([{ role: 'user', text: 'dibuja el flujo de pedidos' }], {
+      appName: 'demo',
+      resources: [],
+      pages: []
+    })
+
+    expect(proposal.design.flows ?? []).toHaveLength(0)
+    expect(proposal.reply).toMatch(/entidad|crea/i)
+  })
+
+  it('los flujos existentes se conservan al pedir cualquier otra cosa', async () => {
+    const adapter = new FakeChatAdapter()
+    const flows = [
+      {
+        name: 'Ya dibujado',
+        nodes: [
+          { id: 'a', kind: 'start' as const, text: 'Inicio' },
+          { id: 'b', kind: 'end' as const, text: 'Fin' }
+        ],
+        edges: [{ from: 'a', to: 'b' }]
+      }
+    ]
+
+    const proposal = await adapter.propose([{ role: 'user', text: 'crea una tabla de clientes' }], {
+      appName: 'demo',
+      resources: [],
+      pages: [],
+      flows
+    })
+
+    expect(proposal.design.flows).toEqual(flows)
   })
 })

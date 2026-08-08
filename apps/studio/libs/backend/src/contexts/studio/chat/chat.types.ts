@@ -1,4 +1,4 @@
-import type { BusinessBrief, PortsDefinition } from '@acc/schema'
+import type { BusinessBrief, BusinessFlow, PortsDefinition } from '@acc/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 export interface ChatMessage {
@@ -17,6 +17,8 @@ export interface DesignPayload {
   ports?: PortsDefinition
   /** Contexto de negocio destilado del chat; el usuario lo ve y lo corrige (spec 22) */
   brief?: BusinessBrief
+  /** Procesos de negocio dibujados o propuestos (spec 28); nunca generan código */
+  flows?: BusinessFlow[]
 }
 
 /** Lo que propone la IA: un reply breve y el diseño COMPLETO resultante (nunca código). */

@@ -1,4 +1,4 @@
-import { BRIEF_LIMITS, briefProblems, defineResource } from '@acc/schema'
+import { BRIEF_LIMITS, briefProblems, defineResource, validateFlows } from '@acc/schema'
 import { draftToResource } from '@app/shared/domain'
 import type { DesignPayload } from './chat.types'
 
@@ -36,6 +36,21 @@ export function validateDesign(design: DesignPayload): DesignPayload {
       const unique = new Set(values.map(value => value.value))
       if (unique.size !== values.length) {
         throw new Error(`El campo «${field.name}» de ${resource.name} tiene valores repetidos`)
+      }
+    }
+  }
+
+  // Los flujos pasan por el MISMO gate estructural que defineApp exigirá en la frontera
+  // (spec 28): rechazarlos aquí da un error accionable al turno del chat, no al generar.
+  const flowIssues = validateFlows(design.flows)
+  if (flowIssues.length) {
+    throw new Error(`Los flujos no pasan el gate: ${flowIssues.join('; ')}`)
+  }
+  const knownEntities = new Set(design.resources.map(r => r.name))
+  for (const flow of design.flows ?? []) {
+    for (const node of flow.nodes) {
+      if (node.entity !== undefined && !knownEntities.has(node.entity)) {
+        throw new Error(`El flujo «${flow.name}» alude a una entidad inexistente: ${node.entity}`)
       }
     }
   }

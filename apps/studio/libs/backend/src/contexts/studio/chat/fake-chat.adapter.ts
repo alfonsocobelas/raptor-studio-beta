@@ -37,6 +37,41 @@ export class FakeChatAdapter extends ChatPort {
       }
     }
 
+    // «dibuja el flujo de pedidos» / «el proceso de pedidos» (spec 28)
+    const flowMatch = text.match(/(?:flujo|proceso)\s+(?:de\s+)?([a-z0-9-]+)/)
+    if (flowMatch && !remove) {
+      const target = findResource(design, flowMatch[1])
+      if (!target) {
+        return { reply: `Para dibujar el flujo necesito la entidad «${flowMatch[1]}»: créala primero.`, design }
+      }
+      const label = target.labelSingular.toLowerCase()
+      design.flows = [
+        ...(design.flows ?? []),
+        {
+          name: `Ciclo de ${label}`,
+          description: `Flujo de demostración del ${label}, editable en la vista Flujos.`,
+          nodes: [
+            { id: 'llega', kind: 'start', text: `Llega un ${label}`, entity: target.name },
+            { id: 'revisar', kind: 'step', text: 'Se revisa y registra', entity: target.name },
+            { id: 'aprobado', kind: 'decision', text: '¿Todo correcto?' },
+            { id: 'subsanar', kind: 'step', text: 'Se subsana y vuelve a revisión' },
+            { id: 'cerrado', kind: 'end', text: `${target.labelSingular} en curso` }
+          ],
+          edges: [
+            { from: 'llega', to: 'revisar' },
+            { from: 'revisar', to: 'aprobado' },
+            { from: 'aprobado', to: 'cerrado', label: 'sí' },
+            { from: 'aprobado', to: 'subsanar', label: 'no' },
+            { from: 'subsanar', to: 'revisar' }
+          ]
+        }
+      ]
+      return {
+        reply: `Dibujado el ciclo de ${label} con una decisión y su vuelta a revisión: edítalo en la vista Flujos.`,
+        design
+      }
+    }
+
     // «cada pedido es de un cliente» / «los pedidos pertenecen a un cliente»
     const relationMatch = text.match(
       /(?:cada|los|las)?\s*([a-z0-9-]+?)s?\s+(?:es|son|pertenece|pertenecen)\s+(?:de|a)\s+(?:un|una|el|la)?\s*([a-z0-9-]+)/

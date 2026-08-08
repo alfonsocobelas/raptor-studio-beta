@@ -81,6 +81,15 @@ const SYSTEM_PROMPT = [
   'afinar, nunca borrar ni inventar lo que no se ha dicho. No repreguntes lo que el brief ya',
   'responde.',
   '',
+  'FLUJOS: design.flows son los PROCESOS del negocio, como diagramas. Propón un flujo cuando',
+  'el usuario describa un proceso con pasos o ramas («cuando llega un pedido se revisa y si',
+  'falta stock…»); CONSERVA los existentes — el usuario pudo dibujarlos a mano. Cada flujo:',
+  'name, description opcional, nodes [{id slug-kebab único, kind start|step|decision|end,',
+  'text corto, entity opcional = name de una entidad de resources}] y edges [{from, to,',
+  'label}]. Exactamente UN start y al menos un end; toda salida de una decisión lleva label',
+  '(«sí», «no»…); todos los nodos alcanzables desde start; sin auto-bucles. Los flujos NO',
+  'generan código: son contexto del negocio que viaja con el diseño.',
+  '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
   'reply es una frase breve en español explicando qué cambiaste.'
@@ -152,6 +161,45 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
               }
             },
             required: ['name', 'plural', 'labelSingular', 'labelPlural', 'gender', 'fields'],
+            additionalProperties: false
+          }
+        },
+        flows: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              nodes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    kind: { type: 'string', enum: ['start', 'step', 'decision', 'end'] },
+                    text: { type: 'string' },
+                    entity: { type: 'string' }
+                  },
+                  required: ['id', 'kind', 'text'],
+                  additionalProperties: false
+                }
+              },
+              edges: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    from: { type: 'string' },
+                    to: { type: 'string' },
+                    label: { type: 'string' }
+                  },
+                  required: ['from', 'to'],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ['name', 'nodes', 'edges'],
             additionalProperties: false
           }
         },

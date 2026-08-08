@@ -1,5 +1,6 @@
 import { validateDesign } from '@app/backend/contexts/studio/chat/validate-proposal'
 import type { DesignPayload } from '@app/backend/contexts/studio/chat/chat.types'
+import type { BusinessFlow } from '@acc/schema'
 
 const vehiculo = {
   name: 'vehiculo',
@@ -174,5 +175,50 @@ describe('validateDesign — el brief pasa por el gate (spec 22)', () => {
     const design = { ...base(), resources: [{ ...vehiculo, brief: 'x'.repeat(501) }] }
 
     expect(() => validateDesign(design)).toThrow(/brief/)
+  })
+})
+
+describe('validateDesign — los flujos pasan por el gate (spec 28)', () => {
+  const base = (): DesignPayload => ({
+    appName: 'flotas',
+    resources: [vehiculo],
+    pages: []
+  })
+
+  const validFlow = (): BusinessFlow => ({
+    name: 'Alta de vehículo',
+    nodes: [
+      { id: 'llega', kind: 'start' as const, text: 'Llega el vehículo', entity: 'vehiculo' },
+      { id: 'registrar', kind: 'step' as const, text: 'Se registra' },
+      { id: 'fin', kind: 'end' as const, text: 'En servicio' }
+    ],
+    edges: [
+      { from: 'llega', to: 'registrar' },
+      { from: 'registrar', to: 'fin' }
+    ]
+  })
+
+  it('acepta un flujo válido y lo conserva', () => {
+    const design = { ...base(), flows: [validFlow()] }
+
+    const clean = validateDesign(design)
+
+    expect(clean.flows).toHaveLength(1)
+    expect(clean.flows?.[0].name).toBe('Alta de vehículo')
+  })
+
+  it('rechaza un flujo estructuralmente inválido (sin nodo de fin)', () => {
+    const flow = validFlow()
+    flow.nodes = flow.nodes.filter(n => n.kind !== 'end')
+    flow.edges = flow.edges.filter(e => e.to !== 'fin')
+
+    expect(() => validateDesign({ ...base(), flows: [flow] })).toThrow(/end/)
+  })
+
+  it('rechaza un nodo que alude a una entidad no declarada en el diseño', () => {
+    const flow = validFlow()
+    flow.nodes[1] = { ...flow.nodes[1], entity: 'fantasma' }
+
+    expect(() => validateDesign({ ...base(), flows: [flow] })).toThrow(/fantasma/)
   })
 })

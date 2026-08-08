@@ -28,10 +28,14 @@
       memoria sobre `flowLayout`), conexión con flecha fantasma (etiqueta
       pedida al salir de una decisión), doble clic edita texto, desplegable
       de `entity`, selección y borrado de nodo/arista (botón + Supr).
-- [ ] TASK-06 — Chat de punta a punta: `DesignPayload.flows`, `RESPONSE_SCHEMA`,
+- [x] TASK-06 — Chat de punta a punta: `DesignPayload.flows`, `RESPONSE_SCHEMA`,
       prompt («propón un flujo cuando el proceso tenga ramas; conserva los
       existentes»), fake adapter con flujo de demo, gate + existencia de
       `entity` en `validateDesign` (tests del gate primero).
+      · el fake («dibuja el flujo de pedidos») emite un ciclo con decisión y vuelta
+        a revisión que pasa el gate REAL de validateFlows; sin entidad, pide crearla
+      · validateDesign valida estructura (validateFlows compartido con defineApp) y
+        que `entity` aluda a entidades del diseño — error accionable en el turno
 
 ## Fase 3 — la frontera y el aterrizaje
 
