@@ -1,5 +1,6 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
+import { SHARED_VOS } from './models/shared-vos'
 import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
 
 /**
@@ -276,7 +277,9 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
     else if (c.field.type === 'number' || c.field.type === 'integer')
       lines.push(`${c.name}: ${Math.max(i, seedMin(definition, c.name, vo))}`)
     else if (c.field.type === 'date' || c.field.type === 'timestamptz') lines.push(`${c.name}: '2026-01-0${i}'`)
-    else if (vo?.noInnerWhitespace) lines.push(`${c.name}: 'SEED-${names(definition.name).constantName}-${i}'`)
+    // la regla sin-espacios puede venir del VO local O del compartido (canon ContractNumber)
+    else if (vo?.noInnerWhitespace || SHARED_VOS[c.field.voShared?.name ?? '']?.noInnerWhitespace)
+      lines.push(`${c.name}: 'SEED-${names(definition.name).constantName}-${i}'`)
     else lines.push(`${c.name}: '${label} seed ${i}'`)
   }
 

@@ -133,6 +133,27 @@ describe('semillas — datos coherentes con el dominio', () => {
     expect(renderEntrypoints(withSamples({}), true).seedItems).toHaveLength(2)
   })
 
+  it('un campo con voShared sin-espacios-interiores NO se siembra con «Label seed N»', () => {
+    // contract.contractNumber (voShared ContractNumber, noInnerWhitespace) recibía
+    // 'Nº Contrato seed 1' y el seed del oro abortaba en su propio VO
+    const model = {
+      ...paciente,
+      fields: {
+        id: { type: 'uuid', pk: true },
+        chip: {
+          type: 'string',
+          required: true,
+          voShared: { name: 'ContractNumber' },
+          form: { control: 'text', label: 'Nº Chip', section: 'general' }
+        }
+      }
+    } as unknown as ResourceDefinition
+
+    const [primera] = renderEntrypoints(model, true).seedItems
+
+    expect(primera.join(' ')).toContain("chip: 'SEED-PACIENTE-1'")
+  })
+
   it('la fila N usa el ejemplo N de cada campo, sin mezclar', () => {
     const model = withSamples({
       nombre: ['Luna', 'Simba', 'Nala'],
