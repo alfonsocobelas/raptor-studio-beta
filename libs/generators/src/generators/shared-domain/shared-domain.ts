@@ -32,7 +32,9 @@ export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGen
     generateFiles(tree, path.join(__dirname, 'files-resource'), path.join(outputDir, n.fileName), {
       ...bindings,
       className: n.className,
-      fileName: n.fileName
+      fileName: n.fileName,
+      // el frontend importa el nombre que declara el modelo (canon LicenseWithConsumptionDto)
+      dtoInterfaceName: model.dtoName ?? `${n.className}Dto`
     })
     if (!model.composition) {
       tree.delete(path.join(outputDir, n.fileName, `${n.fileName}-detail.dto.ts`))

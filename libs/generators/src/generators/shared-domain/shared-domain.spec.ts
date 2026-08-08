@@ -60,6 +60,14 @@ describe('shared-domain generator', () => {
     expect(dto).toContain("export type CustomerClassification = 'cloud' | 'onprem' | 'hybrid'")
   })
 
+  it('el DTO adopta el dtoName del modelo (canon LicenseWithConsumptionDto)', () => {
+    // el frontend emitido importa el nombre declarado; emitir License**Dto** dejaba
+    // la app sin compilar al servir (TS2305) — resto de la spec 04
+    const dto = tree.read('tmp/generated/shared-domain/license/license.dto.ts', 'utf-8') ?? ''
+    expect(dto).toContain('export interface LicenseWithConsumptionDto {')
+    expect(dto).not.toContain('export interface LicenseDto')
+  })
+
   it('keeps sync-managed fields out of register/update DTOs', () => {
     const register = tree.read('tmp/generated/shared-domain/customer/register-customer.dto.ts', 'utf-8') ?? ''
     expect(register).not.toContain('archivedAt')

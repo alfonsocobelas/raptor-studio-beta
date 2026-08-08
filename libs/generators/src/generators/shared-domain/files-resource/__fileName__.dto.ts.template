@@ -6,7 +6,7 @@ import { <%- enums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enum
 export type <%- u.name %> = <%- u.values %>
 
 <%_ }) _%>
-export interface <%- className %>Dto {
+export interface <%- dtoInterfaceName %> {
 <%_ dtoLines.forEach(line => { _%>
   <%- line %>
 <%_ }) _%>
