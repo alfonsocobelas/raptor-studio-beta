@@ -9,7 +9,11 @@
 - [x] TASK-04 — Cruce al generador: `buildAppFile` copia `design.brief`; `draftToResource` copia el de entidad al `ResourceDefinition` (test de la frontera)
 - [x] TASK-05 — Emisión: `CLAUDE.md` en la raíz de la app generada (markdown construido en `generator.ts`, plantilla tonta; sin brief → sin fichero). Gate: fixtures actuales sin brief → diff vacío
 - [x] TASK-06 — Fixture de oro nueva CON brief (commit propio de re-baseline, skill `golden-diff`)
-- [ ] TASK-07 — Validación final: `/golden-diff` completo, suites de `@acc/schema` + generadores + estudio verdes, verificación manual con bridge: contar negocio → recargar → el turno siguiente no repregunta
+- [x] TASK-07 — Validación final: `/golden-diff` completo, suites de `@acc/schema` + generadores + estudio verdes, verificación manual con bridge: contar negocio → recargar → el turno siguiente no repregunta
+      · 2026-08-08, desbloqueada por la spec 21 (persistencia): e2e en navegador con el
+        chat fake — contar el negocio deja brief, el autosave lo escribe, tras RECARGAR
+        el panel lo muestra intacto y el turno siguiente lo lleva en la petición real
+        (interceptada y verificada). Golden 6/6 vacíos y suites verdes ese mismo día
       · HECHO (2026-08-07): suites verdes — schema 108, estudio 234 (jest) + 204 (vitest); los 6
         golden vacíos en la parte de esta spec (los diffs restantes al correr eran el RED en vuelo
         de la spec 29 de la sesión concurrente, no de aquí)
