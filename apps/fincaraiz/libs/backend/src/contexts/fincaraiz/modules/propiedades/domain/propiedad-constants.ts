@@ -1,0 +1,8 @@
+export const PROPIEDAD_CONSTRAINTS = {
+  TITULO: { MIN: 2, MAX: 200 },
+  ZONA: { MAX: 200 },
+  METROSCUADRADOS: { MIN: 0 },
+  HABITACIONES: { MIN: 0 },
+  PRECIO: { MIN: 0 },
+  AGENTE_NAME: { MAX: 200 }
+} as const

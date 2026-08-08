@@ -1,0 +1,75 @@
+import { HttpClient } from '@angular/common/http'
+import { Injectable, inject, resource, signal } from '@angular/core'
+import { API_PREFIX } from '../http/api.constants'
+import { InviteUserDto, UserDto, UserRoleEnum, UserStatusEnum } from '@app/shared/domain'
+import { firstValueFrom } from 'rxjs'
+import { OffsetPaginatedOutput } from './pagination.types'
+
+export type { OffsetPaginatedOutput } from './pagination.types'
+
+export interface UserRequest {
+  page: number
+  pageSize: number
+  role?: UserRoleEnum
+  status?: UserStatusEnum
+  text?: string
+}
+
+const defaultRequest = (): UserRequest => ({ page: 1, pageSize: 20 })
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private readonly _http = inject(HttpClient)
+
+  readonly request = signal<UserRequest>(defaultRequest())
+
+  resetRequest(): void {
+    this.request.set(defaultRequest())
+  }
+
+  readonly users = resource<OffsetPaginatedOutput<UserDto>, UserRequest>({
+    params: () => this.request(),
+    loader: ({ params: req }) =>
+      firstValueFrom(
+        this._http.get<OffsetPaginatedOutput<UserDto>>(`${API_PREFIX}/users`, { params: this.buildParams(req) })
+      )
+  })
+
+  invite(dto: InviteUserDto): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/invitations`, dto)).then(() => {
+      this.users.reload()
+    })
+  }
+
+  changeRole(id: string, role: UserRoleEnum): Promise<void> {
+    return firstValueFrom(this._http.put<void>(`${API_PREFIX}/users/${id}/role`, { role })).then(() => {
+      this.users.reload()
+    })
+  }
+
+  disable(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/users/${id}/disable`, {})).then(() => {
+      this.users.reload()
+    })
+  }
+
+  reactivate(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/users/${id}/reactivate`, {})).then(() => {
+      this.users.reload()
+    })
+  }
+
+  private buildParams(req: UserRequest): Record<string, string> {
+    const params: Record<string, string> = { page: String(req.page), pageSize: String(req.pageSize) }
+
+    const filters = [
+      ...(req.role ? [{ field: 'role', operator: 'eq', value: req.role }] : []),
+      ...(req.status ? [{ field: 'status', operator: 'eq', value: req.status }] : []),
+      ...(req.text ? [{ field: 'email', operator: 'contains', value: req.text }] : [])
+    ]
+    if (filters.length) {
+      params['filters'] = JSON.stringify(filters)
+    }
+    return params
+  }
+}

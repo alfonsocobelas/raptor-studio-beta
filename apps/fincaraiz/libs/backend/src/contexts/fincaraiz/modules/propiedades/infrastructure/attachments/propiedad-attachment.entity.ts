@@ -1,0 +1,29 @@
+import { Column, CreateDateColumn, Entity, Index, PrimaryColumn } from 'typeorm'
+
+/** Metadatos de un adjunto de Propiedades. El binario vive en FileStoragePort. */
+@Entity({ name: 'propiedades_attachments', schema: 'fincaraiz' })
+export class TypeOrmPropiedadAttachmentEntity {
+  @PrimaryColumn({ type: 'uuid' })
+  id!: string
+
+  /** Registro al que pertenece el adjunto: los ficheros son DEL registro, no del recurso. */
+  @Index()
+  @Column({ name: 'propiedad_id', type: 'uuid' })
+  propiedadId!: string
+
+  @Index()
+  @Column({ name: 'file_name', type: 'varchar', length: 255 })
+  fileName!: string
+
+  @Column({ name: 'mime_type', type: 'varchar', length: 128 })
+  mimeType!: string
+
+  @Column({ name: 'size_bytes', type: 'int' })
+  sizeBytes!: number
+
+  @Column({ name: 'storage_key', type: 'uuid' })
+  storageKey!: string
+
+  @CreateDateColumn({ name: 'uploaded_at', type: 'timestamptz' })
+  uploadedAt!: Date
+}
