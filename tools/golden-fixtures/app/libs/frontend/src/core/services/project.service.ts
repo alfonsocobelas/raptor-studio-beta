@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { Injectable, inject, resource, signal } from '@angular/core'
-import { ExportFormat, ProjectDto, RegisterProjectDto, UpdateProjectDto } from '@app/shared/domain'
+import { AuditEventDto, ExportFormat, ProjectDto, RegisterProjectDto, UpdateProjectDto } from '@app/shared/domain'
 import { firstValueFrom } from 'rxjs'
 import { ColumnFilter, SortOrder } from '../../shared/components/data-table'
 import { API_PREFIX } from '../http/api.constants'
@@ -44,6 +44,11 @@ export class ProjectService {
   /** Carga un registro por id: lo que necesita la ficha (spec 16). */
   findOne(id: string): Promise<ProjectDto> {
     return firstValueFrom(this._http.get<ProjectDto>(`${API_URL}/${id}`))
+  }
+
+  /** La timeline de la ficha (spec 31): los últimos eventos del registro. */
+  history(id: string): Promise<AuditEventDto[]> {
+    return firstValueFrom(this._http.get<AuditEventDto[]>(`${API_URL}/${id}/history`))
   }
 
   create(dto: RegisterProjectDto): Promise<void> {

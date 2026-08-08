@@ -8,7 +8,7 @@ import { AuthService } from '../../../../../../core/services/auth.service'
 import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
-import { ProjectDto } from '@app/shared/domain'
+import { AuditEventDto, ProjectDto } from '@app/shared/domain'
 import { ProjectService } from '../../../../../../core/services/project.service'
 import { formatValue } from '../../../../../../shared/utils/format-value'
 import { ProjectAttachmentsComponent } from './project-attachments.component'
@@ -82,6 +82,35 @@ interface DetailRow {
         </dl>
 
         <app-projects-attachments [projectId]="item.id" />
+
+        <!-- la timeline del registro (spec 31): qué pasó, qué cambió y cuándo -->
+        <section class="bg-card rounded-lg border p-4">
+          <h2 class="mb-3 text-sm font-semibold">Historial</h2>
+          @if (!history().length) {
+            <p class="text-muted-foreground text-sm">Sin cambios registrados</p>
+          } @else {
+            <ol class="space-y-3">
+              @for (event of history(); track event.id) {
+                <li class="border-border border-l-2 pl-3" data-testid="history-event">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-medium">{{ actionLabel(event) }}</span>
+                    <span class="text-muted-foreground text-xs">{{ when(event) }}</span>
+                  </div>
+                  @if (changedFields(event).length) {
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      @for (change of changedFields(event); track change.field) {
+                        <span class="bg-muted rounded-full px-2 py-0.5 text-xs">
+                          <span class="text-muted-foreground">{{ change.field }}:</span>
+                          {{ change.from }} → {{ change.to }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ol>
+          }
+        </section>
       }
     </div>
 
@@ -144,6 +173,7 @@ export class ProjectDetailComponent {
     }
     try {
       this.project.set(await this._service.findOne(id))
+      this.history.set(await this._service.history(id))
     } catch (e) {
       const status = (e as { status?: number }).status
       if (status === 404) this.notFound.set(true)
@@ -155,6 +185,31 @@ export class ProjectDetailComponent {
 
   back(): void {
     void this._router.navigate(['/sap-licensing/projects'])
+  }
+
+  readonly history = signal<AuditEventDto[]>([])
+
+  private readonly actionLabels: Record<AuditEventDto['action'], string> = {
+    created: 'Creado',
+    updated: 'Actualizado',
+    deleted: 'Eliminado',
+    restored: 'Restaurado'
+  }
+
+  actionLabel(event: AuditEventDto): string {
+    return this.actionLabels[event.action]
+  }
+
+  when(event: AuditEventDto): string {
+    return formatValue(event.occurredAt)
+  }
+
+  changedFields(event: AuditEventDto): { field: string; from: string; to: string }[] {
+    return Object.entries(event.changes).map(([field, change]) => ({
+      field,
+      from: formatValue(change.from),
+      to: formatValue(change.to)
+    }))
   }
 
   /** Un valor se lee igual aquí que en el listado: mismo formateador (kernel). */
