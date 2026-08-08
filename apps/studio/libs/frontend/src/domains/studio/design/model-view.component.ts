@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import {
   MODEL_GRID,
   MODEL_NODE,
@@ -36,13 +37,44 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
+    <!-- crear entidades SIN salir del diagrama: el modelo también se dibuja aquí -->
+    <div class="mb-4 flex items-center gap-1">
+      @if (creating()) {
+        <form class="flex items-center gap-1" (ngSubmit)="confirmEntity()">
+          <input
+            class="border-input w-44 rounded-md border px-2 py-1 text-sm"
+            name="entityName"
+            placeholder="Nombre de la entidad…"
+            [(ngModel)]="entityName"
+            data-testid="model-new-entity-name"
+          />
+          <button
+            type="submit"
+            class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-sm"
+            data-testid="model-new-entity-ok"
+          >
+            Crear
+          </button>
+          <button type="button" class="text-muted-foreground text-sm" (click)="creating.set(false)">✕</button>
+        </form>
+      } @else {
+        <button type="button" class="toolbar-chip" data-testid="model-new-entity" (click)="creating.set(true)">
+          + Entidad
+        </button>
+        <span class="text-muted-foreground text-xs">
+          arrastra del asa de una caja a otra para relacionarlas · la vista de listado se añade en Vistas
+        </span>
+      }
+    </div>
+
     @if (!nodes().length) {
       <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-model">
         <p class="text-muted-foreground mb-2 text-lg">Sin entidades todavía</p>
         <p class="text-muted-foreground max-w-md text-sm">
-          Crea una vista con datos (o pídesela al chat) y su entidad aparecerá aquí como una caja.
+          Crea una con <strong>+ Entidad</strong>, con una vista de datos o pidiéndosela al chat.
         </p>
       </div>
     } @else {
@@ -164,10 +196,35 @@ interface DiagramEdge {
         }
       </div>
     }
+  `,
+  styles: `
+    .toolbar-chip {
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      transition: background-color 0.15s;
+    }
+    .toolbar-chip:hover {
+      background-color: var(--accent);
+    }
   `
 })
 export class ModelViewComponent {
   protected readonly store = inject(DesignStore)
+
+  protected readonly creating = signal(false)
+  protected readonly entityName = signal('')
+
+  /** Entidad suelta desde el diagrama: mismo camino (y mismo gate) que el resto del lienzo. */
+  protected confirmEntity(): void {
+    const label = this.entityName().trim()
+    if (!label) return
+    if (this.store.addResource(label)) {
+      this.creating.set(false)
+      this.entityName.set('')
+    }
+  }
   protected readonly headerHeight = MODEL_NODE.headerHeight
   protected readonly rowHeight = MODEL_NODE.rowHeight
 
