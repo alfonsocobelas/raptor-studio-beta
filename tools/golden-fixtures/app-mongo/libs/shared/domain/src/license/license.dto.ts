@@ -1,4 +1,4 @@
-export interface LicenseDto {
+export interface LicenseWithConsumptionDto {
   id: string
   contractId: string
   customerId: string
