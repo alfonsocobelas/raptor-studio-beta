@@ -239,6 +239,13 @@ function seedRowCount(resource: string): number {
   return parent ? seedRowNumbers(parent).length : 2
 }
 
+/** Mes N contando desde enero de 2026, desbordando de año si hace falta ('2027-02'). */
+function seedMonth(n: number): string {
+  const year = 2026 + Math.floor((n - 1) / 12)
+  const month = ((n - 1) % 12) + 1
+  return `${year}-${String(month).padStart(2, '0')}`
+}
+
 function seedRowNumbers(definition: ResourceDefinition): number[] {
   const richest = Math.max(0, ...Object.values(definition.fields).map(field => field.samples?.length ?? 0))
   const rows = Math.min(Math.max(richest, 2), MAX_SEED_ROWS)
@@ -251,6 +258,18 @@ function renderSeedItem(definition: ResourceDefinition, ctxs: Ctx[], i: number):
   for (const c of ctxs) {
     const vo = typeof c.field.vo === 'object' ? c.field.vo : undefined
     const label = names(c.name).className
+
+    // los campos del period se siembran como intervalos reales y escalonados, aunque el fin
+    // sea opcional: sin esto el cronograma (spec 30) nace con barras abiertas y eje de 30 días
+    if (definition.period && c.name === definition.period.start) {
+      lines.push(`${c.name}: '${seedMonth(i)}-01'`)
+      continue
+    }
+    if (definition.period && c.name === definition.period.end) {
+      // seis meses de vigencia; día 28, válido en cualquier mes
+      lines.push(`${c.name}: '${seedMonth(i + 6)}-28'`)
+      continue
+    }
 
     if (c.field.relation && c.field.type === 'uuid') {
       // El padre puede sembrar menos filas que el hijo: ciclar sobre SUS filas

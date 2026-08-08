@@ -154,6 +154,27 @@ describe('semillas — datos coherentes con el dominio', () => {
     expect(primera.join(' ')).toContain("chip: 'SEED-PACIENTE-1'")
   })
 
+  it('los campos del period se siembran como intervalos reales, aunque el fin sea opcional', () => {
+    // sin esto el cronograma (spec 30) nace con barras abiertas y un eje de 30 días
+    const model = {
+      ...paciente,
+      period: { start: 'desde', end: 'hasta' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        desde: { type: 'date', required: true, form: { control: 'date', label: 'Desde', section: 'general' } },
+        hasta: { type: 'date', nullable: true, form: { control: 'date', label: 'Hasta', section: 'general' } }
+      }
+    } as unknown as ResourceDefinition
+
+    const [primera, segunda] = renderEntrypoints(model, true).seedItems
+
+    expect(primera.join(' ')).toContain("desde: '2026-01-01'")
+    expect(primera.join(' ')).toContain("hasta: '2026-07-28'")
+    // filas escalonadas: barras distintas en el cronograma
+    expect(segunda.join(' ')).toContain("desde: '2026-02-01'")
+    expect(segunda.join(' ')).toContain("hasta: '2026-08-28'")
+  })
+
   it('la fila N usa el ejemplo N de cada campo, sin mezclar', () => {
     const model = withSamples({
       nombre: ['Luna', 'Simba', 'Nala'],
