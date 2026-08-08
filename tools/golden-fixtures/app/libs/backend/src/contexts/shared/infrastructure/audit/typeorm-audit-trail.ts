@@ -15,7 +15,9 @@ export class TypeOrmAuditTrail extends AuditTrailPort {
 
   async record(event: Omit<AuditEvent, 'id' | 'occurredAt'>): Promise<void> {
     try {
-      await this.repository().insert({ ...event, id: uuidv7(), occurredAt: new Date() })
+      // create+save y no insert(): QueryDeepPartialEntity no admite el Record del jsonb
+      const row = this.repository().create({ ...event, id: uuidv7(), occurredAt: new Date() })
+      await this.repository().save(row)
     } catch (error) {
       // mejor esfuerzo: perder un evento no puede tumbar la operación de negocio
       this.logger.warn(`audit event lost for ${event.entity} ${event.entityId}: ${String(error)}`)
