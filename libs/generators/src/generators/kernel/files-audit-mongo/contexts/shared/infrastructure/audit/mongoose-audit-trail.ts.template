@@ -1,0 +1,51 @@
+import { Injectable, Logger } from '@nestjs/common'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { v7 as uuidv7 } from 'uuid'
+import { AuditAction, AuditEvent } from '../../domain/audit/audit-event'
+import { AuditTrailPort } from '../../domain/audit/audit-trail.port'
+import { MongooseTransactionManager } from '../persistence/mongoose/mongoose-transaction-manager'
+import { AuditEventDoc } from './audit-event.schema'
+
+@Injectable()
+export class MongooseAuditTrail extends AuditTrailPort {
+  private readonly logger = new Logger('AuditTrail')
+
+  constructor(
+    @InjectModel('AuditEvent') private readonly auditModel: Model<AuditEventDoc>,
+    private readonly transactionManager: MongooseTransactionManager
+  ) {
+    super()
+  }
+
+  async record(event: Omit<AuditEvent, 'id' | 'occurredAt'>): Promise<void> {
+    try {
+      await this.auditModel.create(
+        [{ ...event, id: uuidv7(), occurredAt: new Date().toISOString() }],
+        { session: this.transactionManager.getEntityManager() ?? undefined }
+      )
+    } catch (error) {
+      // mejor esfuerzo: perder un evento no puede tumbar la operación de negocio
+      this.logger.warn(`audit event lost for ${event.entity} ${event.entityId}: ${String(error)}`)
+    }
+  }
+
+  async of(entity: string, entityId: string, limit: number): Promise<AuditEvent[]> {
+    const docs = await this.auditModel
+      .find({ entity, entityId })
+      .sort({ occurredAt: -1 })
+      .limit(limit)
+      .lean<AuditEventDoc[]>()
+      .exec()
+
+    return docs.map(doc => ({
+      id: doc.id,
+      entity: doc.entity,
+      entityId: doc.entityId,
+      action: doc.action as AuditAction,
+      changes: doc.changes,
+      occurredAt: doc.occurredAt,
+      actor: doc.actor
+    }))
+  }
+}

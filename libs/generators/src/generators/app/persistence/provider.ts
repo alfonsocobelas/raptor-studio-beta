@@ -27,6 +27,8 @@ export interface PersistenceProvider {
   skeletonFiles?: string
   /** Indicador de @nestjs/terminus con el que el readiness comprueba la base */
   healthIndicator: string
+  /** Subárbol del adapter de auditoría del motor (spec 31); se emite solo con modelos history */
+  auditFiles: string
   /** Dependencias que el motor añade al package.json emitido (driver + integración Nest) */
   dependencies: Record<string, string>
   /**

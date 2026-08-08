@@ -51,18 +51,22 @@ export const migrationsPlugin = definePlugin({
     const stamp = 1790000000000
     const className = `InitialSchema${stamp}`
     const ordered = byDependency(context.models)
-    const body = ordered
-      .map(model =>
+    const body = [
+      ...ordered.map(model =>
         [
           renderTable(model, context.models),
           ...(model.composition ? [renderCompositionTable(model)] : []),
           ...(model.attachments ? [renderAttachmentsTable(model)] : [])
         ].join('\n\n')
-      )
-      .join('\n\n')
-    const drops = [...ordered]
-      .reverse()
-      .flatMap(model => [
+      ),
+      // el historial (spec 31) usa una tabla GLOBAL: una por app, venga de los modelos que venga
+      ...(context.models.some(model => model.history) ? [renderAuditTable()] : [])
+    ].join('\n\n')
+    const drops = [
+      ...(context.models.some(model => model.history)
+        ? ['    await queryRunner.query(`DROP TABLE IF EXISTS shared.audit_events`)']
+        : []),
+      ...[...ordered].reverse().flatMap(model => [
         ...(model.attachments
           ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}_attachments\`)`]
           : []),
@@ -71,7 +75,7 @@ export const migrationsPlugin = definePlugin({
           : []),
         `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`
       ])
-      .join('\n')
+    ].join('\n')
 
     tree.write(
       path.join(context.backendSrc, MIGRATIONS_DIR, `${stamp}-InitialSchema.ts`),
@@ -203,6 +207,31 @@ ${rendered}
 
     await queryRunner.query(\`
       CREATE INDEX idx_${comp.plural}_${parentColumn} ON ${table} (${parentColumn})
+    \`)`
+}
+
+/**
+ * Tabla GLOBAL de eventos de auditoría (spec 31): una por app, en su propio esquema
+ * `shared`. Los use cases la alimentan vía AuditTrailPort; la ficha la lee.
+ */
+function renderAuditTable(): string {
+  return `    await queryRunner.query(\`CREATE SCHEMA IF NOT EXISTS shared\`)
+
+    await queryRunner.query(\`
+      CREATE TABLE shared.audit_events (
+        id          UUID         NOT NULL,
+        entity      VARCHAR(100) NOT NULL,
+        entity_id   UUID         NOT NULL,
+        action      VARCHAR(20)  NOT NULL,
+        changes     JSONB        NOT NULL DEFAULT '{}',
+        occurred_at TIMESTAMPTZ  NOT NULL,
+        actor       VARCHAR(255) NULL,
+        CONSTRAINT pk_audit_events PRIMARY KEY (id)
+      )
+    \`)
+
+    await queryRunner.query(\`
+      CREATE INDEX idx_audit_events_entity ON shared.audit_events (entity, entity_id, occurred_at DESC)
     \`)`
 }
 

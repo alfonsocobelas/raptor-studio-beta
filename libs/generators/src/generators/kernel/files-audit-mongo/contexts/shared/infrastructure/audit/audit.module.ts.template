@@ -1,0 +1,14 @@
+import { Global, Module } from '@nestjs/common'
+import { MongooseModule } from '@nestjs/mongoose'
+import { AuditTrailPort } from '../../domain/audit/audit-trail.port'
+import { AuditEventSchema } from './audit-event.schema'
+import { MongooseAuditTrail } from './mongoose-audit-trail'
+
+/** Global: cualquier módulo con historial inyecta AuditTrailPort sin re-declararlo (spec 31). */
+@Global()
+@Module({
+  imports: [MongooseModule.forFeature([{ name: 'AuditEvent', schema: AuditEventSchema }])],
+  providers: [{ provide: AuditTrailPort, useClass: MongooseAuditTrail }],
+  exports: [AuditTrailPort]
+})
+export class AuditModule {}

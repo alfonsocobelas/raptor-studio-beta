@@ -1,0 +1,27 @@
+import { Schema } from 'mongoose'
+import { AuditChange } from '../../domain/audit/audit-event'
+
+export interface AuditEventDoc {
+  id: string
+  entity: string
+  entityId: string
+  action: string
+  changes: Record<string, AuditChange>
+  occurredAt: string
+  actor: string | null
+}
+
+export const AuditEventSchema = new Schema<AuditEventDoc>(
+  {
+    id: { type: String, required: true, unique: true },
+    entity: { type: String, required: true },
+    entityId: { type: String, required: true },
+    action: { type: String, required: true },
+    changes: { type: Object, required: true, default: {} },
+    occurredAt: { type: String, required: true },
+    actor: { type: String, default: null }
+  },
+  { collection: 'audit_events', versionKey: false }
+)
+
+AuditEventSchema.index({ entity: 1, entityId: 1, occurredAt: -1 })

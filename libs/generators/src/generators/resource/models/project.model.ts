@@ -29,6 +29,8 @@ export const project = defineResource({
   audit: true,
   auditComment: true,
   softDelete: true,
+  // Historial de cambios (spec 31): project estrena la timeline — ciclo completo con su papelera
+  history: true,
   searchNotes: ['Free-text columns shown in the table (spec 25: status/implementer are badges, dates are out).'],
   constraints: {
     NAME: { MIN: 3, MAX: 200 },

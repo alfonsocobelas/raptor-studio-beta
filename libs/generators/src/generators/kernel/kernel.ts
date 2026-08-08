@@ -45,6 +45,12 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     return list
   })
 
+  // el historial (spec 31) añade la tabla global de eventos; el DataSource debe conocerla
+  const hasHistory = MODEL_LIST.some(model => model.history)
+  if (hasHistory) {
+    entities.push({ className: 'TypeOrmAuditEventEntity', importPath: '../../audit/typeorm-audit-event.entity' })
+  }
+
   // Un modelo Mongoose raíz por recurso: los hijos de composición van embebidos.
   const mongooseModels = MODEL_LIST.map(model => {
     const n = names(model.name)
@@ -67,6 +73,11 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
   // puerto + adapter de almacenamiento: solo si algún recurso declara adjuntos
   if (MODEL_LIST.some(model => model.attachments)) {
     generateFiles(tree, path.join(__dirname, 'files-attachments'), outputDir, substitutions)
+  }
+  // puerto + tabla global de auditoría: solo si algún recurso declara historial (spec 31)
+  if (hasHistory) {
+    generateFiles(tree, path.join(__dirname, 'files-audit'), outputDir, substitutions)
+    generateFiles(tree, path.join(__dirname, persistence.auditFiles), outputDir, substitutions)
   }
   // lo específico del motor (config + persistencia compartida) lo dicta su manifiesto
   generateFiles(tree, path.join(__dirname, persistence.kernelFiles), outputDir, substitutions)
