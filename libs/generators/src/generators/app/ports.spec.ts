@@ -97,6 +97,15 @@ describe('applyPorts', () => {
     expect(read(tree, 'docker/docker-compose.test.yml')).toContain('container_name: fincaraiz-postgres-test')
   })
 
+  it('el compose lleva el nombre de PROYECTO de la app: sin él, Compose lo deriva del directorio (docker/) y el up de la segunda demo sustituye el contenedor de la primera', () => {
+    const tree = withApp()
+
+    applyPorts(tree, '', 'fincaraiz', undefined)
+
+    expect(read(tree, 'docker/docker-compose.local.yml')).toMatch(/^name: fincaraiz-local\n/)
+    expect(read(tree, 'docker/docker-compose.test.yml')).toMatch(/^name: fincaraiz-test\n/)
+  })
+
   it('publica los valores por defecto que documenta el README', () => {
     expect(DEFAULT_PORTS).toEqual({ api: 3000, web: 4321, postgres: 5433, postgresTest: 5434 })
   })

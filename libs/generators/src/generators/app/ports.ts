@@ -68,6 +68,9 @@ function renameContainers(tree: Tree, root: string, appName: string): void {
     [COMPOSE_TEST, 'test']
   ] as const) {
     const target = path.join(root, file)
+    // el nombre de PROYECTO también: sin él Compose lo deriva del directorio (docker/),
+    // dos apps comparten proyecto+servicio y el up de la segunda sustituye a la primera
+    replace(tree, target, 'services:', `name: ${appName}-${suffix}\nservices:`)
     replace(tree, target, `container_name: app-postgres-${suffix}`, `container_name: ${appName}-postgres-${suffix}`)
     replace(tree, target, `container_name: app-mongo-${suffix}`, `container_name: ${appName}-mongo-${suffix}`)
     for (const engine of ['postgres', 'mongo']) {
