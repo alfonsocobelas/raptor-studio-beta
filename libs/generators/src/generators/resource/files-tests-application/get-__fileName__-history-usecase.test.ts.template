@@ -1,0 +1,26 @@
+import { v7 as uuidv7 } from 'uuid'
+import { AuditEvent } from '../../../../../src/contexts/shared/domain/audit/audit-event'
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
+import { Get<%- className %>HistoryUseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/get-<%- fileName %>-history-usecase.service'
+
+describe('Get<%- className %>HistoryUseCase', () => {
+  it('devuelve los eventos del registro tal y como los da el puerto', async () => {
+    const id = uuidv7()
+    const events: AuditEvent[] = [
+      {
+        id: uuidv7(),
+        entity: '<%- fileName %>',
+        entityId: id,
+        action: 'created',
+        changes: {},
+        occurredAt: '2026-01-01T10:00:00.000Z',
+        actor: null
+      }
+    ]
+    const auditTrail = { record: jest.fn(), of: jest.fn().mockResolvedValue(events) } as unknown as AuditTrailPort
+    const useCase = new Get<%- className %>HistoryUseCase(auditTrail)
+
+    await expect(useCase.invoke({ id })).resolves.toEqual(events)
+    expect(auditTrail.of).toHaveBeenCalledWith('<%- fileName %>', id, 50)
+  })
+})

@@ -96,6 +96,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(app, 'use-cases', `search-deleted-${substitutions.plural}-usecase.service.ts`))
       tree.delete(path.join(app, 'handlers', `search-deleted-${substitutions.plural}.handler.ts`))
     }
+    if (!substitutions.app.history) {
+      tree.delete(path.join(app, 'dtos', `get-${substitutions.fileName}-history-input.dto.ts`))
+      tree.delete(path.join(app, 'use-cases', `get-${substitutions.fileName}-history-usecase.service.ts`))
+      tree.delete(path.join(app, 'handlers', `get-${substitutions.fileName}-history.handler.ts`))
+    }
   }
 
   // entrypoints REST + module wiring
@@ -230,6 +235,9 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       if (!substitutions.app.trash) {
         tree.delete(path.join(appTests, `restore-${substitutions.fileName}-usecase.test.ts`))
         tree.delete(path.join(appTests, `search-deleted-${substitutions.plural}-usecase.test.ts`))
+      }
+      if (!substitutions.app.history) {
+        tree.delete(path.join(appTests, `get-${substitutions.fileName}-history-usecase.test.ts`))
       }
     }
     // test de integración del repositorio (corre contra la base real del compose de test)

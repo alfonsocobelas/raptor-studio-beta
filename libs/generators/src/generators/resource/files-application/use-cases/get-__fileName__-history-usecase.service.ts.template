@@ -1,0 +1,14 @@
+import { Injectable } from '@nestjs/common'
+import { AuditEvent } from '../../../../../shared/domain/audit/audit-event'
+import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
+import { Get<%- className %>HistoryInput } from '../dtos/get-<%- fileName %>-history-input.dto'
+
+/** La timeline de la ficha: los últimos eventos del registro, del más reciente al más antiguo. */
+@Injectable()
+export class Get<%- className %>HistoryUseCase {
+  constructor(private readonly auditTrail: AuditTrailPort) {}
+
+  invoke(input: Get<%- className %>HistoryInput): Promise<AuditEvent[]> {
+    return this.auditTrail.of('<%- fileName %>', input.id, 50)
+  }
+}

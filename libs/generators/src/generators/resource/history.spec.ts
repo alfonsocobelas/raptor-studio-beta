@@ -52,6 +52,35 @@ describe('resource generator — historial en los use cases (spec 31)', () => {
     expect(test).toContain('new RegisterProjectUseCase(repositoryMock, auditTrail)')
   })
 
+  it('project expone GET /:id/history con su use case fino sobre el puerto', async () => {
+    const tree = await emit('project')
+
+    const useCase = read(tree, 'out/backend/application/use-cases/get-project-history-usecase.service.ts')
+    expect(useCase).toContain('export class GetProjectHistoryUseCase')
+    expect(useCase).toContain("this.auditTrail.of('project', input.id, 50)")
+    expect(read(tree, 'out/backend/application/handlers/get-project-history.handler.ts')).toContain(
+      'export class GetProjectHistoryHandler'
+    )
+
+    const controller = read(tree, 'out/backend/infrastructure/entrypoints/projects.controller.ts')
+    expect(controller).toContain("@Get(':id/history')")
+
+    const module = read(tree, 'out/backend/projects.module.ts')
+    expect(module).toContain('GetProjectHistoryHandler')
+    expect(module).toContain('GetProjectHistoryUseCase')
+
+    expect(read(tree, 'out/backend-tests-application/get-project-history-usecase.test.ts')).toContain(
+      'GetProjectHistoryUseCase'
+    )
+  })
+
+  it('customer no emite nada del endpoint de historial', async () => {
+    const tree = await emit('customer')
+
+    expect(tree.exists('out/backend/application/use-cases/get-customer-history-usecase.service.ts')).toBe(false)
+    expect(read(tree, 'out/backend/infrastructure/entrypoints/customers.controller.ts')).not.toContain('history')
+  })
+
   it('customer (sin history) queda exactamente igual que antes', async () => {
     const tree = await emit('customer')
 
