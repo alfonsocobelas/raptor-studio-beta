@@ -3,6 +3,6 @@
 .angular
 apps/studio
 tmp
-tmp/generated/app-golden
-tmp/generated/app-mongo-golden
 tools/golden-fixtures
+apps/soporte
+apps/fincaraiz

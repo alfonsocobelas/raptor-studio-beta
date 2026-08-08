@@ -45,6 +45,26 @@ describe('ignoreNestedWorkspace', () => {
     expect((tree.read('.nxignore', 'utf-8') ?? '').match(/apps\/vetcare/g)).toHaveLength(1)
   })
 
+  it('no añade nada si un patrón con comodín ya cubre la ruta', () => {
+    // los tmp por ejecución del gate de oro (tmp/generated-<pid>/…) se cubren con
+    // un glob; sin esto, cada corrida del gate añadía dos líneas al .nxignore
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('.nxignore', 'tmp/generated-*\n')
+
+    ignoreNestedWorkspace(tree, 'tmp/generated-83014/app-golden')
+
+    expect(tree.read('.nxignore', 'utf-8')).toBe('tmp/generated-*\n')
+  })
+
+  it('un patrón que no cubre la ruta no impide añadirla', () => {
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('.nxignore', 'tmp/generated-*\n')
+
+    ignoreNestedWorkspace(tree, 'apps/vetcare')
+
+    expect(tree.read('.nxignore', 'utf-8')).toContain('apps/vetcare')
+  })
+
   it('no toca nada si la app se genera en la raíz del propio workspace', () => {
     const tree = createTreeWithEmptyWorkspace()
 
