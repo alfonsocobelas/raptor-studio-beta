@@ -16,7 +16,7 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         customer_name            VARCHAR(255) NOT NULL,
         cms_case_id              VARCHAR(30) NOT NULL DEFAULT '',
         business_model           VARCHAR(100) NOT NULL DEFAULT '',
-        sub_solution_areas       TEXT NOT NULL DEFAULT "'{}'",
+        sub_solution_areas       TEXT NOT NULL DEFAULT '{}',
         nbr_of_contracts         INTEGER NOT NULL DEFAULT 1,
         is_favorite              BOOLEAN NOT NULL DEFAULT false,
         status                   VARCHAR(20) NOT NULL DEFAULT 'active',
