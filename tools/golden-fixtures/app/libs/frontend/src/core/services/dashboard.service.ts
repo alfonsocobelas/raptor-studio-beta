@@ -21,15 +21,6 @@ export class DashboardService {
   readonly projects = this._total('/api/v1/projects')
   readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
 
-  readonly contracts = this._total('/api/v1/contracts')
-  readonly contractsTotal = computed(() => (this.contracts.hasValue() ? this.contracts.value().total : 0))
-
-  readonly projects = this._total('/api/v1/projects')
-  readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
-
-  readonly contracts = this._total('/api/v1/contracts')
-  readonly contractsTotal = computed(() => (this.contracts.hasValue() ? this.contracts.value().total : 0))
-
   readonly contractsByContractType = this._counts('/api/v1/contracts', 'contractType', [
     'cloud',
     'onprem',
@@ -48,9 +39,6 @@ export class DashboardService {
     () =>
       this.contracts.isLoading() ||
       this.projects.isLoading() ||
-      this.contracts.isLoading() ||
-      this.projects.isLoading() ||
-      this.contracts.isLoading() ||
       this.contractsByContractType.isLoading() ||
       this.projectsWhereStatusPlanning.isLoading() ||
       this.contractsSeriesStartDate.isLoading()
@@ -59,9 +47,6 @@ export class DashboardService {
     () =>
       this.contracts.error() !== undefined ||
       this.projects.error() !== undefined ||
-      this.contracts.error() !== undefined ||
-      this.projects.error() !== undefined ||
-      this.contracts.error() !== undefined ||
       this.contractsByContractType.error() !== undefined ||
       this.projectsWhereStatusPlanning.error() !== undefined ||
       this.contractsSeriesStartDate.error() !== undefined

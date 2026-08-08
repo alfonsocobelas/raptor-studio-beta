@@ -1,10 +1,60 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-/** Esquema inicial derivado de los modelos: contracts, projects. */
+/** Esquema inicial derivado de los modelos: contracts, projects, customers. */
 export class InitialSchema1790000000000 implements MigrationInterface {
   name = 'InitialSchema1790000000000'
 
   async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS sap_licensing`)
+
+    await queryRunner.query(`
+      CREATE TABLE sap_licensing.customers (
+        id                   UUID NOT NULL,
+        sap_id               VARCHAR(20) NOT NULL,
+        name                 VARCHAR(255) NOT NULL,
+        tax_id               VARCHAR(20) NOT NULL DEFAULT '',
+        industry             VARCHAR(100) NOT NULL DEFAULT '',
+        address              VARCHAR(500) NOT NULL DEFAULT '',
+        phone                VARCHAR(255) NOT NULL DEFAULT '',
+        notes                VARCHAR(1000) NOT NULL DEFAULT '',
+        city                 VARCHAR(100) NOT NULL DEFAULT '',
+        country              VARCHAR(100) NOT NULL DEFAULT '',
+        customer_type        VARCHAR(10) NOT NULL,
+        status               VARCHAR(20) NOT NULL DEFAULT 'active',
+        archived_at          TIMESTAMPTZ NULL,
+        last_seen_in_sync_at TIMESTAMPTZ NULL,
+        created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT           pk_customers PRIMARY KEY (id),
+        CONSTRAINT           uq_customers_sap_id UNIQUE (sap_id)
+      )
+    `)
+
+    await queryRunner.query(`
+      CREATE UNIQUE INDEX uq_customers_tax_id
+        ON sap_licensing.customers (tax_id)
+        WHERE tax_id <> ''
+    `)
+
+    await queryRunner.query(`
+      CREATE TABLE sap_licensing.contacts (
+        id          UUID NOT NULL,
+        customer_id UUID NOT NULL,
+        name        VARCHAR(255) NOT NULL,
+        role        VARCHAR(255) NOT NULL,
+        email       VARCHAR(255) NOT NULL,
+        phone       VARCHAR(255) NOT NULL,
+        is_primary  BOOLEAN NOT NULL,
+        deleted_at  TIMESTAMPTZ NULL,
+        CONSTRAINT  pk_contacts PRIMARY KEY (id),
+        CONSTRAINT  fk_contacts_customer FOREIGN KEY (customer_id) REFERENCES sap_licensing.customers (id) ON DELETE CASCADE
+      )
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_contacts_customer_id ON sap_licensing.contacts (customer_id)
+    `)
+
     await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS sap_licensing`)
 
     await queryRunner.query(`
@@ -38,8 +88,13 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
         CONSTRAINT               pk_contracts PRIMARY KEY (id),
+        CONSTRAINT               fk_contracts_customer FOREIGN KEY (customer_id) REFERENCES sap_licensing.customers (id) ON DELETE RESTRICT,
         CONSTRAINT               uq_contracts_contract_number UNIQUE (contract_number)
       )
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_contracts_customer_id ON sap_licensing.contracts (customer_id)
     `)
 
     await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS sap_licensing`)
@@ -70,8 +125,13 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
         deleted_at           TIMESTAMPTZ NULL,
         CONSTRAINT           pk_projects PRIMARY KEY (id),
+        CONSTRAINT           fk_projects_customer FOREIGN KEY (customer_id) REFERENCES sap_licensing.customers (id) ON DELETE RESTRICT,
         CONSTRAINT           uq_projects_name UNIQUE (name)
       )
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_projects_customer_id ON sap_licensing.projects (customer_id)
     `)
 
     await queryRunner.query(`
@@ -122,5 +182,7 @@ export class InitialSchema1790000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects_attachments`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.contracts`)
+    await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.contacts`)
+    await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.customers`)
   }
 }

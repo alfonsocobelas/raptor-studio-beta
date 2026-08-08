@@ -8,10 +8,7 @@ import { DashboardService } from './dashboard.service'
 /** Total devuelto por cada endpoint, distinto por recurso para detectar cruces. */
 const TOTALS: Record<string, number> = {
   '/api/v1/contracts': 7,
-  '/api/v1/projects': 14,
-  '/api/v1/contracts': 21,
-  '/api/v1/projects': 28,
-  '/api/v1/contracts': 35
+  '/api/v1/projects': 14
 }
 
 describe('DashboardService — totales por recurso', () => {
@@ -40,25 +37,16 @@ describe('DashboardService — totales por recurso', () => {
     await load()
     expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
     expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
   })
 
   it('exposes zero totals while there is no data', () => {
     expect(service.contractsTotal()).toBe(0)
     expect(service.projectsTotal()).toBe(0)
-    expect(service.contractsTotal()).toBe(0)
-    expect(service.projectsTotal()).toBe(0)
-    expect(service.contractsTotal()).toBe(0)
   })
 
   it('exposes the total of every resource once loaded', async () => {
     await load()
     expect(service.contractsTotal()).toBe(7)
     expect(service.projectsTotal()).toBe(14)
-    expect(service.contractsTotal()).toBe(21)
-    expect(service.projectsTotal()).toBe(28)
-    expect(service.contractsTotal()).toBe(35)
   })
 })

@@ -10,6 +10,7 @@ import { AuthModule } from './contexts/iam/modules/auth/auth.module'
 import { StorageModule } from './contexts/shared/infrastructure/storage/storage.module'
 import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
 import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projects.module'
+import { CustomersModule } from './contexts/sap-licensing/modules/customers/customers.module'
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { ProjectsModule } from './contexts/sap-licensing/modules/projects/projec
     AuthModule,
     StorageModule,
     ContractsModule,
-    ProjectsModule
+    ProjectsModule,
+    CustomersModule
   ],
   providers: [
     {

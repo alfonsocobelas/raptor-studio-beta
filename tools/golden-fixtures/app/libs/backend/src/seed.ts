@@ -4,6 +4,10 @@ import { NestFactory } from '@nestjs/core'
 import { CoreConfigModule } from './contexts/shared/infrastructure/config/config.module'
 import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.module'
 import { SharedPersistenceModule } from './contexts/shared/infrastructure/persistence/typeorm/shared-persistence.module'
+import { CustomersModule } from './contexts/sap-licensing/modules/customers/customers.module'
+import { RegisterCustomerUseCase } from './contexts/sap-licensing/modules/customers/application/use-cases/register-customer-usecase.service'
+import { SEED_CUSTOMERS } from './contexts/sap-licensing/modules/customers/infrastructure/seed/local-seed.fixtures'
+import { CustomerLocalSeeder } from './contexts/sap-licensing/modules/customers/infrastructure/seed/local-seeder'
 import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
 import { RegisterContractUseCase } from './contexts/sap-licensing/modules/contracts/application/use-cases/register-contract-usecase.service'
 import { SEED_CONTRACTS } from './contexts/sap-licensing/modules/contracts/infrastructure/seed/local-seed.fixtures'
@@ -14,7 +18,7 @@ import { SEED_PROJECTS } from './contexts/sap-licensing/modules/projects/infrast
 import { ProjectLocalSeeder } from './contexts/sap-licensing/modules/projects/infrastructure/seed/local-seeder'
 
 @Module({
-  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, ContractsModule, ProjectsModule]
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, CustomersModule, ContractsModule, ProjectsModule]
 })
 class SeedModule {}
 
@@ -30,6 +34,10 @@ async function bootstrap(): Promise<void> {
 
   const context = await NestFactory.createApplicationContext(SeedModule, { logger: ['error', 'warn'] })
   try {
+    const customersSummary = await new CustomerLocalSeeder(context.get(RegisterCustomerUseCase)).seed(SEED_CUSTOMERS)
+    console.log(
+      `[seed] customers: +${customersSummary.customersCreated} created, ${customersSummary.customersSkipped} skipped`
+    )
     const contractsSummary = await new ContractLocalSeeder(context.get(RegisterContractUseCase)).seed(SEED_CONTRACTS)
     console.log(
       `[seed] contracts: +${contractsSummary.contractsCreated} created, ${contractsSummary.contractsSkipped} skipped`

@@ -5,6 +5,8 @@ import { join } from 'path'
 import { TypeOrmContractEntity } from '../../../../sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity'
 import { TypeOrmProjectEntity } from '../../../../sap-licensing/modules/projects/infrastructure/persistence/typeorm/typeorm-project.entity'
 import { TypeOrmProjectAttachmentEntity } from '../../../../sap-licensing/modules/projects/infrastructure/attachments/project-attachment.entity'
+import { TypeOrmCustomerEntity } from '../../../../sap-licensing/modules/customers/infrastructure/persistence/typeorm/typeorm-customer.entity'
+import { TypeOrmContactEntity } from '../../../../sap-licensing/modules/customers/infrastructure/persistence/typeorm/typeorm-contact.entity'
 import { TypeOrmAuditEventEntity } from '../../audit/typeorm-audit-event.entity'
 import { TransactionManager } from '../../../domain/persistence/transaction-manager'
 import { TypeOrmCriteriaConverter } from './typeorm-criteria-converter'
@@ -29,6 +31,8 @@ import { SnakeNamingStrategy } from './snake-naming.strategy'
           TypeOrmContractEntity,
           TypeOrmProjectEntity,
           TypeOrmProjectAttachmentEntity,
+          TypeOrmCustomerEntity,
+          TypeOrmContactEntity,
           TypeOrmAuditEventEntity
         ],
         migrations: [join(__dirname, './migrations/*.{ts,js}')]

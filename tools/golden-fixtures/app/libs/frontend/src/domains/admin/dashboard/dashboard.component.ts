@@ -22,7 +22,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
       } @else if (service.loadError()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los datos</p>
       } @else {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
           <app-kpi-card
             title="Contratos"
             [value]="service.contractsTotal()"
@@ -34,24 +34,6 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
             [value]="service.projectsTotal()"
             subtitle="Proyectos de implementación SAP asociados a clientes"
             testId="kpi-projects"
-          />
-          <app-kpi-card
-            title="Contratos"
-            [value]="service.contractsTotal()"
-            subtitle="Gestión de contratos SAP y acuerdos de licenciamiento"
-            testId="kpi-contracts"
-          />
-          <app-kpi-card
-            title="Proyectos"
-            [value]="service.projectsTotal()"
-            subtitle="Proyectos de implementación SAP asociados a clientes"
-            testId="kpi-projects"
-          />
-          <app-kpi-card
-            title="Contratos"
-            [value]="service.contractsTotal()"
-            subtitle="Gestión de contratos SAP y acuerdos de licenciamiento"
-            testId="kpi-contracts"
           />
         </div>
 
