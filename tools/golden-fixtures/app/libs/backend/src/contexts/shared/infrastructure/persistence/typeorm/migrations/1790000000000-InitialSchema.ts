@@ -96,9 +96,29 @@ export class InitialSchema1790000000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE INDEX idx_projects_attachments_file_name ON sap_licensing.projects_attachments (file_name)
     `)
+
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS shared`)
+
+    await queryRunner.query(`
+      CREATE TABLE shared.audit_events (
+        id          UUID         NOT NULL,
+        entity      VARCHAR(100) NOT NULL,
+        entity_id   UUID         NOT NULL,
+        action      VARCHAR(20)  NOT NULL,
+        changes     JSONB        NOT NULL DEFAULT '{}',
+        occurred_at TIMESTAMPTZ  NOT NULL,
+        actor       VARCHAR(255) NULL,
+        CONSTRAINT pk_audit_events PRIMARY KEY (id)
+      )
+    `)
+
+    await queryRunner.query(`
+      CREATE INDEX idx_audit_events_entity ON shared.audit_events (entity, entity_id, occurred_at DESC)
+    `)
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS shared.audit_events`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects_attachments`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.projects`)
     await queryRunner.query(`DROP TABLE IF EXISTS sap_licensing.contracts`)
