@@ -8,26 +8,49 @@
 
 ## Emisión backend
 
-- [ ] TASK-01 — bandera `trash` en `build-substitutions` + port: `matchingDeleted`,
+- [x] TASK-01 — bandera `trash` en `build-substitutions` + port: `matchingDeleted`,
       `countDeleted`, `restore` en el template del repositorio abstracto
-- [ ] TASK-02 — repositorio TypeORM: implementación de los tres métodos (+ soporte en el
+- [x] TASK-02 — repositorio TypeORM: implementación de los tres métodos (+ soporte en el
       repo base del kernel si hace falta)
-- [ ] TASK-03 — repositorio Mongoose: implementación de los tres métodos
-- [ ] TASK-04 — `Restore<Entity>UseCase` + input + handler
-- [ ] TASK-05 — `SearchDeleted<Plural>UseCase` + handler (espejo del search)
-- [ ] TASK-06 — controller: `GET /deleted` (antes de `:id`) + `POST /:id/restore` + wiring
+- [x] TASK-03 — repositorio Mongoose: implementación de los tres métodos
+- [x] TASK-04 — `Restore<Entity>UseCase` + input + handler
+- [x] TASK-05 — `SearchDeleted<Plural>UseCase` + handler (espejo del search)
+- [x] TASK-06 — controller: `GET /deleted` (antes de `:id`) + `POST /:id/restore` + wiring
       en el module
-- [ ] TASK-07 — tests emitidos: use case restore + integración (dos motores)
+- [x] TASK-07 — tests emitidos: use case restore + integración (dos motores)
 
 ## Emisión frontend
 
-- [ ] TASK-08 — servicio: `trashRequest` + resource `/deleted` + `restore(id)`
-- [ ] TASK-09 — componente papelera + ruta `<ruta>/papelera` + enlace en la toolbar del listado
+- [x] TASK-08 — servicio: `trashRequest` + resource `/deleted` + `restore(id)`
+- [x] TASK-09 — componente papelera + ruta `<ruta>/papelera` + enlace en la toolbar del listado
 
 ## Gates
 
-- [ ] TASK-10 — re-baseline de oro deliberado (license, project, apps) revisando el diff;
+- [x] TASK-10 — re-baseline de oro deliberado (license, project, apps) revisando el diff;
       customer y contract sin cambio alguno
-- [ ] TASK-11 — el emitido compila y sus tests pasan (typecheck-emitted + suites del golden app)
-- [ ] TASK-12 — e2e con navegador: borrar → papelera → restaurar en una app generada (si
+- [x] TASK-11 — el emitido compila y sus tests pasan (typecheck-emitted + suites del golden app)
+- [x] TASK-12 — e2e con navegador: borrar → papelera → restaurar en una app generada (si
       Docker disponible; si no, anotar bloqueo como en specs 15/16/17)
+
+---
+
+## Cierre (2026-08-08)
+
+- E2E con navegador sobre una app generada con `vehicle` (que ganó `softDelete` para estrenar
+  la papelera en la demo del concesionario): evidencias `apps/studio/e2e-10..13-papelera-*.png`
+  (listado con enlace, borrado visible en papelera, papelera vacía tras restaurar, registro
+  de vuelta al listado).
+- Integración emitida contra Postgres real: 27/27, incluida la suite `trash` de project.
+- Typecheck del emitido: 0 errores; suite unit emitida 386/386.
+- Correr por primera vez la integración del oro destapó y arregló 4 defectos latentes del
+  generador (ajenos a la papelera): `defaultRaw` con comillas TS en el SQL, tabla del hijo de
+  composición ausente en la migración, tipos por defecto sin `column` (boolean→VARCHAR) y
+  columnas array sin `[]`; además el arranger de tests ahora desactiva los triggers de FK.
+
+### Limitaciones anotadas
+
+- La papelera muestra el botón «Exportar» del DataTable sin cablear (el botón es incondicional
+  en el componente y `data-table.ts.template` estaba en manos de otra sesión): pendiente un
+  input `showExport` y ocultarlo en la papelera.
+- El seed de `contract` (modelos legacy de sap-licenses) viola `noInnerWhitespace` en
+  `contractNumber`: la siembra del oro aborta ahí. Es de los samples, no del pipeline.

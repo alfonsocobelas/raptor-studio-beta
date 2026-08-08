@@ -76,7 +76,7 @@ detrás del trabajo activo (spec 15). Una spec por componente, cada una con su g
 
 | Nº  | Spec                 | Objetivo                                                                                                                                                              | Estado    |
 | --- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| A1  | `vista-papelera`     | `softDelete: true` habilita listado de borrados + restaurar (el `deletedAt` ya se emite; hoy nadie lo ve)                                                             | Pendiente |
+| A1  | ✅ `vista-papelera` (spec 29) | `softDelete + delete` habilita papelera completa: GET /deleted + restore (404 si no hay borrado), vista con restaurar, tests emitidos y e2e (e2e-10..13). De propina: 4 defectos latentes de migraciones arreglados al correr por 1ª vez la integración del oro | ✅ 2026-08-08 |
 | A2  | `vista-gantt`        | `{ kind: 'gantt', resource }` sobre recursos con `period`: cronograma derivable al 100%                                                                                | Pendiente |
 | A3  | `historial-cambios`  | `audit: true` habilita timeline de cambios en la ficha (pieza cara: tabla de eventos + captura en escritura)                                                          | Pendiente |
 | C1v | `widgets-analiticos` | Dashboard: conteo por enum (donut/barras), conteo filtrado, suma/media de campo numérico, serie temporal por mes. Pide agregaciones nuevas en el Criteria del backend | Pendiente |
