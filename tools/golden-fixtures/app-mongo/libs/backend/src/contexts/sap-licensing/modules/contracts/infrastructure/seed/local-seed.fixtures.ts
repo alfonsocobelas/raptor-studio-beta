@@ -6,7 +6,7 @@ const DERIVED: RegisterContractInput[] = [
   {
     id: '019eb800-b7e7-7000-8000-000000000001',
     contractType: 'cloud',
-    contractNumber: 'ContractNumber seed 1',
+    contractNumber: 'SEED-CONTRACT-1',
     customerId: '019eb800-9a64-7000-8000-000000000001',
     customerName: 'CustomerName seed 1',
     status: 'active',
@@ -18,7 +18,7 @@ const DERIVED: RegisterContractInput[] = [
   {
     id: '019eb800-b7e7-7000-8000-000000000002',
     contractType: 'onprem',
-    contractNumber: 'ContractNumber seed 2',
+    contractNumber: 'SEED-CONTRACT-2',
     customerId: '019eb800-9a64-7000-8000-000000000002',
     customerName: 'CustomerName seed 2',
     status: 'expiring',
