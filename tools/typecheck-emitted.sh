@@ -49,8 +49,14 @@ if ! (cd "$APP" && npm install --no-audit --no-fund >"$OUTSIDE/install.log" 2>&1
   exit 1
 fi
 
-echo "▶ tsc --noEmit"
+echo "▶ tsc --noEmit (backend + shared)"
 (cd "$APP" && npx tsc -p tsconfig.json --noEmit > "$OUTSIDE/tsc.log" 2>&1)
+
+# El tsconfig raíz solo incluye backend+shared: los dialogs rotos (TS2693/TS2307 de la
+# spec 04) dieron «0 errores» dos días. El frontend se mide con SU tsconfig (lib dom).
+echo "▶ tsc --noEmit (frontend)"
+(cd "$APP" && npx tsc -p apps/frontend-app/tsconfig.app.json --noEmit >> "$OUTSIDE/tsc.log" 2>&1)
+
 errors=$(grep -c "error TS" "$OUTSIDE/tsc.log" || true)
 
 if [[ "$errors" -eq 0 ]]; then
