@@ -1,4 +1,4 @@
-import { CustomerDto, CustomerClassification } from '@app/shared/domain'
+import { CustomerDto } from '@app/shared/domain'
 import { OffsetPaginatedOutput } from '../customer.service'
 
 // Datos de prueba derivados del resource-schema (generados): los specs del servicio y del
@@ -15,7 +15,7 @@ export const MOCK_CUSTOMERS: CustomerDto[] = [
     notes: 'Notes 1',
     city: 'City 1',
     country: 'Country 1',
-    customerType: CustomerClassification.CLOUD,
+    customerType: 'cloud',
     status: 'Status 1',
     archivedAt: '2026-01-15T10:00:00.000Z',
     lastSeenInSyncAt: '2026-01-15T10:00:00.000Z'
@@ -31,7 +31,7 @@ export const MOCK_CUSTOMERS: CustomerDto[] = [
     notes: 'Notes 2',
     city: 'City 2',
     country: 'Country 2',
-    customerType: CustomerClassification.ONPREM,
+    customerType: 'onprem',
     status: 'Status 2',
     archivedAt: null,
     lastSeenInSyncAt: null

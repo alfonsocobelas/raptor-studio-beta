@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { provideZonelessChangeDetection } from '@angular/core'
 import { TestBed } from '@angular/core/testing'
-import { CustomerClassification } from '@app/shared/domain'
 import { of } from 'rxjs'
 import { vi } from 'vitest'
 import { CustomerService } from './customer.service'
@@ -133,7 +132,7 @@ describe('CustomerService — mutaciones', () => {
       id: '019eb713-19bb-7000-8000-000000000001',
       sapId: 'SapId 1',
       name: 'Name 2',
-      customerType: CustomerClassification.HYBRID
+      customerType: 'hybrid'
     })
 
     expect(httpPost).toHaveBeenCalledOnce()
