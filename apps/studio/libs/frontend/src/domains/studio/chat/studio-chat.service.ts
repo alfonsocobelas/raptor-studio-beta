@@ -44,7 +44,9 @@ export class StudioChatService {
             resources: this.store.resources(),
             pages: this.store.pages(),
             // la memoria del negocio viaja en cada turno: el siguiente no repregunta (spec 22)
-            ...(this.store.brief() ? { brief: this.store.brief() } : {})
+            ...(this.store.brief() ? { brief: this.store.brief() } : {}),
+            // y los procesos dibujados también: sin ellos, «conserva los existentes» no tiene qué conservar (spec 28)
+            ...(this.store.flows().length ? { flows: this.store.flows() } : {})
           }
         })
       )
