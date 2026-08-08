@@ -36,6 +36,12 @@
       · property-test con 5 colores de marca: ningún token derivado se sale de sRGB
       · verificación estática: app generada con `#1a6dff` → tokens teñidos al tono 261 y clase
         correcta en el index.html
-- [ ] TASK-10 — e2e: dos apps lado a lado, una de catálogo y otra con semilla
-      · BLOQUEADA por lo mismo que las otras e2e: hace falta Docker (postgres) y navegador para
-        levantar las dos apps. La parte estática está verificada en TASK-09
+- [x] TASK-10 — e2e: dos apps lado a lado, una de catálogo y otra con semilla
+      · 2026-08-08, desbloqueada levantando Docker Desktop: dos apps generadas del MISMO diseño
+        (tienda-ocean con theme.id y tienda-marca con theme.seed #1a6dff), cada una con su
+        postgres (5461/5462), api (3461/3462) y web (4461/4462), datos reales sembrados
+      · verificado en vivo (e2e-19/20.png): body `theme-ocean` vs `theme-seed-1a6dff`,
+        --background oklch(0.965 0.016 236) vs oklch(0.965 0.016 261.165), primarias distintas
+      · la demo detectó un bug real: el compose emitido no fijaba nombre de PROYECTO y el up de
+        la segunda app sustituía el contenedor de la primera — arreglado en el generador
+        (4869274) con re-baseline propio (ecbbc5c), nunca a mano en las apps generadas
