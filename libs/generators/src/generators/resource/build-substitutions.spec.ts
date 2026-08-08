@@ -159,7 +159,9 @@ describe('buildSubstitutions — spec 03 derivations', () => {
         'source',
         'customerId',
         'customerName',
-        'contractNumber'
+        'contractNumber',
+        // filterable: true (sin número) va al final, en orden de campo — spec 32
+        'startDate'
       ])
     })
 

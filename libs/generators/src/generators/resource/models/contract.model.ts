@@ -214,7 +214,8 @@ export const contract = defineResource({
       type: 'date',
       nullable: true,
       voShared: { name: 'ContractDate' },
-      query: { sortable: 3 },
+      // filterable desde la spec 32: la serie mensual del dashboard cuenta por rangos de inicio
+      query: { sortable: 3, filterable: true },
       table: { show: true, order: 4, label: 'Inicio', type: 'date', minWidth: 120 },
       required: true,
       form: { control: 'date', label: 'Fecha inicio', id: 'start', section: 'contract', order: 5 },

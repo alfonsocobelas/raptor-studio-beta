@@ -26,7 +26,11 @@ export const golden = defineApp({
       label: 'Dashboard',
       widgets: [
         { kind: 'kpi-total', resource: 'contract' },
-        { kind: 'kpi-total', resource: 'project' }
+        { kind: 'kpi-total', resource: 'project' },
+        // analíticos (spec 32): compuestos de conteos filtrados sobre el listado
+        { kind: 'count-by', resource: 'contract', field: 'contractType', label: 'Contratos por tipo' },
+        { kind: 'kpi-count', resource: 'project', field: 'status', equals: 'planning', label: 'Proyectos en planificación' },
+        { kind: 'series', resource: 'contract', field: 'startDate', label: 'Altas de contrato por mes' }
       ]
     },
     { kind: 'resource', resource: 'contract' },
