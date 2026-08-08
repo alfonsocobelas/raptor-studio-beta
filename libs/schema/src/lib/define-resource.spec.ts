@@ -258,6 +258,14 @@ describe('gantt — cronograma derivado del period (spec 30)', () => {
   })
 })
 
+describe('history — historial de cambios (spec 31)', () => {
+  it('acepta un recurso que declara historial; su presencia es lo que lo emite', () => {
+    const model = defineResource({ ...validDefinition(), history: true })
+
+    expect(model.history).toBe(true)
+  })
+})
+
 describe('code — código de negocio autogenerado (spec 19)', () => {
   it('acepta un recurso que declara código, con prefijo derivado', () => {
     expect(defineResource({ ...validDefinition(), code: {} }).code).toEqual({})

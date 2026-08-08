@@ -383,6 +383,9 @@ export interface ResourceDefinition {
   gallery?: GalleryDefinition
   /** Cronograma de barras sobre el mismo listado (spec 30); exige period */
   gantt?: GanttDefinition
+  /** Historial de cambios (spec 31): los use cases de escritura registran eventos
+   *  en la tabla global audit_events y la ficha muestra la timeline */
+  history?: boolean
   /** Código de negocio autogenerado y legible (spec 19) */
   code?: CodeDefinition
   /** Frase de negocio de la entidad (spec 22): documentación que viaja, nunca fuente de código */
