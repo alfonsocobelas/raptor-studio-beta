@@ -1,3 +1,4 @@
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
 import { v7 as uuidv7 } from 'uuid'
 import { RemoveProjectUseCase } from '../../../../../src/contexts/sap-licensing/modules/projects/application/use-cases/remove-project-usecase.service'
 import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
@@ -7,10 +8,11 @@ import { ProjectRepositoryMock } from '../../mocks/project.repository.mock'
 describe('RemoveProjectUseCase', () => {
   let repositoryMock: ProjectRepositoryMock
   let useCase: RemoveProjectUseCase
+  const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
 
   beforeEach(() => {
     repositoryMock = new ProjectRepositoryMock()
-    useCase = new RemoveProjectUseCase(repositoryMock)
+    useCase = new RemoveProjectUseCase(repositoryMock, auditTrail)
   })
 
   describe('given the project exists', () => {

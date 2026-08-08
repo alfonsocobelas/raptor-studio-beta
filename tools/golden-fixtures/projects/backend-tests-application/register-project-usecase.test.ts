@@ -1,3 +1,4 @@
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
 import { RegisterProjectUseCase } from '../../../../../src/contexts/sap-licensing/modules/projects/application/use-cases/register-project-usecase.service'
 import { AlreadyExistsError } from '../../../../../src/contexts/shared/domain/errors'
 import { ProjectMother } from '../../domain/mothers/project.mother'
@@ -6,10 +7,11 @@ import { ProjectRepositoryMock } from '../../mocks/project.repository.mock'
 describe('RegisterProjectUseCase', () => {
   let repositoryMock: ProjectRepositoryMock
   let useCase: RegisterProjectUseCase
+  const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
 
   beforeEach(() => {
     repositoryMock = new ProjectRepositoryMock()
-    useCase = new RegisterProjectUseCase(repositoryMock)
+    useCase = new RegisterProjectUseCase(repositoryMock, auditTrail)
   })
 
   describe('given no duplicate exists', () => {
