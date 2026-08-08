@@ -39,6 +39,7 @@ const STUDIO_ICONS = {
   lucideX
 }
 import { DesignStore } from './design-store'
+import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
@@ -101,6 +102,82 @@ const BLOCK_TOOLS: BlockTool[] = [
             </text>
           </svg>
           <span class="text-[15px] font-semibold tracking-tight">Raptor Studio</span>
+        </div>
+        <div class="bg-border h-6 w-px"></div>
+
+        <!-- historial de diseños (spec 21): selector + indicador de guardado -->
+        <div class="relative">
+          <button
+            type="button"
+            class="toolbar-item flex items-center gap-1.5"
+            data-testid="design-menu-toggle"
+            (click)="designMenu.set(!designMenu())"
+          >
+            <span
+              class="inline-block h-2 w-2 rounded-full"
+              [class.bg-emerald-500]="history.saveState() === 'saved'"
+              [class.bg-amber-500]="history.saveState() === 'saving'"
+              [class.bg-destructive]="history.saveState() === 'error'"
+              [class.bg-muted-foreground]="history.saveState() === 'idle'"
+              [attr.data-testid]="'save-state-' + history.saveState()"
+              [attr.title]="'Guardado: ' + history.saveState()"
+            ></span>
+            {{ store.appName() }}
+          </button>
+          @if (designMenu()) {
+            <div class="bg-background absolute left-0 top-9 z-30 w-72 rounded-md border p-1 shadow-md">
+              @for (design of history.designs(); track design.slug) {
+                <div class="group flex items-center">
+                  <button
+                    type="button"
+                    class="hover:bg-accent flex-1 rounded px-2 py-1.5 text-left text-sm"
+                    [class.font-semibold]="design.slug === history.activeSlug()"
+                    [attr.data-testid]="'design-open-' + design.slug"
+                    (click)="designMenu.set(false); history.select(design.slug)"
+                  >
+                    {{ design.appName }}
+                    <span class="text-muted-foreground block text-xs">{{ design.slug }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="text-destructive hidden px-2 text-xs group-hover:block"
+                    [attr.data-testid]="'design-delete-' + design.slug"
+                    title="Borrar diseño"
+                    (click)="history.remove(design.slug)"
+                  >
+                    ✕
+                  </button>
+                </div>
+              }
+              @if (!history.designs().length) {
+                <p class="text-muted-foreground px-2 py-1.5 text-xs">Aún no hay diseños guardados</p>
+              }
+              <div class="my-1 border-t"></div>
+              <button
+                type="button"
+                class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
+                data-testid="design-new"
+                (click)="designMenu.set(false); history.createNew()"
+              >
+                + Nuevo diseño
+              </button>
+              <form class="flex items-center gap-1 px-2 py-1.5" (ngSubmit)="renameDesign()">
+                <input
+                  class="border-input w-full rounded border px-1.5 py-0.5 text-xs"
+                  name="designSlug"
+                  placeholder="renombrar a… (kebab-case)"
+                  [(ngModel)]="renameSlug"
+                  data-testid="design-rename-input"
+                />
+                <button type="submit" class="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs">
+                  ✓
+                </button>
+              </form>
+              @if (history.lastProblem(); as problem) {
+                <p class="text-destructive px-2 pb-1 text-xs" data-testid="design-problem">{{ problem }}</p>
+              }
+            </div>
+          }
         </div>
         <div class="bg-border h-6 w-px"></div>
 
@@ -457,6 +534,7 @@ const BLOCK_TOOLS: BlockTool[] = [
 })
 export class StudioCanvasComponent {
   protected readonly store = inject(DesignStore)
+  protected readonly history = inject(DesignHistoryService)
   protected readonly preview = inject(PreviewSettings)
   protected readonly palettes = PREVIEW_PALETTES
   /** Tokens del tema elegido: los mismos que emitirá el generador */
@@ -465,6 +543,8 @@ export class StudioCanvasComponent {
   protected readonly blockTools = BLOCK_TOOLS
 
   protected readonly mode = signal<'views' | 'model' | 'flows'>('views')
+  protected readonly designMenu = signal(false)
+  protected readonly renameSlug = signal('')
   protected readonly viewMenu = signal(false)
   protected readonly blockMenu = signal<BlockKind | null>(null)
   protected readonly creating = signal<string | null>(null)
@@ -476,6 +556,19 @@ export class StudioCanvasComponent {
   protected readonly pages = computed(() => this.store.pages())
   protected readonly clampedTab = computed(() => Math.min(this.activeTab(), Math.max(this.pages().length - 1, 0)))
   protected readonly presetLabel = computed(() => this.presets.find(p => p.id === this.creating())?.label ?? '')
+
+  constructor() {
+    // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue
+    void this.history.init()
+  }
+
+  protected renameDesign(): void {
+    const slug = this.renameSlug().trim()
+    if (!slug) return
+    void this.history.rename(slug)
+    this.renameSlug.set('')
+    this.designMenu.set(false)
+  }
 
   protected startPage(presetId: string): void {
     this.viewMenu.set(false)
