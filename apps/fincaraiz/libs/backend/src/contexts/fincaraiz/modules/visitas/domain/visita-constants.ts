@@ -1,6 +1,0 @@
-export const VISITA_CONSTRAINTS = {
-  REFERENCIA: { MIN: 2, MAX: 200 },
-  INTERESADO: { MAX: 200 },
-  OBSERVACIONES: { MAX: 2000 },
-  PROPIEDAD_NAME: { MAX: 200 }
-} as const
