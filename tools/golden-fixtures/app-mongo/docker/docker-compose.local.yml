@@ -1,5 +1,6 @@
 # Mongo local. Single-node REPLICA SET a propósito: las transacciones de Mongo solo
 # existen sobre un replica set, y el TransactionManager del kernel las usa.
+name: app-mongo-golden-local
 services:
   mongo-local:
     image: mongo:7

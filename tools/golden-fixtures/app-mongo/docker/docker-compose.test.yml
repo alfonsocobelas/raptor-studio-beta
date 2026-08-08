@@ -1,5 +1,6 @@
 # Mongo efímero para integración: sin volumen y con los datos en tmpfs.
 # Single-node replica set igual que el local (las transacciones lo exigen).
+name: app-mongo-golden-test
 services:
   mongo-test:
     image: mongo:7
