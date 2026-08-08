@@ -9,6 +9,7 @@ const DERIVED: RegisterProjectInput[] = [
     customerName: 'CustomerName seed 1',
     name: 'Name seed 1',
     startDate: '2026-01-01',
+    endDate: '2026-07-28',
     status: 'planning',
     implementer: 'AVVALE'
   },
@@ -17,7 +18,8 @@ const DERIVED: RegisterProjectInput[] = [
     customerId: '019eb800-9a64-7000-8000-000000000002',
     customerName: 'CustomerName seed 2',
     name: 'Name seed 2',
-    startDate: '2026-01-02',
+    startDate: '2026-02-01',
+    endDate: '2026-08-28',
     status: 'active',
     implementer: 'THIRD_PARTY'
   }

@@ -12,6 +12,7 @@ const DERIVED: RegisterContractInput[] = [
     status: 'active',
     source: 'AVVALE_SOLD',
     startDate: '2026-01-01',
+    endDate: '2026-07-28',
     billingFrequency: 'monthly',
     renewalType: 'auto'
   },
@@ -23,7 +24,8 @@ const DERIVED: RegisterContractInput[] = [
     customerName: 'CustomerName seed 2',
     status: 'expiring',
     source: 'CUSTOMER_OWNED',
-    startDate: '2026-01-02',
+    startDate: '2026-02-01',
+    endDate: '2026-08-28',
     billingFrequency: 'quarterly',
     renewalType: 'manual'
   }
