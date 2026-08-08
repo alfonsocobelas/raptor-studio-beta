@@ -216,6 +216,8 @@ export const vehicle = defineResource({
       column: { type: 'varchar', lengthConst: 'NOTES.MAX', default: '' }
     }
   },
+  // Borrado recuperable (spec 29): la demo del concesionario estrena la papelera
+  softDelete: true,
   list: {
     deleteLabelField: 'plate',
     defaultSort: { field: 'brand', dir: 'asc' },
