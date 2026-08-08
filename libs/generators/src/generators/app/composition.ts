@@ -88,7 +88,8 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
       for (const widget of page.widgets) {
         const model = resolve(widget.resource)
         include(model)
-        kpiModels.push(model)
+        // solo los totales llevan tarjeta propia; los analíticos (spec 32) tienen su sección
+        if (widget.kind === 'kpi-total') kpiModels.push(model)
       }
       return { ...page, label: page.label ?? 'Dashboard' }
     }
@@ -98,6 +99,14 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     const suffix = page.kind === 'cards' ? ' · galería' : page.kind === 'gantt' ? ' · cronograma' : ''
     return { ...page, label: page.label ?? `${labelOf(model)}${suffix}` }
   })
+
+  // Un corte que referencia a un modelo fuera lo INCLUYE como dependencia (sin página):
+  // el emitido importa su id-VO y su servicio de lookup — sin el padre ni compila.
+  for (let index = 0; index < models.length; index++) {
+    for (const field of Object.values(models[index].fields ?? {})) {
+      if (field.relation) include(resolve(field.relation.to))
+    }
+  }
 
   // los widgets analíticos (spec 32) se validan contra el modelo: campo real, filterable
   // y del tipo que el widget necesita — el error llega al diseñar, no al compilar

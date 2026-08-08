@@ -149,3 +149,67 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     expect(subs['resourceEntries']).not.toContain('_counts')
   })
 })
+
+describe('composeApp — arreglos que destapó el typecheck del oro (spec 32)', () => {
+  const registryWithCustomer = () => {
+    const customer = {
+      schemaVersion: 1,
+      name: 'customer',
+      plural: 'customers',
+      context: 'crm',
+      schemaName: 'crm',
+      fields: { id: { type: 'uuid', pk: true } }
+    } as unknown as ResourceDefinition
+    const contract = {
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      fields: {
+        id: { type: 'uuid', pk: true },
+        customerId: { type: 'uuid', relation: { to: 'customer', kind: 'reference' } }
+      }
+    } as unknown as ResourceDefinition
+    return { customer, contract }
+  }
+
+  it('kpiModels solo cuenta los kpi-total: los analíticos no duplican tarjetas', () => {
+    const registry = registryWithCustomer()
+    const app = {
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [
+        {
+          kind: 'dashboard',
+          widgets: [
+            { kind: 'kpi-total', resource: 'customer' },
+            { kind: 'kpi-count', resource: 'customer', field: 'id', equals: 'x', label: 'X' }
+          ]
+        },
+        { kind: 'resource', resource: 'customer' }
+      ]
+    } as unknown as AppDefinition
+    // id es filterable en los modelos reales; aquí basta con declararlo
+    registry.customer.fields['id'].query = { filterable: true }
+
+    const composition = composeApp(app, registry)
+
+    expect(composition.kpiModels.map(m => m.name)).toEqual(['customer'])
+  })
+
+  it('un corte que referencia a un modelo fuera lo INCLUYE: sin el padre no compila ni funciona el lookup', () => {
+    const registry = registryWithCustomer()
+    const app = {
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'resource', resource: 'contract' }]
+    } as unknown as AppDefinition
+
+    const composition = composeApp(app, registry)
+
+    expect(composition.models.map(m => m.name)).toEqual(['contract', 'customer'])
+    // el padre entra como dependencia, no como página: la nav no cambia
+    expect(composition.pages).toHaveLength(1)
+  })
+})
