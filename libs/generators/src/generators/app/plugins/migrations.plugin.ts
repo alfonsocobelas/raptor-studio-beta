@@ -53,9 +53,11 @@ export const migrationsPlugin = definePlugin({
     const ordered = byDependency(context.models)
     const body = ordered
       .map(model =>
-        model.attachments
-          ? [renderTable(model, context.models), renderAttachmentsTable(model)].join('\n\n')
-          : renderTable(model, context.models)
+        [
+          renderTable(model, context.models),
+          ...(model.composition ? [renderCompositionTable(model)] : []),
+          ...(model.attachments ? [renderAttachmentsTable(model)] : [])
+        ].join('\n\n')
       )
       .join('\n\n')
     const drops = [...ordered]
@@ -63,6 +65,9 @@ export const migrationsPlugin = definePlugin({
       .flatMap(model => [
         ...(model.attachments
           ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}_attachments\`)`]
+          : []),
+        ...(model.composition
+          ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.composition.plural}\`)`]
           : []),
         `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`
       ])
@@ -160,6 +165,43 @@ ${rendered}
   ].join('\n\n')
 }
 
+/**
+ * Tabla del hijo de composición (B3): vive en el mismo esquema que su agregado.
+ * FK en cascada (los hijos son del padre) y deleted_at SIEMPRE: el save del
+ * agregado soft-borra por diff los hijos que ya no viven en él.
+ */
+function renderCompositionTable(model: ResourceDefinition): string {
+  const comp = model.composition
+  if (!comp) {
+    return ''
+  }
+  const table = `${model.schemaName}.${comp.plural}`
+  const parentColumn = snake(comp.parentField)
+
+  const columns = Object.entries(comp.fields).map(([name, field]) => renderColumn(model, name, field))
+  columns.push('deleted_at TIMESTAMPTZ NULL')
+  columns.push(`CONSTRAINT pk_${comp.plural} PRIMARY KEY (id)`)
+  columns.push(
+    `CONSTRAINT fk_${comp.plural}_${snake(model.name)} FOREIGN KEY (${parentColumn}) ` +
+      `REFERENCES ${model.schemaName}.${model.plural} (id) ON DELETE CASCADE`
+  )
+
+  const width = Math.max(...columns.map(c => c.split(' ')[0].length))
+  const rendered = columns
+    .map(c => `        ${c.split(' ')[0].padEnd(width)} ${c.split(' ').slice(1).join(' ')}`)
+    .join(',\n')
+
+  return `    await queryRunner.query(\`
+      CREATE TABLE ${table} (
+${rendered}
+      )
+    \`)
+
+    await queryRunner.query(\`
+      CREATE INDEX idx_${comp.plural}_${parentColumn} ON ${table} (${parentColumn})
+    \`)`
+}
+
 /** Tabla de adjuntos (spec 14): metadatos del fichero; el binario vive en FileStoragePort. */
 function renderAttachmentsTable(model: ResourceDefinition): string {
   const table = `${model.schemaName}.${model.plural}_attachments`
@@ -213,7 +255,26 @@ function renderColumn(model: ResourceDefinition, name: string, field: FieldDefin
 
 function sqlType(model: ResourceDefinition, field: FieldDefinition, column?: ColumnDefinition): string {
   if (!column) {
-    return field.type === 'uuid' ? 'UUID' : 'VARCHAR(255)'
+    // sin column declarado, manda el tipo del schema: un boolean como VARCHAR
+    // rompería el INSERT parametrizado (pg no convierte bool → varchar)
+    switch (field.type) {
+      case 'uuid':
+        return 'UUID'
+      case 'boolean':
+        return 'BOOLEAN'
+      case 'integer':
+        return 'INTEGER'
+      case 'number':
+        return 'NUMERIC(15, 2)'
+      case 'date':
+        return 'DATE'
+      case 'timestamptz':
+        return 'TIMESTAMPTZ'
+      case 'text':
+        return 'TEXT'
+      default:
+        return 'VARCHAR(255)'
+    }
   }
   switch (column.type) {
     case 'uuid':

@@ -1,6 +1,7 @@
 import { Tree } from '@nx/devkit'
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import { contract } from '../../resource/models/contract.model'
+import { customer } from '../../resource/models/customer.model'
 import { supplier } from '../../resource/models/supplier.model'
 import { vehicle } from '../../resource/models/vehicle.model'
 import { migrationsPlugin } from './migrations.plugin'
@@ -68,6 +69,25 @@ describe('migrationsPlugin.apply', () => {
 
     expect(migration).toContain("DEFAULT '{}'")
     expect(migration).not.toContain('DEFAULT "')
+  })
+
+  it('la composición emite la tabla del hijo: FK en cascada, deleted_at y tipos reales', () => {
+    // customer posee contacts (composición): sin su tabla, la PRIMERA integración real
+    // del oro reventó con «relation sap_licensing.contacts does not exist».
+    migrationsPlugin.apply?.(tree, { ...contextFor(tree), models: [customer] })
+
+    const migration = tree.read(`${MIGRATIONS_DIR}/1790000000000-InitialSchema.ts`, 'utf-8') ?? ''
+
+    expect(migration).toContain('CREATE TABLE sap_licensing.contacts')
+    // los hijos huérfanos se soft-borran en el diff del agregado: la columna es obligatoria
+    expect(migration).toContain('deleted_at')
+    expect(migration).toContain(
+      'CONSTRAINT fk_contacts_customer FOREIGN KEY (customer_id) ' +
+        'REFERENCES sap_licensing.customers (id) ON DELETE CASCADE'
+    )
+    // el flag primario es BOOLEAN aunque el campo no declare column (fallback por tipo)
+    expect(migration).toMatch(/is_primary\s+BOOLEAN/)
+    expect(migration).toContain('DROP TABLE IF EXISTS sap_licensing.contacts')
   })
 
   it('emits a partial unique index for optional unique fields (ifPresent semantics)', () => {
