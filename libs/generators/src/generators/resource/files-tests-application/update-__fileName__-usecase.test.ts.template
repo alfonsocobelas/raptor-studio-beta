@@ -1,3 +1,6 @@
+<%_ if (app.history) { _%>
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
+<%_ } _%>
 import { v7 as uuidv7 } from 'uuid'
 import { Update<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/update-<%- fileName %>-usecase.service'
 import { <%- app.hasUniqueChecks ? 'AlreadyExistsError, ' : '' %>EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
@@ -7,10 +10,17 @@ import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repo
 describe('Update<%- className %>UseCase', () => {
   let repositoryMock: <%- className %>RepositoryMock
   let useCase: Update<%- className %>UseCase
+<%_ if (app.history) { _%>
+  const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
+<%_ } _%>
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
+<%_ if (app.history) { _%>
+    useCase = new Update<%- className %>UseCase(repositoryMock, auditTrail)
+<%_ } else { _%>
     useCase = new Update<%- className %>UseCase(repositoryMock)
+<%_ } _%>
   })
 
   describe('given the <%- fileName %> does not exist', () => {

@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common'
+<%_ if (app.history) { _%>
+import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
+<%_ } _%>
 import { EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
@@ -6,7 +9,14 @@ import { Restore<%- className %>Input } from '../dtos/restore-<%- fileName %>-in
 
 @Injectable()
 export class Restore<%- className %>UseCase {
+<%_ if (app.history) { _%>
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+    private readonly auditTrail: AuditTrailPort
+  ) {}
+<%_ } else { _%>
   constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+<%_ } _%>
 
   async invoke(input: Restore<%- className %>Input): Promise<void> {
     const restored = await this.<%- propertyName %>Repository.restore(<%- className %>Id.create(input.id))
@@ -14,5 +24,14 @@ export class Restore<%- className %>UseCase {
     if (!restored) {
       throw new EntityNotFoundError('<%- className %>', input.id)
     }
+<%_ if (app.history) { _%>
+    await this.auditTrail.record({
+      entity: '<%- fileName %>',
+      entityId: input.id,
+      action: 'restored',
+      changes: {},
+      actor: null
+    })
+<%_ } _%>
   }
 }

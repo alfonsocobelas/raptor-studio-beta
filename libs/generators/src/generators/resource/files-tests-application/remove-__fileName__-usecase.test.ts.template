@@ -1,3 +1,6 @@
+<%_ if (app.history) { _%>
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
+<%_ } _%>
 import { v7 as uuidv7 } from 'uuid'
 import { Remove<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/remove-<%- fileName %>-usecase.service'
 import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
@@ -7,10 +10,17 @@ import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repo
 describe('Remove<%- className %>UseCase', () => {
   let repositoryMock: <%- className %>RepositoryMock
   let useCase: Remove<%- className %>UseCase
+<%_ if (app.history) { _%>
+  const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
+<%_ } _%>
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
+<%_ if (app.history) { _%>
+    useCase = new Remove<%- className %>UseCase(repositoryMock, auditTrail)
+<%_ } else { _%>
     useCase = new Remove<%- className %>UseCase(repositoryMock)
+<%_ } _%>
   })
 
   describe('given the <%- fileName %> exists', () => {

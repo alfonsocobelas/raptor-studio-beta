@@ -4,6 +4,10 @@ import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/d
 <%_ } else { _%>
 import { EntityNotFoundError } from '../../../../../shared/domain/errors'
 <%_ } _%>
+<%_ if (app.history) { _%>
+import { changesBetween } from '../../../../../shared/domain/audit/audit-changes'
+import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
+<%_ } _%>
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
 <%_ app.registerSpecImports.forEach(line => { _%>
 <%- line %>
@@ -13,7 +17,14 @@ import { Update<%- className %>Input } from '../dtos/update-<%- fileName %>-inpu
 
 @Injectable()
 export class Update<%- className %>UseCase {
+<%_ if (app.history) { _%>
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+    private readonly auditTrail: AuditTrailPort
+  ) {}
+<%_ } else { _%>
   constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+<%_ } _%>
 
   async invoke(input: Update<%- className %>Input): Promise<void> {
     const <%- propertyName %>Id = <%- className %>Id.create(input.id)
@@ -27,7 +38,20 @@ export class Update<%- className %>UseCase {
 <%- block %>
 
 <%_ }) _%>
+<%_ if (app.history) { _%>
+    const before = <%- propertyName %>.toPrimitives()
     <%- propertyName %>.updateDetails(input.updates)
     await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+    await this.auditTrail.record({
+      entity: '<%- fileName %>',
+      entityId: <%- propertyName %>Id.value,
+      action: 'updated',
+      changes: changesBetween(before, <%- propertyName %>.toPrimitives()),
+      actor: null
+    })
+<%_ } else { _%>
+    <%- propertyName %>.updateDetails(input.updates)
+    await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+<%_ } _%>
   }
 }

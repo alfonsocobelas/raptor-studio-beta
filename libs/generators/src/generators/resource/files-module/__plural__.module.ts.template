@@ -11,6 +11,9 @@ import { <%- pluralClassName %>Controller } from './infrastructure/entrypoints/<
 import { <%- entry.childControllerClass %> } from './infrastructure/entrypoints/<%- entry.childControllerFile %>.controller'
 <%_ } _%>
 import { <%- repository.className %> } from '<%- repository.importPath %>'
+<%_ if (app.history) { _%>
+import { AuditModule } from '../../../shared/infrastructure/audit/audit.module'
+<%_ } _%>
 <%_ if (attachments) { _%>
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { StorageModule } from '../../../shared/infrastructure/storage/storage.module'
@@ -20,10 +23,17 @@ import { <%- className %>AttachmentsService } from './infrastructure/attachments
 <%_ } _%>
 
 @Module({
-<%_ if (attachments) { _%>
+<%_ if (attachments && app.history) { _%>
+  // StorageModule y AuditModule explícitos (no se confía en @Global): así el módulo
+  // funciona en cualquier contexto Nest — API, seed o tests — sin depender del root.
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule, AuditModule],
+<%_ } else if (attachments) { _%>
   // StorageModule explícito (no se confía en @Global): así el módulo funciona en
   // cualquier contexto Nest — API, seed o tests — sin depender del root.
   imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule],
+<%_ } else if (app.history) { _%>
+  // AuditModule explícito (no se confía en @Global): el historial funciona también en seed y tests.
+  imports: [AuditModule],
 <%_ } _%>
 <%_ if (attachments) { _%>
   // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro
