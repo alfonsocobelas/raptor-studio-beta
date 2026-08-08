@@ -18,8 +18,10 @@ import { PaginateOffsetDto } from '../../../../../shared/infrastructure/dtos/pag
 import { ParseCriteriaPipe } from '../../../../../shared/infrastructure/pipes/parse-criteria.pipe'
 import { ParseUUIDv7Pipe } from '../../../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
 import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
+import { AuditEvent } from '../../../../../shared/domain/audit/audit-event'
 import { ExportProjectsHandler } from '../../application/handlers/export-projects.handler'
 import { GetProjectHandler } from '../../application/handlers/get-project.handler'
+import { GetProjectHistoryHandler } from '../../application/handlers/get-project-history.handler'
 import { RegisterProjectHandler } from '../../application/handlers/register-project.handler'
 import { RemoveProjectHandler } from '../../application/handlers/remove-project.handler'
 import { RestoreProjectHandler } from '../../application/handlers/restore-project.handler'
@@ -38,6 +40,7 @@ export class ProjectsController {
     private readonly registerProjectHandler: RegisterProjectHandler,
     private readonly searchProjectsHandler: SearchProjectsHandler,
     private readonly getProjectHandler: GetProjectHandler,
+    private readonly getProjectHistoryHandler: GetProjectHistoryHandler,
     private readonly updateProjectHandler: UpdateProjectHandler,
     private readonly removeProjectHandler: RemoveProjectHandler,
     private readonly searchDeletedProjectsHandler: SearchDeletedProjectsHandler,
@@ -74,6 +77,13 @@ export class ProjectsController {
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<ProjectPrimitiveProps>> {
     return this.searchDeletedProjectsHandler.handle(query)
+  }
+
+  // La timeline de la ficha (spec 31): los últimos eventos del registro.
+  @Get(':id/history')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  history(@Param('id', ParseUUIDv7Pipe) id: string): Promise<AuditEvent[]> {
+    return this.getProjectHistoryHandler.handle({ id })
   }
 
   @Get(':id')
