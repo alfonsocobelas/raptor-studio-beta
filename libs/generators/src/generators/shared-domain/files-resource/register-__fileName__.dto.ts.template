@@ -1,5 +1,10 @@
+<%_ if (enums.length) { _%>
+import { <%- enums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
+<%_ } _%>
 <%_ if (unions.length) { _%>
 import { <%- unions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
+<%_ } _%>
+<%_ if (enums.length || unions.length) { _%>
 
 <%_ } _%>
 export interface Register<%- className %>Dto {

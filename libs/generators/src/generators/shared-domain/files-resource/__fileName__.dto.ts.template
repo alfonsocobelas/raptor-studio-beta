@@ -1,3 +1,7 @@
+<%_ if (enums.length) { _%>
+import { <%- enums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
+
+<%_ } _%>
 <%_ unions.forEach(u => { _%>
 export type <%- u.name %> = <%- u.values %>
 

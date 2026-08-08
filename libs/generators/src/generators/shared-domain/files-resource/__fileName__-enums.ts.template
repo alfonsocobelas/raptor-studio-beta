@@ -1,0 +1,10 @@
+<%_ enums.forEach((e, i) => { _%>
+<%_ if (i > 0) { _%>
+
+<%_ } _%>
+export enum <%- e.name %> {
+<%_ e.members.forEach((m, j) => { _%>
+  <%- m.key %> = '<%- m.value %>'<%- j < e.members.length - 1 ? ',' : '' %>
+<%_ }) _%>
+}
+<%_ }) _%>

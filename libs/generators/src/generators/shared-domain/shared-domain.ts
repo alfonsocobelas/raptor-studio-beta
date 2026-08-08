@@ -38,6 +38,11 @@ export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGen
       tree.delete(path.join(outputDir, n.fileName, `${n.fileName}-detail.dto.ts`))
       tree.delete(path.join(outputDir, n.fileName, 'child.dto.ts'))
     }
+    if (!bindings.enums.length) {
+      tree.delete(path.join(outputDir, n.fileName, `${n.fileName}-enums.ts`))
+    } else {
+      exportLines.push(`export * from './${n.fileName}/${n.fileName}-enums'`)
+    }
     if (!model.formSections?.length) {
       tree.delete(path.join(outputDir, n.fileName, `register-${n.fileName}.dto.ts`))
       tree.delete(path.join(outputDir, n.fileName, `update-${n.fileName}.dto.ts`))
@@ -87,13 +92,25 @@ function renderDtoBindings(model: ResourceDefinition) {
     .filter(([name]) => name !== 'id')
     .map(([name, f]) => ({ name, field: f, required: f.required ?? false, nullable: f.nullable ?? false }))
 
-  // uniones nombradas solo cuando el formulario declara optionsType (canon CustomerClassification)
-  const unions = all
+  // tipos nombrados solo cuando el formulario declara optionsType. El canon tiene DOS formas:
+  // '<X>Enum' es un enum REAL en <entity>-enums.ts (el dialog usa sus miembros como valores;
+  // un type union revienta al servir — TS2693) y sin sufijo queda el union inline
+  // (canon CustomerClassification). El sufijo del nombre decide.
+  const optionTypes = all
     .filter(c => typeof c.field.vo === 'object' && c.field.vo.values?.length && c.field.form?.optionsType)
     .map(c => ({
       name: c.field.form?.optionsType ?? '',
-      values: (typeof c.field.vo === 'object' ? c.field.vo.values ?? [] : []).map(v => `'${v}'`).join(' | ')
+      values: typeof c.field.vo === 'object' ? (c.field.vo.values ?? []) : []
     }))
+
+  const unions = optionTypes
+    .filter(t => !t.name.endsWith('Enum'))
+    .map(t => ({ name: t.name, values: t.values.map(v => `'${v}'`).join(' | ') }))
+
+  const enums = optionTypes.filter(t => t.name.endsWith('Enum')).map(t => ({
+    name: t.name,
+    members: t.values.map(value => ({ key: value.toUpperCase().replace(/[^A-Z0-9]/g, '_'), value }))
+  }))
 
   const writable = all.filter(c => !c.field.syncManaged && !(c.field.optionalPrimitive && !c.field.updatable))
 
@@ -106,6 +123,7 @@ function renderDtoBindings(model: ResourceDefinition) {
 
   return {
     unions,
+    enums,
     dtoLines: ['id: string', ...all.map(c => `${c.name}: ${dtoType(c)}`)],
     registerLines: ['id: string', ...writable.map(c => writableLine(c, false))],
     updateLines: writable.map(c => writableLine(c, true)),
