@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
-import { Router } from '@angular/router'
+import { Router, RouterLink } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
@@ -22,14 +22,21 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
 
 @Component({
   selector: 'app-projects-list',
-  imports: [DataTable, AppDialog, AppConfirmDialog, ProjectDialogComponent],
+  imports: [DataTable, RouterLink, AppDialog, AppConfirmDialog, ProjectDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
-        <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
+          <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
+        </div>
+        <a
+          routerLink="//sap-licensing/projects/papelera"
+          class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+          >Papelera</a
+        >
       </div>
 
       @if (isLoading() && !hasData()) {
