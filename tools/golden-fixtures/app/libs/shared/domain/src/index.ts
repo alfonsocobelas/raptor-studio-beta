@@ -1,7 +1,9 @@
 // shared/domain barrel — todos los tipos, DTOs e interfaces compartidos front ⇄ back
+export * from './contract/contract-enums'
 export * from './contract/contract.dto'
 export * from './contract/register-contract.dto'
 export * from './contract/update-contract.dto'
+export * from './project/project-enums'
 export * from './project/project.dto'
 export * from './project/register-project.dto'
 export * from './project/update-project.dto'

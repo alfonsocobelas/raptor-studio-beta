@@ -1,12 +1,10 @@
-export type ContractTypeEnum = 'cloud' | 'onprem' | 'mixed' | 'maintenance'
-
-export type ContractStatusEnum = 'active' | 'expiring' | 'expired' | 'terminated'
-
-export type ContractSourceEnum = 'AVVALE_SOLD' | 'CUSTOMER_OWNED'
-
-export type BillingFrequencyEnum = 'monthly' | 'quarterly' | 'semiannual' | 'yearly'
-
-export type RenewalTypeEnum = 'auto' | 'manual' | 'none'
+import {
+  ContractTypeEnum,
+  ContractStatusEnum,
+  ContractSourceEnum,
+  BillingFrequencyEnum,
+  RenewalTypeEnum
+} from './contract-enums'
 
 export interface ContractDto {
   id: string

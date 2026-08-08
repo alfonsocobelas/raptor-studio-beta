@@ -1,6 +1,4 @@
-export type ProjectStatusEnum = 'planning' | 'active' | 'onhold' | 'closed'
-
-export type ProjectImplementerEnum = 'AVVALE' | 'THIRD_PARTY'
+import { ProjectStatusEnum, ProjectImplementerEnum } from './project-enums'
 
 export interface ProjectDto {
   id: string

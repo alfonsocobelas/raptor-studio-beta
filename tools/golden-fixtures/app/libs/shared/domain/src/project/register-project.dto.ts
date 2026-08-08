@@ -1,4 +1,4 @@
-import { ProjectStatusEnum, ProjectImplementerEnum } from './project.dto'
+import { ProjectStatusEnum, ProjectImplementerEnum } from './project-enums'
 
 export interface RegisterProjectDto {
   id: string

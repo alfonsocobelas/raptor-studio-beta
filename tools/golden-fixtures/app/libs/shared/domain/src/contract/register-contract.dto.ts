@@ -4,7 +4,7 @@ import {
   ContractSourceEnum,
   BillingFrequencyEnum,
   RenewalTypeEnum
-} from './contract.dto'
+} from './contract-enums'
 
 export interface RegisterContractDto {
   id: string
