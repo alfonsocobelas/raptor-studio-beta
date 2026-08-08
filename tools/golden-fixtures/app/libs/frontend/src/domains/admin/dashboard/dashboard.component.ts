@@ -70,14 +70,17 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
           <div class="bg-card rounded-lg border p-4" data-testid="series-contractsSeriesStartDate">
             <h2 class="mb-3 text-sm font-semibold">Altas de contrato por mes</h2>
             @if (service.contractsSeriesStartDate.hasValue()) {
-              <div class="flex h-28 items-end gap-1">
+              <div class="flex items-end gap-1">
                 @for (point of points(service.contractsSeriesStartDate.value()); track point.label) {
                   <div class="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      class="bg-primary w-full rounded-t-sm"
-                      [style.height.%]="point.height"
-                      [title]="point.count"
-                    ></div>
+                    <!-- carril de altura fija: un % necesita un padre con altura definida -->
+                    <div class="flex h-24 w-full items-end">
+                      <div
+                        class="bg-primary w-full rounded-t-sm"
+                        [style.height.%]="point.height"
+                        [title]="point.count"
+                      ></div>
+                    </div>
                     <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
                   </div>
                 }
