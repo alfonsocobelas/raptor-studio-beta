@@ -21,6 +21,7 @@ export const demo = defineApp({
     },
     { kind: 'resource', resource: 'customer' },
     { kind: 'resource', resource: 'contract' },
+    { kind: 'gantt', resource: 'contract' },
     { kind: 'resource', resource: 'license' },
     { kind: 'resource', resource: 'project' }
   ]

@@ -84,6 +84,7 @@ export interface ResourceSubstitutions {
   detail: DetailSubstitution | null
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
   gallery: GallerySubstitution | null
+  gantt: GanttSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
   related: RelatedSubstitution[]
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
@@ -184,6 +185,13 @@ export interface DetailSubstitution {
 }
 
 /** Campos que pinta cada tarjeta, ya resueltos (regla 8). */
+/** Cronograma (spec 30): la barra se etiqueta y se sitúa con campos resueltos aquí, no en runtime. */
+export interface GanttSubstitution {
+  titleField: string
+  startField: string
+  endField: string
+}
+
 export interface GallerySubstitution {
   titleField: string
   subtitleField: string | null
@@ -317,6 +325,7 @@ export function buildSubstitutions(
     attachments: definition.attachments ?? false,
     detail: renderDetail(definition),
     gallery: renderGallery(definition),
+    gantt: renderGantt(definition),
     related: renderRelated(definition, others),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
@@ -852,6 +861,17 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
  * métrica = primer número. Los chips son los dos campos restantes que la tabla
  * muestra — lo justo para que la tarjeta diga algo sin convertirse en una ficha.
  */
+function renderGantt(definition: ResourceDefinition): GanttSubstitution | null {
+  const { gantt, period } = definition
+  if (!gantt || !period) return null
+
+  const fields = Object.entries(definition.fields).filter(([, f]) => !f.pk)
+  const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
+  const titleField = gantt.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
+
+  return { titleField, startField: period.start, endField: period.end }
+}
+
 function renderGallery(definition: ResourceDefinition): GallerySubstitution | null {
   const { gallery } = definition
   if (!gallery) return null

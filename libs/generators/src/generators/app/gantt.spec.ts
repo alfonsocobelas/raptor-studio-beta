@@ -1,4 +1,7 @@
+import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
+import type { Tree } from '@nx/devkit'
 import type { ResourceDefinition } from '@acc/schema'
+import { resourceGenerator } from '../resource/resource'
 import { shellSubstitutions } from './app'
 import { composeFlat } from './composition'
 
@@ -48,5 +51,32 @@ describe('composeFlat + shellSubstitutions — cronograma (spec 30)', () => {
     const subs = shellSubstitutions(composeFlat([model({ gantt: {}, detail: {} })], false))
 
     expect(subs.routeEntries.indexOf('contracts/cronograma')).toBeLessThan(subs.routeEntries.indexOf('contracts/:id'))
+  })
+})
+
+describe('resource generator — componente de cronograma (spec 30)', () => {
+  const emit = async (name: string): Promise<Tree> => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name, directory: 'out' })
+    return tree
+  }
+
+  it('contract (gantt + period) emite el componente con eje y barras derivados del period', async () => {
+    const tree = await emit('contract')
+
+    const component = tree.read('out/frontend/contracts-gantt.component.ts', 'utf-8') ?? ''
+    expect(component).toContain('export class ContractsGanttComponent')
+    // los campos del period viajan como sustituciones, no se infieren en runtime
+    expect(component).toContain("readonly startField = 'startDate'")
+    expect(component).toContain("readonly endField = 'endDate'")
+    // la barra se etiqueta con el primer texto buscable (contractNumber en el canon)
+    expect(component).toContain("readonly barLabel = 'contractNumber'")
+    expect(component).toContain('sin fechas')
+  })
+
+  it('customer (sin gantt) no emite cronograma', async () => {
+    const tree = await emit('customer')
+
+    expect(tree.exists('out/frontend/customers-gantt.component.ts')).toBe(false)
   })
 })

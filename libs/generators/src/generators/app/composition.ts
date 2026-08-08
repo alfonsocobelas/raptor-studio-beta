@@ -76,7 +76,9 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     }
     const model = resolve(page.resource)
     include(model)
-    return { ...page, label: page.label ?? labelOf(model) }
+    // el label por defecto distingue la vista, igual que la composición plana
+    const suffix = page.kind === 'cards' ? ' · galería' : page.kind === 'gantt' ? ' · cronograma' : ''
+    return { ...page, label: page.label ?? `${labelOf(model)}${suffix}` }
   })
 
   return {

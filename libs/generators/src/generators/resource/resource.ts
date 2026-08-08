@@ -144,6 +144,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gallery'), outputDir, substitutions)
   }
 
+  // el cronograma exige period; su presencia en el modelo es lo que lo emite (spec 30)
+  if (model.gantt) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gantt'), outputDir, substitutions)
+  }
+
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
     const comp = substitutions.aggregate.composition

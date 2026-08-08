@@ -30,6 +30,7 @@ export const golden = defineApp({
       ]
     },
     { kind: 'resource', resource: 'contract' },
+    { kind: 'gantt', resource: 'contract' },
     { kind: 'resource', resource: 'project' }
   ]
 })

@@ -27,6 +27,8 @@ export const contract = defineResource({
   ],
   formGroupValidators: [{ kind: 'dateRange', startField: 'startDate', endField: 'endDate' }],
   period: { start: 'startDate', end: 'endDate' },
+  // Cronograma (spec 30): las vigencias de contrato dibujadas como barras
+  gantt: {},
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
   auditComment: true,
