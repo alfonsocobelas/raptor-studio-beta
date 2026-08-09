@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { filter, map } from 'rxjs'
 import { HlmToasterImports } from '@spartan-ng/helm/sonner'
 import { NAV_ITEMS } from './nav'
+import { SessionFooterComponent } from '@app/frontend/domains/auth/session-footer.component'
 import { ThemeService } from '@app/frontend/core/services/theme.service'
 
 /** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
@@ -16,7 +17,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
+  imports: [SessionFooterComponent, RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (bare()) {
@@ -50,6 +51,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
             {{ theme.theme() === 'light' ? '🌙' : '☀️' }}
             <span>{{ theme.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
           </button>
+          <app-session-footer />
         </aside>
         <main class="min-w-0 flex-1 p-6">
           <router-outlet />

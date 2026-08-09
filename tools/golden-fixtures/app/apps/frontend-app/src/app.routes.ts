@@ -21,6 +21,10 @@ export const routes: Routes = [
     path: 'accept-invitation',
     loadComponent: () => import('@app/frontend/domains/auth/set-password.component').then(m => m.SetPasswordComponent)
   },
+  {
+    path: 'users',
+    loadComponent: () => import('@app/frontend/domains/iam/users-list.component').then(m => m.UsersListComponent)
+  },
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
     path: 'dashboard',
