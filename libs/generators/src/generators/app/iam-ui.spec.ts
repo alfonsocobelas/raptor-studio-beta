@@ -64,6 +64,25 @@ describe('app generator — UI de IAM (spec 34)', () => {
     })
   })
 
+  describe('users-list (TASK-03)', () => {
+    it('con auth emite el listado de usuarios sobre el DataTable compartido', () => {
+      const list = withAuth.get('apps/demo/libs/frontend/src/domains/iam/users-list.component.ts')
+
+      expect(list).toBeDefined()
+      expect(list).not.toContain('@spartan-ng')
+      expect(list).toContain('DataTable')
+      expect(list).toContain('UserService')
+      // filtros de rol y estado + acciones de fila con visibilidad por estado
+      expect(list).toContain('roleFilter')
+      expect(list).toContain('statusFilter')
+      expect(list).toContain("action: 'role'")
+      expect(list).toContain("action: 'disable'")
+      expect(list).toContain("action: 'reactivate'")
+      // desactivar avisa del cierre de sesiones (canon de la referencia)
+      expect(list).toContain('Se cerrarán sus sesiones')
+    })
+  })
+
   it('sin auth no se emite nada de la UI de IAM', () => {
     expect([...open.keys()].some(f => f.includes('/domains/iam/'))).toBe(false)
   })
