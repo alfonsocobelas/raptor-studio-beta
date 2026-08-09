@@ -1,0 +1,77 @@
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core'
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
+import { UserRoleEnum } from '@app/shared/domain'
+import { AppButton } from '../../shared/components/ui/button.directive'
+import { AppDialogContent } from '../../shared/components/ui/dialog-content'
+import { AppFormField } from '../../shared/components/ui/form-field'
+import { AppInput } from '../../shared/components/ui/input.directive'
+import { AppSelect, AppSelectOption } from '../../shared/components/ui/select'
+import { USER_ROLE_LABELS } from './iam-labels'
+
+export interface InviteUserFormValue {
+  email: string
+  name: string
+  role: UserRoleEnum
+}
+
+// Los tres roles del dominio son asignables; las etiquetas viven en iam-labels.
+const ROLE_OPTIONS: AppSelectOption[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER].map(role => ({
+  value: role,
+  label: USER_ROLE_LABELS[role]
+}))
+
+@Component({
+  selector: 'app-invite-user-dialog',
+  imports: [ReactiveFormsModule, AppButton, AppDialogContent, AppFormField, AppInput, AppSelect],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-dialog-content
+      title="Invitar usuario"
+      description="Se le enviará un email para que establezca su contraseña."
+    >
+      <form class="space-y-4 py-4" [formGroup]="form" (ngSubmit)="save()">
+        <app-form-field label="Email" for="inviteEmail">
+          <input id="inviteEmail" type="email" appInput formControlName="email" />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <span class="text-destructive text-sm">Email válido obligatorio</span>
+          }
+        </app-form-field>
+        <app-form-field label="Nombre" for="inviteName">
+          <input id="inviteName" appInput formControlName="name" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <span class="text-destructive text-sm">Obligatorio</span>
+          }
+        </app-form-field>
+        <app-form-field label="Rol" for="inviteRole">
+          <app-select formControlName="role" controlId="inviteRole" placeholder="" [options]="roleOptions" />
+        </app-form-field>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="close.emit()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>Enviar invitación</button>
+        </div>
+      </form>
+    </app-dialog-content>
+  `
+})
+export class InviteUserDialogComponent {
+  private readonly _fb = inject(FormBuilder)
+
+  readonly saved = output<InviteUserFormValue>()
+  readonly close = output<void>()
+
+  protected readonly roleOptions = ROLE_OPTIONS
+
+  readonly form = this._fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    name: ['', [Validators.required]],
+    role: [UserRoleEnum.USER, [Validators.required]]
+  })
+
+  save(): void {
+    if (this.form.invalid) {
+      return
+    }
+    this.saved.emit(this.form.getRawValue())
+  }
+}

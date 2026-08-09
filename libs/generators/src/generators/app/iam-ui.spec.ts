@@ -48,6 +48,22 @@ describe('app generator — UI de IAM (spec 34)', () => {
     })
   })
 
+  describe('invite-user-dialog (TASK-02)', () => {
+    it('con auth emite el diálogo de invitación sobre los contratos UI neutrales', () => {
+      const dialog = withAuth.get('apps/demo/libs/frontend/src/domains/iam/invite-user-dialog.component.ts')
+
+      expect(dialog).toBeDefined()
+      expect(dialog).toContain('InviteUserFormValue')
+      // solo contratos neutrales: nada de helm, sirve a las dos pieles sin variante
+      expect(dialog).not.toContain('@spartan-ng')
+      expect(dialog).toContain('AppDialogContent')
+      expect(dialog).toContain('AppSelect')
+      // los tres roles asignables del dominio
+      expect(dialog).toContain('UserRoleEnum.ADMIN')
+      expect(dialog).toContain('UserRoleEnum.VIEWER')
+    })
+  })
+
   it('sin auth no se emite nada de la UI de IAM', () => {
     expect([...open.keys()].some(f => f.includes('/domains/iam/'))).toBe(false)
   })
