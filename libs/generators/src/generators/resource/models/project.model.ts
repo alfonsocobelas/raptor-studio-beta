@@ -19,7 +19,7 @@ export const project = defineResource({
   },
   // spec 25: la ficha es donde viven los documentos del proyecto, y el schema exige la acción
   // «ver» en el listado para que sea alcanzable
-  list: { features: { view: true, delete: true } },
+  list: { features: { view: true, delete: true, import: true } },
   detail: {},
   attachments: true,
   period: { start: 'startDate', end: 'endDate' },

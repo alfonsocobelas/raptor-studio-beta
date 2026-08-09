@@ -1,0 +1,55 @@
+<%_ if (app.history) { _%>
+import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
+<%_ } _%>
+import { TransactionManager } from '../../../../../src/contexts/shared/domain/persistence/transaction-manager'
+import { Import<%- pluralClassName %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/import-<%- plural %>-usecase.service'
+import { Register<%- className %>Input } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/dtos/register-<%- fileName %>-input.dto'
+import { Register<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/register-<%- fileName %>-usecase.service'
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('Import<%- pluralClassName %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: Import<%- pluralClassName %>UseCase
+<%_ if (app.history) { _%>
+  const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
+<%_ } _%>
+  const txManager = {
+    runInTransaction: jest.fn(async (work: () => Promise<unknown>) => work())
+  } as unknown as TransactionManager
+
+  const row = (): Register<%- className %>Input =>
+    <%- className %>Mother.random().toPrimitives() as unknown as Register<%- className %>Input
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+<%_ if (app.history) { _%>
+    const register = new Register<%- className %>UseCase(repositoryMock, auditTrail)
+<%_ } else { _%>
+    const register = new Register<%- className %>UseCase(repositoryMock)
+<%_ } _%>
+    useCase = new Import<%- pluralClassName %>UseCase(register, txManager)
+  })
+
+  it('una fila con error de dominio frena TODO el import y la señala', async () => {
+    // una fila vacía viola los value objects del alta: mismo gate que el formulario
+    const bad = {} as Register<%- className %>Input
+
+    const result = await useCase.invoke({ rows: [row(), bad] })
+
+    expect(result.imported).toBe(0)
+    expect(result.failures).toHaveLength(1)
+    expect(result.failures[0].row).toBe(2)
+    repositoryMock.assertNotCalled('register')
+  })
+
+  it('con todas las filas limpias importa todas dentro de una transacción', async () => {
+    repositoryMock.givenDoesNotExist()
+    repositoryMock.whenRegisterSuccess()
+
+    const result = await useCase.invoke({ rows: [row(), row()] })
+
+    expect(result).toEqual({ imported: 2, failures: [] })
+    expect(txManager.runInTransaction).toHaveBeenCalled()
+  })
+})

@@ -1,0 +1,8 @@
+import { IsArray } from 'class-validator'
+import { Register<%- className %>Dto } from './register-<%- fileName %>.dto'
+
+/** Las filas llegan ya parseadas del cliente; la validación DE VERDAD la hace el dominio. */
+export class Import<%- pluralClassName %>Dto {
+  @IsArray()
+  rows!: Register<%- className %>Dto[]
+}

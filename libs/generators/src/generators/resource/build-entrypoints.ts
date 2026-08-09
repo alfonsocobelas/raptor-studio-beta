@@ -106,6 +106,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   if (removes && definition.softDelete === true) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
   // el historial (spec 31): la timeline de la ficha lee del puerto de auditoría
   if (definition.history === true) ops.push(['Get', `${n.className}History`])
+  // el import (spec 33) delega en el register: sin alta no hay import
+  if (writes && definition.list?.features?.import === true) ops.push(['Import', pluralClass])
   ops.push(['Export', pluralClass])
   const childOps = comp ? ['Add', 'Update', 'Remove'].map(op => `${op}${names(comp.name).className}`) : []
 

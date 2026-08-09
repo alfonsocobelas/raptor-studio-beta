@@ -37,6 +37,8 @@ export interface ApplicationBindings {
   trash: boolean
   /** historial emitido (spec 31): los use cases de escritura registran eventos */
   history: boolean
+  /** import CSV validado (spec 33): exige alta (writes) para delegar en su register */
+  importCsv: boolean
   uniqueSpecs: UniqueSpecBinding[]
   registerSpecImports: string[]
   registerCheckBlocks: string[]
@@ -120,6 +122,7 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     removes: definition.list?.features?.delete === true,
     trash: definition.list?.features?.delete === true && definition.softDelete === true,
     history: definition.history === true,
+    importCsv: definition.list?.features?.import === true && (definition.formSections?.length ?? 0) > 0,
     uniqueSpecs,
     registerSpecImports,
     registerCheckBlocks,
