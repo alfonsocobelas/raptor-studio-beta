@@ -19,10 +19,11 @@ import {
 } from '../../../../../../shared/components/data-table'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
 import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
+import { ProjectsImportComponent } from './projects-import.component'
 
 @Component({
   selector: 'app-projects-list',
-  imports: [DataTable, RouterLink, AppDialog, AppConfirmDialog, ProjectDialogComponent],
+  imports: [DataTable, RouterLink, AppDialog, AppConfirmDialog, ProjectDialogComponent, ProjectsImportComponent],
   providers: [provideIcons({ lucideEye, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -32,11 +33,21 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
           <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
           <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
         </div>
-        <a
-          routerLink="//sap-licensing/projects/papelera"
-          class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-          >Papelera</a
-        >
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+            data-testid="open-import"
+            (click)="importOpen.set(true)"
+          >
+            Importar
+          </button>
+          <a
+            routerLink="//sap-licensing/projects/papelera"
+            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+            >Papelera</a
+          >
+        </div>
       </div>
 
       @if (isLoading() && !hasData()) {
@@ -86,6 +97,12 @@ import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.compo
       (confirmed)="confirmDelete()"
       (closed)="deleteDialogOpen.set(false)"
     />
+
+    <app-dialog [open]="importOpen()" (closed)="importOpen.set(false)">
+      @if (importOpen()) {
+        <app-projects-import (close)="importOpen.set(false)" />
+      }
+    </app-dialog>
   `
 })
 export class ProjectsListComponent {
@@ -129,6 +146,7 @@ export class ProjectsListComponent {
 
   readonly dialogOpen = signal(false)
   readonly editingProject = signal<ProjectDto | null>(null)
+  readonly importOpen = signal(false)
   readonly deletingProject = signal<ProjectDto | null>(null)
   readonly deleteDialogOpen = signal(false)
   readonly deleteDescription = computed(

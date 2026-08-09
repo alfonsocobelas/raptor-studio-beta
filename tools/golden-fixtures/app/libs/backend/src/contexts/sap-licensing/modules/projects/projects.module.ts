@@ -7,6 +7,7 @@ import { RemoveProjectHandler } from './application/handlers/remove-project.hand
 import { SearchDeletedProjectsHandler } from './application/handlers/search-deleted-projects.handler'
 import { RestoreProjectHandler } from './application/handlers/restore-project.handler'
 import { GetProjectHistoryHandler } from './application/handlers/get-project-history.handler'
+import { ImportProjectsHandler } from './application/handlers/import-projects.handler'
 import { ExportProjectsHandler } from './application/handlers/export-projects.handler'
 import { RegisterProjectUseCase } from './application/use-cases/register-project-usecase.service'
 import { SearchProjectsUseCase } from './application/use-cases/search-projects-usecase.service'
@@ -16,6 +17,7 @@ import { RemoveProjectUseCase } from './application/use-cases/remove-project-use
 import { SearchDeletedProjectsUseCase } from './application/use-cases/search-deleted-projects-usecase.service'
 import { RestoreProjectUseCase } from './application/use-cases/restore-project-usecase.service'
 import { GetProjectHistoryUseCase } from './application/use-cases/get-project-history-usecase.service'
+import { ImportProjectsUseCase } from './application/use-cases/import-projects-usecase.service'
 import { ExportProjectsUseCase } from './application/use-cases/export-projects-usecase.service'
 import { ProjectRepository } from './domain/project-repository'
 import { ProjectsController } from './infrastructure/entrypoints/projects.controller'
@@ -44,6 +46,7 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     SearchDeletedProjectsHandler,
     RestoreProjectHandler,
     GetProjectHistoryHandler,
+    ImportProjectsHandler,
     ExportProjectsHandler,
     RegisterProjectUseCase,
     SearchProjectsUseCase,
@@ -53,6 +56,7 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     SearchDeletedProjectsUseCase,
     RestoreProjectUseCase,
     GetProjectHistoryUseCase,
+    ImportProjectsUseCase,
     ExportProjectsUseCase,
     { provide: ProjectRepository, useClass: TypeOrmProjectRepository }
   ],
