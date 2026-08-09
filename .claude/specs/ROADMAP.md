@@ -82,6 +82,12 @@ detrás del trabajo activo (spec 15). Una spec por componente, cada una con su g
 | C1v | ✅ `widgets-analiticos` (spec 32) | Dashboard: `count-by` (barras por enum), `kpi-count` (conteo condicionado) y `series` (12 meses) — SIN backend nuevo: compuestos de conteos filtrados sobre el listado. Sumas/medias quedan para un futuro endpoint de agregación (C2v). E2e e2e-20 | ✅ 2026-08-08 |
 | B1v | ✅ `import-csv-validado` (spec 33) | `features.import`: diálogo con parser propio y plantilla descargable; el backend valida cada fila con los VOs del alta en dos fases (422 con errores por fila, o todo en una transacción delegando en el register). E2e e2e-21/22. **FASE 5 COMPLETA** | ✅ 2026-08-09 |
 
+## Fase 6 — Rescates de la referencia (backlog auditoría 2026-07-31)
+
+| Nº  | Spec                  | Objetivo                                                                                                                                                                                                                                                                                                                                                     | Estado        |
+| --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 34  | ✅ `ui-iam` (spec 34) | Rescate nº 2: UI de IAM sobre el backend ya emitido — `/users` (listar/buscar/filtrar, invitar, cambiar rol, desactivar/reactivar) + pie de sesión en el shell (identidad, Usuarios solo admin, logout). Sobre los contratos UI neutrales: 0 errores en las dos pieles. De propina la demo cazó el bug del `AuthModule` fuera del `imports` en línea única (`ed70e28`). E2e e2e-23/26/27 | ✅ 2026-08-09 |
+
 Banco de ideas aparcadas (YAGNI hasta demanda real): listados derivados/vistas guardadas (canon
 `licenses-overused`), kanban por enum, master-detail split, vista árbol (self-relation),
 calendario, comparador de registros, QR del código de negocio, semáforos por umbral, columnas
