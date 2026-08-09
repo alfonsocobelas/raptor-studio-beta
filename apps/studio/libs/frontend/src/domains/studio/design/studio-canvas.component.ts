@@ -366,7 +366,7 @@ const BLOCK_TOOLS: BlockTool[] = [
             ><code>{{ store.exportJson() }}</code></pre>
           }
           @if (mode() === 'model') {
-            <studio-model-view />
+            <studio-model-view (select)="selected.set($event)" />
           } @else if (mode() === 'flows') {
             <studio-flow-view />
           } @else if (!pages().length) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import {
   MODEL_GRID,
@@ -159,12 +159,13 @@ interface DiagramEdge {
 
         @for (node of nodes(); track node.name) {
           <div
-            class="bg-card group absolute rounded-md border shadow-sm"
+            class="bg-card group absolute cursor-pointer rounded-md border shadow-sm"
             [class.ring-2]="linking()?.from === node.name"
             [style.left.px]="node.box.x"
             [style.top.px]="node.box.y"
             [style.width.px]="node.box.width"
             [attr.data-testid]="'model-node-' + node.name"
+            (click)="$event.stopPropagation(); select.emit(node.name)"
           >
             <!-- asa de enlace: arrastrar hasta otra caja crea la relación -->
             <button
@@ -212,6 +213,9 @@ interface DiagramEdge {
 })
 export class ModelViewComponent {
   protected readonly store = inject(DesignStore)
+
+  /** Caja elegida → el inspector de columnas de la derecha (el MISMO editor que en Vistas). */
+  readonly select = output<string>()
 
   protected readonly creating = signal(false)
   protected readonly entityName = signal('')
