@@ -80,7 +80,7 @@ detrás del trabajo activo (spec 15). Una spec por componente, cada una con su g
 | A2  | ✅ `vista-gantt` (spec 30) | Schema `gantt` (exige period), página/ruta/nav `· cronograma`, barras con eje mensual y seed de intervalos escalonados; contract lo estrena. E2E con captura (e2e-17/18) tras desbloquear la spec 04 en la misma sesión | ✅ 2026-08-08 |
 | A3  | ✅ `historial-cambios` (spec 31) | Flag `history` (no derivado de audit): tabla global `shared.audit_events`, AuditTrailPort mejor-esfuerzo en ambos motores, eventos en los 4 use cases de escritura (update con diff), `GET /:id/history` y timeline en la ficha (e2e-19). Actor pendiente de la ranura auth | ✅ 2026-08-08 |
 | C1v | ✅ `widgets-analiticos` (spec 32) | Dashboard: `count-by` (barras por enum), `kpi-count` (conteo condicionado) y `series` (12 meses) — SIN backend nuevo: compuestos de conteos filtrados sobre el listado. Sumas/medias quedan para un futuro endpoint de agregación (C2v). E2e e2e-20 | ✅ 2026-08-08 |
-| B1v | `import-csv-validado`| Wizard de import: cada fila construye el agregado con los VOs generados → errores de negocio por celda → alta en lote. La vertical más diferencial; spec grande       | Pendiente |
+| B1v | ✅ `import-csv-validado` (spec 33) | `features.import`: diálogo con parser propio y plantilla descargable; el backend valida cada fila con los VOs del alta en dos fases (422 con errores por fila, o todo en una transacción delegando en el register). E2e e2e-21/22. **FASE 5 COMPLETA** | ✅ 2026-08-09 |
 
 Banco de ideas aparcadas (YAGNI hasta demanda real): listados derivados/vistas guardadas (canon
 `licenses-overused`), kanban por enum, master-detail split, vista árbol (self-relation),
