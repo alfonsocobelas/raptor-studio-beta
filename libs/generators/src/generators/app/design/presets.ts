@@ -48,23 +48,25 @@ const CABINA_CSS = `
   --shell-active: oklch(0.23 0.02 240);
 }
 
-@layer components {
-  /* la densidad es la razón de ser del preset: filas apretadas y cifras tabulares */
-  .app-shell-main table td {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    font-size: var(--table-font-size);
-  }
-  .app-shell-main table th {
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .app-shell-main table {
-    font-variant-numeric: tabular-nums;
-  }
+/* Sin @layer a propósito: el CSS sin capa gana a las utilidades de Tailwind, que viven en
+   @layer utilities. Dentro de @layer components estas reglas perdían contra el padding del
+   DataTable y la tabla salía con la densidad de siempre (visto en navegador, 2026-08-10). */
+.app-shell-main table td {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: var(--table-font-size);
+}
+
+.app-shell-main table th {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-shell-main table {
+  font-variant-numeric: tabular-nums;
 }
 `
 
@@ -95,19 +97,21 @@ const SUITE_CSS = `
   --grid-head-bg: oklch(0.26 0.016 250);
 }
 
-@layer components {
-  /* rejilla con todos los bordes: la lectura por celdas del mundo ERP */
-  .app-shell-main table th,
-  .app-shell-main table td {
-    border-right: 1px solid var(--grid-line);
-  }
-  .app-shell-main table th:last-child,
-  .app-shell-main table td:last-child {
-    border-right: 0;
-  }
-  .app-shell-main table th {
-    background: var(--grid-head-bg);
-  }
+/* Sin @layer, misma razón que en cabina: dentro de una capa las utilidades ganarían. */
+.app-shell-main table th,
+.app-shell-main table td {
+  border-right: 1px solid var(--grid-line);
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.app-shell-main table th:last-child,
+.app-shell-main table td:last-child {
+  border-right: 0;
+}
+
+.app-shell-main table th {
+  background: var(--grid-head-bg);
 }
 `
 
