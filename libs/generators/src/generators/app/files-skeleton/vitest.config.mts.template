@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import angular from '@analogjs/vite-plugin-angular'
 import { defineConfig } from 'vitest/config'
 
 /**
@@ -18,13 +19,30 @@ const alias = Object.fromEntries(
     .map(([pattern, [target]]) => [pattern, fileURLToPath(new URL(`./${target}`, import.meta.url))])
 )
 
-// Runner de los specs de frontend (servicios sin template: esbuild basta, sin compilador Angular).
+/**
+ * Runner de los specs de frontend. El plugin de Angular es obligatorio para los tests que
+ * RENDERIZAN un componente: sin él vitest pasa los .ts por esbuild, que borra los decoradores
+ * sin generar metadata, y todo binding de input muere con NG0303. Y va apuntado a
+ * `tsconfig.spec.json` a propósito: el tsconfig raíz solo incluye backend+shared, así que
+ * mirando ahí el plugin no compilaría una sola línea del frontend.
+ */
 export default defineConfig({
+  plugins: [angular({ tsconfig: 'tsconfig.spec.json' })],
   resolve: { alias },
   test: {
     globals: true,
     environment: 'jsdom',
     include: ['libs/frontend/src/**/*.spec.ts'],
-    setupFiles: ['libs/frontend/src/test-setup.ts']
+    setupFiles: ['libs/frontend/src/test-setup.ts'],
+    // TestBed exige un contexto de módulo nuevo por fichero (initTestEnvironment solo se llama
+    // una vez por contexto); se fija explícitamente en vez de confiar en los defaults.
+    pool: 'forks',
+    isolate: true,
+    server: {
+      deps: {
+        // los helm viajan como fuente TS: inline para que el plugin compile sus plantillas
+        inline: [/libs\/ui\//, /@spartan-ng/]
+      }
+    }
   }
 })
