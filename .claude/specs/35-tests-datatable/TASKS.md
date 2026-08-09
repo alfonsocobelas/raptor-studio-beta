@@ -1,7 +1,7 @@
 # Tareas atómicas: Tests del DataTable emitido
 
-> El artefacto SON tests: el ciclo TDD aquí es escribir el spec contra el DataTable emitido en
-> la demo real (rojo si el spec miente, verde cuando describe la verdad) y luego templetizarlo.
+> El artefacto SON tests: el ciclo TDD aquí fue correr la suite del canon contra el DataTable
+> emitido (roja donde el emitido tenía un defecto) y vaciarla, y solo después templetizarla.
 
 - [x] **TASK-00** (descubierta al empezar, habilitadora): **el runner emitido no podía renderizar
       componentes**. Era esbuild pelado: sin `@analogjs/vite-plugin-angular` los decoradores se
@@ -9,21 +9,28 @@
       del canon caían por esto. Añadidos el plugin, `tsconfig.spec.json` (el raíz solo incluye
       backend+shared, así que apuntar ahí no compila NADA del frontend) y testing-library.
       Verificado en app recién generada: un test que renderiza el DataTable pasa. `0b6bf36`.
-- [ ] **TASK-01**: Escribir `data-table.spec.ts` contra el DataTable emitido, iterando en la
-      demo (`iamdemo`) hasta verde: render, búsqueda, filtros, orden, paginación cliente.
-      · Estado: el spec del canon (887 líneas) ya corre contra el emitido con **59/65 en verde**.
-        Los 6 rojos son señal, no ruido — ver TASK-01b.
-- [ ] **TASK-01b**: Decidir uno a uno los rojos del canon. Estado 60/65:
-      · [x] `sortField` no se resolvía de vuelta a la clave de columna en modo servidor →
-        **era un defecto real** (la flecha desaparecía y el 2º clic reiniciaba en asc).
-        Arreglado en `751f5c7`; el test del canon pasa contra el emitido.
-      · [ ] fecha `dd-MM` esperada por el canon vs **`dd/MM` nuestro** (defecto 22, decisión
-        deliberada) → se adapta el TEST al templetizar, no el código.
-      · [ ] vocabulario cerrado por `valueMap` en el desplegable de filtros (2 tests) y los dos
-        de selects spartan → decidir si el emitido los adopta. **Ojo**: la piel material declara
-        `sortColumnInput` y no lo usa en ningún sitio (no restaura el indicador de orden al
-        volver a la pantalla); mismo defecto de fondo, otra piel — merece su propia tarea.
-- [ ] **TASK-02**: Ampliar con lo que la referencia no cubría: server-side (eventos), badges,
-      valueMap, booleanos, acciones con `hidden`, export CSV, estado vacío. Verde en la demo.
-- [ ] **TASK-03**: Templetizar en `files-ui/spartan`, test del generador (se emite con spartan,
-      no con material), golden re-baseline propio y `test:front` verde en app regenerada.
+- [x] **TASK-01/02**: Correr la suite del canon (887 líneas) contra el emitido y vaciarla.
+      Recorrido: 53 rojos → 6 → 5 → 3 → 1 → **0**.
+- [x] **TASK-01b**: Los rojos, uno a uno. Ninguno era ruido:
+      · **defecto real** — `sortField` no se resolvía de vuelta a la clave de columna en modo
+        servidor: la flecha de orden desaparecía y el 2º clic reiniciaba en asc (`751f5c7`).
+      · **defecto real** — una columna con `valueMap` no ofrecía desplegable de filtro: había que
+        teclear la clave guardada (`yearly`) viendo en pantalla su etiqueta (`Anual`), y encima
+        con un «contiene» sin sentido sobre un valor de lista cerrada (`c8b117b`).
+      · **defecto real** — el `test-setup` emitido no rellenaba los huecos de jsdom: `brn-select`
+        llama a `scrollIntoView` al abrirse, así que CUALQUIER test que despliegue un select
+        emitido moría en el CDK. Añadidos también `matchMedia`, limpieza de overlays entre tests
+        y guarda del init del TestBed (`3ec246e`). Decisión: NO se importa el `setup-vitest` de
+        Analog, que arrastra zone.js — estas apps son zoneless.
+      · **diferencia deliberada** — el canon espera `dd-MM`; nuestro canon es `dd/MM` (defecto 22).
+        Se adaptó el TEST, no el código.
+- [x] **TASK-03**: Templetizada en `files-ui/spartan` (se emite con spartan; material no, su tabla
+      es otra y la piel está congelada), test del generador, golden re-baseline y verificación en
+      app recién generada: `npm run test:front` → **65/65** (`40bc2e2`).
+
+## Pendiente (fuera del alcance de esta spec)
+
+- [ ] La piel **material declara `sortColumnInput` y no lo usa en ningún sitio**: no restaura el
+      indicador de orden al volver a la pantalla. Mismo defecto de fondo que el de spartan, otra
+      piel; y su tabla no tiene suite. Tarea propia cuando la piel material se descongele.
+- [ ] Siguiente tanda de suites del kernel si esta demuestra valor: KpiCard, dialogs, RelatedTable.
