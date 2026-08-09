@@ -89,6 +89,8 @@ detrás del trabajo activo (spec 15). Una spec por componente, cada una con su g
 | 34  | ✅ `ui-iam` (spec 34) | Rescate nº 2: UI de IAM sobre el backend ya emitido — `/users` (listar/buscar/filtrar, invitar, cambiar rol, desactivar/reactivar) + pie de sesión en el shell (identidad, Usuarios solo admin, logout). Sobre los contratos UI neutrales: 0 errores en las dos pieles. De propina la demo cazó el bug del `AuthModule` fuera del `imports` en línea única (`ed70e28`). E2e e2e-23/26/27 | ✅ 2026-08-09 |
 | 35  | ✅ `tests-datatable` (spec 35) | Rescate nº 4: el runner emitido ya compila componentes (antes NG0303 en todo binding) y cada app generada trae **65 tests** de su DataTable. La suite del canon contra el emitido destapó tres defectos reales: `sortField` sin resolver de vuelta, `valueMap` sin desplegable de filtro y el `test-setup` sin los polyfills de jsdom | ✅ 2026-08-09 |
 
+| 37  | ✅ `presets-de-diseno` (spec 37) | Ranura `design` con tres presets: `actual` (por defecto, diff de oro vacío), `cabina` (centro de operaciones, cromo en los dos temas) y `suite` (ERP: banda de marca, pestañas de módulo, rejilla). Nace de medir que spartan↔material dejaba las apps indistinguibles. La verificación en navegador cazó el defecto de cascada: el CSS del preset dentro de `@layer` perdía contra las utilidades de Tailwind | ✅ 2026-08-10 |
+
 Banco de ideas aparcadas (YAGNI hasta demanda real): listados derivados/vistas guardadas (canon
 `licenses-overused`), kanban por enum, master-detail split, vista árbol (self-relation),
 calendario, comparador de registros, QR del código de negocio, semáforos por umbral, columnas
