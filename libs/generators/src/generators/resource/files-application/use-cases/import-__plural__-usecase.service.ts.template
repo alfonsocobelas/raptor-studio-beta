@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { BusinessRuleViolationError } from '../../../../../shared/domain/errors'
+import { BaseCustomError } from '../../../../../shared/domain/errors'
 import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'
 import { <%- className %> } from '../../domain/<%- fileName %>'
 import { Import<%- pluralClassName %>Input, Import<%- pluralClassName %>Output, ImportFailure } from '../dtos/import-<%- plural %>-input.dto'
@@ -35,7 +35,7 @@ export class Import<%- pluralClassName %>UseCase {
       try {
         <%- className %>.register(row)
       } catch (error) {
-        if (!(error instanceof BusinessRuleViolationError)) throw error
+        if (!(error instanceof BaseCustomError)) throw error
         failures.push({ row: index + 1, message: error.message })
       }
     })

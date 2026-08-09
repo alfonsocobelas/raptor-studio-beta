@@ -22,7 +22,7 @@ describe('resource generator — import CSV validado (spec 33)', () => {
     expect(useCase).toContain('export class ImportProjectsUseCase')
     // fase 1: el dominio revisa TODAS las filas y acumula errores por fila
     expect(useCase).toContain('Project.register(row)')
-    expect(useCase).toContain('BusinessRuleViolationError')
+    expect(useCase).toContain('BaseCustomError')
     // fase 2: todo o nada, delegando en el register (unicidad y auditoría incluidas)
     expect(useCase).toContain('this.txManager.runInTransaction')
     expect(useCase).toContain('this.registerProject.invoke(row)')
