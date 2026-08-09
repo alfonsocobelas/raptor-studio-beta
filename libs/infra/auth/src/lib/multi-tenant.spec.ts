@@ -4,13 +4,16 @@ import { HostTenantResolver } from './host-tenant-resolver'
 import { InMemorySessionStore } from './in-memory-session-store'
 import { TenantScopedSessionStore } from './tenant-scoped-session-store'
 
+// Fechas relativas al reloj: el store poda lo caducado con Date.now(), así que una
+// expiresAt absoluta convierte la suite en una bomba de relojería (pasó el 2026-07-31:
+// dos días después de escribirse, los tests enrojecieron sin que nadie tocara nada).
 const record = (overrides: Partial<SessionRecord> = {}): SessionRecord => ({
   id: 's-1',
   userId: 'u-1',
   tokenHash: 'hash-1',
-  createdAt: '2026-07-30T10:00:00.000Z',
-  expiresAt: '2026-07-31T10:00:00.000Z',
-  lastSeenAt: '2026-07-30T10:00:00.000Z',
+  createdAt: new Date(Date.now() - 60_000).toISOString(),
+  expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+  lastSeenAt: new Date(Date.now() - 60_000).toISOString(),
   ...overrides
 })
 
