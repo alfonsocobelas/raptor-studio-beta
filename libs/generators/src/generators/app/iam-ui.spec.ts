@@ -83,7 +83,31 @@ describe('app generator — UI de IAM (spec 34)', () => {
     })
   })
 
+  describe('cableado del shell y las rutas (TASK-04)', () => {
+    it('con auth la ruta /users carga el listado de usuarios', () => {
+      const routes = withAuth.get('apps/demo/apps/frontend-app/src/app.routes.ts')
+
+      expect(routes).toContain("path: 'users'")
+      expect(routes).toContain('users-list.component')
+    })
+
+    it('con auth el shell monta el pie de sesión (usuarios admin + logout)', () => {
+      const shell = withAuth.get('apps/demo/apps/frontend-app/src/app.component.ts')
+      const footer = withAuth.get('apps/demo/libs/frontend/src/domains/auth/session-footer.component.ts')
+
+      expect(shell).toContain('SessionFooterComponent')
+      expect(shell).toContain('<app-session-footer />')
+      expect(footer).toContain('Cerrar sesión')
+      expect(footer).toContain('isAdmin')
+    })
+  })
+
   it('sin auth no se emite nada de la UI de IAM', () => {
     expect([...open.keys()].some(f => f.includes('/domains/iam/'))).toBe(false)
+  })
+
+  it('sin auth el shell no monta el pie de sesión ni existe la ruta /users', () => {
+    expect(open.get('apps/demo/apps/frontend-app/src/app.component.ts')).not.toContain('app-session-footer')
+    expect(open.get('apps/demo/apps/frontend-app/src/app.routes.ts')).not.toContain("path: 'users'")
   })
 })

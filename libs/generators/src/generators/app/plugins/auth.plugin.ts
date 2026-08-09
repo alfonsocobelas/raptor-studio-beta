@@ -91,9 +91,29 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
     path: 'accept-invitation',
     loadComponent: () =>
       import('${context.scope}/frontend/domains/auth/set-password.component').then(m => m.SetPasswordComponent)
+  },
+  {
+    path: 'users',
+    loadComponent: () => import('${context.scope}/frontend/domains/iam/users-list.component').then(m => m.UsersListComponent)
   },`
       )
     tree.write(routesPath, guarded)
+  }
+
+  // El shell gana el pie de sesión: quién soy, gestión de usuarios (admin) y logout.
+  const shellPath = path.join(app, 'app.component.ts')
+  const shell = tree.read(shellPath, 'utf-8')
+  if (shell && !shell.includes('SessionFooterComponent')) {
+    tree.write(
+      shellPath,
+      shell
+        .replace(
+          "import { NAV_ITEMS } from './nav'",
+          `import { NAV_ITEMS } from './nav'\nimport { SessionFooterComponent } from '${context.scope}/frontend/domains/auth/session-footer.component'`
+        )
+        .replace('imports: [RouterOutlet, RouterLink, RouterLinkActive', 'imports: [SessionFooterComponent, RouterOutlet, RouterLink, RouterLinkActive')
+        .replace('</aside>', '  <app-session-footer />\n        </aside>')
+    )
   }
 
   const configPath = path.join(app, 'app.config.ts')
