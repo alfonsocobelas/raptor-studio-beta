@@ -32,6 +32,9 @@ export class AuthService {
     return role === UserRoleEnum.ADMIN || role === UserRoleEnum.USER
   })
 
+  /** La gestión de usuarios es solo de administradores: la nav se oculta al resto (el backend ya responde 403). */
+  readonly isAdmin = computed(() => this._currentUser()?.role === UserRoleEnum.ADMIN)
+
   readonly userInitials = computed(() => {
     const user = this._currentUser()
     if (!user) {
