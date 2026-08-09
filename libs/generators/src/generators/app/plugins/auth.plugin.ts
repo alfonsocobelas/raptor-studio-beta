@@ -186,12 +186,15 @@ function registerModule(tree: Tree, context: PluginContext): void {
   }
   // El módulo registra sus guards como APP_GUARD: va justo tras el core para que la
   // sesión esté resuelta cuando se evalúan los roles de los módulos de negocio.
+  // Ojo con el ancla: prettier (printWidth 120) puede dejar el array `imports` en UNA línea
+  // con pocos módulos; `HealthModule,` solo lleva coma dentro del array (el import lleva `}`),
+  // así que el ancla vale para las dos formas. Sin esto la API arrancaba sin rutas de auth.
   const wired = source
     .replace(
       /(import \{ HealthModule \}[^\n]*\n)/,
       "$1import { AuthModule } from './contexts/iam/modules/auth/auth.module'\n"
     )
-    .replace(/(\n\s*HealthModule,)/, '$1\n    AuthModule,')
+    .replace(/HealthModule,(\s*)/, (_, sep: string) => `HealthModule,${sep}AuthModule,${sep}`)
   tree.write(rootPath, wired)
 }
 

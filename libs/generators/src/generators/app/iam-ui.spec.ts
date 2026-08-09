@@ -102,6 +102,41 @@ describe('app generator — UI de IAM (spec 34)', () => {
     })
   })
 
+  // Cazado por la demo iamdemo (2026-08-09): con pocos módulos prettier (printWidth 120 del
+  // workspace real) deja el array `imports` en UNA línea y la cirugía anclada a
+  // `\n  HealthModule,` no prendía — el import se añadía pero AuthModule no entraba en el
+  // módulo y la API arrancaba sin una sola ruta de auth. El workspace de test no tiene
+  // .prettierrc (printWidth 80 parte el array), así que se ejercita la cirugía en directo.
+  it('AuthModule entra en el array imports aunque prettier lo haya dejado en una línea', async () => {
+    const { authPlugin } = await import('./plugins/auth.plugin')
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    tree.write(
+      'apps/demo/libs/backend/src/root.module.ts',
+      `import { Module } from '@nestjs/common'
+import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
+import { CustomersModule } from './contexts/crm/modules/customers/customers.module'
+
+@Module({
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, HealthModule, CustomersModule],
+  providers: []
+})
+export class RootModule {}
+`
+    )
+    authPlugin.apply?.(tree, {
+      root: 'apps/demo',
+      appName: 'demo',
+      backendSrc: 'apps/demo/libs/backend/src',
+      frontendSrc: 'apps/demo/libs/frontend/src',
+      models: [],
+      scope: '@app'
+    })
+
+    const rootModule = tree.read('apps/demo/libs/backend/src/root.module.ts', 'utf-8') ?? ''
+    const importsArray = rootModule.slice(rootModule.indexOf('imports: ['), rootModule.indexOf(']'))
+    expect(importsArray).toContain('AuthModule')
+  })
+
   it('sin auth no se emite nada de la UI de IAM', () => {
     expect([...open.keys()].some(f => f.includes('/domains/iam/'))).toBe(false)
   })
