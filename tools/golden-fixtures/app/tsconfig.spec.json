@@ -1,0 +1,9 @@
+{
+  "extends": "./apps/frontend-app/tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node"]
+  },
+  "files": [],
+  "include": ["libs/frontend/**/*.ts", "libs/shared/**/*.ts", "libs/ui/**/*.ts"],
+  "exclude": []
+}
