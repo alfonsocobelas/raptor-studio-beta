@@ -20,8 +20,16 @@
 
 ## Pendiente
 
-- [ ] **TASK-05**: Que el estudio ofrezca la ranura en su wizard (sale de `slots.json`, que ya
-      está regenerado — falta comprobarlo en la UI del estudio).
+- [x] **TASK-05**: El estudio. Había DOS superficies y la ranura solo llegaba a una:
+      · el **wizard** ya la mostraba (lee `tools/slots.json` en cada petición), pero vive tras el
+        diálogo de generar, así que no se ve al abrir el estudio;
+      · el **lienzo** seguía con el toggle spartan/material — la aproximación de 12 líneas de CSS
+        que no dice nada de la app emitida. Sustituido por un **desplegable de preset visual**
+        que tiñe el cromo del lienzo y **siembra el wizard** con lo elegido (lo dibujado = lo
+        generado). Etiqueta «Preset visual» y no «Diseño»: en el estudio un diseño es el schema.
+      · verificado en el estudio en marcha (puerto 4316): selector con los tres presets, wizard
+        con el grupo «Preset visual», 0 errores de consola. Evidencia `e2e-31-estudio-preset.png`.
+      · gates: generators 521 ✅ · estudio front 216 ✅ · estudio back 265 ✅ · 6 golden vacíos ✅
 - [ ] **TASK-06**: Densidad de `cabina` más agresiva si Alfonso la quiere: hoy la fila baja de
       ~49px a ~42px porque los chips de badge llevan su propio padding. Bajar más exige tocar
       el badge, que es componente compartido — decisión suya.
