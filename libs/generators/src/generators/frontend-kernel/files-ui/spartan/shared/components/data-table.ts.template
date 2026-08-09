@@ -663,7 +663,16 @@ export class DataTable implements OnDestroy {
   readonly globalSearch = linkedSignal(() => (this.serverSide() ? this.searchInput() : ''))
   // Client-side: user-driven, starting from the defaults. Server-side: mirror the host's inputs so a
   // host-driven change (or a re-mount after navigation) keeps the footer, selector and controls in sync.
-  readonly sortColumn = linkedSignal(() => (this.serverSide() ? this.sortColumnInput() : ''))
+  // El host guarda en su request el campo por el que ordena el backend (`sortField`), no la
+  // clave de la columna: sin traducirlo de vuelta, la cabecera no se reconoce ordenada — la
+  // flecha desaparece y el siguiente clic reinicia en asc en vez de invertir.
+  readonly sortColumn = linkedSignal(() => {
+    if (!this.serverSide()) {
+      return ''
+    }
+    const orderBy = this.sortColumnInput()
+    return this.columns().find(c => c.sortField === orderBy)?.key ?? orderBy
+  })
   readonly sortDirection = linkedSignal<'asc' | 'desc'>(() => (this.serverSide() ? this.sortDirectionInput() : 'asc'))
   readonly currentPage = linkedSignal(() => (this.serverSide() ? (this.page() ?? 1) : 1))
   readonly pageSize = linkedSignal(() => (this.serverSide() ? (this.pageSizeInput() ?? 10) : 10))
