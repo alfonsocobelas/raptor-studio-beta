@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
-import { PREVIEW_PALETTES, PreviewSettings } from './preview-settings'
+import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings, presetChrome, type PreviewPreset } from './preview-settings'
 import { previewThemeVars } from './preview-theme'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
@@ -332,15 +332,17 @@ const BLOCK_TOOLS: BlockTool[] = [
             <ng-icon [name]="preview.theme() === 'light' ? 'lucideSun' : 'lucideMoon'" size="14" />
           </button>
           <span class="bg-border mx-1 h-4 w-px"></span>
-          <button
-            type="button"
-            class="text-[10px] font-medium uppercase"
-            title="Librería de componentes de la app"
-            data-testid="preview-skin"
-            (click)="preview.skin.set(preview.skin() === 'spartan' ? 'material' : 'spartan')"
+          <select
+            class="bg-transparent text-[11px] font-medium"
+            title="Preset visual de la app (shell y densidad)"
+            data-testid="preview-preset"
+            [value]="preview.preset()"
+            (change)="onPreset($event)"
           >
-            {{ preview.skin() }}
-          </button>
+            @for (option of visualPresets; track option.id) {
+              <option [value]="option.id">{{ option.label }}</option>
+            }
+          </select>
         </div>
         <button
           type="button"
@@ -407,7 +409,7 @@ const BLOCK_TOOLS: BlockTool[] = [
               class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
               [style]="previewVars()"
               [attr.data-palette]="preview.palette()"
-              [attr.data-skin]="preview.skin()"
+              [attr.data-preset]="preview.preset()"
               [class.dark]="preview.theme() === 'dark'"
               data-testid="preview-scope"
             >
@@ -503,19 +505,31 @@ const BLOCK_TOOLS: BlockTool[] = [
       border-radius: var(--radius);
       color: var(--foreground);
     }
-    /* aproximación de piel: Material redondea más, sube el peso y usa mayúsculas */
-    .preview-scope[data-skin='material'] {
-      --radius: 1rem;
+    /* Aproximación DECLARADA del preset visual: reconocerlo, no clonarlo. El shell real lo
+       emite el generador (files-design/<preset>) — aquí solo se tiñe el cromo del lienzo. */
+    .preview-scope[data-preset='cabina'] .preview-side {
+      background: var(--preview-shell-bg);
+      color: var(--preview-shell-fg);
+      border-color: var(--preview-shell-border);
     }
-    .preview-scope[data-skin='material'] .rounded-md,
-    .preview-scope[data-skin='material'] .rounded-lg,
-    .preview-scope[data-skin='material'] table {
-      border-radius: 0.9rem;
+    .preview-scope[data-preset='cabina'] table td {
+      padding-top: var(--preview-row-py);
+      padding-bottom: var(--preview-row-py);
     }
-    .preview-scope[data-skin='material'] button {
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      font-weight: 600;
+    .preview-scope[data-preset='cabina'] table th {
+      text-transform: var(--preview-head-transform);
+      letter-spacing: 0.08em;
+      font-size: 0.68rem;
+    }
+    .preview-scope[data-preset='suite'] .preview-side {
+      background: var(--preview-banner-bg);
+      color: var(--preview-banner-fg);
+    }
+    .preview-scope[data-preset='suite'] table th,
+    .preview-scope[data-preset='suite'] table td {
+      border-right: 1px solid var(--preview-grid-line);
+      padding-top: var(--preview-row-py);
+      padding-bottom: var(--preview-row-py);
     }
     .toolbar-item {
       border: 1px solid var(--border);
@@ -538,7 +552,16 @@ export class StudioCanvasComponent {
   protected readonly preview = inject(PreviewSettings)
   protected readonly palettes = PREVIEW_PALETTES
   /** Tokens del tema elegido: los mismos que emitirá el generador */
-  protected readonly previewVars = computed(() => previewThemeVars(this.preview.palette(), this.preview.theme()))
+  protected readonly visualPresets = PREVIEW_PRESETS
+  // el cromo del preset se suma a los tokens del tema: mismo [style], una sola pasada
+  protected readonly previewVars = computed(() => ({
+    ...previewThemeVars(this.preview.palette(), this.preview.theme()),
+    ...presetChrome(this.preview.preset())
+  }))
+
+  protected onPreset(event: Event): void {
+    this.preview.preset.set((event.target as HTMLSelectElement).value as PreviewPreset)
+  }
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 

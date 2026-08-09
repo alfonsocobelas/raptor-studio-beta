@@ -64,7 +64,9 @@ export const SLOTS: Record<string, Slot> = {
   },
   design: {
     name: 'design',
-    label: 'Diseño',
+    // «Preset visual» y no «Diseño»: en el estudio un diseño es el schema que se dibuja, y dos
+    // cosas distintas con el mismo nombre en la misma pantalla se confunden (Alfonso, 2026-08-10)
+    label: 'Preset visual',
     default: DEFAULT_DESIGN,
     // los presets salen de su registro (app/design/presets.ts): añadir uno allí basta
     providers: DESIGN_PRESETS.map(({ id, label, description }) => ({ value: id, label, description }))

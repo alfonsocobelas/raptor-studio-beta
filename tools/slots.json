@@ -32,7 +32,7 @@
     },
     {
       "name": "design",
-      "label": "Diseño",
+      "label": "Preset visual",
       "default": "actual",
       "providers": [
         {

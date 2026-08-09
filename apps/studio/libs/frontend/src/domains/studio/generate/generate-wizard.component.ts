@@ -263,7 +263,8 @@ export class GenerateWizardComponent {
     try {
       const manifest = await firstValueFrom(this.http.get<SlotsManifest>('/api/v1/studio/generate/slots'))
       this.manifest.set(manifest)
-      this.selection.set(defaultSelection(manifest))
+      // el preset elegido en el lienzo manda: lo que se ve dibujado es lo que se genera
+      this.selection.set({ ...defaultSelection(manifest), design: this.preview.preset() })
     } catch {
       this.manifestError.set(
         'No se pudieron cargar las opciones del generador. Arranca el backend local: npm run studio:api'
