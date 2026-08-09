@@ -1,0 +1,313 @@
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+import { FormControl, ReactiveFormsModule } from '@angular/forms'
+import { provideIcons } from '@ng-icons/core'
+import { lucidePencil, lucideUserX, lucideUserCheck } from '@ng-icons/lucide'
+import { UserDto, UserRoleEnum, UserStatusEnum } from '@app/shared/domain'
+import { AuthService } from '../../core/services/auth.service'
+import { UserService, OffsetPaginatedOutput } from '../../core/services/user.service'
+import { ColumnDef, DataTable, TableAction } from '../../shared/components/data-table'
+import { AppButton } from '../../shared/components/ui/button.directive'
+import { AppConfirmDialog } from '../../shared/components/ui/confirm-dialog'
+import { AppDialog } from '../../shared/components/ui/dialog'
+import { AppDialogContent } from '../../shared/components/ui/dialog-content'
+import { AppSelect, AppSelectOption } from '../../shared/components/ui/select'
+import { NotificationService } from '../../shared/components/ui/notification.service'
+import { navigationCameFrom } from '../../shared/utils/navigation'
+import { USER_ROLE_LABELS, USER_ROLE_VARIANTS, USER_STATUS_LABELS, USER_STATUS_VARIANTS } from './iam-labels'
+import { InviteUserDialogComponent, InviteUserFormValue } from './invite-user-dialog.component'
+
+type PendingAction = { type: 'role' | 'disable' | 'reactivate'; user: UserDto }
+
+// '' es la opción «todos»: el select necesita un value string y el request lo traduce a undefined.
+const ROLE_FILTER_OPTIONS: AppSelectOption[] = [
+  { value: '', label: 'Todos los roles' },
+  ...Object.values(UserRoleEnum).map(role => ({ value: role, label: USER_ROLE_LABELS[role] }))
+]
+
+const STATUS_FILTER_OPTIONS: AppSelectOption[] = [
+  { value: '', label: 'Todos los estados' },
+  ...Object.values(UserStatusEnum).map(status => ({ value: status, label: USER_STATUS_LABELS[status] }))
+]
+
+const ROLE_OPTIONS: AppSelectOption[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER].map(role => ({
+  value: role,
+  label: USER_ROLE_LABELS[role]
+}))
+
+/** Gestión de usuarios (solo admin): invitar, cambiar rol, desactivar y reactivar. */
+@Component({
+  selector: 'app-users-list',
+  imports: [
+    ReactiveFormsModule,
+    DataTable,
+    AppButton,
+    AppConfirmDialog,
+    AppDialog,
+    AppDialogContent,
+    AppSelect,
+    InviteUserDialogComponent
+  ],
+  providers: [provideIcons({ lucidePencil, lucideUserX, lucideUserCheck })],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="min-w-0 space-y-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Usuarios</h1>
+          <p class="text-muted-foreground">Invitaciones, roles y acceso a la aplicación</p>
+        </div>
+        <button type="button" appBtn (click)="inviteOpen.set(true)">Invitar usuario</button>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <div class="w-48">
+          <app-select
+            [formControl]="roleFilter"
+            controlId="roleFilter"
+            placeholder="Rol"
+            [options]="roleFilterOptions"
+          />
+        </div>
+        <div class="w-48">
+          <app-select
+            [formControl]="statusFilter"
+            controlId="statusFilter"
+            placeholder="Estado"
+            [options]="statusFilterOptions"
+          />
+        </div>
+      </div>
+
+      @if (isLoading() && !hasData()) {
+        <p class="text-muted-foreground py-12 text-center text-sm">Cargando usuarios…</p>
+      } @else if (error()) {
+        <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los usuarios</p>
+      } @else {
+        <app-data-table
+          [columns]="columns"
+          [data]="rows()"
+          [serverSide]="true"
+          [total]="total()"
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [search]="search()"
+          [loading]="isLoading()"
+          exportFilename="usuarios"
+          [actions]="actions"
+          (actionClick)="onAction($event)"
+          (pageChange)="onPage($event)"
+          (pageSizeChange)="onPageSize($event)"
+          (searchChange)="onSearch($event)"
+        />
+      }
+    </div>
+
+    <app-dialog [open]="inviteOpen()" (closed)="inviteOpen.set(false)">
+      @if (inviteOpen()) {
+        <app-invite-user-dialog (saved)="invite($event)" (close)="inviteOpen.set(false)" />
+      }
+    </app-dialog>
+
+    <app-dialog [open]="roleDialogUser() !== null" (closed)="roleDialogUser.set(null)">
+      @if (roleDialogUser(); as user) {
+        <app-dialog-content title="Cambiar rol" [description]="'Rol de ' + user.email">
+          <div class="space-y-4 py-4">
+            <app-select [formControl]="selectedRole" controlId="targetRole" placeholder="" [options]="roleOptions" />
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" appBtn variant="outline" (click)="roleDialogUser.set(null)">Cancelar</button>
+              <button type="button" appBtn (click)="confirmRole()">Guardar</button>
+            </div>
+          </div>
+        </app-dialog-content>
+      }
+    </app-dialog>
+
+    <app-confirm-dialog
+      [open]="pending() !== null"
+      [title]="confirmTitle()"
+      [description]="confirmDescription()"
+      confirmLabel="Confirmar"
+      (confirmed)="confirmAction()"
+      (closed)="pending.set(null)"
+    />
+  `
+})
+export class UsersListComponent {
+  private readonly _service = inject(UserService)
+  private readonly _notify = inject(NotificationService)
+  private readonly _auth = inject(AuthService)
+  protected readonly currentEmail = computed(() => this._auth.currentUser()?.email)
+
+  constructor() {
+    // El request vive en un servicio root y persiste entre navegaciones; se conserva solo
+    // al volver del propio módulo y se resetea al entrar desde fuera.
+    if (!navigationCameFrom('/users')) {
+      this._service.resetRequest()
+    }
+    this.roleFilter.valueChanges.subscribe(value => {
+      this._service.request.update(r => ({ ...r, page: 1, role: (value || undefined) as UserRoleEnum | undefined }))
+    })
+    this.statusFilter.valueChanges.subscribe(value => {
+      this._service.request.update(r => ({
+        ...r,
+        page: 1,
+        status: (value || undefined) as UserStatusEnum | undefined
+      }))
+    })
+  }
+
+  readonly isLoading = this._service.users.isLoading
+  readonly error = this._service.users.error
+
+  // resource() vacía value() mientras recarga: se retiene la última página para no desmontar la tabla.
+  private readonly _loaded = linkedSignal<
+    OffsetPaginatedOutput<UserDto> | undefined,
+    OffsetPaginatedOutput<UserDto> | undefined
+  >({
+    source: () => this._service.users.value(),
+    computation: (value, previous) => value ?? previous?.value
+  })
+
+  readonly rows = computed(() => (this._loaded()?.items ?? []) as unknown as Record<string, unknown>[])
+  readonly total = computed(() => this._loaded()?.total ?? 0)
+  readonly hasData = computed(() => this._loaded() !== undefined)
+  readonly currentPage = computed(() => this._service.request().page)
+  readonly pageSize = computed(() => this._service.request().pageSize)
+  readonly search = computed(() => this._service.request().text ?? '')
+
+  readonly roleFilter = new FormControl<string>('', { nonNullable: true })
+  readonly statusFilter = new FormControl<string>('', { nonNullable: true })
+  readonly selectedRole = new FormControl<string>(UserRoleEnum.USER, { nonNullable: true })
+
+  readonly inviteOpen = signal(false)
+  readonly roleDialogUser = signal<UserDto | null>(null)
+  readonly pending = signal<PendingAction | null>(null)
+
+  protected readonly roleFilterOptions = ROLE_FILTER_OPTIONS
+  protected readonly statusFilterOptions = STATUS_FILTER_OPTIONS
+  protected readonly roleOptions = ROLE_OPTIONS
+
+  readonly columns: ColumnDef[] = [
+    { key: 'email', label: 'Email', sortable: false, minWidth: 220 },
+    { key: 'name', label: 'Nombre', sortable: false, minWidth: 180 },
+    {
+      key: 'role',
+      label: 'Rol',
+      sortable: false,
+      minWidth: 130,
+      type: 'badge',
+      badgeMap: {
+        admin: { label: USER_ROLE_LABELS[UserRoleEnum.ADMIN], variant: USER_ROLE_VARIANTS['admin'] },
+        user: { label: USER_ROLE_LABELS[UserRoleEnum.USER], variant: USER_ROLE_VARIANTS['user'] },
+        viewer: { label: USER_ROLE_LABELS[UserRoleEnum.VIEWER], variant: USER_ROLE_VARIANTS['viewer'] }
+      }
+    },
+    {
+      key: 'status',
+      label: 'Estado',
+      sortable: false,
+      minWidth: 130,
+      type: 'badge',
+      badgeMap: {
+        active: { label: USER_STATUS_LABELS[UserStatusEnum.ACTIVE], variant: USER_STATUS_VARIANTS['active'] },
+        pending: { label: USER_STATUS_LABELS[UserStatusEnum.PENDING], variant: USER_STATUS_VARIANTS['pending'] },
+        disabled: { label: USER_STATUS_LABELS[UserStatusEnum.DISABLED], variant: USER_STATUS_VARIANTS['disabled'] }
+      }
+    }
+  ]
+
+  // Desactivar solo aplica a cuentas no desactivadas y reactivar solo a las desactivadas;
+  // nadie se desactiva a sí mismo (el backend también lo rechaza).
+  readonly actions: TableAction[] = [
+    { icon: 'lucidePencil', label: 'Cambiar rol', action: 'role' },
+    {
+      icon: 'lucideUserX',
+      label: 'Desactivar',
+      action: 'disable',
+      hidden: row => row['status'] === UserStatusEnum.DISABLED || row['email'] === this.currentEmail()
+    },
+    {
+      icon: 'lucideUserCheck',
+      label: 'Reactivar',
+      action: 'reactivate',
+      hidden: row => row['status'] !== UserStatusEnum.DISABLED
+    }
+  ]
+
+  readonly confirmTitle = computed(() => {
+    const action = this.pending()
+    if (!action) {
+      return ''
+    }
+    return action.type === 'disable' ? `¿Desactivar a ${action.user.email}?` : `¿Reactivar a ${action.user.email}?`
+  })
+
+  readonly confirmDescription = computed(() =>
+    this.pending()?.type === 'disable' ? 'Se cerrarán sus sesiones y no podrá volver a entrar.' : ''
+  )
+
+  onPage(page: number): void {
+    this._service.request.update(r => ({ ...r, page }))
+  }
+
+  onPageSize(pageSize: number): void {
+    this._service.request.update(r => ({ ...r, pageSize, page: 1 }))
+  }
+
+  onSearch(text: string): void {
+    this._service.request.update(r => ({ ...r, text: text || undefined, page: 1 }))
+  }
+
+  onAction(event: { action: string; row: Record<string, unknown> }): void {
+    const user = event.row as unknown as UserDto
+    if (event.action === 'role') {
+      this.selectedRole.setValue(user.role)
+      this.roleDialogUser.set(user)
+    } else if (event.action === 'disable' || event.action === 'reactivate') {
+      this.pending.set({ type: event.action, user })
+    }
+  }
+
+  async confirmRole(): Promise<void> {
+    const user = this.roleDialogUser()
+    if (!user) {
+      return
+    }
+    this.roleDialogUser.set(null)
+    try {
+      await this._service.changeRole(user.id, this.selectedRole.value as UserRoleEnum)
+      this._notify.success('Rol actualizado correctamente')
+    } catch {
+      this._notify.error('No se pudo cambiar el rol')
+    }
+  }
+
+  async confirmAction(): Promise<void> {
+    const action = this.pending()
+    if (!action) {
+      return
+    }
+    this.pending.set(null)
+    try {
+      if (action.type === 'disable') {
+        await this._service.disable(action.user.id)
+        this._notify.success('Usuario desactivado')
+      } else {
+        await this._service.reactivate(action.user.id)
+        this._notify.success('Usuario reactivado')
+      }
+    } catch {
+      this._notify.error('No se pudo completar la acción. Revisa tus permisos o las reglas de negocio.')
+    }
+  }
+
+  async invite(value: InviteUserFormValue): Promise<void> {
+    this.inviteOpen.set(false)
+    try {
+      await this._service.invite(value)
+      this._notify.success('Invitación enviada')
+    } catch {
+      this._notify.error('No se pudo enviar la invitación. Revisa los datos o los permisos.')
+    }
+  }
+}
