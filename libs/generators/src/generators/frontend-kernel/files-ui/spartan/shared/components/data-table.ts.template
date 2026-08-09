@@ -719,12 +719,24 @@ export class DataTable implements OnDestroy {
 
   // The column currently chosen in the filter popover (undefined when none / not found).
   readonly selectedColumnDef = computed(() => this.columns().find(c => c.key === this.filterColumn()))
-  // Whether the chosen column is a badge (closed set of values → dropdown + forced eq operator).
-  readonly isBadgeFilter = computed(() => this.selectedColumnDef()?.type === 'badge')
-  // Value options for a badge column, derived from its badgeMap ([] for non-badge columns).
+  // Vocabulario cerrado (badges o valueMap): el valor se elige de un desplegable en vez de
+  // escribirse. Sin esto había que teclear la clave guardada ('yearly') mientras la celda
+  // muestra su etiqueta ('Anual').
+  readonly isBadgeFilter = computed(() => {
+    const column = this.selectedColumnDef()
+    return column?.type === 'badge' || column?.valueMap !== undefined
+  })
+  // Opciones {valor guardado, etiqueta mostrada} de la columna elegida; [] si no es de vocabulario
+  // cerrado. El value SIEMPRE es la clave, que es lo que entiende el backend.
   readonly badgeOptions = computed(() => {
-    const badgeMap = this.selectedColumnDef()?.badgeMap
-    return badgeMap ? Object.entries(badgeMap).map(([value, { label }]) => ({ value, label })) : []
+    const column = this.selectedColumnDef()
+    if (column?.badgeMap) {
+      return Object.entries(column.badgeMap).map(([value, { label }]) => ({ value, label }))
+    }
+    if (column?.valueMap) {
+      return Object.entries(column.valueMap).map(([value, label]) => ({ value, label }))
+    }
+    return []
   })
 
   // itemToString de los hlm-select del popover de filtros: con el listbox cerrado los items no
@@ -970,8 +982,9 @@ export class DataTable implements OnDestroy {
     if (!col || !value || !colDef) {
       return
     }
-    // Badge columns hold a closed set of values, so equality is the only sensible operator.
-    const operator = colDef.type === 'badge' ? 'eq' : this.filterOperator()
+    // Vocabulario cerrado (badge o valueMap): el valor sale de un desplegable, así que la igualdad
+    // es el único operador con sentido — un 'contiene' sobre una clave elegida de una lista sobra.
+    const operator = colDef.type === 'badge' || colDef.valueMap ? 'eq' : this.filterOperator()
     this.activeFilters.update(f => [
       ...f,
       {
