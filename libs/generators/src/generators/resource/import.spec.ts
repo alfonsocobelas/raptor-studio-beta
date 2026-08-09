@@ -52,6 +52,36 @@ describe('resource generator — import CSV validado (spec 33)', () => {
     expect(test).toContain("assertNotCalled('register')")
   })
 
+  it('el servicio de project envía las filas y recarga; el diálogo parsea y coacciona tipos', async () => {
+    const tree = await emit('project')
+
+    const service = read(tree, 'out/frontend/project.service.ts')
+    expect(service).toContain('importRows(rows: RegisterProjectDto[]): Promise<ImportOutput>')
+    expect(service).toContain('`${API_URL}/import`')
+
+    const dialog = read(tree, 'out/frontend/projects-import.component.ts')
+    expect(dialog).toContain('export class ProjectsImportComponent')
+    // el parser vive en el propio diálogo: comillas y comas, sin dependencias
+    expect(dialog).toContain('parseCsv')
+    // cada columna se coacciona según el tipo del campo del alta
+    expect(dialog).toContain("{ name: 'name', kind: 'text' }")
+    expect(dialog).toContain("{ name: 'startDate', kind: 'date' }")
+    // plantilla descargable con las cabeceras exactas
+    expect(dialog).toContain('Descargar plantilla')
+    expect(dialog).toContain('generateId()')
+  })
+
+  it('el listado de project abre el diálogo de import; el de customer no', async () => {
+    const project = await emit('project')
+    const customer = await emit('customer')
+
+    const list = read(project, 'out/frontend/projects-list.component.ts')
+    expect(list).toContain('ProjectsImportComponent')
+    expect(list).toContain('Importar')
+    expect(read(customer, 'out/frontend/customers-list.component.ts')).not.toContain('Importar')
+    expect(customer.exists('out/frontend/customers-import.component.ts')).toBe(false)
+  })
+
   it('customer (sin import) queda exactamente igual que antes', async () => {
     const tree = await emit('customer')
 

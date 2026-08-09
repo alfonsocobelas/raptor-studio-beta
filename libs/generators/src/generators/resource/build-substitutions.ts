@@ -66,7 +66,7 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
-  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean; history: boolean }
+  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean; history: boolean; import: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
   /** Comentario de las acciones de fila en el listado con ficha */
@@ -86,6 +86,7 @@ export interface ResourceSubstitutions {
   gallery: GallerySubstitution | null
   gantt: GanttSubstitution | null
   labelsModule: LabelsModuleSubstitution | null
+  importCsv: ImportSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
   related: RelatedSubstitution[]
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
@@ -191,6 +192,11 @@ export interface LabelsModuleSubstitution {
   /** Enums importados del shared-domain, en orden alfabético */
   enumImports: string[]
   consts: { name: string; enumName: string; entries: { memberKey: string; label: string }[] }[]
+}
+
+/** Import CSV (spec 33): columnas del alta con su tipo, para parsear y coaccionar en el diálogo. */
+export interface ImportSubstitution {
+  columns: { name: string; kind: 'text' | 'number' | 'boolean' | 'date' }[]
 }
 
 /** Cronograma (spec 30): la barra se etiqueta y se sitúa con campos resueltos aquí, no en runtime. */
@@ -335,6 +341,7 @@ export function buildSubstitutions(
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
     labelsModule: renderLabelsModule(definition),
+    importCsv: renderImportCsv(definition),
     related: renderRelated(definition, others),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
@@ -739,6 +746,7 @@ function resolveFeatures(definition: ResourceDefinition): {
   edit: boolean
   trash: boolean
   history: boolean
+  import: boolean
 } {
   const canDelete = definition.list?.features?.delete ?? false
   return {
@@ -748,7 +756,9 @@ function resolveFeatures(definition: ResourceDefinition): {
     // la papelera (spec 29) se DERIVA: borrado lógico + listado que borra
     trash: canDelete && definition.softDelete === true,
     // el historial (spec 31): timeline en la ficha
-    history: definition.history === true
+    history: definition.history === true,
+    // el import (spec 33): botón y diálogo; exige alta y diálogo de edición
+    import: definition.list?.features?.import === true && (definition.formSections?.length ?? 0) > 0
   }
 }
 
@@ -912,6 +922,27 @@ function renderLabelsModule(definition: ResourceDefinition): LabelsModuleSubstit
     enumImports: [...new Set([...consts.values()].map(c => c.enumName))].sort(),
     consts: [...consts.values()]
   }
+}
+
+/** Las columnas del import son las del alta (mismo filtro que el RegisterInput), con su tipo. */
+function renderImportCsv(definition: ResourceDefinition): ImportSubstitution | null {
+  if (!(definition.list?.features?.import === true && (definition.formSections?.length ?? 0) > 0)) return null
+
+  const columns = Object.entries(definition.fields)
+    .filter(([name, f]) => name !== 'id' && !f.syncManaged && !(f.optionalPrimitive && !f.updatable))
+    .map(([name, f]) => ({
+      name,
+      kind:
+        f.type === 'number' || f.type === 'integer'
+          ? ('number' as const)
+          : f.type === 'boolean'
+            ? ('boolean' as const)
+            : f.type === 'date' || f.type === 'timestamptz'
+              ? ('date' as const)
+              : ('text' as const)
+    }))
+
+  return { columns }
 }
 
 function renderGantt(definition: ResourceDefinition): GanttSubstitution | null {
