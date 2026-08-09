@@ -209,7 +209,7 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 | C1    | `infra-azure`           | Empaquetar lo de la referencia como proveedor `infra=azure`: config+Key Vault, App Insights (absorbe `observability`), Blob, ACS (absorbe la pata azure de `email`), Terraform. Aquí se arregla la obs. 1 (adapter Azure siempre emitido) | Siguiente     |
 | C2    | `infra-lowcost`         | `infra=lowcost`: R2 (S3-compatible), Prometheus/Grafana o Sentry (**a estudiar**, Alfonso 2026-08-04), Bitwarden/Infisical para secretos                                                                                                  | Pendiente     |
 | C3/C4 | `infra-aws`/`infra-gcp` | S3+CloudWatch+Secrets Manager+SES / GCS+Cloud Monitoring+Secret Manager                                                                                                                                                                   | Pendiente     |
-| D     | `auth-multi-tenant`     | `auth=multi-tenant`. **No parte de cero**: `libs/infra/auth` ya tiene tenant resolvers y `TenantScopedSessionStore` (commit c33ac61, 2026-07-30) con **2 tests en rojo en develop**                                                       | Pendiente     |
+| D     | `auth-multi-tenant`     | `auth=multi-tenant`. **No parte de cero**: `libs/infra/auth` ya tiene tenant resolvers y `TenantScopedSessionStore` (commit c33ac61, 2026-07-30), **suite en verde** — los 2 rojos eran fechas absolutas caducadas en el fixture, no un hueco (arreglado `8ba9dc6`, 2026-08-09)     | Pendiente     |
 
 ## En pausa
 
@@ -225,21 +225,17 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     al `.prettierrc` más cercano. Arreglarlo reformatea medio estudio: decisión de Alfonso.
 20. ~~**`build-mongo.spec.ts` sin `build-mongo.ts`**~~ — resuelto 2026-08-04 (spec 06 TASK-06):
     la suite de `generators` está entera en verde (43 suites).
-21. **Los 2 tests rojos de `TenantScopedSessionStore`** (ver spec D arriba).
-22. **El generador NO emite los VOs compartidos que sus modelos referencian** (⚠️ el emitido no
-    compila con esos modelos): `voShared` apunta a `phone.vo`, `customer-name.vo`,
-    `sync-timestamp.vo` y `shared/domain/constants`, y esos ficheros no se emiten ni están en la
-    fixture golden. Medido con el typecheck de la app emitida (2026-08-04): app `customer`
-    postgres 11 errores, mongo 9 — todos de este hueco. Con los modelos de demo (boutique) la app
-    compila limpia en los DOS motores (0 errores), así que el hueco es de los modelos
-    heredados de sap-licenses, no del pipeline.
-23. **El typecheck de la app emitida no está en ningún gate** (⚠️ ya ha mordido DOS veces). El golden
-    compara ficheros y la suite del plugin no compila lo emitido: así pasaron los 5 defectos de
-    `5232994` y, peor, el renombre del logger de la spec 24, que dejó **todas** las apps emitidas sin
-    compilar y se congeló en las fixturas sin que nadie lo notara (`ea6031d`). Hace falta un gate que
-    genere una app FUERA del árbol, instale y le pase `tsc`: fuera, porque dentro del monorepo el
-    hoisting tapa las dependencias no declaradas. Es lento (~2 min por app), así que probablemente
-    va en un target aparte del golden, no en cada commit.
+21. ~~Los 2 tests rojos de `TenantScopedSessionStore`~~ — **resueltos 2026-08-09**: no era la
+    spec D sino un fixture con `expiresAt` absoluta que caducó al día siguiente de escribirse
+    (`InMemorySessionStore` poda con `Date.now()`). Fechas relativas al reloj desde `8ba9dc6`.
+22. ~~El generador NO emite los VOs compartidos que sus modelos referencian~~ — **resuelto**
+    (spec 27, la capa compartida del contexto): la app de oro de 4 modelos da 0 errores en el
+    typecheck fuera del árbol. Verificado de nuevo el 2026-08-09 (spartan y material, con auth).
+23. ~~El typecheck de la app emitida no está en ningún gate~~ — **resuelto** (spec 26):
+    `npm run typecheck:emitted` (`tools/typecheck-emitted.sh`) genera FUERA del árbol,
+    instala y pasa `tsc` a backend+shared y frontend. Lento (~2 min por app): se corre al
+    cerrar spec y en CI, no en cada commit. Ya cazó el renombre del logger (`ea6031d`) y los
+    dialogs rotos de la spec 04.
 
 ## Hallazgos de la demo de validación (2026-08-03)
 
