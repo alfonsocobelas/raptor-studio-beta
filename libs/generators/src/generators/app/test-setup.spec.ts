@@ -25,6 +25,11 @@ describe('test-setup de la app emitida', () => {
     expect(setup).toContain('scrollIntoView')
   })
 
+  it('importa afterEach en vez de usarlo como global (el fichero entra en el tsconfig del front)', () => {
+    // cazado por el gate de typecheck del emitido: como global daba TS2304
+    expect(setup).toContain("import { afterEach } from 'vitest'")
+  })
+
   it('limpia los overlays del CDK entre tests', () => {
     // viven fuera del fixture y sobreviven al cleanup: un overlay huérfano deja el body
     // aria-hidden y tumba las queries por rol del test siguiente

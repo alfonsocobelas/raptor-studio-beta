@@ -1,6 +1,9 @@
 // Sin `@analogjs/vite-plugin-angular/setup-vitest` a propósito: ese arranque importa zone.js y
 // esta app es zoneless (provideZonelessChangeDetection). El compilador basta para las plantillas.
 import '@angular/compiler'
+// afterEach se importa en vez de usarse como global: este fichero SÍ entra en el tsconfig del
+// frontend (que no declara los tipos de vitest), así que como global no compila.
+import { afterEach } from 'vitest'
 import { getTestBed } from '@angular/core/testing'
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing'
 
