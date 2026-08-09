@@ -31,6 +31,28 @@
       ]
     },
     {
+      "name": "design",
+      "label": "Diseño",
+      "default": "actual",
+      "providers": [
+        {
+          "value": "actual",
+          "label": "Actual (neutro)",
+          "description": "El shell que ya emite el acelerador: barra lateral sobria, sin identidad de sector"
+        },
+        {
+          "value": "cabina",
+          "label": "Cabina (centro de operaciones)",
+          "description": "Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro"
+        },
+        {
+          "value": "suite",
+          "label": "Suite (ERP corporativo)",
+          "description": "Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP"
+        }
+      ]
+    },
+    {
       "name": "infra",
       "label": "Infraestructura",
       "default": "none",

@@ -12,7 +12,7 @@
         "$source": "argv",
         "index": 0
       },
-      "x-prompt": "\u00bfC\u00f3mo se llama la aplicaci\u00f3n?"
+      "x-prompt": "¿Cómo se llama la aplicación?"
     },
     "app": {
       "type": "string",
@@ -25,7 +25,7 @@
     "models": {
       "type": "string",
       "description": "Comma-separated model names (defaults to all registered models)",
-      "x-prompt": "\u00bfQu\u00e9 modelos incluye? (separados por comas; vac\u00edo = todos)"
+      "x-prompt": "¿Qué modelos incluye? (separados por comas; vacío = todos)"
     },
     "directory": {
       "type": "string",
@@ -40,9 +40,12 @@
       "type": "string",
       "default": "spartan",
       "description": "Component library used by the emitted frontend",
-      "enum": ["spartan", "material"],
+      "enum": [
+        "spartan",
+        "material"
+      ],
       "x-prompt": {
-        "message": "\u00bfQu\u00e9 librer\u00eda de componentes?",
+        "message": "¿Qué librería de componentes?",
         "type": "list",
         "items": [
           {
@@ -56,11 +59,42 @@
         ]
       }
     },
+    "design": {
+      "type": "string",
+      "default": "actual",
+      "description": "Design preset: shell, density and chrome of the emitted app",
+      "enum": [
+        "actual",
+        "cabina",
+        "suite"
+      ],
+      "x-prompt": {
+        "message": "¿Qué preset de diseño?",
+        "type": "list",
+        "items": [
+          {
+            "value": "actual",
+            "label": "Actual (neutro)"
+          },
+          {
+            "value": "cabina",
+            "label": "Cabina (centro de operaciones)"
+          },
+          {
+            "value": "suite",
+            "label": "Suite (ERP corporativo)"
+          }
+        ]
+      }
+    },
     "database": {
       "type": "string",
       "default": "postgres",
       "description": "Persistence engine of the emitted app (postgres/TypeORM or mongo/Mongoose)",
-      "enum": ["postgres", "mongo"],
+      "enum": [
+        "postgres",
+        "mongo"
+      ],
       "x-prompt": {
         "message": "¿Qué motor de persistencia?",
         "type": "list",
@@ -80,7 +114,10 @@
       "type": "string",
       "default": "none",
       "description": "Authentication of the emitted app (exclusive slot)",
-      "enum": ["none", "single-tenant"],
+      "enum": [
+        "none",
+        "single-tenant"
+      ],
       "x-prompt": {
         "message": "¿Qué autenticación?",
         "type": "list",
@@ -100,9 +137,12 @@
       "type": "string",
       "default": "none",
       "description": "Infrastructure provider of the emitted app (exclusive slot)",
-      "enum": ["none", "azure"],
+      "enum": [
+        "none",
+        "azure"
+      ],
       "x-prompt": {
-        "message": "\u00bfQu\u00e9 infraestructura?",
+        "message": "¿Qué infraestructura?",
         "type": "list",
         "items": [
           {
@@ -126,8 +166,10 @@
       "type": "string",
       "default": "none",
       "description": "Comma-separated additive plugins (email); migrations is built in, authentication and observability are slots",
-      "x-prompt": "\u00bfQu\u00e9 plugins a\u00f1ado? (email \u2014 separados por comas; 'none' para ninguno)"
+      "x-prompt": "¿Qué plugins añado? (email — separados por comas; 'none' para ninguno)"
     }
   },
-  "required": ["name"]
+  "required": [
+    "name"
+  ]
 }

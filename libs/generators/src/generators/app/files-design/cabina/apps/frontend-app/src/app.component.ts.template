@@ -1,0 +1,95 @@
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
+import { toSignal } from '@angular/core/rxjs-interop'
+import { filter, map } from 'rxjs'
+import { HlmToasterImports } from '@spartan-ng/helm/sonner'
+import { NAV_ITEMS } from './nav'
+import { ThemeService } from '@app/frontend/core/services/theme.service'
+
+/** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
+const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation']
+
+/**
+ * Shell del preset «cabina»: centro de operaciones. La barra lateral va a contraste con el
+ * contenido (tokens `--shell-*`, definidos por el preset para los DOS temas) y la tabla se
+ * aprieta desde el CSS del preset, no desde los componentes — el DataTable emitido es el mismo
+ * de siempre, con sus mismos tests.
+ */
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    @if (bare()) {
+      <router-outlet />
+    } @else {
+      <div class="flex min-h-screen">
+        <aside
+          class="app-shell-side flex w-56 shrink-0 flex-col"
+          style="background: var(--shell-bg); border-right: 1px solid var(--shell-border)"
+        >
+          <div class="px-4 py-3" style="border-bottom: 1px solid var(--shell-border)">
+            <p class="text-[13px] font-bold tracking-wide" style="color: var(--shell-fg-strong)">
+              {{ appTitle }}
+            </p>
+            <p class="mt-0.5 text-[10px] font-medium tracking-[0.12em] uppercase" style="color: var(--shell-fg)">
+              {{ appSubtitle }}
+            </p>
+          </div>
+          <nav class="flex flex-col gap-px p-2">
+            @for (item of navItems; track item.route) {
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="app-nav-active font-semibold"
+                class="rounded-sm px-3 py-1.5 text-[12.5px]"
+                style="color: var(--shell-fg)"
+              >
+                {{ item.label }}
+              </a>
+            }
+          </nav>
+          <span class="flex-1"></span>
+          <button
+            type="button"
+            class="flex items-center gap-2 px-4 py-2.5 text-[12px]"
+            style="border-top: 1px solid var(--shell-border); color: var(--shell-fg)"
+            (click)="theme.toggle()"
+            [attr.aria-label]="theme.theme() === 'light' ? 'Activar tema oscuro' : 'Activar tema claro'"
+            data-testid="theme-toggle"
+          >
+            {{ theme.theme() === 'light' ? '🌙' : '☀️' }}
+            <span>{{ theme.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
+          </button>
+        </aside>
+        <main class="app-shell-main min-w-0 flex-1 p-5">
+          <router-outlet />
+        </main>
+      </div>
+    }
+    <hlm-toaster />
+  `,
+  styles: `
+    .app-nav-active {
+      background: var(--shell-active);
+      color: var(--shell-fg-strong) !important;
+      box-shadow: inset 2px 0 0 var(--primary);
+    }
+  `
+})
+export class AppComponent {
+  private readonly _router = inject(Router)
+
+  protected readonly theme = inject(ThemeService)
+  protected readonly appTitle = 'Dashboard'
+  protected readonly appSubtitle = 'Centro de operaciones'
+  protected readonly navItems = NAV_ITEMS
+
+  private readonly _url = toSignal(
+    this._router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(event => event.urlAfterRedirects)
+    ),
+    { initialValue: this._router.url }
+  )
+  protected readonly bare = computed(() => BARE_ROUTES.some(route => this._url().startsWith(route)))
+}

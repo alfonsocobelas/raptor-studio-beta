@@ -65,3 +65,6 @@ th.mat-mdc-header-cell {
 .mat-mdc-row:hover {
   background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
 }
+<%_ if (designCss) { _%>
+<%- designCss %>
+<%_ } _%>

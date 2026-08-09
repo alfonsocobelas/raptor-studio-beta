@@ -8,8 +8,9 @@ import { emailPlugin } from './email.plugin'
  * ya existe: database (postgres|mongo) y ui (spartan|material).
  */
 describe('SLOTS', () => {
-  it('registers the four exclusive decisions of the emitted app', () => {
-    expect(Object.keys(SLOTS)).toEqual(['database', 'ui', 'infra', 'auth'])
+  it('registers the five exclusive decisions of the emitted app', () => {
+    // design entra en la spec 37: la variedad visual no venía de la librería de componentes
+    expect(Object.keys(SLOTS)).toEqual(['database', 'ui', 'design', 'infra', 'auth'])
   })
 
   it('database offers postgres (default) and mongo', () => {

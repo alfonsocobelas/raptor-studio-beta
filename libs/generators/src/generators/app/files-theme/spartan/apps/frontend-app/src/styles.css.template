@@ -41,3 +41,6 @@
     @apply bg-background text-foreground;
   }
 }
+<%_ if (designCss) { _%>
+<%- designCss %>
+<%_ } _%>

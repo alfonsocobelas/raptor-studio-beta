@@ -31,6 +31,7 @@ import { normalizeLegacyPlugins, selectUi, slotPlugins, validateCombination, typ
 import { PERSISTENCE, selectPersistence } from './persistence/registry'
 import type { PersistenceProvider } from './persistence/provider'
 import { selectInfra } from './infra/registry'
+import { selectDesign } from './design/presets'
 import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
@@ -46,6 +47,8 @@ export interface AppGeneratorSchema {
   directory?: string
   /** Component library the emitted frontend is built on */
   ui?: UiLibrary
+  /** Design preset: shell, density and chrome of the emitted app (default actual) */
+  design?: string
   /** Persistence engine of the emitted app (default postgres) */
   database?: DatabaseEngine
   /** Authentication slot of the emitted app (default none) */
@@ -102,6 +105,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // los sub-generadores siguen recibiendo la lista por nombre, venga de donde venga la composición
   const modelNames = models.map(m => m.name).join(',')
   const ui = selectUi(options.ui)
+  // valida antes de emitir: un preset desconocido no puede dejar media app en disco
+  const design = selectDesign(options.design)
   const persistence = selectPersistence(options.database)
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
   const legacy = normalizeLegacyPlugins(options.plugins, {
@@ -272,6 +277,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     copyVerbatim(tree, path.join(__dirname, infra.files), root)
   }
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
+  // el preset de diseño va DESPUÉS de la piel: su shell gana al del esqueleto (spec 37)
+  if (design.files) {
+    copyVerbatim(tree, path.join(__dirname, design.files), root)
+  }
   // los puertos y el nombre del contenedor se ajustan sobre lo ya copiado (hallazgo 14)
   applyPorts(tree, root, options.name, composition.ports)
 
@@ -285,7 +294,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   }
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
-  const theme = themeSubstitutions(composition.themeId, composition.themeSeed)
+  const theme = { ...themeSubstitutions(composition.themeId, composition.themeSeed), designCss: design.css }
   generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
   // la fuente del tema viaja como dependencia (fase 3): self-hosted, la trae el npm install
   addFontDependency(tree, path.join(root, 'package.json'), theme.fontPackage)

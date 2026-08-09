@@ -1,5 +1,6 @@
 import { authPlugin } from './auth.plugin'
 import { INFRA_PROVIDERS } from '../infra/providers'
+import { DESIGN_PRESETS, DEFAULT_DESIGN } from '../design/presets'
 import type { AppPlugin } from './plugin'
 import type { DatabaseEngine } from '../database'
 
@@ -60,6 +61,13 @@ export const SLOTS: Record<string, Slot> = {
     label: 'Componentes',
     default: 'spartan',
     providers: [...UI_PROVIDERS]
+  },
+  design: {
+    name: 'design',
+    label: 'Diseño',
+    default: DEFAULT_DESIGN,
+    // los presets salen de su registro (app/design/presets.ts): añadir uno allí basta
+    providers: DESIGN_PRESETS.map(({ id, label, description }) => ({ value: id, label, description }))
   },
   infra: {
     name: 'infra',

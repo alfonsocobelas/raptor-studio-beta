@@ -1,0 +1,99 @@
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
+import { toSignal } from '@angular/core/rxjs-interop'
+import { filter, map } from 'rxjs'
+import { HlmToasterImports } from '@spartan-ng/helm/sonner'
+import { NAV_ITEMS } from './nav'
+import { ThemeService } from '@app/frontend/core/services/theme.service'
+
+/** Rutas sin shell: las pantallas públicas de auth ocupan la página entera. */
+const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-invitation']
+
+/**
+ * Shell del preset «suite»: ERP corporativo. La navegación deja la barra lateral y sube a una
+ * banda de marca con pestañas de módulo y migas — el patrón que reconoce sin explicación quien
+ * viene de SAP o Dynamics. La ruta activa alimenta la miga, así que no hay estado duplicado.
+ */
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    @if (bare()) {
+      <router-outlet />
+    } @else {
+      <div class="flex min-h-screen flex-col">
+        <header
+          class="app-shell-banner flex h-11 shrink-0 items-center gap-4 px-4"
+          style="background: var(--banner-bg); color: var(--banner-fg)"
+        >
+          <span class="text-sm font-semibold tracking-wide">{{ appTitle }}</span>
+          <span class="h-5 w-px" style="background: var(--banner-fg-dim); opacity: 0.4"></span>
+          <span class="text-xs" style="color: var(--banner-fg-dim)">{{ appSubtitle }}</span>
+          <span class="flex-1"></span>
+          <button
+            type="button"
+            class="text-xs"
+            style="color: var(--banner-fg-dim)"
+            (click)="theme.toggle()"
+            [attr.aria-label]="theme.theme() === 'light' ? 'Activar tema oscuro' : 'Activar tema claro'"
+            data-testid="theme-toggle"
+          >
+            {{ theme.theme() === 'light' ? '🌙' : '☀️' }}
+          </button>
+        </header>
+        <nav
+          class="app-shell-modules flex shrink-0 px-3"
+          style="background: var(--module-bar-bg); border-bottom: 1px solid var(--grid-line)"
+        >
+          @for (item of navItems; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="app-module-active"
+              class="text-muted-foreground border-b-[3px] border-transparent px-4 py-2 text-[12.5px]"
+            >
+              {{ item.label }}
+            </a>
+          }
+        </nav>
+        <div class="text-muted-foreground border-b px-4 py-1.5 text-[11px]" style="background: var(--grid-head-bg)">
+          Inicio › <span class="text-foreground font-semibold">{{ currentSection() }}</span>
+        </div>
+        <main class="app-shell-main min-w-0 flex-1 p-4">
+          <router-outlet />
+        </main>
+      </div>
+    }
+    <hlm-toaster />
+  `,
+  styles: `
+    .app-module-active {
+      color: var(--module-active);
+      border-bottom-color: var(--module-active);
+      font-weight: 600;
+    }
+  `
+})
+export class AppComponent {
+  private readonly _router = inject(Router)
+
+  protected readonly theme = inject(ThemeService)
+  protected readonly appTitle = 'Dashboard'
+  protected readonly appSubtitle = 'Panel de gestión'
+  protected readonly navItems = NAV_ITEMS
+
+  private readonly _url = toSignal(
+    this._router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(event => event.urlAfterRedirects)
+    ),
+    { initialValue: this._router.url }
+  )
+  protected readonly bare = computed(() => BARE_ROUTES.some(route => this._url().startsWith(route)))
+
+  /** La miga sale de la ruta activa: sin estado duplicado que se desincronice. */
+  protected readonly currentSection = computed(() => {
+    const url = this._url()
+    return this.navItems.find(item => url.startsWith(item.route))?.label ?? 'Inicio'
+  })
+}
