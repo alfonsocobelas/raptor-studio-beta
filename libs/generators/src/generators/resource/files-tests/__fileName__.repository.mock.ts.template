@@ -76,6 +76,21 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   restoreByOp(op: DeleteOperationId): Promise<number> {
     return this.getMock('restoreByOp')(op)
   }
+
+<%_ if (app.trash && dragPlan.length) { _%>
+  deletedOpOf(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<DeleteOperationId>> {
+    return this.getMock('deletedOpOf')(<%- propertyName %>Id)
+  }
+
+  givenDeletedOp(op: Nullable<DeleteOperationId>): void {
+    this.setMockResult('deletedOpOf', op)
+  }
+
+  whenRestoreByOpSucceeds(): void {
+    this.setMockResult('restoreByOp', 1)
+  }
+
+<%_ } _%>
 <%_ } _%>
 
   // helpers

@@ -4,6 +4,13 @@ import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/
 import { v7 as uuidv7 } from 'uuid'
 import { Restore<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/restore-<%- fileName %>-usecase.service'
 import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+<%_ if (dragPlan.length) { _%>
+import { DeleteOperationId } from '../../../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
+import { TransactionManager } from '../../../../../src/contexts/shared/domain/persistence/transaction-manager'
+<%_ dragPlan.forEach(level => { _%>
+<%- level.testRepoImport %>
+<%_ }) _%>
+<%_ } _%>
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
 
 describe('Restore<%- className %>UseCase', () => {
@@ -12,16 +19,57 @@ describe('Restore<%- className %>UseCase', () => {
 <%_ if (app.history) { _%>
   const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
 <%_ } _%>
+<%_ if (dragPlan.length) { _%>
+  // Se prueba la ORQUESTACIÓN: la transacción se ejecuta tal cual y cada repo hijo es un stub
+  const txManager = { runInTransaction: (work: () => Promise<unknown>) => work() } as TransactionManager
+<%_ dragPlan.forEach(level => { _%>
+  const <%- level.repoProp %> = { restoreByOp: jest.fn().mockResolvedValue(0) } as unknown as <%- level.repoClass %>
+<%_ }) _%>
+<%_ } _%>
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-<%_ if (app.history) { _%>
+<%_ if (dragPlan.length) { _%>
+    jest.clearAllMocks()
+    useCase = new Restore<%- className %>UseCase(
+      repositoryMock,
+<%_ dragPlan.forEach(level => { _%>
+      <%- level.repoProp %>,
+<%_ }) _%>
+      txManager<%- app.history ? ',\n      auditTrail' : '' %>
+    )
+<%_ } else if (app.history) { _%>
     useCase = new Restore<%- className %>UseCase(repositoryMock, auditTrail)
 <%_ } else { _%>
     useCase = new Restore<%- className %>UseCase(repositoryMock)
 <%_ } _%>
   })
 
+<%_ if (dragPlan.length) { _%>
+  describe('given a soft-deleted <%- fileName %>', () => {
+    it('reverts its whole delete operation, level by level', async () => {
+      const op = DeleteOperationId.random()
+      repositoryMock.givenDeletedOp(op)
+      repositoryMock.whenRestoreByOpSucceeds()
+
+      await useCase.invoke({ id: uuidv7() })
+
+      repositoryMock.assertCalled('restoreByOp')
+<%_ dragPlan.forEach(level => { _%>
+      expect(<%- level.repoProp %>.restoreByOp).toHaveBeenCalledWith(op)
+<%_ }) _%>
+    })
+  })
+
+  describe('given nothing deleted under that id', () => {
+    it('throws EntityNotFoundError and touches nothing', async () => {
+      repositoryMock.givenDeletedOp(null)
+
+      await expect(useCase.invoke({ id: uuidv7() })).rejects.toThrow(EntityNotFoundError)
+      repositoryMock.assertNotCalled('restoreByOp')
+    })
+  })
+<%_ } else { _%>
   describe('given a soft-deleted <%- fileName %>', () => {
     it('restores it', async () => {
       repositoryMock.whenRestoreSucceeds()
@@ -39,4 +87,5 @@ describe('Restore<%- className %>UseCase', () => {
       await expect(useCase.invoke({ id: uuidv7() })).rejects.toThrow(EntityNotFoundError)
     })
   })
+<%_ } _%>
 })

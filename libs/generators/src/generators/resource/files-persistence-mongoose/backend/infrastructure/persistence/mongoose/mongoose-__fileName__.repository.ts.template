@@ -163,6 +163,17 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
     return result.modifiedCount
   }
 <%_ } _%>
+<%_ if (app.trash && dragPlan.length) { _%>
+
+  // ¿Con qué operación cayó este documento archivado? Es lo que el restore del padre revierte.
+  async deletedOpOf(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<DeleteOperationId>> {
+    const row = await this.model()
+      .findOne({ id: <%- propertyName %>Id.value, deletedAt: { $ne: null } }, { deletedOp: 1 })
+      .session(this.session())
+      .exec()
+    return row?.deletedOp ? DeleteOperationId.create(row.deletedOp) : null
+  }
+<%_ } _%>
 
   // @ai:begin repository-extra — implementación de los finders del port-extra
   // @ai:end

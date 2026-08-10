@@ -27,6 +27,9 @@ export abstract class <%- className %>Repository {
 <%_ if (softContract) { _%>
   abstract restoreByOp(op: DeleteOperationId): Promise<number>
 <%_ } _%>
+<%_ if (app.trash && dragPlan.length) { _%>
+  abstract deletedOpOf(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<DeleteOperationId>>
+<%_ } _%>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }
