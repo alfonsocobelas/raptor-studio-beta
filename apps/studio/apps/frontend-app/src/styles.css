@@ -244,7 +244,9 @@
    que tiñe el fondo del lienzo: separa el cromo sin ensuciarlo. El panel de la derecha
    se queda blanco, como la barra. */
 .studio-rail {
-  background-color: var(--muted);
-  /* proyecta sobre el lienzo: el raíl queda por delante del papel, no pegado a él */
-  box-shadow: 2px 0 8px -4px oklch(0 0 0 / 12%);
+  /* Calibrado sobre la referencia: el raíl es el crema más claro de los dos planos de
+     papel (~#F2F1EE en claro) y proyecta sobre el lienzo, que queda un paso por debajo.
+     Se expresa mezclando tokens, no en hex, para que el estudio en oscuro siga válido. */
+  background-color: color-mix(in oklab, var(--muted) 99%, var(--foreground) 1%);
+  box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }

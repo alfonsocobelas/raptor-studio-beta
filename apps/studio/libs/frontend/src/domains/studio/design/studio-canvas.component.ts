@@ -482,10 +482,10 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* El lienzo es el papel más claro de los tres planos: raíl gris a la izquierda,
-       lienzo aquí, panel blanco a la derecha. */
+    /* El papel es gris de verdad (~#EFEEEB en claro): es lo que hace saltar a las
+       tarjetas blancas, como en la referencia. Un paso por debajo del raíl. */
     .canvas-surface {
-      background-color: color-mix(in oklab, var(--muted) 35%, var(--background));
+      background-color: color-mix(in oklab, var(--muted) 98%, var(--foreground) 2%);
     }
     /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
        en el padding del scroll, así el recorte del overflow no deja una línea. */
