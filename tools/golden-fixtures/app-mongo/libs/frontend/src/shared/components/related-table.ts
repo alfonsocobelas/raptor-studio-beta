@@ -9,6 +9,8 @@ export interface RelatedColumn {
   label: string
   /** Sin él, formatValue no sabe qué lee y una fecha sale en ISO crudo (defecto 21) */
   type?: 'date' | 'number' | 'boolean'
+  /** Etiquetas de un conjunto cerrado: el valor guardado se lee como en el listado */
+  labels?: Record<string, string>
 }
 
 interface PagedResponse {
@@ -114,6 +116,6 @@ export class RelatedTable {
   }
 
   protected format(value: unknown, column: RelatedColumn): string {
-    return formatValue(value, { type: column.type })
+    return formatValue(value, { type: column.type, labels: column.labels })
   }
 }
