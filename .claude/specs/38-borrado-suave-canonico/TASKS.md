@@ -33,10 +33,11 @@
       TASK-07 entró aquí). `removeDraggedBy<Fk>` por referencia + `restoreByOp`. VO
       `DeleteOperationId` en el kernel. typecheck:emitted cazó dos errores de tipos antes
       del re-baseline. `0d87db3` + `d11d9ff`.
-- [ ] **TASK-05**: use case de borrado transaccional (árbol estático dentro de
-      `runInTransaction`, evento de historial dentro de la tx si `history`). Medir aquí la
-      DI de ports hijo→padre y exportar los que falten. Test emitido: fallo a mitad ⇒
-      rollback completo.
+- [x] **TASK-05**: use case transaccional con el plan renderizado al emitir; módulo del
+      padre importa los de su árbol (todos exportaban ya su repo); historial dentro de la
+      tx; hojas sin transacción. Plan GATEADO a `features.delete` (sin removes sería DI
+      muerta) ⇒ golden vacío sin re-baseline. El rollback real queda para la integración
+      de TASK-12 (el unitario emitido prueba la orquestación). `1282cd0`
 - [ ] **TASK-06**: restore por operación: DTO del trash expone `deletedOp`, el POST /restore
       revierte el árbol en transacción. Test emitido: hijo borrado aparte NO vuelve.
 - [ ] **TASK-07**: ~~adapter Mongoose~~ el contrato entró con TASK-04. Queda SOLO verificar
