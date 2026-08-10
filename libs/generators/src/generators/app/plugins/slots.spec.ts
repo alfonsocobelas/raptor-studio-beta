@@ -5,7 +5,10 @@ import { emailPlugin } from './email.plugin'
 /**
  * TASK-01 (spec 23): las decisiones excluyentes del generador (elige-un-proveedor)
  * dejan de ser opciones planas y viven en un registro de ranuras. Se migra lo que
- * ya existe: database (postgres|mongo) y ui (spartan|material).
+ * ya existe: database (postgres|mongo) y ui.
+ *
+ * ui tiene un solo proveedor desde la spec 36 (retirada de material): las dos pieles
+ * emitían apps indistinguibles, y la variedad visual la lleva ahora la ranura `design`.
  */
 describe('SLOTS', () => {
   it('registers the five exclusive decisions of the emitted app', () => {
@@ -20,11 +23,11 @@ describe('SLOTS', () => {
     expect(slot.providers.map(p => p.value)).toEqual(['postgres', 'mongo'])
   })
 
-  it('ui offers spartan (default) and material', () => {
+  it('ui offers only spartan (material retired, spec 36)', () => {
     const slot = SLOTS['ui']
 
     expect(slot.default).toBe('spartan')
-    expect(slot.providers.map(p => p.value)).toEqual(['spartan', 'material'])
+    expect(slot.providers.map(p => p.value)).toEqual(['spartan'])
   })
 
   it('auth offers none (default) and single-tenant, which carries the auth plugin manifest', () => {
@@ -61,7 +64,7 @@ describe('SLOTS', () => {
 describe('selectProvider', () => {
   it('resolves a registered provider by value', () => {
     expect(selectProvider('database', 'mongo').value).toBe('mongo')
-    expect(selectProvider('ui', 'material').value).toBe('material')
+    expect(selectProvider('ui', 'spartan').value).toBe('spartan')
   })
 
   it('falls back to the slot default when the value is undefined', () => {
@@ -173,7 +176,7 @@ describe('normalizeLegacyPlugins', () => {
  */
 describe('validateCombination', () => {
   it('accepts a valid selection with no plugins', () => {
-    expect(() => validateCombination({ database: 'mongo', ui: 'material' })).not.toThrow()
+    expect(() => validateCombination({ database: 'mongo', ui: 'spartan' })).not.toThrow()
   })
 
   it('validates the selected values against the registry (unknown value throws)', () => {

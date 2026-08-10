@@ -23,10 +23,6 @@
         {
           "value": "spartan",
           "label": "Spartan NG (shadcn para Angular)"
-        },
-        {
-          "value": "material",
-          "label": "Angular Material"
         }
       ]
     },

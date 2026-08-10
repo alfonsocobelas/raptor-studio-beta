@@ -35,7 +35,7 @@ export interface Slot {
 }
 
 /** Librería de componentes del frontend emitido (la consume el kernel frontend). */
-export type UiLibrary = 'spartan' | 'material'
+export type UiLibrary = 'spartan'
 
 /** Proveedores de persistencia, tipados con el motor: de aquí sale `selectEngine` sin casts. */
 const DATABASE_PROVIDERS: readonly (SlotProvider & { value: DatabaseEngine })[] = [
@@ -43,10 +43,16 @@ const DATABASE_PROVIDERS: readonly (SlotProvider & { value: DatabaseEngine })[] 
   { value: 'mongo', label: 'MongoDB (Mongoose)' }
 ]
 
-/** Ídem para la piel: el tipo concreto sobrevive a la resolución. */
+/**
+ * Ídem para la piel: el tipo concreto sobrevive a la resolución.
+ *
+ * Un solo proveedor a propósito (spec 36): la piel material se retiró tras medir que emitía
+ * apps indistinguibles de las de spartan, y la variedad visual la lleva la ranura `design`.
+ * La ranura se conserva porque es el punto de re-entrada si un cliente exige otra librería;
+ * con un único proveedor el wizard no la pregunta.
+ */
 const UI_PROVIDERS: readonly (SlotProvider & { value: UiLibrary })[] = [
-  { value: 'spartan', label: 'Spartan NG (shadcn para Angular)' },
-  { value: 'material', label: 'Angular Material' }
+  { value: 'spartan', label: 'Spartan NG (shadcn para Angular)' }
 ]
 
 export const SLOTS: Record<string, Slot> = {
