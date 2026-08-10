@@ -245,4 +245,6 @@
    se queda blanco, como la barra. */
 .studio-rail {
   background-color: var(--muted);
+  /* proyecta sobre el lienzo: el raíl queda por delante del papel, no pegado a él */
+  box-shadow: 2px 0 8px -4px oklch(0 0 0 / 12%);
 }

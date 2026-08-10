@@ -83,6 +83,8 @@ describe('ViewsSidebarComponent', () => {
     store.addBlock(1, { kind: 'fields', resource: 'instalacion' })
     store.addBlock(2, { kind: 'fields', resource: 'producto' })
 
+    active.select(1) // Instalaciones: su ficha se despliega, la de Productos sigue plegada
+
     const fixture = mount()
     const items = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
     const shape = items.map(item => ({ text: item.textContent?.trim(), child: item.getAttribute('data-child') }))
@@ -91,9 +93,49 @@ describe('ViewsSidebarComponent', () => {
       { text: 'Resumen', child: null },
       { text: 'Instalaciones', child: null },
       { text: expect.stringContaining('Ficha de instalac'), child: 'true' },
-      { text: 'Productos', child: null },
-      { text: expect.stringContaining('Ficha de producto'), child: 'true' }
+      { text: 'Productos', child: null }
     ])
+  })
+
+  it('las fichas van plegadas: solo se ven las de la vista activa', () => {
+    store.addPage('list', 'Instalaciones')
+    store.addPage('list', 'Productos')
+    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    store.addBlock(1, { kind: 'fields', resource: 'producto' })
+    active.select(0)
+
+    const fixture = mount()
+    const visible = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
+
+    expect(visible.map(item => item.textContent?.trim())).toEqual([
+      'Instalaciones',
+      expect.stringContaining('Ficha de instalac'),
+      'Productos'
+    ])
+  })
+
+  it('la ficha abierta no se pliega bajo sus propios pies', () => {
+    store.addPage('list', 'Instalaciones')
+    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    const ficha = store.pages().findIndex(page => page.drillDown)
+    active.select(ficha)
+
+    const fixture = mount()
+
+    expect(testId(fixture, `view-item-${ficha}`)).not.toBeNull()
+  })
+
+  it('la vista con fichas se marca como desplegable, la que no las tiene no', () => {
+    store.addPage('list', 'Instalaciones')
+    store.addPage('list', 'Productos')
+    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    active.select(1)
+
+    const fixture = mount()
+
+    // Instalaciones tiene ficha y está plegada; Productos no tiene nada que desplegar
+    expect(testId(fixture, 'view-item-0')?.getAttribute('aria-expanded')).toBe('false')
+    expect(testId(fixture, 'view-item-1')?.getAttribute('aria-expanded')).toBeNull()
   })
 
   it('la ficha sigue seleccionando su propia vista, no la de al lado', () => {

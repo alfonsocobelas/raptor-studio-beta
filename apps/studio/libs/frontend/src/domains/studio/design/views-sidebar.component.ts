@@ -3,6 +3,8 @@ import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from 
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
+  lucideChevronDown,
+  lucideChevronRight,
   lucideIdCard,
   lucideLayoutGrid,
   lucidePaperclip,
@@ -14,6 +16,8 @@ import { DesignStore } from './design-store'
 
 const SIDEBAR_ICONS = {
   lucideChartNoAxesColumn,
+  lucideChevronDown,
+  lucideChevronRight,
   lucideIdCard,
   lucideLayoutGrid,
   lucidePaperclip,
@@ -33,6 +37,10 @@ interface ViewNode {
   /** Índice en el diseño: es lo que selecciona y lo que nombran los testids */
   index: number
   child: boolean
+  /** La vista tiene fichas colgando, así que se puede desplegar */
+  expandable: boolean
+  /** Sus fichas están a la vista */
+  open: boolean
 }
 
 /**
@@ -74,7 +82,7 @@ const BLOCK_TOOLS: BlockTool[] = [
   imports: [NgIcon],
   providers: [provideIcons(SIDEBAR_ICONS)],
   template: `
-    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto p-4">
+    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
         <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">
           Vistas del proyecto
@@ -92,13 +100,21 @@ const BLOCK_TOOLS: BlockTool[] = [
             [class.shadow-sm]="node.index === active.index()"
             [class.ring-1]="node.index === active.index()"
             [attr.aria-current]="node.index === active.index() ? 'true' : null"
+            [attr.aria-expanded]="node.expandable ? (node.open ? 'true' : 'false') : null"
             [attr.data-child]="node.child ? 'true' : null"
             [attr.data-testid]="'view-item-' + node.index"
             [attr.title]="node.page.drillDown ? 'Se abre desde el listado · no aparece en el menú' : node.page.title"
             (click)="active.select(node.index)"
           >
             <ng-icon [name]="node.page.drillDown ? 'lucideIdCard' : 'lucideTable'" size="14" />
-            {{ node.page.title }}
+            <span class="min-w-0 flex-1 truncate">{{ node.page.title }}</span>
+            @if (node.expandable) {
+              <ng-icon
+                class="text-muted-foreground"
+                [name]="node.open ? 'lucideChevronDown' : 'lucideChevronRight'"
+                size="13"
+              />
+            }
           </button>
         }
         @if (!pages().length) {
@@ -213,26 +229,32 @@ export class ViewsSidebarComponent {
    * porque en la app emitida se llega a ella desde ahí y nunca desde el menú. La madre es
    * la vista con una tabla o una galería de su entidad; una ficha sin listado se queda al
    * final sin sangrar, porque no cuelga de nada.
+   *
+   * Las fichas van PLEGADAS: se despliegan al seleccionar su madre (o la propia ficha),
+   * así la lista enseña la navegación de la app y no todas sus pantallas a la vez.
    */
   protected readonly tree = computed<ViewNode[]>(() => {
     const pages = this.store.pages().map((page, index) => ({ page, index }))
     const children = pages.filter(entry => entry.page.drillDown)
+    const active = this.active.index()
     const placed = new Set<number>()
     const nodes: ViewNode[] = []
 
     for (const parent of pages.filter(entry => !entry.page.drillDown)) {
-      nodes.push({ ...parent, child: false })
-      for (const child of children) {
-        if (placed.has(child.index)) continue
+      const own = children.filter(child => {
         const resource = detailResource(child.page)
-        if (resource && opensDetailOf(parent.page, resource)) {
-          nodes.push({ ...child, child: true })
-          placed.add(child.index)
-        }
+        return !placed.has(child.index) && resource && opensDetailOf(parent.page, resource)
+      })
+      own.forEach(child => placed.add(child.index))
+
+      const open = own.some(child => child.index === active) || parent.index === active
+      nodes.push({ ...parent, child: false, expandable: own.length > 0, open })
+      if (open) {
+        for (const child of own) nodes.push({ ...child, child: true, expandable: false, open: false })
       }
     }
     for (const child of children) {
-      if (!placed.has(child.index)) nodes.push({ ...child, child: false })
+      if (!placed.has(child.index)) nodes.push({ ...child, child: false, expandable: false, open: false })
     }
     return nodes
   })

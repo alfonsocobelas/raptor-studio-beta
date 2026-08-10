@@ -478,10 +478,10 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* Un solo papel: lienzo y raíl izquierdo comparten el --muted cálido de la foto,
-       separados por el borde; solo el panel derecho y la barra quedan en blanco. */
+    /* El lienzo es el papel más claro de los tres planos: raíl gris a la izquierda,
+       lienzo aquí, panel blanco a la derecha. */
     .canvas-surface {
-      background-color: var(--muted);
+      background-color: color-mix(in oklab, var(--muted) 35%, var(--background));
     }
     /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
        en el padding del scroll, así el recorte del overflow no deja una línea. */
