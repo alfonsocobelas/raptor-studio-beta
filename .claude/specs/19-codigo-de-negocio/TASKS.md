@@ -16,8 +16,17 @@
       `UNIQUE`; `DROP SEQUENCE` en el down. Ancho holgado a propósito: un código importado
       no sigue nuestro formato. Guard `code` + mongo (no hay secuencias) antes de emitir.
       Commit `c1c03a4`.
-- [ ] TASK-04 — el alta pide el código **solo si el input no lo trae** (§2.bis:
-      `code` opcional en `RegisterInput`); el update nunca lo toca
+- [x] TASK-04 — el alta pide el código **solo si el input no lo trae**; el update nunca lo toca.
+      Commit `47ffffc`. Lo importante de esta tarea fue el CÓMO:
+      · `code` se declara como intención y se **expande a campo normal en la frontera del
+        registro** (`expand-code.ts`). De ahí salen gratis el VO, el miembro del agregado,
+        `toPrimitives`, el DTO y la columna del listado — regla 7: generar, no interpretar.
+      · hacerlo por generador en vez de en la frontera dejó un DTO sin el campo; **lo cazó el
+        typecheck del emitido**, no la suite. Tercera vez que ese gate paga.
+      · marcar el campo `unique` trajo gratis la colisión de §2.bis: el alta comprueba
+        `withCode` y lanza `AlreadyExistsError`.
+      · bandera nueva `serverAssigned` en `FieldDefinition`: obligatorio en el dominio,
+        opcional en la entrada, nunca en el update. Es la tensión que destapó el caso del Excel.
 - [ ] TASK-05 — import (spec 33): la plantilla CSV incluye `code` como columna
       opcional y el importador respeta el que venga; colisión → 409 por fila
 - [ ] TASK-06 — frontend: columna en listado y fila en ficha, nunca en el formulario
