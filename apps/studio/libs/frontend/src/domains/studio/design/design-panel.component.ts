@@ -45,7 +45,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
         }
       </div>
 
-      <div class="min-h-0 flex-1 overflow-y-auto pt-3">
+      <div class="min-h-0 flex-1 overflow-y-auto px-0.5 pt-3">
         @switch (tab()) {
           @case ('theme') {
             <h3 class="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wider">Paleta</h3>
@@ -55,6 +55,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
                   type="button"
                   class="hover:bg-accent/60 rounded-md border p-2 text-left"
                   [class.ring-2]="preview.palette() === palette.id"
+                  [class.ring-inset]="preview.palette() === palette.id"
                   [attr.data-testid]="'palette-' + palette.id"
                   (click)="preview.palette.set(palette.id)"
                 >
@@ -94,6 +95,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
                 type="button"
                 class="hover:bg-accent/60 mb-1.5 block w-full rounded-md border px-2 py-2 text-left text-sm"
                 [class.ring-2]="preview.preset() === option.id"
+                [class.ring-inset]="preview.preset() === option.id"
                 [class.font-semibold]="preview.preset() === option.id"
                 [attr.data-testid]="'preview-preset-' + option.id"
                 (click)="preview.preset.set(option.id)"

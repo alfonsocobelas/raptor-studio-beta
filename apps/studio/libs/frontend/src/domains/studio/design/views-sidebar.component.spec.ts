@@ -58,6 +58,57 @@ describe('ViewsSidebarComponent', () => {
     expect(active.index()).toBe(1)
   })
 
+  it('la ficha cuelga de su listado: va detrás de él y sangrada', () => {
+    store.addPage('list', 'Instalaciones')
+    store.addPage('list', 'Productos')
+    // un bloque de detalle sobre la entidad del primer listado crea su ficha, al final del diseño
+    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    const ficha = store.pages().find(page => page.drillDown)?.title
+
+    const fixture = mount()
+    const items = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
+
+    expect(items.map(item => item.textContent?.trim())).toEqual(['Instalaciones', ficha, 'Productos'])
+    expect(items[1].getAttribute('data-child')).toBe('true')
+    expect(items[0].getAttribute('data-child')).toBeNull()
+  })
+
+  it('un panel de KPIs no adopta fichas aunque vaya primero: la madre es el listado que las abre', () => {
+    // el orden real de un diseño: el panel arriba, mencionando por KPIs todas las entidades
+    store.addPage('list', 'Instalaciones')
+    store.addPage('list', 'Productos')
+    store.addPage('panel', 'Resumen')
+    store.addBlock(2, { kind: 'kpis', resources: ['instalacion', 'producto'] })
+    store.movePage(2, 0)
+    store.addBlock(1, { kind: 'fields', resource: 'instalacion' })
+    store.addBlock(2, { kind: 'fields', resource: 'producto' })
+
+    const fixture = mount()
+    const items = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
+    const shape = items.map(item => ({ text: item.textContent?.trim(), child: item.getAttribute('data-child') }))
+
+    expect(shape).toEqual([
+      { text: 'Resumen', child: null },
+      { text: 'Instalaciones', child: null },
+      { text: expect.stringContaining('Ficha de instalac'), child: 'true' },
+      { text: 'Productos', child: null },
+      { text: expect.stringContaining('Ficha de producto'), child: 'true' }
+    ])
+  })
+
+  it('la ficha sigue seleccionando su propia vista, no la de al lado', () => {
+    store.addPage('list', 'Instalaciones')
+    store.addPage('list', 'Productos')
+    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    const fichaIndex = store.pages().findIndex(page => page.drillDown)
+
+    const fixture = mount()
+    const items = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
+    items[1].click()
+
+    expect(active.index()).toBe(fichaIndex)
+  })
+
   it('ofrece los cinco bloques que el generador emite, y ninguno más', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')

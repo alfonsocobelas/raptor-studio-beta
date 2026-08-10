@@ -239,3 +239,10 @@
 .preview-scope[data-preset='cabina'] [hlmcard] p.text-2xl {
   font-family: var(--font-mono-cabina);
 }
+
+/* El raíl de vistas (izquierda) va sobre el gris del papel del estudio, el mismo token
+   que tiñe el fondo del lienzo: separa el cromo sin ensuciarlo. El panel de la derecha
+   se queda blanco, como la barra. */
+.studio-rail {
+  background-color: var(--muted);
+}

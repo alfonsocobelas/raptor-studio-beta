@@ -15,70 +15,73 @@ import { StudioChatService } from './studio-chat.service'
   imports: [FormsModule, NgIcon],
   providers: [provideIcons({ lucideArrowUp })],
   template: `
-    <section class="flex h-full flex-col" data-testid="chat-panel">
-      <h2 class="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
-        Chat de diseño
-        @if (chat.mode() === 'fake') {
-          <span class="text-amber-600" data-testid="chat-mode-fake">· demo sin IA</span>
-        }
-      </h2>
-      <div class="mb-2 flex-1 space-y-2 overflow-auto" data-testid="chat-history">
-        @for (entry of chat.history(); track $index) {
-          @if (entry.role === 'user') {
-            <div class="flex justify-end" [attr.data-testid]="'chat-user-' + $index">
-              <div class="max-w-[85%]">
-                <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">
-                  Tú
-                </p>
-                <div class="rounded-2xl rounded-br-sm bg-neutral-900 px-3 py-2 text-sm text-neutral-50">
+    <section class="flex max-h-full flex-col" data-testid="chat-panel">
+      <!-- El historial va plegado: el chat es una barra y la conversación se consulta a demanda -->
+      @if (showHistory() || chat.pending() || chat.error()) {
+        <div class="mb-2 max-h-48 space-y-2 overflow-auto px-1" data-testid="chat-history">
+          @for (entry of chat.history(); track $index) {
+            @if (entry.role === 'user') {
+              <div class="flex justify-end" [attr.data-testid]="'chat-user-' + $index">
+                <div class="max-w-[85%] rounded-2xl rounded-br-sm bg-neutral-900 px-3 py-2 text-sm text-neutral-50">
                   {{ entry.text }}
                 </div>
               </div>
-            </div>
-          } @else {
-            <div class="flex justify-start" [attr.data-testid]="'chat-assistant-' + $index">
-              <div class="max-w-[90%]">
-                <p class="text-muted-foreground mb-0.5 text-[10px] font-medium uppercase tracking-wide">✦ Asistente</p>
-                <div class="bg-muted rounded-2xl rounded-bl-sm px-3 py-2 text-sm">{{ entry.text }}</div>
+            } @else {
+              <div class="flex justify-start" [attr.data-testid]="'chat-assistant-' + $index">
+                <div class="bg-muted max-w-[90%] rounded-2xl rounded-bl-sm px-3 py-2 text-sm">
+                  <span class="text-brand mr-1">✦</span>{{ entry.text }}
+                </div>
               </div>
-            </div>
+            }
           }
-        }
-        @if (chat.pending()) {
-          <p class="text-muted-foreground text-xs" data-testid="chat-pending">Pensando…</p>
-        }
-        @if (chat.error(); as error) {
-          <p class="text-destructive text-xs" data-testid="chat-error">{{ error }}</p>
-        }
-      </div>
-      <!-- el botón vive DENTRO de la caja, así acompaña al textarea cuando crece -->
-      <form
-        class="bg-muted border-input focus-within:border-ring flex flex-col rounded-2xl border px-3 py-2"
-        (ngSubmit)="submit(input)"
-      >
+          @if (!chat.history().length) {
+            <p class="text-muted-foreground text-xs">Todavía no hay conversación</p>
+          }
+          @if (chat.pending()) {
+            <p class="text-muted-foreground text-xs" data-testid="chat-pending">Pensando…</p>
+          }
+          @if (chat.error(); as error) {
+            <p class="text-destructive text-xs" data-testid="chat-error">{{ error }}</p>
+          }
+        </div>
+      }
+
+      <!-- Una sola fila, como la barra de mando del mockup: ✦, la orden, historial y enviar -->
+      <form class="flex items-end gap-2" (ngSubmit)="submit(input)">
+        <span class="text-brand pb-2 text-base leading-none" aria-hidden="true">✦</span>
         <textarea
           #input
           rows="1"
-          class="w-full resize-none overflow-y-auto bg-transparent text-sm outline-none"
+          class="max-h-32 flex-1 resize-none overflow-y-auto bg-transparent py-2 text-sm outline-none"
           name="draft"
-          placeholder="Describe tu aplicación…"
+          placeholder="«pon los KPIs en dos columnas y sube la tabla»"
           [disabled]="chat.pending()"
           [(ngModel)]="draft"
           (input)="grow(input)"
           (keydown)="onKeydown($event, input)"
           data-testid="chat-input"
         ></textarea>
-        <div class="flex items-center justify-end pt-1">
-          <button
-            type="submit"
-            class="bg-brand text-brand-foreground flex size-7 items-center justify-center rounded-full disabled:opacity-40"
-            [disabled]="chat.pending() || !draft().trim()"
-            aria-label="Enviar"
-            data-testid="chat-send"
-          >
-            <ng-icon name="lucideArrowUp" size="15" />
-          </button>
-        </div>
+        @if (chat.mode() === 'fake') {
+          <span class="pb-2 text-xs text-amber-600" data-testid="chat-mode-fake">demo sin IA</span>
+        }
+        <button
+          type="button"
+          class="text-muted-foreground hover:bg-accent/60 mb-1 rounded-md border px-3 py-1.5 text-sm"
+          [class.bg-accent]="showHistory()"
+          data-testid="chat-history-toggle"
+          (click)="showHistory.set(!showHistory())"
+        >
+          Historial
+        </button>
+        <span class="text-muted-foreground pb-2.5 text-[11px]" aria-hidden="true">⌘↵</span>
+        <button
+          type="submit"
+          class="bg-primary text-primary-foreground mb-1 rounded-md px-4 py-1.5 text-sm font-medium disabled:opacity-40"
+          [disabled]="chat.pending() || !draft().trim()"
+          data-testid="chat-send"
+        >
+          Enviar
+        </button>
       </form>
     </section>
   `
@@ -86,6 +89,8 @@ import { StudioChatService } from './studio-chat.service'
 export class ChatPanelComponent {
   protected readonly chat = inject(StudioChatService)
   protected readonly draft = signal('')
+  /** El historial plegado: la barra manda y la conversación se abre a demanda. */
+  protected readonly showHistory = signal(false)
 
   protected submit(input?: HTMLTextAreaElement): void {
     const text = this.draft().trim()

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
-import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
+import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
@@ -27,6 +27,30 @@ interface BlockTool {
   label: string
 }
 
+/** Una vista de la lista, ya colocada: `child` es la ficha que cuelga de un listado. */
+interface ViewNode {
+  page: DesignPage
+  /** Índice en el diseño: es lo que selecciona y lo que nombran los testids */
+  index: number
+  child: boolean
+}
+
+/**
+ * Bloques desde los que se ABRE una ficha en la app emitida. Un panel de KPIs
+ * menciona entidades pero no lleva a ninguna ficha, así que no puede ser su madre.
+ */
+const NAVIGATING_BLOCKS: BlockKind[] = ['table', 'cards']
+
+/** La entidad de la que trata una vista de ficha. */
+function detailResource(page: DesignPage): string | undefined {
+  return page.blocks.find(block => block.resource)?.resource
+}
+
+/** ¿Se llega a la ficha de esta entidad desde esta vista? */
+function opensDetailOf(page: DesignPage, resource: string): boolean {
+  return page.blocks.some((block: DesignBlock) => NAVIGATING_BLOCKS.includes(block.kind) && block.resource === resource)
+}
+
 /**
  * Los bloques que el generador emite de verdad. Aquí no hay «gráfico» ni
  * «formulario»: mientras `BlockKind` no los tenga, ofrecerlos sería prometer
@@ -50,26 +74,31 @@ const BLOCK_TOOLS: BlockTool[] = [
   imports: [NgIcon],
   providers: [provideIcons(SIDEBAR_ICONS)],
   template: `
-    <aside class="bg-card flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
+    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
         <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">
           Vistas del proyecto
         </h2>
-        @for (page of pages(); track $index) {
+        @for (node of tree(); track node.index) {
           <button
             type="button"
-            class="hover:bg-accent/60 mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm"
-            [class.bg-background]="$index === active.index()"
-            [class.font-semibold]="$index === active.index()"
-            [class.shadow-sm]="$index === active.index()"
-            [class.ring-1]="$index === active.index()"
-            [attr.aria-current]="$index === active.index() ? 'true' : null"
-            [attr.data-testid]="'view-item-' + $index"
-            [attr.title]="page.drillDown ? 'Se abre desde el listado · no aparece en el menú' : page.title"
-            (click)="active.select($index)"
+            class="hover:bg-accent/60 mb-0.5 flex w-full items-center gap-2 rounded-md py-2 pr-2 text-left text-sm"
+            [class.pl-2]="!node.child"
+            [class.ml-3]="node.child"
+            [class.border-l]="node.child"
+            [class.pl-3]="node.child"
+            [class.bg-background]="node.index === active.index()"
+            [class.font-semibold]="node.index === active.index()"
+            [class.shadow-sm]="node.index === active.index()"
+            [class.ring-1]="node.index === active.index()"
+            [attr.aria-current]="node.index === active.index() ? 'true' : null"
+            [attr.data-child]="node.child ? 'true' : null"
+            [attr.data-testid]="'view-item-' + node.index"
+            [attr.title]="node.page.drillDown ? 'Se abre desde el listado · no aparece en el menú' : node.page.title"
+            (click)="active.select(node.index)"
           >
-            <ng-icon [name]="page.drillDown ? 'lucideIdCard' : 'lucideTable'" size="14" />
-            {{ page.title }}
+            <ng-icon [name]="node.page.drillDown ? 'lucideIdCard' : 'lucideTable'" size="14" />
+            {{ node.page.title }}
           </button>
         }
         @if (!pages().length) {
@@ -178,6 +207,35 @@ export class ViewsSidebarComponent {
   protected readonly pageTitle = signal('')
 
   protected readonly pages = computed(() => this.store.pages())
+
+  /**
+   * Las vistas en árbol: cada ficha va detrás del listado desde el que se abre, sangrada,
+   * porque en la app emitida se llega a ella desde ahí y nunca desde el menú. La madre es
+   * la vista con una tabla o una galería de su entidad; una ficha sin listado se queda al
+   * final sin sangrar, porque no cuelga de nada.
+   */
+  protected readonly tree = computed<ViewNode[]>(() => {
+    const pages = this.store.pages().map((page, index) => ({ page, index }))
+    const children = pages.filter(entry => entry.page.drillDown)
+    const placed = new Set<number>()
+    const nodes: ViewNode[] = []
+
+    for (const parent of pages.filter(entry => !entry.page.drillDown)) {
+      nodes.push({ ...parent, child: false })
+      for (const child of children) {
+        if (placed.has(child.index)) continue
+        const resource = detailResource(child.page)
+        if (resource && opensDetailOf(parent.page, resource)) {
+          nodes.push({ ...child, child: true })
+          placed.add(child.index)
+        }
+      }
+    }
+    for (const child of children) {
+      if (!placed.has(child.index)) nodes.push({ ...child, child: false })
+    }
+    return nodes
+  })
 
   protected onTitle(event: Event): void {
     this.pageTitle.set((event.target as HTMLInputElement).value)
