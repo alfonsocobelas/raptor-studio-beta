@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, isDevMode, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings, presetChrome, type PreviewPreset } from './preview-settings'
+import { PreviewSettings, presetChrome } from './preview-settings'
 import { previewThemeVars } from './preview-theme'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
@@ -45,8 +45,8 @@ import { CanvasPageComponent } from './canvas-page.component'
 import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
-import { InspectorComponent } from './inspector.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
+import { DesignPanelComponent } from './design-panel.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
 
@@ -61,12 +61,12 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     FormsModule,
     NgIcon,
     CanvasPageComponent,
-    InspectorComponent,
     ChatPanelComponent,
     GenerateWizardComponent,
     ModelViewComponent,
     FlowViewComponent,
-    ViewsSidebarComponent
+    ViewsSidebarComponent,
+    DesignPanelComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
   template: `
@@ -188,44 +188,6 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         @if (store.lastError(); as error) {
           <span class="text-destructive max-w-80 truncate text-xs" data-testid="canvas-error">{{ error }}</span>
         }
-        <!-- ajustes de PREVISUALIZACIÓN de la app (no del estudio) -->
-        <div class="flex items-center gap-1 rounded-md border px-2 py-1" title="Vista previa de la app">
-          <span class="text-muted-foreground mr-1 text-[10px] uppercase tracking-wide">App</span>
-          @for (palette of palettes; track palette.id) {
-            <button
-              type="button"
-              class="h-4 w-4 rounded-full border transition-transform hover:scale-110"
-              [style.background]="palette.swatch"
-              [class.ring-2]="preview.palette() === palette.id"
-              [class.ring-offset-1]="preview.palette() === palette.id"
-              [attr.title]="palette.label"
-              [attr.data-testid]="'palette-' + palette.id"
-              (click)="preview.palette.set(palette.id)"
-            ></button>
-          }
-          <span class="bg-border mx-1 h-4 w-px"></span>
-          <button
-            type="button"
-            class="text-xs"
-            [attr.title]="'Tema de la app: ' + preview.theme()"
-            data-testid="preview-theme"
-            (click)="preview.toggleTheme()"
-          >
-            <ng-icon [name]="preview.theme() === 'light' ? 'lucideSun' : 'lucideMoon'" size="14" />
-          </button>
-          <span class="bg-border mx-1 h-4 w-px"></span>
-          <select
-            class="bg-transparent text-[11px] font-medium"
-            title="Preset visual de la app (shell y densidad)"
-            data-testid="preview-preset"
-            [value]="preview.preset()"
-            (change)="onPreset($event)"
-          >
-            @for (option of visualPresets; track option.id) {
-              <option [value]="option.id">{{ option.label }}</option>
-            }
-          </select>
-        </div>
         <button
           type="button"
           class="toolbar-item"
@@ -249,7 +211,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
             <pre hidden data-testid="schema-json">{{ store.exportJson() }}</pre>
           }
           @if (mode() === 'model') {
-            <studio-model-view (select)="selected.set($event)" />
+            <studio-model-view (select)="active.selectResource($event)" />
           } @else if (mode() === 'flows') {
             <studio-flow-view />
           } @else if (mode() === 'access') {
@@ -329,7 +291,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
                   Inicio › <span class="text-foreground font-semibold">{{ pages()[active.index()]?.title }}</span>
                 </div>
                 <section class="min-w-0 flex-1 p-4">
-                  <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
+                  <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
                 </section>
               } @else if (preview.preset() === 'cabina') {
                 <!-- Shell «cabina», réplica de files-design/cabina: barra a contraste, cabecera
@@ -405,7 +367,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
                     </span>
                   </div>
                   <section class="min-w-0 flex-1 p-5">
-                    <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
+                    <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
                   </section>
                 </div>
               } @else {
@@ -467,7 +429,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
                 </div>
               </aside>
               <section class="min-w-0 flex-1 p-6">
-                <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
+                <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
               </section>
               }
             </div>
@@ -478,7 +440,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           <div class="min-h-0 flex-1">
             <studio-chat-panel />
           </div>
-          <studio-inspector [resource]="selected()" (close)="selected.set(null)" />
+          <div class="mt-4 max-h-[55%] shrink-0 border-t pt-3">
+            <studio-design-panel />
+          </div>
         </aside>
       </div>
     </div>
@@ -524,25 +488,18 @@ export class StudioCanvasComponent {
   protected readonly store = inject(DesignStore)
   protected readonly history = inject(DesignHistoryService)
   protected readonly preview = inject(PreviewSettings)
-  protected readonly palettes = PREVIEW_PALETTES
-  /** Tokens del tema elegido: los mismos que emitirá el generador */
-  protected readonly visualPresets = PREVIEW_PRESETS
   // el cromo del preset se suma a los tokens del tema: mismo [style], una sola pasada
   protected readonly previewVars = computed(() => ({
     ...previewThemeVars(this.preview.palette(), this.preview.theme()),
     ...presetChrome(this.preview.preset(), this.preview.theme())
   }))
 
-  protected onPreset(event: Event): void {
-    this.preview.preset.set((event.target as HTMLSelectElement).value as PreviewPreset)
-  }
   protected readonly modes = STUDIO_MODES
   protected readonly mode = signal<StudioMode>('views')
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
   protected readonly active = inject(ActiveViewService)
-  protected readonly selected = signal<string | null>(null)
 
   protected readonly pages = computed(() => this.store.pages())
 

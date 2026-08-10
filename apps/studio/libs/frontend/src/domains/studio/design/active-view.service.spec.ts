@@ -25,6 +25,26 @@ describe('ActiveViewService', () => {
     expect(active.index()).toBe(1)
   })
 
+  it('arranca sin entidad elegida: el inspector no tiene nada que enseñar', () => {
+    expect(active.resource()).toBeNull()
+  })
+
+  it('recuerda la entidad elegida en el lienzo', () => {
+    active.selectResource('producto')
+
+    expect(active.resource()).toBe('producto')
+  })
+
+  it('cambiar de vista suelta la entidad: era de la vista anterior', () => {
+    store.addPage('list', 'Productos')
+    store.addPage('list', 'Proveedores')
+    active.selectResource('producto')
+
+    active.select(1)
+
+    expect(active.resource()).toBeNull()
+  })
+
   it('nunca apunta fuera del diseño: al borrar la última vista el índice retrocede', () => {
     store.addPage('list', 'Productos')
     store.addPage('list', 'Proveedores')
