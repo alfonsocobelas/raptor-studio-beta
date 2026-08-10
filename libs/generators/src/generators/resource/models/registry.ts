@@ -10,6 +10,10 @@ import { sale } from './sale.model'
 import { garment } from './garment.model'
 import { supplier } from './supplier.model'
 import { movement } from './movement.model'
+import { account } from './account.model'
+import { installation } from './installation.model'
+import { material } from './material.model'
+import { worklog } from './worklog.model'
 
 /**
  * Single model registry — the one place a resource is declared.
@@ -36,7 +40,11 @@ const REGISTERED: Record<string, ResourceDefinition> = {
   sale,
   garment,
   supplier,
-  movement
+  movement,
+  account,
+  installation,
+  material,
+  worklog
 }
 
 export const MODELS: Record<string, ResourceDefinition> = Object.fromEntries(
