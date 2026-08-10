@@ -50,7 +50,7 @@ describe('theme catalog', () => {
       expect(tokens.light['background']).toBe(NEUTRAL_WHITE)
       expect(tokens.light['card']).toBe(NEUTRAL_WHITE)
       expect(tokens.light['border']).toBe('oklch(0.922 0 0)')
-      expect(tokens.dark['background']).toBe('oklch(0.145 0 0)')
+      expect(tokens.dark['background']).toBe('oklch(0.21 0 0)')
     })
   })
 

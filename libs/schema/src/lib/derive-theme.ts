@@ -26,6 +26,11 @@ export interface Ramp {
   raised: number
   ink: number
   deep: number
+  /** Fondo del modo OSCURO. Separado de `deep` (que en claro es el texto): compartirlo
+   *  ataba el gris del fondo a la negrura de la letra, y salía una app casi negra. */
+  night: number
+  /** Tarjetas, popovers y barra lateral en oscuro: un escalón por encima del fondo */
+  slate: number
 }
 
 export const DEFAULT_RAMP: Ramp = {
@@ -37,9 +42,12 @@ export const DEFAULT_RAMP: Ramp = {
   line: 0.922,
   faint: 0.708,
   dim: 0.556,
-  raised: 0.269,
+  // solo en oscuro: separación de chips/acentos sobre la tarjeta
+  raised: 0.32,
   ink: 0.205,
-  deep: 0.145
+  deep: 0.145,
+  night: 0.21,
+  slate: 0.26
 }
 
 /** Colores que un tema decide, no deriva: son identidad, no escala. */
@@ -171,11 +179,11 @@ const LIGHT_SURFACES: Record<string, keyof Ramp> = {
 }
 
 const DARK_SURFACES: Record<string, keyof Ramp> = {
-  background: 'deep',
+  background: 'night',
   foreground: 'subtle',
-  card: 'ink',
+  card: 'slate',
   'card-foreground': 'subtle',
-  popover: 'ink',
+  popover: 'slate',
   'popover-foreground': 'subtle',
   secondary: 'raised',
   'secondary-foreground': 'subtle',
@@ -183,7 +191,7 @@ const DARK_SURFACES: Record<string, keyof Ramp> = {
   'muted-foreground': 'faint',
   accent: 'raised',
   'accent-foreground': 'subtle',
-  sidebar: 'ink',
+  sidebar: 'slate',
   'sidebar-foreground': 'subtle',
   'sidebar-accent': 'raised',
   'sidebar-accent-foreground': 'subtle'

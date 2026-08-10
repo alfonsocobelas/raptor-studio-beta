@@ -52,30 +52,31 @@ const NEUTRAL_LIGHT: Record<string, string> = {
   'sidebar-ring': 'oklch(0.708 0 0)'
 }
 
+// spec 38: el oscuro dejó de ser negro — fondo 0.21, superficies 0.26, chips 0.32
 const NEUTRAL_DARK: Record<string, string> = {
-  background: 'oklch(0.145 0 0)',
+  background: 'oklch(0.21 0 0)',
   foreground: 'oklch(0.985 0 0)',
-  card: 'oklch(0.205 0 0)',
+  card: 'oklch(0.26 0 0)',
   'card-foreground': 'oklch(0.985 0 0)',
-  popover: 'oklch(0.205 0 0)',
+  popover: 'oklch(0.26 0 0)',
   'popover-foreground': 'oklch(0.985 0 0)',
   primary: 'oklch(0.922 0 0)',
   'primary-foreground': 'oklch(0.205 0 0)',
-  secondary: 'oklch(0.269 0 0)',
+  secondary: 'oklch(0.32 0 0)',
   'secondary-foreground': 'oklch(0.985 0 0)',
-  muted: 'oklch(0.269 0 0)',
+  muted: 'oklch(0.32 0 0)',
   'muted-foreground': 'oklch(0.708 0 0)',
-  accent: 'oklch(0.269 0 0)',
+  accent: 'oklch(0.32 0 0)',
   'accent-foreground': 'oklch(0.985 0 0)',
   destructive: 'oklch(0.704 0.191 22.216)',
   border: 'oklch(1 0 0 / 10%)',
   input: 'oklch(1 0 0 / 15%)',
   ring: 'oklch(0.556 0 0)',
-  sidebar: 'oklch(0.205 0 0)',
+  sidebar: 'oklch(0.26 0 0)',
   'sidebar-foreground': 'oklch(0.985 0 0)',
   'sidebar-primary': 'oklch(0.985 0 0)',
   'sidebar-primary-foreground': 'oklch(0.205 0 0)',
-  'sidebar-accent': 'oklch(0.269 0 0)',
+  'sidebar-accent': 'oklch(0.32 0 0)',
   'sidebar-accent-foreground': 'oklch(0.985 0 0)',
   'sidebar-border': 'oklch(1 0 0 / 10%)',
   'sidebar-ring': 'oklch(0.556 0 0)'
@@ -168,9 +169,9 @@ describe('deriveTheme', () => {
       const { dark } = deriveTheme(theme)
 
       // THEN el fondo y las tarjetas oscuras llevan el tono
-      expect(dark['background']).toBe('oklch(0.145 0.016 250)')
-      expect(dark['card']).toBe('oklch(0.205 0.016 250)')
-      expect(dark['muted']).toBe('oklch(0.269 0.016 250)')
+      expect(dark['background']).toBe('oklch(0.21 0.016 250)')
+      expect(dark['card']).toBe('oklch(0.26 0.016 250)')
+      expect(dark['muted']).toBe('oklch(0.32 0.016 250)')
     })
 
     it('leaves the dark border as a white overlay', () => {
@@ -263,5 +264,54 @@ describe('la fuente del tema (fase 3)', () => {
     const tokens = deriveTheme(theme)
 
     expect(tokens.font).toEqual({ family: 'Inter Variable', package: '@fontsource-variable/inter' })
+  })
+})
+
+/**
+ * Spec 38 · encargo de Alfonso (2026-08-10) tras ver la demo en oscuro: el fondo era
+ * prácticamente negro. El escalón `deep` (0.145) servía a dos amos —fondo oscuro y TEXTO
+ * claro—, así que subirlo habría lavado el texto en claro. El modo oscuro pasa a tener
+ * sus propios escalones grisáceos, y el claro no se entera.
+ */
+describe('el modo oscuro es gris, no negro', () => {
+  const L = (token: string): number => Number(/oklch\(([\d.]+)/.exec(token)?.[1] ?? '0')
+
+  const neutralTheme = (): Theme => ({
+    surface: { chroma: 0, hue: 0 },
+    light: {
+      primary: 'oklch(0.205 0 0)',
+      primaryForeground: 'oklch(0.985 0 0)',
+      ring: 'oklch(0.708 0 0)',
+      sidebarPrimary: 'oklch(0.205 0 0)',
+      sidebarPrimaryForeground: 'oklch(0.985 0 0)'
+    },
+    dark: {
+      primary: 'oklch(0.922 0 0)',
+      primaryForeground: 'oklch(0.205 0 0)',
+      ring: 'oklch(0.556 0 0)',
+      sidebarPrimary: 'oklch(0.985 0 0)',
+      sidebarPrimaryForeground: 'oklch(0.205 0 0)'
+    }
+  })
+
+  it('el fondo oscuro es gris carbón, no negro', () => {
+    const dark = deriveTheme(neutralTheme()).dark
+
+    expect(L(dark['background'])).toBeGreaterThanOrEqual(0.2)
+  })
+
+  it('conserva el relieve: tarjeta sobre fondo, y chip sobre tarjeta', () => {
+    const dark = deriveTheme(neutralTheme()).dark
+
+    expect(L(dark['card'])).toBeGreaterThan(L(dark['background']))
+    expect(L(dark['muted'])).toBeGreaterThan(L(dark['card']))
+    expect(L(dark['sidebar'])).toBeGreaterThan(L(dark['background']))
+  })
+
+  it('el texto en claro NO se lava: sigue en el escalón profundo de siempre', () => {
+    const light = deriveTheme(neutralTheme()).light
+
+    expect(light['foreground']).toBe('oklch(0.145 0 0)')
+    expect(light['card-foreground']).toBe('oklch(0.145 0 0)')
   })
 })

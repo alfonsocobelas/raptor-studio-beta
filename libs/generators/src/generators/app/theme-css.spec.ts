@@ -80,7 +80,7 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
 
       // THEN es el bloque .dark de hoy
       expect(namesOf(darkTokens)).toEqual(ORDER)
-      expect(darkTokens).toContain('  --background: oklch(0.145 0 0);')
+      expect(darkTokens).toContain('  --background: oklch(0.21 0 0);')
       expect(darkTokens).toContain('  --border: oklch(1 0 0 / 10%);')
       expect(darkTokens).toContain('  --input: oklch(1 0 0 / 15%);')
     })
@@ -116,7 +116,7 @@ describe('themeSubstitutions — el tema declarado alimenta el styles.css emitid
       const { darkTokens } = themeSubstitutions('ocean')
 
       // THEN el fondo oscuro lleva el tono
-      expect(darkTokens).toContain('  --background: oklch(0.145 0.016 236);')
+      expect(darkTokens).toContain('  --background: oklch(0.21 0.016 236);')
       expect(darkTokens).toContain('  --primary: oklch(0.72 0.12 236);')
     })
   })
