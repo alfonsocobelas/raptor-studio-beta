@@ -4,6 +4,7 @@ import { AggregateBindings, renderAggregate } from './build-aggregate'
 import { ApplicationBindings, renderApplication } from './build-application'
 import { EntrypointBindings, renderEntrypoints } from './build-entrypoints'
 import { DomainTestBindings, renderDomainTests } from './build-tests'
+import { buildDragTree, type DragLevel } from './drag-tree'
 import {
   ColumnDefinition,
   ConstraintValue,
@@ -90,6 +91,8 @@ export interface ResourceSubstitutions {
   importCsv: ImportSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
   related: RelatedSubstitution[]
+  /** Niveles que arrastra el borrado suave, en orden de marcado (spec 38) */
+  dragTree: DragLevel[]
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
   apiResource: string
   serviceSharedImports: string
@@ -344,6 +347,7 @@ export function buildSubstitutions(
     labelsModule: renderLabelsModule(definition),
     importCsv: renderImportCsv(definition),
     related: renderRelated(definition, others),
+    dragTree: wantsSoftDelete(definition) ? buildDragTree(definition, others) : [],
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
     serviceSharedImports: renderServiceSharedImports(definition, n.className),
     angularCoreImports: renderAngularCoreImports(resolveFeatures(definition)),
