@@ -28,16 +28,19 @@
 
 ## Backend
 
-- [ ] **TASK-04**: port del repositorio: `remove(id, op)` + `removeWhereParent(ids, op)` +
-      `restoreByOp(op)` y adapter TypeORM. Tests emitidos del repo incluidos.
+- [x] **TASK-04**: contrato de borrado con operación en el port y AMBOS adapters (el port es
+      compartido: dejar mongoose atrás no compilaba, así que la mitad de contrato de la
+      TASK-07 entró aquí). `removeDraggedBy<Fk>` por referencia + `restoreByOp`. VO
+      `DeleteOperationId` en el kernel. typecheck:emitted cazó dos errores de tipos antes
+      del re-baseline. `0d87db3` + `d11d9ff`.
 - [ ] **TASK-05**: use case de borrado transaccional (árbol estático dentro de
       `runInTransaction`, evento de historial dentro de la tx si `history`). Medir aquí la
       DI de ports hijo→padre y exportar los que falten. Test emitido: fallo a mitad ⇒
       rollback completo.
 - [ ] **TASK-06**: restore por operación: DTO del trash expone `deletedOp`, el POST /restore
       revierte el árbol en transacción. Test emitido: hijo borrado aparte NO vuelve.
-- [ ] **TASK-07**: adapter Mongoose (`deletedAt`+`deletedOp`, `updateMany`, sesión replSet).
-      Si el TransactionManager mongo no existe en el kernel emitido, entra aquí primero.
+- [ ] **TASK-07**: ~~adapter Mongoose~~ el contrato entró con TASK-04. Queda SOLO verificar
+      la transacción con sesión replSet en la integración mongo (el manager ya existe).
 
 ## Frontend
 
