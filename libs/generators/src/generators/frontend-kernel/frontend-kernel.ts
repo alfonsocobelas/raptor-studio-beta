@@ -4,8 +4,8 @@ import * as path from 'path'
 export interface FrontendKernelGeneratorSchema {
   directory?: string
   sharedDomainAlias?: string
-  /** Component library backing the shared UI contracts */
-  ui?: 'spartan' | 'material'
+  /** Component library backing the shared UI contracts. Single provider since spec 36. */
+  ui?: 'spartan'
 }
 
 /**

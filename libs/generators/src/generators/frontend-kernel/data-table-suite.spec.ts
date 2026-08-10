@@ -8,7 +8,7 @@ import { frontendKernelGenerator } from './frontend-kernel'
  * suite del canon, adaptada a lo que este acelerador decidió distinto (fecha dd/MM, defecto 22).
  */
 describe('frontend kernel — suite del DataTable', () => {
-  const emit = async (ui: 'spartan' | 'material'): Promise<Tree> => {
+  const emit = async (ui: 'spartan'): Promise<Tree> => {
     const tree = createTreeWithEmptyWorkspace()
     await frontendKernelGenerator(tree, { directory: 'out', ui })
     return tree
@@ -30,11 +30,5 @@ describe('frontend kernel — suite del DataTable', () => {
     expect(spec).toContain('hidden predicate')
     // la fecha es nuestra convención, no la del canon (defecto 22: dd/MM, no dd-MM)
     expect(spec).toContain('17/01/2026')
-  })
-
-  it('material no la emite: su tabla es otra y su piel está congelada', async () => {
-    const tree = await emit('material')
-
-    expect(tree.exists(SPEC)).toBe(false)
   })
 })

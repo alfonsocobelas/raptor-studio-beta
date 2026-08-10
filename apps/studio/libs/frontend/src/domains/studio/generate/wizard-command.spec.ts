@@ -33,7 +33,7 @@ const manifest: SlotsManifest = {
       default: 'spartan',
       providers: [
         { value: 'spartan', label: 'Spartan' },
-        { value: 'material', label: 'Material' }
+        { value: 'alt', label: 'Alternativa' }
       ]
     },
     {
@@ -64,7 +64,7 @@ const manifest: SlotsManifest = {
 
 const options: WizardOptions = {
   name: 'tienda-sur',
-  slots: { ui: 'material', database: 'mongo' },
+  slots: { ui: 'alt', database: 'mongo' },
   plugins: ['email']
 }
 
@@ -94,7 +94,7 @@ describe('defaultSelection', () => {
 describe('buildCommand', () => {
   it('monta un flag por ranura elegible, en el orden del manifiesto', () => {
     expect(buildCommand(manifest, options)).toBe(
-      'npx nx g @acc/generators:app tienda-sur --appFile=tienda-sur.app.json --database=mongo --ui=material --auth=none --plugins=email'
+      'npx nx g @acc/generators:app tienda-sur --appFile=tienda-sur.app.json --database=mongo --ui=alt --auth=none --plugins=email'
     )
   })
 

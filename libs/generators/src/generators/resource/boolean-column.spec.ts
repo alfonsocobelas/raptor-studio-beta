@@ -24,26 +24,22 @@ describe('columnas booleanas', () => {
     expect(renderFrontendColumns(conBooleano).join('\n')).toContain("type: 'boolean'")
   })
 
-  it('la DataTable de cada piel pinta Sí/No en las celdas booleanas', () => {
-    const skins = ['spartan', 'material']
+  it('la DataTable pinta Sí/No en las celdas booleanas', () => {
+    const template = fs.readFileSync(
+      path.join(
+        __dirname,
+        '..',
+        'frontend-kernel',
+        'files-ui',
+        'spartan',
+        'shared',
+        'components',
+        'data-table.ts.template'
+      ),
+      'utf-8'
+    )
 
-    for (const skin of skins) {
-      const template = fs.readFileSync(
-        path.join(
-          __dirname,
-          '..',
-          'frontend-kernel',
-          'files-ui',
-          skin,
-          'shared',
-          'components',
-          'data-table.ts.template'
-        ),
-        'utf-8'
-      )
-
-      expect(template).toContain("type === 'boolean'")
-      expect(template).toContain("'Sí'")
-    }
+    expect(template).toContain("type === 'boolean'")
+    expect(template).toContain("'Sí'")
   })
 })

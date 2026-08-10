@@ -7,7 +7,9 @@ import * as path from 'path'
  *
  * La piel Spartan necesita <hlm-toaster /> montado en el shell: NotificationService
  * llama a toast.success/error (sonner) y sin el toaster los avisos no se ven nunca.
- * La piel Material no necesita montaje (MatSnackBar usa su propio overlay).
+ *
+ * Spec 36: era también el punto donde spartan y material divergían — ya no hay
+ * segunda piel que overridee el esqueleto compartido.
  */
 describe('files-skeleton-ui — shell por piel', () => {
   const override = (ui: string) =>
@@ -22,12 +24,7 @@ describe('files-skeleton-ui — shell por piel', () => {
     expect(content.indexOf('<hlm-toaster />')).toBeGreaterThan(content.lastIndexOf('@else'))
   })
 
-  it('material reutiliza el shell compartido, que no conoce sonner', () => {
+  it('material está retirada (spec 36): sin carpeta de override', () => {
     expect(existsSync(override('material'))).toBe(false)
-    const shared = readFileSync(
-      path.join(__dirname, 'files-skeleton/apps/frontend-app/src/app.component.ts.template'),
-      'utf-8'
-    )
-    expect(shared).not.toContain('hlm-toaster')
   })
 })

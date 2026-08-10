@@ -22,7 +22,7 @@ const manifest: SlotsManifest = {
       default: 'spartan',
       providers: [
         { value: 'spartan', label: 'Spartan' },
-        { value: 'material', label: 'Material' }
+        { value: 'alt', label: 'Alternativa' }
       ]
     },
     {
@@ -54,7 +54,7 @@ const manifest: SlotsManifest = {
 const base = {
   manifest,
   name: 'tienda-sur',
-  slots: { ui: 'material', database: 'mongo' },
+  slots: { ui: 'alt', database: 'mongo' },
   plugins: ['email'],
   appFile: '/tmp/tienda-sur.app.json'
 }
@@ -68,7 +68,7 @@ describe('buildGeneratorArgs — argv del generador, validado en el borde', () =
       'tienda-sur',
       '--appFile=/tmp/tienda-sur.app.json',
       '--database=mongo',
-      '--ui=material',
+      '--ui=alt',
       '--auth=none',
       '--plugins=email',
       '--no-interactive'
