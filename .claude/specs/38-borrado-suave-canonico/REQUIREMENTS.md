@@ -32,9 +32,14 @@ motor de base de datos.
 - **IF** la transacción de marcado falla a medias **THEN** no queda ningún registro marcado
   (rollback completo)
 - **WHEN** el usuario restaura desde la papelera un registro que arrastró relacionadas
-  **THEN** {pendiente de decisión: ¿restaura también las relacionadas, o solo el padre?}
+  **THEN** vuelven exactamente las que cayeron en ESA operación (el marcado guarda con qué
+  borrado cayó cada una); una relacionada borrada después por su cuenta se queda en la papelera
+- **WHEN** el usuario confirma un borrado con relacionadas **THEN** el diálogo avisa de forma
+  genérica («se archivarán también sus registros relacionados»), sin conteos previos, y el
+  copy «permanentemente» desaparece de todo borrado reversible
 - **IF** un modelo declara borrado físico explícitamente (caso especial donde no importa la
-  permanencia) **THEN** el generador emite el `DELETE` físico de hoy
+  permanencia; p. ej. un catálogo puro que se reimporta entero por CSV) **THEN** el generador
+  emite el `DELETE` físico de hoy — `material` de la demo Solaris lo estrena
 - **WHILE** un registro está borrado suavemente **THEN** ningún listado, lookup, KPI, export,
   galería, gantt ni tabla relacionada lo muestra
 
@@ -52,8 +57,10 @@ motor de base de datos.
 - [ ] Golden-diff: re-baseline deliberado de las 4 referencias de oro + 2 apps (este cambio
       SÍ cambia el canon empezado — OK de Alfonso ya dado para la dirección; el diff completo
       se revisa a mano antes del commit de re-baseline)
-- [ ] E2E sobre una demo: borrar padre con hijos → desaparecen; restaurar → {según decisión
-      de la story abierta}
+- [ ] E2E sobre una demo: borrar padre con hijos → desaparecen todos; restaurar el padre →
+      vuelven exactamente los que arrastró; un hijo borrado aparte sigue en la papelera
+- [ ] `material` (catálogo puro) borra físico: no aparece en la papelera y el diálogo
+      conserva el copy de permanencia
 
 ## Referencias (proyecto de referencia y diseño)
 
@@ -83,12 +90,13 @@ motor de base de datos.
 - Mongo: la ranura `database=mongo` recibe el mismo contrato en su adapter, pero si el gate
   mongo exige trabajo desproporcionado se abre tarea propia
 
-## Preguntas abiertas (cerrar antes del DESIGN)
+## Decisiones cerradas (2026-08-10, Alfonso)
 
-1. Restaurar un padre, ¿restaura sus relacionadas marcadas en la misma operación? (simétrico
-   al borrado parece lo natural, pero hay que decidir qué pasa si una relacionada fue borrada
-   DESPUÉS por su cuenta)
-2. ¿El diálogo de confirmación debe enumerar el arrastre («se archivarán también 3 obras y
-   12 partes»)? Hoy el texto dice «permanentemente», que además pasa a ser mentira — el copy
-   hay que cambiarlo en cualquier caso.
-3. ¿Qué modelos de la demo/oro declaran borrado físico como caso especial, si alguno?
+1. **Restaurar restaura solo lo que arrastró**: el marcado transaccional registra con qué
+   operación cayó cada relacionada y la restauración revierte exactamente esa operación. Lo
+   borrado aparte, aparte se queda. (Implica guardar un identificador de operación junto al
+   `deletedAt` — detalle para el DESIGN.)
+2. **Diálogo con aviso genérico**, sin conteos previos: «se archivarán también sus registros
+   relacionados». El copy «permanentemente» solo sobrevive en los borrados físicos.
+3. **Borrado físico para catálogos puros**: la escotilla existe en el schema y `material`
+   (tarifa reimportada por CSV cada trimestre) la estrena en la demo Solaris.
