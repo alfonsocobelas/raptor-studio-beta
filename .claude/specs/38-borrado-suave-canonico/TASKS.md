@@ -18,12 +18,13 @@
       en el schema, siete puntos de decisión unificados), `material` declara la escotilla
       física. `f27f1f1` + re-baseline `6593236` (7 ficheros: entidades de contract/customer,
       migración y esquemas mongoose).
-- [ ] **TASK-02**: árbol de arrastre en `build-substitutions`: derivar por entidad los
-      niveles `[{ entity, fkField, parentLevel }]` desde el registro (solo hijos suaves).
-      Tests con el registro de la demo: cliente → [instalacion] → [parte]; parte → [].
-- [ ] **TASK-03**: columna `deleted_op` (uuid, null) en entidad TypeORM + migración de
-      fábrica de toda entidad suave. Test: la migración emitida crea ambas columnas y
-      NINGÚN `ON DELETE CASCADE` aparece.
+- [x] **TASK-02**: árbol de arrastre (`drag-tree.ts`, anchura con visitados para cortar
+      ciclos) y su sustitución `dragTree`. Verificado con la demo: account → [installation,
+      worklog]; material (físico) → []. `9aa99e1`
+- [x] **TASK-03**: columna `deleted_op` en entidad TypeORM y migración de fábrica.
+      `aa0f909` + re-baseline `f364e2b`. Matiz aprendido: la cascada de COMPOSICIÓN se
+      queda (hijo embebido del padre); lo que nunca cascadea es una referencia entre
+      agregados, que sigue en RESTRICT.
 
 ## Backend
 
