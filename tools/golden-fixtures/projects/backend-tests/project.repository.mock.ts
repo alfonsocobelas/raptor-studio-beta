@@ -4,6 +4,7 @@ import { Project } from '../../../../src/contexts/sap-licensing/modules/projects
 import { ProjectRepository } from '../../../../src/contexts/sap-licensing/modules/projects/domain/project-repository'
 import { ProjectName } from '../../../../src/contexts/sap-licensing/modules/projects/domain/value-objects/project-name.vo'
 import { ProjectId } from '../../../../src/contexts/shared/domain/value-objects/projects/project-id.vo'
+import { DeleteOperationId } from '../../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
 export class ProjectRepositoryMock extends MockRepository<Project> implements ProjectRepository {
@@ -15,8 +16,8 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
     return this.getMock('save')(project)
   }
 
-  remove(projectId: ProjectId): Promise<void> {
-    return this.getMock('remove')(projectId)
+  remove(projectId: ProjectId, op: DeleteOperationId): Promise<void> {
+    return this.getMock('remove')(projectId, op)
   }
 
   get(projectId: ProjectId): Promise<Nullable<Project>> {
@@ -49,6 +50,14 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   restore(projectId: ProjectId): Promise<boolean> {
     return this.getMock('restore')(projectId)
+  }
+
+  removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    return this.getMock('removeDraggedByCustomerId')(parentIds, op)
+  }
+
+  restoreByOp(op: DeleteOperationId): Promise<number> {
+    return this.getMock('restoreByOp')(op)
   }
 
   // helpers

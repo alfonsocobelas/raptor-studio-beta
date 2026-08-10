@@ -3,6 +3,7 @@ import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { License } from '../../../../src/contexts/sap-licensing/modules/licenses/domain/license'
 import { LicenseRepository } from '../../../../src/contexts/sap-licensing/modules/licenses/domain/license-repository'
 import { LicenseId } from '../../../../src/contexts/shared/domain/value-objects/licenses/license-id.vo'
+import { DeleteOperationId } from '../../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
 export class LicenseRepositoryMock extends MockRepository<License> implements LicenseRepository {
@@ -28,6 +29,18 @@ export class LicenseRepositoryMock extends MockRepository<License> implements Li
 
   count(criteria: Criteria): Promise<number> {
     return this.getMock('count')(criteria)
+  }
+
+  removeDraggedByContractId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    return this.getMock('removeDraggedByContractId')(parentIds, op)
+  }
+
+  removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    return this.getMock('removeDraggedByCustomerId')(parentIds, op)
+  }
+
+  restoreByOp(op: DeleteOperationId): Promise<number> {
+    return this.getMock('restoreByOp')(op)
   }
 
   // helpers

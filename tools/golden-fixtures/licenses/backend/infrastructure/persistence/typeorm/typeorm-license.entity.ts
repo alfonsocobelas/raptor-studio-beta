@@ -86,9 +86,9 @@ export class TypeOrmLicenseEntity {
   updatedAt!: Date
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
-  deletedAt?: Date
+  deletedAt?: Date | null
 
   // Operación que archivó esta fila: restaurar devuelve exactamente lo que ella arrastró
   @Column('uuid', { name: 'deleted_op', nullable: true })
-  deletedOp?: string
+  deletedOp?: string | null
 }

@@ -3,6 +3,7 @@ import { moduleFixture } from '../jest.setup.integration'
 import { TypeOrmProjectRepository } from '../../../src/contexts/sap-licensing/modules/projects/infrastructure/persistence/typeorm/typeorm-project.repository'
 import { ProjectWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/projects/domain/specifications/project-with-id.specification'
 import { ProjectId } from '../../../src/contexts/shared/domain/value-objects/projects/project-id.vo'
+import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { ProjectName } from '../../../src/contexts/sap-licensing/modules/projects/domain/value-objects/project-name.vo'
 import { ProjectMother } from '../../modules/projects/domain/mothers/project.mother'
 
@@ -79,7 +80,7 @@ describe('TypeOrmProjectRepository (integration)', () => {
       const project = ProjectMother.random()
       await repository.register(project)
 
-      await repository.remove(project.id)
+      await repository.remove(project.id, DeleteOperationId.random())
 
       expect(await repository.get(project.id)).toBeNull()
     })
@@ -89,7 +90,7 @@ describe('TypeOrmProjectRepository (integration)', () => {
     it('a removed project leaves matching and shows up in matchingDeleted', async () => {
       const project = ProjectMother.random()
       await repository.register(project)
-      await repository.remove(project.id)
+      await repository.remove(project.id, DeleteOperationId.random())
 
       const spec = ProjectWithIdSpecification.withId(project.id)
       expect(await repository.matching(spec)).toHaveLength(0)
@@ -103,7 +104,7 @@ describe('TypeOrmProjectRepository (integration)', () => {
     it('restore brings it back; a live or unknown id restores nothing', async () => {
       const project = ProjectMother.random()
       await repository.register(project)
-      await repository.remove(project.id)
+      await repository.remove(project.id, DeleteOperationId.random())
 
       expect(await repository.restore(project.id)).toBe(true)
       expect(await repository.get(project.id)).not.toBeNull()

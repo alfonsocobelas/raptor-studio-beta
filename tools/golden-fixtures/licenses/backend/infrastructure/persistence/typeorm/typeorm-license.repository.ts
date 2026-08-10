@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common'
+import { In, IsNull } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { LicenseId } from '../../../../../../shared/domain/value-objects/licenses/license-id.vo'
+import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
 import { TypeOrmCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-criteria-converter'
 import { TypeOrmRepository } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm.repository'
 import { TypeOrmTransactionManager } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-transaction-manager'
@@ -26,6 +28,38 @@ export class TypeOrmLicenseRepository extends TypeOrmRepository<TypeOrmLicenseEn
 
   async save(license: License): Promise<void> {
     await this.repository().save(LicenseMapper.toPersistence(license))
+  }
+
+  async removeDraggedByContractId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    if (!parentIds.length) return []
+    const rows = await this.repository().find({
+      select: { id: true },
+      where: { contractId: In(parentIds), deletedAt: IsNull() }
+    })
+    const ids = rows.map(row => row.id)
+    if (ids.length) {
+      await this.repository().update({ id: In(ids) }, { deletedAt: () => 'CURRENT_TIMESTAMP', deletedOp: op.value })
+    }
+    return ids
+  }
+
+  async removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    if (!parentIds.length) return []
+    const rows = await this.repository().find({
+      select: { id: true },
+      where: { customerId: In(parentIds), deletedAt: IsNull() }
+    })
+    const ids = rows.map(row => row.id)
+    if (ids.length) {
+      await this.repository().update({ id: In(ids) }, { deletedAt: () => 'CURRENT_TIMESTAMP', deletedOp: op.value })
+    }
+    return ids
+  }
+
+  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
+  async restoreByOp(op: DeleteOperationId): Promise<number> {
+    const result = await this.repository().update({ deletedOp: op.value }, { deletedAt: null, deletedOp: null })
+    return result.affected ?? 0
   }
 
   async get(licenseId: LicenseId): Promise<Nullable<License>> {

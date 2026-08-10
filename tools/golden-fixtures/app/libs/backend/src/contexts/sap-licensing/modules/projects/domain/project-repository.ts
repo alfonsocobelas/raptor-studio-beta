@@ -1,5 +1,6 @@
 import { Nullable } from '../../../../shared/domain/types'
 import { Criteria } from '../../../../shared/domain/query/criteria'
+import { DeleteOperationId } from '../../../../shared/domain/value-objects/delete-operation-id.vo'
 import { ProjectId } from '../../../../shared/domain/value-objects/projects/project-id.vo'
 import { ProjectName } from './value-objects/project-name.vo'
 import { Project } from './project'
@@ -7,7 +8,8 @@ import { Project } from './project'
 export abstract class ProjectRepository {
   abstract register(project: Project): Promise<void>
   abstract save(project: Project): Promise<void>
-  abstract remove(projectId: ProjectId): Promise<void>
+  abstract remove(projectId: ProjectId, op: DeleteOperationId): Promise<void>
+  abstract removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]>
   abstract get(projectId: ProjectId): Promise<Nullable<Project>>
   abstract matching(criteria: Criteria): Promise<Project[]>
   abstract findByName(name: ProjectName): Promise<Nullable<Project>>
@@ -16,6 +18,7 @@ export abstract class ProjectRepository {
   abstract matchingDeleted(criteria: Criteria): Promise<Project[]>
   abstract countDeleted(criteria: Criteria): Promise<number>
   abstract restore(projectId: ProjectId): Promise<boolean>
+  abstract restoreByOp(op: DeleteOperationId): Promise<number>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }

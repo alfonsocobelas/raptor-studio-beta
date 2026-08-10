@@ -3,6 +3,7 @@ import { moduleFixture } from '../jest.setup.integration'
 import { MongooseLicenseRepository } from '../../../src/contexts/sap-licensing/modules/licenses/infrastructure/persistence/mongoose/mongoose-license.repository'
 import { LicenseWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/licenses/domain/specifications/license-with-id.specification'
 import { LicenseId } from '../../../src/contexts/shared/domain/value-objects/licenses/license-id.vo'
+import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { LicenseMother } from '../../modules/licenses/domain/mothers/license.mother'
 
 let repository: MongooseLicenseRepository

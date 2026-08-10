@@ -4,6 +4,7 @@ import { Contract } from '../../../../src/contexts/sap-licensing/modules/contrac
 import { ContractRepository } from '../../../../src/contexts/sap-licensing/modules/contracts/domain/contract-repository'
 import { ContractNumber } from '../../../../src/contexts/sap-licensing/shared/domain/value-objects/contract-number.vo'
 import { ContractId } from '../../../../src/contexts/shared/domain/value-objects/contracts/contract-id.vo'
+import { DeleteOperationId } from '../../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
 export class ContractRepositoryMock extends MockRepository<Contract> implements ContractRepository {
@@ -33,6 +34,14 @@ export class ContractRepositoryMock extends MockRepository<Contract> implements 
 
   count(criteria: Criteria): Promise<number> {
     return this.getMock('count')(criteria)
+  }
+
+  removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    return this.getMock('removeDraggedByCustomerId')(parentIds, op)
+  }
+
+  restoreByOp(op: DeleteOperationId): Promise<number> {
+    return this.getMock('restoreByOp')(op)
   }
 
   // helpers

@@ -29,6 +29,7 @@ export interface LicenseDoc {
   createdAt?: Date
   updatedAt?: Date
   deletedAt?: Nullable<Date>
+  deletedOp?: Nullable<string>
 }
 
 export const LicenseSchema = new Schema<LicenseDoc>(
@@ -55,7 +56,8 @@ export const LicenseSchema = new Schema<LicenseDoc>(
     consumptionPct: { type: Number, default: 0 },
     excessUnits: { type: Number, default: 0 },
     annualValue: { type: Number, default: 0 },
-    deletedAt: { type: Date, default: null }
+    deletedAt: { type: Date, default: null },
+    deletedOp: { type: String, default: null }
   },
   {
     collection: 'licenses',

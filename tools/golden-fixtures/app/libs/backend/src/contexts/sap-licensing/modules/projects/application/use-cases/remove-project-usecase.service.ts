@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { DeleteOperationId } from '../../../../../shared/domain/value-objects/delete-operation-id.vo'
 import { ProjectId } from '../../../../../shared/domain/value-objects/projects/project-id.vo'
 import { ProjectRepository } from '../../domain/project-repository'
 import { RemoveProjectInput } from '../dtos/remove-project-input.dto'
@@ -20,7 +21,9 @@ export class RemoveProjectUseCase {
       throw new EntityNotFoundError('Project', input.id)
     }
 
-    await this.projectRepository.remove(projectId)
+    // La operación identifica ESTE borrado: restaurar revertirá exactamente lo que arrastre
+    const op = DeleteOperationId.random()
+    await this.projectRepository.remove(projectId, op)
     await this.auditTrail.record({
       entity: 'project',
       entityId: projectId.value,

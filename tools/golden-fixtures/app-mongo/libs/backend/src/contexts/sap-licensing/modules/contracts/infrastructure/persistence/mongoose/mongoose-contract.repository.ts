@@ -5,6 +5,7 @@ import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { ContractId } from '../../../../../../shared/domain/value-objects/contracts/contract-id.vo'
+import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
 import { MongooseCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-criteria-converter'
 import { MongooseRepository } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose.repository'
 import { MongooseTransactionManager } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-transaction-manager'
@@ -69,6 +70,31 @@ export class MongooseContractRepository extends MongooseRepository<ContractDoc> 
 
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
+  }
+
+  async removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    if (!parentIds.length) return []
+    const rows = await this.model()
+      .find({ customerId: { $in: parentIds }, deletedAt: null }, { id: 1 })
+      .session(this.session())
+      .exec()
+    const ids = rows.map(row => row.id)
+    if (ids.length) {
+      await this.model()
+        .updateMany({ id: { $in: ids } }, { $set: { deletedAt: new Date(), deletedOp: op.value } })
+        .session(this.session())
+        .exec()
+    }
+    return ids
+  }
+
+  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
+  async restoreByOp(op: DeleteOperationId): Promise<number> {
+    const result = await this.model()
+      .updateMany({ deletedOp: op.value }, { $set: { deletedAt: null, deletedOp: null } })
+      .session(this.session())
+      .exec()
+    return result.modifiedCount
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

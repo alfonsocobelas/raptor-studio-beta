@@ -33,6 +33,7 @@ export interface ContractDoc {
   createdAt?: Date
   updatedAt?: Date
   deletedAt?: Nullable<Date>
+  deletedOp?: Nullable<string>
 }
 
 export const ContractSchema = new Schema<ContractDoc>(
@@ -63,7 +64,8 @@ export const ContractSchema = new Schema<ContractDoc>(
     supportModel: { type: String, default: '' },
     upcomingMaintenanceEnd: { type: String, default: null },
     upcomingMaintenanceFee: { type: Number, default: null },
-    deletedAt: { type: Date, default: null }
+    deletedAt: { type: Date, default: null },
+    deletedOp: { type: String, default: null }
   },
   {
     collection: 'contracts',
