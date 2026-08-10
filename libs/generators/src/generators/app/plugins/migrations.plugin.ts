@@ -109,7 +109,9 @@ function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []):
     columns.push('created_at TIMESTAMPTZ NOT NULL DEFAULT now()', 'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()')
   }
   if (wantsSoftDelete(model)) {
-    columns.push('deleted_at TIMESTAMPTZ NULL')
+    // deleted_op: la operación que archivó la fila (spec 38). La escribe el caso de uso,
+    // nunca un trigger — la base protege, no gobierna.
+    columns.push('deleted_at TIMESTAMPTZ NULL', 'deleted_op UUID NULL')
   }
 
   const table = `${model.schemaName}.${model.plural}`
