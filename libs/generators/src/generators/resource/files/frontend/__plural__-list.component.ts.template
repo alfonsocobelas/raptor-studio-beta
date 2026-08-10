@@ -211,7 +211,7 @@ export class <%- className %>sListComponent {
   readonly deleteDialogOpen = signal(false)
   readonly deleteDescription = computed(
     () =>
-      `Se eliminará permanentemente <%- ui.deleteDescriptionSubject %> "${this.deleting<%- className %>()?.<%- deleteLabelField %> ?? ''}" y todos sus datos asociados. Esta acción no se puede deshacer.`
+      `<%- ui.deleteDescriptionPrefix %> "${this.deleting<%- className %>()?.<%- deleteLabelField %> ?? ''}"<%- ui.deleteDescriptionSuffix %>`
   )
 <%_ } _%>
 

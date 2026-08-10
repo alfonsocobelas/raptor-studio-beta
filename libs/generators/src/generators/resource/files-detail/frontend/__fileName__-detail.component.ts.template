@@ -283,7 +283,7 @@ export class <%- className %>DetailComponent {
 
   deleteDescription(): string {
     const current = this.<%- propertyName %>()
-    return current ? `<%- ui.deleteDescriptionSubject %> «${current.<%- detail.titleField %>}».` : ''
+    return current ? `<%- ui.deleteDescriptionPrefix %> «${current.<%- detail.titleField %>}»<%- ui.deleteDescriptionSuffix %>` : ''
   }
 
   async onDelete(): Promise<void> {

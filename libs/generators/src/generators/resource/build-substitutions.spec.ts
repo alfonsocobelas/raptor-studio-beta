@@ -312,6 +312,9 @@ describe('buildSubstitutions — frontend bindings', () => {
       dialogCreateDescription: 'Introduce los datos del nuevo cliente',
       deleteTitle: 'Eliminar cliente',
       deleteDescriptionSubject: 'el cliente',
+      // spec 38: el copy dice la verdad — archivar es reversible, eliminar es permanente
+      deleteDescriptionPrefix: 'Se archivará el cliente',
+      deleteDescriptionSuffix: '. Podrás restaurarlo desde la papelera.',
       toastDeleted: 'Cliente eliminado',
       toastDeleteError: 'No se pudo eliminar el cliente'
     })

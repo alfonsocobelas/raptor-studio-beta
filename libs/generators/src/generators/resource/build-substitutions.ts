@@ -269,6 +269,10 @@ export interface UiStrings {
   dialogCreateDescription: string
   deleteTitle: string
   deleteDescriptionSubject: string
+  /** Frase completa antes del nombre del registro (spec 38) */
+  deleteDescriptionPrefix: string
+  /** Cierre de la frase: archivar avisa del arrastre y de la papelera; físico, de la permanencia */
+  deleteDescriptionSuffix: string
   toastDeleted: string
   toastDeleteError: string
 }
@@ -345,7 +349,7 @@ export function buildSubstitutions(
     toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f)),
     route: definition.route ?? `/${definition.context}/${definition.plural}`,
     sharedDomainAlias: definition.sharedDomainAlias ?? '@acc/shared/domain',
-    ui: renderUiStrings(definition),
+    ui: renderUiStrings(definition, wantsSoftDelete(definition) ? buildDragTree(definition, others).length > 0 : false),
     frontendColumns: renderFrontendColumns(definition),
     valueMapImports: [
       ...new Set(fields.map(([, f]) => f.table?.valueMapConst).filter((c): c is string => c !== undefined))
@@ -846,7 +850,7 @@ function renderIcons(features: { view: boolean; delete: boolean; edit: boolean }
   return icons
 }
 
-function renderUiStrings(definition: ResourceDefinition): UiStrings {
+function renderUiStrings(definition: ResourceDefinition, dragsChildren = false): UiStrings {
   const labels = definition.labels ?? { singular: definition.name, plural: definition.plural }
   const singular = labels.singular
   const plural = labels.plural
@@ -874,6 +878,14 @@ function renderUiStrings(definition: ResourceDefinition): UiStrings {
     dialogCreateDescription: `Introduce los datos ${feminine ? 'de la nueva' : 'del nuevo'} ${lowerSingular}`,
     deleteTitle: `Eliminar ${lowerSingular}`,
     deleteDescriptionSubject: `${article} ${lowerSingular}`,
+    // El copy dice la VERDAD sobre lo que va a pasar (spec 38): archivar es reversible y
+    // arrastra; eliminar es permanente. Aviso genérico, sin conteos previos (decisión 2).
+    deleteDescriptionPrefix: wantsSoftDelete(definition)
+      ? `Se archivará ${article} ${lowerSingular}`
+      : `Se eliminará permanentemente ${article} ${lowerSingular}`,
+    deleteDescriptionSuffix: wantsSoftDelete(definition)
+      ? `${dragsChildren ? ' y sus registros relacionados' : ''}. Podrás restaurarl${feminine ? 'a' : 'o'} desde la papelera.`
+      : ' y todos sus datos asociados. Esta acción no se puede deshacer.',
     toastDeleted: `${singular} eliminad${suffix}`,
     toastDeleteError: `No se pudo eliminar ${article} ${lowerSingular}`
   }
