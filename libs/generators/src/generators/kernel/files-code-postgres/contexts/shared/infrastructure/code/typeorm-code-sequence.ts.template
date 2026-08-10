@@ -1,0 +1,36 @@
+import { Injectable } from '@nestjs/common'
+import { CodeSequencePort } from '../../domain/code/code-sequence.port'
+import { TypeOrmTransactionManager } from '../persistence/typeorm/typeorm-transaction-manager'
+
+/**
+ * Secuencia de Postgres de cada entidad con código. Se deriva del registro AL GENERAR:
+ * el adapter no adivina nombres ni el dominio conoce identificadores de base de datos.
+ */
+const SEQUENCES: Record<string, string> = {
+<%_ codeSequences.forEach(seq => { _%>
+  <%- seq.entity %>: '<%- seq.sequence %>',
+<%_ }) _%>
+}
+
+@Injectable()
+export class TypeOrmCodeSequence extends CodeSequencePort {
+  constructor(private readonly transactionManager: TypeOrmTransactionManager) {
+    super()
+  }
+
+  async next(entity: string): Promise<number> {
+    const sequence = SEQUENCES[entity]
+    if (!sequence) {
+      throw new Error(`No code sequence registered for '${entity}'`)
+    }
+
+    // nextval y NO 'SELECT MAX(code) + 1': el incremento de la secuencia es atómico, así que
+    // dos altas simultáneas reciben números distintos. Con MAX ambas leerían el mismo valor
+    // antes de que la otra guardase, y la segunda reventaría contra el UNIQUE de la columna.
+    const rows: { nextval: string }[] = await this.transactionManager
+      .getEntityManager()
+      .query('SELECT nextval($1::regclass) AS nextval', [sequence])
+
+    return Number(rows[0].nextval)
+  }
+}

@@ -1,0 +1,17 @@
+/**
+ * Contador de códigos de negocio (spec 19): el correlativo legible (`PAC-0001`) que
+ * identifica un registro para un humano, frente al uuid que lo identifica para la máquina.
+ *
+ * Vive tras un puerto porque repartir correlativos es PERSISTENCIA: el agregado no la
+ * conoce y solo declara que la necesita, igual que con adjuntos o historial.
+ */
+export abstract class CodeSequencePort {
+  /**
+   * Siguiente número de la entidad (su plural del registro: 'clients').
+   *
+   * Es ATÓMICO: dos altas simultáneas nunca reciben el mismo número. A cambio, un alta
+   * que falle después de pedirlo deja un hueco — aceptable para un identificador de
+   * referencia, y el precio de no bloquear (spec 19 §2).
+   */
+  abstract next(entity: string): Promise<number>
+}

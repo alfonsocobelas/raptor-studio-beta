@@ -61,8 +61,16 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
     }
   })
 
+  // Códigos de negocio (spec 19): una secuencia por entidad que lo declare. El nombre se
+  // deriva aquí, al generar, para que ni el dominio ni el adapter conozcan la convención.
+  const codeSequences = MODEL_LIST.filter(model => model.code).map(model => ({
+    entity: model.plural,
+    sequence: `${model.schemaName}.${model.plural}_code_seq`
+  }))
+
   const substitutions = {
     sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
+    codeSequences,
     databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
     entities,
     mongooseModels,
@@ -78,6 +86,11 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
   if (hasHistory) {
     generateFiles(tree, path.join(__dirname, 'files-audit'), outputDir, substitutions)
     generateFiles(tree, path.join(__dirname, persistence.auditFiles), outputDir, substitutions)
+  }
+  // puerto + adapter de secuencia: solo si algún recurso declara código (spec 19)
+  if (codeSequences.length && persistence.codeFiles) {
+    generateFiles(tree, path.join(__dirname, 'files-code'), outputDir, substitutions)
+    generateFiles(tree, path.join(__dirname, persistence.codeFiles), outputDir, substitutions)
   }
   // lo específico del motor (config + persistencia compartida) lo dicta su manifiesto
   generateFiles(tree, path.join(__dirname, persistence.kernelFiles), outputDir, substitutions)

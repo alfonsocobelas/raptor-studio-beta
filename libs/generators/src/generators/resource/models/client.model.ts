@@ -16,6 +16,9 @@ export const client = defineResource({
   ],
   constraintsConst: 'CLIENT_CONSTRAINTS',
   audit: true,
+  // Estrena el código de negocio (spec 19): un concesionario referencia a sus clientes por
+  // CLI-0001, no por su uuid. Ningún modelo de oro lo declara, así que el gate sigue vacío.
+  code: { prefix: 'CLI', padding: 4 },
   constraints: {
     NAME: { MIN: 2, MAX: 200 },
     TAX_ID: { MAX: 20 },

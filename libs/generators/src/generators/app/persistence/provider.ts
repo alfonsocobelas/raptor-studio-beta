@@ -29,6 +29,12 @@ export interface PersistenceProvider {
   healthIndicator: string
   /** Subárbol del adapter de auditoría del motor (spec 31); se emite solo con modelos history */
   auditFiles: string
+  /**
+   * Subárbol del adapter de secuencia de códigos (spec 19); se emite solo con modelos `code`.
+   * Opcional a propósito: Mongo no tiene secuencias, así que el hueco se ve como ausencia
+   * (y el generador rechaza `code` + mongo antes de emitir) en vez de inventar un mecanismo.
+   */
+  codeFiles?: string
   /** Dependencias que el motor añade al package.json emitido (driver + integración Nest) */
   dependencies: Record<string, string>
   /**

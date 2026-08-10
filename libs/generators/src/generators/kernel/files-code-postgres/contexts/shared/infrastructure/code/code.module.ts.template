@@ -1,0 +1,11 @@
+import { Global, Module } from '@nestjs/common'
+import { CodeSequencePort } from '../../domain/code/code-sequence.port'
+import { TypeOrmCodeSequence } from './typeorm-code-sequence'
+
+/** Global: cualquier módulo con código inyecta CodeSequencePort sin re-declararlo (spec 19). */
+@Global()
+@Module({
+  providers: [{ provide: CodeSequencePort, useClass: TypeOrmCodeSequence }],
+  exports: [CodeSequencePort]
+})
+export class CodeModule {}
