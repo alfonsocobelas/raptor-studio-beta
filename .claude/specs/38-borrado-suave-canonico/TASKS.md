@@ -42,13 +42,17 @@
       el op de la fila archivada (`deletedOpOf`, ambos motores) y revierte el árbol en
       transacción. 404 antes de tocar nada; hojas como siempre. El «hijo borrado aparte no
       vuelve» queda garantizado por diseño (otro op) y se verifica e2e en TASK-12.
-- [ ] **TASK-07**: ~~adapter Mongoose~~ el contrato entró con TASK-04. Queda SOLO verificar
-      la transacción con sesión replSet en la integración mongo (el manager ya existe).
+- [ ] **TASK-07**: ~~adapter Mongoose~~ (entró con TASK-04). Lo que queda —probar el arrastre
+      y el restore contra una BD real— NO cabe en la integración emitida: es por entidad, y
+      un hijo no puede insertarse sin su padre (la FK es real, las migraciones corren). Se
+      **pliega en TASK-12**, que tiene padre, hijo y base de datos de verdad. El manager de
+      transacción mongo ya existe y usa `withTransaction` sobre replSet.
 
 ## Frontend
 
-- [ ] **TASK-08**: copy del diálogo por sustitución (`deleteCopy`): archivará/relacionados/
-      papelera para suaves, permanencia solo en físicas. Test del generador por caso.
+- [x] **TASK-08**: copy del diálogo en listado y ficha, con género del modelo y aviso
+      genérico de arrastre. `173096b` + re-baseline `94eb816` (project, el único de oro que
+      borra).
 - [ ] **TASK-09**: verificación de filtrado de borrados en TODAS las superficies (listado,
       lookup, KPIs, widgets, export, galería, gantt, related-tables) — tests de integración
       emitidos donde falten.
