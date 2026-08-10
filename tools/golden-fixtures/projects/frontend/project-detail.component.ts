@@ -239,7 +239,7 @@ export class ProjectDetailComponent {
 
   deleteDescription(): string {
     const current = this.project()
-    return current ? `el proyecto «${current.customerName}».` : ''
+    return current ? `Se archivará el proyecto «${current.customerName}». Podrás restaurarlo desde la papelera.` : ''
   }
 
   async onDelete(): Promise<void> {

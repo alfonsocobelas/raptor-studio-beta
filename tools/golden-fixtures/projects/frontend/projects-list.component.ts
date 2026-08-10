@@ -150,8 +150,7 @@ export class ProjectsListComponent {
   readonly deletingProject = signal<ProjectDto | null>(null)
   readonly deleteDialogOpen = signal(false)
   readonly deleteDescription = computed(
-    () =>
-      `Se eliminará permanentemente el proyecto "${this.deletingProject()?.name ?? ''}" y todos sus datos asociados. Esta acción no se puede deshacer.`
+    () => `Se archivará el proyecto "${this.deletingProject()?.name ?? ''}". Podrás restaurarlo desde la papelera.`
   )
 
   readonly columns: ColumnDef[] = [
