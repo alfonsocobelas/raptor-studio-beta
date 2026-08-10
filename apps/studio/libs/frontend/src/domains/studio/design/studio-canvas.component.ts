@@ -478,16 +478,17 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* Fondo liso: el mockup es el protagonista y la cuadrícula de puntos le competía. */
+    /* Un solo papel: lienzo y raíl izquierdo comparten el --muted cálido de la foto,
+       separados por el borde; solo el panel derecho y la barra quedan en blanco. */
     .canvas-surface {
-      background-color: color-mix(in oklab, var(--muted) 45%, var(--background));
+      background-color: var(--muted);
     }
-    /* El mockup flota sobre el papel: sombra ancha y difusa, no la de un dropdown. */
+    /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
+       en el padding del scroll, así el recorte del overflow no deja una línea. */
     .canvas-card {
       box-shadow:
-        0 1px 2px oklch(0 0 0 / 7%),
-        0 12px 32px -8px oklch(0 0 0 / 18%),
-        0 32px 64px -16px oklch(0 0 0 / 14%);
+        0 1px 2px oklch(0 0 0 / 6%),
+        0 8px 24px -10px oklch(0 0 0 / 12%);
     }
     /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
        en oscuro, aquí se redefinen todos los tokens para que no se hereden. Los

@@ -74,7 +74,7 @@ const BLOCK_TOOLS: BlockTool[] = [
   imports: [NgIcon],
   providers: [provideIcons(SIDEBAR_ICONS)],
   template: `
-    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
+    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto p-4">
       <section>
         <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">
           Vistas del proyecto
