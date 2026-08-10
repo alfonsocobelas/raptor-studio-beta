@@ -61,9 +61,20 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
             <span>{{ theme.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
           </button>
         </aside>
-        <main class="app-shell-main min-w-0 flex-1 p-5">
-          <router-outlet />
-        </main>
+        <div class="flex min-w-0 flex-1 flex-col">
+          <!-- barra de estado de la maqueta skindemo: contexto / sección, en monospace -->
+          <div
+            class="app-shell-topbar flex h-8 shrink-0 items-center px-5 text-[11px]"
+            style="background: var(--shell-bg); border-bottom: 1px solid var(--shell-border); color: var(--shell-fg); font-family: var(--font-mono-cabina)"
+          >
+            <span>{{ appTitle.toLowerCase() }}</span>
+            <span class="mx-1.5 opacity-60">/</span>
+            <span style="color: var(--shell-fg-strong)">{{ currentSection().toLowerCase() }}</span>
+          </div>
+          <main class="app-shell-main min-w-0 flex-1 p-5">
+            <router-outlet />
+          </main>
+        </div>
       </div>
     }
     <hlm-toaster />
@@ -92,4 +103,10 @@ export class AppComponent {
     { initialValue: this._router.url }
   )
   protected readonly bare = computed(() => BARE_ROUTES.some(route => this._url().startsWith(route)))
+
+  /** La sección de la barra de estado sale de la ruta activa: sin estado duplicado. */
+  protected readonly currentSection = computed(() => {
+    const url = this._url()
+    return this.navItems.find(item => url.startsWith(item.route))?.label ?? 'Inicio'
+  })
 }

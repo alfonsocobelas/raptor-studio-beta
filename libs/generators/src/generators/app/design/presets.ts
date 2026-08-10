@@ -68,6 +68,119 @@ const CABINA_CSS = `
 .app-shell-main table {
   font-variant-numeric: tabular-nums;
 }
+
+/* ── componentes y tipografía (profundización 2026-08-10): shell+densidad seguía dejando
+   los presets indistinguibles a un metro de distancia. Cabina es instrumentación: esquinas
+   vivas, texto condensado y cifras tabulares en toda la pantalla — vía tokens y selectores
+   de directiva ([hlmbtn], [hlmbadge]…), nunca tocando los componentes emitidos. */
+:root {
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+}
+
+.app-shell-main {
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* el badge de la maqueta skindemo: etiqueta OUTLINE uppercase con color semántico por
+   variante — fondo fuera, borde al color del texto. El hue por variante lo fija el preset
+   (verde=default, ámbar=secondary, azul=outline, rojo=destructive) en los dos temas. */
+[hlmbadge] {
+  border-radius: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: transparent !important;
+  border: 1px solid currentColor !important;
+}
+
+[hlmbadge].bg-primary {
+  color: oklch(0.45 0.12 160);
+}
+
+[hlmbadge].bg-secondary {
+  color: oklch(0.5 0.12 75);
+}
+
+[hlmbadge].bg-destructive {
+  color: oklch(0.5 0.19 25);
+}
+
+[hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
+  color: oklch(0.45 0.09 250);
+}
+
+.dark [hlmbadge].bg-primary {
+  color: oklch(0.78 0.14 160);
+}
+
+.dark [hlmbadge].bg-secondary {
+  color: oklch(0.8 0.13 80);
+}
+
+.dark [hlmbadge].bg-destructive {
+  color: oklch(0.72 0.17 25);
+}
+
+.dark [hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
+  color: oklch(0.75 0.1 250);
+}
+
+/* los DATOS van en monospace, como en la maqueta: cifras de tabla, buscador y paginación */
+:root {
+  --font-mono-cabina: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo, monospace;
+}
+
+.app-shell-main table td.text-right {
+  font-family: var(--font-mono-cabina);
+  font-size: 0.74rem;
+}
+
+[hlminput] {
+  font-family: var(--font-mono-cabina);
+  font-size: 0.78rem;
+}
+
+/* botones e inputs a la altura de la fila: un centro de operaciones no desperdicia alto */
+[hlmbtn] {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[hlminput] {
+  border-radius: 0;
+}
+
+/* la tira de KPIs de la maqueta: panel PLANO fundido con la rejilla (fondo fuera, borde
+   del shell), etiqueta uppercase pequeña y cifra enorme en monospace tabular */
+[hlmcard] {
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  border-color: var(--shell-border);
+}
+
+[hlmcard] .text-sm {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+[hlmcard] p.text-2xl {
+  font-size: 2.4rem;
+  line-height: 1.1;
+  font-family: var(--font-mono-cabina);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
 `
 
 /**
@@ -112,6 +225,47 @@ const SUITE_CSS = `
 
 .app-shell-main table th {
   background: var(--grid-head-bg);
+}
+
+/* ── componentes y tipografía (profundización 2026-08-10): suite es un ERP — rectangular,
+   corporativo y sin sombras. Tokens y selectores de directiva, nunca componentes. */
+:root {
+  --radius: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --font-sans: 'Segoe UI', Tahoma, Verdana, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* los títulos de pantalla se contienen: un ERP no grita */
+.app-shell-main h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* botones rectangulares, planos y con borde: nada flota en un ERP */
+[hlmbtn] {
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+[hlminput] {
+  border-radius: 2px;
+}
+
+/* el badge es una etiqueta de estado rectangular, no una píldora */
+[hlmbadge] {
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+/* la tarjeta KPI se cuadra y toma la cabecera etiquetada de la rejilla */
+[hlmcard] {
+  border-radius: 2px;
+  box-shadow: none;
+  border-color: var(--grid-line);
 }
 `
 
