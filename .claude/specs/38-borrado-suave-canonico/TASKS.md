@@ -53,15 +53,20 @@
 - [x] **TASK-08**: copy del diálogo en listado y ficha, con género del modelo y aviso
       genérico de arrastre. `173096b` + re-baseline `94eb816` (project, el único de oro que
       borra).
-- [ ] **TASK-09**: verificación de filtrado de borrados en TODAS las superficies (listado,
-      lookup, KPIs, widgets, export, galería, gantt, related-tables) — tests de integración
-      emitidos donde falten.
+- [x] **TASK-09**: auditoría escrita como 7 tests. Verdes a la primera: toda superficie lee
+      por el mismo endpoint paginado → matching/count → exclusión del repositorio base. No
+      hizo falta arreglar nada; lo que hacía falta era fijarlo. `6517153`
 
 ## Gates finales
 
-- [ ] **TASK-10**: `typecheck:emitted` a 0 errores + suites completas (generadores, estudio).
-- [ ] **TASK-11**: re-baseline deliberado del golden (4 referencias + 2 apps), diff revisado
-      a mano, commit `chore(golden)` propio.
-- [ ] **TASK-12**: regenerar la demo Solaris y e2e de los tres escenarios del REQUIREMENTS
-      (padre arrastra · restore devuelve el arrastre exacto · material borra físico), con
-      capturas e2e-3x.
+- [x] **TASK-10**: gates verdes en cada tarea: 591 tests del generador, typecheck emitido 0
+      errores, 6 árboles de oro vacíos, y la suite EMITIDA de Solaris 185 ✓.
+- [x] **TASK-11**: re-baseline hecho por tarea (01, 03, 04, 08), cada uno revisado a mano y
+      en su commit `chore(golden)` propio.
+- [x] **TASK-12**: Solaris regenerada y verificada contra Postgres real:
+      · borrar cliente con obra y parte vivos → **204** (antes 500) y caen los tres niveles (1,1,1)
+      · restaurar → vuelven exactamente esos tres; el parte borrado APARTE sigue en la papelera
+      · material (escotilla física) borra sin papelera
+      · copy real: «Se archivará el cliente "Cerámicas Duero S.L." y sus registros relacionados»
+      Capturas e2e-32/33/34. Absorbe la verificación que quedaba de TASK-07 (postgres);
+      mongo queda pendiente de una pasada con su replSet.
