@@ -302,8 +302,18 @@ describe('shellSubstitutions — ruta de la papelera (spec 29)', () => {
     expect(subs.routeEntries.indexOf('projects/papelera')).toBeLessThan(subs.routeEntries.indexOf('projects/:id'))
   })
 
-  it('sin softDelete no hay ruta de papelera', () => {
+  // spec 38: el borrado es suave por defecto, así que un listado que borra YA lleva papelera;
+  // quien no la quiere declara la escotilla física
+  it('un listado que borra lleva papelera aunque no declare nada', () => {
     const subs = shellSubstitutions(composeFlat([model({ list: { features: { delete: true } } })], false))
+
+    expect(subs.routeEntries).toContain('papelera')
+  })
+
+  it('con la escotilla física (softDelete: false) no hay ruta de papelera', () => {
+    const subs = shellSubstitutions(
+      composeFlat([model({ softDelete: false, list: { features: { delete: true } } })], false)
+    )
 
     expect(subs.routeEntries).not.toContain('papelera')
   })

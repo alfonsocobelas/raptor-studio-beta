@@ -372,7 +372,9 @@ export interface ResourceDefinition {
   auditComment?: boolean
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
-  /** Emit a DeleteDateColumn soft-delete column (deletedAt) */
+  /** Borrado suave (spec 38): TRUE POR DEFECTO — todo borrado archiva (deletedAt) y es
+   *  reversible desde la papelera. `false` es la escotilla física para catálogos puros
+   *  donde la permanencia no importa (p. ej. una tarifa reimportada entera por CSV). */
   softDelete?: boolean
   /** Comment lines emitted above ALLOWED_ORDERS in the search-config */
   ordersNotes?: string[]
@@ -400,4 +402,13 @@ export interface ResourceDefinition {
   code?: CodeDefinition
   /** Frase de negocio de la entidad (spec 22): documentación que viaja, nunca fuente de código */
   brief?: string
+}
+
+/**
+ * Semántica ÚNICA del borrado suave (spec 38): por defecto se archiva; `false` es la
+ * escotilla física. Todos los generadores deciden por aquí — siete sitios decidían por
+ * `=== true` y el defecto vivía repartido.
+ */
+export function wantsSoftDelete(definition: Pick<ResourceDefinition, 'softDelete'>): boolean {
+  return definition.softDelete !== false
 }

@@ -1,6 +1,6 @@
 import { names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import { ColumnDefinition, FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { ColumnDefinition, FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@acc/schema'
 import { byDependency } from '../dependency-order'
 import { definePlugin, type PluginContext } from './plugin'
 
@@ -108,7 +108,7 @@ function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []):
   if (model.audit) {
     columns.push('created_at TIMESTAMPTZ NOT NULL DEFAULT now()', 'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()')
   }
-  if (model.softDelete) {
+  if (wantsSoftDelete(model)) {
     columns.push('deleted_at TIMESTAMPTZ NULL')
   }
 

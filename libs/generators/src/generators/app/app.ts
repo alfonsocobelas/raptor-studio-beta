@@ -1,5 +1,5 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
-import { defineApp, defineResource, type AppDefinition, type ResourceDefinition } from '@acc/schema'
+import { defineApp, defineResource, wantsSoftDelete, type AppDefinition, type ResourceDefinition } from '@acc/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -762,7 +762,7 @@ export function shellSubstitutions(composition: AppComposition): {
     const wantsGallery = Boolean(model.gallery)
     const wantsGantt = Boolean(model.gantt)
     // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
-    const wantsTrash = model.softDelete === true && model.list?.features?.delete === true
+    const wantsTrash = wantsSoftDelete(model) && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
     if (wantsGantt) routes.push(ganttRoute(model))

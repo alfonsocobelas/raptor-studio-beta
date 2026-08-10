@@ -11,7 +11,8 @@ import {
   FieldTable,
   FieldType,
   ResourceDefinition,
-  VoDefinition
+  VoDefinition,
+  wantsSoftDelete
 } from '@acc/schema'
 
 export interface ColumnSubstitution {
@@ -296,7 +297,7 @@ export function buildSubstitutions(
     constraintsConst: definition.constraintsConst,
     audit: definition.audit ?? false,
     auditComment: definition.auditComment ?? false,
-    softDelete: definition.softDelete ?? false,
+    softDelete: wantsSoftDelete(definition),
     needsNullable: columns.some(c => c.tsType.includes('Nullable<')),
     needsNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'numeric'),
     needsNullableNumericTransformer: fields.some(([, f]) => f.column?.transformer === 'nullableNumeric'),
@@ -754,7 +755,7 @@ function resolveFeatures(definition: ResourceDefinition): {
     delete: canDelete,
     edit: definition.list?.features?.edit ?? true,
     // la papelera (spec 29) se DERIVA: borrado lógico + listado que borra
-    trash: canDelete && definition.softDelete === true,
+    trash: canDelete && wantsSoftDelete(definition),
     // el historial (spec 31): timeline en la ficha
     history: definition.history === true,
     // el import (spec 33): botón y diálogo; exige alta y diálogo de edición
@@ -1145,7 +1146,7 @@ function renderTypeormImports(definition: ResourceDefinition): string {
   if (fields.some(f => f.pk)) imports.push('PrimaryColumn')
   if (fields.some(f => !f.pk)) imports.push('Column')
   if (definition.audit) imports.push('CreateDateColumn', 'UpdateDateColumn')
-  if (definition.softDelete) imports.push('DeleteDateColumn')
+  if (wantsSoftDelete(definition)) imports.push('DeleteDateColumn')
   return imports.sort().join(', ')
 }
 

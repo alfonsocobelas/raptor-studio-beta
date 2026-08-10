@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@acc/schema'
 
 /**
  * Application layer synthesis (use cases + handlers + input DTOs + uniqueness
@@ -126,7 +126,7 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     emit: emitAggregate,
     writes: (definition.formSections?.length ?? 0) > 0,
     removes: definition.list?.features?.delete === true,
-    trash: definition.list?.features?.delete === true && definition.softDelete === true,
+    trash: definition.list?.features?.delete === true && wantsSoftDelete(definition),
     history: definition.history === true,
     importCsv: definition.list?.features?.import === true && (definition.formSections?.length ?? 0) > 0,
     uniqueSpecs,

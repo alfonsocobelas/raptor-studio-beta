@@ -1,7 +1,7 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
 import { SHARED_VOS } from './models/shared-vos'
-import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition, VoDefinition, wantsSoftDelete } from '@acc/schema'
 
 /**
  * Entrypoints synthesis: REST controller, class-validator body DTOs, export
@@ -103,7 +103,7 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   if (writes) ops.push(['Update', n.className])
   if (removes) ops.push(['Remove', n.className])
   // la papelera (spec 29) cuelga del borrado: sin softDelete no hay nada que listar ni restaurar
-  if (removes && definition.softDelete === true) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
+  if (removes && wantsSoftDelete(definition)) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
   // el historial (spec 31): la timeline de la ficha lee del puerto de auditoría
   if (definition.history === true) ops.push(['Get', `${n.className}History`])
   // el import (spec 33) delega en el register: sin alta no hay import

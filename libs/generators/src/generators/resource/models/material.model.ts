@@ -21,6 +21,9 @@ export const material = defineResource({
   formSections: [{ id: 'general', title: 'Datos del artículo' }],
   constraintsConst: 'MATERIAL_CONSTRAINTS',
   audit: true,
+  // Escotilla de borrado FÍSICO (spec 38): un catálogo puro cuya tarifa se reimporta entera
+  // por CSV cada trimestre no tiene historia que preservar.
+  softDelete: false,
   detail: {},
   gallery: { title: 'reference', subtitle: 'description', metric: 'price' },
   constraints: {

@@ -43,7 +43,10 @@ describe('buildSubstitutions', () => {
     it('computes the typeorm import list sorted alphabetically', () => {
       const subs = buildSubstitutions(contract)
 
-      expect(subs.typeormImports).toBe('Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn')
+      // DeleteDateColumn entra por el defecto suave de la spec 38: contract no declara nada
+      expect(subs.typeormImports).toBe(
+        'Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryColumn, UpdateDateColumn'
+      )
     })
 
     it('imports only what a minimal model uses', () => {
@@ -56,7 +59,9 @@ describe('buildSubstitutions', () => {
         fields: { id: { type: 'uuid', pk: true } }
       }
 
-      expect(buildSubstitutions(minimal).typeormImports).toBe('Entity, PrimaryColumn')
+      // sin declarar nada archiva (spec 38); la escotilla física es softDelete: false
+      expect(buildSubstitutions(minimal).typeormImports).toBe('DeleteDateColumn, Entity, PrimaryColumn')
+      expect(buildSubstitutions({ ...minimal, softDelete: false }).typeormImports).toBe('Entity, PrimaryColumn')
     })
 
     it('reports no flags for a minimal model', () => {
