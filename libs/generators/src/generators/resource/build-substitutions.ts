@@ -1005,10 +1005,21 @@ function renderRelated(definition: ResourceDefinition, others: ResourceDefinitio
         .sort(([, a], [, b]) => (a.table?.order ?? 99) - (b.table?.order ?? 99))
         .slice(0, 4)
         .map(([name, field]) => {
+          const label = field.table?.label ?? name
+          // Un conjunto cerrado se lee con SUS etiquetas, como en el listado: 'badge' es un tipo
+          // del DataTable y el contrato de RelatedColumn no lo admite — emitirlo no compilaba
+          // (defecto cazado por la demo Solaris, 2026-08-10).
+          if (field.table?.type === 'badge' && field.table.badgeMap) {
+            const labels = Object.entries(field.table.badgeMap)
+              .map(([value, badge]) => `${value}: '${badge.label}'`)
+              .join(', ')
+            return `{ key: '${name}', label: '${label}', labels: { ${labels} } }`
+          }
           // la columna viaja con su tipo o la tabla enseña la fecha en ISO crudo (defecto 21):
           // key/label no bastan para que formatValue sepa qué está leyendo
-          const type = field.table?.type ?? detailValueType(field) ?? (field.type === 'date' ? 'date' : null)
-          return `{ key: '${name}', label: '${field.table?.label ?? name}'${type ? `, type: '${type}'` : ''} }`
+          const rawType = field.table?.type ?? detailValueType(field) ?? (field.type === 'date' ? 'date' : null)
+          const type = rawType === 'badge' ? null : rawType
+          return `{ key: '${name}', label: '${label}'${type ? `, type: '${type}'` : ''} }`
         })
 
       return [

@@ -147,6 +147,46 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain(`{ key: 'motivo', label: 'Motivo' }`)
   })
 
+  /**
+   * Defecto cazado por la demo Solaris (2026-08-10): la ficha de instalación no COMPILABA.
+   * Una columna badge del hijo viajaba como `type: 'badge'`, que es del DataTable pero no del
+   * contrato de RelatedColumn ('date' | 'number' | 'boolean') → TS2322 al servir la app.
+   * Un conjunto cerrado se lee con sus etiquetas, igual que en el listado.
+   */
+  it('una columna badge del hijo viaja como etiquetas, no como un tipo que el contrato no admite', async () => {
+    const paciente = { ...withDetail(), name: 'paciente', plural: 'pacientes' } as ResourceDefinition
+    const ingreso = {
+      ...MODELS['supplier'],
+      name: 'ingreso',
+      plural: 'ingresos',
+      labels: { singular: 'Ingreso', plural: 'Ingresos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        estado: {
+          type: 'string',
+          table: {
+            show: true,
+            label: 'Estado',
+            type: 'badge',
+            badgeMap: {
+              abierto: { label: 'Abierto', variant: 'default' },
+              cerrado: { label: 'Cerrado', variant: 'secondary' }
+            }
+          }
+        },
+        pacienteId: { type: 'uuid', relation: { to: 'paciente', kind: 'reference' } }
+      }
+    } as unknown as ResourceDefinition
+
+    registerModels([paciente, ingreso])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'paciente', directory: 'out' })
+    const detail = tree.read('out/frontend/paciente-detail.component.ts', 'utf-8') ?? ''
+
+    expect(detail).not.toContain(`type: 'badge'`)
+    expect(detail).toContain(`{ key: 'estado', label: 'Estado', labels: { abierto: 'Abierto', cerrado: 'Cerrado' } }`)
+  })
+
   it('sin hijos que lo referencien, la ficha no monta tablas relacionadas', async () => {
     const tree = await generate(withDetail())
 
