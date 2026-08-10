@@ -32,9 +32,12 @@ describe('previewThemeVars — el lienzo pinta con los tokens que se van a emiti
     // WHEN se piden sus variables en oscuro
     const vars = previewThemeVars('neutral', 'dark')
 
-    // THEN el borde es el velo, no un gris inventado
-    expect(vars['--background']).toBe('oklch(0.145 0 0)')
+    // THEN la página es el gris carbón que emite el generador (no el negro de antes)
+    // y el borde es el velo, no un gris inventado
+    expect(vars['--background']).toBe('oklch(0.21 0 0)')
     expect(vars['--border']).toBe('oklch(1 0 0 / 10%)')
+    // la tarjeta queda por encima de la página: sin ese escalón el lienzo es una mancha
+    expect(vars['--card']).toBe('oklch(0.26 0 0)')
   })
 
   it('un tema con color tiñe también las superficies del lienzo', () => {
