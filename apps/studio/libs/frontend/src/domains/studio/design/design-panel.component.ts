@@ -32,7 +32,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
           <button
             type="button"
             role="tab"
-            class="-mb-px border-b-2 border-transparent px-0.5 pb-2 text-sm"
+            class="hover:border-b-foreground/30 hover:text-foreground -mb-px border-b-2 border-transparent px-0.5 pb-2 text-sm transition-colors"
             [class.border-b-foreground]="tab() === option.id"
             [class.font-semibold]="tab() === option.id"
             [class.text-muted-foreground]="tab() !== option.id"
@@ -53,7 +53,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
               @for (palette of palettes; track palette.id) {
                 <button
                   type="button"
-                  class="hover:bg-accent/60 rounded-md border p-2 text-left"
+                  class="hover:border-foreground/40 rounded-md border p-2 text-left transition-colors"
                   [class.ring-2]="preview.palette() === palette.id"
                   [class.ring-inset]="preview.palette() === palette.id"
                   [attr.data-testid]="'palette-' + palette.id"
@@ -72,7 +72,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
               @for (mode of modes; track mode) {
                 <button
                   type="button"
-                  class="flex-1 rounded px-2 py-1 text-xs"
+                  class="hover:ring-foreground/25 flex-1 rounded px-2 py-1 text-xs transition-shadow hover:ring-1"
                   [class.bg-accent]="preview.theme() === mode"
                   [class.font-semibold]="preview.theme() === mode"
                   [attr.data-testid]="'preview-mode-' + mode"
@@ -93,7 +93,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
             @for (option of presets; track option.id) {
               <button
                 type="button"
-                class="hover:bg-accent/60 mb-1.5 block w-full rounded-md border px-2 py-2 text-left text-sm"
+                class="hover:border-foreground/40 mb-1.5 block w-full rounded-md border px-2 py-2 text-left text-sm transition-colors"
                 [class.ring-2]="preview.preset() === option.id"
                 [class.ring-inset]="preview.preset() === option.id"
                 [class.font-semibold]="preview.preset() === option.id"

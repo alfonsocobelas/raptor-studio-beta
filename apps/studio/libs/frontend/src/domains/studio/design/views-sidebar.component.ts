@@ -94,7 +94,7 @@ const BLOCK_TOOLS: BlockTool[] = [
         @for (node of tree(); track node.index) {
           <button
             type="button"
-            class="hover:bg-accent/60 mb-0.5 flex w-full items-center gap-2 rounded-md py-2 pr-2 text-left text-sm"
+            class="hover:ring-foreground/25 mb-0.5 flex w-full items-center gap-2 rounded-md py-2 pr-2 text-left text-sm transition-shadow hover:ring-1"
             [class.pl-2]="!node.child"
             [class.ml-3]="node.child"
             [class.border-l]="node.child"
@@ -148,7 +148,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:bg-accent/60 mt-1 flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-sm"
+              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-sm transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -180,7 +180,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div [attr.data-menu-root]="'block-' + tool.kind">
             <button
               type="button"
-              class="hover:bg-accent/60 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm disabled:opacity-40"
+              class="hover:border-foreground/40 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors disabled:opacity-40"
               [class.bg-background]="blockMenu() === tool.kind"
               [disabled]="!pages().length"
               [attr.data-testid]="'block-tool-' + tool.kind"

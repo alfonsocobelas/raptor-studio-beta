@@ -482,10 +482,11 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* Papel del lienzo: #f1efeb muestreado de docs/style. Es el plano más oscuro de
-       los tres, y por eso las tarjetas blancas saltan sobre él. */
+    /* Papel del lienzo: la referencia de docs/style da #f1efeb; Alfonso lo quiere un
+       pelín por debajo, así que se baja un paso más (~#ecE9e5). Es el plano más oscuro
+       de los tres, y por eso las tarjetas blancas saltan sobre él. */
     .canvas-surface {
-      background-color: color-mix(in oklab, var(--muted) 98.8%, var(--foreground) 1.2%);
+      background-color: color-mix(in oklab, var(--muted) 96%, var(--foreground) 4%);
     }
     /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
        en el padding del scroll, así el recorte del overflow no deja una línea. */
