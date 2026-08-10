@@ -116,14 +116,6 @@ function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []):
   const pk = Object.entries(model.fields).find(([, f]) => f.pk)?.[0] ?? 'id'
   columns.push(`CONSTRAINT pk_${model.plural} PRIMARY KEY (${snake(pk)})`)
 
-  // Código de negocio (spec 19): columna con el código YA formateado ('CLI-0001'), no el
-  // número suelto — es lo que se busca y se enseña. UNIQUE es la última línea de defensa:
-  // la secuencia ya no repite, pero un código importado de fuera sí podría chocar.
-  if (model.code) {
-    columns.push(`code VARCHAR(${codeColumnLength(model)}) NOT NULL`)
-    columns.push(`CONSTRAINT uq_${model.plural}_code UNIQUE (code)`)
-  }
-
   // Claves ajenas de las referencias (spec 15): sin ellas la base acepta hijos de
   // padres inexistentes. RESTRICT y no CASCADE: borrar un agente con propiedades
   // debe fallar, no llevárselas por delante — eso es decisión de negocio.
@@ -285,17 +277,6 @@ function renderAttachmentsTable(model: ResourceDefinition): string {
 }
 
 /** Unique opcional (semántica ifPresent): string no requerido y no nullable, como el taxId del canon. */
-/**
- * Ancho de la columna `code`. Nuestro formato ocupa prefijo + guion + relleno, pero un código
- * IMPORTADO de otro sistema (§2.bis) no sigue ese formato, así que se deja holgura en vez de
- * ajustar al milímetro: una columna estrecha convertiría una migración de datos en un error.
- */
-function codeColumnLength(model: ResourceDefinition): number {
-  const prefix = model.code?.prefix ?? model.name.slice(0, 3).toUpperCase()
-  const padding = model.code?.padding ?? 4
-  return Math.max(50, prefix.length + 1 + padding)
-}
-
 function isOptionalUnique(field: FieldDefinition): boolean {
   return field.required !== true && !(field.nullable ?? false) && field.type === 'string'
 }

@@ -201,6 +201,14 @@ export interface FieldDefinition {
   optionalPrimitive?: boolean
   /** optionalPrimitive fields default to non-updatable (sync-populated); set true for user-editable ones */
   updatable?: boolean
+  /**
+   * El SERVIDOR lo rellena si el alta no lo trae (spec 19: el código de negocio). Distinto de
+   * `omitAtRegister`, que lo saca del alta por completo: aquí el alta PUEDE traerlo — es lo que
+   * permite importar registros que ya venían numerados de otro sistema (§2.bis) — y si no viene,
+   * lo asigna el backend. En el dominio siempre tiene valor; solo la ENTRADA es opcional.
+   * Nunca entra en el update.
+   */
+  serverAssigned?: boolean
   /** El ALTA no pide este campo: lo rellena otro proceso (el sync) después. `register` lo inicializa
    *  al valor «sin dato» (`unset()` si el VO lo declara, `null` si no) y desaparece de RegisterProps.
    *  No es inferible: `project.waveStage` (no lo pide) y `contract.upcomingMaintenanceEnd` (sí lo

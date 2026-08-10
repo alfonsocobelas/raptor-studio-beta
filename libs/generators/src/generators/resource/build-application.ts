@@ -49,6 +49,12 @@ export interface ApplicationBindings {
   hasOptionalUniques: boolean
   /** overrides del mother con los opcionales vacíos: "{ taxId: '' }" */
   optionalUniqueOverrides: string
+  /**
+   * Código de negocio (spec 19), null si el modelo no lo declara. Todo resuelto aquí —
+   * plural para la secuencia, prefijo y relleno ya con sus defaults— para que la plantilla
+   * solo interpole (regla 8).
+   */
+  code: { entity: string; prefix: string; padding: number } | null
   /** checks que corren siempre (uniques requeridos) */
   requiredUniqueCount: number
 }
@@ -133,7 +139,15 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
       .filter(s => s.optional)
       .map(s => `${s.field}: ''`)
       .join(', ')} }`,
-    requiredUniqueCount: uniqueSpecs.filter(s => !s.optional).length
+    requiredUniqueCount: uniqueSpecs.filter(s => !s.optional).length,
+    // Código de negocio (spec 19). Todo calculado aquí: la plantilla solo interpola (regla 8).
+    code: definition.code
+      ? {
+          entity: definition.plural,
+          prefix: definition.code.prefix ?? definition.name.slice(0, 3).toUpperCase(),
+          padding: definition.code.padding ?? 4
+        }
+      : null
   }
 }
 

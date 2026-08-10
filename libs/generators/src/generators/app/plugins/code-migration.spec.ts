@@ -1,10 +1,14 @@
 import { Tree } from '@nx/devkit'
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
-import { client } from '../../resource/models/client.model'
-import { vehicle } from '../../resource/models/vehicle.model'
+import { MODELS } from '../../resource/models/registry'
 import { appGenerator } from '../app'
 import { migrationsPlugin } from './migrations.plugin'
 import type { PluginContext } from './plugin'
+
+// del REGISTRO, no del fichero del modelo: es lo que ve la generación real, ya con `code`
+// expandido a campo (spec 19). Importar el crudo probaría algo que nunca ocurre.
+const client = MODELS['client']
+const vehicle = MODELS['vehicle']
 
 const ENVS_DIR = 'backend/contexts/shared/infrastructure/config/environments'
 const MIGRATIONS_DIR = 'backend/contexts/shared/infrastructure/persistence/typeorm/migrations'

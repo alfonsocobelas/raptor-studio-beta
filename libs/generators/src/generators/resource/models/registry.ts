@@ -1,4 +1,5 @@
 import { ResourceDefinition } from '@acc/schema'
+import { expandCode } from '../expand-code'
 import { contract } from './contract.model'
 import { customer } from './customer.model'
 import { license } from './license.model'
@@ -19,7 +20,13 @@ import { movement } from './movement.model'
  * Static on purpose (bundle-safe, same pattern as the reference's config-sources.ts):
  * the plugin is bundled, so a directory scan would not survive the build.
  */
-export const MODELS: Record<string, ResourceDefinition> = {
+/**
+ * Los modelos se registran EXPANDIDOS: `code: { prefix, padding }` se declara como intención
+ * y aquí se convierte en un campo normal (spec 19). Se hace en la frontera del registro y no
+ * en cada generador para que todos —recurso, kernel, shared-domain, migraciones— vean
+ * exactamente el mismo modelo; hacerlo por separado ya dejó un DTO sin el campo.
+ */
+const REGISTERED: Record<string, ResourceDefinition> = {
   contract,
   customer,
   license,
@@ -32,6 +39,10 @@ export const MODELS: Record<string, ResourceDefinition> = {
   movement
 }
 
+export const MODELS: Record<string, ResourceDefinition> = Object.fromEntries(
+  Object.entries(REGISTERED).map(([name, model]) => [name, expandCode(model)])
+)
+
 export const MODEL_LIST: ResourceDefinition[] = Object.values(MODELS)
 
 /**
@@ -42,8 +53,9 @@ export const MODEL_LIST: ResourceDefinition[] = Object.values(MODELS)
  */
 export function registerModels(models: ResourceDefinition[]): void {
   for (const model of models) {
-    if (!MODELS[model.name]) MODEL_LIST.push(model)
-    MODELS[model.name] = model
+    const expanded = expandCode(model)
+    if (!MODELS[model.name]) MODEL_LIST.push(expanded)
+    MODELS[model.name] = expanded
   }
 }
 

@@ -133,8 +133,10 @@ function renderDtoBindings(model: ResourceDefinition) {
     unions,
     enums,
     dtoLines: ['id: string', ...all.map(c => `${c.name}: ${dtoType(c)}`)],
-    registerLines: ['id: string', ...writable.map(c => writableLine(c, false))],
-    updateLines: writable.map(c => writableLine(c, true)),
+    // `serverAssigned` (spec 19): opcional al ALTA — el backend lo pone si no viene, pero una
+    // importación puede traerlo (§2.bis) — y fuera del UPDATE, donde no se toca nunca.
+    registerLines: ['id: string', ...writable.map(c => writableLine(c, c.field.serverAssigned === true))],
+    updateLines: writable.filter(c => !c.field.serverAssigned).map(c => writableLine(c, true)),
     comp: comp
       ? {
           childClass: names(comp.name).className,

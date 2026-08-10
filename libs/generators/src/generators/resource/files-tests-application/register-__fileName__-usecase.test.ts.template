@@ -1,6 +1,9 @@
 <%_ if (app.history) { _%>
 import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
 <%_ } _%>
+<%_ if (app.code) { _%>
+import { CodeSequencePort } from '../../../../../src/contexts/shared/domain/code/code-sequence.port'
+<%_ } _%>
 import { Register<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/register-<%- fileName %>-usecase.service'
 <%_ if (app.hasUniqueChecks) { _%>
 import { AlreadyExistsError } from '../../../../../src/contexts/shared/domain/errors'
@@ -14,14 +17,14 @@ describe('Register<%- className %>UseCase', () => {
 <%_ if (app.history) { _%>
   const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
 <%_ } _%>
+<%_ if (app.code) { _%>
+  // doble del contador: el alta no necesita una base para probar su regla
+  const codeSequence = { next: jest.fn().mockResolvedValue(1) } as unknown as CodeSequencePort
+<%_ } _%>
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-<%_ if (app.history) { _%>
-    useCase = new Register<%- className %>UseCase(repositoryMock, auditTrail)
-<%_ } else { _%>
-    useCase = new Register<%- className %>UseCase(repositoryMock)
-<%_ } _%>
+    useCase = new Register<%- className %>UseCase(repositoryMock<% if (app.history) { %>, auditTrail<% } %><% if (app.code) { %>, codeSequence<% } %>)
   })
 <%_ if (app.hasUniqueChecks) { _%>
 

@@ -5,6 +5,9 @@ import { AlreadyExistsError } from '../../../../../shared/domain/errors'
 <%_ if (app.history) { _%>
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 <%_ } _%>
+<%_ if (app.code) { _%>
+import { CodeSequencePort } from '../../../../../shared/domain/code/code-sequence.port'
+<%_ } _%>
 import { <%- className %> } from '../../domain/<%- fileName %>'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
 <%_ app.registerSpecImports.forEach(line => { _%>
@@ -14,17 +17,22 @@ import { Register<%- className %>Input } from '../dtos/register-<%- fileName %>-
 
 @Injectable()
 export class Register<%- className %>UseCase {
-<%_ if (app.history) { _%>
   constructor(
-    private readonly <%- propertyName %>Repository: <%- className %>Repository,
-    private readonly auditTrail: AuditTrailPort
+    private readonly <%- propertyName %>Repository: <%- className %>Repository<% if (app.history) { %>,
+    private readonly auditTrail: AuditTrailPort<% } %><% if (app.code) { %>,
+    private readonly codeSequence: CodeSequencePort<% } %>
   ) {}
-<%_ } else { _%>
-  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
-<%_ } _%>
 
   async invoke(input: Register<%- className %>Input): Promise<void> {
+<%_ if (app.code) { _%>
+    // Asignar si falta, respetar si viene: un alta normal no trae código y lo pone la
+    // secuencia; una importación SÍ lo trae, porque ese identificador ya vivía en el
+    // sistema de origen y pisarlo rompería su trazabilidad (spec 19 §2.bis).
+    const code = input.code ?? this.format(await this.codeSequence.next('<%- app.code.entity %>'))
+    const <%- propertyName %> = <%- className %>.register({ ...input, code })
+<%_ } else { _%>
     const <%- propertyName %> = <%- className %>.register(input)
+<%_ } _%>
 <%_ app.registerCheckBlocks.forEach(block => { _%>
 <%- block %>
 
@@ -40,4 +48,11 @@ export class Register<%- className %>UseCase {
     })
 <%_ } _%>
   }
+<%_ if (app.code) { _%>
+
+  /** <%- app.code.prefix %>-0001: el número de la secuencia con el prefijo y el relleno del modelo. */
+  private format(sequence: number): string {
+    return '<%- app.code.prefix %>-' + String(sequence).padStart(<%- app.code.padding %>, '0')
+  }
+<%_ } _%>
 }
