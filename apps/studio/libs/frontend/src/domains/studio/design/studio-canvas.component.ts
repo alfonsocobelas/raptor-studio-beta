@@ -38,6 +38,7 @@ const STUDIO_ICONS = {
   lucideTrash2,
   lucideX
 }
+import { STUDIO_MODES, type StudioMode } from './studio-modes'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
@@ -102,9 +103,7 @@ const BLOCK_TOOLS: BlockTool[] = [
               R
             </text>
           </svg>
-          <span class="text-[15px] font-semibold tracking-tight">Raptor Studio</span>
         </div>
-        <div class="bg-border h-6 w-px"></div>
 
         <!-- historial de diseños (spec 21): selector + indicador de guardado -->
         <div class="relative">
@@ -182,39 +181,22 @@ const BLOCK_TOOLS: BlockTool[] = [
         </div>
         <div class="bg-border h-6 w-px"></div>
 
-        <!-- conmutador Vistas / Modelo (spec 15, fase 4) -->
-        <div class="flex items-center gap-0.5 rounded-md border p-0.5">
-          <button
-            type="button"
-            class="rounded px-2 py-0.5 text-xs font-medium"
-            [class.bg-primary]="mode() === 'views'"
-            [class.text-primary-foreground]="mode() === 'views'"
-            data-testid="mode-views"
-            (click)="mode.set('views')"
-          >
-            Vistas
-          </button>
-          <button
-            type="button"
-            class="rounded px-2 py-0.5 text-xs font-medium"
-            [class.bg-primary]="mode() === 'model'"
-            [class.text-primary-foreground]="mode() === 'model'"
-            data-testid="mode-model"
-            (click)="mode.set('model')"
-          >
-            Modelo
-          </button>
-          <button
-            type="button"
-            class="rounded px-2 py-0.5 text-xs font-medium"
-            [class.bg-primary]="mode() === 'flows'"
-            [class.text-primary-foreground]="mode() === 'flows'"
-            data-testid="mode-flows"
-            (click)="mode.set('flows')"
-          >
-            Flujos
-          </button>
-        </div>
+        <!-- navegación de primer nivel: la vista va primera (lavado de cara 2026-08-10) -->
+        <nav class="flex items-center gap-1" data-testid="studio-modes">
+          @for (tab of modes; track tab.mode) {
+            <button
+              type="button"
+              class="hover:bg-accent/60 rounded-md px-3 py-1 text-sm"
+              [class.bg-accent]="mode() === tab.mode"
+              [class.font-semibold]="mode() === tab.mode"
+              [class.text-muted-foreground]="mode() !== tab.mode"
+              [attr.data-testid]="'mode-' + tab.mode"
+              (click)="mode.set(tab.mode)"
+            >
+              {{ tab.label }}
+            </button>
+          }
+        </nav>
         <div class="bg-border h-6 w-px"></div>
 
         <!-- crear vista -->
@@ -368,6 +350,13 @@ const BLOCK_TOOLS: BlockTool[] = [
             <studio-model-view (select)="selected.set($event)" />
           } @else if (mode() === 'flows') {
             <studio-flow-view />
+          } @else if (mode() === 'access') {
+            <div class="flex h-full flex-col items-center justify-center text-center" data-testid="access-placeholder">
+              <p class="text-muted-foreground mb-2 text-lg">Accesos</p>
+              <p class="text-muted-foreground max-w-md text-sm">
+                Quién entra y qué puede hacer. Todavía no está: se diseña en la siguiente tanda.
+              </p>
+            </div>
           } @else if (!pages().length) {
             <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
               <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
@@ -673,7 +662,8 @@ export class StudioCanvasComponent {
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
 
-  protected readonly mode = signal<'views' | 'model' | 'flows'>('views')
+  protected readonly modes = STUDIO_MODES
+  protected readonly mode = signal<StudioMode>('views')
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()

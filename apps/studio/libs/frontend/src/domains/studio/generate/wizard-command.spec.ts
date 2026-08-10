@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { AppDefinition } from '@acc/schema'
+import type { DesignPage } from '@app/shared/domain'
 import {
   buildAppFile,
   buildCommand,
   defaultSelection,
+  hasPublishableDesign,
   isDisabled,
   type SlotsManifest,
   type WizardOptions
@@ -117,5 +119,26 @@ describe('isDisabled', () => {
 
   it('un proveedor sin requires nunca se deshabilita', () => {
     expect(isDisabled(manifest.slots[0].providers[1], { auth: 'single-tenant' })).toBe(false)
+  })
+})
+
+describe('hasPublishableDesign', () => {
+  it('un lienzo sin vistas no se puede publicar', () => {
+    expect(hasPublishableDesign([])).toBe(false)
+  })
+
+  it('una vista sin bloques todavía no es un diseño', () => {
+    const pages: DesignPage[] = [{ title: 'Vacía', blocks: [] }]
+
+    expect(hasPublishableDesign(pages)).toBe(false)
+  })
+
+  it('basta una vista con un bloque', () => {
+    const pages: DesignPage[] = [
+      { title: 'Vacía', blocks: [] },
+      { title: 'Prendas', blocks: [{ kind: 'table', resource: 'garment' }] }
+    ]
+
+    expect(hasPublishableDesign(pages)).toBe(true)
   })
 })

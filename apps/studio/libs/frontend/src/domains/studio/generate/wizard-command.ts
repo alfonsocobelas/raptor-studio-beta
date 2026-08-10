@@ -1,4 +1,5 @@
 import type { AppDefinition } from '@acc/schema'
+import type { DesignPage } from '@app/shared/domain'
 
 /**
  * El wizard no sabe qué opciones existen: se las dice el MANIFIESTO que sirve
@@ -53,6 +54,14 @@ export function choosableSlots(manifest: SlotsManifest): ManifestSlot[] {
 /** ¿Choca este proveedor con la selección actual? Mismo criterio que el gate del generador. */
 export function isDisabled(provider: ManifestProvider, selection: Record<string, string>): boolean {
   return Object.entries(provider.requires ?? {}).some(([slot, required]) => selection[slot] !== required)
+}
+
+/**
+ * ¿Hay algo que generar? Una vista sin bloques no emite nada, así que el botón
+ * de generar se queda apagado hasta que exista al menos una vista con un bloque.
+ */
+export function hasPublishableDesign(pages: readonly DesignPage[]): boolean {
+  return pages.some(page => page.blocks.length > 0)
 }
 
 export function buildCommand(manifest: SlotsManifest, options: WizardOptions): string {

@@ -9,6 +9,7 @@ import {
   buildCommand,
   choosableSlots,
   defaultSelection,
+  hasPublishableDesign,
   isDisabled,
   type ManifestProvider,
   type SlotsManifest
@@ -40,8 +41,10 @@ interface GenerateEvent {
   template: `
     <button
       type="button"
-      class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium"
+      class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
       data-testid="open-wizard"
+      [disabled]="!canPublish()"
+      [title]="canPublish() ? 'Generar aplicación' : 'Diseña al menos una vista con un bloque antes de generar'"
       (click)="open.set(true)"
     >
       Generar aplicación
@@ -237,6 +240,9 @@ export class GenerateWizardComponent {
   protected readonly lastFile = signal<string | null>(null)
   protected readonly seconds = signal(0)
   private ticker: ReturnType<typeof setInterval> | null = null
+
+  /** Sin una vista con bloques no hay nada que generar: el botón se queda apagado. */
+  protected readonly canPublish = computed(() => hasPublishableDesign(this.store.pages()))
 
   protected readonly choosable = computed(() => {
     const manifest = this.manifest()

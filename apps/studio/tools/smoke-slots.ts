@@ -33,6 +33,12 @@ async function main(): Promise<void> {
     waitUntil: 'networkidle',
     timeout: 90000
   })
+  // el botón de generar exige un diseño: una vista con un bloque basta
+  await page.getByTestId('tool-new-view').click()
+  await page.getByTestId('preset-list').click()
+  await page.getByTestId('new-page-title').fill('Pacientes')
+  await page.getByTestId('new-page-ok').click()
+
   await page.click('[data-testid="open-wizard"]')
   await page.waitForSelector('[data-testid="wizard-slots"]')
 
