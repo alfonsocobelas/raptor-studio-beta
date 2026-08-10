@@ -59,7 +59,6 @@ async function main(): Promise<void> {
   const navAfterRejected = await page.locator(nav).count()
 
   // 5. el schema JSON refleja el estado final
-  await page.click('[data-testid="toggle-schema"]')
   const schemaText = await page.locator('[data-testid="schema-json"]').textContent()
   const parsed = JSON.parse(schemaText ?? '{}') as AppDefinition
   const garmentPages = parsed.pages.filter(p => p.kind === 'resource' && p.resource === 'garment').length

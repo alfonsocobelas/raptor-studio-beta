@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, isDevMode, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
 import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings, presetChrome, type PreviewPreset } from './preview-settings'
@@ -354,19 +354,15 @@ const BLOCK_TOOLS: BlockTool[] = [
         >
           {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
         </button>
-        <button type="button" class="toolbar-item" data-testid="toggle-schema" (click)="showSchema.set(!showSchema())">
-          {{ showSchema() ? 'Ocultar diseño' : 'Ver diseño' }}
-        </button>
         <studio-generate-wizard />
       </header>
 
       <div class="flex min-h-0 flex-1">
         <main class="canvas-surface min-w-0 flex-1 overflow-auto p-10">
-          @if (showSchema()) {
-            <pre
-              class="bg-muted mb-4 max-h-64 overflow-auto rounded-md border p-4 text-xs"
-              data-testid="schema-json"
-            ><code>{{ store.exportJson() }}</code></pre>
+          <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
+               build de producción el JSON no llega nunca al DOM del cliente. -->
+          @if (devMode) {
+            <pre hidden data-testid="schema-json">{{ store.exportJson() }}</pre>
           }
           @if (mode() === 'model') {
             <studio-model-view (select)="selected.set($event)" />
@@ -680,11 +676,11 @@ export class StudioCanvasComponent {
   protected readonly mode = signal<'views' | 'model' | 'flows'>('views')
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
+  protected readonly devMode = isDevMode()
   protected readonly viewMenu = signal(false)
   protected readonly blockMenu = signal<BlockKind | null>(null)
   protected readonly creating = signal<string | null>(null)
   protected readonly pageTitle = signal('')
-  protected readonly showSchema = signal(false)
   protected readonly activeTab = signal(0)
   protected readonly selected = signal<string | null>(null)
 

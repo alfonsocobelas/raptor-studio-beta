@@ -58,7 +58,6 @@ async function main(): Promise<void> {
   await shot(page, 'smoke-model-2-relacion')
 
   // la flecha ES el schema: el export lleva el par canónico
-  await page.getByTestId('toggle-schema').click()
   const json = (await page.getByTestId('schema-json').textContent()) ?? '{}'
   const schema = JSON.parse(json) as {
     resources?: { name: string; fields?: Record<string, Record<string, unknown>> }[]
@@ -77,7 +76,6 @@ async function main(): Promise<void> {
   console.log('✓ schema: pacienteId (relation reference → paciente, lookup) + pacienteName')
 
   // borrar la flecha elimina el campo ref
-  await page.getByTestId('toggle-schema').click()
   await page.getByTestId('edge-cita-paciente').click()
   await page.getByTestId('delete-edge').click()
   await page.getByTestId('edge-cita-paciente').waitFor({ state: 'detached' })
