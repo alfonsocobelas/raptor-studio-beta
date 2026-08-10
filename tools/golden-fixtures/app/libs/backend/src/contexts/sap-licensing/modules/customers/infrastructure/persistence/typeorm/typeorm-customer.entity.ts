@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { CUSTOMER_CONSTRAINTS as LIMITS } from '../../../domain/customer-constants'
 
@@ -51,4 +51,7 @@ export class TypeOrmCustomerEntity {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt?: Date
 }

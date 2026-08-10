@@ -32,6 +32,7 @@ export interface ContractDoc {
   upcomingMaintenanceFee: Nullable<number>
   createdAt?: Date
   updatedAt?: Date
+  deletedAt?: Nullable<Date>
 }
 
 export const ContractSchema = new Schema<ContractDoc>(
@@ -61,7 +62,8 @@ export const ContractSchema = new Schema<ContractDoc>(
     lastSeenInSyncAt: { type: Date, default: null },
     supportModel: { type: String, default: '' },
     upcomingMaintenanceEnd: { type: String, default: null },
-    upcomingMaintenanceFee: { type: Number, default: null }
+    upcomingMaintenanceFee: { type: Number, default: null },
+    deletedAt: { type: Date, default: null }
   },
   {
     collection: 'contracts',

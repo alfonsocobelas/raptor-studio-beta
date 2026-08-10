@@ -30,6 +30,7 @@ export interface CustomerDoc {
   contacts: ContactDoc[]
   createdAt?: Date
   updatedAt?: Date
+  deletedAt?: Nullable<Date>
 }
 
 // Subdocumento embebido: sin _id propio — su identidad es el `id` del agregado hijo
@@ -61,7 +62,8 @@ export const CustomerSchema = new Schema<CustomerDoc>(
     status: { type: String, default: 'active' },
     archivedAt: { type: Date, default: null },
     lastSeenInSyncAt: { type: Date, default: null },
-    contacts: { type: [ContactSchema], default: [] }
+    contacts: { type: [ContactSchema], default: [] },
+    deletedAt: { type: Date, default: null }
   },
   {
     collection: 'customers',

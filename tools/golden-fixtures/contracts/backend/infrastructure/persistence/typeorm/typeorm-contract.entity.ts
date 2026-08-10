@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { CONTRACT_CONSTRAINTS as LIMITS } from '../../../domain/contract-constants'
 
@@ -104,4 +104,7 @@ export class TypeOrmContractEntity {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt?: Date
 }
