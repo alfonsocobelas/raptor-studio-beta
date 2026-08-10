@@ -41,6 +41,7 @@ const STUDIO_ICONS = {
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
+import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
 import { InspectorComponent } from './inspector.component'
@@ -406,14 +407,147 @@ const BLOCK_TOOLS: BlockTool[] = [
               }
             </div>
             <div
-              class="preview-scope bg-background mx-auto flex min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
+              class="preview-scope bg-background mx-auto min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
+              [class.flex]="preview.preset() !== 'suite'"
+              [class.flex-col]="preview.preset() === 'suite'"
               [style]="previewVars()"
               [attr.data-palette]="preview.palette()"
               [attr.data-preset]="preview.preset()"
               [class.dark]="preview.theme() === 'dark'"
               data-testid="preview-scope"
             >
-              <aside class="bg-card flex w-56 shrink-0 flex-col border-r p-4" data-testid="mock-sidebar">
+              @if (preview.preset() === 'suite') {
+                <!-- Shell «suite», réplica de files-design/suite: banda de marca + pestañas de
+                     módulo + miga sobre banda sombreada. Sin usuario en la banda: el real no lo lleva. -->
+                <header
+                  class="flex h-10 shrink-0 items-center gap-3 px-4"
+                  style="background: var(--preview-banner-bg); color: var(--preview-banner-fg)"
+                  data-testid="mock-banner"
+                >
+                  <span class="text-sm font-semibold capitalize tracking-wide">{{ store.appName() }}</span>
+                  <span class="h-4 w-px bg-current opacity-30"></span>
+                  <span class="text-xs opacity-70">Panel de gestión</span>
+                  <span class="flex-1"></span>
+                  <button type="button" class="text-xs opacity-70" data-testid="mock-theme-toggle" (click)="preview.toggleTheme()">
+                    {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
+                  </button>
+                </header>
+                <nav class="bg-card flex shrink-0 border-b px-3" data-testid="mock-modules">
+                  @for (page of pages(); track $index) {
+                    @if (!page.drillDown) {
+                      <div class="group relative">
+                        <button
+                          type="button"
+                          class="text-muted-foreground border-b-[3px] border-transparent px-4 py-2 text-[12.5px]"
+                          [class.border-b-primary]="$index === clampedTab()"
+                          [class.text-foreground]="$index === clampedTab()"
+                          [class.font-semibold]="$index === clampedTab()"
+                          [attr.data-testid]="'nav-page-' + $index"
+                          (click)="activeTab.set($index)"
+                        >
+                          {{ page.title }}
+                        </button>
+                        <button
+                          type="button"
+                          class="bg-destructive absolute -right-1 top-1 hidden h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
+                          [attr.data-testid]="'nav-close-' + $index"
+                          (click)="store.removePage($index)"
+                        >
+                          <ng-icon name="lucideX" size="10" />
+                        </button>
+                      </div>
+                    }
+                  }
+                </nav>
+                <div
+                  class="text-muted-foreground shrink-0 border-b px-4 py-1.5 text-[11px]"
+                  style="background: var(--preview-grid-head, oklch(0.91 0.014 250))"
+                  data-testid="mock-breadcrumb"
+                >
+                  Inicio › <span class="text-foreground font-semibold">{{ pages()[clampedTab()]?.title }}</span>
+                </div>
+                <section class="min-w-0 flex-1 p-4">
+                  <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
+                </section>
+              } @else if (preview.preset() === 'cabina') {
+                <!-- Shell «cabina», réplica de files-design/cabina: barra a contraste, cabecera
+                     con subtítulo uppercase y el activo con barra izquierda — sin logo ni usuario. -->
+                <aside
+                  class="flex w-56 shrink-0 flex-col"
+                  style="background: var(--preview-shell-bg); border-right: 1px solid var(--preview-shell-border)"
+                  data-testid="mock-sidebar"
+                >
+                  <div class="px-4 py-3" style="border-bottom: 1px solid var(--preview-shell-border)">
+                    <p class="text-[13px] font-bold capitalize tracking-wide" style="color: var(--preview-shell-fg-strong)">
+                      {{ store.appName() }}
+                    </p>
+                    <p class="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em]" style="color: var(--preview-shell-fg)">
+                      Centro de operaciones
+                    </p>
+                  </div>
+                  <nav class="flex flex-col gap-px p-2">
+                    @for (page of pages(); track $index) {
+                      @if (!page.drillDown) {
+                        <div class="group relative">
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-left text-[12.5px]"
+                            [style.color]="$index === clampedTab() ? 'var(--preview-shell-fg-strong)' : 'var(--preview-shell-fg)'"
+                            [style.background]="$index === clampedTab() ? 'var(--preview-shell-active)' : ''"
+                            [style.box-shadow]="$index === clampedTab() ? 'inset 2px 0 0 var(--primary)' : ''"
+                            [class.font-semibold]="$index === clampedTab()"
+                            [attr.data-testid]="'nav-page-' + $index"
+                            (click)="activeTab.set($index)"
+                          >
+                            <span>{{ page.title }}</span>
+                            <!-- contador por recurso, la seña del centro de operaciones (maqueta skindemo) -->
+                            @if (pageCount($index); as count) {
+                              <span class="mono-data text-[10.5px] opacity-70">{{ count }}</span>
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            class="bg-destructive absolute -right-1 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
+                            [attr.data-testid]="'nav-close-' + $index"
+                            (click)="store.removePage($index)"
+                          >
+                            <ng-icon name="lucideX" size="10" />
+                          </button>
+                        </div>
+                      }
+                    }
+                  </nav>
+                  <span class="flex-1"></span>
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 px-4 py-2.5 text-[12px]"
+                    style="border-top: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                    data-testid="mock-theme-toggle"
+                    (click)="preview.toggleTheme()"
+                  >
+                    {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
+                    <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
+                  </button>
+                </aside>
+                <div class="flex min-w-0 flex-1 flex-col">
+                  <!-- barra de estado de la maqueta: contexto / sección, en monospace -->
+                  <div
+                    class="mono-data flex h-8 shrink-0 items-center px-5 text-[11px]"
+                    style="background: var(--preview-shell-bg); border-bottom: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                    data-testid="mock-statusbar"
+                  >
+                    <span class="lowercase">{{ store.appName() }}</span>
+                    <span class="mx-1.5 opacity-60">/</span>
+                    <span class="lowercase" style="color: var(--preview-shell-fg-strong)">
+                      {{ pages()[clampedTab()]?.title }}
+                    </span>
+                  </div>
+                  <section class="min-w-0 flex-1 p-5">
+                    <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
+                  </section>
+                </div>
+              } @else {
+              <aside class="preview-side bg-card flex w-56 shrink-0 flex-col border-r p-4" data-testid="mock-sidebar">
                 <div class="mb-6 flex items-center gap-2 px-1">
                   <div
                     class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase"
@@ -473,6 +607,7 @@ const BLOCK_TOOLS: BlockTool[] = [
               <section class="min-w-0 flex-1 p-6">
                 <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
               </section>
+              }
             </div>
           }
         </main>
@@ -505,32 +640,9 @@ const BLOCK_TOOLS: BlockTool[] = [
       border-radius: var(--radius);
       color: var(--foreground);
     }
-    /* Aproximación DECLARADA del preset visual: reconocerlo, no clonarlo. El shell real lo
-       emite el generador (files-design/<preset>) — aquí solo se tiñe el cromo del lienzo. */
-    .preview-scope[data-preset='cabina'] .preview-side {
-      background: var(--preview-shell-bg);
-      color: var(--preview-shell-fg);
-      border-color: var(--preview-shell-border);
-    }
-    .preview-scope[data-preset='cabina'] table td {
-      padding-top: var(--preview-row-py);
-      padding-bottom: var(--preview-row-py);
-    }
-    .preview-scope[data-preset='cabina'] table th {
-      text-transform: var(--preview-head-transform);
-      letter-spacing: 0.08em;
-      font-size: 0.68rem;
-    }
-    .preview-scope[data-preset='suite'] .preview-side {
-      background: var(--preview-banner-bg);
-      color: var(--preview-banner-fg);
-    }
-    .preview-scope[data-preset='suite'] table th,
-    .preview-scope[data-preset='suite'] table td {
-      border-right: 1px solid var(--preview-grid-line);
-      padding-top: var(--preview-row-py);
-      padding-bottom: var(--preview-row-py);
-    }
+    /* Los shells de cabina y suite no se tiñen: se CAMBIAN (réplica de files-design/<preset>).
+       El cromo de componentes vive en el styles.css global del estudio, mismo mecanismo que
+       la app emitida — desde aquí la encapsulación no alcanza a los componentes hijos. */
     .toolbar-item {
       border: 1px solid var(--border);
       border-radius: 0.375rem;
@@ -556,7 +668,7 @@ export class StudioCanvasComponent {
   // el cromo del preset se suma a los tokens del tema: mismo [style], una sola pasada
   protected readonly previewVars = computed(() => ({
     ...previewThemeVars(this.preview.palette(), this.preview.theme()),
-    ...presetChrome(this.preview.preset())
+    ...presetChrome(this.preview.preset(), this.preview.theme())
   }))
 
   protected onPreset(event: Event): void {
@@ -579,6 +691,20 @@ export class StudioCanvasComponent {
   protected readonly pages = computed(() => this.store.pages())
   protected readonly clampedTab = computed(() => Math.min(this.activeTab(), Math.max(this.pages().length - 1, 0)))
   protected readonly presetLabel = computed(() => this.presets.find(p => p.id === this.creating())?.label ?? '')
+
+  /**
+   * Contador de la barra lateral de cabina. Mismo total de mockup que usan los KPIs y la
+   * paginación, así que el lienzo no se contradice consigo mismo. Solo para vistas con recurso.
+   */
+  protected pageCount(index: number): string {
+    const page = this.pages()[index]
+    const resource = page?.blocks.find(block => block.resource)?.resource
+    if (!resource) return ''
+    const position = this.store.resources().findIndex(r => r.name === resource)
+    if (position < 0) return ''
+    const total = mockTotal(position)
+    return total >= 1000 ? `${(total / 1000).toFixed(1)}k` : String(total)
+  }
 
   constructor() {
     // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue

@@ -238,6 +238,8 @@ const BADGE_CLASSES = [
     }
   `,
   styles: `
+    /* El cromo del preset vive en el styles.css GLOBAL del estudio (mismo mecanismo que la
+       app emitida): desde aquí la encapsulación lo dejaría ciego a los bloques hermanos. */
     .chrome-btn {
       border: 1px solid var(--border);
       border-radius: 0.375rem;
