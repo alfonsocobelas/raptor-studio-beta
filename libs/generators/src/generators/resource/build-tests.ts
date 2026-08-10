@@ -2,6 +2,7 @@ import { names } from '@nx/devkit'
 import { SHARED_VOS } from './models/shared-vos'
 import { MODELS } from './models/registry'
 import { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { softDeleteContract } from './drag-tree'
 
 /**
  * Domain test artifacts (spec 14 backend): repository port + object mother + builder +
@@ -312,6 +313,14 @@ function renderPortImports(definition: ResourceDefinition, uniques: Ctx[]): stri
     `import { Criteria } from '../../../../shared/domain/query/criteria'`,
     `import { ${n.className}Id } from '../../../../shared/domain/value-objects/${definition.plural}/${n.fileName}-id.vo'`
   ]
+  // El contrato de borrado suave viaja con su operación (spec 38)
+  if (softDeleteContract(definition)) {
+    lines.splice(
+      2,
+      0,
+      `import { DeleteOperationId } from '../../../../shared/domain/value-objects/delete-operation-id.vo'`
+    )
+  }
   for (const c of uniques) {
     if (c.field.voShared) {
       lines.push(`import { ${c.voName} } from '../../../shared/domain/value-objects/${names(c.voName).fileName}.vo'`)

@@ -10,6 +10,9 @@ import { <%- f.voName %> } from '../../../../src/contexts/<%- context %>/modules
 <%_ } _%>
 <%_ }) _%>
 import { <%- className %>Id } from '../../../../src/contexts/shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+<%_ if (softContract) { _%>
+import { DeleteOperationId } from '../../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
+<%_ } _%>
 import { MockRepository } from '../../shared/mocks/mock-repository'
 
 export class <%- className %>RepositoryMock extends MockRepository<<%- className %>> implements <%- className %>Repository {
@@ -22,8 +25,8 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   }
 <%_ if (app.removes) { _%>
 
-  remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
-    return this.getMock('remove')(<%- propertyName %>Id)
+  remove(<%- propertyName %>Id: <%- className %>Id<%- softContract ? ', op: DeleteOperationId' : '' %>): Promise<void> {
+    return this.getMock('remove')(<%- propertyName %>Id<%- softContract ? ', op' : '' %>)
   }
 <%_ } _%>
 
@@ -60,6 +63,18 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
 
   restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean> {
     return this.getMock('restore')(<%- propertyName %>Id)
+  }
+<%_ } _%>
+<%_ dragged.forEach(d => { _%>
+
+  <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    return this.getMock('<%- d.method %>')(parentIds, op)
+  }
+<%_ }) _%>
+<%_ if (softContract) { _%>
+
+  restoreByOp(op: DeleteOperationId): Promise<number> {
+    return this.getMock('restoreByOp')(op)
   }
 <%_ } _%>
 

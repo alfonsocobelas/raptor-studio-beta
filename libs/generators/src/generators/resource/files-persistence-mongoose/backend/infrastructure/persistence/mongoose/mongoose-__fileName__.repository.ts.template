@@ -7,6 +7,9 @@ import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+<%_ if (softContract) { _%>
+import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
+<%_ } _%>
 import { MongooseCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-criteria-converter'
 import { MongooseRepository } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose.repository'
 import { MongooseTransactionManager } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-transaction-manager'
@@ -66,11 +69,14 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
   }
 <%_ if (app.removes) { _%>
 
-  async remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
+  async remove(<%- propertyName %>Id: <%- className %>Id<%- softContract ? ', op: DeleteOperationId' : '' %>): Promise<void> {
 <%_ if (softDelete) { _%>
-    // soft-delete: el documento se marca y ninguna consulta base lo vuelve a ver
+    // soft-delete: el documento se marca (y con QUÉ operación) y ninguna consulta base lo vuelve a ver
     await this.model()
-      .updateOne({ id: <%- propertyName %>Id.value }, { $set: { deletedAt: new Date() } })
+      .updateOne(
+        { id: <%- propertyName %>Id.value, deletedAt: null },
+        { $set: { deletedAt: new Date(), deletedOp: op.value } }
+      )
       .session(this.session())
       .exec()
 <%_ } else { _%>
@@ -125,6 +131,36 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
       .exec()
 
     return result.matchedCount > 0
+  }
+<%_ } _%>
+
+<%_ dragged.forEach(d => { _%>
+
+  async <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    if (!parentIds.length) return []
+    const rows = await this.model()
+      .find({ <%- d.fkField %>: { $in: parentIds }, deletedAt: null }, { id: 1 })
+      .session(this.session())
+      .exec()
+    const ids = rows.map(row => row.id)
+    if (ids.length) {
+      await this.model()
+        .updateMany({ id: { $in: ids } }, { $set: { deletedAt: new Date(), deletedOp: op.value } })
+        .session(this.session())
+        .exec()
+    }
+    return ids
+  }
+<%_ }) _%>
+<%_ if (softContract) { _%>
+
+  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
+  async restoreByOp(op: DeleteOperationId): Promise<number> {
+    const result = await this.model()
+      .updateMany({ deletedOp: op.value }, { $set: { deletedAt: null, deletedOp: null } })
+      .session(this.session())
+      .exec()
+    return result.modifiedCount
   }
 <%_ } _%>
 

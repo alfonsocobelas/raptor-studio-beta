@@ -49,3 +49,30 @@ export function buildDragTree(definition: ResourceDefinition, registry: Resource
 
   return levels
 }
+
+/** Referencias por las que ESTA entidad puede ser arrastrada (sus FKs a otros agregados). */
+export interface DraggedRelation {
+  fkField: string
+  /** Nombre del método de marcado emitido en su port: removeDraggedBy<Fk> */
+  method: string
+}
+
+export function draggedRelations(definition: ResourceDefinition): DraggedRelation[] {
+  if (!wantsSoftDelete(definition)) return []
+  return Object.entries(definition.fields)
+    .filter(([, field]) => field.relation?.kind === 'reference')
+    .map(([fkField]) => ({
+      fkField,
+      method: `removeDraggedBy${fkField.charAt(0).toUpperCase()}${fkField.slice(1)}`
+    }))
+}
+
+/**
+ * ¿Esta entidad participa del contrato de borrado suave? Sí cuando es suave y además
+ * borra desde su listado o puede ser arrastrada por un padre. Gobierna la firma del
+ * port, el import del DeleteOperationId y la emisión de restoreByOp.
+ */
+export function softDeleteContract(definition: ResourceDefinition): boolean {
+  const removes = definition.list?.features?.delete === true
+  return wantsSoftDelete(definition) && (removes || draggedRelations(definition).length > 0)
+}

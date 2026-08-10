@@ -3,6 +3,9 @@ import { moduleFixture } from '../jest.setup.integration'
 import { TypeOrm<%- className %>Repository } from '../../../src/contexts/<%- context %>/modules/<%- plural %>/infrastructure/persistence/typeorm/typeorm-<%- fileName %>.repository'
 import { <%- className %>WithIdSpecification } from '../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/specifications/<%- fileName %>-with-id.specification'
 import { <%- className %>Id } from '../../../src/contexts/shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+<%_ if (softContract) { _%>
+import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
+<%_ } _%>
 <%_ domainTests.uniqueFinders.forEach(f => { _%>
 <%_ if (f.shared) { _%>
 import { <%- f.voName %> } from '../../../src/contexts/<%- context %>/shared/domain/value-objects/<%- f.voFileName %>.vo'
@@ -88,7 +91,7 @@ describe('TypeOrm<%- className %>Repository (integration)', () => {
       const <%- propertyName %> = <%- className %>Mother.random()
       await repository.register(<%- propertyName %>)
 
-      await repository.remove(<%- propertyName %>.id)
+      await repository.remove(<%- propertyName %>.id<%- softContract ? ', DeleteOperationId.random()' : '' %>)
 
       expect(await repository.get(<%- propertyName %>.id)).toBeNull()
     })
@@ -100,7 +103,7 @@ describe('TypeOrm<%- className %>Repository (integration)', () => {
     it('a removed <%- fileName %> leaves matching and shows up in matchingDeleted', async () => {
       const <%- propertyName %> = <%- className %>Mother.random()
       await repository.register(<%- propertyName %>)
-      await repository.remove(<%- propertyName %>.id)
+      await repository.remove(<%- propertyName %>.id<%- softContract ? ', DeleteOperationId.random()' : '' %>)
 
       const spec = <%- className %>WithIdSpecification.withId(<%- propertyName %>.id)
       expect(await repository.matching(spec)).toHaveLength(0)
@@ -114,7 +117,7 @@ describe('TypeOrm<%- className %>Repository (integration)', () => {
     it('restore brings it back; a live or unknown id restores nothing', async () => {
       const <%- propertyName %> = <%- className %>Mother.random()
       await repository.register(<%- propertyName %>)
-      await repository.remove(<%- propertyName %>.id)
+      await repository.remove(<%- propertyName %>.id<%- softContract ? ', DeleteOperationId.random()' : '' %>)
 
       expect(await repository.restore(<%- propertyName %>.id)).toBe(true)
       expect(await repository.get(<%- propertyName %>.id)).not.toBeNull()

@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common'
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 <%_ } _%>
 import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+<%_ if (softContract) { _%>
+import { DeleteOperationId } from '../../../../../shared/domain/value-objects/delete-operation-id.vo'
+<%_ } _%>
 import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
 import { Remove<%- className %>Input } from '../dtos/remove-<%- fileName %>-input.dto'
@@ -26,7 +29,13 @@ export class Remove<%- className %>UseCase {
       throw new EntityNotFoundError('<%- className %>', input.id)
     }
 
+<%_ if (softContract) { _%>
+    // La operación identifica ESTE borrado: restaurar revertirá exactamente lo que arrastre
+    const op = DeleteOperationId.random()
+    await this.<%- propertyName %>Repository.remove(<%- propertyName %>Id, op)
+<%_ } else { _%>
     await this.<%- propertyName %>Repository.remove(<%- propertyName %>Id)
+<%_ } _%>
 <%_ if (app.history) { _%>
     await this.auditTrail.record({
       entity: '<%- fileName %>',

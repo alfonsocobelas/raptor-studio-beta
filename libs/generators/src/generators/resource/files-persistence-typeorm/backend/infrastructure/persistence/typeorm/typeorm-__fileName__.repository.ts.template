@@ -4,16 +4,23 @@
 <%_ const kids = comp ? comp.childrenProp : '' _%>
 <%_ const KidsCap = comp ? kids.charAt(0).toUpperCase() + kids.slice(1) : '' _%>
 import { Injectable } from '@nestjs/common'
-<%_ if (comp && app.trash) { _%>
-import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
-<%_ } else if (comp) { _%>
-import { FindOptionsWhere, In, Not } from 'typeorm'
-<%_ } else if (app.trash) { _%>
-import { IsNull, Not } from 'typeorm'
+<%_
+  // los símbolos de typeorm que usa este adapter, deducidos de lo que emite
+  const tySyms = new Set()
+  if (comp) { tySyms.add('FindOptionsWhere'); tySyms.add('In'); tySyms.add('Not') }
+  if (app.trash) { tySyms.add('IsNull'); tySyms.add('Not') }
+  if (softContract && app.removes) { tySyms.add('IsNull') }
+  if (dragged.length) { tySyms.add('In'); tySyms.add('IsNull') }
+_%>
+<%_ if (tySyms.size) { _%>
+import { <%- [...tySyms].sort().join(', ') %> } from 'typeorm'
 <%_ } _%>
 import { Nullable } from '../../../../../../shared/domain/types'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+<%_ if (softContract) { _%>
+import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
+<%_ } _%>
 import { TypeOrmCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-criteria-converter'
 import { TypeOrmRepository } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm.repository'
 import { TypeOrmTransactionManager } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-transaction-manager'
@@ -70,10 +77,42 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
     await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
   }
 <%_ } _%>
-<%_ if (app.removes) { _%>
+<%_ if (app.removes && softContract) { _%>
+
+  // Archiva la fila viva marcando QUÉ operación la tumbó; un update, se une a la tx ambiental
+  async remove(<%- propertyName %>Id: <%- className %>Id, op: DeleteOperationId): Promise<void> {
+    await this.repository().update(
+      { id: <%- propertyName %>Id.value, deletedAt: IsNull() },
+      { deletedAt: () => 'CURRENT_TIMESTAMP', deletedOp: op.value }
+    )
+  }
+<%_ } else if (app.removes) { _%>
 
   async remove(<%- propertyName %>Id: <%- className %>Id): Promise<void> {
     await this.repository().<%- softDelete ? 'softDelete' : 'delete' %>({ id: <%- propertyName %>Id.value })
+  }
+<%_ } _%>
+<%_ dragged.forEach(d => { _%>
+
+  async <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
+    if (!parentIds.length) return []
+    const rows = await this.repository().find({
+      select: { id: true },
+      where: { <%- d.fkField %>: In(parentIds), deletedAt: IsNull() }
+    })
+    const ids = rows.map(row => row.id)
+    if (ids.length) {
+      await this.repository().update({ id: In(ids) }, { deletedAt: () => 'CURRENT_TIMESTAMP', deletedOp: op.value })
+    }
+    return ids
+  }
+<%_ }) _%>
+<%_ if (softContract) { _%>
+
+  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
+  async restoreByOp(op: DeleteOperationId): Promise<number> {
+    const result = await this.repository().update({ deletedOp: op.value }, { deletedAt: null, deletedOp: null })
+    return result.affected ?? 0
   }
 <%_ } _%>
 

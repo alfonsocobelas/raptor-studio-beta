@@ -27,6 +27,7 @@ export interface <%- className %>Doc {
 <%_ } _%>
 <%_ if (softDelete) { _%>
   deletedAt?: Nullable<Date>
+  deletedOp?: Nullable<string>
 <%_ } _%>
 }
 <%_ if (child) { _%>
@@ -51,7 +52,8 @@ export const <%- mongo.schemaConst %> = new Schema<<%- className %>Doc>(
     <%- child.childrenProp %>: { type: [<%- child.schemaConst %>], default: [] },
 <%_ } _%>
 <%_ if (softDelete) { _%>
-    deletedAt: { type: Date, default: null }
+    deletedAt: { type: Date, default: null },
+    deletedOp: { type: String, default: null }
 <%_ } _%>
   },
   {

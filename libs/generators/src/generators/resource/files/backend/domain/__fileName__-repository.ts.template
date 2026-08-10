@@ -7,8 +7,11 @@ export abstract class <%- className %>Repository {
   abstract register(<%- propertyName %>: <%- className %>): Promise<void>
   abstract save(<%- propertyName %>: <%- className %>): Promise<void>
 <%_ if (app.removes) { _%>
-  abstract remove(<%- propertyName %>Id: <%- className %>Id): Promise<void>
+  abstract remove(<%- propertyName %>Id: <%- className %>Id<%- softContract ? ', op: DeleteOperationId' : '' %>): Promise<void>
 <%_ } _%>
+<%_ dragged.forEach(d => { _%>
+  abstract <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]>
+<%_ }) _%>
   abstract get(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<<%- className %>>>
   abstract matching(criteria: Criteria): Promise<<%- className %>[]>
 <%_ domainTests.uniqueFinders.forEach(f => { _%>
@@ -20,6 +23,9 @@ export abstract class <%- className %>Repository {
   abstract matchingDeleted(criteria: Criteria): Promise<<%- className %>[]>
   abstract countDeleted(criteria: Criteria): Promise<number>
   abstract restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean>
+<%_ } _%>
+<%_ if (softContract) { _%>
+  abstract restoreByOp(op: DeleteOperationId): Promise<number>
 <%_ } _%>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
