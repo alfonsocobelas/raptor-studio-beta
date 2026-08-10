@@ -207,7 +207,8 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           <studio-views-sidebar />
         }
         <div class="canvas-surface flex min-h-0 min-w-0 flex-1 flex-col">
-          <main class="min-h-0 flex-1 overflow-auto px-10 pt-6">
+          <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
+          <main class="min-h-0 flex-1 overflow-auto px-10 pb-10 pt-6">
             <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
                  build de producción el JSON no llega nunca al DOM del cliente. -->
             @if (devMode) {
