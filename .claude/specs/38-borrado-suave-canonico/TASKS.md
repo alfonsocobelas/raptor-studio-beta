@@ -38,8 +38,10 @@
       tx; hojas sin transacción. Plan GATEADO a `features.delete` (sin removes sería DI
       muerta) ⇒ golden vacío sin re-baseline. El rollback real queda para la integración
       de TASK-12 (el unitario emitido prueba la orquestación). `1282cd0`
-- [ ] **TASK-06**: restore por operación: DTO del trash expone `deletedOp`, el POST /restore
-      revierte el árbol en transacción. Test emitido: hijo borrado aparte NO vuelve.
+- [x] **TASK-06**: restore por operación SIN tocar el API ni el DTO: el servidor resuelve
+      el op de la fila archivada (`deletedOpOf`, ambos motores) y revierte el árbol en
+      transacción. 404 antes de tocar nada; hojas como siempre. El «hijo borrado aparte no
+      vuelve» queda garantizado por diseño (otro op) y se verifica e2e en TASK-12.
 - [ ] **TASK-07**: ~~adapter Mongoose~~ el contrato entró con TASK-04. Queda SOLO verificar
       la transacción con sesión replSet en la integración mongo (el manager ya existe).
 
