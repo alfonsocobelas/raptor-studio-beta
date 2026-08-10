@@ -90,6 +90,7 @@ detrás del trabajo activo (spec 15). Una spec por componente, cada una con su g
 | 35  | ✅ `tests-datatable` (spec 35) | Rescate nº 4: el runner emitido ya compila componentes (antes NG0303 en todo binding) y cada app generada trae **65 tests** de su DataTable. La suite del canon contra el emitido destapó tres defectos reales: `sortField` sin resolver de vuelta, `valueMap` sin desplegable de filtro y el `test-setup` sin los polyfills de jsdom | ✅ 2026-08-09 |
 
 | 37  | ✅ `presets-de-diseno` (spec 37) | Ranura `design` con tres presets: `actual` (por defecto, diff de oro vacío), `cabina` (centro de operaciones, cromo en los dos temas) y `suite` (ERP: banda de marca, pestañas de módulo, rejilla). Nace de medir que spartan↔material dejaba las apps indistinguibles. La verificación en navegador cazó el defecto de cascada: el CSS del preset dentro de `@layer` perdía contra las utilidades de Tailwind | ✅ 2026-08-10 |
+| 36  | ✅ `retirar-material` (spec 36) | La ranura `ui` pasa a un único proveedor (`spartan`); `--ui=material` se rechaza antes de emitir nada. Fuera `@angular/material`/`@fontsource/roboto` del package emitido (`@angular/cdk` se conserva: lo usan las primitivas headless de spartan), fuera `files-ui/material`/`files-theme/material`/`files-skeleton-ui/material`. La ranura y los contratos UI neutrales se conservan como punto de re-entrada. Último commit con material viva: `103f24d`. Suite 524 ✅ · 6 golden vacíos ✅ · typecheck emitido 0 errores | ✅ 2026-08-10 |
 
 Banco de ideas aparcadas (YAGNI hasta demanda real): listados derivados/vistas guardadas (canon
 `licenses-overused`), kanban por enum, master-detail split, vista árbol (self-relation),
@@ -150,10 +151,11 @@ el starter original las tenía cerradas pero no llegó a este repo.
 
 ## Observaciones abiertas (cont.)
 
-8. **Piel Material del lienzo es una aproximación**, no la librería real: se
-   simula con radios, mayúsculas y peso de fuente. Para fidelidad habría que
-   montar la piel material congelada dentro del estudio (coste alto, valor
-   dudoso antes de generar).
+8. ~~Piel Material del lienzo es una aproximación~~ — **resuelto por retirada** (spec 36,
+   2026-08-10): medido el 2026-08-09 que spartan y material emitían apps indistinguibles
+   (12 ficheros distintos de ~750; listado y diálogo idénticos byte a byte), así que la piel
+   se retiró en vez de perseguir fidelidad. La variedad visual la lleva la ranura `design`
+   (spec 37). Último commit con material viva: `103f24d`.
 9. **Paletas de previsualización no viajan al app-schema todavía**: elegir
    "Océano" en el lienzo NO cambia los tokens de la app generada. Siguiente
    paso natural: `theme: { palette }` en el app-schema y el kernel emitiendo
@@ -199,7 +201,7 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 ```
   RANURA      PROVEEDORES HOY                 PENDIENTE (spec que lo rellena)
   database    postgres ✅ | mongo ✅          spec 06: falta golden mongo + suite integración
-  ui          spartan ✅ | material ✅         —
+  ui          spartan ✅ (único proveedor)      material retirada (spec 36, 2026-08-10)
   infra       none ✅                          C1 azure · C2 lowcost · C3 aws · C4 gcp
   auth        none ✅ | single-tenant ✅       D multi-tenant (¡ojo: ya hay código, ver abajo)
 
