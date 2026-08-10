@@ -179,7 +179,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
             <button
               type="button"
               class="hover:bg-accent/60 rounded-md px-3 py-1 text-sm"
-              [class.bg-accent]="mode() === tab.mode"
+              [class.studio-mode-active]="mode() === tab.mode"
               [class.font-semibold]="mode() === tab.mode"
               [class.text-muted-foreground]="mode() !== tab.mode"
               [attr.data-testid]="'mode-' + tab.mode"
@@ -482,9 +482,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* Papel del lienzo: la referencia de docs/style da #f1efeb; Alfonso lo quiere un
-       pelín por debajo, así que se baja un paso más (~#ecE9e5). Es el plano más oscuro
-       de los tres, y por eso las tarjetas blancas saltan sobre él. */
+    /* Papel del lienzo: la referencia de docs/style da #f1efeb y Alfonso lo quiere un
+       pelín por debajo. El MISMO tono viste la pestaña activa de la barra
+       (.studio-mode-active en styles.css): si cambia uno, cambia el otro. */
     .canvas-surface {
       background-color: color-mix(in oklab, var(--muted) 96%, var(--foreground) 4%);
     }

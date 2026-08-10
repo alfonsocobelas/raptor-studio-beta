@@ -250,3 +250,10 @@
   background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
+
+/* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.
+   El valor se repite en .canvas-surface (studio-canvas.component): una custom property
+   compartida no sobrevive al pipeline de Tailwind, así que se mantienen a la par aquí. */
+.studio-mode-active {
+  background-color: color-mix(in oklab, var(--muted) 96%, var(--foreground) 4%);
+}
