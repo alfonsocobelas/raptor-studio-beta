@@ -1,16 +1,23 @@
 # Tareas atómicas: Borrado suave canónico
 
 > Cada tarea = un commit atómico en develop. Orden TDD: test del generador en rojo →
-> plantilla/lógica → verde → siguiente. El golden-diff corre en cada tarea que toque
-> emisión; los diffs esperados se acumulan y el re-baseline es UNA tarea propia al final.
+> plantilla/lógica → verde → siguiente.
+>
+> **Corrección sobre el plan inicial (tras TASK-01)**: el re-baseline NO se acumula al final.
+> Cada tarea que cambia el canon se cierra con su propio `chore(golden)` inmediatamente
+> después, para que el árbol nunca quede con el gate en rojo. Y el re-baseline se hace
+> COPIANDO sin borrar (`rsync -a`, nunca `--delete`): las fixtures contienen ficheros de la
+> referencia que el generador todavía no emite, y un `--delete` se llevó 87 por delante.
+> Los ficheros de `tools/golden-skip.txt` (mappers con composición a mano) no se pisan.
 
 ---
 
 ## Contrato y cimientos
 
-- [ ] **TASK-01**: `softDelete` cambia su defecto a `true` en el schema (`resource-types.ts`
-      JSDoc + `build-substitutions`), `material` declara `softDelete: false`. Tests: un
-      modelo mudo emite soft delete; uno con `false` emite el DELETE físico de hoy.
+- [x] **TASK-01**: `softDelete` cambia su defecto a `true` (helper único `wantsSoftDelete()`
+      en el schema, siete puntos de decisión unificados), `material` declara la escotilla
+      física. `f27f1f1` + re-baseline `6593236` (7 ficheros: entidades de contract/customer,
+      migración y esquemas mongoose).
 - [ ] **TASK-02**: árbol de arrastre en `build-substitutions`: derivar por entidad los
       niveles `[{ entity, fkField, parentLevel }]` desde el registro (solo hijos suaves).
       Tests con el registro de la demo: cliente → [instalacion] → [parte]; parte → [].
