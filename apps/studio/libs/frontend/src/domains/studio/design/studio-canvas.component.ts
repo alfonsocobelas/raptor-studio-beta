@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, isDevMode, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { VIEW_PRESETS, type BlockKind } from '@app/shared/domain'
 import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings, presetChrome, type PreviewPreset } from './preview-settings'
 import { previewThemeVars } from './preview-theme'
 import { NgIcon, provideIcons } from '@ng-icons/core'
@@ -39,6 +38,7 @@ const STUDIO_ICONS = {
   lucideX
 }
 import { STUDIO_MODES, type StudioMode } from './studio-modes'
+import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
@@ -46,24 +46,9 @@ import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
 import { InspectorComponent } from './inspector.component'
+import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
-
-interface BlockTool {
-  kind: BlockKind
-  icon: string
-  label: string
-  /** Necesita elegir entidad al insertarlo */
-  needsResource: boolean
-}
-
-const BLOCK_TOOLS: BlockTool[] = [
-  { kind: 'table', icon: 'lucideTable', label: 'Tabla', needsResource: true },
-  { kind: 'kpis', icon: 'lucideChartNoAxesColumn', label: 'KPIs', needsResource: true },
-  { kind: 'fields', icon: 'lucideIdCard', label: 'Datos', needsResource: true },
-  { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería', needsResource: true },
-  { kind: 'attachments', icon: 'lucidePaperclip', label: 'Ficheros', needsResource: true }
-]
 
 /**
  * El estudio: primero eliges VISTA (en blanco o preset) y luego le sueltas
@@ -80,7 +65,8 @@ const BLOCK_TOOLS: BlockTool[] = [
     ChatPanelComponent,
     GenerateWizardComponent,
     ModelViewComponent,
-    FlowViewComponent
+    FlowViewComponent,
+    ViewsSidebarComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
   template: `
@@ -197,93 +183,6 @@ const BLOCK_TOOLS: BlockTool[] = [
             </button>
           }
         </nav>
-        <div class="bg-border h-6 w-px"></div>
-
-        <!-- crear vista -->
-        @if (creating()) {
-          <form class="flex items-center gap-2" (ngSubmit)="confirmPage()">
-            <input
-              class="border-input w-44 rounded-md border px-2 py-1 text-sm"
-              name="pageTitle"
-              placeholder="Nombre de la vista…"
-              [(ngModel)]="pageTitle"
-              data-testid="new-page-title"
-            />
-            <button
-              type="submit"
-              class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-sm"
-              data-testid="new-page-ok"
-            >
-              Crear {{ presetLabel() }}
-            </button>
-            <button type="button" class="text-muted-foreground text-sm" (click)="creating.set(null)">✕</button>
-          </form>
-        } @else {
-          <div class="relative">
-            <button
-              type="button"
-              class="toolbar-item font-medium"
-              data-testid="tool-new-view"
-              (click)="viewMenu.set(!viewMenu())"
-            >
-              + Nueva vista
-            </button>
-            @if (viewMenu()) {
-              <div class="bg-background absolute left-0 top-9 z-20 w-64 rounded-md border p-1 shadow-md">
-                @for (preset of presets; track preset.id) {
-                  <button
-                    type="button"
-                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left"
-                    [attr.data-testid]="'preset-' + preset.id"
-                    (click)="startPage(preset.id)"
-                  >
-                    <span class="flex items-center gap-2 text-sm font-medium">
-                      <ng-icon [name]="preset.icon" size="16" />
-                      {{ preset.label }}
-                    </span>
-                    <span class="text-muted-foreground block text-xs">{{ preset.description }}</span>
-                  </button>
-                }
-              </div>
-            }
-          </div>
-
-          <div class="bg-border h-6 w-px"></div>
-
-          <!-- bloques: se insertan en la vista activa -->
-          @for (tool of blockTools; track tool.kind) {
-            <div class="relative">
-              <button
-                type="button"
-                class="toolbar-item"
-                [disabled]="!pages().length"
-                [attr.data-testid]="'block-tool-' + tool.kind"
-                (click)="openBlockMenu(tool.kind)"
-                [title]="'Añadir ' + tool.label + ' a la vista activa'"
-              >
-                <ng-icon [name]="tool.icon" size="15" />
-                {{ tool.label }}
-              </button>
-              @if (blockMenu() === tool.kind) {
-                <div class="bg-background absolute left-0 top-9 z-20 min-w-48 rounded-md border p-1 shadow-md">
-                  @if (!store.resources().length) {
-                    <p class="text-muted-foreground px-2 py-1.5 text-xs">Crea antes una entidad (vista con datos)</p>
-                  }
-                  @for (resource of store.resources(); track resource.name) {
-                    <button
-                      type="button"
-                      class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
-                      [attr.data-testid]="'add-' + tool.kind + '-' + resource.name"
-                      (click)="addBlock(tool.kind, resource.name)"
-                    >
-                      {{ resource.labelPlural }}
-                    </button>
-                  }
-                </div>
-              }
-            </div>
-          }
-        }
 
         <span class="flex-1"></span>
         @if (store.lastError(); as error) {
@@ -340,6 +239,9 @@ const BLOCK_TOOLS: BlockTool[] = [
       </header>
 
       <div class="flex min-h-0 flex-1">
+        @if (mode() === 'views') {
+          <studio-views-sidebar />
+        }
         <main class="canvas-surface min-w-0 flex-1 overflow-auto p-10">
           <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
                build de producción el JSON no llega nunca al DOM del cliente. -->
@@ -361,36 +263,11 @@ const BLOCK_TOOLS: BlockTool[] = [
             <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
               <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
               <p class="text-muted-foreground max-w-md text-sm">
-                Empieza con <strong>+ Nueva vista</strong> (en blanco o un preset), o descríbele tu aplicación al chat:
+                Empieza con <strong>Nueva vista</strong> en el panel de la izquierda, o descríbele tu aplicación al chat:
                 «una web para mi frutería con stock».
               </p>
             </div>
           } @else {
-            <!-- selector de VISTAS: chrome del estudio, fuera del mockup. Aquí sí
-                 aparecen las fichas, que en la app se abren desde el listado. -->
-            <div class="mx-auto mb-3 flex max-w-6xl flex-wrap items-center gap-1" data-testid="view-tabs">
-              @for (page of pages(); track $index) {
-                <button
-                  type="button"
-                  class="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs"
-                  [class.bg-primary]="$index === clampedTab()"
-                  [class.text-primary-foreground]="$index === clampedTab()"
-                  [class.border-transparent]="$index === clampedTab()"
-                  [attr.data-testid]="'view-tab-' + $index"
-                  (click)="activeTab.set($index)"
-                >
-                  @if (page.drillDown) {
-                    <ng-icon name="lucideIdCard" size="12" />
-                  }
-                  {{ page.title }}
-                </button>
-              }
-              @if (pages()[clampedTab()]?.drillDown) {
-                <span class="text-muted-foreground ml-2 text-xs" data-testid="drilldown-hint">
-                  se abre desde el listado · no aparece en el menú
-                </span>
-              }
-            </div>
             <div
               class="preview-scope bg-background mx-auto min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
               [class.flex]="preview.preset() !== 'suite'"
@@ -424,11 +301,11 @@ const BLOCK_TOOLS: BlockTool[] = [
                         <button
                           type="button"
                           class="text-muted-foreground border-b-[3px] border-transparent px-4 py-2 text-[12.5px]"
-                          [class.border-b-primary]="$index === clampedTab()"
-                          [class.text-foreground]="$index === clampedTab()"
-                          [class.font-semibold]="$index === clampedTab()"
+                          [class.border-b-primary]="$index === active.index()"
+                          [class.text-foreground]="$index === active.index()"
+                          [class.font-semibold]="$index === active.index()"
                           [attr.data-testid]="'nav-page-' + $index"
-                          (click)="activeTab.set($index)"
+                          (click)="active.select($index)"
                         >
                           {{ page.title }}
                         </button>
@@ -449,10 +326,10 @@ const BLOCK_TOOLS: BlockTool[] = [
                   style="background: var(--preview-grid-head, oklch(0.91 0.014 250))"
                   data-testid="mock-breadcrumb"
                 >
-                  Inicio › <span class="text-foreground font-semibold">{{ pages()[clampedTab()]?.title }}</span>
+                  Inicio › <span class="text-foreground font-semibold">{{ pages()[active.index()]?.title }}</span>
                 </div>
                 <section class="min-w-0 flex-1 p-4">
-                  <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
+                  <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
                 </section>
               } @else if (preview.preset() === 'cabina') {
                 <!-- Shell «cabina», réplica de files-design/cabina: barra a contraste, cabecera
@@ -477,12 +354,12 @@ const BLOCK_TOOLS: BlockTool[] = [
                           <button
                             type="button"
                             class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-left text-[12.5px]"
-                            [style.color]="$index === clampedTab() ? 'var(--preview-shell-fg-strong)' : 'var(--preview-shell-fg)'"
-                            [style.background]="$index === clampedTab() ? 'var(--preview-shell-active)' : ''"
-                            [style.box-shadow]="$index === clampedTab() ? 'inset 2px 0 0 var(--primary)' : ''"
-                            [class.font-semibold]="$index === clampedTab()"
+                            [style.color]="$index === active.index() ? 'var(--preview-shell-fg-strong)' : 'var(--preview-shell-fg)'"
+                            [style.background]="$index === active.index() ? 'var(--preview-shell-active)' : ''"
+                            [style.box-shadow]="$index === active.index() ? 'inset 2px 0 0 var(--primary)' : ''"
+                            [class.font-semibold]="$index === active.index()"
                             [attr.data-testid]="'nav-page-' + $index"
-                            (click)="activeTab.set($index)"
+                            (click)="active.select($index)"
                           >
                             <span>{{ page.title }}</span>
                             <!-- contador por recurso, la seña del centro de operaciones (maqueta skindemo) -->
@@ -524,11 +401,11 @@ const BLOCK_TOOLS: BlockTool[] = [
                     <span class="lowercase">{{ store.appName() }}</span>
                     <span class="mx-1.5 opacity-60">/</span>
                     <span class="lowercase" style="color: var(--preview-shell-fg-strong)">
-                      {{ pages()[clampedTab()]?.title }}
+                      {{ pages()[active.index()]?.title }}
                     </span>
                   </div>
                   <section class="min-w-0 flex-1 p-5">
-                    <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
+                    <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
                   </section>
                 </div>
               } @else {
@@ -551,10 +428,10 @@ const BLOCK_TOOLS: BlockTool[] = [
                         <button
                           type="button"
                           class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
-                          [class.bg-accent]="$index === clampedTab()"
-                          [class.font-semibold]="$index === clampedTab()"
+                          [class.bg-accent]="$index === active.index()"
+                          [class.font-semibold]="$index === active.index()"
                           [attr.data-testid]="'nav-page-' + $index"
-                          (click)="activeTab.set($index)"
+                          (click)="active.select($index)"
                         >
                           {{ page.title }}
                         </button>
@@ -590,7 +467,7 @@ const BLOCK_TOOLS: BlockTool[] = [
                 </div>
               </aside>
               <section class="min-w-0 flex-1 p-6">
-                <studio-canvas-page [pageIndex]="clampedTab()" (select)="selected.set($event)" />
+                <studio-canvas-page [pageIndex]="active.index()" (select)="selected.set($event)" />
               </section>
               }
             </div>
@@ -659,24 +536,15 @@ export class StudioCanvasComponent {
   protected onPreset(event: Event): void {
     this.preview.preset.set((event.target as HTMLSelectElement).value as PreviewPreset)
   }
-  protected readonly presets = VIEW_PRESETS
-  protected readonly blockTools = BLOCK_TOOLS
-
   protected readonly modes = STUDIO_MODES
   protected readonly mode = signal<StudioMode>('views')
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
-  protected readonly viewMenu = signal(false)
-  protected readonly blockMenu = signal<BlockKind | null>(null)
-  protected readonly creating = signal<string | null>(null)
-  protected readonly pageTitle = signal('')
-  protected readonly activeTab = signal(0)
+  protected readonly active = inject(ActiveViewService)
   protected readonly selected = signal<string | null>(null)
 
   protected readonly pages = computed(() => this.store.pages())
-  protected readonly clampedTab = computed(() => Math.min(this.activeTab(), Math.max(this.pages().length - 1, 0)))
-  protected readonly presetLabel = computed(() => this.presets.find(p => p.id === this.creating())?.label ?? '')
 
   /**
    * Contador de la barra lateral de cabina. Mismo total de mockup que usan los KPIs y la
@@ -703,30 +571,5 @@ export class StudioCanvasComponent {
     void this.history.rename(slug)
     this.renameSlug.set('')
     this.designMenu.set(false)
-  }
-
-  protected startPage(presetId: string): void {
-    this.viewMenu.set(false)
-    this.creating.set(presetId)
-  }
-
-  protected confirmPage(): void {
-    const preset = this.creating()
-    if (!preset) return
-    if (this.store.addPage(preset, this.pageTitle())) {
-      this.creating.set(null)
-      this.pageTitle.set('')
-      this.activeTab.set(this.pages().length - 1)
-    }
-  }
-
-  protected openBlockMenu(kind: BlockKind): void {
-    this.blockMenu.update(current => (current === kind ? null : kind))
-  }
-
-  protected addBlock(kind: BlockKind, resource: string): void {
-    this.blockMenu.set(null)
-    const block = kind === 'kpis' ? { kind, resources: [resource] } : { kind, resource }
-    this.store.addBlock(this.clampedTab(), block)
   }
 }
