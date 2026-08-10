@@ -151,6 +151,55 @@ describe('ViewsSidebarComponent', () => {
     expect(active.index()).toBe(fichaIndex)
   })
 
+  it('un clic fuera cierra el desplegable de nueva vista', () => {
+    const fixture = mount()
+    testId(fixture, 'tool-new-view')?.click()
+    fixture.detectChanges()
+    expect(testId(fixture, 'preset-list')).not.toBeNull()
+
+    document.body.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'preset-list')).toBeNull()
+  })
+
+  it('un clic dentro del desplegable no lo cierra', () => {
+    const fixture = mount()
+    testId(fixture, 'tool-new-view')?.click()
+    fixture.detectChanges()
+
+    testId(fixture, 'view-menu')?.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'preset-list')).not.toBeNull()
+  })
+
+  it('Escape cierra el desplegable sin tocar el diseño', () => {
+    const fixture = mount()
+    testId(fixture, 'tool-new-view')?.click()
+    fixture.detectChanges()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'preset-list')).toBeNull()
+    expect(store.pages()).toEqual([])
+  })
+
+  it('un clic fuera cierra también el menú de entidades de un bloque', () => {
+    store.addPage('list', 'Productos')
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-table')?.click()
+    fixture.detectChanges()
+    expect(testId(fixture, 'add-table-producto')).not.toBeNull()
+
+    document.body.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'add-table-producto')).toBeNull()
+  })
+
   it('ofrece los cinco bloques que el generador emite, y ninguno más', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')

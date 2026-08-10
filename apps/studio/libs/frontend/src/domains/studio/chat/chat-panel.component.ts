@@ -76,11 +76,12 @@ import { StudioChatService } from './studio-chat.service'
         <span class="text-muted-foreground pb-2.5 text-[11px]" aria-hidden="true">⌘↵</span>
         <button
           type="submit"
-          class="bg-primary text-primary-foreground mb-1 rounded-md px-4 py-1.5 text-sm font-medium disabled:opacity-40"
+          class="bg-brand text-brand-foreground mb-1.5 flex size-8 items-center justify-center rounded-full disabled:opacity-40"
           [disabled]="chat.pending() || !draft().trim()"
+          aria-label="Enviar"
           data-testid="chat-send"
         >
-          Enviar
+          <ng-icon name="lucideArrowUp" size="16" />
         </button>
       </form>
     </section>

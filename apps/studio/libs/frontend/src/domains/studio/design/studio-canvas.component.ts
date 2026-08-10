@@ -71,6 +71,10 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     CanvasHeaderComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'designMenu.set(false)'
+  },
   template: `
     <div class="flex h-screen flex-col">
       <header class="bg-card flex items-center gap-3 border-b px-4 py-2">
@@ -94,7 +98,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         </div>
 
         <!-- historial de diseños (spec 21): selector + indicador de guardado -->
-        <div class="relative">
+        <div class="relative" data-menu-root="design">
           <button
             type="button"
             class="toolbar-item flex items-center gap-1.5"
@@ -552,6 +556,13 @@ export class StudioCanvasComponent {
   constructor() {
     // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue
     void this.history.init()
+  }
+
+  /** El menú de diseños se cierra al pulsar fuera; su propio clic se reconoce por la raíz. */
+  protected onDocumentClick(event: Event): void {
+    if (!this.designMenu()) return
+    const inside = (event.target as HTMLElement | null)?.closest('[data-menu-root="design"]')
+    if (!inside) this.designMenu.set(false)
   }
 
   protected renameDesign(): void {

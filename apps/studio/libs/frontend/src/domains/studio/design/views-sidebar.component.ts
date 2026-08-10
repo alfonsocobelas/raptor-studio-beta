@@ -81,6 +81,10 @@ const BLOCK_TOOLS: BlockTool[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIcon],
   providers: [provideIcons(SIDEBAR_ICONS)],
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'closeMenus()'
+  },
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
@@ -141,67 +145,71 @@ const BLOCK_TOOLS: BlockTool[] = [
             </button>
           </form>
         } @else {
-          <button
-            type="button"
-            class="text-muted-foreground hover:bg-accent/60 mt-1 flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-sm"
-            data-testid="tool-new-view"
-            (click)="viewMenu.set(!viewMenu())"
-          >
-            <ng-icon name="lucidePlus" size="14" />
-            Nueva vista
-          </button>
-          @if (viewMenu()) {
-            <div class="bg-background mt-1 rounded-md border p-1 shadow-md">
-              @for (preset of presets; track preset.id) {
-                <button
-                  type="button"
-                  class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left"
-                  [attr.data-testid]="'preset-' + preset.id"
-                  (click)="startPage(preset.id)"
-                >
-                  <span class="block text-sm font-medium">{{ preset.label }}</span>
-                  <span class="text-muted-foreground block text-xs">{{ preset.description }}</span>
-                </button>
-              }
-            </div>
-          }
+          <div data-menu-root="view">
+            <button
+              type="button"
+              class="text-muted-foreground hover:bg-accent/60 mt-1 flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-sm"
+              data-testid="tool-new-view"
+              (click)="viewMenu.set(!viewMenu())"
+            >
+              <ng-icon name="lucidePlus" size="14" />
+              Nueva vista
+            </button>
+            @if (viewMenu()) {
+              <div class="bg-background mt-1 rounded-md border p-1 shadow-md" data-testid="view-menu">
+                @for (preset of presets; track preset.id) {
+                  <button
+                    type="button"
+                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left"
+                    [attr.data-testid]="'preset-' + preset.id"
+                    (click)="startPage(preset.id)"
+                  >
+                    <span class="block text-sm font-medium">{{ preset.label }}</span>
+                    <span class="text-muted-foreground block text-xs">{{ preset.description }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
         }
       </section>
 
       <section>
         <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">Componentes</h2>
         @for (tool of blockTools; track tool.kind) {
-          <button
-            type="button"
-            class="hover:bg-accent/60 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm disabled:opacity-40"
-            [class.bg-background]="blockMenu() === tool.kind"
-            [disabled]="!pages().length"
-            [attr.data-testid]="'block-tool-' + tool.kind"
-            [attr.title]="pages().length ? 'Añadir ' + tool.label + ' a la vista activa' : 'Crea antes una vista'"
-            (click)="openBlockMenu(tool.kind)"
-          >
-            <ng-icon [name]="tool.icon" size="15" />
-            {{ tool.label }}
-          </button>
-          @if (blockMenu() === tool.kind) {
-            <div class="bg-background mb-1.5 rounded-md border p-1 shadow-md">
-              @if (!store.resources().length) {
-                <p class="text-muted-foreground px-2 py-1.5 text-xs" data-testid="block-menu-empty">
-                  Crea antes una entidad (una vista con datos)
-                </p>
-              }
-              @for (resource of store.resources(); track resource.name) {
-                <button
-                  type="button"
-                  class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
-                  [attr.data-testid]="'add-' + tool.kind + '-' + resource.name"
-                  (click)="addBlock(tool.kind, resource.name)"
-                >
-                  {{ resource.labelPlural }}
-                </button>
-              }
-            </div>
-          }
+          <div [attr.data-menu-root]="'block-' + tool.kind">
+            <button
+              type="button"
+              class="hover:bg-accent/60 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm disabled:opacity-40"
+              [class.bg-background]="blockMenu() === tool.kind"
+              [disabled]="!pages().length"
+              [attr.data-testid]="'block-tool-' + tool.kind"
+              [attr.title]="pages().length ? 'Añadir ' + tool.label + ' a la vista activa' : 'Crea antes una vista'"
+              (click)="openBlockMenu(tool.kind)"
+            >
+              <ng-icon [name]="tool.icon" size="15" />
+              {{ tool.label }}
+            </button>
+            @if (blockMenu() === tool.kind) {
+              <div class="bg-background mb-1.5 rounded-md border p-1 shadow-md">
+                @if (!store.resources().length) {
+                  <p class="text-muted-foreground px-2 py-1.5 text-xs" data-testid="block-menu-empty">
+                    Crea antes una entidad (una vista con datos)
+                  </p>
+                }
+                @for (resource of store.resources(); track resource.name) {
+                  <button
+                    type="button"
+                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
+                    [attr.data-testid]="'add-' + tool.kind + '-' + resource.name"
+                    (click)="addBlock(tool.kind, resource.name)"
+                  >
+                    {{ resource.labelPlural }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
         }
       </section>
 
@@ -258,6 +266,24 @@ export class ViewsSidebarComponent {
     }
     return nodes
   })
+
+  /**
+   * Un desplegable abierto se cierra al pulsar en cualquier otro sitio. Los clics del
+   * propio botón y de su menú se reconocen por su `data-menu-root`: sin eso el clic que
+   * abre el menú llegaría aquí y lo cerraría en el mismo gesto.
+   */
+  protected onDocumentClick(event: Event): void {
+    if (!this.viewMenu() && !this.blockMenu()) return
+    const root = (event.target as HTMLElement | null)?.closest('[data-menu-root]')?.getAttribute('data-menu-root')
+    if (root === 'view' && this.viewMenu()) return
+    if (root === `block-${this.blockMenu()}`) return
+    this.closeMenus()
+  }
+
+  protected closeMenus(): void {
+    this.viewMenu.set(false)
+    this.blockMenu.set(null)
+  }
 
   protected onTitle(event: Event): void {
     this.pageTitle.set((event.target as HTMLInputElement).value)
