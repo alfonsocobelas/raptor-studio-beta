@@ -120,6 +120,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
   ensureAttachmentsFitTheEngine(models, persistence)
+  ensureCodesFitTheEngine(models, persistence)
   // los proveedores de ranura se aplican antes que los aditivos: email requiere el módulo de auth.
   // Los plugins de fábrica que el motor no admite se quedan fuera (Mongo no migra: sincroniza).
   const excluded = persistence.excludesPlugins ?? []
@@ -826,6 +827,29 @@ export default appGenerator
  * emitirlos. Se comprueba aquí y no como `requires` de una ranura porque el disparador es una
  * propiedad del MODELO, no de la selección del usuario; qué motor los soporta lo dice su manifiesto.
  */
+/**
+ * El código de negocio se apoya en una SECUENCIA del motor (spec 19). Mongo no tiene, y el
+ * sustituto (un contador en una colección con findOneAndUpdate) es otro mecanismo con otras
+ * garantías: se rechaza en vez de inventarlo, igual que con los adjuntos.
+ */
+function ensureCodesFitTheEngine(models: ResourceDefinition[], persistence: PersistenceProvider): void {
+  if (persistence.codeFiles) {
+    return
+  }
+  const offender = models.find(model => model.code)
+  if (!offender) {
+    return
+  }
+  const supported = Object.values(PERSISTENCE)
+    .filter(candidate => candidate.codeFiles)
+    .map(candidate => candidate.engine)
+
+  throw new Error(
+    `Business code on '${offender.name}' needs a persistence engine with sequences (${supported.join(', ')}) ` +
+      `and the app targets ${persistence.engine}. Drop code from the model or use --database=${supported[0]}.`
+  )
+}
+
 function ensureAttachmentsFitTheEngine(models: ResourceDefinition[], persistence: PersistenceProvider): void {
   if (persistence.supportsAttachments) {
     return
