@@ -240,7 +240,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
               </div>
             } @else {
               <div
-                class="preview-scope bg-background mx-auto min-h-[85%] max-w-6xl overflow-hidden border shadow-xl ring-1 ring-black/5"
+                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] max-w-6xl overflow-hidden rounded-xl border"
                 [class.flex]="preview.preset() !== 'suite'"
                 [class.flex-col]="preview.preset() === 'suite'"
                 [style]="previewVars()"
@@ -464,7 +464,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           <!-- el chat pertenece al lienzo: se le habla de lo que se está mirando. Sin
                altura fija: vacío es una barra, y con conversación crece hasta su tope. -->
           <div class="mx-auto mb-6 mt-3 w-full max-w-6xl shrink-0 px-10">
-            <div class="bg-card max-h-72 rounded-lg border p-3 shadow-sm">
+            <div class="bg-card canvas-card max-h-72 rounded-xl border p-3">
               <studio-chat-panel />
             </div>
           </div>
@@ -480,6 +480,13 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     /* Fondo liso: el mockup es el protagonista y la cuadrícula de puntos le competía. */
     .canvas-surface {
       background-color: color-mix(in oklab, var(--muted) 45%, var(--background));
+    }
+    /* El mockup flota sobre el papel: sombra ancha y difusa, no la de un dropdown. */
+    .canvas-card {
+      box-shadow:
+        0 1px 2px oklch(0 0 0 / 7%),
+        0 12px 32px -8px oklch(0 0 0 / 18%),
+        0 32px 64px -16px oklch(0 0 0 / 14%);
     }
     /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
        en oscuro, aquí se redefinen todos los tokens para que no se hereden. Los
