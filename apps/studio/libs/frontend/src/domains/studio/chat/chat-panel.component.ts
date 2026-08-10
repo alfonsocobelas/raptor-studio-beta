@@ -30,7 +30,7 @@ import { StudioChatService } from './studio-chat.service'
                 <p class="text-muted-foreground mb-0.5 text-right text-[10px] font-medium uppercase tracking-wide">
                   Tú
                 </p>
-                <div class="bg-card rounded-2xl rounded-br-sm border px-3 py-2 text-sm">
+                <div class="rounded-2xl rounded-br-sm bg-neutral-900 px-3 py-2 text-sm text-neutral-50">
                   {{ entry.text }}
                 </div>
               </div>
