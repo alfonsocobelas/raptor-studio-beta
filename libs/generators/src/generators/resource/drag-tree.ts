@@ -76,3 +76,66 @@ export function softDeleteContract(definition: ResourceDefinition): boolean {
   const removes = definition.list?.features?.delete === true
   return wantsSoftDelete(definition) && (removes || draggedRelations(definition).length > 0)
 }
+
+/** Un nivel del plan de marcado, ya renderizado para la plantilla del use case. */
+export interface DragPlanLevel {
+  repoClass: string
+  repoProp: string
+  repoImport: string
+  /** El mismo import, desde la carpeta de tests emitidos */
+  testRepoImport: string
+  method: string
+  /** Expresión con los ids del padre de este nivel */
+  sourceExpr: string
+  /** Nombre de la constante con los ids marcados; null si ningún nivel posterior la usa */
+  idsVar: string | null
+}
+
+export interface DragModule {
+  className: string
+  importLine: string
+}
+
+/** Nombres al estilo de @nx/devkit names(), sin arrastrar la dependencia hasta aquí. */
+function camel(value: string): string {
+  return value.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+}
+function pascal(value: string): string {
+  const c = camel(value)
+  return c.charAt(0).toUpperCase() + c.slice(1)
+}
+
+/**
+ * Plan de marcado del use case del padre (spec 38 · TASK-05): por nivel, qué repo se
+ * inyecta, qué método se llama y de dónde salen los ids. Todo resuelto aquí; la
+ * plantilla solo interpola.
+ */
+export function buildDragPlan(definition: ResourceDefinition, tree: DragLevel[], ownIdExpr: string): DragPlanLevel[] {
+  return tree.map(level => {
+    const cls = pascal(level.entity)
+    const prop = camel(level.entity)
+    const usedLater = tree.some(other => other.parent === level.entity)
+    return {
+      repoClass: `${cls}Repository`,
+      repoProp: `${prop}Repository`,
+      repoImport: `import { ${cls}Repository } from '../../../${level.plural}/domain/${level.entity}-repository'`,
+      testRepoImport: `import { ${cls}Repository } from '../../../../../src/contexts/${definition.context}/modules/${level.plural}/domain/${level.entity}-repository'`,
+      method: `removeDraggedBy${pascal(level.fkField)}`,
+      sourceExpr: level.parent === definition.name ? `[${ownIdExpr}]` : `${camel(level.parent)}Ids`,
+      idsVar: usedLater ? `${prop}Ids` : null
+    }
+  })
+}
+
+/** Módulos Nest de los niveles del árbol, sin repetir: el módulo del padre los importa. */
+export function dragModules(tree: DragLevel[]): DragModule[] {
+  const seen = new Set<string>()
+  const modules: DragModule[] = []
+  for (const level of tree) {
+    if (seen.has(level.plural)) continue
+    seen.add(level.plural)
+    const className = `${pascal(level.plural)}Module`
+    modules.push({ className, importLine: `import { ${className} } from '../${level.plural}/${level.plural}.module'` })
+  }
+  return modules
+}

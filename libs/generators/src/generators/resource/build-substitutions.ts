@@ -4,7 +4,17 @@ import { AggregateBindings, renderAggregate } from './build-aggregate'
 import { ApplicationBindings, renderApplication } from './build-application'
 import { EntrypointBindings, renderEntrypoints } from './build-entrypoints'
 import { DomainTestBindings, renderDomainTests } from './build-tests'
-import { buildDragTree, draggedRelations, softDeleteContract, type DraggedRelation, type DragLevel } from './drag-tree'
+import {
+  buildDragPlan,
+  buildDragTree,
+  draggedRelations,
+  dragModules,
+  softDeleteContract,
+  type DraggedRelation,
+  type DragLevel,
+  type DragModule,
+  type DragPlanLevel
+} from './drag-tree'
 import {
   ColumnDefinition,
   ConstraintValue,
@@ -95,6 +105,10 @@ export interface ResourceSubstitutions {
   dragTree: DragLevel[]
   /** Referencias por las que esta entidad puede ser arrastrada (spec 38) */
   dragged: DraggedRelation[]
+  /** Plan de marcado del use case del padre, ya renderizado (spec 38 TASK-05) */
+  dragPlan: DragPlanLevel[]
+  /** Módulos Nest de los niveles del árbol, para la DI cruzada */
+  dragModules: DragModule[]
   /** La entidad participa del contrato suave: firma con op, restoreByOp, import del VO */
   softContract: boolean
   /** Segmento del recurso bajo API_PREFIX: el servicio emite `${API_PREFIX}/<apiResource>` */
@@ -352,6 +366,16 @@ export function buildSubstitutions(
     importCsv: renderImportCsv(definition),
     related: renderRelated(definition, others),
     dragTree: wantsSoftDelete(definition) ? buildDragTree(definition, others) : [],
+    // el plan solo existe donde hay use case de borrado que lo ejecute: sin removes,
+    // importar los módulos hijos sería DI muerta (visto en customer/contract del oro)
+    dragPlan:
+      wantsSoftDelete(definition) && definition.list?.features?.delete === true
+        ? buildDragPlan(definition, buildDragTree(definition, others), `${n.propertyName}Id.value`)
+        : [],
+    dragModules:
+      wantsSoftDelete(definition) && definition.list?.features?.delete === true
+        ? dragModules(buildDragTree(definition, others))
+        : [],
     dragged: draggedRelations(definition),
     softContract: softDeleteContract(definition),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),

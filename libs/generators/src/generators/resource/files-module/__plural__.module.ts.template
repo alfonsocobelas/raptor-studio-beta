@@ -14,6 +14,9 @@ import { <%- repository.className %> } from '<%- repository.importPath %>'
 <%_ if (app.history) { _%>
 import { AuditModule } from '../../../shared/infrastructure/audit/audit.module'
 <%_ } _%>
+<%_ dragModules.forEach(m => { _%>
+<%- m.importLine %>
+<%_ }) _%>
 <%_ if (attachments) { _%>
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { StorageModule } from '../../../shared/infrastructure/storage/storage.module'
@@ -26,14 +29,18 @@ import { <%- className %>AttachmentsService } from './infrastructure/attachments
 <%_ if (attachments && app.history) { _%>
   // StorageModule y AuditModule explícitos (no se confía en @Global): así el módulo
   // funciona en cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule, AuditModule],
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule, AuditModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
 <%_ } else if (attachments) { _%>
   // StorageModule explícito (no se confía en @Global): así el módulo funciona en
   // cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule],
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
 <%_ } else if (app.history) { _%>
   // AuditModule explícito (no se confía en @Global): el historial funciona también en seed y tests.
-  imports: [AuditModule],
+  imports: [AuditModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
+<%_ } else if (dragModules.length) { _%>
+  // Los módulos del árbol de arrastre (spec 38): el borrado del padre marca a sus hijos
+  // por sus PORTS, así que la DI cruza módulos — cada hijo ya exporta su repositorio.
+  imports: [<%- dragModules.map(m => m.className).join(', ') %>],
 <%_ } _%>
 <%_ if (attachments) { _%>
   // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro

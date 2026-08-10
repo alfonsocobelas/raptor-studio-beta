@@ -6,13 +6,30 @@ import { EntityNotFoundError } from '../../../../../shared/domain/errors'
 <%_ if (softContract) { _%>
 import { DeleteOperationId } from '../../../../../shared/domain/value-objects/delete-operation-id.vo'
 <%_ } _%>
+<%_ if (dragPlan.length) { _%>
+import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'
+<%_ } _%>
 import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ dragPlan.forEach(level => { _%>
+<%- level.repoImport %>
+<%_ }) _%>
 import { Remove<%- className %>Input } from '../dtos/remove-<%- fileName %>-input.dto'
 
 @Injectable()
 export class Remove<%- className %>UseCase {
+<%_ if (dragPlan.length) { _%>
+  constructor(
+    private readonly <%- propertyName %>Repository: <%- className %>Repository,
+<%_ dragPlan.forEach(level => { _%>
+    private readonly <%- level.repoProp %>: <%- level.repoClass %>,
+<%_ }) _%>
+    private readonly txManager: TransactionManager<%- app.history ? ',' : '' %>
 <%_ if (app.history) { _%>
+    private readonly auditTrail: AuditTrailPort
+<%_ } _%>
+  ) {}
+<%_ } else if (app.history) { _%>
   constructor(
     private readonly <%- propertyName %>Repository: <%- className %>Repository,
     private readonly auditTrail: AuditTrailPort
@@ -29,6 +46,27 @@ export class Remove<%- className %>UseCase {
       throw new EntityNotFoundError('<%- className %>', input.id)
     }
 
+<%_ if (dragPlan.length) { _%>
+    // La operación identifica ESTE borrado: restaurar revertirá exactamente lo que arrastre
+    const op = DeleteOperationId.random()
+    // El árbol entero cae en UNA transacción: o se archiva todo o no se archiva nada.
+    // Quién cuelga de quién lo resolvió el generador desde el registro (nunca la base de datos).
+    await this.txManager.runInTransaction(async () => {
+      await this.<%- propertyName %>Repository.remove(<%- propertyName %>Id, op)
+<%_ dragPlan.forEach(level => { _%>
+      <%- level.idsVar ? `const ${level.idsVar} = ` : '' %>await this.<%- level.repoProp %>.<%- level.method %>(<%- level.sourceExpr %>, op)
+<%_ }) _%>
+<%_ if (app.history) { _%>
+      await this.auditTrail.record({
+        entity: '<%- fileName %>',
+        entityId: <%- propertyName %>Id.value,
+        action: 'deleted',
+        changes: {},
+        actor: null
+      })
+<%_ } _%>
+    })
+<%_ } else { _%>
 <%_ if (softContract) { _%>
     // La operación identifica ESTE borrado: restaurar revertirá exactamente lo que arrastre
     const op = DeleteOperationId.random()
@@ -44,6 +82,7 @@ export class Remove<%- className %>UseCase {
       changes: {},
       actor: null
     })
+<%_ } _%>
 <%_ } _%>
   }
 }

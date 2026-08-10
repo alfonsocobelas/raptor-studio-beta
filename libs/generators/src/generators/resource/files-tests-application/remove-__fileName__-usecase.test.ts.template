@@ -6,6 +6,12 @@ import { Remove<%- className %>UseCase } from '../../../../../src/contexts/<%- c
 import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
 import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+<%_ if (dragPlan.length) { _%>
+import { TransactionManager } from '../../../../../src/contexts/shared/domain/persistence/transaction-manager'
+<%_ dragPlan.forEach(level => { _%>
+<%- level.testRepoImport %>
+<%_ }) _%>
+<%_ } _%>
 
 describe('Remove<%- className %>UseCase', () => {
   let repositoryMock: <%- className %>RepositoryMock
@@ -14,9 +20,26 @@ describe('Remove<%- className %>UseCase', () => {
   const auditTrail = { record: jest.fn(), of: jest.fn() } as unknown as AuditTrailPort
 <%_ } _%>
 
+<%_ if (dragPlan.length) { _%>
+  // El árbol se marca dentro de la transacción: el manager de test la ejecuta tal cual,
+  // y cada repo hijo es un stub — aquí se prueba la ORQUESTACIÓN, no la persistencia.
+  const txManager = { runInTransaction: (work: () => Promise<unknown>) => work() } as TransactionManager
+<%_ dragPlan.forEach(level => { _%>
+  const <%- level.repoProp %> = { <%- level.method %>: jest.fn().mockResolvedValue([]) } as unknown as <%- level.repoClass %>
+<%_ }) _%>
+<%_ } _%>
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-<%_ if (app.history) { _%>
+<%_ if (dragPlan.length) { _%>
+    jest.clearAllMocks()
+    useCase = new Remove<%- className %>UseCase(
+      repositoryMock,
+<%_ dragPlan.forEach(level => { _%>
+      <%- level.repoProp %>,
+<%_ }) _%>
+      txManager<%- app.history ? ',\n      auditTrail' : '' %>
+    )
+<%_ } else if (app.history) { _%>
     useCase = new Remove<%- className %>UseCase(repositoryMock, auditTrail)
 <%_ } else { _%>
     useCase = new Remove<%- className %>UseCase(repositoryMock)
@@ -32,6 +55,9 @@ describe('Remove<%- className %>UseCase', () => {
       await useCase.invoke({ id: <%- propertyName %>.id.value })
 
       repositoryMock.assertCalled('remove')
+<%_ dragPlan.forEach(level => { _%>
+      expect(<%- level.repoProp %>.<%- level.method %>).toHaveBeenCalled()
+<%_ }) _%>
     })
   })
 
