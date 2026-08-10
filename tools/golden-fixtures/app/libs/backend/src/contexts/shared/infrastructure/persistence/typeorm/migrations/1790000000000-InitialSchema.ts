@@ -26,6 +26,7 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
         deleted_at           TIMESTAMPTZ NULL,
+        deleted_op           UUID NULL,
         CONSTRAINT           pk_customers PRIMARY KEY (id),
         CONSTRAINT           uq_customers_sap_id UNIQUE (sap_id)
       )
@@ -89,6 +90,7 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
         deleted_at               TIMESTAMPTZ NULL,
+        deleted_op               UUID NULL,
         CONSTRAINT               pk_contracts PRIMARY KEY (id),
         CONSTRAINT               fk_contracts_customer FOREIGN KEY (customer_id) REFERENCES sap_licensing.customers (id) ON DELETE RESTRICT,
         CONSTRAINT               uq_contracts_contract_number UNIQUE (contract_number)
@@ -126,6 +128,7 @@ export class InitialSchema1790000000000 implements MigrationInterface {
         created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
         deleted_at           TIMESTAMPTZ NULL,
+        deleted_op           UUID NULL,
         CONSTRAINT           pk_projects PRIMARY KEY (id),
         CONSTRAINT           fk_projects_customer FOREIGN KEY (customer_id) REFERENCES sap_licensing.customers (id) ON DELETE RESTRICT,
         CONSTRAINT           uq_projects_name UNIQUE (name)

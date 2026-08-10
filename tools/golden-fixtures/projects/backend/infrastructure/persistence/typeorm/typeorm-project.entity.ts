@@ -76,4 +76,8 @@ export class TypeOrmProjectEntity {
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt?: Date
+
+  // Operación que archivó esta fila: restaurar devuelve exactamente lo que ella arrastró
+  @Column('uuid', { name: 'deleted_op', nullable: true })
+  deletedOp?: string
 }
