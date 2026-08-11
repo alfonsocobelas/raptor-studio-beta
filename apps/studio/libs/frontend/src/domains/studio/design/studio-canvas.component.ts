@@ -108,7 +108,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         <div class="relative" data-menu-root="design">
           <button
             type="button"
-            class="toolbar-item flex items-center gap-1.5"
+            class="toolbar-item studio-ui flex items-center gap-1.5"
             data-testid="design-menu-toggle"
             (click)="designMenu.set(!designMenu())"
           >
@@ -185,9 +185,8 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           @for (tab of modes; track tab.mode) {
             <button
               type="button"
-              class="hover:bg-accent/60 rounded-md px-3 py-1 text-sm"
-              [class.studio-mode-active]="mode() === tab.mode"
-              [class.font-semibold]="mode() === tab.mode"
+              class="studio-nav hover:bg-accent/60"
+              [class.bg-muted]="mode() === tab.mode"
               [class.text-muted-foreground]="mode() !== tab.mode"
               [attr.data-testid]="'mode-' + tab.mode"
               (click)="mode.set(tab.mode)"
@@ -224,7 +223,12 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         }
         <div class="canvas-surface flex min-h-0 min-w-0 flex-1 flex-col">
           <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
-          <main class="min-h-0 flex-1 overflow-auto px-10 pb-10 pt-6">
+          <main
+            class="min-h-0 flex-1 overflow-auto"
+            [class.px-10]="mode() !== 'model'"
+            [class.pb-10]="mode() !== 'model'"
+            [class.pt-6]="mode() !== 'model'"
+          >
             <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
                  build de producción el JSON no llega nunca al DOM del cliente. -->
             @if (devMode) {

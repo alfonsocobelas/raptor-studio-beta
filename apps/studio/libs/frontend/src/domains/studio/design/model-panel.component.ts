@@ -29,7 +29,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
           <button
             type="button"
             role="tab"
-            class="hover:border-b-foreground/30 hover:text-foreground -mb-px border-b-2 border-transparent px-0.5 pb-2 text-sm transition-colors"
+            class="studio-ui hover:border-b-foreground/30 hover:text-foreground -mb-px border-b-2 border-transparent px-2.5 pb-2.5 pt-3 font-semibold transition-colors"
             [class.border-b-foreground]="tab() === option.id"
             [class.font-semibold]="tab() === option.id"
             [class.text-muted-foreground]="tab() !== option.id"
@@ -51,7 +51,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               <label class="text-muted-foreground mb-1 block text-xs" for="field-name">Nombre</label>
               <input
                 id="field-name"
-                class="border-input mb-3 w-full rounded-md border px-2 py-1.5 text-sm"
+                class="border-input studio-ui mb-3 w-full rounded-[7px] border px-2 py-1.5"
                 [value]="current.label"
                 (input)="rename($event)"
                 data-testid="field-name"
@@ -61,7 +61,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
               <select
                 id="field-type"
-                class="border-input mb-4 w-full rounded-md border px-2 py-1.5 text-sm disabled:opacity-60"
+                class="border-input studio-ui mb-4 w-full rounded-[7px] border px-2 py-1.5 disabled:opacity-60"
                 [value]="current.type"
                 [disabled]="current.type === 'ref'"
                 (change)="retype($event)"
@@ -79,7 +79,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               <label class="text-muted-foreground mb-1 block text-xs" for="field-ref">Referencia</label>
               <select
                 id="field-ref"
-                class="border-input mb-4 w-full rounded-md border px-2 py-1.5 text-sm"
+                class="border-input studio-ui mb-4 w-full rounded-[7px] border px-2 py-1.5"
                 [value]="current.refTo ?? ''"
                 (change)="repoint($event)"
                 data-testid="field-ref"

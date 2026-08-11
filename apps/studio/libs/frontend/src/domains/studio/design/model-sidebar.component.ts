@@ -17,7 +17,7 @@ import { DesignStore } from './design-store'
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto p-4">
       <section>
-        <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">Añadir</h2>
+        <h2 class="studio-eyebrow mb-2 px-1">Añadir</h2>
 
         @if (creating()) {
           <form class="mb-1.5 flex items-center gap-1" (submit)="onSubmit($event)">
@@ -41,7 +41,7 @@ import { DesignStore } from './design-store'
         } @else {
           <button
             type="button"
-            class="hover:border-foreground/40 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors"
+            class="bg-foreground text-background studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-opacity hover:opacity-90"
             data-testid="model-add-entity"
             (click)="creating.set(true)"
           >
@@ -52,7 +52,7 @@ import { DesignStore } from './design-store'
 
         <button
           type="button"
-          class="hover:border-foreground/40 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors disabled:opacity-40"
+          class="hover:border-foreground/40 studio-ui flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
           [disabled]="!selected()"
           [attr.title]="selected() ? 'Añadir una columna a ' + selected() : 'Elige antes una entidad en el diagrama'"
           data-testid="model-add-field"

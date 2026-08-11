@@ -56,7 +56,7 @@ interface DiagramEdge {
         </p>
       </div>
     } @else {
-      <div class="model-grid min-h-full min-w-full">
+      <div class="model-surface model-grid min-h-full min-w-full">
         <div
           #surfaceEl
           class="relative"
@@ -160,10 +160,8 @@ interface DiagramEdge {
               ></button>
               <!-- la elegida se pinta en tinta: en la referencia es así como se sabe cuál manda -->
               <header
-                class="flex cursor-move select-none items-center justify-between gap-2 border-b px-3 text-sm font-semibold"
-                [class.bg-foreground]="node.name === chosen()"
-                [class.text-background]="node.name === chosen()"
-                [class.border-transparent]="node.name === chosen()"
+                class="model-card-header studio-ui flex cursor-move select-none items-center justify-between gap-2 border-b px-3 font-semibold"
+                [class.model-card-header-chosen]="node.name === chosen()"
                 [style.height.px]="headerHeight"
                 [attr.data-testid]="'model-node-header-' + node.name"
                 (pointerdown)="startDrag($event, node.name)"
@@ -192,9 +190,7 @@ interface DiagramEdge {
                 <button
                   type="button"
                   class="hover:bg-foreground/[0.04] text-muted-foreground flex w-full items-center justify-between border-l-2 border-transparent px-3 text-left text-xs transition-colors"
-                  [class.border-l-primary]="isChosenField(node.name, $index)"
-                  [class.text-foreground]="isChosenField(node.name, $index)"
-                  [class.font-medium]="isChosenField(node.name, $index)"
+                  [class.model-field-chosen]="isChosenField(node.name, $index)"
                   [style.height.px]="rowHeight"
                   [attr.aria-current]="isChosenField(node.name, $index) ? 'true' : null"
                   [attr.data-testid]="'model-field-' + node.name + '-' + field.name"
@@ -220,9 +216,31 @@ interface DiagramEdge {
        tamaño es el del layout (MODEL_GRID) para que las cajas caigan sobre la retícula. */
     .model-grid {
       background-image:
-        linear-gradient(to right, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px),
-        linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px);
-      background-size: 32px 32px;
+        linear-gradient(to right, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    /* Cabecera de caja: gris suave, y tinta cuando es la elegida. Como clases propias,
+       porque bg-muted y bg-foreground son utilidades que se pisan por orden de hoja. */
+    .model-card-header {
+      background-color: var(--muted);
+    }
+    .model-card-header-chosen {
+      background-color: var(--foreground);
+      color: var(--background);
+      border-color: transparent;
+    }
+    /* El lienzo del diagrama es blanco: el esquema se lee mejor sobre papel limpio,
+       y así la rejilla queda tan suave como en la referencia (19A). */
+    .model-surface {
+      background-color: var(--card);
+    }
+    /* La columna elegida se tiñe de marca, no solo se marca en negrita (19A). */
+    .model-field-chosen {
+      background-color: color-mix(in oklab, var(--brand) 10%, var(--card));
+      border-left-color: var(--brand);
+      color: color-mix(in oklab, var(--brand) 78%, var(--foreground));
+      font-weight: 600;
     }
     .model-card {
       box-shadow:

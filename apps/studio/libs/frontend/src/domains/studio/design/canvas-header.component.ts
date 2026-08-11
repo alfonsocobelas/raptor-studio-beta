@@ -15,17 +15,17 @@ import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings } from './preview-se
     @if (title(); as title) {
       <div class="mx-auto mb-3 flex max-w-6xl items-center gap-3" data-testid="canvas-header">
         <p
-          class="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.12em]"
+          class="studio-eyebrow"
           data-testid="canvas-header-title"
         >
           Aspecto final · {{ title }}
         </p>
         <span class="flex-1"></span>
-        <span class="bg-card text-muted-foreground rounded-full border px-3 py-1 text-xs" data-testid="chip-skin">
+        <span class="bg-card text-muted-foreground studio-ui rounded-full border px-3 py-1" data-testid="chip-skin">
           Piel: {{ skinLabel() }}
         </span>
         <span
-          class="bg-card text-muted-foreground flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs"
+          class="bg-card text-muted-foreground studio-ui flex items-center gap-1.5 rounded-full border px-3 py-1"
           data-testid="chip-theme"
         >
           <span class="inline-block size-2.5 rounded-full" [style.background]="themeSwatch()"></span>

@@ -32,7 +32,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
           <button
             type="button"
             role="tab"
-            class="hover:border-b-foreground/30 hover:text-foreground -mb-px border-b-2 border-transparent px-0.5 pb-2 text-sm transition-colors"
+            class="studio-ui hover:border-b-foreground/30 hover:text-foreground -mb-px border-b-2 border-transparent px-2.5 pb-2.5 pt-3 font-semibold transition-colors"
             [class.border-b-foreground]="tab() === option.id"
             [class.font-semibold]="tab() === option.id"
             [class.text-muted-foreground]="tab() !== option.id"
@@ -48,7 +48,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
       <div class="min-h-0 flex-1 overflow-y-auto px-0.5 pt-3">
         @switch (tab()) {
           @case ('theme') {
-            <h3 class="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wider">Paleta</h3>
+            <h3 class="studio-eyebrow mb-2">Paleta</h3>
             <div class="grid grid-cols-2 gap-2">
               @for (palette of palettes; track palette.id) {
                 <button
@@ -67,7 +67,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
               }
             </div>
 
-            <h3 class="text-muted-foreground mb-2 mt-4 text-[11px] font-semibold uppercase tracking-wider">Modo</h3>
+            <h3 class="studio-eyebrow mb-2 mt-4">Modo</h3>
             <div class="flex items-center gap-1 rounded-md border p-0.5">
               @for (mode of modes; track mode) {
                 <button
@@ -89,7 +89,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
           }
 
           @case ('skin') {
-            <h3 class="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wider">Piel</h3>
+            <h3 class="studio-eyebrow mb-2">Piel</h3>
             @for (option of presets; track option.id) {
               <button
                 type="button"

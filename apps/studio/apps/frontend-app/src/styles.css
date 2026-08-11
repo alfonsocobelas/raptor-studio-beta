@@ -257,3 +257,32 @@
 .studio-mode-active {
   background-color: color-mix(in oklab, var(--muted) 96%, var(--foreground) 4%);
 }
+
+/* ===== Chrome del estudio, calibrado contra docs/style (turno 17A) =====
+   La referencia trabaja un punto por debajo de nuestro text-sm: 12.5px en el cuerpo
+   de los paneles, 13px en la navegación y 9.5-10px en las versalitas. Se expresa en
+   clases propias para no pelear con las utilidades de Tailwind en cada plantilla. */
+.studio-ui {
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.studio-nav {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  padding: 6px 12px;
+}
+/* Título de sección y cabecera del lienzo: versalitas anchas y apagadas */
+.studio-eyebrow {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--muted-foreground) 88%, var(--background));
+}
+.studio-cta {
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 15px;
+}

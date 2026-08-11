@@ -9,10 +9,12 @@ import {
   lucideLayoutGrid,
   lucidePaperclip,
   lucidePlus,
+  lucideSquareDashed,
   lucideTable
 } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { viewIcon } from './view-icon'
 
 const SIDEBAR_ICONS = {
   lucideChartNoAxesColumn,
@@ -22,6 +24,7 @@ const SIDEBAR_ICONS = {
   lucideLayoutGrid,
   lucidePaperclip,
   lucidePlus,
+  lucideSquareDashed,
   lucideTable
 }
 
@@ -88,13 +91,13 @@ const BLOCK_TOOLS: BlockTool[] = [
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
-        <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">
+        <h2 class="studio-eyebrow mb-2 px-1">
           Vistas del proyecto
         </h2>
         @for (node of tree(); track node.index) {
           <button
             type="button"
-            class="hover:ring-foreground/25 mb-0.5 flex w-full items-center gap-2 rounded-md py-2 pr-2 text-left text-sm transition-shadow hover:ring-1"
+            class="hover:ring-foreground/25 mb-0.5 flex w-full items-center gap-2 studio-ui rounded-[7px] py-2 pr-2 text-left transition-shadow hover:ring-1"
             [class.pl-2]="!node.child"
             [class.ml-3]="node.child"
             [class.border-l]="node.child"
@@ -148,7 +151,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 rounded-md border border-dashed px-2 py-2 text-left text-sm transition-colors"
+              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -175,12 +178,12 @@ const BLOCK_TOOLS: BlockTool[] = [
       </section>
 
       <section>
-        <h2 class="text-muted-foreground mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider">Componentes</h2>
+        <h2 class="studio-eyebrow mb-2 px-1">Componentes</h2>
         @for (tool of blockTools; track tool.kind) {
           <div [attr.data-menu-root]="'block-' + tool.kind">
             <button
               type="button"
-              class="hover:border-foreground/40 mb-1.5 flex w-full items-center gap-2 rounded-md border px-2 py-2 text-left text-sm transition-colors disabled:opacity-40"
+              class="hover:border-foreground/40 mb-1.5 flex w-full items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
               [class.bg-background]="blockMenu() === tool.kind"
               [disabled]="!pages().length"
               [attr.data-testid]="'block-tool-' + tool.kind"
@@ -283,6 +286,11 @@ export class ViewsSidebarComponent {
   protected closeMenus(): void {
     this.viewMenu.set(false)
     this.blockMenu.set(null)
+  }
+
+  /** El icono dice qué hay en la vista: un panel de KPIs no se dibuja como tabla. */
+  protected icon(page: DesignPage): string {
+    return viewIcon(page)
   }
 
   protected onTitle(event: Event): void {
