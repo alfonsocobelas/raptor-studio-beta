@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp } from '@ng-icons/lucide'
+import { StudioModeService } from '../design/studio-mode.service'
 import { autosize, shouldSubmit } from './chat-input'
+import { chatPlaceholder } from './chat-placeholder'
 import { StudioChatService } from './studio-chat.service'
 
 /**
@@ -54,7 +56,7 @@ import { StudioChatService } from './studio-chat.service'
           rows="1"
           class="max-h-32 flex-1 resize-none overflow-y-auto bg-transparent py-2 text-sm outline-none"
           name="draft"
-          placeholder="«pon los KPIs en dos columnas y sube la tabla»"
+          [placeholder]="placeholder()"
           [disabled]="chat.pending()"
           [(ngModel)]="draft"
           (input)="grow(input)"
@@ -88,7 +90,11 @@ import { StudioChatService } from './studio-chat.service'
 })
 export class ChatPanelComponent {
   protected readonly chat = inject(StudioChatService)
+  private readonly studioMode = inject(StudioModeService)
   protected readonly draft = signal('')
+
+  /** Lo que se sugiere depende del lienzo: al chat se le habla de lo que se está mirando. */
+  protected readonly placeholder = computed(() => chatPlaceholder(this.studioMode.mode()))
   /** El historial plegado: la barra manda y la conversación se abre a demanda. */
   protected readonly showHistory = signal(false)
 

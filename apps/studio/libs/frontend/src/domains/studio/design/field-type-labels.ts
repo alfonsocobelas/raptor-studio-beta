@@ -10,7 +10,7 @@ export const TYPE_LABELS: Record<DraftFieldType, string> = {
   text: 'texto largo',
   number: 'número',
   integer: 'entero',
-  boolean: 'sí/no',
+  boolean: 'boolean',
   date: 'fecha',
   ref: 'referencia a…',
   enum: 'lista de valores'
@@ -30,7 +30,7 @@ export const SHORT_TYPE_LABELS: Record<DraftFieldType, string> = {
   text: 'txt+',
   number: 'núm',
   integer: 'entero',
-  boolean: 'sí/no',
+  boolean: 'bool',
   date: 'fecha',
   ref: 'ref',
   enum: 'lista'

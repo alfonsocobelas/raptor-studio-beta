@@ -37,7 +37,8 @@ const STUDIO_ICONS = {
   lucideTrash2,
   lucideX
 }
-import { STUDIO_MODES, type StudioMode } from './studio-modes'
+import { STUDIO_MODES } from './studio-modes'
+import { StudioModeService } from './studio-mode.service'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
@@ -49,6 +50,7 @@ import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
+import { ModelSummaryComponent } from './model-summary.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
@@ -72,6 +74,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     ModelSidebarComponent,
     DesignPanelComponent,
     ModelPanelComponent,
+    ModelSummaryComponent,
     CanvasHeaderComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
@@ -195,6 +198,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         </nav>
 
         <span class="flex-1"></span>
+        @if (mode() === 'model') {
+          <studio-model-summary />
+        }
         @if (store.lastError(); as error) {
           <span class="text-destructive max-w-80 truncate text-xs" data-testid="canvas-error">{{ error }}</span>
         }
@@ -542,7 +548,8 @@ export class StudioCanvasComponent {
   }))
 
   protected readonly modes = STUDIO_MODES
-  protected readonly mode = signal<StudioMode>('views')
+  private readonly studioMode = inject(StudioModeService)
+  protected readonly mode = this.studioMode.mode
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
