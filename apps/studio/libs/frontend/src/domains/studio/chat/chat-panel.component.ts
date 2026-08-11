@@ -73,7 +73,6 @@ import { StudioChatService } from './studio-chat.service'
         >
           Historial
         </button>
-        <span class="text-muted-foreground pb-2.5 text-[11px]" aria-hidden="true">⌘↵</span>
         <button
           type="submit"
           class="bg-brand text-brand-foreground mb-1.5 flex size-8 items-center justify-center rounded-full disabled:opacity-40"
