@@ -4,12 +4,12 @@ import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
 import {
   FLOW_GRID,
   FLOW_NODE,
-  edgeLine,
+  flowEdgeCurve,
   flowLayout,
   flowNodeBox,
   nodeAt,
   overlayLayout,
-  type EdgeSegment,
+  type FlowEdgeCurve,
   type NodeBox,
   type NodePosition
 } from '@app/shared/domain'
@@ -25,7 +25,7 @@ interface FlowDiagramEdge {
   from: string
   to: string
   label?: string
-  line: EdgeSegment
+  line: FlowEdgeCurve
 }
 
 /** Lo elegible en el lienzo: un nodo o una arista (identidad completa). */
@@ -57,6 +57,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       @if (flow.description) {
         <p class="text-muted-foreground mb-3 max-w-2xl text-sm">{{ flow.description }}</p>
       }
+      <div class="flow-grid min-h-full min-w-full">
       <div
         class="relative"
         [style.width.px]="surface().width"
@@ -66,8 +67,16 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       >
         <svg class="absolute inset-0 h-full w-full" data-testid="flow-edges">
           <defs>
-            <marker id="flow-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-              <polygon points="0 0, 9 3.5, 0 7" class="fill-muted-foreground" />
+            <marker
+              id="flow-arrow"
+              markerWidth="13"
+              markerHeight="12"
+              refX="10"
+              refY="6"
+              orient="auto"
+              markerUnits="userSpaceOnUse"
+            >
+              <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-foreground" stroke-width="1.8" />
             </marker>
           </defs>
           @for (item of edges(); track item.from + '→' + item.to + (item.label ?? '')) {
@@ -76,27 +85,29 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               [attr.data-testid]="'flow-edge-' + item.from + '-' + item.to"
               (click)="selectEdge($event, item)"
             >
-              <line
-                [attr.x1]="item.line.x1"
-                [attr.y1]="item.line.y1"
-                [attr.x2]="item.line.x2"
-                [attr.y2]="item.line.y2"
-                stroke="transparent"
-                stroke-width="12"
-              />
-              <line
-                [attr.x1]="item.line.x1"
-                [attr.y1]="item.line.y1"
-                [attr.x2]="item.line.x2"
-                [attr.y2]="item.line.y2"
-                [class]="isEdgeSelected(item) ? 'stroke-primary' : 'stroke-muted-foreground'"
+              <!-- zona de clic ancha e invisible: el trazo fino es imposible de acertar -->
+              <path [attr.d]="item.line.d" fill="none" stroke="transparent" stroke-width="14" />
+              <path
+                [attr.d]="item.line.d"
+                fill="none"
+                [class]="isEdgeSelected(item) ? 'stroke-primary' : 'stroke-foreground'"
                 [attr.stroke-width]="isEdgeSelected(item) ? 2.5 : 1.5"
                 marker-end="url(#flow-arrow)"
               />
               @if (item.label) {
+                <!-- la etiqueta de una salida de decisión va en pastilla: se lee sobre la rejilla -->
+                <rect
+                  [attr.x]="item.line.labelX - 22"
+                  [attr.y]="item.line.labelY - 10"
+                  width="44"
+                  height="20"
+                  rx="6"
+                  class="fill-card stroke-border"
+                  stroke-width="1"
+                />
                 <text
-                  [attr.x]="(item.line.x1 + item.line.x2) / 2"
-                  [attr.y]="(item.line.y1 + item.line.y2) / 2 - 6"
+                  [attr.x]="item.line.labelX"
+                  [attr.y]="item.line.labelY + 4"
                   text-anchor="middle"
                   [class]="'text-[10px] font-medium ' + (isEdgeSelected(item) ? 'fill-primary' : 'fill-muted-foreground')"
                 >
@@ -157,7 +168,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 
         @for (item of nodes(); track item.node.id) {
           <div
-            class="group absolute flex cursor-move items-center justify-center px-3 text-center text-xs"
+            class="group studio-ui absolute flex cursor-move items-center justify-center px-3 text-center"
+            [class.text-background]="item.node.kind === 'start'"
             [style.left.px]="item.box.x"
             [style.top.px]="item.box.y"
             [style.width.px]="item.box.width"
@@ -170,16 +182,17 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           >
             @if (item.node.kind === 'decision') {
               <div
-                class="bg-card absolute inset-0 border shadow-sm"
+                class="bg-card flow-card absolute inset-0 border"
                 [class.ring-2]="isNodeSelected(item.node.id)"
                 style="clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%)"
               ></div>
             } @else {
               <div
-                class="bg-card absolute inset-0 border shadow-sm"
+                class="bg-card flow-card absolute inset-0 border"
                 [class.ring-2]="isNodeSelected(item.node.id)"
                 [class.rounded-full]="item.node.kind !== 'step'"
-                [class.rounded-md]="item.node.kind === 'step'"
+                [class.rounded-lg]="item.node.kind === 'step'"
+                [class.flow-card-start]="item.node.kind === 'start'"
               ></div>
             }
 
@@ -216,7 +229,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 </select>
               </div>
             } @else {
-              <span class="text-foreground z-10 leading-tight">
+              <span class="z-10 leading-tight">
                 {{ item.node.text }}
                 @if (item.node.entity) {
                   <span class="text-muted-foreground block text-[10px]">{{ item.node.entity }}</span>
@@ -225,19 +238,29 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
             }
           </div>
         }
+        </div>
       </div>
     }
   `,
   styles: `
-    .toolbar-chip {
-      border: 1px solid var(--border);
-      border-radius: 0.375rem;
-      padding: 0.2rem 0.6rem;
-      font-size: 0.75rem;
-      transition: background-color 0.15s;
+    /* Misma rejilla que el diagrama de modelo: los dos lienzos son el mismo papel. */
+    .flow-grid {
+      background-image:
+        linear-gradient(to right, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
-    .toolbar-chip:hover {
-      background-color: var(--accent);
+    /* Los nodos flotan sobre la rejilla, como las cajas del modelo. */
+    .flow-card {
+      box-shadow:
+        0 1px 2px oklch(0 0 0 / 8%),
+        0 6px 14px -6px oklch(0 0 0 / 14%),
+        0 16px 32px -20px oklch(0 0 0 / 22%);
+    }
+    /* El arranque del proceso va en tinta: se ve de un vistazo por dónde empieza. */
+    .flow-card-start {
+      background-color: var(--foreground);
+      border-color: transparent;
     }
   `
 })
@@ -281,7 +304,7 @@ export class FlowViewComponent {
       const from = boxes.get(edge.from)
       const to = boxes.get(edge.to)
       return from && to
-        ? [{ from: edge.from, to: edge.to, ...(edge.label ? { label: edge.label } : {}), line: edgeLine(from, to) }]
+        ? [{ from: edge.from, to: edge.to, ...(edge.label ? { label: edge.label } : {}), line: flowEdgeCurve(from, to) }]
         : []
     })
   })

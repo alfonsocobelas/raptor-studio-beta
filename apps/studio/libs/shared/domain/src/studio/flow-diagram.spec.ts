@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BusinessFlow } from '@acc/schema'
-import { FLOW_GRID, FLOW_NODE, flowLayout, flowNodeBox } from './flow-diagram'
+import { FLOW_GRID, FLOW_NODE, flowEdgeCurve, flowLayout, flowNodeBox } from './flow-diagram'
+import type { NodeBox } from './model-diagram'
 
 const pedidoFlow = (): BusinessFlow => ({
   name: 'Alta de pedido',
@@ -87,5 +88,41 @@ describe('flowNodeBox — la caja de un nodo de flujo', () => {
       width: FLOW_NODE.width,
       height: FLOW_NODE.height
     })
+  })
+})
+
+describe('flowEdgeCurve — el flujo baja, así que la curva es vertical', () => {
+  const arriba: NodeBox = { x: 100, y: 40, width: 180, height: 56 }
+  const abajo: NodeBox = { x: 100, y: 200, width: 180, height: 56 }
+
+  it('sale por el pie del origen y entra por la cabeza del destino', () => {
+    const curva = flowEdgeCurve(arriba, abajo)
+
+    expect(curva.x1).toBe(arriba.x + arriba.width / 2)
+    expect(curva.y1).toBe(arriba.y + arriba.height)
+    expect(curva.x2).toBe(abajo.x + abajo.width / 2)
+    expect(curva.y2).toBe(abajo.y)
+  })
+
+  it('cuando el destino está por encima, sale por arriba y entra por abajo', () => {
+    const curva = flowEdgeCurve(abajo, arriba)
+
+    expect(curva.y1).toBe(abajo.y)
+    expect(curva.y2).toBe(arriba.y + arriba.height)
+  })
+
+  it('los tiradores van en vertical: la curva sale y entra plana', () => {
+    const curva = flowEdgeCurve(arriba, abajo)
+    const [cx1, , cx2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+
+    expect(cx1).toBe(curva.x1)
+    expect(cx2).toBe(curva.x2)
+  })
+
+  it('la etiqueta va en el medio del trazo', () => {
+    const curva = flowEdgeCurve(arriba, abajo)
+
+    expect(curva.labelY).toBeGreaterThan(curva.y1)
+    expect(curva.labelY).toBeLessThan(curva.y2)
   })
 })
