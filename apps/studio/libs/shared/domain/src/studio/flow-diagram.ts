@@ -86,7 +86,12 @@ export function flowLayout(
   // una decisión) se reparten en el eje perpendicular. Lo congelado no se toca; lo
   // demás aterriza en su hueco de capa y, si está pisado, se aparta una fila.
   const kinds = new Map(flow.nodes.map(node => [node.id, node.kind]))
-  const tamano = (id: string) => sizeOf(id) ?? flowNodeSize(kinds.get(id))
+  // solo el TAMAÑO: si `sizeOf` devuelve una caja entera, su x/y no puede colarse
+  // en la posición del hueco (lo hacía, y mandaba las tarjetas al origen)
+  const tamano = (id: string) => {
+    const { width, height } = sizeOf(id) ?? flowNodeSize(kinds.get(id))
+    return { width, height }
+  }
   const positions: Record<string, NodePosition> = {}
   const puestas: NodeBox[] = []
   for (const node of flow.nodes) {

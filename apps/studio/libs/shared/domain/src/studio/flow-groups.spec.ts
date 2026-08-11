@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BusinessFlow } from '@acc/schema'
 import { FLOW_GROUP, flowCondensed, flowGroupBox, flowGroups } from './flow-groups'
-import { FLOW_GRID } from './flow-diagram'
+import { FLOW_GRID, flowLayout } from './flow-diagram'
 
 // Las acciones consecutivas de una rama se leen como UNA tarjeta con filas numeradas
 // (referencia 12A: «RAMA SÍ · 1 Marcar la fila · 2 Enviar correo · + Acción»). El grupo
@@ -98,6 +98,23 @@ describe('flowCondensed — el grafo que se dibuja', () => {
     const condensed = flowCondensed(flow)
 
     expect(condensed.edges.filter(e => e.from === e.to)).toEqual([])
+  })
+})
+
+describe('flowLayout con tarjetas — la altura de la tarjeta no le cambia el sitio', () => {
+  it('coloca la tarjeta en la columna que le toca, no en el origen', () => {
+    const flow = conRamas()
+    const groups = flowGroups(flow)
+    const filas = new Map(groups.map(group => [group.id, group.steps.length]))
+
+    const positions = flowLayout(flowCondensed(flow, groups), 'horizontal', {}, id => {
+      const rows = filas.get(id)
+      return rows === undefined ? undefined : flowGroupBox({ x: 0, y: 0 }, rows)
+    })
+
+    // 'marcar' cuelga de la decisión, que está en la capa 1: le toca la 2
+    expect(positions['marcar'].x).toBe(FLOW_GRID.margin + 2 * FLOW_GRID.colWidth + (200 - FLOW_GROUP.width) / 2)
+    expect(positions['marcar'].y).toBeLessThan(FLOW_GRID.margin + FLOW_GRID.rowHeight)
   })
 })
 
