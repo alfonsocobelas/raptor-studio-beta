@@ -360,12 +360,11 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           @for (item of pills(); track item.node.id) {
             <div
               class="group studio-ui absolute flex cursor-move items-center px-2"
-              [class.text-background]="item.node.kind === 'start'"
+              [class.text-background]="item.node.kind === 'start' || item.node.kind === 'end'"
               [style.left.px]="item.box.x"
               [style.top.px]="item.box.y"
               [style.width.px]="item.box.width"
               [style.height.px]="item.box.height"
-              [class.flow-end-ink]="item.node.kind === 'end'"
               [attr.data-testid]="'flow-node-' + item.node.id"
               [attr.data-kind]="item.node.kind"
               (pointerdown)="startDrag($event, item.node.id, item.box)"
@@ -528,13 +527,12 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       background-color: var(--foreground);
       border-color: transparent;
     }
-    /* Y el final va en el naranja de la casa: inicio y fin se distinguen sin leerlos. */
+    /* Y el final va en el naranja de la casa, macizo: inicio y fin se distinguen sin
+       leerlos, y sin que el fin parezca un aviso —con el tinte claro y el borde de color
+       se leía como un error, no como el cierre del proceso—. */
     .flow-card-end {
-      background-color: color-mix(in oklab, var(--flow-accent) 10%, var(--card));
-      border-color: color-mix(in oklab, var(--flow-accent) 50%, transparent);
-    }
-    .flow-end-ink {
-      color: color-mix(in oklab, var(--flow-accent) 75%, var(--foreground));
+      background-color: var(--flow-accent);
+      border-color: transparent;
     }
   `
 })
