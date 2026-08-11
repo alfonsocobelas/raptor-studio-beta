@@ -56,7 +56,7 @@ interface DiagramEdge {
         </p>
       </div>
     } @else {
-      <div class="model-surface model-grid min-h-full min-w-full">
+      <div class="model-grid min-h-full min-w-full">
         <div
           #surfaceEl
           class="relative"
@@ -229,11 +229,6 @@ interface DiagramEdge {
       background-color: var(--foreground);
       color: var(--background);
       border-color: transparent;
-    }
-    /* El lienzo del diagrama es blanco: el esquema se lee mejor sobre papel limpio,
-       y así la rejilla queda tan suave como en la referencia (19A). */
-    .model-surface {
-      background-color: var(--card);
     }
     /* La columna elegida se tiñe de marca, no solo se marca en negrita (19A). */
     .model-field-chosen {

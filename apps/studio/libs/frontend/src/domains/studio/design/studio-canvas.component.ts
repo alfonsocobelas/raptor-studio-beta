@@ -221,12 +221,16 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         } @else if (mode() === 'model') {
           <studio-model-sidebar />
         }
-        <div class="canvas-surface flex min-h-0 min-w-0 flex-1 flex-col">
+        <div
+          class="relative flex min-h-0 min-w-0 flex-1 flex-col"
+          [class.canvas-surface]="mode() !== 'model'"
+          [class.bg-card]="mode() === 'model'"
+        >
           <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
           <main
             class="min-h-0 flex-1 overflow-auto"
             [class.px-10]="mode() !== 'model'"
-            [class.pb-10]="mode() !== 'model'"
+            [class.pb-28]="mode() !== 'model'"
             [class.pt-6]="mode() !== 'model'"
           >
             <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
@@ -482,10 +486,11 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
             }
           </main>
 
-          <!-- el chat pertenece al lienzo: se le habla de lo que se está mirando. Sin
-               altura fija: vacío es una barra, y con conversación crece hasta su tope. -->
-          <div class="mx-auto mb-6 mt-3 w-full max-w-6xl shrink-0 px-10">
-            <div class="bg-card canvas-card max-h-72 rounded-xl border p-3">
+          <!-- el chat FLOTA sobre el lienzo, anclado al pie: se le habla de lo que se está
+               mirando y no le roba alto al lienzo. Sin altura fija: vacío es una barra, y
+               con conversación crece hasta su tope. -->
+          <div class="pointer-events-none absolute inset-x-0 bottom-5 z-20 px-10">
+            <div class="bg-card canvas-card pointer-events-auto mx-auto max-h-72 max-w-6xl rounded-xl border p-3">
               <studio-chat-panel />
             </div>
           </div>
