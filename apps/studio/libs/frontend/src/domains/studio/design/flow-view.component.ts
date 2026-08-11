@@ -318,11 +318,15 @@ export class FlowViewComponent {
   protected selectNode(event: MouseEvent, id: string): void {
     event.stopPropagation()
     this.selected.set({ kind: 'node', id })
+    // el inspector de la derecha edita lo elegido aquí
+    this.active.selectFlowNode(id)
   }
 
   protected selectEdge(event: MouseEvent, edge: FlowDiagramEdge): void {
     event.stopPropagation()
     this.selected.set({ kind: 'edge', from: edge.from, to: edge.to, ...(edge.label ? { label: edge.label } : {}) })
+    // una arista no se edita en el inspector: suelta el nodo para no mentir sobre qué hay elegido
+    this.active.selectFlowNode(null)
   }
 
   protected isNodeSelected(id: string): boolean {

@@ -51,6 +51,7 @@ import { ModelSidebarComponent } from './model-sidebar.component'
 import { FlowSidebarComponent } from './flow-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
+import { FlowPanelComponent } from './flow-panel.component'
 import { ModelSummaryComponent } from './model-summary.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
@@ -76,6 +77,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     FlowSidebarComponent,
     DesignPanelComponent,
     ModelPanelComponent,
+    FlowPanelComponent,
     ModelSummaryComponent,
     CanvasHeaderComponent
   ],
@@ -201,6 +203,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         <span class="flex-1"></span>
         @if (mode() === 'model') {
           <studio-model-summary />
+        }
+        @if (mode() === 'flows' && active.flow(); as flow) {
+          <span class="studio-eyebrow" data-testid="flow-summary">{{ flow }}</span>
         }
         @if (store.lastError(); as error) {
           <span class="text-destructive max-w-80 truncate text-xs" data-testid="canvas-error">{{ error }}</span>
@@ -504,6 +509,8 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         <aside class="bg-card flex w-80 shrink-0 flex-col border-l p-4">
           @if (mode() === 'model') {
             <studio-model-panel />
+          } @else if (mode() === 'flows') {
+            <studio-flow-panel />
           } @else {
             <studio-design-panel />
           }
