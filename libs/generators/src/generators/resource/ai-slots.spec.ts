@@ -1,9 +1,58 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import { Tree } from '@nx/devkit'
-import { harvestAiSlots, reinjectAiSlots, stripAiSlots } from './ai-slots'
+import { harvestAiSlots, listEmptyAiSlots, reinjectAiSlots, stripAiSlots } from './ai-slots'
 import { resourceGenerator } from './resource'
 
 describe('ai slots', () => {
+  /**
+   * Spec 39, TASK-10: el inverso del harvest. El harvest se lleva lo escrito; para
+   * saber qué queda POR escribir hace falta listar los huecos vacíos, y ese es el
+   * punto de partida del comando de relleno. Misma gramática de marcador (SLOT_REGEX).
+   */
+  describe('listEmptyAiSlots (huecos por rellenar)', () => {
+    it('lista los huecos vacíos con su fichero e id, y omite los que ya tienen cuerpo', () => {
+      const tree = createTreeWithEmptyWorkspace()
+      tree.write(
+        'out/a.process.ts',
+        [
+          '  // @ai:begin flow-uno — Primer paso',
+          '  // @ai:end',
+          '  // @ai:begin flow-dos — Segundo paso',
+          '  await this.repo.save(x)',
+          '  // @ai:end',
+          '  // @ai:begin flow-tres — Tercer paso',
+          '  // @ai:end'
+        ].join('\n')
+      )
+
+      expect(listEmptyAiSlots(tree, 'out')).toEqual([
+        { file: 'out/a.process.ts', id: 'flow-uno' },
+        { file: 'out/a.process.ts', id: 'flow-tres' }
+      ])
+    })
+
+    it('un hueco con solo espacios en blanco cuenta como vacío', () => {
+      const tree = createTreeWithEmptyWorkspace()
+      tree.write('out/a.ts', '// @ai:begin flow-uno\n   \n\n// @ai:end\n')
+
+      expect(listEmptyAiSlots(tree, 'out').map(slot => slot.id)).toEqual(['flow-uno'])
+    })
+
+    it('filtra por prefijo cuando se pide: el relleno de flujos no toca otros huecos', () => {
+      const tree = createTreeWithEmptyWorkspace()
+      tree.write('out/a.ts', '// @ai:begin domain-extra\n// @ai:end\n// @ai:begin flow-uno\n// @ai:end\n')
+
+      expect(listEmptyAiSlots(tree, 'out', 'flow-').map(slot => slot.id)).toEqual(['flow-uno'])
+      expect(listEmptyAiSlots(tree, 'out').map(slot => slot.id)).toEqual(['domain-extra', 'flow-uno'])
+    })
+
+    it('sin directorio no hay huecos (y no revienta)', () => {
+      const tree = createTreeWithEmptyWorkspace()
+
+      expect(listEmptyAiSlots(tree, 'no-existe')).toEqual([])
+    })
+  })
+
   describe('harvest + reinject (unit)', () => {
     it('carries slot content from the old file into the regenerated one', () => {
       const tree = createTreeWithEmptyWorkspace()

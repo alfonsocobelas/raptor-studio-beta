@@ -41,9 +41,13 @@
 
 ## Bloque B — relleno IA bajo gate
 
-- [ ] TASK-10: Tests + recolección: el comando de relleno lista los huecos `flow-*` vacíos
+- [x] TASK-10: Tests + recolección: el comando de relleno lista los huecos `flow-*` vacíos
       de una app emitida con `harvestAiSlots`; sin ejecutor disponible, reporta y termina
-      sin tocar nada.
+      sin tocar nada. **Corrección 2026-08-11**: `harvestAiSlots` recoge los huecos CON
+      cuerpo (es lo que salva de la regeneración), así que listar los vacíos pedía su
+      inverso: `listEmptyAiSlots(tree, dir, prefix)`, misma `SLOT_REGEX`. El comando es el
+      generador `fill-flow-slots`; el informe va en función pura porque Nx invoca como
+      callback lo que devuelve un generador.
 - [ ] TASK-11: Tests + constructor de prompt por hueco: contexto acotado (CLAUDE.md del
       negocio, mapa del flujo, JSDoc del paso, firmas de los repos inyectados) + contrato
       coreográfico (cuerpo autosuficiente, guarda de estado, prohibido llamar a otros pasos,

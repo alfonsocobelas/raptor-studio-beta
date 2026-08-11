@@ -45,6 +45,35 @@ export function harvestAiSlots(tree: Tree, dir: string): AiSlotHarvest {
   return harvest
 }
 
+/** Un hueco concreto de un fichero concreto: la unidad de trabajo del relleno. */
+export interface AiSlotRef {
+  file: string
+  id: string
+}
+
+/**
+ * El inverso del harvest: los huecos que siguen VACÍOS. El harvest se lleva lo
+ * escrito para no perderlo al regenerar; esto dice qué queda por escribir, que es
+ * por donde empieza el comando de relleno (spec 39). `prefix` acota la familia de
+ * huecos: el relleno de flujos no es asunto de `domain-extra`.
+ */
+export function listEmptyAiSlots(tree: Tree, dir: string, prefix = ''): AiSlotRef[] {
+  const empty: AiSlotRef[] = []
+
+  if (!tree.exists(dir)) return empty
+
+  visitFiles(tree, dir, file => {
+    const content = tree.read(file, 'utf-8')
+    if (!content || !content.includes('// @ai:begin')) return
+
+    for (const [, , id, body] of content.matchAll(SLOT_REGEX)) {
+      if (body.trim() === '' && id.startsWith(prefix)) empty.push({ file, id })
+    }
+  })
+
+  return empty
+}
+
 // Marcador en línea propia, formato TS (`// @ai:begin id …`) o HTML (`<!-- @ai:begin id … -->`)
 const MARKER_LINE_REGEX = /^[ \t]*(?:\/\/|<!--) @ai:(?:begin|end)\b[^\n]*\n?/gm
 

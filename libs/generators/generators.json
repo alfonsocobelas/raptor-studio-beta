@@ -30,6 +30,11 @@
       "schema": "./src/generators/strip-ai-slots/schema.json",
       "description": "Delivery step: removes the @ai:begin/@ai:end marker lines from a generated app, keeping their content"
     },
+    "fill-flow-slots": {
+      "factory": "./src/generators/fill-flow-slots/fill-flow-slots",
+      "schema": "./src/generators/fill-flow-slots/schema.json",
+      "description": "Lists the empty flow-* step slots of an emitted app; without an AI executor it reports and touches nothing"
+    },
     "app": {
       "factory": "./src/generators/app/app",
       "schema": "./src/generators/app/schema.json",
