@@ -490,7 +490,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
                mirando y no le roba alto al lienzo. Sin altura fija: vacío es una barra, y
                con conversación crece hasta su tope. -->
           <div class="pointer-events-none absolute inset-x-0 bottom-5 z-20 px-10">
-            <div class="bg-card canvas-card pointer-events-auto mx-auto max-h-72 max-w-6xl rounded-xl border p-3">
+            <div class="bg-card chat-card pointer-events-auto mx-auto max-h-72 max-w-6xl rounded-xl border p-3">
               <studio-chat-panel />
             </div>
           </div>
@@ -519,6 +519,16 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
       box-shadow:
         0 1px 2px oklch(0 0 0 / 6%),
         0 8px 24px -10px oklch(0 0 0 / 12%);
+    }
+    /* El chat FLOTA sobre el lienzo, así que necesita sombra por los cuatro lados y
+       algo más de contraste que una tarjeta apoyada: un halo corto lo separa del papel
+       y de la rejilla del modelo. */
+    .chat-card {
+      box-shadow:
+        0 0 0 1px oklch(0 0 0 / 4%),
+        0 2px 6px oklch(0 0 0 / 8%),
+        0 10px 24px -8px oklch(0 0 0 / 16%),
+        0 24px 48px -20px oklch(0 0 0 / 18%);
     }
     /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
        en oscuro, aquí se redefinen todos los tokens para que no se hereden. Los
