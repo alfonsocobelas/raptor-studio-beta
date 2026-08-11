@@ -5,6 +5,7 @@ import {
   FLOW_GRID,
   FLOW_NODE,
   flowEdgeCurve,
+  flowStepNumbers,
   flowLayout,
   flowNodeBox,
   nodeAt,
@@ -26,6 +27,13 @@ interface FlowDiagramEdge {
   to: string
   label?: string
   line: FlowEdgeCurve
+}
+
+const KIND_LABELS: Record<FlowNodeKind, string> = {
+  start: 'inicio',
+  step: 'paso',
+  decision: 'decisión',
+  end: 'fin'
 }
 
 /** Lo elegible en el lienzo: un nodo o una arista (identidad completa). */
@@ -168,7 +176,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 
         @for (item of nodes(); track item.node.id) {
           <div
-            class="group studio-ui absolute flex cursor-move items-center justify-center px-3 text-center"
+            class="group studio-ui absolute flex cursor-move items-center px-2"
             [class.text-background]="item.node.kind === 'start'"
             [style.left.px]="item.box.x"
             [style.top.px]="item.box.y"
@@ -181,6 +189,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
             (dblclick)="startEdit(item.node)"
           >
             @if (item.node.kind === 'decision') {
+              <!-- el rombo ocupa el nodo y lleva el texto dentro: la forma ya dice que decide -->
               <div
                 class="bg-card flow-card absolute inset-0 border"
                 [class.ring-2]="isNodeSelected(item.node.id)"
@@ -229,11 +238,36 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 </select>
               </div>
             } @else {
-              <span class="z-10 leading-tight">
-                {{ item.node.text }}
-                @if (item.node.entity) {
-                  <span class="text-muted-foreground block text-[10px]">{{ item.node.entity }}</span>
+              <!-- como en la referencia: etiqueta de tipo arriba, el texto debajo, y el
+                   número de orden en los pasos para leer el proceso «1, 2, 3» -->
+              <span
+                class="z-10 flex min-w-0 items-center gap-2 px-1"
+                [class.justify-center]="item.node.kind === 'decision'"
+                [class.w-full]="item.node.kind === 'decision'"
+                [class.text-center]="item.node.kind === 'decision'"
+              >
+                @if (numbers()[item.node.id]; as number) {
+                  <span
+                    class="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold"
+                    [attr.data-testid]="'flow-node-number-' + item.node.id"
+                  >
+                    {{ number }}
+                  </span>
                 }
+                <span class="min-w-0">
+                  @if (item.node.kind !== 'step' && item.node.kind !== 'decision') {
+                    <span
+                      class="block text-[9px] font-semibold uppercase tracking-[0.12em] opacity-60"
+                      [attr.data-testid]="'flow-node-kind-' + item.node.id"
+                    >
+                      {{ kindLabel(item.node.kind) }}
+                    </span>
+                  }
+                  <span class="block truncate leading-tight">{{ item.node.text }}</span>
+                  @if (item.node.entity) {
+                    <span class="block truncate text-[10px] opacity-60">{{ item.node.entity }}</span>
+                  }
+                </span>
               </span>
             }
           </div>
@@ -284,6 +318,16 @@ export class FlowViewComponent {
   protected readonly activeFlow = computed<BusinessFlow | null>(
     () => this.store.flows().find(f => f.name === this.activeName()) ?? null
   )
+
+  /** Número de orden de cada paso, para leer el proceso «1, 2, 3». */
+  protected readonly numbers = computed(() => {
+    const flow = this.activeFlow()
+    return flow ? flowStepNumbers(flow) : {}
+  })
+
+  protected kindLabel(kind: FlowNodeKind): string {
+    return KIND_LABELS[kind]
+  }
 
   protected readonly nodes = computed<FlowDiagramNode[]>(() => {
     const flow = this.activeFlow()

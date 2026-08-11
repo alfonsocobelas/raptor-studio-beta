@@ -100,3 +100,36 @@ export function flowEdgeCurve(from: NodeBox, to: NodeBox): FlowEdgeCurve {
     labelY: (y1 + y2) / 2
   }
 }
+
+/**
+ * Número de orden de cada PASO, como en la referencia: los pasos se leen «1, 2, 3»
+ * siguiendo el recorrido del proceso. El inicio, las decisiones y los fines no se
+ * numeran —no son trabajo, son estructura— y un paso suelto se numera al final,
+ * porque está en el lienzo aunque no cuelgue de nada.
+ */
+export function flowStepNumbers(flow: BusinessFlow): Record<string, number> {
+  const start = flow.nodes.find(node => node.kind === 'start')
+  const orden: string[] = []
+  const visto = new Set<string>()
+
+  if (start) {
+    const cola = [start.id]
+    visto.add(start.id)
+    while (cola.length) {
+      const actual = cola.shift() as string
+      orden.push(actual)
+      for (const edge of flow.edges) {
+        if (edge.from !== actual || visto.has(edge.to)) continue
+        visto.add(edge.to)
+        cola.push(edge.to)
+      }
+    }
+  }
+  for (const node of flow.nodes) if (!visto.has(node.id)) orden.push(node.id)
+
+  const kinds = new Map(flow.nodes.map(node => [node.id, node.kind]))
+  const numeros: Record<string, number> = {}
+  let siguiente = 1
+  for (const id of orden) if (kinds.get(id) === 'step') numeros[id] = siguiente++
+  return numeros
+}

@@ -20,7 +20,7 @@ const KIND_LABELS: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-0 flex-col gap-5 overflow-y-auto">
-      <section>
+      <section class="studio-box">
         <h2 class="studio-eyebrow mb-3">Nodo seleccionado</h2>
 
         @if (node(); as current) {
@@ -65,7 +65,7 @@ const KIND_LABELS: Record<string, string> = {
         }
       </section>
 
-      <section>
+      <section class="studio-box">
         <h2 class="studio-eyebrow mb-2">Vista de texto</h2>
         <p class="studio-ui text-muted-foreground" data-testid="flow-prose">{{ prose() }}</p>
         <p class="text-muted-foreground mt-2 text-xs">

@@ -313,3 +313,12 @@
 .studio-row > select:disabled {
   opacity: 0.6;
 }
+
+/* Bloque del inspector, como en la referencia (12A/19A): las secciones del panel
+   van en su propio recuadro sobre papel, no sueltas sobre el blanco. */
+.studio-box {
+  background-color: color-mix(in oklab, var(--muted) 55%, var(--card));
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 12px;
+}
