@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signa
 import { FormsModule } from '@angular/forms'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
 import {
+  FLOW_DECISION,
   FLOW_GRID,
   FLOW_GROUP,
   canvasExtent,
   flowAlternateEdges,
+  flowBranchLabel,
   flowCondensed,
   flowEdgeCurve,
   flowGroupBox,
@@ -44,6 +46,9 @@ const KIND_LABELS: Record<FlowNodeKind, string> = {
   decision: 'decisión',
   end: 'fin'
 }
+
+/** Margen de gracia al soltar una flecha: cerca del bloque cuenta como dentro. */
+const FLOW_LINK_SNAP = 16
 
 /** Lo elegible en el lienzo: un nodo o una arista (identidad completa). */
 type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string; to: string; label?: string }
@@ -223,8 +228,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               [attr.data-testid]="'flow-card-' + card.group.id"
             >
               <div
-                class="bg-card flow-card overflow-hidden rounded-[12px] border"
+                class="bg-card flow-card overflow-hidden rounded-[12px] border transition-colors"
                 [class.ring-2]="isNodeSelected(card.group.id)"
+                [class.border-foreground]="isLinkTarget(card.group.id)"
               >
                 <!-- cabecera: de qué rama cuelga y cuántas acciones lleva; y es el asa de arrastre -->
                 <div
@@ -312,6 +318,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 </button>
               </div>
 
+              <!-- puerto de ENTRADA: el círculo del prototipo, encendido si la flecha cae aquí -->
+              <span
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-colors"
+                [class.border-foreground]="isLinkTarget(card.group.id)"
+                [class.bg-foreground]="isLinkTarget(card.group.id)"
+                [attr.data-testid]="'flow-port-' + card.group.id"
+              ></span>
+
               <!-- asa de conexión: se ve al pasar por encima y se arrastra hasta otro bloque -->
               <button
                 type="button"
@@ -346,21 +360,38 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   [attr.width]="item.box.width"
                   [attr.height]="item.box.height"
                 >
-                  <polygon
-                    [attr.points]="diamondPoints(item.box)"
+                  <!-- un cuadrado con las esquinas redondeadas, girado 45°: así el rombo
+                       tiene las puntas romas del prototipo (un polygon las deja en pico) -->
+                  <rect
+                    [attr.x]="diamondInset(item.box)"
+                    [attr.y]="diamondInset(item.box)"
+                    [attr.width]="diamondSide(item.box)"
+                    [attr.height]="diamondSide(item.box)"
+                    [attr.rx]="decisionMetrics.corner"
+                    [attr.transform]="'rotate(45 ' + item.box.width / 2 + ' ' + item.box.height / 2 + ')'"
                     class="fill-card flow-diamond"
                     [class.stroke-primary]="isNodeSelected(item.node.id)"
                     [class.stroke-foreground]="!isNodeSelected(item.node.id)"
-                    [attr.stroke-width]="isNodeSelected(item.node.id) ? 3 : 1.5"
+                    [attr.stroke-width]="isNodeSelected(item.node.id) ? 3 : isLinkTarget(item.node.id) ? 2.5 : 1.5"
                   />
                 </svg>
               } @else {
                 <div
                   class="bg-card flow-card absolute inset-0 rounded-[10px] border"
                   [class.ring-2]="isNodeSelected(item.node.id)"
+                  [class.border-foreground]="isLinkTarget(item.node.id)"
                   [class.flow-card-start]="item.node.kind === 'start'"
                 ></div>
               }
+
+              <!-- puerto de ENTRADA: el círculo del prototipo. Se enciende cuando la flecha
+                   que se está arrastrando va a caer aquí, para saber a qué se va a unir. -->
+              <span
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-colors"
+                [class.border-foreground]="isLinkTarget(item.node.id)"
+                [class.bg-foreground]="isLinkTarget(item.node.id)"
+                [attr.data-testid]="'flow-port-' + item.node.id"
+              ></span>
 
               <!-- asa de conexión: se ve al pasar por encima y se arrastra hasta otro bloque -->
               <button
@@ -443,11 +474,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
        2026-08-11): los tres son el mismo papel, así que se dibujan igual — celda de 24px
        y punto en el naranja #d75f3d al 35%. */
     .flow-grid {
-      background-image: radial-gradient(
-        circle,
-        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
-        transparent 1.4px
-      );
+      background-image: radial-gradient(circle, color-mix(in oklab, #d75f3d 35%, transparent) 1.4px, transparent 1.4px);
       background-size: 24px 24px;
     }
     /* El rombo lleva la misma sombra que las píldoras: flota sobre el papel igual que ellas. */
@@ -480,6 +507,8 @@ export class FlowViewComponent {
   protected readonly selected = signal<FlowSelection | null>(null)
   protected readonly editing = signal<string | null>(null)
   protected readonly linking = signal<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
+  /** Bloque bajo el cursor mientras se arrastra una flecha: se resalta para saber dónde cae. */
+  protected readonly linkTarget = signal<string | null>(null)
 
   /** El flujo dibujado lo elige el raíl; aquí solo se lee. */
   protected readonly activeName = this.active.flow
@@ -533,9 +562,24 @@ export class FlowViewComponent {
     ])
   })
 
-  /** Los cuatro vértices del rombo, con 1px de margen para que el trazo no se recorte. */
-  protected diamondPoints(box: NodeBox): string {
-    return `${box.width / 2},1 ${box.width - 1},${box.height / 2} ${box.width / 2},${box.height - 1} 1,${box.height / 2}`
+  protected readonly decisionMetrics = FLOW_DECISION
+
+  /**
+   * El rombo es un CUADRADO girado 45°: su lado es la diagonal partida por √2, y así las
+   * esquinas redondeadas del `rx` salen romas como en el prototipo. Con un polygon las
+   * puntas quedaban en pico y no había forma de redondearlas.
+   */
+  protected diamondSide(box: NodeBox): number {
+    return box.width / Math.SQRT2
+  }
+
+  protected diamondInset(box: NodeBox): number {
+    return (box.width - this.diamondSide(box)) / 2
+  }
+
+  /** El bloque al que va a caer la flecha que se está arrastrando. */
+  protected isLinkTarget(id: string): boolean {
+    return this.linkTarget() === id
   }
 
   /** Posiciones ya colocadas de un flujo, sin el prefijo del nombre. */
@@ -815,13 +859,16 @@ export class FlowViewComponent {
     const onMove = (move: PointerEvent) => {
       const point = toWorld(move)
       this.linking.set({ x1: originX, y1: originY, x2: point.x, y2: point.y })
+      // el destino se enciende mientras se arrastra: acertar a ciegas era lo difícil
+      const candidato = this.blockNear(point)
+      this.linkTarget.set(candidato === id ? null : candidato)
     }
     const onUp = (up: PointerEvent) => {
       handle.removeEventListener('pointermove', onMove)
       handle.removeEventListener('pointerup', onUp)
       this.linking.set(null)
-      const point = toWorld(up)
-      const target = nodeAt(point, Object.fromEntries(this.boxes()))
+      this.linkTarget.set(null)
+      const target = this.blockNear(toWorld(up))
       const flow = this.activeName()
       if (!target || target === id || !flow) return
       // conectar también cambia las capas: congelar antes de que el grafo cambie
@@ -833,15 +880,29 @@ export class FlowViewComponent {
   }
 
   /**
-   * Etiqueta de una salida nueva: solo las decisiones la llevan, y la primera es el 'sí'
-   * y la segunda el 'no' —el reparto que hace cualquiera al dibujar a mano—. De la tercera
-   * en adelante se deja en blanco: ahí ya no hay convención que adivinar.
+   * Bloque bajo un punto, con un margen de gracia alrededor: soltar la flecha justo
+   * dentro del borde era pedir puntería, sobre todo con el rombo, que solo ocupa de
+   * verdad la mitad de su caja.
    */
+  private blockNear(point: NodePosition): string | null {
+    const holgura = FLOW_LINK_SNAP
+    const crecidas = Object.fromEntries(
+      [...this.boxes()].map(([id, box]) => [
+        id,
+        {
+          x: box.x - holgura,
+          y: box.y - holgura,
+          width: box.width + holgura * 2,
+          height: box.height + holgura * 2
+        }
+      ])
+    )
+    return nodeAt(point, crecidas)
+  }
+
+  /** La etiqueta de una salida nueva la reparte el dominio (la primera rama libre). */
   private branchLabelFor(from: string): string | undefined {
     const flow = this.activeFlow()
-    const nodo = flow?.nodes.find(node => node.id === from)
-    if (!flow || nodo?.kind !== 'decision') return undefined
-    const salidas = flow.edges.filter(edge => edge.from === from).length
-    return ['sí', 'no'][salidas] ?? ''
+    return flow ? flowBranchLabel(flow, from) : undefined
   }
 }

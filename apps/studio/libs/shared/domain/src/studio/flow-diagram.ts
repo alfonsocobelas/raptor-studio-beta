@@ -21,7 +21,9 @@ export const FLOW_NODE = {
 
 /** La decisión es un ROMBO, y un rombo solo se lee como rombo si es cuadrado. */
 export const FLOW_DECISION = {
-  size: 128
+  size: 128,
+  /** Radio de las puntas: el prototipo las tiene romas, no en pico. */
+  corner: 12
 } as const
 
 export function flowNodeSize(kind?: FlowNodeKind): { width: number; height: number } {
@@ -187,6 +189,22 @@ export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrien
     labelX: (x1 + x2) / 2,
     labelY: (y1 + y2) / 2
   }
+}
+
+/** Las dos ramas que reparte una decisión, en el orden en que las dibujaría cualquiera. */
+export const FLOW_BRANCHES = ['sí', 'no'] as const
+
+/**
+ * Etiqueta que le toca a una salida NUEVA de una decisión: la primera libre de
+ * `FLOW_BRANCHES`. Es un conjunto a repartir, no un contador —contando salidas,
+ * borrar la rama «sí» y volver a dibujarla la creaba como «no» y quedaban dos «no»—.
+ * Lo que no sale de una decisión no lleva etiqueta; con las dos ramas ya puestas se
+ * deja en blanco, porque ahí ya no hay convención que adivinar.
+ */
+export function flowBranchLabel(flow: BusinessFlow, from: string): string | undefined {
+  if (flow.nodes.find(node => node.id === from)?.kind !== 'decision') return undefined
+  const puestas = new Set(flow.edges.filter(edge => edge.from === from).map(edge => edge.label))
+  return FLOW_BRANCHES.find(branch => !puestas.has(branch)) ?? ''
 }
 
 /**

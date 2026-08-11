@@ -101,6 +101,13 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(testId(fixture, 'flow-card-branch-enviar-correo')?.textContent).toContain('rama sí')
   })
 
+  it('cada bloque enseña su puerto de entrada: el círculo al que se une la flecha', () => {
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-port-marcar-la-fila')).not.toBeNull()
+    expect(testId(fixture, 'flow-port-stock-10')).not.toBeNull()
+  })
+
   it('ya no hay «+» en las flechas: insertar es cosa de la tarjeta', () => {
     const fixture = mount()
 

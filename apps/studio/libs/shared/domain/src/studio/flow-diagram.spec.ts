@@ -5,6 +5,7 @@ import {
   FLOW_GRID,
   FLOW_NODE,
   flowAlternateEdges,
+  flowBranchLabel,
   flowEdgeCurve,
   flowLayout,
   flowNodeBox
@@ -226,6 +227,42 @@ describe('flowEdgeCurve — el flujo avanza a la derecha, así que la curva es h
 
     expect(curva.labelX).toBeGreaterThan(curva.x1)
     expect(curva.labelX).toBeLessThan(curva.x2)
+  })
+})
+
+// La etiqueta de una salida nueva de decisión: 'sí' y 'no' son un CONJUNTO a repartir,
+// no un contador. Con un contador, borrar la rama 'sí' y volver a dibujarla la creaba
+// como 'no' —había una salida, así que le tocaba la segunda etiqueta— y quedaban dos 'no'.
+describe('flowBranchLabel — qué etiqueta le toca a una salida nueva', () => {
+  it('la primera salida de una decisión es el «sí»', () => {
+    const flow = pedidoFlow()
+    flow.edges = flow.edges.filter(edge => edge.from !== 'stock')
+
+    expect(flowBranchLabel(flow, 'stock')).toBe('sí')
+  })
+
+  it('con el «sí» puesto, la siguiente es el «no»', () => {
+    const flow = pedidoFlow()
+    flow.edges = flow.edges.filter(edge => !(edge.from === 'stock' && edge.label === 'no'))
+
+    expect(flowBranchLabel(flow, 'stock')).toBe('no')
+  })
+
+  it('si se borró el «sí» y queda el «no», la nueva vuelve a ser el «sí»', () => {
+    const flow = pedidoFlow()
+    flow.nodes = flow.nodes.filter(node => node.id !== 'reservar')
+    flow.edges = flow.edges.filter(edge => !(edge.from === 'stock' && edge.label === 'sí'))
+
+    expect(flowBranchLabel(flow, 'stock')).toBe('sí')
+  })
+
+  it('con las dos ramas puestas no hay convención que adivinar: etiqueta vacía', () => {
+    expect(flowBranchLabel(pedidoFlow(), 'stock')).toBe('')
+  })
+
+  it('lo que no es una decisión no lleva etiqueta', () => {
+    expect(flowBranchLabel(pedidoFlow(), 'reservar')).toBeUndefined()
+    expect(flowBranchLabel(pedidoFlow(), 'fantasma')).toBeUndefined()
   })
 })
 
