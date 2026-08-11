@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { defineResource } from '@acc/schema'
-import { draftToResource, newDraftResource, type DraftResource } from './draft-resource'
+import {
+  DRAFT_FIELD_TYPES,
+  SELECTABLE_FIELD_TYPES,
+  draftToResource,
+  newDraftResource,
+  type DraftResource
+} from './draft-resource'
 
 const draft: DraftResource = {
   name: 'empleado',
@@ -310,5 +316,34 @@ describe('newDraftResource — singular y plural en castellano (hallazgo 20)', (
   it('la etiqueta singular respeta lo escrito por el usuario', () => {
     expect(newDraftResource('Propiedades').labelSingular).toBe('Propiedad')
     expect(newDraftResource('Coches').labelSingular).toBe('Coche')
+  })
+})
+
+describe('el tipo uuid', () => {
+  it('está en el contrato: el generador ya sabe emitir columnas uuid', () => {
+    expect(DRAFT_FIELD_TYPES).toContain('uuid')
+  })
+
+  it('NO se ofrece «ref» como tipo: la referencia se elige aparte, por entidad destino', () => {
+    expect(SELECTABLE_FIELD_TYPES).not.toContain('ref')
+    expect(SELECTABLE_FIELD_TYPES).toContain('uuid')
+  })
+
+  it('un campo uuid emite su columna uuid, no un varchar', () => {
+    const draft: DraftResource = {
+      name: 'lectura',
+      plural: 'lecturas',
+      labelSingular: 'Lectura',
+      labelPlural: 'Lecturas',
+      gender: 'f',
+      fields: [
+        { name: 'nombre', label: 'Nombre', type: 'string' },
+        { name: 'externo', label: 'Externo', type: 'uuid' }
+      ]
+    }
+
+    const resource = draftToResource(draft, 'mi-app')
+
+    expect(resource.fields['externo'].column).toMatchObject({ type: 'uuid' })
   })
 })

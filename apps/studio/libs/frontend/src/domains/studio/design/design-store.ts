@@ -395,6 +395,38 @@ export class DesignStore {
     }))
   }
 
+  /**
+   * Apunta un campo existente a otra entidad, o le quita el destino. Es la otra
+   * puerta a las relaciones —la primera es arrastrar el asa— y aplica las mismas
+   * reglas: ni a sí misma, ni a una entidad que no existe. Al quitar el destino
+   * el campo vuelve a ser texto: un `ref` sin `refTo` no significa nada.
+   */
+  setFieldRef(resource: string, index: number, refTo: string | null): boolean {
+    if (refTo === resource) {
+      this._lastError.set(`Una entidad no puede referenciarse a sí misma («${resource}»)`)
+      return false
+    }
+    if (refTo && !this._resources().some(r => r.name === refTo)) {
+      this._lastError.set(`No existe la entidad «${refTo}»`)
+      return false
+    }
+    const field = this._resources().find(r => r.name === resource)?.fields[index]
+    if (!field) {
+      this._lastError.set(`No existe la columna ${index} de «${resource}»`)
+      return false
+    }
+
+    return this.updateResource(resource, draft => ({
+      ...draft,
+      fields: draft.fields.map((f, i) => {
+        if (i !== index) return f
+        if (refTo) return { ...f, type: 'ref' as const, refTo }
+        const { refTo: _gone, ...withoutRef } = f
+        return { ...withoutRef, type: 'string' as const }
+      })
+    }))
+  }
+
   /** Borrar una flecha del diagrama: solo puede tocar campos `ref`, nunca otro campo por error. */
   removeRelation(resource: string, fieldIndex: number): boolean {
     const field = this._resources().find(r => r.name === resource)?.fields[fieldIndex]

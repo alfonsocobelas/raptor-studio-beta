@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
-import { DRAFT_FIELD_TYPES, modelEdges, type DraftFieldType } from '@app/shared/domain'
+import { SELECTABLE_FIELD_TYPES, modelEdges, type DraftFieldType } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { InspectorComponent } from './inspector.component'
@@ -58,15 +58,35 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               />
 
               <label class="text-muted-foreground mb-1 block text-xs" for="field-type">Tipo</label>
+              <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
               <select
                 id="field-type"
-                class="border-input mb-4 w-full rounded-md border px-2 py-1.5 text-sm"
+                class="border-input mb-4 w-full rounded-md border px-2 py-1.5 text-sm disabled:opacity-60"
                 [value]="current.type"
+                [disabled]="current.type === 'ref'"
                 (change)="retype($event)"
                 data-testid="field-type"
               >
-                @for (type of types; track type) {
-                  <option [value]="type">{{ label(type) }}</option>
+                @if (current.type === 'ref') {
+                  <option value="ref">referencia (uuid)</option>
+                } @else {
+                  @for (type of types; track type) {
+                    <option [value]="type">{{ label(type) }}</option>
+                  }
+                }
+              </select>
+
+              <label class="text-muted-foreground mb-1 block text-xs" for="field-ref">Referencia</label>
+              <select
+                id="field-ref"
+                class="border-input mb-4 w-full rounded-md border px-2 py-1.5 text-sm"
+                [value]="current.refTo ?? ''"
+                (change)="repoint($event)"
+                data-testid="field-ref"
+              >
+                <option value="">— ninguna —</option>
+                @for (target of targets(); track target.name) {
+                  <option [value]="target.name">{{ target.labelSingular }}</option>
                 }
               </select>
 
@@ -111,8 +131,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
 
               @if (current.type === 'ref') {
                 <p class="text-muted-foreground mt-3 text-xs">
-                  Es una relación: apunta a <strong class="text-foreground">{{ current.refTo }}</strong> y se dibuja
-                  como flecha. Para quitarla, usa la pestaña Relación.
+                  Con una referencia elegida, el campo se dibuja como flecha en el diagrama.
                 </p>
               }
             } @else {
@@ -169,7 +188,7 @@ export class ModelPanelComponent {
   protected readonly active = inject(ActiveViewService)
 
   protected readonly tabs = MODEL_TABS
-  protected readonly types = DRAFT_FIELD_TYPES
+  protected readonly types = SELECTABLE_FIELD_TYPES
 
   /** Elegir una columna en el diagrama trae el panel a su pestaña (igual que el de vistas). */
   protected readonly tab = linkedSignal<number | null, ModelTab>({
@@ -193,6 +212,17 @@ export class ModelPanelComponent {
     const edges = modelEdges(this.store.resources())
     return chosen ? edges.filter(edge => edge.from === chosen) : edges
   })
+
+  /** Destinos posibles: todas las entidades menos la propia. */
+  protected readonly targets = computed(() =>
+    this.store.resources().filter(resource => resource.name !== this.active.resource())
+  )
+
+  protected repoint(event: Event): void {
+    const current = this.field()
+    const value = (event.target as HTMLSelectElement).value
+    if (current) this.store.setFieldRef(current.resource, current.index, value || null)
+  }
 
   protected label(type: DraftFieldType): string {
     return TYPE_LABELS[type]

@@ -5,7 +5,17 @@ import type { FieldDefinition, ResourceDefinition } from '@acc/schema'
  * draftToResource la expande a un ResourceDefinition completo siguiendo los
  * patrones canónicos (VOs, constraints, columnas) — el usuario nunca ve esto.
  */
-export type DraftFieldType = 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'date' | 'ref' | 'enum'
+export type DraftFieldType =
+  | 'string'
+  | 'text'
+  | 'number'
+  | 'integer'
+  | 'boolean'
+  | 'date'
+  /** Identificador externo: el generador ya conoce la columna uuid */
+  | 'uuid'
+  | 'ref'
+  | 'enum'
 
 export interface DraftField {
   name: string
@@ -51,9 +61,17 @@ export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
   'integer',
   'boolean',
   'date',
+  'uuid',
   'ref',
   'enum'
 ]
+
+/**
+ * Los tipos que se OFRECEN al elegir el tipo de un campo. `ref` no está: una
+ * referencia no se elige como tipo, se elige diciendo a qué entidad apunta, y
+ * eso vive en su propio control junto al nombre y al tipo.
+ */
+export const SELECTABLE_FIELD_TYPES: DraftFieldType[] = DRAFT_FIELD_TYPES.filter(type => type !== 'ref')
 
 /**
  * Variantes de badge por POSICIÓN: el mismo diseño produce siempre los mismos
@@ -251,6 +269,13 @@ export function draftToResource(
           required: true,
           vo: { name: voName, fieldName: field.label },
           column: { type: 'date', tsType: 'string' }
+        }
+        break
+      case 'uuid':
+        fields[field.name] = {
+          ...base,
+          vo: { name: voName, fieldName: field.label },
+          column: { type: 'uuid' }
         }
         break
     }

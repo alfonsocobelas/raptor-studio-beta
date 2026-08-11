@@ -12,6 +12,7 @@ export const TYPE_LABELS: Record<DraftFieldType, string> = {
   integer: 'entero',
   boolean: 'boolean',
   date: 'fecha',
+  uuid: 'uuid',
   ref: 'referencia a…',
   enum: 'lista de valores'
 }
@@ -32,6 +33,7 @@ export const SHORT_TYPE_LABELS: Record<DraftFieldType, string> = {
   integer: 'entero',
   boolean: 'bool',
   date: 'fecha',
+  uuid: 'uuid',
   ref: 'ref',
   enum: 'lista'
 }

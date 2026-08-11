@@ -428,3 +428,47 @@ describe('mover y duplicar columnas (el orden viaja al código emitido)', () => 
     expect(store.moveField('fantasma', 0, 1)).toBe(false)
   })
 })
+
+describe('la referencia de un campo se elige aparte del tipo', () => {
+  const conDos = (): DesignStore => {
+    const store = new DesignStore()
+    store.addResource('Producto')
+    store.addResource('Proveedor')
+    store.addField('producto')
+    return store
+  }
+
+  it('apuntar un campo a otra entidad lo convierte en relación', () => {
+    const store = conDos()
+
+    expect(store.setFieldRef('producto', 1, 'proveedor')).toBe(true)
+
+    const field = store.resources()[0].fields[1]
+    expect(field.type).toBe('ref')
+    expect(field.refTo).toBe('proveedor')
+  })
+
+  it('quitar la referencia deja un campo normal, sin destino colgando', () => {
+    const store = conDos()
+    store.setFieldRef('producto', 1, 'proveedor')
+
+    expect(store.setFieldRef('producto', 1, null)).toBe(true)
+
+    const field = store.resources()[0].fields[1]
+    expect(field.type).not.toBe('ref')
+    expect(field.refTo).toBeUndefined()
+  })
+
+  it('una entidad no puede apuntarse a sí misma', () => {
+    const store = conDos()
+
+    expect(store.setFieldRef('producto', 1, 'producto')).toBe(false)
+    expect(store.lastError()).toBeTruthy()
+  })
+
+  it('no se puede apuntar a una entidad que no existe', () => {
+    const store = conDos()
+
+    expect(store.setFieldRef('producto', 1, 'fantasma')).toBe(false)
+  })
+})

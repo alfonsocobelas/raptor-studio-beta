@@ -61,6 +61,65 @@ describe('ModelPanelComponent', () => {
     expect(store.resources()[0].fields[1].type).toBe('date')
   })
 
+  it('el tipo no ofrece «referencia»: eso se elige en su propio control', () => {
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    const opciones = [...(testId(fixture, 'field-type') as HTMLSelectElement).options].map(o => o.value)
+
+    expect(opciones).not.toContain('ref')
+    expect(opciones).toContain('uuid')
+  })
+
+  it('apuntar el campo a otra entidad lo convierte en relación', () => {
+    store.addResource('Proveedor')
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    const select = testId(fixture, 'field-ref') as HTMLSelectElement
+    select.value = 'proveedor'
+    select.dispatchEvent(new Event('change'))
+
+    expect(store.resources()[0].fields[1]).toMatchObject({ type: 'ref', refTo: 'proveedor' })
+  })
+
+  it('la propia entidad no aparece entre los destinos posibles', () => {
+    store.addResource('Proveedor')
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    const opciones = [...(testId(fixture, 'field-ref') as HTMLSelectElement).options].map(o => o.value)
+
+    expect(opciones).not.toContain('producto')
+    expect(opciones).toContain('proveedor')
+  })
+
+  it('con referencia elegida, el tipo no se queda en blanco: dice qué se emite', () => {
+    store.addResource('Proveedor')
+    store.setFieldRef('producto', 1, 'proveedor')
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    const select = testId(fixture, 'field-type') as HTMLSelectElement
+
+    expect(select.disabled).toBe(true)
+    expect(select.value).toBe('ref')
+    expect(select.options[select.selectedIndex].textContent).toContain('uuid')
+  })
+
+  it('quitar el destino devuelve el campo a un tipo normal', () => {
+    store.addResource('Proveedor')
+    store.setFieldRef('producto', 1, 'proveedor')
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    const select = testId(fixture, 'field-ref') as HTMLSelectElement
+    select.value = ''
+    select.dispatchEvent(new Event('change'))
+
+    expect(store.resources()[0].fields[1].type).not.toBe('ref')
+  })
+
   it('duplicar deja dos columnas donde había una', () => {
     active.selectField('producto', 1)
     const antes = store.resources()[0].fields.length
