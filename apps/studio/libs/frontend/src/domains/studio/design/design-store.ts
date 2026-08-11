@@ -405,6 +405,53 @@ export class DesignStore {
     return this.removeField(resource, fieldIndex)
   }
 
+  /**
+   * Reordena una columna. No es cosmético: el orden de `fields` es el de las
+   * columnas de la tabla y de los campos de la ficha en el código emitido.
+   */
+  moveField(resource: string, from: number, to: number): boolean {
+    const fields = this._resources().find(r => r.name === resource)?.fields
+    if (!fields || from < 0 || to < 0 || from >= fields.length || to >= fields.length) {
+      this._lastError.set(`No se puede mover la columna ${from} de «${resource}» a ${to}`)
+      return false
+    }
+    return this.updateResource(resource, draft => {
+      const next = [...draft.fields]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return { ...draft, fields: next }
+    })
+  }
+
+  /**
+   * Copia una columna justo detrás de la original. Una relación se copia como
+   * TEXTO, no como otra `ref`: dos flechas idénticas entre las mismas entidades
+   * serían un modelo que nadie quiso dibujar.
+   */
+  duplicateField(resource: string, index: number): boolean {
+    const fields = this._resources().find(r => r.name === resource)?.fields
+    const original = fields?.[index]
+    if (!fields || !original) {
+      this._lastError.set(`No existe la columna ${index} de «${resource}»`)
+      return false
+    }
+
+    const taken = new Set(fields.map(f => f.name))
+    let name = `${original.name}2`
+    for (let i = 3; taken.has(name); i++) name = `${original.name}${i}`
+
+    const { refTo: _discarded, ...withoutRef } = original
+    const copy: DraftField =
+      original.type === 'ref'
+        ? { ...withoutRef, name, label: `${original.label} (copia)`, type: 'string' }
+        : { ...original, name, label: `${original.label} (copia)` }
+
+    return this.updateResource(resource, draft => ({
+      ...draft,
+      fields: [...draft.fields.slice(0, index + 1), copy, ...draft.fields.slice(index + 1)]
+    }))
+  }
+
   removeField(resource: string, index: number): boolean {
     return this.updateResource(resource, draft => ({
       ...draft,

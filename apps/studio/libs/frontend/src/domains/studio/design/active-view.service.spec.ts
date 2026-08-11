@@ -55,3 +55,48 @@ describe('ActiveViewService', () => {
     expect(active.index()).toBe(0)
   })
 })
+
+describe('ActiveViewService — la columna elegida', () => {
+  let active: ActiveViewService
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    active = TestBed.inject(ActiveViewService)
+    store = TestBed.inject(DesignStore)
+  })
+
+  it('arranca sin columna elegida', () => {
+    expect(active.field()).toBeNull()
+  })
+
+  it('elegir una columna elige también su entidad: el inspector necesita las dos', () => {
+    store.addResource('Producto')
+    store.addField('producto')
+
+    active.selectField('producto', 1)
+
+    expect(active.resource()).toBe('producto')
+    expect(active.field()).toBe(1)
+  })
+
+  it('cambiar de entidad suelta la columna: el índice era de la otra', () => {
+    store.addResource('Producto')
+    store.addResource('Proveedor')
+    active.selectField('producto', 0)
+
+    active.selectResource('proveedor')
+
+    expect(active.field()).toBeNull()
+  })
+
+  it('la columna nunca apunta fuera de la entidad: al borrarla el índice se suelta', () => {
+    store.addResource('Producto')
+    store.addField('producto')
+    active.selectField('producto', 1)
+
+    store.removeField('producto', 1)
+
+    expect(active.field()).toBeNull()
+  })
+})

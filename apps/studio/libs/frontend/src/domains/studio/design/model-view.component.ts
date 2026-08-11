@@ -187,20 +187,27 @@ interface DiagramEdge {
                 </span>
               </div>
 
+              <!-- cada columna se elige: es lo que abre la pestaña Campo del inspector -->
               @for (field of node.fields; track field.name) {
-                <div
-                  class="text-muted-foreground flex items-center justify-between px-3 text-xs"
+                <button
+                  type="button"
+                  class="hover:bg-foreground/[0.04] text-muted-foreground flex w-full items-center justify-between border-l-2 border-transparent px-3 text-left text-xs transition-colors"
+                  [class.border-l-primary]="isChosenField(node.name, $index)"
+                  [class.text-foreground]="isChosenField(node.name, $index)"
+                  [class.font-medium]="isChosenField(node.name, $index)"
                   [style.height.px]="rowHeight"
+                  [attr.aria-current]="isChosenField(node.name, $index) ? 'true' : null"
                   [attr.data-testid]="'model-field-' + node.name + '-' + field.name"
+                  (click)="$event.stopPropagation(); active.selectField(node.name, $index)"
                 >
-                  <span class="text-foreground truncate">{{ field.name }}</span>
+                  <span class="truncate">{{ field.name }}</span>
                   <span class="flex items-center gap-1.5">
                     <span class="text-[10px] uppercase tracking-wider">{{ field.type }}</span>
                     @if (field.isRef) {
                       <span class="bg-foreground/70 inline-block size-1.5 rounded-full"></span>
                     }
                   </span>
-                </div>
+                </button>
               }
             </div>
           }
@@ -236,10 +243,15 @@ interface DiagramEdge {
 })
 export class ModelViewComponent {
   protected readonly store = inject(DesignStore)
-  private readonly active = inject(ActiveViewService)
+  protected readonly active = inject(ActiveViewService)
 
   /** La entidad elegida (la que edita el inspector): se pinta en tinta. */
   protected readonly chosen = computed(() => this.active.resource())
+
+  /** ¿Es esta la columna elegida? La barra naranja de la izquierda lo señala. */
+  protected isChosenField(resource: string, index: number): boolean {
+    return this.active.resource() === resource && this.active.field() === index
+  }
 
   /** Caja elegida → el inspector de columnas de la derecha (el MISMO editor que en Vistas). */
   readonly select = output<string>()

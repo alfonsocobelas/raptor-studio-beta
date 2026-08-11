@@ -369,3 +369,62 @@ describe('etiquetas de tipo de columna', () => {
     }
   })
 })
+
+describe('mover y duplicar columnas (el orden viaja al código emitido)', () => {
+  const conCampos = (): DesignStore => {
+    const store = new DesignStore()
+    store.addResource('Producto')
+    store.addField('producto') // campo2
+    store.addField('producto') // campo3
+    return store
+  }
+
+  it('mover una columna cambia su sitio: el orden es el de las pantallas generadas', () => {
+    const store = conCampos()
+    const antes = store.resources()[0].fields.map(f => f.name)
+
+    expect(store.moveField('producto', 2, 0)).toBe(true)
+    expect(store.resources()[0].fields.map(f => f.name)).toEqual([antes[2], antes[0], antes[1]])
+  })
+
+  it('no mueve a un hueco que no existe', () => {
+    const store = conCampos()
+    const antes = store.resources()[0].fields.map(f => f.name)
+
+    expect(store.moveField('producto', 0, 9)).toBe(false)
+    expect(store.moveField('producto', -1, 0)).toBe(false)
+    expect(store.resources()[0].fields.map(f => f.name)).toEqual(antes)
+  })
+
+  it('duplicar deja la copia justo detrás, con nombre libre y el mismo tipo', () => {
+    const store = conCampos()
+    store.updateField('producto', 0, { type: 'date' })
+
+    expect(store.duplicateField('producto', 0)).toBe(true)
+
+    const fields = store.resources()[0].fields
+    expect(fields[1].name).not.toBe(fields[0].name)
+    expect(fields[1].type).toBe('date')
+    expect(new Set(fields.map(f => f.name)).size).toBe(fields.length)
+  })
+
+  it('duplicar una relación no crea una flecha gemela: el ref se copia como texto', () => {
+    const store = conCampos()
+    store.addResource('Proveedor')
+    store.addRelation('producto', 'proveedor')
+    const refIndex = store.resources()[0].fields.findIndex(f => f.type === 'ref')
+
+    expect(store.duplicateField('producto', refIndex)).toBe(true)
+
+    const refs = store.resources()[0].fields.filter(f => f.type === 'ref')
+    expect(refs).toHaveLength(1)
+  })
+
+  it('sobre una entidad o un índice que no existen, no hace nada', () => {
+    const store = conCampos()
+
+    expect(store.duplicateField('fantasma', 0)).toBe(false)
+    expect(store.duplicateField('producto', 9)).toBe(false)
+    expect(store.moveField('fantasma', 0, 1)).toBe(false)
+  })
+})

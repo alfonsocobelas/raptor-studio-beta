@@ -48,6 +48,7 @@ import { FlowViewComponent } from './flow-view.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
+import { ModelPanelComponent } from './model-panel.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GenerateWizardComponent } from '../generate/generate-wizard.component'
@@ -70,6 +71,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     ViewsSidebarComponent,
     ModelSidebarComponent,
     DesignPanelComponent,
+    ModelPanelComponent,
     CanvasHeaderComponent
   ],
   providers: [provideIcons(STUDIO_ICONS)],
@@ -480,7 +482,11 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         </div>
 
         <aside class="bg-card flex w-80 shrink-0 flex-col border-l p-4">
-          <studio-design-panel />
+          @if (mode() === 'model') {
+            <studio-model-panel />
+          } @else {
+            <studio-design-panel />
+          }
         </aside>
       </div>
     </div>
