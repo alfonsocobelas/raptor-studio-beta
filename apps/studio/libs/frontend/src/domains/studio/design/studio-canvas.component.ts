@@ -48,6 +48,7 @@ import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
+import { FlowSidebarComponent } from './flow-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
 import { ModelSummaryComponent } from './model-summary.component'
@@ -72,6 +73,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     FlowViewComponent,
     ViewsSidebarComponent,
     ModelSidebarComponent,
+    FlowSidebarComponent,
     DesignPanelComponent,
     ModelPanelComponent,
     ModelSummaryComponent,
@@ -220,18 +222,21 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           <studio-views-sidebar />
         } @else if (mode() === 'model') {
           <studio-model-sidebar />
+        } @else if (mode() === 'flows') {
+          <studio-flow-sidebar />
         }
         <div
           class="relative flex min-h-0 min-w-0 flex-1 flex-col"
           [class.canvas-surface]="mode() !== 'model'"
-          [class.bg-background]="mode() === 'model'"
+          [class.bg-background]="mode() === 'model' || mode() === 'flows'"
         >
           <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
           <main
             class="min-h-0 flex-1 overflow-auto"
-            [class.px-10]="mode() !== 'model'"
-            [class.pb-28]="mode() !== 'model'"
-            [class.pt-6]="mode() !== 'model'"
+            [class.px-10]="mode() === 'views'"
+            [class.pb-28]="mode() === 'views'"
+            [class.pt-6]="mode() === 'views'"
+            [class.p-8]="mode() === 'flows'"
           >
             <!-- Punto de lectura del schema para los smoke tools. Solo en dev: en un
                  build de producción el JSON no llega nunca al DOM del cliente. -->

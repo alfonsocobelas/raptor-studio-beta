@@ -100,3 +100,64 @@ describe('ActiveViewService — la columna elegida', () => {
     expect(active.field()).toBeNull()
   })
 })
+
+describe('ActiveViewService — el flujo elegido', () => {
+  let active: ActiveViewService
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    active = TestBed.inject(ActiveViewService)
+    store = TestBed.inject(DesignStore)
+  })
+
+  it('sin flujos no hay flujo elegido', () => {
+    expect(active.flow()).toBeNull()
+  })
+
+  it('con flujos y sin elección, manda el primero: el lienzo nunca queda en blanco', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+
+    expect(active.flow()).toBe('Aviso de stock bajo')
+  })
+
+  it('elegir un flujo lo deja al mando', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+
+    active.selectFlow('Resumen semanal')
+
+    expect(active.flow()).toBe('Resumen semanal')
+  })
+
+  it('si el flujo elegido se borra, vuelve al primero que quede', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+    active.selectFlow('Resumen semanal')
+
+    store.removeFlow('Resumen semanal')
+
+    expect(active.flow()).toBe('Aviso de stock bajo')
+  })
+
+  it('el nodo elegido se suelta al cambiar de flujo: era del otro diagrama', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+    active.selectFlowNode('inicio')
+
+    active.selectFlow('Resumen semanal')
+
+    expect(active.flowNode()).toBeNull()
+  })
+
+  it('un nodo que ya no existe no se queda elegido', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlowNode('Aviso de stock bajo', 'step', 'Avisar')
+    active.selectFlowNode('avisar')
+
+    store.removeFlowNode('Aviso de stock bajo', 'avisar')
+
+    expect(active.flowNode()).toBeNull()
+  })
+})

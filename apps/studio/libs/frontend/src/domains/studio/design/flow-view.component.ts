@@ -13,6 +13,7 @@ import {
   type NodeBox,
   type NodePosition
 } from '@app/shared/domain'
+import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 
 interface FlowDiagramNode {
@@ -30,12 +31,6 @@ interface FlowDiagramEdge {
 /** Lo elegible en el lienzo: un nodo o una arista (identidad completa). */
 type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string; to: string; label?: string }
 
-const PALETTE: { kind: FlowNodeKind; label: string; starter: string }[] = [
-  { kind: 'step', label: '+ Paso', starter: 'Nuevo paso' },
-  { kind: 'decision', label: '+ Decisión', starter: '¿Decisión?' },
-  { kind: 'end', label: '+ Fin', starter: 'Fin' }
-]
-
 /**
  * La vista de FLUJOS (spec 28): los procesos de negocio del diseño, dibujados
  * y EDITABLES (TASK-05). Otra proyección del DesignStore — cada gesto llama a
@@ -48,45 +43,12 @@ const PALETTE: { kind: FlowNodeKind; label: string; starter: string }[] = [
   imports: [FormsModule],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
-    <!-- paleta: crear flujo y añadir nodos al activo -->
-    <div class="mb-4 flex items-center gap-1" data-testid="flow-tabs">
-      @for (flow of store.flows(); track flow.name) {
-        <button
-          type="button"
-          class="rounded-md border px-3 py-1 text-xs font-medium"
-          [class.bg-primary]="activeName() === flow.name"
-          [class.text-primary-foreground]="activeName() === flow.name"
-          [attr.data-testid]="'flow-tab-' + flow.name"
-          (click)="active.set(flow.name)"
-        >
-          {{ flow.name }}
-        </button>
-      }
-      <button type="button" class="toolbar-chip" data-testid="flow-add" (click)="addFlow()">+ Nuevo flujo</button>
-      @if (activeName(); as name) {
-        <span class="bg-border mx-1 h-4 w-px"></span>
-        @for (tool of palette; track tool.kind) {
-          <button
-            type="button"
-            class="toolbar-chip"
-            [attr.data-testid]="'flow-palette-' + tool.kind"
-            (click)="store.addFlowNode(name, tool.kind, tool.starter)"
-          >
-            {{ tool.label }}
-          </button>
-        }
-        <button type="button" class="toolbar-chip text-destructive" data-testid="flow-remove" (click)="removeFlow()">
-          Eliminar flujo
-        </button>
-      }
-    </div>
-
     @if (!store.flows().length) {
       <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-flows">
         <p class="text-muted-foreground mb-2 text-lg">Sin procesos todavía</p>
         <p class="text-muted-foreground max-w-md text-sm">
-          Cuéntale al chat cómo trabaja el negocio («cuando llega un pedido…») o crea un flujo y dibújalo: los pasos
-          se conectan arrastrando desde su asa.
+          Cuéntale al chat cómo trabaja el negocio («cuando llega un pedido…») o crea uno con
+          <strong>Nuevo flujo</strong> en el panel de la izquierda: los pasos se conectan arrastrando desde su asa.
         </p>
       </div>
     }
@@ -281,10 +243,7 @@ const PALETTE: { kind: FlowNodeKind; label: string; starter: string }[] = [
 })
 export class FlowViewComponent {
   protected readonly store = inject(DesignStore)
-  protected readonly palette = PALETTE
-
-  /** Flujo elegido en las pestañas; si desaparece, se cae al primero. */
-  protected readonly active = signal<string | null>(null)
+  protected readonly active = inject(ActiveViewService)
 
   /** Posiciones arrastradas por flujo:nodo — SOLO memoria de sesión (layout cosmético). */
   private readonly manual = signal<Record<string, NodePosition>>({})
@@ -296,11 +255,8 @@ export class FlowViewComponent {
   protected readonly pendingEdge = signal<{ from: string; to: string; x: number; y: number } | null>(null)
   protected readonly pendingLabel = signal('')
 
-  protected readonly activeName = computed(() => {
-    const chosen = this.active()
-    const flows = this.store.flows()
-    return flows.some(f => f.name === chosen) ? chosen : (flows[0]?.name ?? null)
-  })
+  /** El flujo dibujado lo elige el raíl; aquí solo se lee. */
+  protected readonly activeName = this.active.flow
 
   protected readonly activeFlow = computed<BusinessFlow | null>(
     () => this.store.flows().find(f => f.name === this.activeName()) ?? null
@@ -335,18 +291,6 @@ export class FlowViewComponent {
     width: Math.max(...this.nodes().map(n => n.box.x + n.box.width), FLOW_NODE.width) + FLOW_GRID.margin,
     height: Math.max(...this.nodes().map(n => n.box.y + n.box.height), FLOW_NODE.height) + FLOW_GRID.margin
   }))
-
-  protected addFlow(): void {
-    const taken = new Set(this.store.flows().map(f => f.name))
-    let name = 'Nuevo proceso'
-    for (let i = 2; taken.has(name); i++) name = `Nuevo proceso ${i}`
-    if (this.store.addFlow(name)) this.active.set(name)
-  }
-
-  protected removeFlow(): void {
-    const name = this.activeName()
-    if (name) this.store.removeFlow(name)
-  }
 
   protected selectNode(event: MouseEvent, id: string): void {
     event.stopPropagation()
