@@ -20,10 +20,23 @@ describe('viewIcon', () => {
     expect(icono).not.toBe('lucideTable')
   })
 
-  it('con tabla manda la tabla: es lo que domina la pantalla', () => {
-    expect(viewIcon(page([{ kind: 'kpis', resources: ['producto'] }, { kind: 'table', resource: 'producto' }]))).toBe(
-      'lucideTable'
-    )
+  it('manda el PRIMER bloque: en un panel son los KPIs, con tabla debajo o sin ella', () => {
+    const panel = page([{ kind: 'kpis', resources: ['producto'] }, { kind: 'table', resource: 'producto' }])
+
+    expect(viewIcon(panel)).toBe('lucideChartNoAxesColumn')
+  })
+
+  it('un listado con KPIs debajo sigue siendo un listado', () => {
+    const listado = page([{ kind: 'table', resource: 'producto' }, { kind: 'kpis', resources: ['producto'] }])
+
+    expect(viewIcon(listado)).toBe('lucideTable')
+  })
+
+  it('el preset Panel del catálogo NO se dibuja como tabla', () => {
+    const preset = VIEW_PRESETS.find(p => p.id === 'panel')
+    if (!preset) throw new Error('falta el preset panel')
+
+    expect(viewIcon(page(preset.blocks('producto')))).toBe('lucideChartNoAxesColumn')
   })
 
   it('una galería se ve como galería', () => {

@@ -1,18 +1,26 @@
-import type { DesignPage } from '@app/shared/domain'
+import type { DesignBlock, DesignPage } from '@app/shared/domain'
+
+/** Un icono por tipo de bloque; el orden de la vista decide cuál se usa. */
+const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
+  table: 'lucideTable',
+  cards: 'lucideLayoutGrid',
+  kpis: 'lucideChartNoAxesColumn',
+  fields: 'lucideIdCard',
+  attachments: 'lucidePaperclip'
+}
 
 /**
- * El icono de una vista sale de lo que TIENE, no de cómo se creó: un panel de
- * KPIs no es una tabla, y una vista en blanco no debe fingir contenido. Con
- * tabla manda la tabla, que es lo que domina la pantalla emitida.
+ * El icono de una vista sale de su PRIMER bloque, que es lo que domina arriba:
+ * un panel (KPIs y listado debajo) se ve como KPIs, no como tabla, y un listado
+ * con métricas al pie sigue siendo un listado. La ficha es la excepción, porque
+ * lo que la define es cómo se llega a ella. Una vista vacía no finge contenido.
  */
 export function viewIcon(page: DesignPage): string {
   if (page.drillDown) return 'lucideIdCard'
 
-  const kinds = new Set(page.blocks.map(block => block.kind))
-  if (kinds.has('table')) return 'lucideTable'
-  if (kinds.has('cards')) return 'lucideLayoutGrid'
-  if (kinds.has('kpis')) return 'lucideChartNoAxesColumn'
-  if (kinds.has('fields')) return 'lucideIdCard'
-  if (kinds.has('attachments')) return 'lucidePaperclip'
+  for (const block of page.blocks) {
+    const icon = ICONS[block.kind]
+    if (icon) return icon
+  }
   return 'lucideSquareDashed'
 }

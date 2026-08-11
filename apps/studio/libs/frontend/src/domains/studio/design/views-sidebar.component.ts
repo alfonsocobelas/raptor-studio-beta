@@ -113,7 +113,7 @@ const BLOCK_TOOLS: BlockTool[] = [
             [attr.title]="node.page.drillDown ? 'Se abre desde el listado · no aparece en el menú' : node.page.title"
             (click)="active.select(node.index)"
           >
-            <ng-icon [name]="node.page.drillDown ? 'lucideIdCard' : 'lucideTable'" size="14" />
+            <ng-icon [name]="icon(node.page)" size="14" />
             <span class="min-w-0 flex-1 truncate">{{ node.page.title }}</span>
             @if (node.expandable) {
               <ng-icon
