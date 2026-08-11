@@ -3,12 +3,12 @@ import {
   MODEL_GRID,
   MODEL_NODE,
   autoLayout,
-  edgeLine,
+  edgeCurve,
   modelEdges,
   nodeAt,
   nodeBox,
   overlayLayout,
-  type EdgeSegment,
+  type EdgeCurve,
   type ModelEdge,
   type NodeBox,
   type NodePosition
@@ -34,7 +34,7 @@ interface DiagramNode {
 
 interface DiagramEdge {
   edge: ModelEdge
-  line: EdgeSegment
+  line: EdgeCurve
 }
 
 /**
@@ -67,8 +67,28 @@ interface DiagramEdge {
         >
           <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
             <defs>
-              <marker id="model-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-                <polygon points="0 0, 9 3.5, 0 7" class="fill-muted-foreground" />
+              <!-- punta simple: un chevron de trazo, sin relleno -->
+              <marker
+                id="model-arrow"
+                markerWidth="13"
+                markerHeight="12"
+                refX="10"
+                refY="6"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-foreground" stroke-width="1.8" />
+              </marker>
+              <marker
+                id="model-arrow-sel"
+                markerWidth="13"
+                markerHeight="12"
+                refX="10"
+                refY="6"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-primary" stroke-width="1.8" />
               </marker>
             </defs>
             @for (item of edges(); track item.edge.from + '-' + item.edge.fieldIndex) {
@@ -77,28 +97,29 @@ interface DiagramEdge {
                 [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to"
                 (click)="selectEdge($event, item.edge)"
               >
-                <!-- zona de clic ancha e invisible: la línea de 1.5px es imposible de acertar -->
-                <line
-                  [attr.x1]="item.line.x1"
-                  [attr.y1]="item.line.y1"
-                  [attr.x2]="item.line.x2"
-                  [attr.y2]="item.line.y2"
-                  stroke="transparent"
-                  stroke-width="12"
-                />
-                <line
-                  [attr.x1]="item.line.x1"
-                  [attr.y1]="item.line.y1"
-                  [attr.x2]="item.line.x2"
-                  [attr.y2]="item.line.y2"
-                  [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-muted-foreground'"
+                <!-- zona de clic ancha e invisible: el trazo de 1.5px es imposible de acertar -->
+                <path [attr.d]="item.line.d" fill="none" stroke="transparent" stroke-width="14" />
+                <path
+                  [attr.d]="item.line.d"
+                  fill="none"
+                  [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-foreground'"
                   [attr.stroke-width]="isSelected(item.edge) ? 2.5 : 1.5"
-                  marker-end="url(#model-arrow)"
+                  [attr.marker-end]="isSelected(item.edge) ? 'url(#model-arrow-sel)' : 'url(#model-arrow)'"
                 />
                 <title>{{ item.edge.label }} · {{ item.edge.from }} → {{ item.edge.to }}</title>
+                <!-- la cardinalidad va en pastilla, para que se lea sobre la rejilla -->
+                <rect
+                  [attr.x]="item.line.labelX - 24"
+                  [attr.y]="item.line.labelY - 10"
+                  width="48"
+                  height="20"
+                  rx="6"
+                  class="fill-card stroke-border"
+                  stroke-width="1"
+                />
                 <text
-                  [attr.x]="(item.line.x1 + item.line.x2) / 2"
-                  [attr.y]="(item.line.y1 + item.line.y2) / 2 - 6"
+                  [attr.x]="item.line.labelX"
+                  [attr.y]="item.line.labelY + 4"
                   text-anchor="middle"
                   [class]="
                     'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
@@ -240,10 +261,13 @@ interface DiagramEdge {
       color: color-mix(in oklab, var(--brand) 78%, var(--foreground));
       font-weight: 600;
     }
+    /* Las cajas flotan sobre la rejilla: sin sombra el borde de 1px se pierde entre
+       las líneas de la malla. Tres capas cortas, como la referencia. */
     .model-card {
       box-shadow:
-        0 1px 2px oklch(0 0 0 / 6%),
-        0 8px 20px -12px oklch(0 0 0 / 18%);
+        0 1px 2px oklch(0 0 0 / 8%),
+        0 6px 14px -6px oklch(0 0 0 / 14%),
+        0 16px 32px -20px oklch(0 0 0 / 22%);
     }
     .toolbar-chip {
       border: 1px solid var(--border);
@@ -300,7 +324,7 @@ export class ModelViewComponent {
     return modelEdges(this.store.resources()).flatMap(edge => {
       const from = boxes.get(edge.from)
       const to = boxes.get(edge.to)
-      return from && to ? [{ edge, line: edgeLine(from, to) }] : []
+      return from && to ? [{ edge, line: edgeCurve(from, edge.fieldIndex, to) }] : []
     })
   })
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { DraftResource } from './draft-resource'
 import {
   autoLayout,
+  edgeCurve,
   edgeLine,
   modelEdges,
   nodeAt,
@@ -171,5 +172,72 @@ describe('edgeLine', () => {
     const onTarget =
       line.x2 === to.x || line.x2 === to.x + to.width || line.y2 === to.y || line.y2 === to.y + to.height
     expect(onTarget).toBe(true)
+  })
+})
+
+describe('edgeCurve — la flecha sale del campo, no del centro de la caja', () => {
+  const from: NodeBox = { x: 100, y: 100, width: 240, height: 160 }
+  const to: NodeBox = { x: 500, y: 300, width: 240, height: 112 }
+
+  it('arranca en el borde derecho del origen, a la altura de su campo', () => {
+    const curva = edgeCurve(from, 1, to)
+
+    expect(curva.x1).toBe(from.x + from.width)
+    // fila del campo 1, contando la del id que el diagrama pinta antes
+    expect(curva.y1).toBe(from.y + MODEL_NODE.headerHeight + 2.5 * MODEL_NODE.rowHeight)
+  })
+
+  it('termina en el borde izquierdo del destino, a la altura de su clave', () => {
+    const curva = edgeCurve(from, 0, to)
+
+    expect(curva.x2).toBe(to.x)
+    expect(curva.y2).toBe(to.y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight)
+  })
+
+  it('entra por la derecha cuando el destino está a la izquierda: nunca cruza la caja', () => {
+    const izquierda: NodeBox = { x: 0, y: 300, width: 240, height: 112 }
+
+    const curva = edgeCurve(from, 0, izquierda)
+
+    expect(curva.x1).toBe(from.x)
+    expect(curva.x2).toBe(izquierda.x + izquierda.width)
+  })
+
+  it('el trazo es una curva suave, con los tiradores en horizontal', () => {
+    const curva = edgeCurve(from, 0, to)
+
+    expect(curva.d).toMatch(/^M [\d.-]+ [\d.-]+ C/)
+    expect(curva.d.split('C')[1].trim().split(/[ ,]+/)).toHaveLength(6)
+  })
+
+  it('la etiqueta va sobre el trazo, entre las dos cajas', () => {
+    const curva = edgeCurve(from, 0, to)
+
+    expect(curva.labelX).toBeGreaterThan(Math.min(curva.x1, curva.x2))
+    expect(curva.labelX).toBeLessThan(Math.max(curva.x1, curva.x2))
+  })
+})
+
+describe('edgeCurve — saltos largos', () => {
+  const from: NodeBox = { x: 700, y: 100, width: 240, height: 160 }
+  const lejosIzquierda: NodeBox = { x: 0, y: 100, width: 240, height: 160 }
+
+  it('cuando hay sitio para otra caja en medio, el arco baja por debajo de ambas', () => {
+    const curva = edgeCurve(from, 0, lejosIzquierda)
+    // C cx1 cy1, cx2 cy2, x2 y2
+    const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+
+    const suelo = Math.max(from.y + from.height, lejosIzquierda.y + lejosIzquierda.height)
+    expect(cy1).toBeGreaterThan(suelo)
+    expect(cy2).toBeGreaterThan(suelo)
+  })
+
+  it('un salto corto no baja: la curva se queda plana entre las dos filas', () => {
+    const alLado: NodeBox = { x: 1000, y: 100, width: 240, height: 160 }
+
+    const curva = edgeCurve(from, 0, alLado)
+    const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
+
+    expect(cy1).toBe(curva.y1)
   })
 })

@@ -132,3 +132,55 @@ function clipToBorder(box: NodeBox, from: NodePosition, towards: NodePosition): 
   const t = Math.min(tx, ty)
   return { x: from.x + dx * t, y: from.y + dy * t }
 }
+
+export interface EdgeCurve extends EdgeSegment {
+  /** Trazo SVG listo para `path[d]` */
+  d: string
+  labelX: number
+  labelY: number
+}
+
+/**
+ * La flecha de una relación sale del PUNTO DEL CAMPO `ref` —no del centro de la
+ * caja— y entra por el lado de la clave del destino, como en la referencia de
+ * diseño. Elige el lado por posición relativa, así que nunca cruza su propia
+ * caja, y los tiradores van en horizontal para que la curva salga y entre plana.
+ *
+ * `fieldIndex` cuenta los campos del draft; el diagrama pinta antes la fila del
+ * `id`, y por eso la fila real es la siguiente.
+ */
+export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeCurve {
+  const y1 = from.y + MODEL_NODE.headerHeight + (fieldIndex + 1.5) * MODEL_NODE.rowHeight
+  const y2 = to.y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight
+
+  // el destino manda el lado: si queda a la izquierda, se sale por la izquierda
+  const haciaLaDerecha = to.x + to.width / 2 >= from.x + from.width / 2
+  const x1 = haciaLaDerecha ? from.x + from.width : from.x
+  const x2 = haciaLaDerecha ? to.x : to.x + to.width
+
+  const tirador = Math.max(30, Math.abs(x2 - x1) / 2)
+  const cx1 = haciaLaDerecha ? x1 + tirador : x1 - tirador
+  const cx2 = haciaLaDerecha ? x2 - tirador : x2 + tirador
+
+  /**
+   * Si entre las dos cajas cabe otra, el arco baja por debajo de ambas: con los
+   * tiradores planos la curva atravesaba la caja de en medio, que es justo lo que
+   * hace ilegible un diagrama.
+   */
+  // basta con que quepa una caja en el trayecto; con el layout en fila el salto
+  // de dos columnas mide exactamente el ancho de una caja más los dos huecos
+  const salto = Math.abs(x2 - x1) > MODEL_NODE.width
+  const suelo = Math.max(from.y + from.height, to.y + to.height) + MODEL_NODE.rowHeight * 1.5
+  const cy1 = salto ? suelo : y1
+  const cy2 = salto ? suelo : y2
+
+  return {
+    x1,
+    y1,
+    x2,
+    y2,
+    d: `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`,
+    labelX: (x1 + x2) / 2,
+    labelY: salto ? (suelo + Math.max(y1, y2)) / 2 : (y1 + y2) / 2
+  }
+}
