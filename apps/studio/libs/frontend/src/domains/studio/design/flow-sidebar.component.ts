@@ -31,7 +31,7 @@ const FLOW_BLOCKS: FlowBlock[] = [
   imports: [NgIcon],
   providers: [provideIcons({ lucideCircleDot, lucideDiamond, lucidePlus, lucideSquare, lucideZap })],
   template: `
-    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto p-4">
+    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
         <h2 class="studio-eyebrow mb-2 px-1">Bloques</h2>
         @for (block of blocks; track block.kind) {
