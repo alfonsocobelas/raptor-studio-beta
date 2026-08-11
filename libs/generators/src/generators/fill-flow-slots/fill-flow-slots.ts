@@ -1,5 +1,7 @@
 import type { Tree } from '@nx/devkit'
 import { type AiSlotRef, listEmptyAiSlots, readSlotBody, replaceSlotBody } from '../resource/ai-slots'
+import { bridgeSlotExecutor } from './bridge-executor'
+import { emittedAppGate } from './gate'
 import { buildFlowSlotPrompt } from './prompt'
 import { validateSlotOnlyEdit } from './slot-write'
 
@@ -9,6 +11,10 @@ const FLOW_PREFIX = 'flow-'
 export interface FillFlowSlotsGeneratorSchema {
   /** Directorio de la app ya emitida sobre la que se rellena (p.ej. apps/solaris) */
   directory: string
+  /** Un solo hueco por su id (`flow-cie`): una prueba real no cuesta cinco gates */
+  slot?: string
+  /** Directorio del puente donde espera la petición; sin él no hay ejecutor */
+  bridge?: string
 }
 
 /**
@@ -21,9 +27,13 @@ export interface SlotExecutor {
   propose(prompt: string, slot: AiSlotRef, current: string): Promise<string | undefined>
 }
 
-/** El gate determinista de un hueco: devuelve el motivo del rechazo, o nada si pasa. */
+/**
+ * El gate determinista de un hueco. Recibe el contenido ya relleno porque compilar es
+ * una operación de disco y el árbol de Nx no se vuelca hasta el final del generador.
+ * Devuelve el motivo del rechazo, o nada si pasa.
+ */
 export interface SlotGate {
-  run(slot: AiSlotRef): Promise<string | undefined>
+  run(slot: AiSlotRef, content: string): Promise<string | undefined>
 }
 
 export interface FlowFillOptions extends FillFlowSlotsGeneratorSchema {
@@ -48,8 +58,10 @@ export interface FlowFillReport {
 }
 
 /** Los huecos de paso que siguen sin cuerpo en una app emitida. */
-export function pendingFlowSlots(tree: Tree, directory: string): AiSlotRef[] {
-  return listEmptyAiSlots(tree, directory, FLOW_PREFIX)
+export function pendingFlowSlots(tree: Tree, directory: string, slotId?: string): AiSlotRef[] {
+  const pending = listEmptyAiSlots(tree, directory, FLOW_PREFIX)
+
+  return slotId ? pending.filter(slot => slot.id === slotId) : pending
 }
 
 /**
@@ -61,7 +73,7 @@ export function flowFillReport(tree: Tree, options: FillFlowSlotsGeneratorSchema
   return {
     // sin ejecutor no se toca nada: la IA vive en los bordes y siempre bajo gate
     executor: 'none',
-    pending: pendingFlowSlots(tree, options.directory),
+    pending: pendingFlowSlots(tree, options.directory, options.slot),
     filled: [],
     rejected: []
   }
@@ -82,7 +94,7 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
   const filled: AiSlotRef[] = []
   const rejected: FlowFillRejection[] = []
 
-  for (const slot of pendingFlowSlots(tree, directory)) {
+  for (const slot of pendingFlowSlots(tree, directory, options.slot)) {
     const original = tree.read(slot.file, 'utf-8') ?? ''
     const candidate = await executor.propose(buildFlowSlotPrompt(tree, directory, slot), slot, original)
 
@@ -100,9 +112,10 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
 
     // se escribe SIEMPRE por replaceSlotBody: los bytes de fuera del hueco los pone el
     // acelerador, y así el relleno sobrevive a la regeneración por construcción
-    tree.write(slot.file, replaceSlotBody(original, slot.id, readSlotBody(candidate, slot.id) ?? ''))
+    const written = replaceSlotBody(original, slot.id, readSlotBody(candidate, slot.id) ?? '')
+    tree.write(slot.file, written)
 
-    const reason = await gate.run(slot)
+    const reason = await gate.run(slot, written)
     if (reason) {
       tree.write(slot.file, original)
       rejected.push({ slot, reason })
@@ -125,7 +138,16 @@ export async function fillFlowSlotsGenerator(tree: Tree, options: FlowFillOption
     throw new Error(`El directorio '${options.directory}' no existe: nada que rellenar`)
   }
 
-  const report = await fillPendingFlowSlots(tree, options)
+  // con puente hay ejecutor, y donde hay ejecutor hay gate: los dos o ninguno
+  const wired: FlowFillOptions = options.bridge
+    ? {
+        ...options,
+        executor: options.executor ?? bridgeSlotExecutor(options.bridge),
+        gate: options.gate ?? emittedAppGate(options.directory)
+      }
+    : options
+
+  const report = await fillPendingFlowSlots(tree, wired)
 
   for (const { slot, reason } of report.rejected) {
     console.log(`✗ ${slot.id}: ${reason}`)

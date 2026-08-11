@@ -2,13 +2,21 @@
   "$schema": "https://json-schema.org/schema",
   "$id": "FillFlowSlots",
   "title": "Fill flow step slots",
-  "description": "Lists the empty `flow-*` slots of an emitted app. Without an AI executor available it reports what is pending and exits without touching anything",
+  "description": "Fills the empty `flow-*` slots of an emitted app, one at a time and each behind its own deterministic gate. Without an executor it reports what is pending and exits without touching anything",
   "type": "object",
   "properties": {
     "directory": {
       "type": "string",
       "description": "Directory of the emitted app to fill (e.g. apps/solaris)",
       "$default": { "$source": "argv", "index": 0 }
+    },
+    "slot": {
+      "type": "string",
+      "description": "Fill a single slot by id (e.g. flow-cie) instead of every pending one"
+    },
+    "bridge": {
+      "type": "string",
+      "description": "Bridge directory where a watching Claude Code session answers the request; without it there is no executor"
     }
   },
   "required": ["directory"]

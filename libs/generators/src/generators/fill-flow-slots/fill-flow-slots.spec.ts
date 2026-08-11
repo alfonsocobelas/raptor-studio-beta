@@ -117,7 +117,7 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
 
     const gateThat = (reason?: string): SlotGate & { calls: number } => ({
       calls: 0,
-      async run() {
+      async run(_slot, _content) {
         this.calls++
         return reason
       }
@@ -212,6 +212,42 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       await expect(
         fillPendingFlowSlots(tree, { directory: 'apps/demo', executor: executorThat(current => current) })
       ).rejects.toThrow(/gate/i)
+    })
+
+    it('con --slot solo se toca ese hueco (una prueba real no cuesta cinco gates)', async () => {
+      const tree = emittedApp()
+      tree.write(PROCESS, replaceSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-subsanar', ''))
+      const executor = executorThat((current, id) => replaceSlotBody(current, id, BODY))
+
+      const report = await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        slot: 'flow-subsanar',
+        executor,
+        gate: gateThat()
+      })
+
+      expect(report.filled.map(s => s.id)).toEqual(['flow-subsanar'])
+      expect(executor.prompts).toHaveLength(1)
+      // el otro sigue pendiente, intacto
+      expect(report.pending.map(s => s.id)).toEqual(['flow-revisar'])
+    })
+
+    it('el gate recibe el contenido ya relleno (compilar es cosa del disco, no del árbol)', async () => {
+      const tree = emittedApp()
+      const seen: string[] = []
+
+      await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor: executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY)),
+        gate: {
+          async run(_slot, content) {
+            seen.push(content)
+            return undefined
+          }
+        }
+      })
+
+      expect(readSlotBody(seen[0], 'flow-revisar')).toBe(BODY)
     })
 
     it('el informe nombra al ejecutor que se usó', async () => {
