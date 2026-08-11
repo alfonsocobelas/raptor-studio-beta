@@ -1,4 +1,4 @@
-import { type Tree, visitNotIgnoredFiles } from '@nx/devkit'
+import { joinPathFragments, type Tree } from '@nx/devkit'
 
 /**
  * Huecos para la IA/mano (§7 del maestro): las plantillas emiten pares
@@ -12,12 +12,25 @@ export type AiSlotHarvest = Map<string, Map<string, string>>
 
 const SLOT_REGEX = /^([ \t]*\/\/ @ai:begin ([\w-]+)[^\n]*\n)([\s\S]*?)(^[ \t]*\/\/ @ai:end)/gm
 
+/**
+ * Recorrido propio, sin filtro de ignores: la app emitida vive en `.nxignore`
+ * (workspace anidado) y `visitNotIgnoredFiles` la saltaría — la cosecha y el
+ * strip serían no-ops silenciosos desde el workspace padre.
+ */
+function visitFiles(tree: Tree, dir: string, visitor: (file: string) => void): void {
+  for (const child of tree.children(dir)) {
+    const childPath = joinPathFragments(dir, child)
+    if (tree.isFile(childPath)) visitor(childPath)
+    else visitFiles(tree, childPath, visitor)
+  }
+}
+
 export function harvestAiSlots(tree: Tree, dir: string): AiSlotHarvest {
   const harvest: AiSlotHarvest = new Map()
 
   if (!tree.exists(dir)) return harvest
 
-  visitNotIgnoredFiles(tree, dir, file => {
+  visitFiles(tree, dir, file => {
     const content = tree.read(file, 'utf-8')
     if (!content || !content.includes('// @ai:begin')) return
 
@@ -43,7 +56,7 @@ const MARKER_LINE_REGEX = /^[ \t]*(?:\/\/|<!--) @ai:(?:begin|end)\b[^\n]*\n?/gm
 export function stripAiSlots(tree: Tree, dir: string): void {
   if (!tree.exists(dir)) return
 
-  visitNotIgnoredFiles(tree, dir, file => {
+  visitFiles(tree, dir, file => {
     const content = tree.read(file, 'utf-8')
     if (!content || !content.includes('@ai:begin')) return
 

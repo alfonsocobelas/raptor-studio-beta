@@ -262,6 +262,37 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
   })
 
   /**
+   * Spec 39, TASK-07: supervivencia. Lo escrito a mano dentro de un hueco flow-*
+   * sobrevive a la regeneración por el mecanismo existente de ai-slots.ts
+   * (harvest antes de emitir, reinyección después), sin cambios en su código.
+   */
+  it('el texto escrito a mano en un hueco flow-* sobrevive a la regeneración', async () => {
+    // GIVEN: una app emitida con un hueco flow-revisar relleno a mano
+    const { dir, appFile } = writeAppFile([pedidoFlow])
+    try {
+      const tree: Tree = createTreeWithEmptyWorkspace()
+      await appGenerator(tree, { name: 'demo', appFile, skipInstall: true })
+
+      const manual = '    const garment = await this.garmentRepository.findById(id)\n'
+      const filled = (tree.read(PROCESS_PATH, 'utf-8') ?? '').replace(
+        /(\/\/ @ai:begin flow-revisar[^\n]*\n)/,
+        `$1${manual}`
+      )
+      tree.write(PROCESS_PATH, filled)
+
+      // WHEN: se regenera la app sobre el mismo árbol
+      await appGenerator(tree, { name: 'demo', appFile, skipInstall: true })
+
+      // THEN: el hueco conserva el cuerpo manual y los demás siguen vacíos
+      const regenerated = tree.read(PROCESS_PATH, 'utf-8') ?? ''
+      expect(regenerated).toContain('await this.garmentRepository.findById(id)')
+      expect(regenerated).toContain('// @ai:begin flow-subsanar — Se subsana')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  /**
    * Spec 39, TASK-06: cableado de módulos. El ProcessesModule se registra en el
    * composition root (mismo patrón de parcheo que el plugin de auth) y puede inyectar
    * los repositorios porque cada módulo de entidad los exporta.

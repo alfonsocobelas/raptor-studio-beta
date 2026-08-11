@@ -24,7 +24,7 @@
 - [x] TASK-06: Tests + cableado de módulos: `ProcessesModule` con procesos como providers e
       imports de los módulos de las entidades citadas (verificar que exportan su repositorio;
       si no, añadir el export al generador de recurso), registro en el módulo del contexto.
-- [ ] TASK-07: Test de supervivencia: texto escrito a mano dentro de un hueco `flow-*`
+- [x] TASK-07: Test de supervivencia: texto escrito a mano dentro de un hueco `flow-*`
       sobrevive a la regeneración (harvest + reinyección de `ai-slots.ts` sin cambios).
 - [ ] TASK-08: Fixture de oro con flujos (diseño solaris): re-baseline, diff vacío, y
       comprobación de que las fixtures SIN flujos siguen dando diff vacío (no emiten `processes/`).

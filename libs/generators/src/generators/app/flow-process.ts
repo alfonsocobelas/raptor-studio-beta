@@ -1,6 +1,7 @@
 import { generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import type { BusinessFlow, FlowNode, ResourceDefinition } from '@acc/schema'
+import { harvestAiSlots, reinjectAiSlots } from '../resource/ai-slots'
 import { bfsOrder, renderFlowSteps } from './brief-doc'
 
 /**
@@ -95,6 +96,9 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
 
   for (const [ctx, ctxFlows] of byContext) {
     const processesDir = path.join(backendSrc, 'contexts', ctx, 'processes')
+    // supervivencia (TASK-07): lo escrito a mano en los huecos flow-* se cosecha del
+    // árbol anterior y se reinyecta tras regenerar — mismo mecanismo que el recurso
+    const survivors = harvestAiSlots(tree, processesDir)
 
     // el módulo lista TODOS los procesos del contexto: mismas substitutions en cada pasada (idempotente)
     const processNames = ctxFlows.map(flowProcessNames)
@@ -139,6 +143,8 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
         methodsBlock: methods.map(renderMethod).join('\n\n')
       })
     }
+
+    reinjectAiSlots(tree, processesDir, survivors)
   }
 
   registerInRoot(tree, backendSrc, [...byContext.keys()])

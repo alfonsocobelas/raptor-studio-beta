@@ -34,6 +34,17 @@ describe('strip-ai-slots generator (paso de entrega)', () => {
     expect(tree.read('apps/demo/b.ts', 'utf-8')).toBe('')
   })
 
+  it('strips apps listed in .nxignore (la app emitida es un workspace anidado ignorado)', async () => {
+    // GIVEN: la app emitida siempre entra en .nxignore — el strip no puede saltársela
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('.nxignore', 'apps/demo\n')
+    tree.write('apps/demo/a.ts', 'const a = 1\n// @ai:begin x\n// @ai:end\n')
+
+    await stripAiSlotsGenerator(tree, { directory: 'apps/demo' })
+
+    expect(tree.read('apps/demo/a.ts', 'utf-8')).toBe('const a = 1\n')
+  })
+
   it('fails loudly when the directory does not exist (guardarraíl de entrega)', async () => {
     const tree = createTreeWithEmptyWorkspace()
 
