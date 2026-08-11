@@ -112,11 +112,22 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(testId(fixture, 'flow-card-branch-enviar-correo')?.textContent).toContain('rama sí')
   })
 
-  it('cada bloque enseña su puerto de entrada: el círculo al que se une la flecha', () => {
+  // El puerto sirve para RECIBIR la flecha, así que solo se ve cuando hay una en el aire.
+  // Pasar por encima de un bloque enseña su asa negra, la de sacarla, y nada más.
+  it('los puertos están ocultos hasta que hay una flecha en el aire', () => {
     const fixture = mount()
+    const puerto = () => testId(fixture, 'flow-port-marcar-la-fila')?.style.opacity
 
-    expect(testId(fixture, 'flow-port-marcar-la-fila')).not.toBeNull()
-    expect(testId(fixture, 'flow-port-stock-10')).not.toBeNull()
+    expect(puerto()).toBe('0')
+
+    press(testId(fixture, 'flow-link-handle-quitar-el-aviso'))
+    fixture.detectChanges()
+
+    expect(puerto()).toBe('1')
+    // y al dejarlo, se vuelven a esconder
+    testId(fixture, 'flow-viewport')?.click()
+    fixture.detectChanges()
+    expect(puerto()).toBe('0')
   })
 
   it('unir es pulsar el asa y luego el bloque: sin arrastrar y sin puntería', () => {

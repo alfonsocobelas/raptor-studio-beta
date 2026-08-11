@@ -338,7 +338,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                    caer aquí no se rellena: engorda el borde y crece un poco. -->
               <span
                 class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-all"
-                [style.opacity]="portOn(card.group.id) ? 1 : 0"
+                [style.opacity]="portsOn() ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(card.group.id)"
                 [class.border-2]="isLinkTarget(card.group.id)"
                 [class.scale-125]="isLinkTarget(card.group.id)"
@@ -412,7 +412,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                    que se está arrastrando va a caer aquí, para saber a qué se va a unir. -->
               <span
                 class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-all"
-                [style.opacity]="portOn(item.node.id) ? 1 : 0"
+                [style.opacity]="portsOn() ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(item.node.id)"
                 [class.border-2]="isLinkTarget(item.node.id)"
                 [class.scale-125]="isLinkTarget(item.node.id)"
@@ -560,8 +560,6 @@ export class FlowViewComponent {
    * difícil; con dos clics no hay puntería que valga.
    */
   protected readonly linkFrom = signal<string | null>(null)
-  /** Bloque bajo el cursor, para enseñar sus puertos solo cuando se está mirando. */
-  private readonly hovered = signal<string | null>(null)
 
   /** El flujo dibujado lo elige el raíl; aquí solo se lee. */
   protected readonly activeName = this.active.flow
@@ -816,18 +814,18 @@ export class FlowViewComponent {
     this.orientation.toggle()
   }
 
-  /** Bloque bajo el cursor: los puertos solo se ven en el bloque que estás mirando. */
+  /** Con una conexión a medias, pasar por encima de un bloque lo marca como destino. */
   protected hoverBlock(id: string | null): void {
-    this.hovered.set(id)
     if (this.linkFrom()) this.linkTarget.set(id === this.linkFrom() ? null : id)
   }
 
   /**
-   * ¿Se ve el puerto de este bloque? Igual que el asa negra: escondido hasta que pasas
-   * por encima. Mientras hay una flecha en el aire se ven TODOS, que es cuando hacen falta.
+   * ¿Se ven los puertos? Solo mientras hay una flecha en el aire, que es para lo que
+   * sirven: RECIBIRLA. Pasar por encima de un bloque enseña su asa negra —la de sacar
+   * la flecha— y nada más; el puerto ahí no dice nada.
    */
-  protected portOn(id: string): boolean {
-    return this.hovered() === id || !!this.linking() || !!this.linkFrom()
+  protected portsOn(): boolean {
+    return !!this.linking() || !!this.linkFrom()
   }
 
   /** Esc suelta lo que haya a medias: la flecha en el aire y la edición abierta. */
