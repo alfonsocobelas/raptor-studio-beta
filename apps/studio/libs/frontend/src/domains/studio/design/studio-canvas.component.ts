@@ -235,11 +235,12 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           [class.canvas-surface]="mode() === 'views' || mode() === 'access'"
           [class.bg-background]="mode() === 'model' || mode() === 'flows'"
         >
-          <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
+          <!-- el hueco inferior deja pasar la sombra del mockup y el alto del chat en reposo;
+               justo eso y nada más, para que el chat quede pegado a la vista -->
           <main
             class="min-h-0 flex-1 overflow-auto"
             [class.px-10]="mode() === 'views'"
-            [class.pb-28]="mode() === 'views'"
+            [class.pb-24]="mode() === 'views'"
             [class.pt-6]="mode() === 'views'"
             [class.p-8]="mode() === 'flows'"
           >
@@ -499,7 +500,11 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           <!-- el chat FLOTA sobre el lienzo, anclado al pie: se le habla de lo que se está
                mirando y no le roba alto al lienzo. Sin altura fija: vacío es una barra, y
                con conversación crece hasta su tope. -->
-          <div class="pointer-events-none absolute inset-x-0 bottom-5 z-20 px-10">
+          <div
+            class="pointer-events-none absolute inset-x-0 z-20 px-10"
+            [class.bottom-3]="mode() === 'views'"
+            [class.bottom-5]="mode() !== 'views'"
+          >
             <!-- centrado en todos los lienzos; en los diagramas la barra es más estrecha -->
             <div
               class="bg-card chat-card pointer-events-auto mx-auto max-h-72 rounded-xl border p-3"
@@ -524,11 +529,20 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
-    /* Papel del lienzo: la referencia de docs/style da #f1efeb y Alfonso lo quiere un
-       pelín por debajo. El MISMO tono viste la pestaña activa de la barra
-       (.studio-mode-active en styles.css): si cambia uno, cambia el otro. */
+    /* Papel del lienzo: el MISMO que el de Modelo y Flujos, --background a secas
+       (decisión de Alfonso, 2026-08-11: el gris cálido de docs/style oscurecía
+       demasiado). Rejilla de PUNTOS con la misma geometría que allí —celda de 24px—
+       pero el punto en el naranja #d75f3d al 35% —a opacidad plena la retícula cantaba
+       más que la maqueta—, no en tinta. */
     .canvas-surface {
-      background-color: color-mix(in oklab, var(--muted) 96%, var(--foreground) 4%);
+      background-color: var(--background);
+      background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
+        transparent 1.4px
+      );
+      background-size: 24px 24px;
+      background-position: -12px -12px;
     }
     /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
        en el padding del scroll, así el recorte del overflow no deja una línea. */

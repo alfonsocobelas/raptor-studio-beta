@@ -439,12 +439,13 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
   `,
   styles: `
-    /* Misma rejilla de PUNTOS que el lienzo de Modelo (decisión de Alfonso, 2026-08-11):
-       los dos lienzos son el mismo papel, así que se dibujan igual. */
+    /* Misma rejilla de PUNTOS que los lienzos de Modelo y Vistas (decisión de Alfonso,
+       2026-08-11): los tres son el mismo papel, así que se dibujan igual — celda de 24px
+       y punto en el naranja #d75f3d al 35%. */
     .flow-grid {
       background-image: radial-gradient(
         circle,
-        color-mix(in oklab, var(--foreground) 14%, transparent) 1.4px,
+        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
         transparent 1.4px
       );
       background-size: 24px 24px;

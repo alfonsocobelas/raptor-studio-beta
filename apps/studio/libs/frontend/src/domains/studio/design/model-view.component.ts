@@ -257,11 +257,13 @@ interface DiagramEdge {
     /* Rejilla del diagrama, como en la referencia: líneas finas sobre el papel. El
        tamaño es el del layout (MODEL_GRID) para que las cajas caigan sobre la retícula. */
     /* Lienzo de puntos: la retícula marca la misma celda de 24px, pero en vez de líneas
-       continuas deja un punto en cada cruce. Mismo tono cálido derivado de --border. */
+       continuas deja un punto en cada cruce. El punto va en el naranja #d75f3d al 35%,
+       el mismo que el lienzo de Vistas (decisión de Alfonso, 2026-08-11): los tres
+       lienzos son el mismo papel, así que se dibujan igual. */
     .model-grid {
       background-image: radial-gradient(
         circle,
-        color-mix(in oklab, var(--foreground) 14%, transparent) 1.4px,
+        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
         transparent 1.4px
       );
       background-size: 24px 24px;
