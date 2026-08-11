@@ -170,7 +170,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   [attr.stroke-dasharray]="item.alternate ? '5 4' : null"
                   [attr.marker-end]="item.alternate ? 'url(#flow-arrow-alt)' : 'url(#flow-arrow)'"
                 />
-                @if (item.label) {
+              </g>
+            }
+            <!-- las etiquetas van en su PROPIA capa, después de todas las líneas: en SVG
+                 manda el orden del documento, y dentro del <g> de su arista la pastilla
+                 quedaba tapada por las flechas que se pintaban después -->
+            @for (item of edges(); track item.from + '→' + item.to + (item.label ?? '')) {
+              @if (item.label) {
+                <g class="pointer-events-auto cursor-pointer" (click)="selectEdge($event, item)">
                   <!-- la etiqueta de una salida de decisión va en pastilla: se lee sobre la rejilla -->
                   <rect
                     [attr.x]="item.line.labelX - 22"
@@ -191,8 +198,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   >
                     {{ item.label }}
                   </text>
-                }
-              </g>
+                </g>
+              }
             }
             @if (linking(); as ghost) {
               <line
