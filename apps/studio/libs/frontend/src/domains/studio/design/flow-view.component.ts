@@ -260,12 +260,22 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
             (dblclick)="startEdit(item.node)"
           >
             @if (item.node.kind === 'decision') {
-              <!-- el rombo ocupa el nodo y lleva el texto dentro: la forma ya dice que decide -->
-              <div
-                class="bg-card flow-card absolute inset-0 border"
-                [class.ring-2]="isNodeSelected(item.node.id)"
-                style="clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%)"
-              ></div>
+              <!-- el rombo va en SVG: con clip-path el recorte se come el borde, y el borde
+                   negro es justo lo que dice «aquí se decide» en la referencia -->
+              <svg
+                class="absolute inset-0 overflow-visible"
+                [attr.viewBox]="'0 0 ' + item.box.width + ' ' + item.box.height"
+                [attr.width]="item.box.width"
+                [attr.height]="item.box.height"
+              >
+                <polygon
+                  [attr.points]="diamondPoints(item.box)"
+                  class="fill-card flow-diamond"
+                  [class.stroke-primary]="isNodeSelected(item.node.id)"
+                  [class.stroke-foreground]="!isNodeSelected(item.node.id)"
+                  [attr.stroke-width]="isNodeSelected(item.node.id) ? 3 : 1.5"
+                />
+              </svg>
             } @else {
               <div
                 class="bg-card flow-card absolute inset-0 rounded-[10px] border"
@@ -314,6 +324,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 [class.justify-center]="item.node.kind === 'decision'"
                 [class.w-full]="item.node.kind === 'decision'"
                 [class.text-center]="item.node.kind === 'decision'"
+                [class.px-5]="item.node.kind === 'decision'"
               >
                 @if (numbers()[item.node.id]; as number) {
                   <span
@@ -335,7 +346,16 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                       {{ kindLabel(item.node.kind) }}
                     </span>
                   }
-                  <span class="block truncate font-semibold leading-tight">{{ item.node.text }}</span>
+                  <!-- dentro del rombo el ancho útil es poco: el texto se parte en líneas
+                       en vez de cortarse, como el «stock < 10» de la referencia -->
+                  <span
+                    [class]="
+                      item.node.kind === 'decision'
+                        ? 'block text-[11px] font-semibold leading-tight'
+                        : 'block truncate font-semibold leading-tight'
+                    "
+                    >{{ item.node.text }}</span
+                  >
                   @if (item.node.entity) {
                     <span class="block truncate text-[11px] font-normal opacity-60">{{ item.node.entity }}</span>
                   }
@@ -349,13 +369,19 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
   `,
   styles: `
-    /* Flujos se queda con la retícula de líneas (decisión de Alfonso): los puntos son
-       del lienzo de modelo. Misma celda de 24px y mismo tono cálido. */
+    /* Misma rejilla de PUNTOS que el lienzo de Modelo (decisión de Alfonso, 2026-08-11):
+       los dos lienzos son el mismo papel, así que se dibujan igual. */
     .flow-grid {
-      background-image:
-        linear-gradient(to right, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px),
-        linear-gradient(to bottom, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px);
+      background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--foreground) 14%, transparent) 1.4px,
+        transparent 1.4px
+      );
       background-size: 24px 24px;
+    }
+    /* El rombo lleva la misma sombra que las píldoras: flota sobre el papel igual que ellas. */
+    .flow-diamond {
+      filter: drop-shadow(0 1px 2px oklch(0 0 0 / 8%)) drop-shadow(0 6px 14px oklch(0 0 0 / 10%));
     }
     /* Los nodos flotan sobre la rejilla, como las cajas del modelo. */
     .flow-card {
@@ -411,9 +437,14 @@ export class FlowViewComponent {
     // sin start el layout viene vacío (el gate ya lo rechaza): que el lienzo no se caiga
     return flow.nodes.map(node => ({
       node,
-      box: flowNodeBox(positions[node.id] ?? { x: FLOW_GRID.margin, y: FLOW_GRID.margin })
+      box: flowNodeBox(positions[node.id] ?? { x: FLOW_GRID.margin, y: FLOW_GRID.margin }, node.kind)
     }))
   })
+
+  /** Los cuatro vértices del rombo, con 1px de margen para que el trazo no se recorte. */
+  protected diamondPoints(box: NodeBox): string {
+    return `${box.width / 2},1 ${box.width - 1},${box.height / 2} ${box.width / 2},${box.height - 1} 1,${box.height / 2}`
+  }
 
   /** Posiciones ya colocadas de un flujo, sin el prefijo del nombre. */
   private frozenOf(flowName: string): Record<string, NodePosition> {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BusinessFlow } from '@acc/schema'
 import {
+  FLOW_DECISION,
   FLOW_GRID,
   FLOW_NODE,
   flowAlternateEdges,
@@ -35,7 +36,10 @@ describe('flowLayout — capas BFS desde el start', () => {
 
     const layerX = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.colWidth
     expect(positions['inicio']).toEqual({ x: layerX(0), y: FLOW_GRID.margin })
-    expect(positions['stock']).toEqual({ x: layerX(1), y: FLOW_GRID.margin })
+    // 'stock' es una decisión: el rombo es más pequeño y va centrado en su hueco
+    const centradoX = (FLOW_NODE.width - FLOW_DECISION.size) / 2
+    const centradoY = (FLOW_NODE.height - FLOW_DECISION.size) / 2
+    expect(positions['stock']).toEqual({ x: layerX(1) + centradoX, y: FLOW_GRID.margin + centradoY })
     // capa 2: 'pedir' < 'reservar' alfabéticamente, así que 'pedir' va arriba
     expect(positions['pedir']).toEqual({ x: layerX(2), y: FLOW_GRID.margin })
     expect(positions['reservar']).toEqual({ x: layerX(2), y: FLOW_GRID.margin + FLOW_GRID.rowHeight })
@@ -161,6 +165,33 @@ describe('flowNodeBox — la caja de un nodo de flujo', () => {
       width: FLOW_NODE.width,
       height: FLOW_NODE.height
     })
+  })
+
+  it('la decisión es CUADRADA: un rombo alargado no se lee como rombo', () => {
+    expect(flowNodeBox({ x: 100, y: 60 }, 'decision')).toEqual({
+      x: 100,
+      y: 60,
+      width: FLOW_DECISION.size,
+      height: FLOW_DECISION.size
+    })
+  })
+
+})
+
+describe('flowLayout — el rombo comparte carril con los pasos', () => {
+  it('centra la decisión en su fila: la flecha entra y sale plana, sin subir y bajar', () => {
+    const positions = flowLayout(pedidoFlow())
+    const paso = flowNodeBox(positions['inicio'])
+    const rombo = flowNodeBox(positions['stock'], 'decision')
+
+    // los vértices izquierdo y derecho del rombo caen a la altura por la que entra la flecha
+    expect(rombo.y + rombo.height / 2).toBe(paso.y + paso.height / 2)
+  })
+
+  it('una posición congelada manda sobre el centrado: lo arrastrado no se recoloca', () => {
+    const positions = flowLayout(pedidoFlow(), 'horizontal', { stock: { x: 700, y: 400 } })
+
+    expect(positions['stock']).toEqual({ x: 700, y: 400 })
   })
 })
 
@@ -289,7 +320,11 @@ describe('orientación del flujo', () => {
 
     const capaY = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
     expect(positions['inicio']).toEqual({ x: FLOW_GRID.margin, y: capaY(0) })
-    expect(positions['stock']).toEqual({ x: FLOW_GRID.margin, y: capaY(1) })
+    // la decisión va centrada en su hueco, también leyendo el proceso en columna
+    expect(positions['stock']).toEqual({
+      x: FLOW_GRID.margin + (FLOW_NODE.width - FLOW_DECISION.size) / 2,
+      y: capaY(1) + (FLOW_NODE.height - FLOW_DECISION.size) / 2
+    })
     expect(positions['pedir']).toEqual({ x: FLOW_GRID.margin, y: capaY(2) })
     expect(positions['reservar']).toEqual({ x: FLOW_GRID.margin + FLOW_GRID.colWidth, y: capaY(2) })
   })

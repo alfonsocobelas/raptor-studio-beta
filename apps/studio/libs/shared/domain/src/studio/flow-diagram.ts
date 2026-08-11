@@ -1,4 +1,4 @@
-import type { BusinessFlow } from '@acc/schema'
+import type { BusinessFlow, FlowNodeKind } from '@acc/schema'
 import type { NodeBox, NodePosition } from './model-diagram'
 
 /**
@@ -12,14 +12,25 @@ export const FLOW_GRID = {
   margin: 40
 } as const
 
-/** Dimensiones fijas del nodo de flujo: el rombo y la píldora son CSS, no geometría. */
+/** Dimensiones fijas del nodo de flujo: la píldora es CSS, la geometría es esta. */
 export const FLOW_NODE = {
   width: 200,
   height: 62
 } as const
 
-export function flowNodeBox(position: NodePosition): NodeBox {
-  return { x: position.x, y: position.y, width: FLOW_NODE.width, height: FLOW_NODE.height }
+/** La decisión es un ROMBO, y un rombo solo se lee como rombo si es cuadrado. */
+export const FLOW_DECISION = {
+  size: 128
+} as const
+
+export function flowNodeSize(kind?: FlowNodeKind): { width: number; height: number } {
+  return kind === 'decision'
+    ? { width: FLOW_DECISION.size, height: FLOW_DECISION.size }
+    : { width: FLOW_NODE.width, height: FLOW_NODE.height }
+}
+
+export function flowNodeBox(position: NodePosition, kind?: FlowNodeKind): NodeBox {
+  return { x: position.x, y: position.y, ...flowNodeSize(kind) }
 }
 
 /**
@@ -30,14 +41,9 @@ export function flowNodeBox(position: NodePosition): NodeBox {
 /** El proceso se puede leer en fila (izquierda→derecha) o en columna (arriba→abajo). */
 export type FlowOrientation = 'horizontal' | 'vertical'
 
-/** ¿Se pisan dos nodos colocados en estas posiciones? */
-function seSolapan(a: NodePosition, b: NodePosition): boolean {
-  return (
-    a.x < b.x + FLOW_NODE.width &&
-    b.x < a.x + FLOW_NODE.width &&
-    a.y < b.y + FLOW_NODE.height &&
-    b.y < a.y + FLOW_NODE.height
-  )
+/** ¿Se pisan estas dos cajas? */
+function seSolapan(a: NodeBox, b: NodeBox): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
 }
 
 /**
@@ -76,29 +82,38 @@ export function flowLayout(
   // La capa avanza en el eje del proceso y los nodos que la comparten (las ramas de
   // una decisión) se reparten en el eje perpendicular. Lo congelado no se toca; lo
   // demás aterriza en su hueco de capa y, si está pisado, se aparta una fila.
+  const kinds = new Map(flow.nodes.map(node => [node.id, node.kind]))
   const positions: Record<string, NodePosition> = {}
-  for (const node of flow.nodes) if (frozen[node.id]) positions[node.id] = frozen[node.id]
-
-  const libre = (candidato: NodePosition) =>
-    !Object.values(positions).some(puesta => seSolapan(candidato, puesta))
+  const puestas: NodeBox[] = []
+  for (const node of flow.nodes) {
+    if (!frozen[node.id]) continue
+    positions[node.id] = frozen[node.id]
+    puestas.push(flowNodeBox(frozen[node.id], node.kind))
+  }
 
   for (const [depth, ids] of layers) {
     ;[...ids].sort().forEach((sibling, index) => {
       if (positions[sibling]) return
+      // el nodo se CENTRA en su hueco: un rombo de 128 alineado por arriba junto a
+      // píldoras de 62 dejaría la flecha subiendo y bajando en cada decisión
+      const size = flowNodeSize(kinds.get(sibling))
+      const dx = (FLOW_NODE.width - size.width) / 2
+      const dy = (FLOW_NODE.height - size.height) / 2
       const slot = (paso: number): NodePosition =>
         orientation === 'horizontal'
           ? {
-              x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth,
-              y: FLOW_GRID.margin + (index + paso) * FLOW_GRID.rowHeight
+              x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth + dx,
+              y: FLOW_GRID.margin + (index + paso) * FLOW_GRID.rowHeight + dy
             }
           : {
-              x: FLOW_GRID.margin + (index + paso) * FLOW_GRID.colWidth,
-              y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
+              x: FLOW_GRID.margin + (index + paso) * FLOW_GRID.colWidth + dx,
+              y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight + dy
             }
       let paso = 0
       // tope defensivo: mejor un solape que un bucle infinito en un render
-      while (paso < 50 && !libre(slot(paso))) paso++
+      while (paso < 50 && puestas.some(puesta => seSolapan({ ...slot(paso), ...size }, puesta))) paso++
       positions[sibling] = slot(paso)
+      puestas.push({ ...slot(paso), ...size })
     })
   }
   return positions
