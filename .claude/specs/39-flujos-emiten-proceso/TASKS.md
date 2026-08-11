@@ -9,7 +9,7 @@
 - [x] TASK-01: Exportar de `brief-doc.ts` lo que la derivación reutiliza (`bfsOrder`,
       numeración y render del mapa) sin cambiar su salida — tests actuales en verde
       y golden intacto (refactor puro).
-- [ ] TASK-02: Tests + helper `flow-process.ts` — derivación de nombres: carpeta/fichero
+- [x] TASK-02: Tests + helper `flow-process.ts` — derivación de nombres: carpeta/fichero
       kebab del flujo, clase PascalCase + sufijo `Process`, método camelCase por nodo `step`
       (los nodos `start`/`end`/`decision` no derivan método).
 - [ ] TASK-03: Tests + derivación de firmas y constructor: parámetro `id: <Entity>Id` solo
