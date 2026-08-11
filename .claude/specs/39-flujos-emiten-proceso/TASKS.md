@@ -26,8 +26,12 @@
       si no, añadir el export al generador de recurso), registro en el módulo del contexto.
 - [x] TASK-07: Test de supervivencia: texto escrito a mano dentro de un hueco `flow-*`
       sobrevive a la regeneración (harvest + reinyección de `ai-slots.ts` sin cambios).
-- [ ] TASK-08: Fixture de oro con flujos (diseño solaris): re-baseline, diff vacío, y
+- [x] TASK-08: Fixture de oro con flujos (diseño solaris): re-baseline, diff vacío, y
       comprobación de que las fixtures SIN flujos siguen dando diff vacío (no emiten `processes/`).
+      **Desviación 2026-08-11**: los flujos se congelan en el diseño `golden` (la app «todo
+      encendido» que ya cubre el gate), no en solaris — una tercera fixture de ~800 ficheros
+      no añadía cobertura. `app-mongo` queda como control sin flujos. El criterio de solaris
+      (5 métodos, 2 repos) se verifica en TASK-09.
 - [ ] TASK-09: Gate de app real: la app emitida con procesos compila y su suite pasa
       (gate de spec 26 intacto); criterio de los 5 métodos y 2 repos de solaris verificado.
 
