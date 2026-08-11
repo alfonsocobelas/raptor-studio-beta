@@ -48,10 +48,16 @@
       inverso: `listEmptyAiSlots(tree, dir, prefix)`, misma `SLOT_REGEX`. El comando es el
       generador `fill-flow-slots`; el informe va en función pura porque Nx invoca como
       callback lo que devuelve un generador.
-- [ ] TASK-11: Tests + constructor de prompt por hueco: contexto acotado (CLAUDE.md del
+- [x] TASK-11: Tests + constructor de prompt por hueco: contexto acotado (CLAUDE.md del
       negocio, mapa del flujo, JSDoc del paso, firmas de los repos inyectados) + contrato
       coreográfico (cuerpo autosuficiente, guarda de estado, prohibido llamar a otros pasos,
       prohibido escribir fuera del hueco). Nada más entra en el prompt.
+      **Nota 2026-08-11**: el CLAUDE.md entra sin su sección «Procesos de negocio» (el mapa
+      llega acotado al flujo del paso por el JSDoc de la clase; con varios flujos, meterlos
+      todos ensanchaba justo lo que se pide estrecho). Las firmas de los repos se leen del
+      puerto REAL resolviendo el import del proceso, no de una suposición. Bug cazado
+      inspeccionando un prompt real, no por los tests: la línea `Firma:` arrastraba desde el
+      primer `async` del fichero — los `toContain` pasaban porque la firma buena era su cola.
 - [ ] TASK-12: Tests + escritura acotada y gate determinista: escritura validada por
       `SLOT_REGEX` (edición fuera del hueco invalida); gate por hueco = build + test de la
       app emitida en verde Y regeneración + reinyección sin pérdida; si falla, el hueco se
