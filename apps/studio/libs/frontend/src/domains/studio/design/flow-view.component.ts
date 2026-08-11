@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
 import {
-  FLOW_GRID,
-  FLOW_NODE,
+  canvasExtent,
+  clampToCanvas,
   flowEdgeCurve,
   flowStepNumbers,
   flowAlternateEdges,
@@ -386,10 +386,8 @@ export class FlowViewComponent {
   })
 
   /** El lienzo abarca todos los nodos del flujo activo, con margen para respirar. */
-  protected readonly surface = computed(() => ({
-    width: Math.max(...this.nodes().map(n => n.box.x + n.box.width), FLOW_NODE.width) + FLOW_GRID.margin,
-    height: Math.max(...this.nodes().map(n => n.box.y + n.box.height), FLOW_NODE.height) + FLOW_GRID.margin
-  }))
+  /** El lienzo es amplio: el contenido más un colchón, y nunca menos que el mínimo. */
+  protected readonly surface = computed(() => canvasExtent(this.nodes().map(n => n.box)))
 
   protected selectNode(event: MouseEvent, id: string): void {
     event.stopPropagation()
@@ -469,7 +467,10 @@ export class FlowViewComponent {
     const onMove = (move: PointerEvent) =>
       this.manual.update(manual => ({
         ...manual,
-        [key]: { x: origin.x + move.clientX - down.clientX, y: origin.y + move.clientY - down.clientY }
+        [key]: clampToCanvas({
+          x: origin.x + move.clientX - down.clientX,
+          y: origin.y + move.clientY - down.clientY
+        })
       }))
     const onUp = () => {
       handle.removeEventListener('pointermove', onMove)

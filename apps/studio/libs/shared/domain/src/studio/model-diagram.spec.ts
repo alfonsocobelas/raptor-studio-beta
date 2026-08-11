@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { DraftResource } from './draft-resource'
 import {
   autoLayout,
+  canvasExtent,
+  clampToCanvas,
   edgeCurve,
   edgeLine,
   modelEdges,
@@ -239,5 +241,41 @@ describe('edgeCurve — saltos largos', () => {
     const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
 
     expect(cy1).toBe(curva.y1)
+  })
+})
+
+describe('canvasExtent — el lienzo tiene sitio de sobra para seguir dibujando', () => {
+  const caja = (x: number, y: number): NodeBox => ({ x, y, width: 240, height: 120 })
+
+  it('un lienzo vacío ya ocupa el mínimo: se puede arrastrar desde el primer momento', () => {
+    const extent = canvasExtent([])
+
+    expect(extent.width).toBeGreaterThanOrEqual(2000)
+    expect(extent.height).toBeGreaterThanOrEqual(1200)
+  })
+
+  it('deja un colchón por detrás del contenido, no lo recorta al borde', () => {
+    const extent = canvasExtent([caja(4000, 3000)])
+
+    expect(extent.width).toBeGreaterThan(4000 + 240)
+    expect(extent.height).toBeGreaterThan(3000 + 120)
+  })
+
+  it('crece con la caja más lejana, no con la primera', () => {
+    const cerca = canvasExtent([caja(0, 0)])
+    const lejos = canvasExtent([caja(0, 0), caja(3000, 2000)])
+
+    expect(lejos.width).toBeGreaterThan(cerca.width)
+    expect(lejos.height).toBeGreaterThan(cerca.height)
+  })
+})
+
+describe('clampToCanvas — nada se arrastra fuera del lienzo', () => {
+  it('una posición negativa vuelve al borde: un nodo arrastrado arriba no se pierde', () => {
+    expect(clampToCanvas({ x: -80, y: -12 })).toEqual({ x: 0, y: 0 })
+  })
+
+  it('una posición válida no se toca', () => {
+    expect(clampToCanvas({ x: 120, y: 340 })).toEqual({ x: 120, y: 340 })
   })
 })

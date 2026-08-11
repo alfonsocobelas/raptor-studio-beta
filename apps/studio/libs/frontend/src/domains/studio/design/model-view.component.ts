@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core'
 import {
-  MODEL_GRID,
   MODEL_NODE,
   autoLayout,
+  canvasExtent,
+  clampToCanvas,
   edgeCurve,
   modelEdges,
   nodeAt,
@@ -420,7 +421,10 @@ export class ModelViewComponent {
     const onMove = (move: PointerEvent) =>
       this.manual.update(manual => ({
         ...manual,
-        [name]: { x: origin.x + move.clientX - down.clientX, y: origin.y + move.clientY - down.clientY }
+        [name]: clampToCanvas({
+          x: origin.x + move.clientX - down.clientX,
+          y: origin.y + move.clientY - down.clientY
+        })
       }))
     const onUp = () => {
       handle.removeEventListener('pointermove', onMove)
@@ -430,9 +434,6 @@ export class ModelViewComponent {
     handle.addEventListener('pointerup', onUp)
   }
 
-  /** El lienzo abarca todas las cajas; con margen para que la última respire. */
-  protected readonly surface = computed(() => ({
-    width: Math.max(...this.nodes().map(n => n.box.x + n.box.width), 0) + MODEL_GRID.margin,
-    height: Math.max(...this.nodes().map(n => n.box.y + n.box.height), 0) + MODEL_GRID.margin
-  }))
+  /** El lienzo es amplio: el contenido más un colchón, y nunca menos que el mínimo. */
+  protected readonly surface = computed(() => canvasExtent(this.nodes().map(n => n.box)))
 }

@@ -184,3 +184,28 @@ export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeC
     labelY: salto ? (suelo + Math.max(y1, y2)) / 2 : (y1 + y2) / 2
   }
 }
+
+/** Mínimos del lienzo: hay sitio para arrastrar aunque no haya nada dibujado. */
+export const CANVAS_MIN = { width: 2400, height: 1400 } as const
+
+/** Colchón por detrás del contenido, para que arrastrar al borde no se acabe el papel. */
+export const CANVAS_PADDING = 600
+
+/**
+ * Tamaño del lienzo: el contenido más un colchón generoso, y nunca menos que el
+ * mínimo. Antes medía justo lo que ocupaban las cajas, así que no se podía arrastrar
+ * nada más allá del borde ni había scroll donde seguir dibujando.
+ */
+export function canvasExtent(boxes: NodeBox[]): { width: number; height: number } {
+  const derecha = Math.max(0, ...boxes.map(box => box.x + box.width))
+  const abajo = Math.max(0, ...boxes.map(box => box.y + box.height))
+  return {
+    width: Math.max(CANVAS_MIN.width, derecha + CANVAS_PADDING),
+    height: Math.max(CANVAS_MIN.height, abajo + CANVAS_PADDING)
+  }
+}
+
+/** Ningún nodo se arrastra fuera por arriba o por la izquierda: ahí no hay lienzo. */
+export function clampToCanvas(position: NodePosition): NodePosition {
+  return { x: Math.max(0, position.x), y: Math.max(0, position.y) }
+}
