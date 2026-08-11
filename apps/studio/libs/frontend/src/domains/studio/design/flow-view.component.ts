@@ -277,7 +277,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
   `,
   styles: `
-    /* Misma rejilla que el diagrama de modelo: los dos lienzos son el mismo papel. */
+    /* Flujos se queda con la retícula de líneas (decisión de Alfonso): los puntos son
+       del lienzo de modelo. Misma celda de 24px y mismo tono cálido. */
     .flow-grid {
       background-image:
         linear-gradient(to right, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px),

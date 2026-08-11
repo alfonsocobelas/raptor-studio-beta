@@ -235,14 +235,16 @@ interface DiagramEdge {
   styles: `
     /* Rejilla del diagrama, como en la referencia: líneas finas sobre el papel. El
        tamaño es el del layout (MODEL_GRID) para que las cajas caigan sobre la retícula. */
-    /* Rejilla muestreada de 19A: líneas #efece6 sobre papel #fbfaf8, celda de 24px. Se
-       mezcla con --border (cálido), no con --foreground: con el gris del texto la retícula
-       salía fría y se notaba al lado de las cajas. */
+    /* Lienzo de puntos: la retícula marca la misma celda de 24px, pero en vez de líneas
+       continuas deja un punto en cada cruce. Mismo tono cálido derivado de --border. */
     .model-grid {
-      background-image:
-        linear-gradient(to right, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px),
-        linear-gradient(to bottom, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px);
+      background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--border) 55%, var(--background)) 1.3px,
+        transparent 1.3px
+      );
       background-size: 24px 24px;
+      background-position: -12px -12px;
     }
     /* Cabecera de caja: gris suave, y tinta cuando es la elegida. Como clases propias,
        porque bg-muted y bg-foreground son utilidades que se pisan por orden de hoja. */
