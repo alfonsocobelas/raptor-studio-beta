@@ -135,6 +135,40 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(testId(fixture, 'flow-link-hint')).toBeNull()
   })
 
+  it('una flecha que no se une a nada NO se queda dibujada en el lienzo', () => {
+    const fixture = mount()
+    const asa = testId(fixture, 'flow-link-handle-quitar-el-aviso') as HTMLElement
+    asa.setPointerCapture = () => undefined
+
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 400, clientY: 600 }))
+    fixture.detectChanges()
+    expect(testId(fixture, 'flow-ghost-edge')).not.toBeNull()
+
+    // soltar en el vacío: la flecha desaparece y no se ha creado ningún tramo
+    window.dispatchEvent(new MouseEvent('pointerup', { clientX: 400, clientY: 600 }))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'flow-ghost-edge')).toBeNull()
+    expect(store.flows()[0].edges.some(edge => edge.from === 'quitar-el-aviso' && edge.to !== 'fin')).toBe(false)
+  })
+
+  it('si el puntero se cancela a mitad del gesto, la flecha tampoco se queda', () => {
+    const fixture = mount()
+    const asa = testId(fixture, 'flow-link-handle-quitar-el-aviso') as HTMLElement
+    asa.setPointerCapture = () => undefined
+
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 400, clientY: 600 }))
+    fixture.detectChanges()
+    expect(testId(fixture, 'flow-ghost-edge')).not.toBeNull()
+
+    window.dispatchEvent(new MouseEvent('pointercancel', {}))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'flow-ghost-edge')).toBeNull()
+  })
+
   it('pulsar una FILA cierra la flecha contra su tarjeta, no contra la fila', () => {
     const fixture = mount()
 

@@ -334,12 +334,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 </button>
               </div>
 
-              <!-- puerto de ENTRADA: el círculo del prototipo, encendido si la flecha cae aquí -->
+              <!-- puerto de ENTRADA: el círculo BLANCO del prototipo. Cuando la flecha va a
+                   caer aquí no se rellena: engorda el borde y crece un poco. -->
               <span
-                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-opacity"
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-all"
                 [style.opacity]="portOn(card.group.id) ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(card.group.id)"
-                [class.bg-foreground]="isLinkTarget(card.group.id)"
+                [class.border-2]="isLinkTarget(card.group.id)"
+                [class.scale-125]="isLinkTarget(card.group.id)"
                 [attr.data-testid]="'flow-port-' + card.group.id"
               ></span>
 
@@ -409,10 +411,11 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               <!-- puerto de ENTRADA: el círculo del prototipo. Se enciende cuando la flecha
                    que se está arrastrando va a caer aquí, para saber a qué se va a unir. -->
               <span
-                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-opacity"
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-all"
                 [style.opacity]="portOn(item.node.id) ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(item.node.id)"
-                [class.bg-foreground]="isLinkTarget(item.node.id)"
+                [class.border-2]="isLinkTarget(item.node.id)"
+                [class.scale-125]="isLinkTarget(item.node.id)"
                 [attr.data-testid]="'flow-port-' + item.node.id"
               ></span>
 
@@ -959,12 +962,16 @@ export class FlowViewComponent {
           y: origin.y + (move.clientY - down.clientY) / this.camera().zoom
         }
       }))
-    const onUp = () => {
-      handle.removeEventListener('pointermove', onMove)
-      handle.removeEventListener('pointerup', onUp)
+    // en la VENTANA y no en el bloque: si el puntero se cancela o el bloque se redibuja
+    // a mitad del arrastre, el listener del bloque moría y la caja se quedaba pegada al cursor
+    const cerrar = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', cerrar)
+      window.removeEventListener('pointercancel', cerrar)
     }
-    handle.addEventListener('pointermove', onMove)
-    handle.addEventListener('pointerup', onUp)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', cerrar)
+    window.addEventListener('pointercancel', cerrar)
   }
 
   /**
@@ -997,22 +1004,30 @@ export class FlowViewComponent {
       const candidato = this.blockNear(point)
       this.linkTarget.set(candidato === id ? null : candidato)
     }
-    const onUp = (up: PointerEvent) => {
-      handle.removeEventListener('pointermove', onMove)
-      handle.removeEventListener('pointerup', onUp)
+    /**
+     * El fantasma se borra SIEMPRE al acabar el gesto, termine como termine. Estaba
+     * colgado del `pointerup` del asa, así que si el puntero se cancelaba —o el asa
+     * se redibujaba— la flecha se quedaba dibujada en el lienzo para siempre.
+     */
+    const cerrar = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', cerrar)
       this.linking.set(null)
       this.linkTarget.set(null)
+    }
+    const onUp = (up: PointerEvent) => {
       // soltar sin moverse NO es un arrastre fallido: es un clic, y deja el origen
       // ARMADO para unir con un segundo clic en el bloque destino
       const apenasSeMovio = Math.hypot(up.clientX - down.clientX, up.clientY - down.clientY) < 5
-      if (apenasSeMovio) {
-        this.linkFrom.set(id)
-        return
-      }
-      this.connect(id, this.blockNear(toWorld(up)))
+      const destino = apenasSeMovio ? null : this.blockNear(toWorld(up))
+      cerrar()
+      if (apenasSeMovio) this.linkFrom.set(id)
+      else this.connect(id, destino)
     }
-    handle.addEventListener('pointermove', onMove)
-    handle.addEventListener('pointerup', onUp)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', cerrar)
   }
 
   /**
