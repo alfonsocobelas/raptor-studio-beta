@@ -12,7 +12,7 @@
 - [x] TASK-02: Tests + helper `flow-process.ts` — derivación de nombres: carpeta/fichero
       kebab del flujo, clase PascalCase + sufijo `Process`, método camelCase por nodo `step`
       (los nodos `start`/`end`/`decision` no derivan método).
-- [ ] TASK-03: Tests + derivación de firmas y constructor: parámetro `id: <Entity>Id` solo
+- [x] TASK-03: Tests + derivación de firmas y constructor: parámetro `id: <Entity>Id` solo
       si el nodo declara `entity`; repos de las entidades citadas, deduplicados, en orden
       de primera aparición BFS.
 - [ ] TASK-04: Tests + derivación de JSDoc: cabecera de clase (nombre + descripción + mapa

@@ -1,5 +1,5 @@
 import type { BusinessFlow } from '@acc/schema'
-import { flowProcessNames, flowStepMethods } from './flow-process'
+import { flowProcessNames, flowRepoDeps, flowStepMethods } from './flow-process'
 
 /**
  * Spec 39, TASK-02: derivación de nombres del proceso emitido. Toda la lógica vive
@@ -40,6 +40,55 @@ describe('flow-process — derivación de nombres (spec 39)', () => {
     // THEN: ni start, ni decision, ni end — y 'planifica-montaje' → 'planificaMontaje'
     expect(methods.map(m => m.methodName)).toEqual(['presupuesto', 'planificaMontaje'])
     expect(methods.map(m => m.node.id)).toEqual(['presupuesto', 'planifica-montaje'])
+  })
+
+  it('la firma lleva id tipado solo si el nodo declara entity', () => {
+    // GIVEN: un flujo con un step sin entidad
+    const conCierre: BusinessFlow = {
+      ...flow,
+      nodes: [...flow.nodes, { id: 'cierre-mensual', kind: 'step', text: 'Cierre administrativo' }],
+      edges: [...flow.edges, { from: 'fin', to: 'cierre-mensual' }]
+    }
+
+    // WHEN
+    const methods = flowStepMethods(conCierre)
+
+    // THEN: firmas estables (el harvest no cubre firmas): id tipado con el VO del canon o nada
+    expect(methods.find(m => m.methodName === 'presupuesto')?.params).toBe('id: InstalacionId')
+    expect(methods.find(m => m.methodName === 'cierreMensual')?.params).toBe('')
+  })
+
+  it('el constructor inyecta los repos citados, deduplicados y en orden de primera aparición BFS', () => {
+    // GIVEN: dos steps citan instalacion y un tercero (posterior en BFS) cita parte
+    const conParte: BusinessFlow = {
+      ...flow,
+      nodes: [...flow.nodes, { id: 'monta-parte', kind: 'step', text: 'Se abre parte', entity: 'parte' }],
+      edges: [...flow.edges, { from: 'planifica-montaje', to: 'monta-parte' }]
+    }
+
+    // WHEN
+    const deps = flowRepoDeps(conParte)
+
+    // THEN: instalacion aparece una sola vez y antes que parte
+    expect(deps).toEqual([
+      { entity: 'instalacion', className: 'InstalacionRepository', propertyName: 'instalacionRepository' },
+      { entity: 'parte', className: 'ParteRepository', propertyName: 'parteRepository' }
+    ])
+  })
+
+  it('los repos también cuentan las entidades citadas por nodos que no son step', () => {
+    // GIVEN: solo el start cita entidad
+    const soloStart: BusinessFlow = {
+      name: 'Alta',
+      nodes: [
+        { id: 'llega', kind: 'start', text: 'Llega un pedido', entity: 'pedido' },
+        { id: 'fin', kind: 'end', text: 'Registrado' }
+      ],
+      edges: [{ from: 'llega', to: 'fin' }]
+    }
+
+    // WHEN / THEN
+    expect(flowRepoDeps(soloStart).map(d => d.className)).toEqual(['PedidoRepository'])
   })
 
   it('un flujo sin nodos step no deriva ningún método', () => {
