@@ -140,6 +140,36 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
       })
     }
   }
+
+  registerInRoot(tree, backendSrc, [...byContext.keys()])
+}
+
+/**
+ * Cablea cada ProcessesModule en el composition root que emitió el generador de root
+ * (mismo patrón de parcheo que el plugin de auth: ancla en HealthModule, que vale
+ * tanto si prettier deja el array `imports` en una línea como en varias). Con más de
+ * un contexto las clases son homónimas: se importan con alias por contexto.
+ */
+function registerInRoot(tree: Tree, backendSrc: string, contexts: string[]): void {
+  const rootPath = path.join(backendSrc, 'root.module.ts')
+  const source = tree.read(rootPath, 'utf-8')
+  if (!source || source.includes('ProcessesModule')) return
+
+  const entries = contexts.map(ctx => ({
+    localName: contexts.length === 1 ? 'ProcessesModule' : `${names(ctx).className}ProcessesModule`,
+    importPath: `./contexts/${ctx}/processes/processes.module`
+  }))
+  const importLines = entries
+    .map(entry => {
+      const clause = entry.localName === 'ProcessesModule' ? 'ProcessesModule' : `ProcessesModule as ${entry.localName}`
+      return `import { ${clause} } from '${entry.importPath}'\n`
+    })
+    .join('')
+
+  const wired = source
+    .replace(/(import \{ HealthModule \}[^\n]*\n)/, `$1${importLines}`)
+    .replace(/HealthModule,(\s*)/, (_, sep: string) => `HealthModule,${sep}${entries.map(e => `${e.localName},${sep}`).join('')}`)
+  tree.write(rootPath, wired)
 }
 
 /** El cuerpo de cada paso es un hueco @ai vacío: la coreografía no se ejecuta, se documenta. */

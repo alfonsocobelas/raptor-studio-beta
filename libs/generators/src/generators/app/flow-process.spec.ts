@@ -162,7 +162,7 @@ describe('flow-process — derivación de nombres (spec 39)', () => {
  * con huecos flow-* vacíos y el processes.module.ts. Sin flujos, ni carpeta ni módulo.
  */
 describe('app generator — los flujos emiten proceso (spec 39)', () => {
-  const writeAppFile = (flows?: BusinessFlow[]): { dir: string; appFile: string } => {
+  const writeAppFile = (flows?: BusinessFlow[], resources = ['garment']): { dir: string; appFile: string } => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'acc-flows-'))
     const appFile = path.join(dir, 'demo.app.json')
     fs.writeFileSync(
@@ -170,8 +170,8 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
       JSON.stringify({
         schemaVersion: 1,
         name: 'demo',
-        pages: [{ kind: 'resource', resource: 'garment' }],
-        resources: [MODELS['garment']],
+        pages: resources.map(resource => ({ kind: 'resource', resource })),
+        resources: resources.map(resource => MODELS[resource]),
         ...(flows ? { flows } : {})
       })
     )
@@ -197,8 +197,8 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
     ]
   }
 
-  const generate = async (flows?: BusinessFlow[]): Promise<Tree> => {
-    const { dir, appFile } = writeAppFile(flows)
+  const generate = async (flows?: BusinessFlow[], resources?: string[]): Promise<Tree> => {
+    const { dir, appFile } = writeAppFile(flows, resources)
     try {
       const tree: Tree = createTreeWithEmptyWorkspace()
       await appGenerator(tree, { name: 'demo', appFile, skipInstall: true })
@@ -259,5 +259,66 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
 
     expect(tree.exists(MODULE_PATH)).toBe(false)
     expect(tree.children('apps/demo/libs/backend/src/contexts/warehouse')).not.toContain('processes')
+  })
+
+  /**
+   * Spec 39, TASK-06: cableado de módulos. El ProcessesModule se registra en el
+   * composition root (mismo patrón de parcheo que el plugin de auth) y puede inyectar
+   * los repositorios porque cada módulo de entidad los exporta.
+   */
+  describe('cableado de módulos (TASK-06)', () => {
+    const ROOT_PATH = 'apps/demo/libs/backend/src/root.module.ts'
+
+    it('registra ProcessesModule en el root.module del backend', async () => {
+      const tree = await generate([pedidoFlow])
+      const root = tree.read(ROOT_PATH, 'utf-8') ?? ''
+
+      expect(root).toContain("import { ProcessesModule } from './contexts/warehouse/processes/processes.module'")
+      expect(root).toMatch(/imports: \[[^\]]*ProcessesModule/)
+    })
+
+    it('sin flujos el root.module no menciona ProcessesModule', async () => {
+      const tree = await generate()
+
+      expect(tree.read(ROOT_PATH, 'utf-8') ?? '').not.toContain('ProcessesModule')
+    })
+
+    it('el módulo de la entidad citada exporta su repositorio (inyectable desde processes/)', async () => {
+      const tree = await generate([pedidoFlow])
+      const garmentsModule =
+        tree.read('apps/demo/libs/backend/src/contexts/warehouse/modules/garments/garments.module.ts', 'utf-8') ?? ''
+
+      expect(garmentsModule).toContain('exports: [GarmentRepository]')
+    })
+
+    it('con flujos en dos contextos, cada ProcessesModule entra con alias propio', async () => {
+      // GIVEN: un flujo por contexto (garment → warehouse, material → solaris)
+      const materialFlow: BusinessFlow = {
+        name: 'Alta de material',
+        nodes: [
+          { id: 'llega-material', kind: 'start', text: 'Llega material' },
+          { id: 'registrar', kind: 'step', text: 'Se registra', entity: 'material' },
+          { id: 'fin-alta', kind: 'end', text: 'Material dado de alta' }
+        ],
+        edges: [
+          { from: 'llega-material', to: 'registrar' },
+          { from: 'registrar', to: 'fin-alta' }
+        ]
+      }
+
+      // WHEN
+      const tree = await generate([pedidoFlow, materialFlow], ['garment', 'material'])
+      const root = tree.read(ROOT_PATH, 'utf-8') ?? ''
+
+      // THEN: dos clases homónimas no pueden importarse sin alias
+      expect(root).toContain(
+        "import { ProcessesModule as WarehouseProcessesModule } from './contexts/warehouse/processes/processes.module'"
+      )
+      expect(root).toContain(
+        "import { ProcessesModule as SolarisProcessesModule } from './contexts/solaris/processes/processes.module'"
+      )
+      expect(root).toMatch(/imports: \[[^\]]*WarehouseProcessesModule/)
+      expect(root).toMatch(/imports: \[[^\]]*SolarisProcessesModule/)
+    })
   })
 })

@@ -21,7 +21,7 @@
 - [x] TASK-05: Tests + plantillas `files-flow-process/` (`__flowFileName__.process.ts.template`
       con huecos `// @ai:begin flow-<nodeId>` vacíos, `processes.module.ts.template`) y emisión
       desde el generador de app: carpeta `processes/` solo si hay flujos.
-- [ ] TASK-06: Tests + cableado de módulos: `ProcessesModule` con procesos como providers e
+- [x] TASK-06: Tests + cableado de módulos: `ProcessesModule` con procesos como providers e
       imports de los módulos de las entidades citadas (verificar que exportan su repositorio;
       si no, añadir el export al generador de recurso), registro en el módulo del contexto.
 - [ ] TASK-07: Test de supervivencia: texto escrito a mano dentro de un hueco `flow-*`
