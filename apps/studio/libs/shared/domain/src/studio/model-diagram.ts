@@ -51,7 +51,8 @@ export function overlayLayout(
   return Object.fromEntries(
     Object.entries(auto).map(([name, position]) => {
       const dragged = manual[name]
-      return [name, dragged ? { x: Math.max(0, dragged.x), y: Math.max(0, dragged.y) } : position]
+      // sin recortes: el lienzo es infinito y una caja puede vivir en coordenadas negativas
+      return [name, dragged ?? position]
     })
   )
 }
@@ -205,7 +206,3 @@ export function canvasExtent(boxes: NodeBox[]): { width: number; height: number 
   }
 }
 
-/** Ningún nodo se arrastra fuera por arriba o por la izquierda: ahí no hay lienzo. */
-export function clampToCanvas(position: NodePosition): NodePosition {
-  return { x: Math.max(0, position.x), y: Math.max(0, position.y) }
-}

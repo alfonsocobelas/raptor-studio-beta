@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
 import {
   canvasExtent,
-  clampToCanvas,
   flowEdgeCurve,
   flowStepNumbers,
   flowAlternateEdges,
@@ -16,6 +15,8 @@ import {
   type NodePosition
 } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
+import { CanvasControlsComponent } from './canvas-controls.component'
+import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
 
 interface FlowDiagramNode {
@@ -51,7 +52,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 @Component({
   selector: 'studio-flow-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, CanvasControlsComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
     @if (!store.flows().length) {
@@ -68,15 +69,32 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       @if (flow.description) {
         <p class="text-muted-foreground mb-3 max-w-2xl text-sm">{{ flow.description }}</p>
       }
-      <div class="flow-grid min-h-full min-w-full">
+      <!-- Lienzo infinito: el viewport recorta y el MUNDO se mueve con la cámara. -->
       <div
-        class="relative"
-        [style.width.px]="surface().width"
-        [style.height.px]="surface().height"
+        #viewportEl
+        class="flow-grid absolute inset-0 overflow-hidden"
+        [style.background-position]="gridOffset()"
+        [style.background-size]="gridSize()"
+        [class.cursor-grabbing]="panning()"
+        data-testid="flow-viewport"
+        (pointerdown)="startPan($event)"
+        (wheel)="onWheel($event)"
+      >
+        <div class="absolute right-4 top-4 z-30">
+          <studio-canvas-controls (fit)="fitToView()" />
+        </div>
+      <div
+        class="absolute left-0 top-0 origin-top-left"
+        [style.transform]="worldTransform()"
         data-testid="flow-surface"
         (click)="selected.set(null)"
       >
-        <svg class="absolute inset-0 h-full w-full" data-testid="flow-edges">
+        <svg
+          class="pointer-events-none absolute left-0 top-0 overflow-visible"
+          [attr.width]="surface().width"
+          [attr.height]="surface().height"
+          data-testid="flow-edges"
+        >
           <defs>
             <marker
               id="flow-arrow"
@@ -104,7 +122,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           </defs>
           @for (item of edges(); track item.from + '→' + item.to + (item.label ?? '')) {
             <g
-              class="cursor-pointer"
+              class="pointer-events-auto cursor-pointer"
               [attr.data-testid]="'flow-edge-' + item.from + '-' + item.to"
               (click)="selectEdge($event, item)"
             >
@@ -323,6 +341,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 export class FlowViewComponent {
   protected readonly store = inject(DesignStore)
   protected readonly active = inject(ActiveViewService)
+  private readonly viewport = inject(CanvasViewportService)
 
   /** Posiciones arrastradas por flujo:nodo — SOLO memoria de sesión (layout cosmético). */
   private readonly manual = signal<Record<string, NodePosition>>({})
@@ -386,8 +405,67 @@ export class FlowViewComponent {
   })
 
   /** El lienzo abarca todos los nodos del flujo activo, con margen para respirar. */
-  /** El lienzo es amplio: el contenido más un colchón, y nunca menos que el mínimo. */
+  /** Tamaño del SVG de aristas: cubre el contenido, ya no dimensiona el lienzo. */
   protected readonly surface = computed(() => canvasExtent(this.nodes().map(n => n.box)))
+
+  private readonly viewportRef = viewChild<ElementRef<HTMLElement>>('viewportEl')
+  protected readonly camera = this.viewport.of('flows')
+  protected readonly panning = signal(false)
+
+  protected readonly worldTransform = computed(() => {
+    const { pan, zoom } = this.camera()
+    return `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+  })
+
+  protected readonly gridOffset = computed(() => {
+    const { pan } = this.camera()
+    return `${pan.x}px ${pan.y}px`
+  })
+  protected readonly gridSize = computed(() => {
+    const celda = 24 * this.camera().zoom
+    return `${celda}px ${celda}px`
+  })
+
+  /** Arrastrar el PAPEL mueve la cámara; sobre un nodo o un control, no. */
+  protected startPan(down: PointerEvent): void {
+    if (down.button !== 0) return
+    const target = down.target as HTMLElement
+    if (target.closest('[data-testid^="flow-node-"], button, input, select, [data-testid="canvas-controls"]')) return
+
+    const element = down.currentTarget as HTMLElement
+    element.setPointerCapture(down.pointerId)
+    this.panning.set(true)
+    let last = { x: down.clientX, y: down.clientY }
+
+    const onMove = (move: PointerEvent) => {
+      this.viewport.panBy('flows', { x: move.clientX - last.x, y: move.clientY - last.y })
+      last = { x: move.clientX, y: move.clientY }
+    }
+    const onUp = () => {
+      this.panning.set(false)
+      element.removeEventListener('pointermove', onMove)
+      element.removeEventListener('pointerup', onUp)
+    }
+    element.addEventListener('pointermove', onMove)
+    element.addEventListener('pointerup', onUp)
+  }
+
+  protected onWheel(event: WheelEvent): void {
+    event.preventDefault()
+    if (event.ctrlKey || event.metaKey) {
+      const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
+      const punto = { x: event.clientX - (caja?.left ?? 0), y: event.clientY - (caja?.top ?? 0) }
+      this.viewport.zoomBy('flows', event.deltaY < 0 ? 1.08 : 1 / 1.08, punto)
+      return
+    }
+    this.viewport.panBy('flows', { x: -event.deltaX, y: -event.deltaY })
+  }
+
+  protected fitToView(): void {
+    const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
+    if (!caja) return
+    this.viewport.fit('flows', this.nodes().map(n => n.box), { width: caja.width, height: caja.height })
+  }
 
   protected selectNode(event: MouseEvent, id: string): void {
     event.stopPropagation()
@@ -467,10 +545,10 @@ export class FlowViewComponent {
     const onMove = (move: PointerEvent) =>
       this.manual.update(manual => ({
         ...manual,
-        [key]: clampToCanvas({
-          x: origin.x + move.clientX - down.clientX,
-          y: origin.y + move.clientY - down.clientY
-        })
+        [key]: {
+          x: origin.x + (move.clientX - down.clientX) / this.camera().zoom,
+          y: origin.y + (move.clientY - down.clientY) / this.camera().zoom
+        }
       }))
     const onUp = () => {
       handle.removeEventListener('pointermove', onMove)

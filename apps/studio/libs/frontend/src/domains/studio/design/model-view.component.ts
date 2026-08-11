@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, output, signal, viewChild } from '@angular/core'
 import {
   MODEL_NODE,
   autoLayout,
   canvasExtent,
-  clampToCanvas,
   edgeCurve,
   modelEdges,
   nodeAt,
@@ -15,6 +14,8 @@ import {
   type NodePosition
 } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
+import { CanvasControlsComponent } from './canvas-controls.component'
+import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
 import { shortLabelOfType } from './field-type-labels'
 
@@ -46,6 +47,7 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CanvasControlsComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
     @if (!nodes().length) {
@@ -57,16 +59,34 @@ interface DiagramEdge {
         </p>
       </div>
     } @else {
-      <div class="model-grid min-h-full min-w-full">
+      <!-- Lienzo infinito: el viewport recorta y el MUNDO se mueve con la cámara. El
+           papel de puntos vive aquí para que se desplace y escale con el pan/zoom. -->
+      <div
+        #viewportEl
+        class="model-grid absolute inset-0 overflow-hidden"
+        [style.background-position]="gridOffset()"
+        [style.background-size]="gridSize()"
+        [class.cursor-grabbing]="panning()"
+        data-testid="model-viewport"
+        (pointerdown)="startPan($event)"
+        (wheel)="onWheel($event)"
+      >
+        <div class="absolute right-4 top-4 z-30">
+          <studio-canvas-controls (fit)="fitToView()" />
+        </div>
         <div
           #surfaceEl
-          class="relative"
-          [style.width.px]="surface().width"
-          [style.height.px]="surface().height"
+          class="absolute left-0 top-0 origin-top-left"
+          [style.transform]="worldTransform()"
           data-testid="model-surface"
           (click)="selected.set(null)"
         >
-          <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
+          <svg
+            class="pointer-events-none absolute left-0 top-0 overflow-visible"
+            [attr.width]="surface().width"
+            [attr.height]="surface().height"
+            data-testid="model-edges"
+          >
             <defs>
               <!-- punta simple: un chevron de trazo, sin relleno -->
               <marker
@@ -94,7 +114,7 @@ interface DiagramEdge {
             </defs>
             @for (item of edges(); track item.edge.from + '-' + item.edge.fieldIndex) {
               <g
-                class="cursor-pointer"
+                class="pointer-events-auto cursor-pointer"
                 [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to"
                 (click)="selectEdge($event, item.edge)"
               >
@@ -287,6 +307,7 @@ interface DiagramEdge {
 export class ModelViewComponent {
   protected readonly store = inject(DesignStore)
   protected readonly active = inject(ActiveViewService)
+  private readonly viewport = inject(CanvasViewportService)
 
   /** La entidad elegida (la que edita el inspector): se pinta en tinta. */
   protected readonly chosen = computed(() => this.active.resource())
@@ -421,10 +442,10 @@ export class ModelViewComponent {
     const onMove = (move: PointerEvent) =>
       this.manual.update(manual => ({
         ...manual,
-        [name]: clampToCanvas({
-          x: origin.x + move.clientX - down.clientX,
-          y: origin.y + move.clientY - down.clientY
-        })
+        [name]: {
+          x: origin.x + (move.clientX - down.clientX) / this.camera().zoom,
+          y: origin.y + (move.clientY - down.clientY) / this.camera().zoom
+        }
       }))
     const onUp = () => {
       handle.removeEventListener('pointermove', onMove)
@@ -434,6 +455,70 @@ export class ModelViewComponent {
     handle.addEventListener('pointerup', onUp)
   }
 
-  /** El lienzo es amplio: el contenido más un colchón, y nunca menos que el mínimo. */
+  /** Tamaño del SVG de aristas: cubre el contenido, ya no dimensiona el lienzo. */
   protected readonly surface = computed(() => canvasExtent(this.nodes().map(n => n.box)))
+
+  private readonly viewportRef = viewChild<ElementRef<HTMLElement>>('viewportEl')
+  protected readonly camera = this.viewport.of('model')
+  protected readonly panning = signal(false)
+
+  protected readonly worldTransform = computed(() => {
+    const { pan, zoom } = this.camera()
+    return `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+  })
+
+  /** El papel de puntos acompaña a la cámara: se desplaza con el pan y escala con el zoom. */
+  protected readonly gridOffset = computed(() => {
+    const { pan } = this.camera()
+    return `${pan.x}px ${pan.y}px`
+  })
+  protected readonly gridSize = computed(() => {
+    const celda = 24 * this.camera().zoom
+    return `${celda}px ${celda}px`
+  })
+
+  /** Arrastrar el FONDO mueve la cámara; sobre una caja manda el arrastre del nodo. */
+  protected startPan(down: PointerEvent): void {
+    if (down.button !== 0) return
+    // el pan solo arranca sobre el PAPEL: sobre una caja manda el arrastre del nodo, y
+    // sobre un control el clic es del control (capturar el puntero aquí se lo comía)
+    const target = down.target as HTMLElement
+    if (target.closest('[data-testid^="model-node-"], button, input, select, [data-testid="canvas-controls"]')) return
+
+    const element = down.currentTarget as HTMLElement
+    element.setPointerCapture(down.pointerId)
+    this.panning.set(true)
+    let last = { x: down.clientX, y: down.clientY }
+
+    const onMove = (move: PointerEvent) => {
+      this.viewport.panBy('model', { x: move.clientX - last.x, y: move.clientY - last.y })
+      last = { x: move.clientX, y: move.clientY }
+    }
+    const onUp = () => {
+      this.panning.set(false)
+      element.removeEventListener('pointermove', onMove)
+      element.removeEventListener('pointerup', onUp)
+    }
+    element.addEventListener('pointermove', onMove)
+    element.addEventListener('pointerup', onUp)
+  }
+
+  /** Rueda: con ⌘/ctrl (o pinza de trackpad) hace zoom en el cursor; sin él, desplaza. */
+  protected onWheel(event: WheelEvent): void {
+    event.preventDefault()
+    if (event.ctrlKey || event.metaKey) {
+      const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
+      const punto = { x: event.clientX - (caja?.left ?? 0), y: event.clientY - (caja?.top ?? 0) }
+      this.viewport.zoomBy('model', event.deltaY < 0 ? 1.08 : 1 / 1.08, punto)
+      return
+    }
+    this.viewport.panBy('model', { x: -event.deltaX, y: -event.deltaY })
+  }
+
+  /** Encajar el diagrama en lo que se ve. */
+  protected fitToView(): void {
+    const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
+    if (!caja) return
+    this.viewport.fit('model', this.nodes().map(n => n.box), { width: caja.width, height: caja.height })
+  }
 }

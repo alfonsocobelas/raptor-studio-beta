@@ -3,7 +3,6 @@ import type { DraftResource } from './draft-resource'
 import {
   autoLayout,
   canvasExtent,
-  clampToCanvas,
   edgeCurve,
   edgeLine,
   modelEdges,
@@ -95,12 +94,12 @@ describe('overlayLayout — lo arrastrado gana al auto-layout', () => {
     expect(merged).toEqual(auto)
   })
 
-  it('recorta a coordenadas no negativas: no se puede sacar una caja del lienzo', () => {
+  it('respeta las coordenadas negativas: el lienzo es infinito y el mundo no empieza en cero', () => {
     const auto = autoLayout(['a'])
 
     const merged = overlayLayout(auto, { a: { x: -30, y: -5 } })
 
-    expect(merged['a']).toEqual({ x: 0, y: 0 })
+    expect(merged['a']).toEqual({ x: -30, y: -5 })
   })
 })
 
@@ -270,12 +269,3 @@ describe('canvasExtent — el lienzo tiene sitio de sobra para seguir dibujando'
   })
 })
 
-describe('clampToCanvas — nada se arrastra fuera del lienzo', () => {
-  it('una posición negativa vuelve al borde: un nodo arrastrado arriba no se pierde', () => {
-    expect(clampToCanvas({ x: -80, y: -12 })).toEqual({ x: 0, y: 0 })
-  })
-
-  it('una posición válida no se toca', () => {
-    expect(clampToCanvas({ x: 120, y: 340 })).toEqual({ x: 120, y: 340 })
-  })
-})
