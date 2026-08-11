@@ -214,10 +214,13 @@ interface DiagramEdge {
   styles: `
     /* Rejilla del diagrama, como en la referencia: líneas finas sobre el papel. El
        tamaño es el del layout (MODEL_GRID) para que las cajas caigan sobre la retícula. */
+    /* Rejilla muestreada de 19A: líneas #efece6 sobre papel #fbfaf8, celda de 24px. Se
+       mezcla con --border (cálido), no con --foreground: con el gris del texto la retícula
+       salía fría y se notaba al lado de las cajas. */
     .model-grid {
       background-image:
-        linear-gradient(to right, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px),
-        linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px);
+        linear-gradient(to right, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklab, var(--border) 65%, var(--background)) 1px, transparent 1px);
       background-size: 24px 24px;
     }
     /* Cabecera de caja: gris suave, y tinta cuando es la elegida. Como clases propias,

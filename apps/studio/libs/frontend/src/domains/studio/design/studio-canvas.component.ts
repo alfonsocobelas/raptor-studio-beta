@@ -224,7 +224,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         <div
           class="relative flex min-h-0 min-w-0 flex-1 flex-col"
           [class.canvas-surface]="mode() !== 'model'"
-          [class.bg-card]="mode() === 'model'"
+          [class.bg-background]="mode() === 'model'"
         >
           <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
           <main
