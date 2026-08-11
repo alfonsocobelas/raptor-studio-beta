@@ -7,8 +7,7 @@ import {
   flowAlternateEdges,
   flowEdgeCurve,
   flowLayout,
-  flowNodeBox,
-  flowStepNumbers
+  flowNodeBox
 } from './flow-diagram'
 import type { NodeBox } from './model-diagram'
 
@@ -175,7 +174,6 @@ describe('flowNodeBox — la caja de un nodo de flujo', () => {
       height: FLOW_DECISION.size
     })
   })
-
 })
 
 describe('flowLayout — el rombo comparte carril con los pasos', () => {
@@ -228,45 +226,6 @@ describe('flowEdgeCurve — el flujo avanza a la derecha, así que la curva es h
 
     expect(curva.labelX).toBeGreaterThan(curva.x1)
     expect(curva.labelX).toBeLessThan(curva.x2)
-  })
-})
-
-describe('flowStepNumbers — los pasos se numeran por el orden del recorrido', () => {
-  it('numera solo los pasos: el inicio, la decisión y el fin no llevan número', () => {
-    const flow = {
-      name: 'F',
-      nodes: [
-        { id: 'inicio', kind: 'start' as const, text: 'Inicio' },
-        { id: 'uno', kind: 'step' as const, text: 'Uno' },
-        { id: 'dec', kind: 'decision' as const, text: '¿Sí?' },
-        { id: 'dos', kind: 'step' as const, text: 'Dos' },
-        { id: 'fin', kind: 'end' as const, text: 'Fin' }
-      ],
-      edges: [
-        { from: 'inicio', to: 'uno' },
-        { from: 'uno', to: 'dec' },
-        { from: 'dec', to: 'dos', label: 'sí' },
-        { from: 'dos', to: 'fin' }
-      ]
-    }
-
-    const numeros = flowStepNumbers(flow)
-
-    expect(numeros).toEqual({ uno: 1, dos: 2 })
-  })
-
-  it('un paso suelto también se numera, al final: existe en el lienzo', () => {
-    const flow = {
-      name: 'F',
-      nodes: [
-        { id: 'inicio', kind: 'start' as const, text: 'Inicio' },
-        { id: 'conectado', kind: 'step' as const, text: 'Conectado' },
-        { id: 'suelto', kind: 'step' as const, text: 'Suelto' }
-      ],
-      edges: [{ from: 'inicio', to: 'conectado' }]
-    }
-
-    expect(flowStepNumbers(flow)).toEqual({ conectado: 1, suelto: 2 })
   })
 })
 

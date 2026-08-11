@@ -7,8 +7,9 @@ import type { NodeBox, NodePosition } from './model-diagram'
  * componente y jamás entran al app-schema.
  */
 export const FLOW_GRID = {
-  colWidth: 220,
-  rowHeight: 130,
+  /** la celda deja aire entre columnas: la tarjeta de acciones mide 240 de ancho */
+  colWidth: 320,
+  rowHeight: 150,
   margin: 40
 } as const
 
@@ -55,7 +56,9 @@ function seSolapan(a: NodeBox, b: NodeBox): boolean {
 export function flowLayout(
   flow: BusinessFlow,
   orientation: FlowOrientation = 'horizontal',
-  frozen: Record<string, NodePosition> = {}
+  frozen: Record<string, NodePosition> = {},
+  /** Tamaño de un nodo cuando no es el de siempre (una tarjeta de acciones crece con sus filas). */
+  sizeOf: (id: string) => { width: number; height: number } | undefined = () => undefined
 ): Record<string, NodePosition> {
   const start = flow.nodes.find(node => node.kind === 'start')
   if (!start) return {}
@@ -83,12 +86,13 @@ export function flowLayout(
   // una decisión) se reparten en el eje perpendicular. Lo congelado no se toca; lo
   // demás aterriza en su hueco de capa y, si está pisado, se aparta una fila.
   const kinds = new Map(flow.nodes.map(node => [node.id, node.kind]))
+  const tamano = (id: string) => sizeOf(id) ?? flowNodeSize(kinds.get(id))
   const positions: Record<string, NodePosition> = {}
   const puestas: NodeBox[] = []
   for (const node of flow.nodes) {
     if (!frozen[node.id]) continue
     positions[node.id] = frozen[node.id]
-    puestas.push(flowNodeBox(frozen[node.id], node.kind))
+    puestas.push({ ...frozen[node.id], ...tamano(node.id) })
   }
 
   for (const [depth, ids] of layers) {
@@ -96,7 +100,7 @@ export function flowLayout(
       if (positions[sibling]) return
       // el nodo se CENTRA en su hueco: un rombo de 128 alineado por arriba junto a
       // píldoras de 62 dejaría la flecha subiendo y bajando en cada decisión
-      const size = flowNodeSize(kinds.get(sibling))
+      const size = tamano(sibling)
       const dx = (FLOW_NODE.width - size.width) / 2
       const dy = (FLOW_NODE.height - size.height) / 2
       const slot = (paso: number): NodePosition =>
@@ -178,39 +182,6 @@ export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrien
     labelX: (x1 + x2) / 2,
     labelY: (y1 + y2) / 2
   }
-}
-
-/**
- * Número de orden de cada PASO, como en la referencia: los pasos se leen «1, 2, 3»
- * siguiendo el recorrido del proceso. El inicio, las decisiones y los fines no se
- * numeran —no son trabajo, son estructura— y un paso suelto se numera al final,
- * porque está en el lienzo aunque no cuelgue de nada.
- */
-export function flowStepNumbers(flow: BusinessFlow): Record<string, number> {
-  const start = flow.nodes.find(node => node.kind === 'start')
-  const orden: string[] = []
-  const visto = new Set<string>()
-
-  if (start) {
-    const cola = [start.id]
-    visto.add(start.id)
-    while (cola.length) {
-      const actual = cola.shift() as string
-      orden.push(actual)
-      for (const edge of flow.edges) {
-        if (edge.from !== actual || visto.has(edge.to)) continue
-        visto.add(edge.to)
-        cola.push(edge.to)
-      }
-    }
-  }
-  for (const node of flow.nodes) if (!visto.has(node.id)) orden.push(node.id)
-
-  const kinds = new Map(flow.nodes.map(node => [node.id, node.kind]))
-  const numeros: Record<string, number> = {}
-  let siguiente = 1
-  for (const id of orden) if (kinds.get(id) === 'step') numeros[id] = siguiente++
-  return numeros
 }
 
 /**

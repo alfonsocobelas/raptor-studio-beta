@@ -44,6 +44,15 @@ function slug(text: string): string {
   )
 }
 
+/** Id libre para un nodo nuevo: el slug del texto, y si está pillado, sufijo numérico. */
+function freeNodeId(flow: BusinessFlow, text: string): string {
+  const taken = new Set(flow.nodes.map(node => node.id))
+  const base = slug(text)
+  let id = base
+  for (let i = 2; taken.has(id); i++) id = `${base}-${i}`
+  return id
+}
+
 /**
  * Gate ligero de los flujos MIENTRAS se dibujan (spec 28): identidad,
  * referencias y topes. Un nodo suelto o una decisión con una sola salida son
@@ -520,13 +529,10 @@ export class DesignStore {
   }
 
   addFlowNode(flowName: string, kind: FlowNodeKind, text: string): boolean {
-    return this.updateFlow(flowName, flow => {
-      const taken = new Set(flow.nodes.map(n => n.id))
-      const base = slug(text)
-      let id = base
-      for (let i = 2; taken.has(id); i++) id = `${base}-${i}`
-      return { ...flow, nodes: [...flow.nodes, { id, kind, text }] }
-    })
+    return this.updateFlow(flowName, flow => ({
+      ...flow,
+      nodes: [...flow.nodes, { id: freeNodeId(flow, text), kind, text }]
+    }))
   }
 
   updateFlowNode(flowName: string, id: string, patch: Partial<Omit<FlowNode, 'id'>>): boolean {
@@ -588,19 +594,42 @@ export class DesignStore {
       return false
     }
 
-    const taken = new Set(flow.nodes.map(node => node.id))
-    const base = slug(text)
-    let id = base
-    for (let i = 2; taken.has(id); i++) id = `${base}-${i}`
+    const id = freeNodeId(flow, text)
 
     return this.updateFlow(flowName, current => ({
       ...current,
       nodes: [...current.nodes, { id, kind: 'step' as const, text }],
       edges: current.edges.flatMap(edge =>
         edge === tramo || (edge.from === from && edge.to === to && edge.label === label)
-          ? [{ from, to: id, ...(label ? { label } : {}) }, { from: id, to }]
+          ? [
+              { from, to: id, ...(label ? { label } : {}) },
+              { from: id, to }
+            ]
           : [edge]
       )
+    }))
+  }
+
+  /**
+   * El «+ Acción» de la tarjeta: cuelga un paso DETRÁS de otro. Si el de delante ya
+   * llevaba a algún sitio, el paso nuevo se mete en medio (la cadena no se rompe);
+   * si no llevaba a ninguno, la tarjeta simplemente crece por abajo.
+   */
+  appendFlowStep(flowName: string, afterId: string, text: string): boolean {
+    const flow = this._flows().find(f => f.name === flowName)
+    if (!flow?.nodes.some(node => node.id === afterId)) {
+      this._lastError.set(`No existe el nodo ${afterId} en «${flowName}»`)
+      return false
+    }
+    const salida = flow.edges.find(edge => edge.from === afterId)
+    if (salida) return this.insertFlowStep(flowName, afterId, salida.to, text, salida.label)
+
+    // de una sola mutación: el nodo y su tramo entran juntos o no entran
+    const id = freeNodeId(flow, text)
+    return this.updateFlow(flowName, current => ({
+      ...current,
+      nodes: [...current.nodes, { id, kind: 'step' as const, text }],
+      edges: [...current.edges, { from: afterId, to: id }]
     }))
   }
 

@@ -156,6 +156,41 @@ describe('DesignStore — nodos de flujo', () => {
     expect(store.flows()[0].edges).toEqual([{ from: 'inicio', to: 'fin' }])
   })
 
+  it('appendFlowStep cuelga la acción DETRÁS de otra sin romper la cadena', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'step', 'Revisar')
+    store.addFlowEdge('Alta de pedido', 'inicio', 'revisar')
+    store.addFlowEdge('Alta de pedido', 'revisar', 'fin')
+    store.removeFlowEdge('Alta de pedido', 'inicio', 'fin')
+
+    expect(store.appendFlowStep('Alta de pedido', 'revisar', 'Aprobar')).toBe(true)
+
+    const flow = store.flows()[0]
+    expect(flow.nodes.map(n => n.id)).toEqual(['inicio', 'fin', 'revisar', 'aprobar'])
+    expect(flow.edges).toEqual([
+      { from: 'inicio', to: 'revisar' },
+      { from: 'revisar', to: 'aprobar' },
+      { from: 'aprobar', to: 'fin' }
+    ])
+  })
+
+  it('appendFlowStep tras un paso sin salida solo añade el tramo nuevo', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'step', 'Revisar')
+    store.addFlowEdge('Alta de pedido', 'inicio', 'revisar')
+
+    expect(store.appendFlowStep('Alta de pedido', 'revisar', 'Aprobar')).toBe(true)
+
+    expect(store.flows()[0].edges).toContainEqual({ from: 'revisar', to: 'aprobar' })
+  })
+
+  it('appendFlowStep no cuelga nada de un nodo que no existe', () => {
+    const store = withFlow()
+
+    expect(store.appendFlowStep('Alta de pedido', 'fantasma', 'Aprobar')).toBe(false)
+    expect(store.flows()[0].nodes).toHaveLength(2)
+  })
+
   it('rechaza un texto de nodo que supera el tope del contrato', () => {
     const store = withFlow()
 
