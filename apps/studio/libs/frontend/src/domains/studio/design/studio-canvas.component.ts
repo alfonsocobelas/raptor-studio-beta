@@ -500,9 +500,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
                mirando y no le roba alto al lienzo. Sin altura fija: vacío es una barra, y
                con conversación crece hasta su tope. -->
           <div class="pointer-events-none absolute inset-x-0 bottom-5 z-20 px-10">
+            <!-- centrado en todos los lienzos; en los diagramas la barra es más estrecha -->
             <div
-              class="bg-card chat-card pointer-events-auto max-h-72 rounded-xl border p-3"
-              [class.mx-auto]="mode() === 'views'"
+              class="bg-card chat-card pointer-events-auto mx-auto max-h-72 rounded-xl border p-3"
               [class.max-w-6xl]="mode() === 'views'"
               [class.max-w-xl]="mode() !== 'views'"
             >
