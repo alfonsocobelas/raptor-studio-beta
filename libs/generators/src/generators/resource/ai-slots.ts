@@ -45,6 +45,30 @@ export function harvestAiSlots(tree: Tree, dir: string): AiSlotHarvest {
   return harvest
 }
 
+/**
+ * El cuerpo que hay hoy en un hueco, o `undefined` si ese hueco no está en el texto.
+ * Un hueco vacío devuelve cadena vacía: «no está» y «está vacío» son cosas distintas.
+ */
+export function readSlotBody(source: string, id: string): string | undefined {
+  for (const [, , slotId, body] of source.matchAll(SLOT_REGEX)) {
+    if (slotId === id) return body
+  }
+  return undefined
+}
+
+/**
+ * Sustituye el cuerpo de UN hueco y deja el resto del texto byte a byte igual: es la
+ * única forma en que este proyecto escribe dentro de un hueco. Si el hueco no está,
+ * devuelve el texto tal cual (quien decide qué hacer con eso es la frontera del relleno).
+ */
+export function replaceSlotBody(source: string, id: string, body: string): string {
+  const normalized = body === '' || body.endsWith('\n') ? body : `${body}\n`
+
+  return source.replace(SLOT_REGEX, (whole, beginLine: string, slotId: string, _body: string, endLine: string) =>
+    slotId === id ? `${beginLine}${normalized}${endLine}` : whole
+  )
+}
+
 /** Un hueco concreto de un fichero concreto: la unidad de trabajo del relleno. */
 export interface AiSlotRef {
   file: string
