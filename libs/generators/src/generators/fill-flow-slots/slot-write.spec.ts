@@ -103,3 +103,20 @@ describe('validateSlotOnlyEdit (frontera de la escritura)', () => {
     expect(accepts(candidate)).toMatch(/marcador/i)
   })
 })
+
+/**
+ * La pata «regeneración + reinyección sin pérdida» del gate no se comprueba en
+ * ejecución, y a propósito: se cumple por construcción. El cuerpo entra SIEMPRE por
+ * `replaceSlotBody` (los bytes de fuera del hueco los pone el acelerador) y la frontera
+ * de arriba ya rechaza lo único que rompería la cosecha —un cuerpo con su propio
+ * `// @ai:end`, que se lee como hueco vacío—. La prueba de que el mecanismo conserva lo
+ * escrito al regenerar de verdad es el test de supervivencia de TASK-07, sobre el
+ * generador de app completo, no una simulación aquí.
+ */
+describe('cuerpo escrito y regeneración', () => {
+  it('un cuerpo con su propio @ai:end no llega nunca a escribirse', () => {
+    const candidate = replaceSlotBody(FILE, 'flow-revisar', '    const g = 1\n    // @ai:end\n    const fuera = 2\n')
+
+    expect(validateSlotOnlyEdit(FILE, candidate, 'flow-revisar')).toBeDefined()
+  })
+})

@@ -1,6 +1,14 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
-import { fillFlowSlotsGenerator, flowFillReport, pendingFlowSlots } from './fill-flow-slots'
+import { readSlotBody, replaceSlotBody } from '../resource/ai-slots'
+import {
+  fillFlowSlotsGenerator,
+  fillPendingFlowSlots,
+  flowFillReport,
+  pendingFlowSlots,
+  type SlotExecutor,
+  type SlotGate
+} from './fill-flow-slots'
 
 /**
  * Spec 39, TASK-10: recolección. El comando de relleno empieza por saber QUÉ falta.
@@ -50,7 +58,8 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
     expect(flowFillReport(tree, { directory: 'apps/demo' })).toEqual({
       executor: 'none',
       pending: [{ file: PROCESS, id: 'flow-revisar' }],
-      filled: []
+      filled: [],
+      rejected: []
     })
   })
 
@@ -86,5 +95,135 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
     const tree = createTreeWithEmptyWorkspace()
 
     await expect(fillFlowSlotsGenerator(tree, { directory: 'apps/no-existe' })).rejects.toThrow('apps/no-existe')
+  })
+
+  /**
+   * Spec 39, TASK-12 (segunda mitad): un hueco entra en el árbol solo si su relleno
+   * se queda dentro del hueco Y el gate lo acepta. Si algo falla, el hueco vuelve a
+   * quedar vacío y se reporta el motivo: nunca queda código rojo en la app.
+   */
+  describe('relleno bajo gate por hueco', () => {
+    const BODY = '    const garment = await this.garmentRepository.get(id)\n'
+
+    /** Ejecutor de mentira: propone lo que se le diga y anota los prompts que recibió */
+    const executorThat = (propose: (current: string, id: string) => string | undefined): SlotExecutor & { prompts: string[] } => ({
+      name: 'fake',
+      prompts: [],
+      async propose(prompt, slot, current) {
+        this.prompts.push(prompt)
+        return propose(current, slot.id)
+      }
+    })
+
+    const gateThat = (reason?: string): SlotGate & { calls: number } => ({
+      calls: 0,
+      async run() {
+        this.calls++
+        return reason
+      }
+    })
+
+    it('acepta un relleno válido: queda en el árbol y sale del informe de pendientes', async () => {
+      const tree = emittedApp()
+      const executor = executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY))
+      const gate = gateThat()
+
+      const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+      expect(report.filled).toEqual([{ file: PROCESS, id: 'flow-revisar' }])
+      expect(report.rejected).toEqual([])
+      expect(report.pending).toEqual([])
+      expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe(BODY)
+      // el prompt del hueco llegó al ejecutor
+      expect(executor.prompts[0]).toContain('Rellena el cuerpo del paso «flow-revisar»')
+      expect(gate.calls).toBe(1)
+    })
+
+    it('rechaza un relleno que se sale del hueco, sin tocar el árbol ni gastar el gate', async () => {
+      const tree = emittedApp()
+      const before = tree.read(PROCESS, 'utf-8')
+      const executor = executorThat(current =>
+        replaceSlotBody(current, 'flow-revisar', BODY).replace('export class CicloProcess {', "import { x } from 'fs'\nexport class CicloProcess {")
+      )
+      const gate = gateThat()
+
+      const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+      expect(report.filled).toEqual([])
+      expect(report.rejected[0].reason).toMatch(/fuera del hueco/i)
+      expect(tree.read(PROCESS, 'utf-8')).toBe(before)
+      // no se corre un gate de minutos sobre algo ya invalidado
+      expect(gate.calls).toBe(0)
+    })
+
+    it('si el gate se pone rojo, el hueco vuelve a quedar vacío y se reporta el motivo', async () => {
+      const tree = emittedApp()
+      const before = tree.read(PROCESS, 'utf-8')
+      const executor = executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY))
+
+      const report = await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor,
+        gate: gateThat("typecheck: error TS2304: Cannot find name 'garment'")
+      })
+
+      expect(report.filled).toEqual([])
+      expect(report.rejected[0]).toEqual({
+        slot: { file: PROCESS, id: 'flow-revisar' },
+        reason: "typecheck: error TS2304: Cannot find name 'garment'"
+      })
+      // nunca queda código rojo: el fichero vuelve exactamente a como estaba
+      expect(tree.read(PROCESS, 'utf-8')).toBe(before)
+      expect(report.pending).toEqual([{ file: PROCESS, id: 'flow-revisar' }])
+    })
+
+    it('si el ejecutor no propone nada, se reporta y no se escribe', async () => {
+      const tree = emittedApp()
+      const before = tree.read(PROCESS, 'utf-8')
+
+      const report = await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor: executorThat(() => undefined),
+        gate: gateThat()
+      })
+
+      expect(report.rejected[0].reason).toMatch(/no propuso/i)
+      expect(tree.read(PROCESS, 'utf-8')).toBe(before)
+    })
+
+    it('un hueco rechazado no arrastra a los demás', async () => {
+      const tree = emittedApp()
+      // dos huecos vacíos en el mismo fichero
+      tree.write(PROCESS, replaceSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-subsanar', ''))
+      const executor = executorThat((current, id) =>
+        id === 'flow-revisar' ? current : replaceSlotBody(current, id, '    await this.garmentRepository.save(x)\n')
+      )
+
+      const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate: gateThat() })
+
+      expect(report.rejected.map(r => r.slot.id)).toEqual(['flow-revisar'])
+      expect(report.filled.map(s => s.id)).toEqual(['flow-subsanar'])
+      expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-subsanar')).toContain('save(x)')
+    })
+
+    it('un ejecutor sin gate no se acepta: la IA no entra sin frontera', async () => {
+      const tree = emittedApp()
+
+      await expect(
+        fillPendingFlowSlots(tree, { directory: 'apps/demo', executor: executorThat(current => current) })
+      ).rejects.toThrow(/gate/i)
+    })
+
+    it('el informe nombra al ejecutor que se usó', async () => {
+      const tree = emittedApp()
+
+      const report = await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor: executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY)),
+        gate: gateThat()
+      })
+
+      expect(report.executor).toBe('fake')
+    })
   })
 })

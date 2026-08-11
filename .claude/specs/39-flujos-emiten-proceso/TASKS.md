@@ -58,10 +58,18 @@
       puerto REAL resolviendo el import del proceso, no de una suposición. Bug cazado
       inspeccionando un prompt real, no por los tests: la línea `Firma:` arrastraba desde el
       primer `async` del fichero — los `toContain` pasaban porque la firma buena era su cola.
-- [ ] TASK-12: Tests + escritura acotada y gate determinista: escritura validada por
+- [x] TASK-12: Tests + escritura acotada y gate determinista: escritura validada por
       `SLOT_REGEX` (edición fuera del hueco invalida); gate por hueco = build + test de la
       app emitida en verde Y regeneración + reinyección sin pérdida; si falla, el hueco se
-      vacía y se reporta el motivo.
+      vacía y se reporta el motivo. Partida en dos commits (frontera de escritura /
+      orquestación + gate). **Decisión 2026-08-11**: la pata «regeneración + reinyección sin
+      pérdida» NO se comprueba en ejecución porque se cumple por construcción — el cuerpo
+      entra siempre por `replaceSlotBody` y la frontera ya rechaza lo único que rompería la
+      cosecha (un cuerpo con su propio `// @ai:end`). Escribí el verificador, no conseguí
+      hacerlo fallar con ninguna entrada realista y lo borré en vez de dejar un sello verde;
+      la evidencia de que el relleno sobrevive a una regeneración real es el test de TASK-07.
+      El gate real usa los scripts de la propia app emitida (`npm run typecheck`, `npm test`)
+      y falla al primero.
 - [ ] TASK-13: Prueba real sobre la demo solaris: rellenar al menos un hueco vía ejecutor
       (Claude Code por puente) con el gate aceptando, y comprobar que un relleno que rompe
       la compilación es rechazado (hueco vaciado + motivo reportado).
