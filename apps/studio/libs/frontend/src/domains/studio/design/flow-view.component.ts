@@ -185,7 +185,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     width="44"
                     height="20"
                     rx="6"
-                    class="fill-card stroke-border"
+                    class="fill-card flow-edge-label"
                     stroke-width="1"
                   />
                   <text
@@ -510,6 +510,12 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
         transparent 1.4px
       );
       background-size: 24px 24px;
+    }
+    /* La pastilla del sí/no se lee como un bloque más: borde algo más intenso que el
+       token --border (que sobre las flechas se perdía) y la misma sombra que las cajas. */
+    .flow-edge-label {
+      stroke: color-mix(in oklab, var(--foreground) 35%, var(--border));
+      filter: drop-shadow(0 1px 2px oklch(0 0 0 / 8%)) drop-shadow(0 6px 14px oklch(0 0 0 / 10%));
     }
     /* El rombo lleva la misma sombra que las píldoras: flota sobre el papel igual que ellas. */
     .flow-diamond {
