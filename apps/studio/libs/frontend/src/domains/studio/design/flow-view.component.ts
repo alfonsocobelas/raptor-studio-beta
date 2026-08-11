@@ -17,6 +17,7 @@ import {
 import { ActiveViewService } from './active-view.service'
 import { CanvasControlsComponent } from './canvas-controls.component'
 import { CanvasViewportService } from './canvas-viewport.service'
+import { FlowOrientationService } from './flow-orientation.service'
 import { DesignStore } from './design-store'
 
 interface FlowDiagramNode {
@@ -80,7 +81,18 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
         (pointerdown)="startPan($event)"
         (wheel)="onWheel($event)"
       >
-        <div class="absolute right-4 top-4 z-30">
+        <div class="absolute right-4 top-4 z-30 flex items-center gap-2">
+          <button
+            type="button"
+            class="bg-card canvas-card studio-ui hover:bg-accent/60 rounded-[9px] border px-2.5 py-1.5 transition-colors"
+            [attr.title]="
+              orientation.value() === 'horizontal' ? 'Leer el proceso en columna' : 'Leer el proceso en fila'
+            "
+            data-testid="flow-orientation"
+            (click)="orientation.toggle()"
+          >
+            {{ orientation.value() === 'horizontal' ? '→' : '↓' }}
+          </button>
           <studio-canvas-controls (fit)="fitToView()" />
         </div>
       <div
@@ -122,7 +134,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           </defs>
           @for (item of edges(); track item.from + '→' + item.to + (item.label ?? '')) {
             <g
-              class="pointer-events-auto cursor-pointer"
+              class="group/edge pointer-events-auto cursor-pointer"
               [attr.data-testid]="'flow-edge-' + item.from + '-' + item.to"
               (click)="selectEdge($event, item)"
             >
@@ -138,6 +150,29 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 [attr.stroke-dasharray]="item.alternate ? '5 4' : null"
                 [attr.marker-end]="item.alternate ? 'url(#flow-arrow-alt)' : 'url(#flow-arrow)'"
               />
+              <!-- el «+» de la referencia: insertar un paso EN MEDIO del tramo -->
+              <!-- visible siempre, como en 12A: es la forma de meter un paso en medio -->
+              <g
+                class="hover:opacity-100 opacity-70 transition-opacity"
+                [attr.data-testid]="'flow-insert-' + item.from + '-' + item.to"
+                (click)="$event.stopPropagation(); insertStep(item)"
+              >
+                <circle
+                  [attr.cx]="item.label ? item.line.labelX + 26 : item.line.labelX"
+                  [attr.cy]="item.line.labelY"
+                  r="9"
+                  class="fill-card stroke-border"
+                  stroke-width="1"
+                />
+                <text
+                  [attr.x]="item.label ? item.line.labelX + 26 : item.line.labelX"
+                  [attr.y]="item.line.labelY + 4"
+                  text-anchor="middle"
+                  class="fill-muted-foreground text-[11px]"
+                >
+                  +
+                </text>
+              </g>
               @if (item.label) {
                 <!-- la etiqueta de una salida de decisión va en pastilla: se lee sobre la rejilla -->
                 <rect
@@ -233,10 +268,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               ></div>
             } @else {
               <div
-                class="bg-card flow-card absolute inset-0 border"
+                class="bg-card flow-card absolute inset-0 rounded-[10px] border"
                 [class.ring-2]="isNodeSelected(item.node.id)"
-                [class.rounded-full]="item.node.kind !== 'step'"
-                [class.rounded-lg]="item.node.kind === 'step'"
                 [class.flow-card-start]="item.node.kind === 'start'"
               ></div>
             }
@@ -342,6 +375,7 @@ export class FlowViewComponent {
   protected readonly store = inject(DesignStore)
   protected readonly active = inject(ActiveViewService)
   private readonly viewport = inject(CanvasViewportService)
+  protected readonly orientation = inject(FlowOrientationService)
 
   /** Posiciones arrastradas por flujo:nodo — SOLO memoria de sesión (layout cosmético). */
   private readonly manual = signal<Record<string, NodePosition>>({})
@@ -373,7 +407,7 @@ export class FlowViewComponent {
   protected readonly nodes = computed<FlowDiagramNode[]>(() => {
     const flow = this.activeFlow()
     if (!flow) return []
-    const auto = flowLayout(flow)
+    const auto = flowLayout(flow, this.orientation.value())
     const dragged = Object.fromEntries(
       Object.entries(this.manual())
         .filter(([key]) => key.startsWith(`${flow.name}:`))
@@ -397,7 +431,7 @@ export class FlowViewComponent {
               to: edge.to,
               ...(edge.label ? { label: edge.label } : {}),
               alternate: alternates.has(`${edge.from}→${edge.to}`),
-              line: flowEdgeCurve(from, to)
+              line: flowEdgeCurve(from, to, this.orientation.value())
             }
           ]
         : []
@@ -430,7 +464,11 @@ export class FlowViewComponent {
   protected startPan(down: PointerEvent): void {
     if (down.button !== 0) return
     const target = down.target as HTMLElement
-    if (target.closest('[data-testid^="flow-node-"], button, input, select, [data-testid="canvas-controls"]')) return
+    // ni los nodos, ni los controles, ni lo que se pueda pulsar DENTRO del svg (aristas y
+    // el «+» de insertar): capturar el puntero aquí se comía su clic
+    const interactivo =
+      '[data-testid^="flow-node-"], [data-testid^="flow-edge-"], [data-testid^="flow-insert-"], button, input, select, [data-testid="canvas-controls"]'
+    if (target.closest(interactivo)) return
 
     const element = down.currentTarget as HTMLElement
     element.setPointerCapture(down.pointerId)
@@ -465,6 +503,19 @@ export class FlowViewComponent {
     const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
     if (!caja) return
     this.viewport.fit('flows', this.nodes().map(n => n.box), { width: caja.width, height: caja.height })
+  }
+
+  /** Parte el tramo en dos con un paso nuevo, que queda elegido para renombrarlo. */
+  protected insertStep(edge: FlowDiagramEdge): void {
+    const flow = this.activeName()
+    if (!flow) return
+    if (this.store.insertFlowStep(flow, edge.from, edge.to, 'Nuevo paso', edge.label)) {
+      const creado = this.store
+        .flows()
+        .find(f => f.name === flow)
+        ?.nodes.at(-1)
+      if (creado) this.active.selectFlowNode(creado.id)
+    }
   }
 
   protected selectNode(event: MouseEvent, id: string): void {

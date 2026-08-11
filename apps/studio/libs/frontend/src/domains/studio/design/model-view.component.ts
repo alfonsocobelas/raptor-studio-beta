@@ -483,7 +483,11 @@ export class ModelViewComponent {
     // el pan solo arranca sobre el PAPEL: sobre una caja manda el arrastre del nodo, y
     // sobre un control el clic es del control (capturar el puntero aquí se lo comía)
     const target = down.target as HTMLElement
-    if (target.closest('[data-testid^="model-node-"], button, input, select, [data-testid="canvas-controls"]')) return
+    // ni las cajas, ni los controles, ni las aristas del svg: capturar el puntero aquí
+    // se comía el clic con el que se seleccionan
+    const interactivo =
+      '[data-testid^="model-node-"], [data-testid^="edge-"], button, input, select, [data-testid="canvas-controls"]'
+    if (target.closest(interactivo)) return
 
     const element = down.currentTarget as HTMLElement
     element.setPointerCapture(down.pointerId)

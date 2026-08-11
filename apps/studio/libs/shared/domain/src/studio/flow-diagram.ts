@@ -14,8 +14,8 @@ export const FLOW_GRID = {
 
 /** Dimensiones fijas del nodo de flujo: el rombo y la píldora son CSS, no geometría. */
 export const FLOW_NODE = {
-  width: 180,
-  height: 56
+  width: 200,
+  height: 62
 } as const
 
 export function flowNodeBox(position: NodePosition): NodeBox {
@@ -27,7 +27,10 @@ export function flowNodeBox(position: NodePosition): NodeBox {
  * Los nodos inalcanzables (el gate ya los rechaza) caen en una capa extra al
  * final para que nunca desaparezcan del lienzo. Sin start → layout vacío.
  */
-export function flowLayout(flow: BusinessFlow): Record<string, NodePosition> {
+/** El proceso se puede leer en fila (izquierda→derecha) o en columna (arriba→abajo). */
+export type FlowOrientation = 'horizontal' | 'vertical'
+
+export function flowLayout(flow: BusinessFlow, orientation: FlowOrientation = 'horizontal'): Record<string, NodePosition> {
   const start = flow.nodes.find(node => node.kind === 'start')
   if (!start) return {}
 
@@ -50,15 +53,21 @@ export function flowLayout(flow: BusinessFlow): Record<string, NodePosition> {
     layers.set(depth, [...(layers.get(depth) ?? []), node.id])
   }
 
-  // El proceso avanza en HORIZONTAL, como en la referencia: cada capa es una columna
-  // y los nodos que comparten capa (las ramas de una decisión) se apilan en filas.
+  // La capa avanza en el eje del proceso y los nodos que la comparten (las ramas de
+  // una decisión) se reparten en el eje perpendicular.
   const positions: Record<string, NodePosition> = {}
   for (const [depth, ids] of layers) {
-    ;[...ids].sort().forEach((id, row) => {
-      positions[id] = {
-        x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth,
-        y: FLOW_GRID.margin + row * FLOW_GRID.rowHeight
-      }
+    ;[...ids].sort().forEach((sibling, index) => {
+      positions[sibling] =
+        orientation === 'horizontal'
+          ? {
+              x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth,
+              y: FLOW_GRID.margin + index * FLOW_GRID.rowHeight
+            }
+          : {
+              x: FLOW_GRID.margin + index * FLOW_GRID.colWidth,
+              y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
+            }
     })
   }
   return positions
@@ -81,7 +90,29 @@ export interface FlowEdgeCurve {
  * horizontal para que el trazo salga y entre plano. Si el destino queda a la izquierda
  * (un bucle hacia atrás), se invierten los lados en vez de cruzar el nodo.
  */
-export function flowEdgeCurve(from: NodeBox, to: NodeBox): FlowEdgeCurve {
+export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrientation = 'horizontal'): FlowEdgeCurve {
+  if (orientation === 'vertical') {
+    const haciaAbajo = to.y >= from.y
+    const x1 = from.x + from.width / 2
+    const x2 = to.x + to.width / 2
+    const y1 = haciaAbajo ? from.y + from.height : from.y
+    const y2 = haciaAbajo ? to.y : to.y + to.height
+
+    const tirador = Math.max(24, Math.abs(y2 - y1) / 2)
+    const cy1 = haciaAbajo ? y1 + tirador : y1 - tirador
+    const cy2 = haciaAbajo ? y2 - tirador : y2 + tirador
+
+    return {
+      x1,
+      y1,
+      x2,
+      y2,
+      d: `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`,
+      labelX: (x1 + x2) / 2,
+      labelY: (y1 + y2) / 2
+    }
+  }
+
   const haciaLaDerecha = to.x >= from.x
   const y1 = from.y + from.height / 2
   const y2 = to.y + to.height / 2

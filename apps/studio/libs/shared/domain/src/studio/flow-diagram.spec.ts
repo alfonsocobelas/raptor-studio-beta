@@ -218,3 +218,30 @@ describe('flowAlternateEdges — la salida alternativa de una decisión', () => 
     expect(flowAlternateEdges(flow).size).toBe(0)
   })
 })
+
+describe('orientación del flujo', () => {
+  it('en vertical la capa baja y las ramas se reparten a lo ancho', () => {
+    const positions = flowLayout(pedidoFlow(), 'vertical')
+
+    const capaY = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
+    expect(positions['inicio']).toEqual({ x: FLOW_GRID.margin, y: capaY(0) })
+    expect(positions['stock']).toEqual({ x: FLOW_GRID.margin, y: capaY(1) })
+    expect(positions['pedir']).toEqual({ x: FLOW_GRID.margin, y: capaY(2) })
+    expect(positions['reservar']).toEqual({ x: FLOW_GRID.margin + FLOW_GRID.colWidth, y: capaY(2) })
+  })
+
+  it('horizontal sigue siendo el valor por defecto', () => {
+    expect(flowLayout(pedidoFlow())).toEqual(flowLayout(pedidoFlow(), 'horizontal'))
+  })
+
+  it('la curva vertical sale por el pie y entra por la cabeza', () => {
+    const arriba: NodeBox = { x: 40, y: 40, width: 180, height: 56 }
+    const abajo: NodeBox = { x: 40, y: 240, width: 180, height: 56 }
+
+    const curva = flowEdgeCurve(arriba, abajo, 'vertical')
+
+    expect(curva.y1).toBe(arriba.y + arriba.height)
+    expect(curva.y2).toBe(abajo.y)
+    expect(curva.x1).toBe(arriba.x + arriba.width / 2)
+  })
+})

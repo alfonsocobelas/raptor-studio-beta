@@ -551,6 +551,35 @@ export class DesignStore {
     }))
   }
 
+  /**
+   * Inserta un paso EN MEDIO de un tramo: el «+» de la referencia. El tramo original
+   * se parte en dos y la etiqueta se queda en la primera mitad, que es la que sigue
+   * saliendo de la decisión — moverla al segundo tramo cambiaría de rama el resto.
+   */
+  insertFlowStep(flowName: string, from: string, to: string, text: string, label?: string): boolean {
+    const flow = this._flows().find(f => f.name === flowName)
+    const tramo = flow?.edges.find(edge => edge.from === from && edge.to === to && edge.label === label)
+    if (!flow || !tramo) {
+      this._lastError.set(`No existe el tramo ${from} → ${to} en «${flowName}»`)
+      return false
+    }
+
+    const taken = new Set(flow.nodes.map(node => node.id))
+    const base = slug(text)
+    let id = base
+    for (let i = 2; taken.has(id); i++) id = `${base}-${i}`
+
+    return this.updateFlow(flowName, current => ({
+      ...current,
+      nodes: [...current.nodes, { id, kind: 'step' as const, text }],
+      edges: current.edges.flatMap(edge =>
+        edge === tramo || (edge.from === from && edge.to === to && edge.label === label)
+          ? [{ from, to: id, ...(label ? { label } : {}) }, { from: id, to }]
+          : [edge]
+      )
+    }))
+  }
+
   removeFlowEdge(flowName: string, from: string, to: string, label?: string): boolean {
     return this.updateFlow(flowName, flow => ({
       ...flow,

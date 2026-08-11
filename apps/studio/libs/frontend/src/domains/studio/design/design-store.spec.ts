@@ -472,3 +472,45 @@ describe('la referencia de un campo se elige aparte del tipo', () => {
     expect(store.setFieldRef('producto', 1, 'fantasma')).toBe(false)
   })
 })
+
+describe('insertar un paso EN MEDIO de un tramo (el «+» de la referencia)', () => {
+  const conTramo = (): DesignStore => {
+    const store = new DesignStore()
+    store.addFlow('Aviso')
+    return store
+  }
+
+  it('parte el tramo en dos: inicio → nuevo → fin', () => {
+    const store = conTramo()
+
+    expect(store.insertFlowStep('Aviso', 'inicio', 'fin', 'Avisar a compras')).toBe(true)
+
+    const flow = store.flows()[0]
+    const nuevo = flow.nodes.find(n => n.text === 'Avisar a compras')
+    expect(nuevo?.kind).toBe('step')
+    expect(flow.edges).toEqual([
+      { from: 'inicio', to: nuevo?.id },
+      { from: nuevo?.id, to: 'fin' }
+    ])
+  })
+
+  it('conserva la etiqueta del tramo en la primera mitad: la rama sigue siendo la que era', () => {
+    const store = conTramo()
+    store.addFlowNode('Aviso', 'decision', '¿Menos de 10?')
+    store.addFlowEdge('Aviso', 'menos-de-10', 'fin', 'sí')
+
+    store.insertFlowStep('Aviso', 'menos-de-10', 'fin', 'Avisar', 'sí')
+
+    const flow = store.flows()[0]
+    const nuevo = flow.nodes.find(n => n.text === 'Avisar')
+    expect(flow.edges).toContainEqual({ from: 'menos-de-10', to: nuevo?.id, label: 'sí' })
+    expect(flow.edges).toContainEqual({ from: nuevo?.id, to: 'fin' })
+  })
+
+  it('sobre un tramo que no existe no hace nada', () => {
+    const store = conTramo()
+
+    expect(store.insertFlowStep('Aviso', 'inicio', 'fantasma', 'Paso')).toBe(false)
+    expect(store.flows()[0].nodes).toHaveLength(2)
+  })
+})
