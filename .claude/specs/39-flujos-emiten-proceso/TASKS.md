@@ -6,7 +6,7 @@
 
 ## Bloque A — esqueleto determinista
 
-- [ ] TASK-01: Exportar de `brief-doc.ts` lo que la derivación reutiliza (`bfsOrder`,
+- [x] TASK-01: Exportar de `brief-doc.ts` lo que la derivación reutiliza (`bfsOrder`,
       numeración y render del mapa) sin cambiar su salida — tests actuales en verde
       y golden intacto (refactor puro).
 - [ ] TASK-02: Tests + helper `flow-process.ts` — derivación de nombres: carpeta/fichero

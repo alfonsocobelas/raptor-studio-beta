@@ -62,25 +62,36 @@ export function renderFlows(flows: BusinessFlow[] | undefined): string {
     sections.push('', `### ${flow.name}`, '')
     if (flow.description) sections.push(flow.description, '')
 
-    const order = bfsOrder(flow)
-    const numberOf = new Map(order.map((node, i) => [node.id, i + 1]))
-
-    order.forEach((node, i) => {
-      sections.push(`${i + 1}. ${describeNode(node)}`)
-      const outgoing = flow.edges.filter(e => e.from === node.id)
-      for (const edge of outgoing) {
-        const target = numberOf.get(edge.to)
-        if (target === undefined) continue
-        // las ramas etiquetadas siempre se listan; un paso al siguiente número es implícito
-        if (edge.label !== undefined) {
-          sections.push(`   - ${edge.label} → ${target}`)
-        } else if (target !== i + 2) {
-          sections.push(`   - → ${target}`)
-        }
-      }
-    })
+    sections.push(...renderFlowSteps(flow))
   }
   return sections.join('\n') + '\n'
+}
+
+/**
+ * Las líneas numeradas de UN flujo, sin cabeceras markdown: la pieza que comparten el
+ * CLAUDE.md (spec 28) y el JSDoc de la clase de proceso emitida (spec 39). Un solo
+ * mapa numerado en todo el proyecto — divergencia imposible por construcción.
+ */
+export function renderFlowSteps(flow: BusinessFlow): string[] {
+  const order = bfsOrder(flow)
+  const numberOf = new Map(order.map((node, i) => [node.id, i + 1]))
+
+  const lines: string[] = []
+  order.forEach((node, i) => {
+    lines.push(`${i + 1}. ${describeNode(node)}`)
+    const outgoing = flow.edges.filter(e => e.from === node.id)
+    for (const edge of outgoing) {
+      const target = numberOf.get(edge.to)
+      if (target === undefined) continue
+      // las ramas etiquetadas siempre se listan; un paso al siguiente número es implícito
+      if (edge.label !== undefined) {
+        lines.push(`   - ${edge.label} → ${target}`)
+      } else if (target !== i + 2) {
+        lines.push(`   - → ${target}`)
+      }
+    }
+  })
+  return lines
 }
 
 function describeNode(node: FlowNode): string {
@@ -90,7 +101,7 @@ function describeNode(node: FlowNode): string {
 }
 
 /** Capa = distancia BFS al start; dentro de cada capa, orden alfabético por id (determinista). */
-function bfsOrder(flow: BusinessFlow): FlowNode[] {
+export function bfsOrder(flow: BusinessFlow): FlowNode[] {
   const start = flow.nodes.find(n => n.kind === 'start')
   if (!start) return [...flow.nodes]
 

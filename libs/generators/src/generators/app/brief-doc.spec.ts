@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import type { BusinessBrief, BusinessFlow, ResourceDefinition } from '@acc/schema'
 import { appGenerator } from './app'
-import { renderClaudeMd, renderFlows } from './brief-doc'
+import { bfsOrder, renderClaudeMd, renderFlows, renderFlowSteps } from './brief-doc'
 import { MODELS, registerModels } from '../resource/models/registry'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -135,6 +135,54 @@ describe('renderFlows — el esquema numerado del proceso', () => {
   it('sin flujos devuelve cadena vacía', () => {
     expect(renderFlows([])).toBe('')
     expect(renderFlows(undefined)).toBe('')
+  })
+})
+
+/**
+ * Spec 39, TASK-01: las piezas del render que la derivación de procesos reutiliza
+ * (mismo orden BFS y mismo mapa numerado en CLAUDE.md y en el JSDoc emitido — una
+ * sola fuente, dos consumidores). Refactor puro: renderFlows no cambia su salida.
+ */
+describe('bfsOrder y renderFlowSteps — piezas reutilizables del render (spec 39)', () => {
+  const flow: BusinessFlow = {
+    name: 'Ciclo de pedido',
+    nodes: [
+      { id: 'llega', kind: 'start', text: 'Llega un pedido', entity: 'pedido' },
+      { id: 'revisar', kind: 'step', text: 'Se revisa y registra' },
+      { id: 'aprobado', kind: 'decision', text: '¿Todo correcto?' },
+      { id: 'subsanar', kind: 'step', text: 'Se subsana' },
+      { id: 'fin', kind: 'end', text: 'Pedido en curso' }
+    ],
+    edges: [
+      { from: 'llega', to: 'revisar' },
+      { from: 'revisar', to: 'aprobado' },
+      { from: 'aprobado', to: 'fin', label: 'sí' },
+      { from: 'aprobado', to: 'subsanar', label: 'no' },
+      { from: 'subsanar', to: 'revisar' }
+    ]
+  }
+
+  it('bfsOrder ordena por capas desde el start y desempata por id', () => {
+    const ids = bfsOrder(flow).map(node => node.id)
+
+    // fin y subsanar comparten capa (distancia 3): gana el orden alfabético por id
+    expect(ids).toEqual(['llega', 'revisar', 'aprobado', 'fin', 'subsanar'])
+  })
+
+  it('renderFlowSteps devuelve solo las líneas numeradas, con ramas y saltos', () => {
+    const lines = renderFlowSteps(flow)
+
+    expect(lines[0]).toBe('1. (inicio) Llega un pedido · entidad: pedido')
+    expect(lines).toContain('   - sí → 4')
+    expect(lines).toContain('   - no → 5')
+    expect(lines).toContain('   - → 2')
+    expect(lines.join('\n')).not.toContain('###')
+  })
+
+  it('renderFlows compone renderFlowSteps: la salida es EXACTAMENTE la de antes', () => {
+    const md = renderFlows([flow])
+
+    expect(md).toContain(renderFlowSteps(flow).join('\n'))
   })
 })
 
