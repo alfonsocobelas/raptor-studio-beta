@@ -262,6 +262,42 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
   })
 
   /**
+   * Spec 39, TASK-09: el criterio de aceptación de la demo solaris, fijado como test
+   * (el gate de compilación vive en tools/typecheck-emitted.sh, que no mira la forma).
+   * Los nombres de clase salen de los modelos registrados —`installation`/`worklog`—,
+   * no de la prosa del REQUIREMENTS, que los citaba en español.
+   */
+  it('la demo solaris emite los 5 pasos y los 2 repos del flujo de legalización', async () => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'solaris', app: 'solaris', skipInstall: true })
+
+    const emitted =
+      tree.read(
+        'apps/solaris/libs/backend/src/contexts/solaris/processes/de-presupuesto-a-legalizacion/de-presupuesto-a-legalizacion.process.ts',
+        'utf-8'
+      ) ?? ''
+
+    // los 5 nodos step del flujo, y solo ellos
+    expect(emitted.match(/^  async \w+\(/gm)?.map(m => m.trim())).toEqual([
+      'async presupuesto(',
+      'async planifica(',
+      'async montaje(',
+      'async averia(',
+      'async cie('
+    ])
+    // dos entidades citadas → dos repos inyectados, en orden de primera aparición BFS.
+    // Se lee la lista de parámetros, no el texto literal: el árbol de test no pasa por
+    // prettier (la fixture de oro sí), así que el salto de línea del constructor difiere.
+    const ctor = emitted.match(/constructor\(([\s\S]*?)\) \{\}/)?.[1] ?? ''
+    expect(ctor.match(/private readonly \w+: \w+/g)).toEqual([
+      'private readonly installationRepository: InstallationRepository',
+      'private readonly worklogRepository: WorklogRepository'
+    ])
+    // y los 5 huecos nacen vacíos: el relleno es el bloque B de la spec
+    expect(emitted.match(/@ai:begin flow-/g)).toHaveLength(5)
+  })
+
+  /**
    * Spec 39, TASK-07: supervivencia. Lo escrito a mano dentro de un hueco flow-*
    * sobrevive a la regeneración por el mecanismo existente de ai-slots.ts
    * (harvest antes de emitir, reinyección después), sin cambios en su código.

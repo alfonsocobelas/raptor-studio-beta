@@ -32,8 +32,12 @@
       encendido» que ya cubre el gate), no en solaris — una tercera fixture de ~800 ficheros
       no añadía cobertura. `app-mongo` queda como control sin flujos. El criterio de solaris
       (5 métodos, 2 repos) se verifica en TASK-09.
-- [ ] TASK-09: Gate de app real: la app emitida con procesos compila y su suite pasa
+- [x] TASK-09: Gate de app real: la app emitida con procesos compila y su suite pasa
       (gate de spec 26 intacto); criterio de los 5 métodos y 2 repos de solaris verificado.
+      **Medición 2026-08-11**: `typecheck-emitted.sh --app=golden …` → **0 errores** de TS
+      (backend+shared y frontend) y la suite del emitido **332/332** en 33 suites, con la
+      app generada e instalada FUERA del monorepo. El criterio de solaris queda fijado como
+      test (`flow-process.spec.ts`), no como comprobación manual.
 
 ## Bloque B — relleno IA bajo gate
 

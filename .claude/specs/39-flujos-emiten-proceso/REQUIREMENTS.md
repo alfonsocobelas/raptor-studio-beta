@@ -63,15 +63,19 @@ no solo como punto de extensión manual.
 
 ## Criterios de aceptación
 
-- [ ] `nx g @acc/generators:app` con el diseño solaris emite
+- [x] `nx g @acc/generators:app` con el diseño solaris emite
       `contexts/solaris/processes/de-presupuesto-a-legalizacion/` con la clase
       cableada: 5 métodos (`presupuesto`, `planifica`, `montaje`, `averia`, `cie`),
       repos `InstalacionRepository` y `ParteRepository` inyectados, huecos vacíos.
-- [ ] La app emitida con procesos compila y su suite pasa (gate de spec 26 intacto).
-- [ ] Un diseño sin flujos no emite `processes/` y `/golden-diff` da diff vacío
-      sobre las fixtures que no tengan flujos.
-- [ ] La fixture de oro con flujos queda re-baselineada y el diff es vacío.
-- [ ] Texto escrito a mano dentro de un hueco `flow-*` sobrevive a la regeneración.
+      · Los repos reales son `InstallationRepository` y `WorklogRepository`: los modelos
+      registrados son `installation`/`worklog`, no los nombres españoles de esta prosa.
+- [x] La app emitida con procesos compila y su suite pasa (gate de spec 26 intacto).
+      · 0 errores de TS y 332/332 tests, medido fuera del monorepo (TASK-09).
+- [x] Un diseño sin flujos no emite `processes/` y `/golden-diff` da diff vacío
+      sobre las fixtures que no tengan flujos. · `app-mongo`, 596 ficheros sin cambio.
+- [x] La fixture de oro con flujos queda re-baselineada y el diff es vacío.
+      · Congelada en el diseño `golden`, no en solaris (ver desviación en TASK-08).
+- [x] Texto escrito a mano dentro de un hueco `flow-*` sobrevive a la regeneración.
 - [ ] El comando de relleno rellena al menos un hueco de la demo solaris y el gate
       lo acepta (build + test en verde).
 - [ ] Un relleno que rompe la compilación es rechazado: el hueco vuelve a quedar
