@@ -76,10 +76,11 @@ no solo como punto de extensión manual.
 - [x] La fixture de oro con flujos queda re-baselineada y el diff es vacío.
       · Congelada en el diseño `golden`, no en solaris (ver desviación en TASK-08).
 - [x] Texto escrito a mano dentro de un hueco `flow-*` sobrevive a la regeneración.
-- [ ] El comando de relleno rellena al menos un hueco de la demo solaris y el gate
-      lo acepta (build + test en verde).
-- [ ] Un relleno que rompe la compilación es rechazado: el hueco vuelve a quedar
-      vacío y se reporta.
+- [x] El comando de relleno rellena al menos un hueco de la demo solaris y el gate
+      lo acepta (build + test en verde). · Demostrado sobre la composición `golden`:
+      la app solaris no compila por un defecto ajeno (ver TASKS.md).
+- [x] Un relleno que rompe la compilación es rechazado: el hueco vuelve a quedar
+      vacío y se reporta. · TS2339 + TS2304 reportados, hueco vaciado, nada en disco.
 
 ## Referencias del proyecto de referencia
 

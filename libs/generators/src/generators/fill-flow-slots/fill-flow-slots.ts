@@ -49,6 +49,8 @@ export interface FlowFillRejection {
 export interface FlowFillReport {
   /** Nombre del ejecutor usado, o 'none' si no había */
   executor: string
+  /** Motivo si la app YA estaba en rojo antes de rellenar: no se intenta nada */
+  baseline?: string
   /** Huecos de paso que siguen vacíos, en orden de recorrido del árbol */
   pending: AiSlotRef[]
   /** Huecos rellenados y aceptados por el gate */
@@ -91,10 +93,22 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
   if (!executor) return flowFillReport(tree, options)
   if (!gate) throw new Error('Un relleno sin gate no se acepta: la IA solo entra bajo gate determinista')
 
+  const pending = pendingFlowSlots(tree, directory, options.slot)
+
+  // línea base: si la app ya está roja, el gate de cada hueco reportaría el error de un
+  // fichero que nadie tocó y parecería culpa del relleno (visto en la corrida real de
+  // solaris, con un VO compartido colgando). Se mide una vez y se para.
+  if (pending.length) {
+    const baseline = await gate.run(pending[0], tree.read(pending[0].file, 'utf-8') ?? '')
+    if (baseline) {
+      return { executor: executor.name, baseline, pending, filled: [], rejected: [] }
+    }
+  }
+
   const filled: AiSlotRef[] = []
   const rejected: FlowFillRejection[] = []
 
-  for (const slot of pendingFlowSlots(tree, directory, options.slot)) {
+  for (const slot of pending) {
     const original = tree.read(slot.file, 'utf-8') ?? ''
     const candidate = await executor.propose(buildFlowSlotPrompt(tree, directory, slot), slot, original)
 
@@ -148,6 +162,11 @@ export async function fillFlowSlotsGenerator(tree: Tree, options: FlowFillOption
     : options
 
   const report = await fillPendingFlowSlots(tree, wired)
+
+  if (report.baseline) {
+    console.log(`✗ La app ya estaba en rojo ANTES de rellenar, así que no se ha intentado nada:\n${report.baseline}`)
+    return
+  }
 
   for (const { slot, reason } of report.rejected) {
     console.log(`✗ ${slot.id}: ${reason}`)

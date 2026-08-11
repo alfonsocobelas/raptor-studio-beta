@@ -70,9 +70,30 @@
       la evidencia de que el relleno sobrevive a una regeneración real es el test de TASK-07.
       El gate real usa los scripts de la propia app emitida (`npm run typecheck`, `npm test`)
       y falla al primero.
-- [ ] TASK-13: Prueba real sobre la demo solaris: rellenar al menos un hueco vía ejecutor
+- [x] TASK-13: Prueba real sobre la demo solaris: rellenar al menos un hueco vía ejecutor
       (Claude Code por puente) con el gate aceptando, y comprobar que un relleno que rompe
       la compilación es rechazado (hueco vaciado + motivo reportado).
+      **Corrida real 2026-08-11** (app generada e instalada, gate = `typecheck` + `test`):
+      · Aceptación: `flow-contrato` relleno por puente (yo como sesión ejecutora) →
+        `✓ relleno y aceptado por el gate`, y el cuerpo queda en disco.
+      · Rechazo: `flow-proyecto` con un método inexistente del puerto → `✗ typecheck en
+        rojo` con los dos TS2339/TS2304, hueco vacío otra vez y ni rastro del relleno.
+      **Desviación**: la corrida NO fue sobre solaris sino sobre la composición `golden`,
+      porque **la app solaris emitida no compila** por un defecto ajeno a esta spec (abajo).
+      **Hallazgo del propio gate**: no distinguía «mi relleno rompió la app» de «la app ya
+      venía roja» y culpaba a cada hueco del error de un fichero que nadie tocó. Ahora mide
+      la línea base una vez, lo dice y no molesta al ejecutor.
+
+## Defecto encontrado (fuera del alcance de esta spec)
+
+- **La app solaris emitida no compila**: `sharedVosOf` (`resource/models/shared-vos.ts`)
+  añade `Period` cuando el modelo declara período, pero **no sigue su dependencia**
+  `of: 'ContractDate'` del catálogo. En contract/project/license el VO entra por casualidad
+  (sus campos lo declaran con `voShared`), pero `installation` solo declara el período: se
+  emite `period.vo.ts` referenciando un `ContractDate` que no existe ni se importa
+  → 8 × TS2304 + un módulo inexistente en el builder, más 2 errores de nulabilidad
+  (`string | null` → `string`) en el mismo agregado. Merece tarea propia: es un fallo de
+  clase spec 26/27 que muerde a cualquier app con período cuya entidad no sea `contract`.
 
 ## Validación
 

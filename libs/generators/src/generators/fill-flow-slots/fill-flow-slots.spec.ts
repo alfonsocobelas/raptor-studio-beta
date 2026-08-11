@@ -115,7 +115,20 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       }
     })
 
+    /**
+     * La PRIMERA llamada de un gate es siempre la línea base (la app sin tocar), y en
+     * estos tests está verde: lo que se modela es una app sana que un relleno rompe.
+     */
     const gateThat = (reason?: string): SlotGate & { calls: number } => ({
+      calls: 0,
+      async run(_slot, _content) {
+        this.calls++
+        return this.calls === 1 ? undefined : reason
+      }
+    })
+
+    /** Una app que ya venía en rojo: el gate falla desde la línea base. */
+    const gateRedFromTheStart = (reason: string): SlotGate & { calls: number } => ({
       calls: 0,
       async run(_slot, _content) {
         this.calls++
@@ -136,7 +149,8 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe(BODY)
       // el prompt del hueco llegó al ejecutor
       expect(executor.prompts[0]).toContain('Rellena el cuerpo del paso «flow-revisar»')
-      expect(gate.calls).toBe(1)
+      // línea base + el hueco
+      expect(gate.calls).toBe(2)
     })
 
     it('rechaza un relleno que se sale del hueco, sin tocar el árbol ni gastar el gate', async () => {
@@ -152,8 +166,8 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       expect(report.filled).toEqual([])
       expect(report.rejected[0].reason).toMatch(/fuera del hueco/i)
       expect(tree.read(PROCESS, 'utf-8')).toBe(before)
-      // no se corre un gate de minutos sobre algo ya invalidado
-      expect(gate.calls).toBe(0)
+      // solo la línea base: no se corre un gate de minutos sobre algo ya invalidado
+      expect(gate.calls).toBe(1)
     })
 
     it('si el gate se pone rojo, el hueco vuelve a quedar vacío y se reporta el motivo', async () => {
@@ -247,7 +261,43 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
         }
       })
 
-      expect(readSlotBody(seen[0], 'flow-revisar')).toBe(BODY)
+      // la primera llamada es la línea base (sin tocar); la segunda ya lleva el relleno
+      expect(readSlotBody(seen[0], 'flow-revisar')).toBe('')
+      expect(readSlotBody(seen[1], 'flow-revisar')).toBe(BODY)
+    })
+
+    /**
+     * Encontrado en la corrida real de TASK-13: la app solaris no compilaba ANTES de
+     * rellenar (un VO compartido colgando, defecto ajeno a esta spec) y cada hueco se
+     * rechazaba con el error de un fichero que nadie había tocado. Si la línea base ya
+     * está roja hay que decirlo una vez y no culpar a los rellenos.
+     */
+    it('si la app ya estaba en rojo antes de rellenar, se dice y no se intenta nada', async () => {
+      const tree = emittedApp()
+      const executor = executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY))
+      const gate = gateRedFromTheStart('`npm run typecheck` en rojo:\ninstallation.ts(106,27): error TS2304')
+
+      const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+      expect(report.baseline).toMatch(/en rojo/)
+      expect(report.filled).toEqual([])
+      expect(report.rejected).toEqual([])
+      // no se le pide nada al ejecutor: no hay contra qué medir un relleno
+      expect(executor.prompts).toEqual([])
+      expect(gate.calls).toBe(1)
+    })
+
+    it('con la línea base en verde el informe no reporta baseline', async () => {
+      const tree = emittedApp()
+
+      const report = await fillPendingFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor: executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY)),
+        gate: gateThat()
+      })
+
+      expect(report.baseline).toBeUndefined()
+      expect(report.filled).toHaveLength(1)
     })
 
     it('el informe nombra al ejecutor que se usó', async () => {
