@@ -1,5 +1,5 @@
 import type { BusinessFlow } from '@acc/schema'
-import { flowProcessNames, flowRepoDeps, flowStepMethods } from './flow-process'
+import { flowClassDoc, flowProcessNames, flowRepoDeps, flowStepMethods } from './flow-process'
 
 /**
  * Spec 39, TASK-02: derivación de nombres del proceso emitido. Toda la lógica vive
@@ -89,6 +89,49 @@ describe('flow-process — derivación de nombres (spec 39)', () => {
 
     // WHEN / THEN
     expect(flowRepoDeps(soloStart).map(d => d.className)).toEqual(['PedidoRepository'])
+  })
+
+  it('la cabecera de la clase lleva nombre, descripción y el MISMO mapa numerado del CLAUDE.md', () => {
+    // GIVEN
+    const conDescripcion: BusinessFlow = { ...flow, description: 'De la solicitud a la obra legalizada.' }
+
+    // WHEN
+    const doc = flowClassDoc(conDescripcion)
+
+    // THEN: reutiliza renderFlowSteps — una sola fuente para el mapa
+    expect(doc[0]).toBe('De presupuesto a legalización')
+    expect(doc).toContain('De la solicitud a la obra legalizada.')
+    expect(doc).toContain('1. (inicio) Llega una obra')
+    expect(doc).toContain('   - sí → 4')
+  })
+
+  it('sin descripción la cabecera va del nombre al mapa, sin línea vacía duplicada', () => {
+    const doc = flowClassDoc(flow)
+
+    expect(doc[0]).toBe('De presupuesto a legalización')
+    expect(doc[1]).toBe('')
+    expect(doc[2]).toBe('1. (inicio) Llega una obra')
+  })
+
+  it('el JSDoc de cada método lleva número de paso, texto, procedencia y destino', () => {
+    // WHEN
+    const presupuesto = flowStepMethods(flow).find(m => m.methodName === 'presupuesto')
+
+    // THEN
+    expect(presupuesto?.docLines).toEqual([
+      'Paso 2 — Se solicita presupuesto',
+      'Viene de: 1. Llega una obra',
+      'Va a: 3. ¿Aprueba el cliente?'
+    ])
+  })
+
+  it('venir de una decisión anota la etiqueta de la rama', () => {
+    // WHEN
+    const planifica = flowStepMethods(flow).find(m => m.methodName === 'planificaMontaje')
+
+    // THEN
+    expect(planifica?.docLines).toContain('Viene de: 3. ¿Aprueba el cliente? (rama «sí»)')
+    expect(planifica?.docLines).toContain('Va a: 5. Instalación legalizada')
   })
 
   it('un flujo sin nodos step no deriva ningún método', () => {

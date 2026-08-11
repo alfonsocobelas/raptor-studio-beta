@@ -15,7 +15,7 @@
 - [x] TASK-03: Tests + derivación de firmas y constructor: parámetro `id: <Entity>Id` solo
       si el nodo declara `entity`; repos de las entidades citadas, deduplicados, en orden
       de primera aparición BFS.
-- [ ] TASK-04: Tests + derivación de JSDoc: cabecera de clase (nombre + descripción + mapa
+- [x] TASK-04: Tests + derivación de JSDoc: cabecera de clase (nombre + descripción + mapa
       numerado BFS reutilizando TASK-01) y JSDoc por método (número de paso, texto, de dónde
       viene —con etiqueta de rama— y a dónde va).
 - [ ] TASK-05: Tests + plantillas `files-flow-process/` (`__flowFileName__.process.ts.template`

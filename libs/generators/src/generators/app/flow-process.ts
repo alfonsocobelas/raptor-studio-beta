@@ -1,6 +1,6 @@
 import { names } from '@nx/devkit'
 import type { BusinessFlow, FlowNode } from '@acc/schema'
-import { bfsOrder } from './brief-doc'
+import { bfsOrder, renderFlowSteps } from './brief-doc'
 
 /**
  * Derivación de la clase de proceso que emite un flujo (spec 39). El flujo NO se
@@ -20,6 +20,8 @@ export interface FlowStepMethod {
   methodName: string
   /** Firma estable (el harvest no cubre firmas): 'id: InstalacionId' si el nodo cita entidad; si no, '' */
   params: string
+  /** JSDoc del método: número de paso, texto, procedencia (con rama etiquetada) y destino */
+  docLines: string[]
   node: FlowNode
 }
 
@@ -41,13 +43,37 @@ export function flowProcessNames(flow: BusinessFlow): FlowProcessNames {
 
 /** Solo los nodos `step` derivan método, en orden BFS (el mismo del mapa del CLAUDE.md). */
 export function flowStepMethods(flow: BusinessFlow): FlowStepMethod[] {
-  return bfsOrder(flow)
+  const order = bfsOrder(flow)
+  const numberOf = new Map(order.map((node, i) => [node.id, i + 1]))
+  const nodeOf = new Map(order.map(node => [node.id, node]))
+
+  const describe = (id: string) => `${numberOf.get(id)}. ${nodeOf.get(id)?.text}`
+  return order
     .filter(node => node.kind === 'step')
-    .map(node => ({
-      methodName: names(node.id).propertyName,
-      params: node.entity ? `id: ${names(node.entity).className}Id` : '',
-      node
-    }))
+    .map(node => {
+      const docLines = [`Paso ${numberOf.get(node.id)} — ${node.text}`]
+      for (const edge of flow.edges) {
+        if (edge.to !== node.id || !numberOf.has(edge.from)) continue
+        const branch = edge.label !== undefined ? ` (rama «${edge.label}»)` : ''
+        docLines.push(`Viene de: ${describe(edge.from)}${branch}`)
+      }
+      for (const edge of flow.edges) {
+        if (edge.from !== node.id || !numberOf.has(edge.to)) continue
+        const branch = edge.label !== undefined ? ` (rama «${edge.label}»)` : ''
+        docLines.push(`Va a: ${describe(edge.to)}${branch}`)
+      }
+      return {
+        methodName: names(node.id).propertyName,
+        params: node.entity ? `id: ${names(node.entity).className}Id` : '',
+        docLines,
+        node
+      }
+    })
+}
+
+/** Cabecera JSDoc de la clase: nombre, descripción y el mapa numerado de renderFlowSteps (una sola fuente). */
+export function flowClassDoc(flow: BusinessFlow): string[] {
+  return [flow.name, '', ...(flow.description ? [flow.description, ''] : []), ...renderFlowSteps(flow)]
 }
 
 /**
