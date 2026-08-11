@@ -77,6 +77,40 @@ describe('ModelSidebarComponent', () => {
     expect(active.resource()).toBe('movimiento')
   })
 
+  it('la tecla E abre el alta de entidad, como anuncia su atajo', async () => {
+    const fixture = mount()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', bubbles: true }))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'model-new-entity-name')).not.toBeNull()
+  })
+
+  it('la tecla C añade un campo a la entidad elegida', () => {
+    store.addResource('Productos')
+    active.selectResource('producto')
+    const antes = store.resources()[0].fields.length
+
+    const fixture = mount()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }))
+
+    expect(store.resources()[0].fields.length).toBe(antes + 1)
+  })
+
+  it('escribiendo en un campo de texto los atajos no disparan: sería un sabotaje', () => {
+    store.addResource('Productos')
+    active.selectResource('producto')
+    const antes = store.resources()[0].fields.length
+
+    const fixture = mount()
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }))
+    input.remove()
+
+    expect(store.resources()[0].fields.length).toBe(antes)
+  })
+
   it('explica que las relaciones se arrastran, en vez de ofrecer un botón que no las crea', () => {
     const fixture = mount()
 

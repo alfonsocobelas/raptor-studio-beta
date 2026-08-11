@@ -14,6 +14,7 @@ import { DesignStore } from './design-store'
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIcon],
   providers: [provideIcons({ lucideIdCard, lucidePlus, lucideTable })],
+  host: { '(document:keydown)': 'onShortcut($event)' },
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto p-4">
       <section>
@@ -46,7 +47,8 @@ import { DesignStore } from './design-store'
             (click)="creating.set(true)"
           >
             <ng-icon name="lucideTable" size="15" />
-            Entidad
+            <span class="flex-1">Entidad</span>
+            <span class="text-[9px] uppercase opacity-60">E</span>
           </button>
         }
 
@@ -59,7 +61,8 @@ import { DesignStore } from './design-store'
           (click)="addField()"
         >
           <ng-icon name="lucideIdCard" size="15" />
-          Campo
+          <span class="flex-1">Campo</span>
+          <span class="text-[9px] uppercase opacity-60">C</span>
         </button>
 
         <p class="text-muted-foreground mt-3 px-1 text-xs" data-testid="model-add-hint">
@@ -90,6 +93,27 @@ export class ModelSidebarComponent {
 
   /** La entidad elegida en el diagrama: a ella se le añaden los campos. */
   protected readonly selected = computed(() => this.active.resource())
+
+  /**
+   * Atajos anunciados en los botones: E abre el alta de entidad, C añade campo. Si el
+   * foco está escribiendo, no se disparan — teclear «campo» en un nombre no puede
+   * crear cinco cosas por el camino.
+   */
+  protected onShortcut(event: KeyboardEvent): void {
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+    // el target puede ser el propio document, que no tiene closest()
+    const target = event.target instanceof HTMLElement ? event.target : null
+    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+
+    if (event.key === 'e' || event.key === 'E') {
+      event.preventDefault()
+      this.creating.set(true)
+    }
+    if (event.key === 'c' || event.key === 'C') {
+      event.preventDefault()
+      this.addField()
+    }
+  }
 
   protected onName(event: Event): void {
     this.entityName.set((event.target as HTMLInputElement).value)

@@ -48,49 +48,42 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
             @if (field(); as current) {
               <p class="mb-3 text-sm font-semibold">{{ current.name }}</p>
 
-              <label class="text-muted-foreground mb-1 block text-xs" for="field-name">Nombre</label>
-              <input
-                id="field-name"
-                class="border-input studio-ui mb-3 w-full rounded-[7px] border px-2 py-1.5"
-                [value]="current.label"
-                (input)="rename($event)"
-                data-testid="field-name"
-              />
+              <div class="studio-row">
+                <label for="field-name">Nombre</label>
+                <input id="field-name" [value]="current.label" (input)="rename($event)" data-testid="field-name" />
+              </div>
 
-              <label class="text-muted-foreground mb-1 block text-xs" for="field-type">Tipo</label>
+              <div class="studio-row">
+                <label for="field-type">Tipo</label>
               <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
-              <select
-                id="field-type"
-                class="border-input studio-ui mb-4 w-full rounded-[7px] border px-2 py-1.5 disabled:opacity-60"
-                [value]="current.type"
-                [disabled]="current.type === 'ref'"
-                (change)="retype($event)"
-                data-testid="field-type"
-              >
-                @if (current.type === 'ref') {
-                  <option value="ref">referencia (uuid)</option>
-                } @else {
-                  @for (type of types; track type) {
-                    <option [value]="type">{{ label(type) }}</option>
+                <select
+                  id="field-type"
+                  [value]="current.type"
+                  [disabled]="current.type === 'ref'"
+                  (change)="retype($event)"
+                  data-testid="field-type"
+                >
+                  @if (current.type === 'ref') {
+                    <option value="ref">referencia (uuid)</option>
+                  } @else {
+                    @for (type of types; track type) {
+                      <option [value]="type">{{ label(type) }}</option>
+                    }
                   }
-                }
-              </select>
+                </select>
+              </div>
 
-              <label class="text-muted-foreground mb-1 block text-xs" for="field-ref">Referencia</label>
-              <select
-                id="field-ref"
-                class="border-input studio-ui mb-4 w-full rounded-[7px] border px-2 py-1.5"
-                [value]="current.refTo ?? ''"
-                (change)="repoint($event)"
-                data-testid="field-ref"
-              >
-                <option value="">— ninguna —</option>
-                @for (target of targets(); track target.name) {
-                  <option [value]="target.name">{{ target.labelSingular }}</option>
-                }
-              </select>
+              <div class="studio-row">
+                <label for="field-ref">Referencia</label>
+                <select id="field-ref" [value]="current.refTo ?? ''" (change)="repoint($event)" data-testid="field-ref">
+                  <option value="">— ninguna —</option>
+                  @for (target of targets(); track target.name) {
+                    <option [value]="target.name">{{ target.labelSingular }}</option>
+                  }
+                </select>
+              </div>
 
-              <div class="flex flex-wrap items-center gap-1.5">
+              <div class="mt-4 flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   class="hover:border-foreground/40 rounded-md border px-2.5 py-1.5 text-xs transition-colors"

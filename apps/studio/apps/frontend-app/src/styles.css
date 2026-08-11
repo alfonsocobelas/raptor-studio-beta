@@ -286,3 +286,30 @@
   border-radius: 8px;
   padding: 8px 15px;
 }
+
+/* Fila del inspector, calibrada contra 19A: la etiqueta a la izquierda en gris y el
+   control a la derecha con su borde, ambos en la misma línea. */
+.studio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.studio-row > label {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.studio-row > input,
+.studio-row > select {
+  font-size: 12.5px;
+  width: 150px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  background-color: var(--card);
+}
+.studio-row > select:disabled {
+  opacity: 0.6;
+}
