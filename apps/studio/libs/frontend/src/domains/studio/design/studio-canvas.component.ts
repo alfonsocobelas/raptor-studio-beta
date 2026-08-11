@@ -46,6 +46,7 @@ import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
+import { ModelSidebarComponent } from './model-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
@@ -67,6 +68,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     ModelViewComponent,
     FlowViewComponent,
     ViewsSidebarComponent,
+    ModelSidebarComponent,
     DesignPanelComponent,
     CanvasHeaderComponent
   ],
@@ -209,6 +211,8 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
       <div class="flex min-h-0 flex-1">
         @if (mode() === 'views') {
           <studio-views-sidebar />
+        } @else if (mode() === 'model') {
+          <studio-model-sidebar />
         }
         <div class="canvas-surface flex min-h-0 min-w-0 flex-1 flex-col">
           <!-- pb-10: sin ese aire el scroll recorta la sombra inferior y el mockup se funde con el chat -->
