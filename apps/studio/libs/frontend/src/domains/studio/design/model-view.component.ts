@@ -240,8 +240,8 @@ interface DiagramEdge {
     .model-grid {
       background-image: radial-gradient(
         circle,
-        color-mix(in oklab, var(--border) 55%, var(--background)) 1.3px,
-        transparent 1.3px
+        color-mix(in oklab, var(--foreground) 22%, transparent) 1.4px,
+        transparent 1.4px
       );
       background-size: 24px 24px;
       background-position: -12px -12px;

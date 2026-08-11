@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { BusinessFlow } from '@acc/schema'
-import { FLOW_GRID, FLOW_NODE, flowEdgeCurve, flowLayout, flowNodeBox, flowStepNumbers } from './flow-diagram'
+import {
+  FLOW_GRID,
+  FLOW_NODE,
+  flowAlternateEdges,
+  flowEdgeCurve,
+  flowLayout,
+  flowNodeBox,
+  flowStepNumbers
+} from './flow-diagram'
 import type { NodeBox } from './model-diagram'
 
 const pedidoFlow = (): BusinessFlow => ({
@@ -22,16 +30,16 @@ const pedidoFlow = (): BusinessFlow => ({
 })
 
 describe('flowLayout — capas BFS desde el start', () => {
-  it('coloca cada nodo en la capa de su distancia al start (y) en orden por id (x)', () => {
+  it('el proceso avanza en HORIZONTAL: la capa es la columna (x) y el orden dentro de ella la fila (y)', () => {
     const positions = flowLayout(pedidoFlow())
 
-    const layerY = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
-    expect(positions['inicio']).toEqual({ x: FLOW_GRID.margin, y: layerY(0) })
-    expect(positions['stock']).toEqual({ x: FLOW_GRID.margin, y: layerY(1) })
-    // capa 2: 'pedir' < 'reservar' alfabéticamente
-    expect(positions['pedir']).toEqual({ x: FLOW_GRID.margin, y: layerY(2) })
-    expect(positions['reservar']).toEqual({ x: FLOW_GRID.margin + FLOW_GRID.colWidth, y: layerY(2) })
-    expect(positions['fin']).toEqual({ x: FLOW_GRID.margin, y: layerY(3) })
+    const layerX = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.colWidth
+    expect(positions['inicio']).toEqual({ x: layerX(0), y: FLOW_GRID.margin })
+    expect(positions['stock']).toEqual({ x: layerX(1), y: FLOW_GRID.margin })
+    // capa 2: 'pedir' < 'reservar' alfabéticamente, así que 'pedir' va arriba
+    expect(positions['pedir']).toEqual({ x: layerX(2), y: FLOW_GRID.margin })
+    expect(positions['reservar']).toEqual({ x: layerX(2), y: FLOW_GRID.margin + FLOW_GRID.rowHeight })
+    expect(positions['fin']).toEqual({ x: layerX(3), y: FLOW_GRID.margin })
   })
 
   it('es determinista: el mismo flujo produce las mismas posiciones', () => {
@@ -60,7 +68,8 @@ describe('flowLayout — capas BFS desde el start', () => {
     const positions = flowLayout(flow)
 
     expect(Object.keys(positions)).toHaveLength(5)
-    expect(positions['revisar'].y).toBe(FLOW_GRID.margin + FLOW_GRID.rowHeight)
+    // 'revisar' está en la capa 1: primera columna tras el inicio
+    expect(positions['revisar'].x).toBe(FLOW_GRID.margin + FLOW_GRID.colWidth)
   })
 
   it('un nodo inalcanzable no desaparece: cae en una capa extra al final (defensivo)', () => {
@@ -69,7 +78,7 @@ describe('flowLayout — capas BFS desde el start', () => {
 
     const positions = flowLayout(flow)
 
-    expect(positions['isla']).toEqual({ x: FLOW_GRID.margin, y: FLOW_GRID.margin + 4 * FLOW_GRID.rowHeight })
+    expect(positions['isla']).toEqual({ x: FLOW_GRID.margin + 4 * FLOW_GRID.colWidth, y: FLOW_GRID.margin })
   })
 
   it('sin nodo start devuelve un layout vacío (el gate ya lo habrá rechazado)', () => {
@@ -91,39 +100,39 @@ describe('flowNodeBox — la caja de un nodo de flujo', () => {
   })
 })
 
-describe('flowEdgeCurve — el flujo baja, así que la curva es vertical', () => {
-  const arriba: NodeBox = { x: 100, y: 40, width: 180, height: 56 }
-  const abajo: NodeBox = { x: 100, y: 200, width: 180, height: 56 }
+describe('flowEdgeCurve — el flujo avanza a la derecha, así que la curva es horizontal', () => {
+  const izquierda: NodeBox = { x: 40, y: 100, width: 180, height: 56 }
+  const derecha: NodeBox = { x: 300, y: 240, width: 180, height: 56 }
 
-  it('sale por el pie del origen y entra por la cabeza del destino', () => {
-    const curva = flowEdgeCurve(arriba, abajo)
+  it('sale por el costado derecho del origen y entra por el izquierdo del destino', () => {
+    const curva = flowEdgeCurve(izquierda, derecha)
 
-    expect(curva.x1).toBe(arriba.x + arriba.width / 2)
-    expect(curva.y1).toBe(arriba.y + arriba.height)
-    expect(curva.x2).toBe(abajo.x + abajo.width / 2)
-    expect(curva.y2).toBe(abajo.y)
+    expect(curva.x1).toBe(izquierda.x + izquierda.width)
+    expect(curva.y1).toBe(izquierda.y + izquierda.height / 2)
+    expect(curva.x2).toBe(derecha.x)
+    expect(curva.y2).toBe(derecha.y + derecha.height / 2)
   })
 
-  it('cuando el destino está por encima, sale por arriba y entra por abajo', () => {
-    const curva = flowEdgeCurve(abajo, arriba)
+  it('cuando el destino queda a la izquierda (un bucle atrás), se invierten los lados', () => {
+    const curva = flowEdgeCurve(derecha, izquierda)
 
-    expect(curva.y1).toBe(abajo.y)
-    expect(curva.y2).toBe(arriba.y + arriba.height)
+    expect(curva.x1).toBe(derecha.x)
+    expect(curva.x2).toBe(izquierda.x + izquierda.width)
   })
 
-  it('los tiradores van en vertical: la curva sale y entra plana', () => {
-    const curva = flowEdgeCurve(arriba, abajo)
-    const [cx1, , cx2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+  it('los tiradores van en horizontal: la curva sale y entra plana', () => {
+    const curva = flowEdgeCurve(izquierda, derecha)
+    const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
 
-    expect(cx1).toBe(curva.x1)
-    expect(cx2).toBe(curva.x2)
+    expect(cy1).toBe(curva.y1)
+    expect(cy2).toBe(curva.y2)
   })
 
   it('la etiqueta va en el medio del trazo', () => {
-    const curva = flowEdgeCurve(arriba, abajo)
+    const curva = flowEdgeCurve(izquierda, derecha)
 
-    expect(curva.labelY).toBeGreaterThan(curva.y1)
-    expect(curva.labelY).toBeLessThan(curva.y2)
+    expect(curva.labelX).toBeGreaterThan(curva.x1)
+    expect(curva.labelX).toBeLessThan(curva.x2)
   })
 })
 
@@ -163,5 +172,49 @@ describe('flowStepNumbers — los pasos se numeran por el orden del recorrido', 
     }
 
     expect(flowStepNumbers(flow)).toEqual({ conectado: 1, suelto: 2 })
+  })
+})
+
+describe('flowAlternateEdges — la salida alternativa de una decisión', () => {
+  it('la primera salida de la decisión es la principal; las demás son alternativas', () => {
+    const flow: BusinessFlow = {
+      name: 'F',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Inicio' },
+        { id: 'dec', kind: 'decision', text: '¿Sí?' },
+        { id: 'a', kind: 'step', text: 'A' },
+        { id: 'b', kind: 'step', text: 'B' }
+      ],
+      edges: [
+        { from: 'inicio', to: 'dec' },
+        { from: 'dec', to: 'a', label: 'sí' },
+        { from: 'dec', to: 'b', label: 'no' }
+      ]
+    }
+
+    const alternativas = flowAlternateEdges(flow)
+
+    expect(alternativas.has('dec→b')).toBe(true)
+    expect(alternativas.has('dec→a')).toBe(false)
+    expect(alternativas.has('inicio→dec')).toBe(false)
+  })
+
+  it('las salidas de un paso normal nunca son alternativas: no bifurcan por decisión', () => {
+    const flow: BusinessFlow = {
+      name: 'F',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Inicio' },
+        { id: 'paso', kind: 'step', text: 'Paso' },
+        { id: 'a', kind: 'step', text: 'A' },
+        { id: 'b', kind: 'step', text: 'B' }
+      ],
+      edges: [
+        { from: 'inicio', to: 'paso' },
+        { from: 'paso', to: 'a' },
+        { from: 'paso', to: 'b' }
+      ]
+    }
+
+    expect(flowAlternateEdges(flow).size).toBe(0)
   })
 })

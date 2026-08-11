@@ -50,12 +50,14 @@ export function flowLayout(flow: BusinessFlow): Record<string, NodePosition> {
     layers.set(depth, [...(layers.get(depth) ?? []), node.id])
   }
 
+  // El proceso avanza en HORIZONTAL, como en la referencia: cada capa es una columna
+  // y los nodos que comparten capa (las ramas de una decisión) se apilan en filas.
   const positions: Record<string, NodePosition> = {}
   for (const [depth, ids] of layers) {
-    ;[...ids].sort().forEach((id, column) => {
+    ;[...ids].sort().forEach((id, row) => {
       positions[id] = {
-        x: FLOW_GRID.margin + column * FLOW_GRID.colWidth,
-        y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
+        x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth,
+        y: FLOW_GRID.margin + row * FLOW_GRID.rowHeight
       }
     })
   }
@@ -74,28 +76,28 @@ export interface FlowEdgeCurve {
 }
 
 /**
- * La flecha de un flujo es VERTICAL: el proceso baja por capas, así que sale por
- * el pie del nodo y entra por la cabeza del siguiente, con los tiradores en
- * vertical para que el trazo salga y entre plano. Si el destino queda por encima
+ * La flecha de un flujo es HORIZONTAL: el proceso avanza por columnas, así que sale
+ * por el costado del nodo y entra por el costado del siguiente, con los tiradores en
+ * horizontal para que el trazo salga y entre plano. Si el destino queda a la izquierda
  * (un bucle hacia atrás), se invierten los lados en vez de cruzar el nodo.
  */
 export function flowEdgeCurve(from: NodeBox, to: NodeBox): FlowEdgeCurve {
-  const haciaAbajo = to.y >= from.y
-  const x1 = from.x + from.width / 2
-  const x2 = to.x + to.width / 2
-  const y1 = haciaAbajo ? from.y + from.height : from.y
-  const y2 = haciaAbajo ? to.y : to.y + to.height
+  const haciaLaDerecha = to.x >= from.x
+  const y1 = from.y + from.height / 2
+  const y2 = to.y + to.height / 2
+  const x1 = haciaLaDerecha ? from.x + from.width : from.x
+  const x2 = haciaLaDerecha ? to.x : to.x + to.width
 
-  const tirador = Math.max(24, Math.abs(y2 - y1) / 2)
-  const cy1 = haciaAbajo ? y1 + tirador : y1 - tirador
-  const cy2 = haciaAbajo ? y2 - tirador : y2 + tirador
+  const tirador = Math.max(24, Math.abs(x2 - x1) / 2)
+  const cx1 = haciaLaDerecha ? x1 + tirador : x1 - tirador
+  const cx2 = haciaLaDerecha ? x2 - tirador : x2 + tirador
 
   return {
     x1,
     y1,
     x2,
     y2,
-    d: `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`,
+    d: `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`,
     labelX: (x1 + x2) / 2,
     labelY: (y1 + y2) / 2
   }
@@ -132,4 +134,23 @@ export function flowStepNumbers(flow: BusinessFlow): Record<string, number> {
   let siguiente = 1
   for (const id of orden) if (kinds.get(id) === 'step') numeros[id] = siguiente++
   return numeros
+}
+
+/**
+ * Salidas ALTERNATIVAS de las decisiones: la primera es el camino principal y el
+ * resto son las alternativas, que la referencia dibuja en trazo discontinuo. Solo
+ * cuenta lo que sale de una decisión: un paso con dos salidas no bifurca, va a dos
+ * sitios. La clave es `from→to`, la misma identidad que usa el lienzo.
+ */
+export function flowAlternateEdges(flow: BusinessFlow): Set<string> {
+  const decisiones = new Set(flow.nodes.filter(node => node.kind === 'decision').map(node => node.id))
+  const vistas = new Set<string>()
+  const alternativas = new Set<string>()
+
+  for (const edge of flow.edges) {
+    if (!decisiones.has(edge.from)) continue
+    if (vistas.has(edge.from)) alternativas.add(`${edge.from}→${edge.to}`)
+    vistas.add(edge.from)
+  }
+  return alternativas
 }

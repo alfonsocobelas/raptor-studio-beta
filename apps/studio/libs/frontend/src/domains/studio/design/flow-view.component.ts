@@ -6,6 +6,7 @@ import {
   FLOW_NODE,
   flowEdgeCurve,
   flowStepNumbers,
+  flowAlternateEdges,
   flowLayout,
   flowNodeBox,
   nodeAt,
@@ -26,6 +27,8 @@ interface FlowDiagramEdge {
   from: string
   to: string
   label?: string
+  /** Salida secundaria de una decisión: se dibuja discontinua */
+  alternate: boolean
   line: FlowEdgeCurve
 }
 
@@ -86,6 +89,18 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
             >
               <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-foreground" stroke-width="1.8" />
             </marker>
+            <!-- la salida alternativa de una decisión va apagada, como la RAMA NO de 12A -->
+            <marker
+              id="flow-arrow-alt"
+              markerWidth="13"
+              markerHeight="12"
+              refX="10"
+              refY="6"
+              orient="auto"
+              markerUnits="userSpaceOnUse"
+            >
+              <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-muted-foreground" stroke-width="1.8" />
+            </marker>
           </defs>
           @for (item of edges(); track item.from + '→' + item.to + (item.label ?? '')) {
             <g
@@ -98,9 +113,12 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               <path
                 [attr.d]="item.line.d"
                 fill="none"
-                [class]="isEdgeSelected(item) ? 'stroke-primary' : 'stroke-foreground'"
+                [class]="
+                  isEdgeSelected(item) ? 'stroke-primary' : item.alternate ? 'stroke-muted-foreground' : 'stroke-foreground'
+                "
                 [attr.stroke-width]="isEdgeSelected(item) ? 2.5 : 1.5"
-                marker-end="url(#flow-arrow)"
+                [attr.stroke-dasharray]="item.alternate ? '5 4' : null"
+                [attr.marker-end]="item.alternate ? 'url(#flow-arrow-alt)' : 'url(#flow-arrow)'"
               />
               @if (item.label) {
                 <!-- la etiqueta de una salida de decisión va en pastilla: se lee sobre la rejilla -->
@@ -255,6 +273,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   </span>
                 }
                 <span class="min-w-0">
+                  @if (item.node.kind === 'decision') {
+                    <span class="block text-[9px] font-semibold uppercase tracking-[0.12em] opacity-50">si</span>
+                  }
                   @if (item.node.kind !== 'step' && item.node.kind !== 'decision') {
                     <span
                       class="block text-[9px] font-semibold uppercase tracking-[0.12em] opacity-60"
@@ -263,9 +284,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                       {{ kindLabel(item.node.kind) }}
                     </span>
                   }
-                  <span class="block truncate leading-tight">{{ item.node.text }}</span>
+                  <span class="block truncate font-semibold leading-tight">{{ item.node.text }}</span>
                   @if (item.node.entity) {
-                    <span class="block truncate text-[10px] opacity-60">{{ item.node.entity }}</span>
+                    <span class="block truncate text-[11px] font-normal opacity-60">{{ item.node.entity }}</span>
                   }
                 </span>
               </span>
@@ -345,11 +366,21 @@ export class FlowViewComponent {
 
   protected readonly edges = computed<FlowDiagramEdge[]>(() => {
     const boxes = new Map(this.nodes().map(n => [n.node.id, n.box]))
+    const flujo = this.activeFlow()
+    const alternates = flujo ? flowAlternateEdges(flujo) : new Set<string>()
     return (this.activeFlow()?.edges ?? []).flatMap(edge => {
       const from = boxes.get(edge.from)
       const to = boxes.get(edge.to)
       return from && to
-        ? [{ from: edge.from, to: edge.to, ...(edge.label ? { label: edge.label } : {}), line: flowEdgeCurve(from, to) }]
+        ? [
+            {
+              from: edge.from,
+              to: edge.to,
+              ...(edge.label ? { label: edge.label } : {}),
+              alternate: alternates.has(`${edge.from}→${edge.to}`),
+              line: flowEdgeCurve(from, to)
+            }
+          ]
         : []
     })
   })
