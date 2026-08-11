@@ -256,7 +256,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   (click)="selectNode($event, card.group.id)"
                 >
                   <span
-                    class="text-muted-foreground rounded-[5px] border px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.12em]"
+                    class="flow-branch-chip rounded-[5px] border px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.12em]"
                     [attr.data-testid]="'flow-card-branch-' + card.group.id"
                   >
                     {{ card.group.branch ? 'rama ' + card.group.branch : 'acciones' }}
@@ -274,7 +274,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     (dblclick)="startEdit(step)"
                   >
                     <span
-                      class="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold"
+                      class="flow-step-number flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold"
                       [attr.data-testid]="'flow-step-number-' + step.id"
                     >
                       {{ i + 1 }}
@@ -533,6 +533,17 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     .flow-card-steps {
       border-color: color-mix(in oklab, var(--flow-accent) 45%, transparent);
       border-left: 3px solid var(--flow-accent);
+    }
+    /* Y las marcas de la tarjeta —la rama y el número de la fila— también llevan el color:
+       es la dosis más pequeña de las tres y la que más se parece al prototipo de 12A, que
+       tiñe la etiqueta de la rama y deja el texto de la acción en negro. */
+    .flow-branch-chip {
+      color: var(--flow-accent);
+      border-color: color-mix(in oklab, var(--flow-accent) 40%, transparent);
+    }
+    .flow-step-number {
+      background-color: color-mix(in oklab, var(--flow-accent) 15%, transparent);
+      color: var(--flow-accent);
     }
     /* Destino de la flecha: manda el negro, y por eso va DESPUÉS (misma especificidad). */
     .flow-card-steps.is-target {
