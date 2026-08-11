@@ -118,6 +118,35 @@ describe('flowLayout con tarjetas — la altura de la tarjeta no le cambia el si
   })
 })
 
+describe('flowLayout con tarjetas — el carril crece con la tarjeta más alta', () => {
+  it('las dos ramas quedan una debajo de otra, no en diagonal', () => {
+    const flow = conRamas()
+    // la rama sí engorda hasta cuatro acciones: la tarjeta pasa a medir más que la celda
+    flow.nodes = [
+      ...flow.nodes,
+      { id: 'tercera', kind: 'step', text: 'Tercera' },
+      { id: 'cuarta', kind: 'step', text: 'Cuarta' }
+    ]
+    flow.edges = [
+      ...flow.edges.filter(edge => !(edge.from === 'correo' && edge.to === 'fin')),
+      { from: 'correo', to: 'tercera' },
+      { from: 'tercera', to: 'cuarta' },
+      { from: 'cuarta', to: 'fin' }
+    ]
+    const groups = flowGroups(flow)
+    const filas = new Map(groups.map(group => [group.id, group.steps.length]))
+    const positions = flowLayout(flowCondensed(flow, groups), 'horizontal', {}, id => {
+      const rows = filas.get(id)
+      return rows === undefined ? undefined : flowGroupBox({ x: 0, y: 0 }, rows)
+    })
+
+    const ramaSi = flowGroupBox(positions['marcar'], 4)
+    // misma capa: misma columna. Con el paso de carril fijo, la rama no se iba a la derecha
+    expect(positions['quitar'].x).toBe(positions['marcar'].x)
+    expect(positions['quitar'].y).toBeGreaterThanOrEqual(ramaSi.y + ramaSi.height)
+  })
+})
+
 describe('flowGroupBox — la tarjeta crece con sus filas', () => {
   it('cabecera + una fila por acción + el pie del «+ Acción»', () => {
     const [ramaSi] = flowGroups(conRamas())

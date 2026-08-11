@@ -7,10 +7,13 @@ import type { NodeBox, NodePosition } from './model-diagram'
  * componente y jamás entran al app-schema.
  */
 export const FLOW_GRID = {
-  /** la celda deja aire entre columnas: la tarjeta de acciones mide 240 de ancho */
+  /** celda MÍNIMA: si un bloque no cabe en ella, el paso crece con él */
   colWidth: 320,
   rowHeight: 150,
-  margin: 40
+  margin: 40,
+  /** aire entre capas del proceso y entre carriles de una misma capa */
+  gapAlong: 80,
+  gapAcross: 20
 } as const
 
 /** Dimensiones fijas del nodo de flujo: la píldora es CSS, la geometría es esta. */
@@ -102,6 +105,21 @@ export function flowLayout(
     puestas.push({ ...frozen[node.id], ...tamano(node.id) })
   }
 
+  // El paso de la rejilla se AGRANDA si algún bloque no cabe en él: una tarjeta de
+  // cuatro acciones mide más que la celda, y con la celda fija el antisolape la iba
+  // empujando de carril en carril y el proceso salía en diagonal.
+  const medidas = flow.nodes.map(node => tamano(node.id))
+  const alto = Math.max(FLOW_NODE.height, ...medidas.map(m => m.height))
+  const ancho = Math.max(FLOW_NODE.width, ...medidas.map(m => m.width))
+  const pasoCapa =
+    orientation === 'horizontal'
+      ? Math.max(FLOW_GRID.colWidth, ancho + FLOW_GRID.gapAlong)
+      : Math.max(FLOW_GRID.rowHeight, alto + FLOW_GRID.gapAlong)
+  const pasoCarril =
+    orientation === 'horizontal'
+      ? Math.max(FLOW_GRID.rowHeight, alto + FLOW_GRID.gapAcross)
+      : Math.max(FLOW_GRID.colWidth, ancho + FLOW_GRID.gapAcross)
+
   for (const [depth, ids] of layers) {
     ;[...ids].sort().forEach((sibling, index) => {
       if (positions[sibling]) return
@@ -113,12 +131,12 @@ export function flowLayout(
       const slot = (paso: number): NodePosition =>
         orientation === 'horizontal'
           ? {
-              x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth + dx,
-              y: FLOW_GRID.margin + (index + paso) * FLOW_GRID.rowHeight + dy
+              x: FLOW_GRID.margin + depth * pasoCapa + dx,
+              y: FLOW_GRID.margin + (index + paso) * pasoCarril + dy
             }
           : {
-              x: FLOW_GRID.margin + (index + paso) * FLOW_GRID.colWidth + dx,
-              y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight + dy
+              x: FLOW_GRID.margin + (index + paso) * pasoCarril + dx,
+              y: FLOW_GRID.margin + depth * pasoCapa + dy
             }
       let paso = 0
       // tope defensivo: mejor un solape que un bucle infinito en un render
@@ -208,20 +226,28 @@ export function flowBranchLabel(flow: BusinessFlow, from: string): string | unde
 }
 
 /**
- * Salidas ALTERNATIVAS de las decisiones: la primera es el camino principal y el
- * resto son las alternativas, que la referencia dibuja en trazo discontinuo. Solo
- * cuenta lo que sale de una decisión: un paso con dos salidas no bifurca, va a dos
- * sitios. La clave es `from→to`, la misma identidad que usa el lienzo.
+ * Salidas ALTERNATIVAS de las decisiones: el camino principal va a trazo continuo y el
+ * resto discontinuo, como la RAMA NO de la referencia. El principal es el «sí» —el orden
+ * en que estén guardadas las aristas no puede decidir el dibujo: cuando lo decidía,
+ * borrar el «sí» dejaba el «no» continuo y al redibujar el «sí» salía discontinuo—. Sin
+ * «sí» manda la primera salida, y una decisión con una sola salida no tiene alternativa
+ * ninguna. Solo cuenta lo que sale de una decisión: un paso con dos salidas no bifurca,
+ * va a dos sitios. La clave es `from→to`, la misma identidad que usa el lienzo.
  */
 export function flowAlternateEdges(flow: BusinessFlow): Set<string> {
   const decisiones = new Set(flow.nodes.filter(node => node.kind === 'decision').map(node => node.id))
-  const vistas = new Set<string>()
   const alternativas = new Set<string>()
 
-  for (const edge of flow.edges) {
-    if (!decisiones.has(edge.from)) continue
-    if (vistas.has(edge.from)) alternativas.add(`${edge.from}→${edge.to}`)
-    vistas.add(edge.from)
+  for (const decision of decisiones) {
+    const salidas = flow.edges.filter(edge => edge.from === decision)
+    for (const salida of salidas) {
+      // el «sí» es siempre el camino principal; el «no» es siempre la alternativa,
+      // aunque se quede solo. Con etiquetas de la casa manda el orden: la primera es
+      // el camino y las demás las alternativas.
+      if (salida.label === FLOW_BRANCHES[0]) continue
+      const esAlternativa = salida.label === FLOW_BRANCHES[1] || salida !== salidas[0]
+      if (esAlternativa) alternativas.add(`${decision}→${salida.to}`)
+    }
   }
   return alternativas
 }

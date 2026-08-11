@@ -267,6 +267,43 @@ describe('flowBranchLabel — qué etiqueta le toca a una salida nueva', () => {
 })
 
 describe('flowAlternateEdges — la salida alternativa de una decisión', () => {
+  // El trazo lo decide la RAMA, no el orden en que estén guardadas las aristas. Cuando
+  // dependía del orden, borrar la rama «sí» dejaba el «no» a trazo continuo, y al volver
+  // a dibujar el «sí» era este el que salía discontinuo.
+  it('el «sí» es el camino principal aunque esté guardado DESPUÉS del «no»', () => {
+    const flow = pedidoFlow()
+    flow.edges = [
+      { from: 'inicio', to: 'stock' },
+      { from: 'stock', to: 'pedir', label: 'no' },
+      { from: 'stock', to: 'reservar', label: 'sí' }
+    ]
+
+    const alternativas = flowAlternateEdges(flow)
+
+    expect(alternativas.has('stock→reservar')).toBe(false)
+    expect(alternativas.has('stock→pedir')).toBe(true)
+  })
+
+  it('el «no» sigue discontinuo aunque se quede solo: es la rama alternativa, no la segunda', () => {
+    const flow = pedidoFlow()
+    flow.edges = [
+      { from: 'inicio', to: 'stock' },
+      { from: 'stock', to: 'pedir', label: 'no' }
+    ]
+
+    expect(flowAlternateEdges(flow).has('stock→pedir')).toBe(true)
+  })
+
+  it('una salida sin etiqueta y sola va continua: no hay ninguna rama de la que ser alternativa', () => {
+    const flow = pedidoFlow()
+    flow.edges = [
+      { from: 'inicio', to: 'stock' },
+      { from: 'stock', to: 'reservar' }
+    ]
+
+    expect(flowAlternateEdges(flow).size).toBe(0)
+  })
+
   it('la primera salida de la decisión es la principal; las demás son alternativas', () => {
     const flow: BusinessFlow = {
       name: 'F',
@@ -314,15 +351,17 @@ describe('orientación del flujo', () => {
   it('en vertical la capa baja y las ramas se reparten a lo ancho', () => {
     const positions = flowLayout(pedidoFlow(), 'vertical')
 
-    const capaY = (depth: number) => FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
-    expect(positions['inicio']).toEqual({ x: FLOW_GRID.margin, y: capaY(0) })
-    // la decisión va centrada en su hueco, también leyendo el proceso en columna
-    expect(positions['stock']).toEqual({
-      x: FLOW_GRID.margin + (FLOW_NODE.width - FLOW_DECISION.size) / 2,
-      y: capaY(1) + (FLOW_NODE.height - FLOW_DECISION.size) / 2
-    })
-    expect(positions['pedir']).toEqual({ x: FLOW_GRID.margin, y: capaY(2) })
-    expect(positions['reservar']).toEqual({ x: FLOW_GRID.margin + FLOW_GRID.colWidth, y: capaY(2) })
+    // sin números a mano: el paso de la capa depende del bloque más grande del flujo
+    expect(positions['inicio']).toEqual({ x: FLOW_GRID.margin, y: FLOW_GRID.margin })
+    // el proceso BAJA de capa en capa
+    expect(positions['stock'].y).toBeGreaterThan(positions['inicio'].y)
+    expect(positions['pedir'].y).toBeGreaterThan(positions['stock'].y)
+    expect(positions['fin'].y).toBeGreaterThan(positions['pedir'].y)
+    // y las dos ramas se reparten A LO ANCHO, a la misma altura
+    expect(positions['reservar'].y).toBe(positions['pedir'].y)
+    expect(positions['reservar'].x).toBeGreaterThan(positions['pedir'].x)
+    // la decisión va centrada en su carril, también leyendo el proceso en columna
+    expect(positions['stock'].x).toBe(FLOW_GRID.margin + (FLOW_NODE.width - FLOW_DECISION.size) / 2)
   })
 
   it('horizontal sigue siendo el valor por defecto', () => {

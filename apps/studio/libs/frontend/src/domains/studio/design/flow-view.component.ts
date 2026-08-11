@@ -47,6 +47,9 @@ const KIND_LABELS: Record<FlowNodeKind, string> = {
   end: 'fin'
 }
 
+/** Nombre de partida de una acción recién creada: mientras lo conserve, es un borrador. */
+const NEW_ACTION_TEXT = 'Nueva acción'
+
 /** Margen de gracia al soltar una flecha: cerca del bloque cuenta como dentro. */
 const FLOW_LINK_SNAP = 16
 
@@ -63,7 +66,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
   selector: 'studio-flow-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, CanvasControlsComponent],
-  host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
+  host: { '(document:keydown.delete)': 'onDeleteKey($event)', '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (!store.flows().length) {
       <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-flows">
@@ -88,6 +91,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
         [class.cursor-grabbing]="panning()"
         data-testid="flow-viewport"
         (pointerdown)="startPan($event)"
+        (click)="onCanvasClick($event)"
         (wheel)="onWheel($event)"
       >
         <div class="absolute right-4 top-4 z-30 flex items-center gap-2">
@@ -98,17 +102,26 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               orientation.value() === 'horizontal' ? 'Leer el proceso en columna' : 'Leer el proceso en fila'
             "
             data-testid="flow-orientation"
-            (click)="orientation.toggle()"
+            (click)="toggleOrientation()"
           >
             {{ orientation.value() === 'horizontal' ? '→' : '↓' }}
           </button>
           <studio-canvas-controls (fit)="fitToView()" />
         </div>
+
+        <!-- conexión a medias: se dice qué falta, porque el lienzo por sí solo no lo cuenta -->
+        @if (linkFrom()) {
+          <div
+            class="bg-foreground text-background absolute left-1/2 top-4 z-30 -translate-x-1/2 rounded-full px-3 py-1.5 text-xs shadow"
+            data-testid="flow-link-hint"
+          >
+            Pulsa el bloque con el que conectar · <kbd>Esc</kbd> para dejarlo
+          </div>
+        }
         <div
           class="absolute left-0 top-0 origin-top-left"
           [style.transform]="worldTransform()"
           data-testid="flow-surface"
-          (click)="selected.set(null)"
         >
           <svg
             class="pointer-events-none absolute left-0 top-0 overflow-visible"
@@ -226,6 +239,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               [style.top.px]="card.box.y"
               [style.width.px]="card.box.width"
               [attr.data-testid]="'flow-card-' + card.group.id"
+              (pointerenter)="hoverBlock(card.group.id)"
+              (pointerleave)="hoverBlock(null)"
+              (click)="selectNode($event, card.group.id)"
             >
               <div
                 class="bg-card flow-card overflow-hidden rounded-[12px] border transition-colors"
@@ -270,7 +286,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                           name="stepText"
                           [ngModel]="step.text"
                           (ngModelChange)="store.updateFlowNode(activeName()!, step.id, { text: $event })"
-                          (keydown.enter)="editing.set(null)"
+                          (keydown.enter)="confirmEdit()"
                           data-testid="flow-node-text-input"
                         />
                         <select
@@ -320,7 +336,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 
               <!-- puerto de ENTRADA: el círculo del prototipo, encendido si la flecha cae aquí -->
               <span
-                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-colors"
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-opacity"
+                [style.opacity]="portOn(card.group.id) ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(card.group.id)"
                 [class.bg-foreground]="isLinkTarget(card.group.id)"
                 [attr.data-testid]="'flow-port-' + card.group.id"
@@ -330,8 +347,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               <button
                 type="button"
                 class="bg-primary ring-background absolute -right-2 top-1/2 z-20 size-3.5 -translate-y-1/2 cursor-crosshair rounded-full opacity-0 ring-2 transition-opacity group-hover/card:opacity-100"
+                [class.opacity-100]="linkFrom() === card.group.id"
                 [attr.data-testid]="'flow-link-handle-' + card.group.id"
-                title="Arrastra hasta otro bloque para conectarlos"
+                title="Púlsame y luego pulsa el bloque con el que conectar (o arrástrame hasta él)"
                 (pointerdown)="startLink($event, card.group.id, card.box)"
               ></button>
             </div>
@@ -345,9 +363,12 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               [style.top.px]="item.box.y"
               [style.width.px]="item.box.width"
               [style.height.px]="item.box.height"
+              [class.flow-end-ink]="item.node.kind === 'end'"
               [attr.data-testid]="'flow-node-' + item.node.id"
               [attr.data-kind]="item.node.kind"
               (pointerdown)="startDrag($event, item.node.id, item.box)"
+              (pointerenter)="hoverBlock(item.node.id)"
+              (pointerleave)="hoverBlock(null)"
               (click)="selectNode($event, item.node.id)"
               (dblclick)="startEdit(item.node)"
             >
@@ -381,13 +402,15 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   [class.ring-2]="isNodeSelected(item.node.id)"
                   [class.border-foreground]="isLinkTarget(item.node.id)"
                   [class.flow-card-start]="item.node.kind === 'start'"
+                  [class.flow-card-end]="item.node.kind === 'end'"
                 ></div>
               }
 
               <!-- puerto de ENTRADA: el círculo del prototipo. Se enciende cuando la flecha
                    que se está arrastrando va a caer aquí, para saber a qué se va a unir. -->
               <span
-                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-colors"
+                class="border-border bg-card pointer-events-none absolute -left-1.5 top-1/2 z-20 size-3 -translate-y-1/2 rounded-full border transition-opacity"
+                [style.opacity]="portOn(item.node.id) ? 1 : 0"
                 [class.border-foreground]="isLinkTarget(item.node.id)"
                 [class.bg-foreground]="isLinkTarget(item.node.id)"
                 [attr.data-testid]="'flow-port-' + item.node.id"
@@ -397,8 +420,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               <button
                 type="button"
                 class="bg-primary ring-background absolute -right-2 top-1/2 z-20 size-3.5 -translate-y-1/2 cursor-crosshair rounded-full opacity-0 ring-2 transition-opacity group-hover:opacity-100"
+                [class.opacity-100]="linkFrom() === item.node.id"
                 [attr.data-testid]="'flow-link-handle-' + item.node.id"
-                title="Arrastra hasta otro bloque para conectarlos"
+                title="Púlsame y luego pulsa el bloque con el que conectar (o arrástrame hasta él)"
                 (pointerdown)="startLink($event, item.node.id, item.box)"
               ></button>
 
@@ -409,7 +433,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     name="nodeText"
                     [ngModel]="item.node.text"
                     (ngModelChange)="store.updateFlowNode(activeName()!, item.node.id, { text: $event })"
-                    (keydown.enter)="editing.set(null)"
+                    (keydown.enter)="confirmEdit()"
                     data-testid="flow-node-text-input"
                   />
                   <select
@@ -470,11 +494,19 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
   `,
   styles: `
+    /* El naranja de la casa, una sola vez: lo usan la rejilla y el cierre del proceso. */
+    :host {
+      --flow-accent: #d75f3d;
+    }
     /* Misma rejilla de PUNTOS que los lienzos de Modelo y Vistas (decisión de Alfonso,
        2026-08-11): los tres son el mismo papel, así que se dibujan igual — celda de 24px
-       y punto en el naranja #d75f3d al 35%. */
+       y punto en el naranja de la casa al 35%. */
     .flow-grid {
-      background-image: radial-gradient(circle, color-mix(in oklab, #d75f3d 35%, transparent) 1.4px, transparent 1.4px);
+      background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--flow-accent) 35%, transparent) 1.4px,
+        transparent 1.4px
+      );
       background-size: 24px 24px;
     }
     /* El rombo lleva la misma sombra que las píldoras: flota sobre el papel igual que ellas. */
@@ -493,6 +525,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       background-color: var(--foreground);
       border-color: transparent;
     }
+    /* Y el final va en el naranja de la casa: inicio y fin se distinguen sin leerlos. */
+    .flow-card-end {
+      background-color: color-mix(in oklab, var(--flow-accent) 10%, var(--card));
+      border-color: color-mix(in oklab, var(--flow-accent) 50%, transparent);
+    }
+    .flow-end-ink {
+      color: color-mix(in oklab, var(--flow-accent) 75%, var(--foreground));
+    }
   `
 })
 export class FlowViewComponent {
@@ -506,9 +546,19 @@ export class FlowViewComponent {
 
   protected readonly selected = signal<FlowSelection | null>(null)
   protected readonly editing = signal<string | null>(null)
+  /** Acción recién creada y aún sin nombre: se descarta si se pulsa fuera sin tocarla. */
+  private readonly draft = signal<string | null>(null)
   protected readonly linking = signal<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
   /** Bloque bajo el cursor mientras se arrastra una flecha: se resalta para saber dónde cae. */
   protected readonly linkTarget = signal<string | null>(null)
+  /**
+   * Origen ARMADO: pulsar el asa sin arrastrar deja la conexión a medias y el siguiente
+   * clic en un bloque la cierra. Arrastrar con precisión hasta el puerto era el gesto
+   * difícil; con dos clics no hay puntería que valga.
+   */
+  protected readonly linkFrom = signal<string | null>(null)
+  /** Bloque bajo el cursor, para enseñar sus puertos solo cuando se está mirando. */
+  private readonly hovered = signal<string | null>(null)
 
   /** El flujo dibujado lo elige el raíl; aquí solo se lee. */
   protected readonly activeName = this.active.flow
@@ -699,7 +749,7 @@ export class FlowViewComponent {
     if (!flow) return
     this.freezePositions()
     const tail = group.steps[group.steps.length - 1]
-    if (!this.store.appendFlowStep(flow, tail.id, 'Nueva acción')) return
+    if (!this.store.appendFlowStep(flow, tail.id, NEW_ACTION_TEXT)) return
     const creado = this.store
       .flows()
       .find(f => f.name === flow)
@@ -708,6 +758,8 @@ export class FlowViewComponent {
     this.active.selectFlowNode(creado.id)
     this.selected.set({ kind: 'node', id: creado.id })
     this.editing.set(creado.id)
+    // queda en BORRADOR: si nadie la nombra y se pulsa fuera, se descarta
+    this.draft.set(creado.id)
   }
 
   /** Quitar una fila de la tarjeta: es el mismo borrado con recosido de siempre. */
@@ -733,9 +785,91 @@ export class FlowViewComponent {
 
   protected selectNode(event: MouseEvent, id: string): void {
     event.stopPropagation()
+    // con una conexión armada, el clic no elige: cierra la flecha
+    const armado = this.linkFrom()
+    if (armado) {
+      this.connect(armado, this.blockOf(id))
+      this.cancelLink()
+      return
+    }
     this.selected.set({ kind: 'node', id })
     // el inspector de la derecha edita lo elegido aquí
     this.active.selectFlowNode(id)
+  }
+
+  /** El bloque que representa a un id en el lienzo: una fila responde por su tarjeta. */
+  private blockOf(id: string): string {
+    if (this.boxes().has(id)) return id
+    return this.cards().find(card => card.group.steps.some(step => step.id === id))?.group.id ?? id
+  }
+
+  /**
+   * Cambiar de eje es lo CONTRARIO de congelar: se pide recolocar el proceso para leerlo
+   * en columna, así que las posiciones congeladas se sueltan y el layout vuelve a mandar.
+   * Sin esto, el botón no movía nada en cuanto habías editado el flujo una vez.
+   */
+  protected toggleOrientation(): void {
+    this.manual.set({})
+    this.orientation.toggle()
+  }
+
+  /** Bloque bajo el cursor: los puertos solo se ven en el bloque que estás mirando. */
+  protected hoverBlock(id: string | null): void {
+    this.hovered.set(id)
+    if (this.linkFrom()) this.linkTarget.set(id === this.linkFrom() ? null : id)
+  }
+
+  /**
+   * ¿Se ve el puerto de este bloque? Igual que el asa negra: escondido hasta que pasas
+   * por encima. Mientras hay una flecha en el aire se ven TODOS, que es cuando hacen falta.
+   */
+  protected portOn(id: string): boolean {
+    return this.hovered() === id || !!this.linking() || !!this.linkFrom()
+  }
+
+  /** Esc suelta lo que haya a medias: la flecha en el aire y la edición abierta. */
+  protected onEscape(): void {
+    this.cancelLink()
+    this.stopEditing()
+  }
+
+  /** Enter da por bueno el nombre, incluso el de partida: lo escrito manda. */
+  protected confirmEdit(): void {
+    this.draft.set(null)
+    this.editing.set(null)
+  }
+
+  protected cancelLink(): void {
+    this.linkFrom.set(null)
+    this.linkTarget.set(null)
+  }
+
+  /**
+   * Clic en el PAPEL: suelta lo elegido, en el lienzo y en el inspector. Se escucha en el
+   * viewport y no en el mundo porque el mundo mide 0×0 —sus hijos van en absoluto—, así
+   * que un clic en el vacío nunca lo tocaba y la selección se quedaba pegada. Los bloques
+   * paran la propagación, así que este manejador solo ve el papel y los controles.
+   */
+  protected onCanvasClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('button, input, select')) return
+    this.stopEditing()
+    this.selected.set(null)
+    this.active.selectFlowNode(null)
+    this.cancelLink()
+  }
+
+  /**
+   * Cierra la edición. Si lo que se estaba editando era una acción recién creada con el
+   * «+ Acción» y nadie le cambió el nombre, se descarta: pulsar «+ Acción» y luego fuera
+   * no puede dejar una fila «Nueva acción» sembrada en el proceso.
+   */
+  protected stopEditing(): void {
+    const borrador = this.draft()
+    this.draft.set(null)
+    this.editing.set(null)
+    if (!borrador) return
+    const nodo = this.activeFlow()?.nodes.find(node => node.id === borrador)
+    if (nodo?.text === NEW_ACTION_TEXT) this.removeStep(borrador)
   }
 
   protected selectEdge(event: MouseEvent, edge: FlowDiagramEdge): void {
@@ -868,15 +1002,28 @@ export class FlowViewComponent {
       handle.removeEventListener('pointerup', onUp)
       this.linking.set(null)
       this.linkTarget.set(null)
-      const target = this.blockNear(toWorld(up))
-      const flow = this.activeName()
-      if (!target || target === id || !flow) return
-      // conectar también cambia las capas: congelar antes de que el grafo cambie
-      this.freezePositions()
-      this.store.addFlowEdge(flow, id, target, this.branchLabelFor(id))
+      // soltar sin moverse NO es un arrastre fallido: es un clic, y deja el origen
+      // ARMADO para unir con un segundo clic en el bloque destino
+      const apenasSeMovio = Math.hypot(up.clientX - down.clientX, up.clientY - down.clientY) < 5
+      if (apenasSeMovio) {
+        this.linkFrom.set(id)
+        return
+      }
+      this.connect(id, this.blockNear(toWorld(up)))
     }
     handle.addEventListener('pointermove', onMove)
     handle.addEventListener('pointerup', onUp)
+  }
+
+  /**
+   * Une dos bloques. Único sitio donde nace una arista desde el lienzo, así que aquí
+   * viven las dos reglas: congelar antes de tocar la topología y repartir la rama.
+   */
+  private connect(from: string, to: string | null): void {
+    const flow = this.activeName()
+    if (!to || to === from || !flow) return
+    this.freezePositions()
+    this.store.addFlowEdge(flow, from, to, this.branchLabelFor(from))
   }
 
   /**
