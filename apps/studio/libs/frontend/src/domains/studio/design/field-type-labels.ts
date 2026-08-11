@@ -21,4 +21,23 @@ export function labelOfType(type: string): string {
   return TYPE_LABELS[type as DraftFieldType] ?? type
 }
 
+/**
+ * Versión corta para el diagrama del modelo, donde la etiqueta va en versalitas a la
+ * derecha del nombre y no puede robarle sitio. «texto largo» no cabe; «txt+» sí.
+ */
+export const SHORT_TYPE_LABELS: Record<DraftFieldType, string> = {
+  string: 'texto',
+  text: 'txt+',
+  number: 'núm',
+  integer: 'entero',
+  boolean: 'sí/no',
+  date: 'fecha',
+  ref: 'ref',
+  enum: 'lista'
+}
+
+export function shortLabelOfType(type: string): string {
+  return SHORT_TYPE_LABELS[type as DraftFieldType] ?? type
+}
+
 export const LABELLED_TYPES = DRAFT_FIELD_TYPES

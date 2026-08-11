@@ -13,13 +13,22 @@ import {
   type NodeBox,
   type NodePosition
 } from '@app/shared/domain'
+import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
-import { TYPE_LABELS } from './field-type-labels'
+import { shortLabelOfType } from './field-type-labels'
+
+interface DiagramField {
+  name: string
+  /** Etiqueta corta que se pinta en versalitas a la derecha */
+  type: string
+  /** Los `ref` llevan punto de conexión: son los que dibujan las flechas */
+  isRef: boolean
+}
 
 interface DiagramNode {
   name: string
   label: string
-  fields: { name: string; type: string }[]
+  fields: DiagramField[]
   box: NodeBox
 }
 
@@ -42,132 +51,177 @@ interface DiagramEdge {
       <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-model">
         <p class="text-muted-foreground mb-2 text-lg">Sin entidades todavía</p>
         <p class="text-muted-foreground max-w-md text-sm">
-          Crea una con <strong>Entidad</strong> en el panel de la izquierda, con una vista de datos o pidiéndosela
-          al chat.
+          Crea una con <strong>Entidad</strong> en el panel de la izquierda, con una vista de datos o pidiéndosela al
+          chat.
         </p>
       </div>
     } @else {
-      <div
-        #surfaceEl
-        class="relative"
-        [style.width.px]="surface().width"
-        [style.height.px]="surface().height"
-        data-testid="model-surface"
-        (click)="selected.set(null)"
-      >
-        <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
-          <defs>
-            <marker id="model-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-              <polygon points="0 0, 9 3.5, 0 7" class="fill-muted-foreground" />
-            </marker>
-          </defs>
-          @for (item of edges(); track item.edge.from + '-' + item.edge.fieldIndex) {
-            <g
-              class="cursor-pointer"
-              [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to"
-              (click)="selectEdge($event, item.edge)"
-            >
-              <!-- zona de clic ancha e invisible: la línea de 1.5px es imposible de acertar -->
-              <line
-                [attr.x1]="item.line.x1"
-                [attr.y1]="item.line.y1"
-                [attr.x2]="item.line.x2"
-                [attr.y2]="item.line.y2"
-                stroke="transparent"
-                stroke-width="12"
-              />
-              <line
-                [attr.x1]="item.line.x1"
-                [attr.y1]="item.line.y1"
-                [attr.x2]="item.line.x2"
-                [attr.y2]="item.line.y2"
-                [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-muted-foreground'"
-                [attr.stroke-width]="isSelected(item.edge) ? 2.5 : 1.5"
-                marker-end="url(#model-arrow)"
-              />
-              <text
-                [attr.x]="(item.line.x1 + item.line.x2) / 2"
-                [attr.y]="(item.line.y1 + item.line.y2) / 2 - 6"
-                text-anchor="middle"
-                [class]="'text-[10px] ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')"
+      <div class="model-grid min-h-full min-w-full">
+        <div
+          #surfaceEl
+          class="relative"
+          [style.width.px]="surface().width"
+          [style.height.px]="surface().height"
+          data-testid="model-surface"
+          (click)="selected.set(null)"
+        >
+          <svg class="absolute inset-0 h-full w-full" data-testid="model-edges">
+            <defs>
+              <marker id="model-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                <polygon points="0 0, 9 3.5, 0 7" class="fill-muted-foreground" />
+              </marker>
+            </defs>
+            @for (item of edges(); track item.edge.from + '-' + item.edge.fieldIndex) {
+              <g
+                class="cursor-pointer"
+                [attr.data-testid]="'edge-' + item.edge.from + '-' + item.edge.to"
+                (click)="selectEdge($event, item.edge)"
               >
-                {{ item.edge.label }}
-              </text>
-            </g>
-          }
-          <!-- flecha fantasma mientras se arrastra un enlace -->
-          @if (linking(); as ghost) {
-            <line
-              [attr.x1]="ghost.x1"
-              [attr.y1]="ghost.y1"
-              [attr.x2]="ghost.x2"
-              [attr.y2]="ghost.y2"
-              class="stroke-primary"
-              stroke-width="1.5"
-              stroke-dasharray="5 4"
-              marker-end="url(#model-arrow)"
-              data-testid="ghost-edge"
-            />
-          }
-        </svg>
+                <!-- zona de clic ancha e invisible: la línea de 1.5px es imposible de acertar -->
+                <line
+                  [attr.x1]="item.line.x1"
+                  [attr.y1]="item.line.y1"
+                  [attr.x2]="item.line.x2"
+                  [attr.y2]="item.line.y2"
+                  stroke="transparent"
+                  stroke-width="12"
+                />
+                <line
+                  [attr.x1]="item.line.x1"
+                  [attr.y1]="item.line.y1"
+                  [attr.x2]="item.line.x2"
+                  [attr.y2]="item.line.y2"
+                  [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-muted-foreground'"
+                  [attr.stroke-width]="isSelected(item.edge) ? 2.5 : 1.5"
+                  marker-end="url(#model-arrow)"
+                />
+                <title>{{ item.edge.label }} · {{ item.edge.from }} → {{ item.edge.to }}</title>
+                <text
+                  [attr.x]="(item.line.x1 + item.line.x2) / 2"
+                  [attr.y]="(item.line.y1 + item.line.y2) / 2 - 6"
+                  text-anchor="middle"
+                  [class]="
+                    'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
+                  "
+                >
+                  N : 1
+                </text>
+              </g>
+            }
+            <!-- flecha fantasma mientras se arrastra un enlace -->
+            @if (linking(); as ghost) {
+              <line
+                [attr.x1]="ghost.x1"
+                [attr.y1]="ghost.y1"
+                [attr.x2]="ghost.x2"
+                [attr.y2]="ghost.y2"
+                class="stroke-primary"
+                stroke-width="1.5"
+                stroke-dasharray="5 4"
+                marker-end="url(#model-arrow)"
+                data-testid="ghost-edge"
+              />
+            }
+          </svg>
 
-        <!-- botón de borrado de la flecha seleccionada (también responde la tecla Supr) -->
-        @if (selectedEdge(); as sel) {
-          <button
-            type="button"
-            class="bg-destructive text-destructive-foreground absolute z-10 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs leading-none shadow"
-            [style.left.px]="(sel.line.x1 + sel.line.x2) / 2"
-            [style.top.px]="(sel.line.y1 + sel.line.y2) / 2 + 10"
-            data-testid="delete-edge"
-            title="Eliminar relación (Supr)"
-            (click)="$event.stopPropagation(); deleteSelected()"
-          >
-            ×
-          </button>
-        }
-
-        @for (node of nodes(); track node.name) {
-          <div
-            class="bg-card group absolute cursor-pointer rounded-md border shadow-sm"
-            [class.ring-2]="linking()?.from === node.name"
-            [style.left.px]="node.box.x"
-            [style.top.px]="node.box.y"
-            [style.width.px]="node.box.width"
-            [attr.data-testid]="'model-node-' + node.name"
-            (click)="$event.stopPropagation(); select.emit(node.name)"
-          >
-            <!-- asa de enlace: arrastrar hasta otra caja crea la relación -->
+          <!-- botón de borrado de la flecha seleccionada (también responde la tecla Supr) -->
+          @if (selectedEdge(); as sel) {
             <button
               type="button"
-              class="bg-primary absolute -right-1.5 z-10 h-3 w-3 cursor-crosshair rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-              [style.top.px]="headerHeight / 2 - 6"
-              [attr.data-testid]="'link-handle-' + node.name"
-              title="Arrastra hasta otra entidad para crear una relación"
-              (pointerdown)="startLink($event, node.name)"
-            ></button>
-            <header
-              class="flex cursor-move select-none items-center border-b px-3 text-sm font-semibold"
-              [style.height.px]="headerHeight"
-              [attr.data-testid]="'model-node-header-' + node.name"
-              (pointerdown)="startDrag($event, node.name)"
+              class="bg-destructive text-destructive-foreground absolute z-10 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs leading-none shadow"
+              [style.left.px]="(sel.line.x1 + sel.line.x2) / 2"
+              [style.top.px]="(sel.line.y1 + sel.line.y2) / 2 + 10"
+              data-testid="delete-edge"
+              title="Eliminar relación (Supr)"
+              (click)="$event.stopPropagation(); deleteSelected()"
             >
-              {{ node.label }}
-            </header>
-            @for (field of node.fields; track field.name) {
+              ×
+            </button>
+          }
+
+          @for (node of nodes(); track node.name) {
+            <div
+              class="bg-card model-card group absolute cursor-pointer overflow-hidden rounded-lg border"
+              [class.ring-2]="linking()?.from === node.name"
+              [style.left.px]="node.box.x"
+              [style.top.px]="node.box.y"
+              [style.width.px]="node.box.width"
+              [attr.data-testid]="'model-node-' + node.name"
+              (click)="$event.stopPropagation(); select.emit(node.name)"
+            >
+              <!-- asa de enlace: arrastrar hasta otra caja crea la relación -->
+              <button
+                type="button"
+                class="bg-primary absolute -right-1.5 z-10 h-3 w-3 cursor-crosshair rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                [style.top.px]="headerHeight / 2 - 6"
+                [attr.data-testid]="'link-handle-' + node.name"
+                title="Arrastra hasta otra entidad para crear una relación"
+                (pointerdown)="startLink($event, node.name)"
+              ></button>
+              <!-- la elegida se pinta en tinta: en la referencia es así como se sabe cuál manda -->
+              <header
+                class="flex cursor-move select-none items-center justify-between gap-2 border-b px-3 text-sm font-semibold"
+                [class.bg-foreground]="node.name === chosen()"
+                [class.text-background]="node.name === chosen()"
+                [class.border-transparent]="node.name === chosen()"
+                [style.height.px]="headerHeight"
+                [attr.data-testid]="'model-node-header-' + node.name"
+                (pointerdown)="startDrag($event, node.name)"
+              >
+                <span class="truncate">{{ node.label }}</span>
+                <span class="shrink-0 text-[10px] font-medium uppercase tracking-wider opacity-60">
+                  {{ node.fields.length + 1 }} campos
+                </span>
+              </header>
+
+              <!-- el id lo emite SIEMPRE el generador (UUIDv7): está en el diagrama y no se edita -->
               <div
                 class="text-muted-foreground flex items-center justify-between px-3 text-xs"
                 [style.height.px]="rowHeight"
+                [attr.data-testid]="'model-field-' + node.name + '-id'"
               >
-                <span class="text-foreground truncate">{{ field.name }}</span>
-                <span class="ml-2 shrink-0">{{ field.type }}</span>
+                <span class="text-foreground truncate">id</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="text-[10px] uppercase tracking-wider">clave</span>
+                  <span class="bg-foreground/70 inline-block size-1.5 rounded-full"></span>
+                </span>
               </div>
-            }
-          </div>
-        }
+
+              @for (field of node.fields; track field.name) {
+                <div
+                  class="text-muted-foreground flex items-center justify-between px-3 text-xs"
+                  [style.height.px]="rowHeight"
+                  [attr.data-testid]="'model-field-' + node.name + '-' + field.name"
+                >
+                  <span class="text-foreground truncate">{{ field.name }}</span>
+                  <span class="flex items-center gap-1.5">
+                    <span class="text-[10px] uppercase tracking-wider">{{ field.type }}</span>
+                    @if (field.isRef) {
+                      <span class="bg-foreground/70 inline-block size-1.5 rounded-full"></span>
+                    }
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     }
   `,
   styles: `
+    /* Rejilla del diagrama, como en la referencia: líneas finas sobre el papel. El
+       tamaño es el del layout (MODEL_GRID) para que las cajas caigan sobre la retícula. */
+    .model-grid {
+      background-image:
+        linear-gradient(to right, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .model-card {
+      box-shadow:
+        0 1px 2px oklch(0 0 0 / 6%),
+        0 8px 20px -12px oklch(0 0 0 / 18%);
+    }
     .toolbar-chip {
       border: 1px solid var(--border);
       border-radius: 0.375rem;
@@ -182,6 +236,10 @@ interface DiagramEdge {
 })
 export class ModelViewComponent {
   protected readonly store = inject(DesignStore)
+  private readonly active = inject(ActiveViewService)
+
+  /** La entidad elegida (la que edita el inspector): se pinta en tinta. */
+  protected readonly chosen = computed(() => this.active.resource())
 
   /** Caja elegida → el inspector de columnas de la derecha (el MISMO editor que en Vistas). */
   readonly select = output<string>()
@@ -202,7 +260,8 @@ export class ModelViewComponent {
       label: resource.labelSingular,
       fields: resource.fields.map(f => ({
         name: f.name,
-        type: f.type === 'ref' && f.refTo ? `→ ${f.refTo}` : TYPE_LABELS[f.type]
+        type: shortLabelOfType(f.type),
+        isRef: f.type === 'ref'
       })),
       box: nodeBox(this.positions()[resource.name], resource.fields.length)
     }))
