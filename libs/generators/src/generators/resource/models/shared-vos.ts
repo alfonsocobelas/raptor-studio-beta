@@ -69,5 +69,13 @@ export function sharedVosOf(models: ResourceDefinition[]): string[] {
     if (model.period) referenced.add('Period')
   }
 
+  // un VO compuesto arrastra el VO del que se construye: `Period` se hace con
+  // `ContractDate`, y emitir uno sin el otro deja una referencia colgando. Colaba
+  // mientras los modelos con período declaraban además ese VO en algún campo.
+  for (const name of [...referenced]) {
+    const dependency = SHARED_VOS[name]?.of
+    if (dependency) referenced.add(dependency)
+  }
+
   return Object.keys(SHARED_VOS).filter(name => referenced.has(name))
 }

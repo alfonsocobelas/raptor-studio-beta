@@ -31,6 +31,39 @@ describe('SHARED_VOS — el registro cubre todo lo que los modelos referencian',
       expect(sharedVosOf([model])).toContain('Period')
     }
   })
+
+  /**
+   * El mismo agujero que el test de arriba, un nivel más abajo: un VO compuesto declara
+   * de qué VO se construye (`Period` → `of: 'ContractDate'`) y el emisor no seguía esa
+   * dependencia. En contract/project/license colaba porque sus campos declaran
+   * `ContractDate` por su cuenta; `installation` solo declara el período, así que la app
+   * solaris salía con un `period.vo.ts` apuntando a un VO nunca emitido: 8 × TS2304 al
+   * compilar el emitido. Lo cazó la corrida real del gate de la spec 39.
+   */
+  it('un VO compuesto arrastra el VO del que se construye', () => {
+    const withPeriod = MODEL_LIST.filter(m => m.period)
+
+    for (const model of withPeriod) {
+      const emitted = sharedVosOf([model])
+
+      for (const name of emitted) {
+        const dependency = SHARED_VOS[name]?.of
+        if (dependency) {
+          expect(emitted).toContain(dependency)
+        }
+      }
+    }
+  })
+
+  it('un modelo cuyo período no declara ContractDate por campo también lo arrastra', () => {
+    const installation = MODEL_LIST.find(m => m.name === 'installation')
+    if (!installation) throw new Error('fixture de modelos incompleta')
+    // el modelo NO declara voShared ContractDate en ningún campo: entra por Period
+    const byField = Object.values(installation.fields).some(field => field.voShared?.name === 'ContractDate')
+
+    expect(byField).toBe(false)
+    expect(sharedVosOf([installation])).toContain('ContractDate')
+  })
 })
 
 describe('sharedVosOf — sólo lo que la app elige', () => {
