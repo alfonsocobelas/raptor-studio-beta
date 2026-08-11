@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "StripAiSlots",
+  "title": "Strip AI slots (delivery step)",
+  "description": "Removes the `@ai:begin/@ai:end` marker lines from a generated app, keeping their content. One-way: after stripping, the copy leaves the regeneration cycle",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Directory of the generated app to deliver (e.g. apps/solaris)",
+      "$default": { "$source": "argv", "index": 0 }
+    }
+  },
+  "required": ["directory"]
+}

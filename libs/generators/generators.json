@@ -25,6 +25,11 @@
       "schema": "./src/generators/frontend-kernel/schema.json",
       "description": "Scaffolds the Angular shared kernel (copy-once) the emitted components import"
     },
+    "strip-ai-slots": {
+      "factory": "./src/generators/strip-ai-slots/strip-ai-slots",
+      "schema": "./src/generators/strip-ai-slots/schema.json",
+      "description": "Delivery step: removes the @ai:begin/@ai:end marker lines from a generated app, keeping their content"
+    },
     "app": {
       "factory": "./src/generators/app/app",
       "schema": "./src/generators/app/schema.json",

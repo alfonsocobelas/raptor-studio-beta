@@ -32,6 +32,25 @@ export function harvestAiSlots(tree: Tree, dir: string): AiSlotHarvest {
   return harvest
 }
 
+// Marcador en línea propia, formato TS (`// @ai:begin id …`) o HTML (`<!-- @ai:begin id … -->`)
+const MARKER_LINE_REGEX = /^[ \t]*(?:\/\/|<!--) @ai:(?:begin|end)\b[^\n]*\n?/gm
+
+/**
+ * Paso de entrega (opt-in, un solo sentido): elimina las líneas de marcador
+ * conservando lo escrito dentro. Tras el strip la app queda fuera del ciclo
+ * de regeneración — sin marcadores no hay cosecha que reinyectar.
+ */
+export function stripAiSlots(tree: Tree, dir: string): void {
+  if (!tree.exists(dir)) return
+
+  visitNotIgnoredFiles(tree, dir, file => {
+    const content = tree.read(file, 'utf-8')
+    if (!content || !content.includes('@ai:begin')) return
+
+    tree.write(file, content.replace(MARKER_LINE_REGEX, ''))
+  })
+}
+
 export function reinjectAiSlots(tree: Tree, dir: string, harvest: AiSlotHarvest): void {
   for (const [file, slots] of harvest) {
     if (!tree.exists(file)) continue
