@@ -8,6 +8,7 @@ import {
   type AppDefinition,
   type BusinessBrief,
   type BusinessFlow,
+  type FlowEdge,
   type FlowNode,
   type FlowNodeKind,
   type ResourceDefinition
@@ -535,13 +536,36 @@ export class DesignStore {
     }))
   }
 
-  /** Quitar un nodo arrastra sus aristas: nada puede quedar apuntando al hueco. */
+  /**
+   * Quitar un nodo arrastra sus aristas y RECOSE la cadena: quien le apuntaba pasa a
+   * apuntar a quien le seguía. Es el inverso exacto de insertFlowStep, y por el mismo
+   * motivo la etiqueta que sobrevive es la de ENTRADA: es la que dice de qué rama de
+   * una decisión cuelga el tramo. Sin recosido, borrar un paso del medio dejaba todo
+   * lo de detrás inalcanzable y el lienzo lo apilaba en la capa de los huérfanos.
+   */
   removeFlowNode(flowName: string, id: string): boolean {
-    return this.updateFlow(flowName, flow => ({
-      ...flow,
-      nodes: flow.nodes.filter(n => n.id !== id),
-      edges: flow.edges.filter(e => e.from !== id && e.to !== id)
-    }))
+    return this.updateFlow(flowName, flow => {
+      const entradas = flow.edges.filter(e => e.to === id && e.from !== id)
+      const salidas = flow.edges.filter(e => e.from === id && e.to !== id)
+      const supervivientes = flow.edges.filter(e => e.from !== id && e.to !== id)
+
+      const recosidas = entradas.flatMap(entrada =>
+        salidas
+          .filter(salida => salida.to !== entrada.from)
+          .map(salida => ({
+            from: entrada.from,
+            to: salida.to,
+            ...(entrada.label !== undefined ? { label: entrada.label } : {})
+          }))
+      )
+      const yaEsta = (candidata: FlowEdge, edges: FlowEdge[]) =>
+        edges.some(e => e.from === candidata.from && e.to === candidata.to && e.label === candidata.label)
+
+      const edges = [...supervivientes]
+      for (const candidata of recosidas) if (!yaEsta(candidata, edges)) edges.push(candidata)
+
+      return { ...flow, nodes: flow.nodes.filter(n => n.id !== id), edges }
+    })
   }
 
   addFlowEdge(flowName: string, from: string, to: string, label?: string): boolean {

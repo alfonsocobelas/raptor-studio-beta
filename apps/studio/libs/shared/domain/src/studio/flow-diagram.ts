@@ -30,7 +30,27 @@ export function flowNodeBox(position: NodePosition): NodeBox {
 /** El proceso se puede leer en fila (izquierda→derecha) o en columna (arriba→abajo). */
 export type FlowOrientation = 'horizontal' | 'vertical'
 
-export function flowLayout(flow: BusinessFlow, orientation: FlowOrientation = 'horizontal'): Record<string, NodePosition> {
+/** ¿Se pisan dos nodos colocados en estas posiciones? */
+function seSolapan(a: NodePosition, b: NodePosition): boolean {
+  return (
+    a.x < b.x + FLOW_NODE.width &&
+    b.x < a.x + FLOW_NODE.width &&
+    a.y < b.y + FLOW_NODE.height &&
+    b.y < a.y + FLOW_NODE.height
+  )
+}
+
+/**
+ * @param frozen Posiciones ya colocadas (arrastradas o congeladas por una edición
+ *   anterior): se respetan TAL CUAL. Editar la topología —borrar un paso, meter uno
+ *   en medio— no puede reordenar lo que el ojo ya tenía situado; el layout por capas
+ *   solo decide dónde aterrizan los nodos que aún no tienen sitio.
+ */
+export function flowLayout(
+  flow: BusinessFlow,
+  orientation: FlowOrientation = 'horizontal',
+  frozen: Record<string, NodePosition> = {}
+): Record<string, NodePosition> {
   const start = flow.nodes.find(node => node.kind === 'start')
   if (!start) return {}
 
@@ -54,20 +74,31 @@ export function flowLayout(flow: BusinessFlow, orientation: FlowOrientation = 'h
   }
 
   // La capa avanza en el eje del proceso y los nodos que la comparten (las ramas de
-  // una decisión) se reparten en el eje perpendicular.
+  // una decisión) se reparten en el eje perpendicular. Lo congelado no se toca; lo
+  // demás aterriza en su hueco de capa y, si está pisado, se aparta una fila.
   const positions: Record<string, NodePosition> = {}
+  for (const node of flow.nodes) if (frozen[node.id]) positions[node.id] = frozen[node.id]
+
+  const libre = (candidato: NodePosition) =>
+    !Object.values(positions).some(puesta => seSolapan(candidato, puesta))
+
   for (const [depth, ids] of layers) {
     ;[...ids].sort().forEach((sibling, index) => {
-      positions[sibling] =
+      if (positions[sibling]) return
+      const slot = (paso: number): NodePosition =>
         orientation === 'horizontal'
           ? {
               x: FLOW_GRID.margin + depth * FLOW_GRID.colWidth,
-              y: FLOW_GRID.margin + index * FLOW_GRID.rowHeight
+              y: FLOW_GRID.margin + (index + paso) * FLOW_GRID.rowHeight
             }
           : {
-              x: FLOW_GRID.margin + index * FLOW_GRID.colWidth,
+              x: FLOW_GRID.margin + (index + paso) * FLOW_GRID.colWidth,
               y: FLOW_GRID.margin + depth * FLOW_GRID.rowHeight
             }
+      let paso = 0
+      // tope defensivo: mejor un solape que un bucle infinito en un render
+      while (paso < 50 && !libre(slot(paso))) paso++
+      positions[sibling] = slot(paso)
     })
   }
   return positions

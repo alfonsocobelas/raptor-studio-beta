@@ -110,6 +110,52 @@ describe('DesignStore — nodos de flujo', () => {
     expect(flow.edges.every(e => e.from !== 'revisar' && e.to !== 'revisar')).toBe(true)
   })
 
+  it('removeFlowNode RECOSE la cadena: quien le apuntaba pasa a apuntar a quien le seguía', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'step', 'Revisar')
+    store.addFlowEdge('Alta de pedido', 'inicio', 'revisar')
+    store.addFlowEdge('Alta de pedido', 'revisar', 'fin')
+    store.removeFlowEdge('Alta de pedido', 'inicio', 'fin')
+
+    expect(store.removeFlowNode('Alta de pedido', 'revisar')).toBe(true)
+
+    // sin recosido el 'fin' quedaría huérfano y el layout lo mandaría a la capa de los inalcanzables
+    expect(store.flows()[0].edges).toEqual([{ from: 'inicio', to: 'fin' }])
+  })
+
+  it('el recosido conserva la etiqueta de ENTRADA: el tramo sigue siendo de la misma rama', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'decision', '¿hay stock?')
+    store.addFlowNode('Alta de pedido', 'step', 'Reservar')
+    store.addFlowEdge('Alta de pedido', 'hay-stock', 'reservar', 'sí')
+    store.addFlowEdge('Alta de pedido', 'reservar', 'fin')
+
+    expect(store.removeFlowNode('Alta de pedido', 'reservar')).toBe(true)
+
+    expect(store.flows()[0].edges).toContainEqual({ from: 'hay-stock', to: 'fin', label: 'sí' })
+  })
+
+  it('el recosido no inventa bucles ni tramos repetidos', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'step', 'Revisar')
+    store.addFlowEdge('Alta de pedido', 'inicio', 'revisar')
+    store.addFlowEdge('Alta de pedido', 'revisar', 'fin')
+    // 'inicio → fin' ya existe (lo trae addFlow), así que el recosido no debe duplicarlo
+    expect(store.removeFlowNode('Alta de pedido', 'revisar')).toBe(true)
+
+    expect(store.flows()[0].edges).toEqual([{ from: 'inicio', to: 'fin' }])
+  })
+
+  it('un nodo sin salida se borra sin más: no hay nada que recoser', () => {
+    const store = withFlow()
+    store.addFlowNode('Alta de pedido', 'step', 'Suelto')
+    store.addFlowEdge('Alta de pedido', 'inicio', 'suelto')
+
+    expect(store.removeFlowNode('Alta de pedido', 'suelto')).toBe(true)
+
+    expect(store.flows()[0].edges).toEqual([{ from: 'inicio', to: 'fin' }])
+  })
+
   it('rechaza un texto de nodo que supera el tope del contrato', () => {
     const store = withFlow()
 

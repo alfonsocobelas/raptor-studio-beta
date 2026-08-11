@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signa
 import { FormsModule } from '@angular/forms'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
 import {
+  FLOW_GRID,
   canvasExtent,
   flowEdgeCurve,
   flowStepNumbers,
@@ -9,7 +10,6 @@ import {
   flowLayout,
   flowNodeBox,
   nodeAt,
-  overlayLayout,
   type FlowEdgeCurve,
   type NodeBox,
   type NodePosition
@@ -407,15 +407,37 @@ export class FlowViewComponent {
   protected readonly nodes = computed<FlowDiagramNode[]>(() => {
     const flow = this.activeFlow()
     if (!flow) return []
-    const auto = flowLayout(flow, this.orientation.value())
-    const dragged = Object.fromEntries(
-      Object.entries(this.manual())
-        .filter(([key]) => key.startsWith(`${flow.name}:`))
-        .map(([key, pos]) => [key.slice(flow.name.length + 1), pos])
-    )
-    const positions = overlayLayout(auto, dragged)
-    return flow.nodes.map(node => ({ node, box: flowNodeBox(positions[node.id]) }))
+    const positions = flowLayout(flow, this.orientation.value(), this.frozenOf(flow.name))
+    // sin start el layout viene vacío (el gate ya lo rechaza): que el lienzo no se caiga
+    return flow.nodes.map(node => ({
+      node,
+      box: flowNodeBox(positions[node.id] ?? { x: FLOW_GRID.margin, y: FLOW_GRID.margin })
+    }))
   })
+
+  /** Posiciones ya colocadas de un flujo, sin el prefijo del nombre. */
+  private frozenOf(flowName: string): Record<string, NodePosition> {
+    return Object.fromEntries(
+      Object.entries(this.manual())
+        .filter(([key]) => key.startsWith(`${flowName}:`))
+        .map(([key, pos]) => [key.slice(flowName.length + 1), pos])
+    )
+  }
+
+  /**
+   * Congela lo dibujado ANTES de tocar la topología. El layout por capas deduce la
+   * posición de la distancia al inicio, así que borrar o insertar un paso movía de
+   * columna a todo lo que venía detrás. Congelando primero, la edición solo coloca
+   * lo nuevo y lo que ya estaba se queda donde el ojo lo tenía.
+   */
+  private freezePositions(): void {
+    const flow = this.activeName()
+    if (!flow) return
+    const actuales = Object.fromEntries(
+      this.nodes().map(item => [`${flow}:${item.node.id}`, { x: item.box.x, y: item.box.y }])
+    )
+    this.manual.update(manual => ({ ...actuales, ...manual }))
+  }
 
   protected readonly edges = computed<FlowDiagramEdge[]>(() => {
     const boxes = new Map(this.nodes().map(n => [n.node.id, n.box]))
@@ -509,6 +531,7 @@ export class FlowViewComponent {
   protected insertStep(edge: FlowDiagramEdge): void {
     const flow = this.activeName()
     if (!flow) return
+    this.freezePositions()
     if (this.store.insertFlowStep(flow, edge.from, edge.to, 'Nuevo paso', edge.label)) {
       const creado = this.store
         .flows()
@@ -560,9 +583,19 @@ export class FlowViewComponent {
     const sel = this.selected()
     const name = this.activeName()
     if (!sel || !name) return
-    if (sel.kind === 'node') this.store.removeFlowNode(name, sel.id)
-    else this.store.removeFlowEdge(name, sel.from, sel.to, sel.label)
+    this.freezePositions()
+    if (sel.kind === 'node') {
+      if (this.store.removeFlowNode(name, sel.id)) this.forgetPosition(name, sel.id)
+    } else this.store.removeFlowEdge(name, sel.from, sel.to, sel.label)
     this.selected.set(null)
+  }
+
+  /** El hueco del nodo borrado no se reserva: un nodo futuro con su id no hereda su sitio. */
+  private forgetPosition(flowName: string, id: string): void {
+    this.manual.update(manual => {
+      const { [`${flowName}:${id}`]: _, ...resto } = manual
+      return resto
+    })
   }
 
   protected onDeleteKey(event: Event): void {
@@ -640,6 +673,8 @@ export class FlowViewComponent {
       const target = nodeAt(point, Object.fromEntries(this.nodes().map(n => [n.node.id, n.box])))
       const flow = this.activeName()
       if (!target || target === item.node.id || !flow) return
+      // conectar también cambia las capas: congelar antes de que el grafo cambie
+      this.freezePositions()
       if (item.node.kind === 'decision') {
         this.pendingLabel.set('')
         this.pendingEdge.set({ from: item.node.id, to: target, x: point.x, y: point.y })

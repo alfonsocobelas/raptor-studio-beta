@@ -89,6 +89,70 @@ describe('flowLayout — capas BFS desde el start', () => {
   })
 })
 
+// El lienzo CONGELA lo que ya está colocado: editar la topología (borrar un paso,
+// meter uno en medio) no puede reordenar lo que el ojo ya tenía situado.
+describe('flowLayout — posiciones congeladas', () => {
+  it('lo que ya tiene posición se queda EXACTAMENTE donde estaba', () => {
+    const congeladas = { inicio: { x: 500, y: 300 }, stock: { x: 720, y: 300 } }
+
+    const positions = flowLayout(pedidoFlow(), 'horizontal', congeladas)
+
+    expect(positions['inicio']).toEqual({ x: 500, y: 300 })
+    expect(positions['stock']).toEqual({ x: 720, y: 300 })
+  })
+
+  it('borrar un paso no mueve a los demás: sus posiciones congeladas sobreviven', () => {
+    const flow = pedidoFlow()
+    const congeladas = flowLayout(flow)
+
+    // el gesto real: se borra 'reservar' y el tramo se recose 'stock → fin'
+    flow.nodes = flow.nodes.filter(n => n.id !== 'reservar')
+    flow.edges = [
+      { from: 'inicio', to: 'stock' },
+      { from: 'stock', to: 'fin', label: 'sí' },
+      { from: 'stock', to: 'pedir', label: 'no' },
+      { from: 'pedir', to: 'fin' }
+    ]
+
+    const positions = flowLayout(flow, 'horizontal', congeladas)
+
+    // 'fin' estaba en la capa 3 y sigue en su sitio, aunque ahora le tocaría la 2
+    expect(positions['fin']).toEqual(congeladas['fin'])
+    expect(positions['pedir']).toEqual(congeladas['pedir'])
+    expect(positions['reservar']).toBeUndefined()
+  })
+
+  it('un nodo NUEVO se coloca por capas, como siempre', () => {
+    const flow = pedidoFlow()
+    const congeladas = flowLayout(flow)
+    flow.nodes = [...flow.nodes, { id: 'avisar', kind: 'step', text: 'avisar al cliente' }]
+    flow.edges = [...flow.edges, { from: 'fin', to: 'avisar' }]
+
+    const positions = flowLayout(flow, 'horizontal', congeladas)
+
+    expect(positions['avisar']).toEqual({ x: FLOW_GRID.margin + 4 * FLOW_GRID.colWidth, y: FLOW_GRID.margin })
+  })
+
+  it('un nodo nuevo no aterriza ENCIMA de uno congelado: baja una fila hasta encontrar sitio', () => {
+    const flow = pedidoFlow()
+    flow.nodes = [...flow.nodes, { id: 'avisar', kind: 'step', text: 'avisar al cliente' }]
+    flow.edges = [...flow.edges, { from: 'fin', to: 'avisar' }]
+    // alguien arrastró 'fin' justo al hueco que le toca al nodo nuevo
+    const congeladas = { fin: { x: FLOW_GRID.margin + 4 * FLOW_GRID.colWidth, y: FLOW_GRID.margin } }
+
+    const positions = flowLayout(flow, 'horizontal', congeladas)
+
+    expect(positions['avisar']).toEqual({
+      x: FLOW_GRID.margin + 4 * FLOW_GRID.colWidth,
+      y: FLOW_GRID.margin + FLOW_GRID.rowHeight
+    })
+  })
+
+  it('sin posiciones congeladas se comporta como siempre', () => {
+    expect(flowLayout(pedidoFlow(), 'horizontal', {})).toEqual(flowLayout(pedidoFlow()))
+  })
+})
+
 describe('flowNodeBox — la caja de un nodo de flujo', () => {
   it('devuelve la caja con las dimensiones fijas del nodo de flujo', () => {
     expect(flowNodeBox({ x: 100, y: 60 })).toEqual({
