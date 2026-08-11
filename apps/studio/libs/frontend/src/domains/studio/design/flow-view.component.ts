@@ -244,9 +244,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
               (click)="selectNode($event, card.group.id)"
             >
               <div
-                class="bg-card flow-card overflow-hidden rounded-[12px] border transition-colors"
+                class="bg-card flow-card flow-card-steps overflow-hidden rounded-[12px] border transition-colors"
                 [class.ring-2]="isNodeSelected(card.group.id)"
-                [class.border-foreground]="isLinkTarget(card.group.id)"
+                [class.is-target]="isLinkTarget(card.group.id)"
               >
                 <!-- cabecera: de qué rama cuelga y cuántas acciones lleva; y es el asa de arrastre -->
                 <div
@@ -526,6 +526,17 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     .flow-card-start {
       background-color: var(--foreground);
       border-color: transparent;
+    }
+    /* Las tarjetas de acciones llevan el naranja en dos dosis: un filo cálido al 45 %, que
+       las emparenta con los puntos del papel (que van al 35 %), y un canto macizo a la
+       IZQUIERDA, que es por donde entra la flecha —el mismo lado donde vive el puerto—. */
+    .flow-card-steps {
+      border-color: color-mix(in oklab, var(--flow-accent) 45%, transparent);
+      border-left: 3px solid var(--flow-accent);
+    }
+    /* Destino de la flecha: manda el negro, y por eso va DESPUÉS (misma especificidad). */
+    .flow-card-steps.is-target {
+      border-color: var(--foreground);
     }
     /* Y el final va en el naranja de la casa, macizo: inicio y fin se distinguen sin
        leerlos, y sin que el fin parezca un aviso —con el tinte claro y el borde de color
