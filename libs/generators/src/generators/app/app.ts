@@ -11,6 +11,7 @@ import { applyPorts } from './ports'
 import { addFontDependency, themeSubstitutions } from './theme-css'
 import { composeApp, composeFlat, type AppComposition, type ComposedAnalyticWidget } from './composition'
 import { renderClaudeMd } from './brief-doc'
+import { emitFlowProcesses } from './flow-process'
 import {
   canEmitSharedVo,
   contextSharedGroups,
@@ -292,6 +293,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       claudeMd: renderClaudeMd(options.name, composition.brief, models, composition.flows),
       tmpl: ''
     })
+  }
+
+  // 4a-ter. los flujos emiten proceso (spec 39): una clase por flujo, huecos flow-* vacíos.
+  //         Coreografía documentada — el grafo NO se ejecuta (regla 7); sin flujos, ni carpeta.
+  if (composition.flows?.length) {
+    emitFlowProcesses(tree, backendSrc, composition.flows, models)
   }
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)

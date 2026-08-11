@@ -1,5 +1,12 @@
+import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
+import type { Tree } from '@nx/devkit'
 import type { BusinessFlow } from '@acc/schema'
+import { appGenerator } from './app'
 import { flowClassDoc, flowProcessNames, flowRepoDeps, flowStepMethods } from './flow-process'
+import { MODELS } from '../resource/models/registry'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
 
 /**
  * Spec 39, TASK-02: derivación de nombres del proceso emitido. Toda la lógica vive
@@ -147,5 +154,110 @@ describe('flow-process — derivación de nombres (spec 39)', () => {
 
     // WHEN / THEN
     expect(flowStepMethods(empty)).toEqual([])
+  })
+})
+
+/**
+ * Spec 39, TASK-05: el generador de app emite, por cada flujo, la clase de proceso
+ * con huecos flow-* vacíos y el processes.module.ts. Sin flujos, ni carpeta ni módulo.
+ */
+describe('app generator — los flujos emiten proceso (spec 39)', () => {
+  const writeAppFile = (flows?: BusinessFlow[]): { dir: string; appFile: string } => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'acc-flows-'))
+    const appFile = path.join(dir, 'demo.app.json')
+    fs.writeFileSync(
+      appFile,
+      JSON.stringify({
+        schemaVersion: 1,
+        name: 'demo',
+        pages: [{ kind: 'resource', resource: 'garment' }],
+        resources: [MODELS['garment']],
+        ...(flows ? { flows } : {})
+      })
+    )
+    return { dir, appFile }
+  }
+
+  const pedidoFlow: BusinessFlow = {
+    name: 'Ciclo de pedido',
+    description: 'Del alta a la aprobación.',
+    nodes: [
+      { id: 'llega', kind: 'start', text: 'Llega un pedido' },
+      { id: 'revisar', kind: 'step', text: 'Se revisa y registra', entity: 'garment' },
+      { id: 'ok', kind: 'decision', text: '¿Todo correcto?' },
+      { id: 'subsanar', kind: 'step', text: 'Se subsana' },
+      { id: 'fin', kind: 'end', text: 'Pedido en curso' }
+    ],
+    edges: [
+      { from: 'llega', to: 'revisar' },
+      { from: 'revisar', to: 'ok' },
+      { from: 'ok', to: 'fin', label: 'sí' },
+      { from: 'ok', to: 'subsanar', label: 'no' },
+      { from: 'subsanar', to: 'revisar' }
+    ]
+  }
+
+  const generate = async (flows?: BusinessFlow[]): Promise<Tree> => {
+    const { dir, appFile } = writeAppFile(flows)
+    try {
+      const tree: Tree = createTreeWithEmptyWorkspace()
+      await appGenerator(tree, { name: 'demo', appFile, skipInstall: true })
+      return tree
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  }
+
+  const PROCESS_PATH = 'apps/demo/libs/backend/src/contexts/warehouse/processes/ciclo-de-pedido/ciclo-de-pedido.process.ts'
+  const MODULE_PATH = 'apps/demo/libs/backend/src/contexts/warehouse/processes/processes.module.ts'
+
+  it('emite la clase de proceso en el contexto de la entidad citada', async () => {
+    const tree = await generate([pedidoFlow])
+    const emitted = tree.read(PROCESS_PATH, 'utf-8') ?? ''
+
+    expect(emitted).toContain('export class CicloDePedidoProcess')
+    expect(emitted).toContain('constructor(private readonly garmentRepository: GarmentRepository) {}')
+    expect(emitted).toContain("import { GarmentRepository } from '../../modules/garments/domain/garment-repository'")
+    expect(emitted).toContain("import { GarmentId } from '../../../shared/domain/value-objects/garments/garment-id.vo'")
+  })
+
+  it('cada step es un método con su hueco flow-* vacío; start/end/decision no emiten método', async () => {
+    const tree = await generate([pedidoFlow])
+    const emitted = tree.read(PROCESS_PATH, 'utf-8') ?? ''
+
+    expect(emitted).toContain('async revisar(id: GarmentId): Promise<void> {')
+    expect(emitted).toContain('async subsanar(): Promise<void> {')
+    expect(emitted).toContain('// @ai:begin flow-revisar — Se revisa y registra')
+    expect(emitted).toContain('// @ai:begin flow-subsanar — Se subsana')
+    expect(emitted).not.toContain('async llega')
+    expect(emitted).not.toContain('async ok')
+    expect(emitted).not.toContain('async fin')
+  })
+
+  it('la cabecera lleva el mapa BFS y cada método su paso, procedencia y destino', async () => {
+    const tree = await generate([pedidoFlow])
+    const emitted = tree.read(PROCESS_PATH, 'utf-8') ?? ''
+
+    expect(emitted).toContain(' * Ciclo de pedido')
+    expect(emitted).toContain(' * 1. (inicio) Llega un pedido')
+    expect(emitted).toContain(' * Paso 2 — Se revisa y registra')
+    expect(emitted).toContain(' * Viene de: 3. ¿Todo correcto? (rama «no»)')
+  })
+
+  it('emite processes.module.ts con el proceso como provider e importa los módulos citados', async () => {
+    const tree = await generate([pedidoFlow])
+    const emitted = tree.read(MODULE_PATH, 'utf-8') ?? ''
+
+    expect(emitted).toContain('export class ProcessesModule')
+    expect(emitted).toContain("import { GarmentsModule } from '../modules/garments/garments.module'")
+    expect(emitted).toContain("import { CicloDePedidoProcess } from './ciclo-de-pedido/ciclo-de-pedido.process'")
+    expect(emitted).toContain('providers: [CicloDePedidoProcess]')
+  })
+
+  it('sin flujos no se emite la carpeta processes/', async () => {
+    const tree = await generate()
+
+    expect(tree.exists(MODULE_PATH)).toBe(false)
+    expect(tree.children('apps/demo/libs/backend/src/contexts/warehouse')).not.toContain('processes')
   })
 })

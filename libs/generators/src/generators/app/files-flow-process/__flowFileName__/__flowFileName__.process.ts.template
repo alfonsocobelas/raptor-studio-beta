@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common'
+<%- imports %>
+
+/**
+<%- classDoc %>
+ */
+@Injectable()
+export class <%- className %> {
+  constructor(<%- ctorParams %>) {}
+
+<%- methodsBlock %>
+}

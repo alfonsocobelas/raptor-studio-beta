@@ -18,7 +18,7 @@
 - [x] TASK-04: Tests + derivación de JSDoc: cabecera de clase (nombre + descripción + mapa
       numerado BFS reutilizando TASK-01) y JSDoc por método (número de paso, texto, de dónde
       viene —con etiqueta de rama— y a dónde va).
-- [ ] TASK-05: Tests + plantillas `files-flow-process/` (`__flowFileName__.process.ts.template`
+- [x] TASK-05: Tests + plantillas `files-flow-process/` (`__flowFileName__.process.ts.template`
       con huecos `// @ai:begin flow-<nodeId>` vacíos, `processes.module.ts.template`) y emisión
       desde el generador de app: carpeta `processes/` solo si hay flujos.
 - [ ] TASK-06: Tests + cableado de módulos: `ProcessesModule` con procesos como providers e

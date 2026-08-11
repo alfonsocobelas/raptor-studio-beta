@@ -1,0 +1,10 @@
+import { Module } from '@nestjs/common'
+<%- moduleImports %>
+<%- processImports %>
+
+@Module({
+  imports: [<%- entityModules %>],
+  providers: [<%- processProviders %>],
+  exports: [<%- processProviders %>]
+})
+export class ProcessesModule {}

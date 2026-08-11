@@ -1,5 +1,6 @@
-import { names } from '@nx/devkit'
-import type { BusinessFlow, FlowNode } from '@acc/schema'
+import { generateFiles, names, type Tree } from '@nx/devkit'
+import * as path from 'path'
+import type { BusinessFlow, FlowNode, ResourceDefinition } from '@acc/schema'
 import { bfsOrder, renderFlowSteps } from './brief-doc'
 
 /**
@@ -74,6 +75,88 @@ export function flowStepMethods(flow: BusinessFlow): FlowStepMethod[] {
 /** Cabecera JSDoc de la clase: nombre, descripción y el mapa numerado de renderFlowSteps (una sola fuente). */
 export function flowClassDoc(flow: BusinessFlow): string[] {
   return [flow.name, '', ...(flow.description ? [flow.description, ''] : []), ...renderFlowSteps(flow)]
+}
+
+/**
+ * Emite la carpeta processes/ de cada contexto citado: una clase por flujo y su
+ * processes.module.ts. El contexto de un flujo es el de la primera entidad que cita
+ * (fallback: el del primer modelo). Solo se llama con flujos: sin ellos, ni carpeta.
+ */
+export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: BusinessFlow[], models: ResourceDefinition[]): void {
+  const pluralOf = new Map(models.map(model => [model.name, model.plural]))
+  const contextOf = new Map(models.map(model => [model.name, model.context]))
+
+  const byContext = new Map<string, BusinessFlow[]>()
+  for (const flow of flows) {
+    const anchor = bfsOrder(flow).find(node => node.entity)?.entity
+    const ctx = (anchor ? contextOf.get(anchor) : undefined) ?? models[0].context
+    byContext.set(ctx, [...(byContext.get(ctx) ?? []), flow])
+  }
+
+  for (const [ctx, ctxFlows] of byContext) {
+    const processesDir = path.join(backendSrc, 'contexts', ctx, 'processes')
+
+    // el módulo lista TODOS los procesos del contexto: mismas substitutions en cada pasada (idempotente)
+    const processNames = ctxFlows.map(flowProcessNames)
+    const entities = [...new Set(ctxFlows.flatMap(flow => flowRepoDeps(flow).map(dep => dep.entity)))]
+    const moduleSubstitutions = {
+      moduleImports: entities
+        .map(entity => {
+          const plural = pluralOf.get(entity)
+          return `import { ${names(plural ?? entity).className}Module } from '../modules/${plural}/${plural}.module'`
+        })
+        .join('\n'),
+      processImports: processNames
+        .map(p => `import { ${p.className} } from './${p.fileName}/${p.fileName}.process'`)
+        .join('\n'),
+      entityModules: entities.map(entity => `${names(pluralOf.get(entity) ?? entity).className}Module`).join(', '),
+      processProviders: processNames.map(p => p.className).join(', ')
+    }
+
+    for (const flow of ctxFlows) {
+      const { fileName, className } = flowProcessNames(flow)
+      const methods = flowStepMethods(flow)
+      const deps = flowRepoDeps(flow)
+
+      const idImports = [...new Set(methods.map(m => m.node.entity).filter((e): e is string => Boolean(e)))].map(
+        entity => {
+          const n = names(entity)
+          return `import { ${n.className}Id } from '../../../shared/domain/value-objects/${pluralOf.get(entity)}/${n.fileName}-id.vo'`
+        }
+      )
+      const repoImports = deps.map(dep => {
+        const n = names(dep.entity)
+        return `import { ${dep.className} } from '../../modules/${pluralOf.get(dep.entity)}/domain/${n.fileName}-repository'`
+      })
+
+      generateFiles(tree, path.join(__dirname, 'files-flow-process'), processesDir, {
+        ...moduleSubstitutions,
+        flowFileName: fileName,
+        className,
+        imports: [...idImports, ...repoImports].join('\n'),
+        classDoc: docBlock(flowClassDoc(flow)),
+        ctorParams: deps.map(dep => `private readonly ${dep.propertyName}: ${dep.className}`).join(', '),
+        methodsBlock: methods.map(renderMethod).join('\n\n')
+      })
+    }
+  }
+}
+
+/** El cuerpo de cada paso es un hueco @ai vacío: la coreografía no se ejecuta, se documenta. */
+function renderMethod(method: FlowStepMethod): string {
+  return [
+    '  /**',
+    ...method.docLines.map(line => `   * ${line}`),
+    '   */',
+    `  async ${method.methodName}(${method.params}): Promise<void> {`,
+    `    // @ai:begin flow-${method.node.id} — ${method.node.text}`,
+    '    // @ai:end',
+    '  }'
+  ].join('\n')
+}
+
+function docBlock(lines: string[]): string {
+  return lines.map(line => (line ? ` * ${line}` : ' *')).join('\n')
 }
 
 /**
