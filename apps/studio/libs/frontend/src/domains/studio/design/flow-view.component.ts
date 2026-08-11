@@ -5,6 +5,7 @@ import {
   FLOW_DECISION,
   FLOW_GRID,
   FLOW_GROUP,
+  FLOW_KIND_LABELS,
   canvasExtent,
   flowAlternateEdges,
   flowBranchLabel,
@@ -38,13 +39,6 @@ interface FlowDiagramEdge {
   /** Salida secundaria de una decisión: se dibuja discontinua */
   alternate: boolean
   line: FlowEdgeCurve
-}
-
-const KIND_LABELS: Record<FlowNodeKind, string> = {
-  start: 'inicio',
-  step: 'paso',
-  decision: 'decisión',
-  end: 'fin'
 }
 
 /** Nombre de partida de una acción recién creada: mientras lo conserve, es un borrador. */
@@ -462,10 +456,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   [class.px-5]="item.node.kind === 'decision'"
                 >
                   <span class="min-w-0">
-                    @if (item.node.kind === 'decision') {
-                      <span class="block text-[9px] font-semibold uppercase tracking-[0.12em] opacity-50">si</span>
-                    }
-                    @if (item.node.kind !== 'step' && item.node.kind !== 'decision') {
+                    <!-- el rombo llevaba un «si» encima que se leía como el «sí» de las
+                         ramas: ahora dice su tipo, CONDICIÓN, igual que el disparador y el fin -->
+                    @if (item.node.kind !== 'step') {
                       <span
                         class="block text-[9px] font-semibold uppercase tracking-[0.12em] opacity-60"
                         [attr.data-testid]="'flow-node-kind-' + item.node.id"
@@ -589,7 +582,7 @@ export class FlowViewComponent {
   )
 
   protected kindLabel(kind: FlowNodeKind): string {
-    return KIND_LABELS[kind]
+    return FLOW_KIND_LABELS[kind]
   }
 
   /** Las medidas de la tarjeta las manda el dominio: la geometría y el CSS no pueden discrepar. */

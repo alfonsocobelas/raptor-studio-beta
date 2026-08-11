@@ -1,14 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import { flowToProse } from '@app/shared/domain'
+import type { FlowNodeKind } from '@acc/schema'
+import { FLOW_KIND_LABELS, flowToProse } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
-
-const KIND_LABELS: Record<string, string> = {
-  start: 'inicio',
-  step: 'paso',
-  decision: 'decisión',
-  end: 'fin'
-}
 
 /**
  * Panel derecho del modo Flujos: el nodo elegido y el flujo contado en prosa.
@@ -31,7 +25,12 @@ const KIND_LABELS: Record<string, string> = {
 
           <div class="studio-row">
             <label for="flow-node-entity">Entidad</label>
-            <select id="flow-node-entity" [value]="current.entity ?? ''" (change)="repoint($event)" data-testid="flow-node-entity">
+            <select
+              id="flow-node-entity"
+              [value]="current.entity ?? ''"
+              (change)="repoint($event)"
+              data-testid="flow-node-entity"
+            >
               <option value="">— ninguna —</option>
               @for (resource of store.resources(); track resource.name) {
                 <option [value]="resource.name">{{ resource.labelSingular }}</option>
@@ -41,7 +40,9 @@ const KIND_LABELS: Record<string, string> = {
 
           <div class="studio-row">
             <label>Tipo</label>
-            <span class="studio-ui text-muted-foreground" data-testid="flow-node-kind">{{ kindLabel(current.kind) }}</span>
+            <span class="studio-ui text-muted-foreground" data-testid="flow-node-kind">{{
+              kindLabel(current.kind)
+            }}</span>
           </div>
 
           @if (current.kind !== 'start') {
@@ -54,9 +55,7 @@ const KIND_LABELS: Record<string, string> = {
               Borrar nodo
             </button>
           } @else {
-            <p class="text-muted-foreground mt-2 text-xs">
-              El inicio no se borra: es por donde el proceso arranca.
-            </p>
+            <p class="text-muted-foreground mt-2 text-xs">El inicio no se borra: es por donde el proceso arranca.</p>
           }
         } @else {
           <p class="text-muted-foreground text-xs" data-testid="flow-node-empty">
@@ -69,8 +68,8 @@ const KIND_LABELS: Record<string, string> = {
         <h2 class="studio-eyebrow mb-2">Vista de texto</h2>
         <p class="studio-ui text-muted-foreground" data-testid="flow-prose">{{ prose() }}</p>
         <p class="text-muted-foreground mt-2 text-xs">
-          Así se lee lo dibujado. El proceso viaja con el diseño y aterriza como contexto en la app generada; no
-          genera código.
+          Así se lee lo dibujado. El proceso viaja con el diseño y aterriza como contexto en la app generada; no genera
+          código.
         </p>
       </section>
     </div>
@@ -92,8 +91,8 @@ export class FlowPanelComponent {
     return flow ? flowToProse(flow) : 'Todavía no hay ningún flujo dibujado.'
   })
 
-  protected kindLabel(kind: string): string {
-    return KIND_LABELS[kind] ?? kind
+  protected kindLabel(kind: FlowNodeKind): string {
+    return FLOW_KIND_LABELS[kind]
   }
 
   protected rename(event: Event): void {

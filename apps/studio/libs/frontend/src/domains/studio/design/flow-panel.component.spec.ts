@@ -38,7 +38,7 @@ describe('FlowPanelComponent', () => {
     const fixture = mount()
 
     expect((testId(fixture, 'flow-node-text') as HTMLInputElement).value).toBe('Inicio')
-    expect(testId(fixture, 'flow-node-kind')?.textContent).toContain('inicio')
+    expect(testId(fixture, 'flow-node-kind')?.textContent).toContain('disparador')
   })
 
   it('cambiar el texto del nodo lo escribe en el diseño', () => {

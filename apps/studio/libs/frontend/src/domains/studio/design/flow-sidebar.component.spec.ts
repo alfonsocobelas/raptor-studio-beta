@@ -29,10 +29,28 @@ describe('FlowSidebarComponent', () => {
     const bloques = fixture.nativeElement.querySelectorAll('[data-testid^="flow-block-"]')
 
     expect([...bloques].map((b: Element) => b.getAttribute('data-testid'))).toEqual([
+      'flow-block-start',
       'flow-block-step',
       'flow-block-decision',
       'flow-block-end'
     ])
+  })
+
+  // El disparador está en el raíl para poder recuperarlo si se borra, pero la frontera
+  // exige exactamente uno por flujo: con uno puesto, el botón se apaga.
+  it('el disparador se apaga cuando el flujo ya tiene el suyo', () => {
+    store.addFlow('Aviso de stock bajo')
+    active.selectFlow('Aviso de stock bajo')
+
+    const fixture = mount()
+    const disparador = () => fixture.nativeElement.querySelector('[data-testid="flow-block-start"]')
+    expect(disparador().disabled).toBe(true)
+    expect(disparador().getAttribute('title')).toContain('único disparador')
+
+    store.removeFlowNode('Aviso de stock bajo', 'inicio')
+    fixture.detectChanges()
+
+    expect(disparador().disabled).toBe(false)
   })
 
   it('lista los flujos del diseño y marca el que se está dibujando', () => {
