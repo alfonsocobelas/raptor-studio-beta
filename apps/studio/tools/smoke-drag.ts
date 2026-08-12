@@ -73,6 +73,15 @@ async function main(): Promise<void> {
 
   await page.screenshot({ path: 'e2e-35-drag-drop.png' })
 
+  // una vista en blanco: el hueco es la propia vista vacía
+  await page.getByTestId('tool-new-view').click()
+  await page.getByTestId('preset-blank').click()
+  await page.getByTestId('new-page-title').fill('Portada')
+  await page.getByTestId('new-page-ok').click()
+
+  await dragBlockOnto(page, 'block-tool-table', 'drop-zone-0', 'e2e-36-drag-vista-vacia.png')
+  await check('la vista vacía admite el primer bloque', async () => (await blocks(page)).join() === 'table')
+
   if (errors.length) console.log('errores de página:', errors)
   await browser.close()
   if (failures.length || errors.length) process.exit(1)

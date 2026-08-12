@@ -35,14 +35,13 @@ import { mockTotal } from './mock-data'
       @if (!current.blocks.length) {
         <div
           class="text-muted-foreground rounded-lg border border-dashed py-16 text-center transition-colors"
-          [class.border-primary]="dragging()"
-          [class.bg-accent]="dragging()"
+          [class.drop-zone]="dragging()"
           data-testid="empty-page"
           (dragover)="allowDrop($event)"
           (drop)="drop($event, 0)"
         >
           @if (dragging()) {
-            <span class="text-primary block h-full w-full text-sm font-medium" data-testid="drop-zone-0">
+            <span class="block h-full w-full text-sm font-medium" data-testid="drop-zone-0">
               Suelta aquí el componente
             </span>
           } @else {
@@ -56,7 +55,7 @@ import { mockTotal } from './mock-data'
         @for (block of current.blocks; track $index) {
           @if (dragging()) {
             <div
-              class="border-primary/40 text-primary/70 hover:bg-primary/10 hover:border-primary hover:text-primary -mb-2 w-full rounded border border-dashed py-1.5 text-center text-[11px] transition-colors"
+              class="drop-zone -mb-2 w-full rounded border border-dashed py-1.5 text-center text-[11px] transition-colors"
               [attr.data-testid]="'drop-zone-' + $index"
               (dragover)="allowDrop($event)"
               (drop)="drop($event, $index)"
@@ -165,7 +164,7 @@ import { mockTotal } from './mock-data'
         <!-- el último hueco: soltar debajo de todo -->
         @if (dragging() && current.blocks.length) {
           <div
-            class="border-primary/40 text-primary/70 hover:bg-primary/10 hover:border-primary hover:text-primary w-full rounded border border-dashed py-3 text-center text-[11px] transition-colors"
+            class="drop-zone w-full rounded border border-dashed py-3 text-center text-[11px] transition-colors"
             [attr.data-testid]="'drop-zone-' + current.blocks.length"
             (dragover)="allowDrop($event)"
             (drop)="drop($event, current.blocks.length)"
@@ -174,6 +173,23 @@ import { mockTotal } from './mock-data'
           </div>
         }
       </div>
+    }
+  `,
+  styles: `
+    /* El arrastre habla en el NARANJA del estudio (#d75f3d, el de la rejilla), no en
+       el primario de la app previsualizada: lo que se está haciendo es diseñar, y eso
+       no debe confundirse con un color que sí viaja al código emitido. */
+    .drop-zone {
+      --studio-drag: #d75f3d;
+      border-color: var(--studio-drag);
+      background-color: var(--studio-drag);
+      color: #fff;
+    }
+    /* El hueco bajo el puntero se oscurece un punto: sigue siendo el mismo naranja,
+       pero dice cuál de todos se va a llevar el bloque. */
+    .drop-zone:hover {
+      background-color: color-mix(in oklab, var(--studio-drag) 85%, black);
+      border-color: color-mix(in oklab, var(--studio-drag) 85%, black);
     }
   `
 })

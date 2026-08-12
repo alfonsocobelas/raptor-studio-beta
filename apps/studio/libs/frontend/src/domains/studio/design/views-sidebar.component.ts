@@ -184,8 +184,8 @@ const BLOCK_TOOLS: BlockTool[] = [
         @for (tool of blockTools; track tool.kind) {
           <button
             type="button"
-            class="hover:border-foreground/40 mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
-            [class.opacity-60]="drag.kind() === tool.kind"
+            class="block-tool mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+            [class.dragging]="drag.kind() === tool.kind"
             [disabled]="!ready()"
             [attr.draggable]="ready() ? 'true' : null"
             [attr.data-testid]="'block-tool-' + tool.kind"
@@ -196,8 +196,8 @@ const BLOCK_TOOLS: BlockTool[] = [
           >
             <ng-icon [name]="tool.icon" size="15" />
             <span class="flex-1">{{ tool.label }}</span>
-            <!-- el asidero: la seña de que esto se arrastra -->
-            <ng-icon class="text-muted-foreground/60" name="lucideGripVertical" size="14" />
+            <!-- el asidero: la seña de que esto se arrastra, en el naranja del arrastre -->
+            <ng-icon class="grip" name="lucideGripVertical" size="14" />
           </button>
         }
       </section>
@@ -206,6 +206,28 @@ const BLOCK_TOOLS: BlockTool[] = [
         Arrastra un componente al lienzo —o púlsalo para dejarlo al final—, o pídelo en el chat.
       </p>
     </aside>
+  `,
+  styles: `
+    /* Mismo naranja que la rejilla del lienzo y que las guías de caída: el gesto
+       de arrastrar se reconoce por el color de punta a punta. */
+    .block-tool {
+      --studio-drag: #d75f3d;
+    }
+    .block-tool:not(:disabled):hover {
+      border-color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
+    }
+    .block-tool .grip {
+      color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
+    }
+    .block-tool:not(:disabled):hover .grip {
+      color: var(--studio-drag);
+    }
+    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
+    .block-tool.dragging {
+      border-color: var(--studio-drag);
+      background-color: color-mix(in oklab, var(--studio-drag) 8%, transparent);
+      color: var(--studio-drag);
+    }
   `
 })
 export class ViewsSidebarComponent {
