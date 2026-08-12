@@ -244,11 +244,15 @@
    que tiñe el fondo del lienzo: separa el cromo sin ensuciarlo. El panel de la derecha
    se queda blanco, como la barra. */
 .studio-rail {
-  /* Muestreado de docs/style: el raíl es #f7f5f2, MÁS claro que el papel del lienzo,
-     y proyecta sobre él. Se expresa mezclando tokens (no hex) para que el estudio en
-     oscuro siga derivando. */
-  background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
+  /* Elegido por Alfonso (2026-08-12): #f8f5f1, el lino de la maqueta —MÁS claro que el
+     papel del lienzo, y proyecta sobre él. En oscuro el hex no vale, así que allí se
+     sigue derivando de los tokens del estudio. */
+  background-color: #f8f5f1;
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
+}
+
+:root.dark .studio-rail {
+  background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.
