@@ -216,9 +216,13 @@ const BLOCK_TOOLS: BlockTool[] = [
          panel sin gritar más que el lienzo. En oscuro un blanco fijo cegaría, así que
          allí se sigue el --background del estudio. */
       background-color: #fff;
+      /* Un gris explícito recorta la ficha blanca sobre el lino: el borde del tema
+         se diluía y el bloque flotaba sin contorno. */
+      border-color: #d8d4ce;
     }
     :host-context(.dark) .block-tool {
       background-color: var(--background);
+      border-color: var(--border);
     }
     .block-tool .grip {
       color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
