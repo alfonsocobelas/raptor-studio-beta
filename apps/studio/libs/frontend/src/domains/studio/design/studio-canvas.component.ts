@@ -563,6 +563,14 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         0 10px 24px -8px oklch(0 0 0 / 16%),
         0 24px 48px -20px oklch(0 0 0 / 18%);
     }
+    /* En oscuro la sombra no separa nada y el naranja al 35% se apaga contra el papel
+       negativo: el chat se confundía con el fondo. Probamos a separarlo por luminosidad
+       (relleno más claro, borde discreto) y Alfonso lo descartó en pantalla (2026-08-12):
+       aquí el borde va a naranja pleno y medio píxel más ancho. */
+    :host-context(.dark) .chat-card {
+      border-color: #d75f3d;
+      border-width: 1.5px;
+    }
     /* La app previsualizada tiene SU PROPIO tema COMPLETO: aunque el estudio esté
        en oscuro, aquí se redefinen todos los tokens para que no se hereden. Los
        valores los pone [style] desde el catálogo — los mismos que se emitirán. */
