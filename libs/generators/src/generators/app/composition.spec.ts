@@ -152,3 +152,64 @@ describe('composeApp — tema (spec 18)', () => {
     expect(composed.themeId).toBe('neutral')
   })
 })
+
+describe('composeApp — el estado del paso es coherente con el enum (spec 39)', () => {
+  // fixture propia: un modelo CON enum de estado y otro sin ningún enum
+  const order = {
+    ...model('order', 'orders'),
+    fields: {
+      id: { type: 'uuid', pk: true },
+      status: { type: 'string', vo: { name: 'OrderStatus', fieldName: 'Order status', values: ['draft', 'open', 'closed'] } }
+    }
+  } as ResourceDefinition
+  const plain = model('plain', 'plains')
+  const shop = { order, plain }
+
+  const appWith = (node: Record<string, unknown>, resource = 'order'): AppDefinition =>
+    defineApp({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'resource', resource }],
+      flows: [
+        {
+          name: 'Ciclo del pedido',
+          nodes: [
+            { id: 'inicio', kind: 'start', text: 'llega el pedido' },
+            { id: 'abrir', kind: 'step', text: 'se abre el pedido', ...node },
+            { id: 'fin', kind: 'end', text: 'cerrado' }
+          ],
+          edges: [
+            { from: 'inicio', to: 'abrir' },
+            { from: 'abrir', to: 'fin' }
+          ]
+        }
+      ]
+    })
+
+  it('acepta un estado que existe en el enum del modelo', () => {
+    const composition = composeApp(appWith({ entity: 'order', status: 'open' }), shop)
+
+    expect(composition.flows?.[0].nodes[1].status).toBe('open')
+  })
+
+  it('rechaza al DISEÑAR un estado que el modelo no tiene, y dice cuáles hay', () => {
+    // el error llega al diseñar, no al compilar: mismo criterio que los widgets analíticos
+    const build = () => composeApp(appWith({ entity: 'order', status: 'en_curso' }), shop)
+
+    expect(build).toThrow(/en_curso/)
+    expect(build).toThrow(/draft, open, closed/)
+  })
+
+  it('rechaza un estado si la entidad no tiene ningún campo enum', () => {
+    expect(() => composeApp(appWith({ entity: 'plain', status: 'cualquiera' }, 'plain'), shop)).toThrow(/enum/)
+  })
+
+  it('un flujo sin estados declarados pasa igual que antes', () => {
+    expect(() => composeApp(appWith({ entity: 'order' }), shop)).not.toThrow()
+  })
+
+  it('un estado del enum que ningún paso alcanza NO es un error', () => {
+    // 'closed' no lo alcanza nadie y da igual: la coherencia va en un solo sentido
+    expect(() => composeApp(appWith({ entity: 'order', status: 'open' }), shop)).not.toThrow()
+  })
+})

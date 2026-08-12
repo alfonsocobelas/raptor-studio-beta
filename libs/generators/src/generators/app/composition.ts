@@ -163,6 +163,35 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     }
   }
 
+  // los estados que declaran los pasos (spec 39) se validan contra el enum del modelo:
+  // dos declaraciones independientes —el enum y el flujo— que hablan del mismo negocio y
+  // pueden divergir sin que nadie avise. Mismo criterio que los widgets analíticos: el
+  // error llega al DISEÑAR, no al compilar. Solo en un sentido: un estado del enum que
+  // ningún paso alcanza es legítimo ('cancelada' puede vivir fuera del flujo).
+  //
+  // Límite conocido: se compara contra los valores de TODOS los campos enum del modelo,
+  // porque el modelo no dice cuál de ellos es «el estado». Caza erratas y divergencias
+  // (que es el objetivo), no usos semánticamente torcidos: un valor de un enum de TIPO
+  // pasaría el filtro. Cuando el estado se haga cumplir en el dominio habrá que nombrar
+  // el campo; hoy sería una abstracción sin segundo caso (regla de los dos).
+  for (const flow of definition.flows ?? []) {
+    for (const node of flow.nodes) {
+      if (node.status === undefined || node.entity === undefined) continue
+
+      const model = resolve(node.entity)
+      const at = `App '${definition.name}': flow '${flow.name}' step '${node.id}'`
+      const values = Object.values(model.fields ?? {}).flatMap(field =>
+        typeof field.vo === 'object' && field.vo.values ? field.vo.values : []
+      )
+      if (!values.length) {
+        throw new Error(`${at} declares status '${node.status}' but '${node.entity}' has no enum field`)
+      }
+      if (!values.includes(node.status)) {
+        throw new Error(`${at} declares unknown status '${node.status}'. Available: ${values.join(', ')}`)
+      }
+    }
+  }
+
   return {
     models,
     pages,

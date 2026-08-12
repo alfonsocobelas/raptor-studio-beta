@@ -54,6 +54,9 @@ export function flowStepMethods(flow: BusinessFlow): FlowStepMethod[] {
     .filter(node => node.kind === 'step')
     .map(node => {
       const docLines = [`Paso ${numberOf.get(node.id)} — ${node.text}`]
+      // el estado en que debe quedar la entidad: es la precondición y el efecto del paso,
+      // y lo que necesita saber quien escriba el cuerpo (spec 39, punto 1)
+      if (node.status) docLines.push(`Deja ${node.entity} en estado: ${node.status}`)
       for (const edge of flow.edges) {
         if (edge.to !== node.id || !numberOf.has(edge.from)) continue
         const branch = edge.label !== undefined ? ` (rama «${edge.label}»)` : ''

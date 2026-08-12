@@ -248,4 +248,36 @@ describe('defineApp — flujos de negocio (spec 28)', () => {
       )
     })
   })
+
+  /**
+   * El estado en que queda la entidad al terminar el paso. Aquí solo se valida la FORMA
+   * (no vacío, tope): que el valor exista en el enum de la entidad es cosa de la frontera,
+   * que sí conoce los recursos — igual que `entity` y que `widget.resource`.
+   */
+  describe('estado del paso', () => {
+    const withStatus = (status: string): BusinessFlow => {
+      const nodes = validFlow().nodes.map(node => (node.id === 'reservar' ? { ...node, status } : node))
+      return validFlow({ nodes })
+    }
+
+    it('acepta un paso que declara el estado en que deja a su entidad', () => {
+      expect(problemsOf(app(withStatus('reservado')))).toEqual([])
+    })
+
+    it('rechaza un estado vacío', () => {
+      expect(problemsOf(app(withStatus('')))).toContain('flows[0].nodes[2]: status must be 1-40 characters')
+    })
+
+    it('rechaza un estado de más de 40 caracteres', () => {
+      expect(problemsOf(app(withStatus('x'.repeat(41))))).toContain('flows[0].nodes[2]: status must be 1-40 characters')
+    })
+
+    it('un estado sin entidad no tiene dueño: se rechaza', () => {
+      const nodes = validFlow().nodes.map(node => (node.id === 'pedir' ? { ...node, status: 'pedido' } : node))
+
+      expect(problemsOf(app(validFlow({ nodes })))).toContain(
+        "flows[0].nodes[3]: status requires 'entity' (whose state is it?)"
+      )
+    })
+  })
 })

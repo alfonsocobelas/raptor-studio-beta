@@ -114,6 +114,12 @@ export interface FlowNode {
   text: string
   /** Recurso al que alude el paso; su existencia la valida la frontera, no defineApp */
   entity?: string
+  /**
+   * Estado en que queda `entity` al terminar el paso, con el valor del enum del modelo
+   * ('in_progress'). Que ese valor exista lo valida la frontera, que sí conoce los
+   * recursos. Es una anotación del mapa: NO emite máquina de estados (regla 7).
+   */
+  status?: string
 }
 
 export interface FlowEdge {
@@ -138,7 +144,8 @@ export const FLOW_LIMITS = {
   name: 60,
   text: 120,
   label: 20,
-  description: 300
+  description: 300,
+  status: 40
 } as const
 
 /**

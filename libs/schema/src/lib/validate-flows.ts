@@ -60,6 +60,15 @@ function validateNodes(nodes: FlowNode[], at: string): string[] {
     if (!node.text.length || node.text.length > FLOW_LIMITS.text) {
       problems.push(`${at}.nodes[${index}]: text must be 1-${FLOW_LIMITS.text} characters`)
     }
+    if (node.status !== undefined) {
+      if (!node.status.length || node.status.length > FLOW_LIMITS.status) {
+        problems.push(`${at}.nodes[${index}]: status must be 1-${FLOW_LIMITS.status} characters`)
+      }
+      // un estado es el estado DE algo: sin entidad no hay dueño a quien atribuirlo
+      if (node.entity === undefined) {
+        problems.push(`${at}.nodes[${index}]: status requires 'entity' (whose state is it?)`)
+      }
+    }
   })
 
   return problems
