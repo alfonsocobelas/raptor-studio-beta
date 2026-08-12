@@ -212,21 +212,21 @@ const BLOCK_TOOLS: BlockTool[] = [
        de arrastrar se reconoce por el color de punta a punta. */
     .block-tool {
       --studio-drag: #d75f3d;
-    }
-    .block-tool:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
+      border-color: var(--studio-drag);
+      background-color: var(--studio-drag);
+      color: #fff;
     }
     .block-tool .grip {
-      color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
+      color: color-mix(in oklab, #fff 70%, transparent);
     }
-    .block-tool:not(:disabled):hover .grip {
-      color: var(--studio-drag);
+    .block-tool:not(:disabled):hover {
+      background-color: color-mix(in oklab, var(--studio-drag) 88%, black);
+      border-color: color-mix(in oklab, var(--studio-drag) 88%, black);
     }
-    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
+    /* El que está en el aire se hunde un punto: se ve cuál de los cinco va en el gesto. */
     .block-tool.dragging {
-      border-color: var(--studio-drag);
-      background-color: color-mix(in oklab, var(--studio-drag) 8%, transparent);
-      color: var(--studio-drag);
+      background-color: color-mix(in oklab, var(--studio-drag) 75%, black);
+      border-color: color-mix(in oklab, var(--studio-drag) 75%, black);
     }
   `
 })
