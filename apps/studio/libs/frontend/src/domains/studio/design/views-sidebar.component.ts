@@ -212,19 +212,21 @@ const BLOCK_TOOLS: BlockTool[] = [
        de arrastrar se reconoce por el color de punta a punta. */
     .block-tool {
       --studio-drag: #d75f3d;
-      /* Ficha clara sobre el raíl gris: el componente se despega del panel sin gritar
-         más que el lienzo. En tema oscuro sigue al --background del estudio. */
+      /* Ficha BLANCA sobre el lino del raíl (#f8f5f1): el componente se despega del
+         panel sin gritar más que el lienzo. En oscuro un blanco fijo cegaría, así que
+         allí se sigue el --background del estudio. */
+      background-color: #fff;
+    }
+    :host-context(.dark) .block-tool {
       background-color: var(--background);
     }
     .block-tool .grip {
       color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
     }
-    /* El borde del hover va en el naranja PLENO y con un anillo del mismo color: a 1px
-       y al 55% se leía como un gris sucio. El anillo es box-shadow, no más borde, para
-       que engordar el trazo no mueva la ficha ni un píxel. */
+    /* Un solo píxel de trazo, como las vistas del proyecto de arriba; lo que lo hace
+       nítido es el naranja PLENO, no el grosor: al 55% se leía como un gris sucio. */
     .block-tool:not(:disabled):hover {
       border-color: var(--studio-drag);
-      box-shadow: 0 0 0 1px var(--studio-drag);
     }
     .block-tool:not(:disabled):hover .grip {
       color: var(--studio-drag);
@@ -232,8 +234,7 @@ const BLOCK_TOOLS: BlockTool[] = [
     /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
     .block-tool.dragging {
       border-color: var(--studio-drag);
-      box-shadow: 0 0 0 1px var(--studio-drag);
-      background-color: color-mix(in oklab, var(--studio-drag) 8%, var(--background));
+      background-color: color-mix(in oklab, var(--studio-drag) 8%, #fff);
       color: var(--studio-drag);
     }
   `

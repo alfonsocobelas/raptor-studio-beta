@@ -15,7 +15,11 @@ async function dragBlockOnto(page: Page, tool: string, zone: string, shot?: stri
   await page.getByTestId(tool).dispatchEvent('dragstart')
   await page.waitForSelector(`[data-testid="${zone}"]`)
   await page.getByTestId(zone).dispatchEvent('dragover')
-  if (shot) await page.screenshot({ path: shot })
+  // los colores del gesto entran con transición: sin esperar, la captura los pilla a medias
+  if (shot) {
+    await page.waitForTimeout(400)
+    await page.screenshot({ path: shot })
+  }
   await page.getByTestId(zone).dispatchEvent('drop')
 }
 
