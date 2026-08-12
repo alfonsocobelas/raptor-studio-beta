@@ -40,6 +40,7 @@ const STUDIO_ICONS = {
 import { STUDIO_MODES } from './studio-modes'
 import { StudioModeService } from './studio-mode.service'
 import { ActiveViewService } from './active-view.service'
+import { CanvasNoticeService, type CanvasNotice } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
@@ -497,6 +498,43 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
             }
           </main>
 
+          <!-- El aviso del lienzo, sobre el chat: lo que acaba de pasar y adónde ir a verlo.
+               Flota (no empuja el mockup) porque un salto de layout al soltar un bloque se
+               confunde con el propio resultado del gesto. -->
+          @if (notice.notice(); as current) {
+            <div
+              class="pointer-events-none absolute inset-x-0 z-30 flex justify-center px-10"
+              [class.bottom-24]="mode() === 'views'"
+              [class.bottom-28]="mode() !== 'views'"
+            >
+              <div
+                class="bg-card canvas-notice pointer-events-auto flex max-w-2xl items-center gap-3 rounded-lg border px-3 py-2 text-sm"
+                data-testid="canvas-notice"
+              >
+                <span>{{ current.text }}</span>
+                @if (current.action; as action) {
+                  <button
+                    type="button"
+                    class="shrink-0 font-semibold underline underline-offset-2"
+                    data-testid="canvas-notice-action"
+                    (click)="runNotice(action)"
+                  >
+                    {{ action.label }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="text-muted-foreground hover:text-foreground shrink-0"
+                  title="Cerrar el aviso"
+                  data-testid="canvas-notice-close"
+                  (click)="notice.dismiss()"
+                >
+                  <ng-icon name="lucideX" size="13" />
+                </button>
+              </div>
+            </div>
+          }
+
           <!-- el chat FLOTA sobre el lienzo, anclado al pie: se le habla de lo que se está
                mirando y no le roba alto al lienzo. Sin altura fija: vacío es una barra, y
                con conversación crece hasta su tope. -->
@@ -563,6 +601,14 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         0 10px 24px -8px oklch(0 0 0 / 16%),
         0 24px 48px -20px oklch(0 0 0 / 18%);
     }
+    /* El aviso comparte el halo del chat —flota sobre el mismo papel— pero se recorta en
+       el naranja pleno del estudio: es la única cosa del lienzo que reclama la vista. */
+    .canvas-notice {
+      border-color: #d75f3d;
+      box-shadow:
+        0 2px 6px oklch(0 0 0 / 8%),
+        0 12px 28px -10px oklch(0 0 0 / 18%);
+    }
     /* En oscuro la sombra no separa nada y el naranja al 35% se apaga contra el papel
        negativo: el chat se confundía con el fondo. Probamos a separarlo por luminosidad
        (relleno más claro, borde discreto) y Alfonso lo descartó en pantalla (2026-08-12):
@@ -614,8 +660,15 @@ export class StudioCanvasComponent {
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
   protected readonly active = inject(ActiveViewService)
+  protected readonly notice = inject(CanvasNoticeService)
 
   protected readonly pages = computed(() => this.store.pages())
+
+  /** Seguir el aviso lo cierra: ya cumplió, y su sitio lo ocupará el gesto siguiente. */
+  protected runNotice(action: NonNullable<CanvasNotice['action']>): void {
+    action.run()
+    this.notice.dismiss()
+  }
 
   /**
    * Contador de la barra lateral de cabina. Mismo total de mockup que usan los KPIs y la
