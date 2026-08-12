@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
+import { BlockDragService } from './block-drag.service'
 import { DesignStore } from './design-store'
 import { ViewsSidebarComponent } from './views-sidebar.component'
 
@@ -186,20 +187,6 @@ describe('ViewsSidebarComponent', () => {
     expect(store.pages()).toEqual([])
   })
 
-  it('un clic fuera cierra también el menú de entidades de un bloque', () => {
-    store.addPage('list', 'Productos')
-
-    const fixture = mount()
-    testId(fixture, 'block-tool-table')?.click()
-    fixture.detectChanges()
-    expect(testId(fixture, 'add-table-producto')).not.toBeNull()
-
-    document.body.click()
-    fixture.detectChanges()
-
-    expect(testId(fixture, 'add-table-producto')).toBeNull()
-  })
-
   it('ofrece los cinco bloques que el generador emite, y ninguno más', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')
@@ -213,26 +200,43 @@ describe('ViewsSidebarComponent', () => {
     ])
   })
 
-  it('sin entidades todavía, el menú de un bloque lo dice en vez de ofrecer nada', () => {
+  it('sin entidades todavía no hay nada que arrastrar: el componente queda deshabilitado', () => {
     store.addPage('blank', 'Portada')
 
     const fixture = mount()
-    testId(fixture, 'block-tool-table')?.click()
-    fixture.detectChanges()
 
-    expect(testId(fixture, 'block-menu-empty')).not.toBeNull()
+    expect((testId(fixture, 'block-tool-table') as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('con una entidad, elegirla añade el bloque a la vista activa', () => {
+  it('los componentes se arrastran', () => {
+    store.addPage('list', 'Productos')
+
+    const fixture = mount()
+
+    expect(testId(fixture, 'block-tool-table')?.getAttribute('draggable')).toBe('true')
+  })
+
+  it('arrastrar un componente anuncia su tipo, y soltarlo fuera lo olvida', () => {
+    store.addPage('list', 'Productos')
+    const drag = TestBed.inject(BlockDragService)
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-kpis')?.dispatchEvent(new Event('dragstart', { bubbles: true }))
+    expect(drag.kind()).toBe('kpis')
+
+    testId(fixture, 'block-tool-kpis')?.dispatchEvent(new Event('dragend', { bubbles: true }))
+    expect(drag.kind()).toBeNull()
+  })
+
+  it('sin arrastrar, un clic añade el bloque a la vista activa con su entidad — ya no hay selector', () => {
     store.addPage('list', 'Productos')
 
     const fixture = mount()
     testId(fixture, 'block-tool-kpis')?.click()
     fixture.detectChanges()
-    testId(fixture, 'add-kpis-producto')?.click()
-    fixture.detectChanges()
 
-    expect(store.pages()[0].blocks.some(block => block.kind === 'kpis')).toBe(true)
+    expect(store.pages()[0].blocks.at(-1)).toMatchObject({ kind: 'kpis', resources: ['producto'] })
+    expect(testId(fixture, 'add-kpis-producto')).toBeNull()
   })
 
   it('la vista recién creada queda seleccionada', async () => {

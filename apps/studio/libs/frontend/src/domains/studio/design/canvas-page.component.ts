@@ -3,6 +3,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
 import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { ActiveViewService } from './active-view.service'
+import { BlockDragService } from './block-drag.service'
+import { blockFor, dropResource } from './block-drop'
 import { DesignStore } from './design-store'
 import { CanvasTableComponent } from './canvas-table.component'
 import { CanvasDetailComponent } from './canvas-detail.component'
@@ -30,14 +33,37 @@ import { mockTotal } from './mock-data'
       }
 
       @if (!current.blocks.length) {
-        <div class="text-muted-foreground rounded-lg border border-dashed py-16 text-center" data-testid="empty-page">
-          <p class="mb-1 text-sm font-medium">Vista vacía</p>
-          <p class="text-xs">Añade bloques desde la barra: tabla, KPIs, datos, galería o ficheros.</p>
+        <div
+          class="text-muted-foreground rounded-lg border border-dashed py-16 text-center transition-colors"
+          [class.border-primary]="dragging()"
+          [class.bg-accent]="dragging()"
+          data-testid="empty-page"
+          (dragover)="allowDrop($event)"
+          (drop)="drop($event, 0)"
+        >
+          @if (dragging()) {
+            <span class="text-primary block h-full w-full text-sm font-medium" data-testid="drop-zone-0">
+              Suelta aquí el componente
+            </span>
+          } @else {
+            <p class="mb-1 text-sm font-medium">Vista vacía</p>
+            <p class="text-xs">Arrastra un componente desde la barra: tabla, KPIs, datos, galería o ficheros.</p>
+          }
         </div>
       }
 
       <div class="flex flex-wrap gap-4">
         @for (block of current.blocks; track $index) {
+          @if (dragging()) {
+            <div
+              class="border-primary/40 text-primary/70 hover:bg-primary/10 hover:border-primary hover:text-primary -mb-2 w-full rounded border border-dashed py-1.5 text-center text-[11px] transition-colors"
+              [attr.data-testid]="'drop-zone-' + $index"
+              (dragover)="allowDrop($event)"
+              (drop)="drop($event, $index)"
+            >
+              Soltar aquí
+            </div>
+          }
           <div
             class="group relative rounded-lg transition-shadow hover:ring-2 hover:ring-primary/60"
             [class]="block.width === 'half' ? 'min-w-80 flex-1' : 'w-full'"
@@ -136,6 +162,17 @@ import { mockTotal } from './mock-data'
             </div>
           </div>
         }
+        <!-- el último hueco: soltar debajo de todo -->
+        @if (dragging() && current.blocks.length) {
+          <div
+            class="border-primary/40 text-primary/70 hover:bg-primary/10 hover:border-primary hover:text-primary w-full rounded border border-dashed py-3 text-center text-[11px] transition-colors"
+            [attr.data-testid]="'drop-zone-' + current.blocks.length"
+            (dragover)="allowDrop($event)"
+            (drop)="drop($event, current.blocks.length)"
+          >
+            Soltar aquí
+          </div>
+        }
       </div>
     }
   `
@@ -145,12 +182,36 @@ export class CanvasPageComponent {
   readonly select = output<string>()
 
   protected readonly store = inject(DesignStore)
+  protected readonly drag = inject(BlockDragService)
+  protected readonly view = inject(ActiveViewService)
   protected readonly page = computed(() => this.store.pages()[this.pageIndex()])
 
   protected readonly sampleFiles = [
     { name: 'albaran-julio.pdf', size: '182 KB' },
     { name: 'foto-lote-0412.jpg', size: '1,4 MB' }
   ]
+
+  /** Los huecos solo existen mientras hay algo en el aire. */
+  protected readonly dragging = computed(() => this.drag.kind() !== null)
+
+  /** Sin cortar el `dragover` el navegador rechaza el `drop`: es la forma de decir «aquí sí». */
+  protected allowDrop(event: Event): void {
+    event.preventDefault()
+  }
+
+  /**
+   * Soltar: el bloque cae en el hueco elegido con la entidad que le dicta el contexto
+   * (la de la vista). Sin entidad en el modelo no hay nada que dibujar, así que no cae nada.
+   */
+  protected drop(event: Event, at: number): void {
+    event.preventDefault()
+    const kind = this.drag.kind()
+    this.drag.end()
+    if (!kind) return
+    const resource = dropResource(this.page(), this.view.resource(), this.store.resources())
+    if (!resource) return
+    this.store.addBlock(this.pageIndex(), blockFor(kind, resource), at)
+  }
 
   protected generable(block: DesignBlock): boolean {
     return GENERABLE_BLOCKS.includes(block.kind)

@@ -236,15 +236,19 @@ export class DesignStore {
     return this.mutate([...this._resources(), draft], this._pages())
   }
 
-  addBlock(pageIndex: number, block: DesignBlock): boolean {
+  /** `at` es el hueco donde cae el bloque al soltarlo; sin él se apila al final. */
+  addBlock(pageIndex: number, block: DesignBlock, at?: number): boolean {
     // La ficha es otra PANTALLA (el generador la emite en <ruta>/:id): sus
     // bloques nunca se apilan bajo el listado, se van a su propia vista.
     if (DETAIL_BLOCKS.includes(block.kind) && block.resource && !this._pages()[pageIndex]?.drillDown) {
       return this.addToDetailPage(block.resource, block)
     }
-    const pages = this._pages().map((page, i) =>
-      i === pageIndex ? { ...page, blocks: [...page.blocks, { width: 'full' as const, ...block }] } : page
-    )
+    const pages = this._pages().map((page, i) => {
+      if (i !== pageIndex) return page
+      const blocks = [...page.blocks]
+      blocks.splice(at ?? blocks.length, 0, { width: 'full' as const, ...block })
+      return { ...page, blocks }
+    })
     if (block.kind === 'text') return this.mutate(this.withIntros(pages), pages)
     const resources =
       block.kind === 'attachments' && block.resource

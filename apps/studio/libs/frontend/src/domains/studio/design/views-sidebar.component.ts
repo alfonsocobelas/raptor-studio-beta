@@ -5,6 +5,7 @@ import {
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
+  lucideGripVertical,
   lucideIdCard,
   lucideLayoutGrid,
   lucidePaperclip,
@@ -13,6 +14,8 @@ import {
   lucideTable
 } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
+import { BlockDragService } from './block-drag.service'
+import { blockFor, dropResource } from './block-drop'
 import { DesignStore } from './design-store'
 import { viewIcon } from './view-icon'
 
@@ -20,6 +23,7 @@ const SIDEBAR_ICONS = {
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
+  lucideGripVertical,
   lucideIdCard,
   lucideLayoutGrid,
   lucidePaperclip,
@@ -91,9 +95,7 @@ const BLOCK_TOOLS: BlockTool[] = [
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
       <section>
-        <h2 class="studio-eyebrow mb-2 px-1">
-          Vistas del proyecto
-        </h2>
+        <h2 class="studio-eyebrow mb-2 px-1">Vistas del proyecto</h2>
         @for (node of tree(); track node.index) {
           <button
             type="button"
@@ -180,44 +182,28 @@ const BLOCK_TOOLS: BlockTool[] = [
       <section>
         <h2 class="studio-eyebrow mb-2 px-1">Componentes</h2>
         @for (tool of blockTools; track tool.kind) {
-          <div [attr.data-menu-root]="'block-' + tool.kind">
-            <button
-              type="button"
-              class="hover:border-foreground/40 mb-1.5 flex w-full items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
-              [class.bg-background]="blockMenu() === tool.kind"
-              [disabled]="!pages().length"
-              [attr.data-testid]="'block-tool-' + tool.kind"
-              [attr.title]="pages().length ? 'Añadir ' + tool.label + ' a la vista activa' : 'Crea antes una vista'"
-              (click)="openBlockMenu(tool.kind)"
-            >
-              <ng-icon [name]="tool.icon" size="15" />
-              {{ tool.label }}
-            </button>
-            @if (blockMenu() === tool.kind) {
-              <div class="bg-background mb-1.5 rounded-md border p-1 shadow-md">
-                @if (!store.resources().length) {
-                  <p class="text-muted-foreground px-2 py-1.5 text-xs" data-testid="block-menu-empty">
-                    Crea antes una entidad (una vista con datos)
-                  </p>
-                }
-                @for (resource of store.resources(); track resource.name) {
-                  <button
-                    type="button"
-                    class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-sm"
-                    [attr.data-testid]="'add-' + tool.kind + '-' + resource.name"
-                    (click)="addBlock(tool.kind, resource.name)"
-                  >
-                    {{ resource.labelPlural }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
+          <button
+            type="button"
+            class="hover:border-foreground/40 mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+            [class.opacity-60]="drag.kind() === tool.kind"
+            [disabled]="!ready()"
+            [attr.draggable]="ready() ? 'true' : null"
+            [attr.data-testid]="'block-tool-' + tool.kind"
+            [attr.title]="hint(tool)"
+            (dragstart)="onDragStart($event, tool.kind)"
+            (dragend)="drag.end()"
+            (click)="addBlock(tool.kind)"
+          >
+            <ng-icon [name]="tool.icon" size="15" />
+            <span class="flex-1">{{ tool.label }}</span>
+            <!-- el asidero: la seña de que esto se arrastra -->
+            <ng-icon class="text-muted-foreground/60" name="lucideGripVertical" size="14" />
+          </button>
         }
       </section>
 
       <p class="text-muted-foreground mt-auto px-1 text-xs">
-        Pulsa un componente y elige la entidad, o pídelo en el chat.
+        Arrastra un componente al lienzo —o púlsalo para dejarlo al final—, o pídelo en el chat.
       </p>
     </aside>
   `
@@ -225,15 +211,18 @@ const BLOCK_TOOLS: BlockTool[] = [
 export class ViewsSidebarComponent {
   protected readonly store = inject(DesignStore)
   protected readonly active = inject(ActiveViewService)
+  protected readonly drag = inject(BlockDragService)
 
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
   protected readonly viewMenu = signal(false)
-  protected readonly blockMenu = signal<BlockKind | null>(null)
   protected readonly creating = signal<string | null>(null)
   protected readonly pageTitle = signal('')
 
   protected readonly pages = computed(() => this.store.pages())
+
+  /** Un componente solo se puede soltar si hay dónde (una vista) y de qué (una entidad). */
+  protected readonly ready = computed(() => this.pages().length > 0 && this.store.resources().length > 0)
 
   /**
    * Las vistas en árbol: cada ficha va detrás del listado desde el que se abre, sangrada,
@@ -271,21 +260,19 @@ export class ViewsSidebarComponent {
   })
 
   /**
-   * Un desplegable abierto se cierra al pulsar en cualquier otro sitio. Los clics del
+   * El desplegable abierto se cierra al pulsar en cualquier otro sitio. Los clics del
    * propio botón y de su menú se reconocen por su `data-menu-root`: sin eso el clic que
    * abre el menú llegaría aquí y lo cerraría en el mismo gesto.
    */
   protected onDocumentClick(event: Event): void {
-    if (!this.viewMenu() && !this.blockMenu()) return
+    if (!this.viewMenu()) return
     const root = (event.target as HTMLElement | null)?.closest('[data-menu-root]')?.getAttribute('data-menu-root')
-    if (root === 'view' && this.viewMenu()) return
-    if (root === `block-${this.blockMenu()}`) return
+    if (root === 'view') return
     this.closeMenus()
   }
 
   protected closeMenus(): void {
     this.viewMenu.set(false)
-    this.blockMenu.set(null)
   }
 
   /** El icono dice qué hay en la vista: un panel de KPIs no se dibuja como tabla. */
@@ -318,13 +305,26 @@ export class ViewsSidebarComponent {
     }
   }
 
-  protected openBlockMenu(kind: BlockKind): void {
-    this.blockMenu.update(current => (current === kind ? null : kind))
+  /** El arrastre lo lleva el servicio; al `dataTransfer` solo se le da carga para que el gesto exista. */
+  protected onDragStart(event: DragEvent, kind: BlockKind): void {
+    event.dataTransfer?.setData('text/plain', kind)
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy'
+    this.drag.start(kind)
   }
 
-  protected addBlock(kind: BlockKind, resource: string): void {
-    this.blockMenu.set(null)
-    const block = kind === 'kpis' ? { kind, resources: [resource] } : { kind, resource }
-    this.store.addBlock(this.active.index(), block)
+  /**
+   * Atajo del arrastre: pulsar deja el bloque al final de la vista activa, con la
+   * misma entidad que le daría el lienzo. Sin menú: la entidad sale del contexto.
+   */
+  protected addBlock(kind: BlockKind): void {
+    const resource = dropResource(this.pages()[this.active.index()], this.active.resource(), this.store.resources())
+    if (!resource) return
+    this.store.addBlock(this.active.index(), blockFor(kind, resource))
+  }
+
+  protected hint(tool: BlockTool): string {
+    if (!this.pages().length) return 'Crea antes una vista'
+    if (!this.store.resources().length) return 'Crea antes una entidad (una vista con datos)'
+    return `Arrastra ${tool.label} al lienzo`
   }
 }

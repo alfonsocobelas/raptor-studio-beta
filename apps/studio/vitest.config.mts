@@ -13,6 +13,12 @@ export default defineConfig({
         replacement: fileURLToPath(new URL('../../libs/generators/src/', import.meta.url)) + '$1'
       },
       { find: '@acc/schema', replacement: fileURLToPath(new URL('../../libs/schema/src/index.ts', import.meta.url)) },
+      // La librería de componentes vive en el propio repo (libs/ui/<nombre>), igual que
+      // en el build: sin esto, montar un componente que use spartan no resuelve.
+      {
+        find: /^@spartan-ng\/helm\/(.*)$/,
+        replacement: fileURLToPath(new URL('./libs/ui/', import.meta.url)) + '$1/src/index.ts'
+      },
       {
         find: '@app/shared/domain',
         replacement: fileURLToPath(new URL('./libs/shared/domain/src/index.ts', import.meta.url))

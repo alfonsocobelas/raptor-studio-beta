@@ -50,6 +50,26 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
 
+  it('un bloque puede caer en un hueco concreto, no siempre al final', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas')
+    const before = store.pages()[0].blocks.map(b => b.kind)
+
+    store.addBlock(0, { kind: 'cards', resource: 'venta' }, 1)
+
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual([before[0], 'cards', before[1]])
+  })
+
+  it('sin hueco indicado el bloque se apila al final, como siempre', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas')
+    const before = store.pages()[0].blocks.map(b => b.kind)
+
+    store.addBlock(0, { kind: 'cards', resource: 'venta' })
+
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual([...before, 'cards'])
+  })
+
   it('mueve bloques dentro de la vista (orden = composición)', () => {
     const store = new DesignStore()
     store.addPage('panel', 'Ventas')
