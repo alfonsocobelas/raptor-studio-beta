@@ -55,14 +55,24 @@ describe('SHARED_VOS — el registro cubre todo lo que los modelos referencian',
     }
   })
 
-  it('un modelo cuyo período no declara ContractDate por campo también lo arrastra', () => {
-    const installation = MODEL_LIST.find(m => m.name === 'installation')
-    if (!installation) throw new Error('fixture de modelos incompleta')
-    // el modelo NO declara voShared ContractDate en ningún campo: entra por Period
-    const byField = Object.values(installation.fields).some(field => field.voShared?.name === 'ContractDate')
+  it('un modelo cuyo período no declara el VO por campo también lo arrastra', () => {
+    // fixture propia: el registro entero sigue el canon (lo exige el guard de más abajo),
+    // así que el caso se construye a mano en vez de depender de un modelo concreto
+    const sinVoShared = {
+      schemaVersion: 1,
+      name: 'obra',
+      plural: 'obras',
+      context: 'demo',
+      schemaName: 'demo',
+      period: { start: 'desde', end: 'hasta' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        desde: { type: 'date', nullable: true },
+        hasta: { type: 'date', nullable: true }
+      }
+    } as unknown as (typeof MODEL_LIST)[number]
 
-    expect(byField).toBe(false)
-    expect(sharedVosOf([installation])).toContain('ContractDate')
+    expect(sharedVosOf([sinVoShared])).toEqual(['ContractDate', 'Period'])
   })
 })
 
@@ -119,4 +129,39 @@ describe('SHARED_VOS — declaraciones medidas contra el canon', () => {
       expect(name).toMatch(/^[A-Z]/)
     }
   })
+})
+
+/**
+ * El guard hermano del de arriba, para el período. Un modelo que declara
+ * `period: { start, end }` construye su `Period` con el VO compartido de fecha, y sus dos
+ * campos tienen que declararlo igual que el canon (contract): `nullable`, el `voShared` del
+ * que se construye el período, y columna `Nullable<string>` — porque `Period` admite nulos
+ * y `toPrimitives` emite el ternario.
+ *
+ * Sin esto, `installation` salió con 8 TS2304 (el VO no se importaba) y 2 TS2322 (un null
+ * en un campo tipado `string`), y no lo vio nadie hasta compilar la app (spec 39, punto 2).
+ */
+describe('SHARED_VOS — los campos del período siguen el canon', () => {
+  const dateVo = SHARED_VOS['Period']?.of
+
+  it('el período del catálogo declara de qué VO se construye', () => {
+    expect(dateVo).toBeTruthy()
+  })
+
+  it.each(MODEL_LIST.filter(model => model.period).map(model => [model.name, model] as const))(
+    '%s declara sus dos campos de período como el canon',
+    (_name, model) => {
+      const period = model.period
+      if (!period) throw new Error('fixture incoherente')
+
+      for (const fieldName of [period.start, period.end]) {
+        const field = model.fields[fieldName]
+
+        expect(field).toBeTruthy()
+        expect(field.nullable).toBe(true)
+        expect(field.voShared?.name).toBe(dateVo)
+        expect(field.column?.tsType).toBe('Nullable<string>')
+      }
+    }
+  )
 })

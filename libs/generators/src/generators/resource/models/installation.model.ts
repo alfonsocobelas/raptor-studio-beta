@@ -218,6 +218,9 @@ export const installation = defineResource({
     startDate: {
       type: 'date',
       required: true,
+      // campo de período: lo construye Period, que admite nulos (canon de contract)
+      nullable: true,
+      voShared: { name: 'ContractDate' },
       vo: { name: 'InstallationStartDate', fieldName: 'Start date' },
       form: { control: 'date', label: 'Inicio previsto', id: 'start', section: 'planning', order: 2 },
       query: { sortable: 7, filterable: 6 },
@@ -234,11 +237,14 @@ export const installation = defineResource({
         '2026-04-06',
         '2026-04-20'
       ],
-      column: { type: 'date', tsType: 'string' }
+      column: { type: 'date', tsType: 'Nullable<string>' }
     },
     endDate: {
       type: 'date',
       required: true,
+      // campo de período: lo construye Period, que admite nulos (canon de contract)
+      nullable: true,
+      voShared: { name: 'ContractDate' },
       vo: { name: 'InstallationEndDate', fieldName: 'End date' },
       form: {
         control: 'date',
@@ -262,7 +268,7 @@ export const installation = defineResource({
         '2026-05-15',
         '2026-05-08'
       ],
-      column: { type: 'date', tsType: 'string' }
+      column: { type: 'date', tsType: 'Nullable<string>' }
     }
   },
   list: {
