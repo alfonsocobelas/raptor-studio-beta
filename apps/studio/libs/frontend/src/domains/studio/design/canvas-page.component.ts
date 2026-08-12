@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
-import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
+import { DETAIL_BLOCKS, GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
@@ -224,9 +224,13 @@ export class CanvasPageComponent {
     const kind = this.drag.kind()
     this.drag.end()
     if (!kind) return
-    const resource = dropResource(this.page(), this.view.resource(), this.store.resources())
+    const page = this.page()
+    const resource = dropResource(page, this.view.resource(), this.store.resources())
     if (!resource) return
     this.store.addBlock(this.pageIndex(), blockFor(kind, resource), at)
+    // datos y adjuntos se van a la ficha (es otra pantalla): el lienzo va tras ellos,
+    // porque si no el gesto no enseña nada —y menos aún si la ficha ya los tenía.
+    if (DETAIL_BLOCKS.includes(kind) && !page?.drillDown) this.view.showDetailOf(resource)
   }
 
   protected generable(block: DesignBlock): boolean {

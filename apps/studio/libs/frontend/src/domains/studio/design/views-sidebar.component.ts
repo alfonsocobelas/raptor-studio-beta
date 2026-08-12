@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
-import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
+import { DETAIL_BLOCKS, VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
@@ -153,7 +153,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
+              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -352,9 +352,12 @@ export class ViewsSidebarComponent {
    * misma entidad que le daría el lienzo. Sin menú: la entidad sale del contexto.
    */
   protected addBlock(kind: BlockKind): void {
-    const resource = dropResource(this.pages()[this.active.index()], this.active.resource(), this.store.resources())
+    const page = this.pages()[this.active.index()]
+    const resource = dropResource(page, this.active.resource(), this.store.resources())
     if (!resource) return
     this.store.addBlock(this.active.index(), blockFor(kind, resource))
+    // datos y adjuntos viven en la ficha: sin seguirlos, pulsar no enseña nada
+    if (DETAIL_BLOCKS.includes(kind) && !page?.drillDown) this.active.showDetailOf(resource)
   }
 
   protected hint(tool: BlockTool): string {
