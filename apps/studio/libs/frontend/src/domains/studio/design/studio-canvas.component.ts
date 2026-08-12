@@ -534,13 +534,14 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
        demasiado). Rejilla de PUNTOS con la misma geometría que allí —celda de 24px—
        pero el punto en el naranja #d75f3d al 35% —a opacidad plena la retícula cantaba
        más que la maqueta—, no en tinta. */
+    :host {
+      /* La tinta de la rejilla del lienzo: la comparten los puntos y el borde del chat,
+         así el estudio no tiene dos naranjas distintos. */
+      --canvas-ink: color-mix(in oklab, #d75f3d 35%, transparent);
+    }
     .canvas-surface {
       background-color: var(--background);
-      background-image: radial-gradient(
-        circle,
-        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
-        transparent 1.4px
-      );
+      background-image: radial-gradient(circle, var(--canvas-ink) 1.4px, transparent 1.4px);
       background-size: 24px 24px;
       background-position: -12px -12px;
     }
@@ -555,6 +556,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
        algo más de contraste que una tarjeta apoyada: un halo corto lo separa del papel
        y de la rejilla del modelo. */
     .chat-card {
+      border-color: var(--canvas-ink);
       box-shadow:
         0 0 0 1px oklch(0 0 0 / 4%),
         0 2px 6px oklch(0 0 0 / 8%),
