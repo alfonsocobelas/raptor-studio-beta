@@ -219,8 +219,12 @@ const BLOCK_TOOLS: BlockTool[] = [
     .block-tool .grip {
       color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
     }
+    /* El borde del hover va en el naranja PLENO y con un anillo del mismo color: a 1px
+       y al 55% se leía como un gris sucio. El anillo es box-shadow, no más borde, para
+       que engordar el trazo no mueva la ficha ni un píxel. */
     .block-tool:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
+      border-color: var(--studio-drag);
+      box-shadow: 0 0 0 1px var(--studio-drag);
     }
     .block-tool:not(:disabled):hover .grip {
       color: var(--studio-drag);
@@ -228,6 +232,7 @@ const BLOCK_TOOLS: BlockTool[] = [
     /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
     .block-tool.dragging {
       border-color: var(--studio-drag);
+      box-shadow: 0 0 0 1px var(--studio-drag);
       background-color: color-mix(in oklab, var(--studio-drag) 8%, var(--background));
       color: var(--studio-drag);
     }
