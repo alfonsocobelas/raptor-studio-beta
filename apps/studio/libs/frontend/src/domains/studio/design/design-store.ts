@@ -236,8 +236,40 @@ export class DesignStore {
     return this.mutate([...this._resources(), draft], this._pages())
   }
 
+  /**
+   * Un segundo panel de KPIs en la misma vista no existe: son la misma fila de
+   * métricas. Soltar KPIs donde ya los hay SUMA una entidad al bloque que está
+   * —la que traiga el gesto si aún falta, y si no la primera del modelo sin
+   * medir—, en vez de crear un bloque gemelo que el gate rechazaría por widget
+   * duplicado. Sin entidades que añadir no hay nada que hacer, y se dice.
+   */
+  private addKpiResource(pageIndex: number, incoming: string[]): boolean {
+    const page = this._pages()[pageIndex]
+    const index = page.blocks.findIndex(block => block.kind === 'kpis')
+    const measured = page.blocks[index].resources ?? []
+    const next =
+      incoming.find(resource => !measured.includes(resource)) ??
+      this._resources().find(r => !measured.includes(r.name))?.name
+
+    if (!next) {
+      this._lastError.set(`«${page.title}» ya mide todas las entidades del modelo`)
+      return false
+    }
+
+    const blocks = page.blocks.map((block, i) =>
+      i === index ? { ...block, resources: [...measured, next] } : block
+    )
+    return this.mutate(
+      this._resources(),
+      this._pages().map((p, i) => (i === pageIndex ? { ...p, blocks } : p))
+    )
+  }
+
   /** `at` es el hueco donde cae el bloque al soltarlo; sin él se apila al final. */
   addBlock(pageIndex: number, block: DesignBlock, at?: number): boolean {
+    if (block.kind === 'kpis' && this._pages()[pageIndex]?.blocks.some(b => b.kind === 'kpis')) {
+      return this.addKpiResource(pageIndex, block.resources ?? [])
+    }
     // La ficha es otra PANTALLA (el generador la emite en <ruta>/:id): sus
     // bloques nunca se apilan bajo el listado, se van a su propia vista.
     if (DETAIL_BLOCKS.includes(block.kind) && block.resource && !this._pages()[pageIndex]?.drillDown) {

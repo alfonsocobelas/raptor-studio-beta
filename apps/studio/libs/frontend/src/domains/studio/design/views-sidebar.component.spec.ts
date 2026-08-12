@@ -269,11 +269,11 @@ describe('ViewsSidebarComponent', () => {
     const notice = TestBed.inject(CanvasNoticeService)
 
     const fixture = mount()
-    testId(fixture, 'block-tool-kpis')?.click() // ya hay KPIs de esa entidad: widget duplicado
+    testId(fixture, 'block-tool-kpis')?.click() // la única entidad del modelo ya tiene su KPI
     fixture.detectChanges()
 
     expect(store.pages()[0].blocks.filter(block => block.kind === 'kpis').length).toBe(1)
-    expect(notice.notice()?.text).toContain('duplicated widget')
+    expect(notice.notice()?.text).toContain('ya mide todas las entidades')
   })
 
   it('la vista recién creada queda seleccionada', async () => {

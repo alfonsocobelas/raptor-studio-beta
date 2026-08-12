@@ -50,6 +50,41 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
 
+  it('los KPIs no se duplican: soltarlos donde ya hay se suma al bloque existente', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas') // deja kpis:[venta] + table:venta
+    store.addResource('Cliente')
+
+    // lo que manda el lienzo es la entidad de la vista, que ya tiene su KPI
+    const added = store.addBlock(0, { kind: 'kpis', resources: ['venta'] })
+
+    expect(added).toBe(true)
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis', 'table'])
+    expect(store.pages()[0].blocks[0].resources).toEqual(['venta', 'cliente'])
+  })
+
+  it('si la entidad que llega falta, es esa la que se suma y no otra', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas')
+    store.addResource('Cliente')
+    store.addResource('Proveedor')
+
+    store.addBlock(0, { kind: 'kpis', resources: ['proveedor'] })
+
+    expect(store.pages()[0].blocks[0].resources).toEqual(['venta', 'proveedor'])
+  })
+
+  it('con todas las entidades ya medidas, el bloque no cambia y dice por qué', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas')
+
+    const added = store.addBlock(0, { kind: 'kpis', resources: ['venta'] })
+
+    expect(added).toBe(false)
+    expect(store.pages()[0].blocks[0].resources).toEqual(['venta'])
+    expect(store.lastError()).toContain('Ventas')
+  })
+
   it('un bloque puede caer en un hueco concreto, no siempre al final', () => {
     const store = new DesignStore()
     store.addPage('panel', 'Ventas')
