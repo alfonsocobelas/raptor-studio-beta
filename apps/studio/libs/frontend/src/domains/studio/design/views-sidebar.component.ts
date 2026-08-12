@@ -212,21 +212,24 @@ const BLOCK_TOOLS: BlockTool[] = [
        de arrastrar se reconoce por el color de punta a punta. */
     .block-tool {
       --studio-drag: #d75f3d;
-      border-color: var(--studio-drag);
-      background-color: var(--studio-drag);
-      color: #fff;
+      /* Ficha clara sobre el raíl gris: el componente se despega del panel sin gritar
+         más que el lienzo. En tema oscuro sigue al --background del estudio. */
+      background-color: var(--background);
     }
     .block-tool .grip {
-      color: color-mix(in oklab, #fff 70%, transparent);
+      color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
     }
     .block-tool:not(:disabled):hover {
-      background-color: color-mix(in oklab, var(--studio-drag) 88%, black);
-      border-color: color-mix(in oklab, var(--studio-drag) 88%, black);
+      border-color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
     }
-    /* El que está en el aire se hunde un punto: se ve cuál de los cinco va en el gesto. */
+    .block-tool:not(:disabled):hover .grip {
+      color: var(--studio-drag);
+    }
+    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
     .block-tool.dragging {
-      background-color: color-mix(in oklab, var(--studio-drag) 75%, black);
-      border-color: color-mix(in oklab, var(--studio-drag) 75%, black);
+      border-color: var(--studio-drag);
+      background-color: color-mix(in oklab, var(--studio-drag) 8%, var(--background));
+      color: var(--studio-drag);
     }
   `
 })

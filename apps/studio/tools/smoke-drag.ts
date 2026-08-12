@@ -27,6 +27,19 @@ async function blocks(page: Page): Promise<string[]> {
   return ids.filter(id => /^block-(table|kpis|cards|fields|attachments|text)-\d+$/.test(id)).map(id => id.split('-')[1])
 }
 
+/**
+ * Los bloques cuando el lienzo se ha repintado: el store cambia en el mismo tick del
+ * clic, pero el DOM llega un tick después, y sin esperar la lectura pilla la vista vieja.
+ */
+async function blocksWhenPainted(page: Page, expected: string): Promise<string[]> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const painted = await blocks(page)
+    if (painted.join() === expected) return painted
+    await page.waitForTimeout(100)
+  }
+  return blocks(page)
+}
+
 async function main(): Promise<void> {
   const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: 1700, height: 950 } })
@@ -60,13 +73,13 @@ async function main(): Promise<void> {
 
   await check(
     'el clic deja el bloque al final, con la entidad de la vista',
-    async () => (await blocks(page)).join() === 'table,kpis'
+    async () => (await blocksWhenPainted(page, 'table,kpis')).join() === 'table,kpis'
   )
 
   await dragBlockOnto(page, 'block-tool-cards', 'drop-zone-0', 'e2e-35-drag-huecos.png')
   await check(
     'soltado en el primer hueco, el bloque cae el primero',
-    async () => (await blocks(page)).join() === 'cards,table,kpis'
+    async () => (await blocksWhenPainted(page, 'cards,table,kpis')).join() === 'cards,table,kpis'
   )
 
   await check('soltar apaga los huecos', async () => (await page.locator('[data-testid^="drop-zone-"]').count()) === 0)
@@ -80,7 +93,10 @@ async function main(): Promise<void> {
   await page.getByTestId('new-page-ok').click()
 
   await dragBlockOnto(page, 'block-tool-table', 'drop-zone-0', 'e2e-36-drag-vista-vacia.png')
-  await check('la vista vacía admite el primer bloque', async () => (await blocks(page)).join() === 'table')
+  await check(
+    'la vista vacía admite el primer bloque',
+    async () => (await blocksWhenPainted(page, 'table')).join() === 'table'
+  )
 
   if (errors.length) console.log('errores de página:', errors)
   await browser.close()
