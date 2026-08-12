@@ -7,6 +7,7 @@ import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
 import {
   buildCommand,
+  buildDesignRequest,
   choosableSlots,
   defaultSelection,
   hasPublishableDesign,
@@ -343,13 +344,16 @@ export class GenerateWizardComponent {
           name: this.name(),
           slots: this.selection(),
           plugins: this.plugins(),
-          design: {
-            appName: this.name(),
+          // lo que ves en el lienzo es lo que se genera (spec 18), y eso incluye la
+          // memoria del negocio y los procesos: se arma en buildDesignRequest, no aquí
+          design: buildDesignRequest({
+            name: this.name(),
             resources: this.store.resources(),
             pages: this.store.pages(),
-            // lo que ves en el lienzo es lo que se genera (spec 18)
-            palette: this.preview.palette()
-          },
+            palette: this.preview.palette(),
+            brief: this.store.brief(),
+            flows: this.store.flows()
+          }),
           skipInstall: !this.install(),
           ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
         })

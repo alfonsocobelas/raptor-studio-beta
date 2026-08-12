@@ -4,6 +4,7 @@ import type { DesignPage } from '@app/shared/domain'
 import {
   buildAppFile,
   buildCommand,
+  buildDesignRequest,
   defaultSelection,
   hasPublishableDesign,
   isDisabled,
@@ -140,5 +141,58 @@ describe('hasPublishableDesign', () => {
     ]
 
     expect(hasPublishableDesign(pages)).toBe(true)
+  })
+})
+
+/**
+ * Lo que el asistente manda a generar. El bug que lo motiva: el cuerpo se construía a
+ * mano con appName/resources/pages/palette, así que el BRIEF y los FLUJOS del lienzo no
+ * cruzaban la frontera. La app del taller salió sin CLAUDE.md y sin `processes/` aunque
+ * su diseño tenía un flujo de seis pasos — dos promesas escritas (specs 22 y 28) rotas
+ * en la última milla, y solo se ve generando de verdad.
+ */
+describe('buildDesignRequest', () => {
+  const design = {
+    name: 'taller',
+    resources: [{ name: 'orden' }] as never,
+    pages: [{ title: 'Órdenes', blocks: [{ kind: 'table' as const, resource: 'orden' }] }],
+    palette: 'ocean',
+    brief: { business: 'Un taller de maquinaria agrícola', rules: [], glossary: [] },
+    flows: [
+      {
+        name: 'De la entrada a la entrega',
+        nodes: [
+          { id: 'entra', kind: 'start' as const, text: 'entra la máquina' },
+          { id: 'abrir', kind: 'step' as const, text: 'se abre la orden', entity: 'orden', status: 'recibida' },
+          { id: 'fin', kind: 'end' as const, text: 'cerrada' }
+        ],
+        edges: [
+          { from: 'entra', to: 'abrir' },
+          { from: 'abrir', to: 'fin' }
+        ]
+      }
+    ]
+  }
+
+  it('lleva el brief y los flujos del lienzo, no solo entidades y vistas', () => {
+    const request = buildDesignRequest(design)
+
+    expect(request.brief).toEqual(design.brief)
+    expect(request.flows).toEqual(design.flows)
+    // y el estado declarado en el paso sobrevive intacto: es lo que emite el proceso
+    expect(request.flows?.[0].nodes[1].status).toBe('recibida')
+  })
+
+  it('mantiene lo que ya viajaba', () => {
+    const request = buildDesignRequest(design)
+
+    expect(request).toMatchObject({ appName: 'taller', resources: design.resources, pages: design.pages, palette: 'ocean' })
+  })
+
+  it('un diseño sin brief ni flujos no declara las claves (no las manda vacías)', () => {
+    const request = buildDesignRequest({ ...design, brief: undefined, flows: [] })
+
+    expect('brief' in request).toBe(false)
+    expect('flows' in request).toBe(false)
   })
 })

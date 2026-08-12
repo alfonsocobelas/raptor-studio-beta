@@ -1,5 +1,5 @@
-import type { AppDefinition } from '@acc/schema'
-import type { DesignPage } from '@app/shared/domain'
+import type { AppDefinition, BusinessBrief, BusinessFlow } from '@acc/schema'
+import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 /**
  * El wizard no sabe qué opciones existen: se las dice el MANIFIESTO que sirve
@@ -62,6 +62,42 @@ export function isDisabled(provider: ManifestProvider, selection: Record<string,
  */
 export function hasPublishableDesign(pages: readonly DesignPage[]): boolean {
   return pages.some(page => page.blocks.length > 0)
+}
+
+export interface DesignRequestInput {
+  name: string
+  resources: readonly DraftResource[]
+  pages: readonly DesignPage[]
+  palette: string
+  brief?: BusinessBrief
+  flows?: readonly BusinessFlow[]
+}
+
+/**
+ * El diseño que viaja a generar. Se construye AQUÍ y no a mano en el componente porque
+ * a mano se olvidaron dos campos: el brief (spec 22) y los flujos (spec 28) se quedaban
+ * en el lienzo, y la app salía sin CLAUDE.md y sin `processes/` — con el diseño intacto
+ * en el estudio, así que nada delataba la pérdida hasta abrir lo generado.
+ *
+ * Lo vacío no viaja: un diseño sin brief no declara la clave, para que el app-file
+ * emitido sea el mismo que antes de que existieran estas ranuras.
+ */
+export function buildDesignRequest(input: DesignRequestInput): {
+  appName: string
+  resources: readonly DraftResource[]
+  pages: readonly DesignPage[]
+  palette: string
+  brief?: BusinessBrief
+  flows?: readonly BusinessFlow[]
+} {
+  return {
+    appName: input.name,
+    resources: input.resources,
+    pages: input.pages,
+    palette: input.palette,
+    ...(input.brief ? { brief: input.brief } : {}),
+    ...(input.flows?.length ? { flows: input.flows } : {})
+  }
 }
 
 export function buildCommand(manifest: SlotsManifest, options: WizardOptions): string {
