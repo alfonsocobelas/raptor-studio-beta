@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
-import { DETAIL_BLOCKS, VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
+import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
@@ -15,7 +15,8 @@ import {
 } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
-import { blockFor, dropResource } from './block-drop'
+import { CanvasNoticeService } from './canvas-notice.service'
+import { dropResource, placeBlock } from './block-drop'
 import { DesignStore } from './design-store'
 import { viewIcon } from './view-icon'
 
@@ -247,6 +248,7 @@ export class ViewsSidebarComponent {
   protected readonly store = inject(DesignStore)
   protected readonly active = inject(ActiveViewService)
   protected readonly drag = inject(BlockDragService)
+  private readonly notice = inject(CanvasNoticeService)
 
   protected readonly presets = VIEW_PRESETS
   protected readonly blockTools = BLOCK_TOOLS
@@ -355,9 +357,7 @@ export class ViewsSidebarComponent {
     const page = this.pages()[this.active.index()]
     const resource = dropResource(page, this.active.resource(), this.store.resources())
     if (!resource) return
-    this.store.addBlock(this.active.index(), blockFor(kind, resource))
-    // datos y adjuntos viven en la ficha: sin seguirlos, pulsar no enseña nada
-    if (DETAIL_BLOCKS.includes(kind) && !page?.drillDown) this.active.showDetailOf(resource)
+    placeBlock({ store: this.store, notice: this.notice, active: this.active }, this.active.index(), kind, resource)
   }
 
   protected hint(tool: BlockTool): string {

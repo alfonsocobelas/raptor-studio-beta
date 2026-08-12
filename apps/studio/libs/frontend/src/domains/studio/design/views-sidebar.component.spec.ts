@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
+import { CanvasNoticeService } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { ViewsSidebarComponent } from './views-sidebar.component'
 
@@ -237,6 +238,42 @@ describe('ViewsSidebarComponent', () => {
 
     expect(store.pages()[0].blocks.at(-1)).toMatchObject({ kind: 'kpis', resources: ['producto'] })
     expect(testId(fixture, 'add-kpis-producto')).toBeNull()
+  })
+
+  it('un bloque de ficha no te mueve de vista: el lienzo se queda donde estás', () => {
+    store.addPage('list', 'Productos')
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-attachments')?.click()
+    fixture.detectChanges()
+
+    expect(active.index()).toBe(0)
+    expect(store.pages()[1]?.drillDown).toBe(true)
+  })
+
+  it('…pero lo dice, y ofrece ir a verlo', () => {
+    store.addPage('list', 'Productos')
+    const notice = TestBed.inject(CanvasNoticeService)
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-attachments')?.click()
+    fixture.detectChanges()
+
+    expect(notice.notice()?.text).toContain('ficha')
+    notice.notice()?.action?.run()
+    expect(active.index()).toBe(1)
+  })
+
+  it('cuando el gate rechaza el bloque, el aviso cuenta por qué en vez de callar', () => {
+    store.addPage('panel', 'Productos')
+    const notice = TestBed.inject(CanvasNoticeService)
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-kpis')?.click() // ya hay KPIs de esa entidad: widget duplicado
+    fixture.detectChanges()
+
+    expect(store.pages()[0].blocks.filter(block => block.kind === 'kpis').length).toBe(1)
+    expect(notice.notice()?.text).toContain('duplicated widget')
   })
 
   it('la vista recién creada queda seleccionada', async () => {
