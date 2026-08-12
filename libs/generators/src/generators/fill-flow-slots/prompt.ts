@@ -36,6 +36,9 @@ export function buildFlowSlotPrompt(tree: Tree, directory: string, slot: AiSlotR
     '## Repositorios inyectados (lo único que puedes usar para tocar datos)',
     '',
     ...repos.map(repo => [`### ${repo.className} — \`this.${repo.propertyName}\``, '', ...repo.signatures, ''].join('\n')),
+    '## Los agregados que devuelven esos repositorios (así se leen y se mutan)',
+    '',
+    ...repos.map(repo => aggregateSection(tree, repo).join('\n')),
     '## El contrato de la coreografía (no negociable)',
     '',
     '- El cuerpo debe ser AUTOSUFICIENTE: hace su parte del trabajo y termina.',
@@ -54,6 +57,46 @@ interface InjectedRepo {
   propertyName: string
   /** Líneas `abstract …` del puerto, sin marcadores ni ruido */
   signatures: string[]
+  /** Ruta del puerto en el árbol: por ahí se llega al agregado */
+  portPath?: string
+}
+
+/**
+ * La superficie pública del agregado: getters y firmas de métodos, más el tipo que toma
+ * `updateDetails`. Sin esto quien rellena no puede dejar la entidad en el estado que pide
+ * el paso —lo adivina y el gate lo rechaza—, que es justo lo que pasó al rellenar de
+ * verdad. Entran FIRMAS, nunca cuerpos: el cómo lo decide el dominio, no el hueco.
+ */
+function aggregateSection(tree: Tree, repo: InjectedRepo): string[] {
+  const className = repo.className.replace(/Repository$/, '')
+  const port = repo.portPath ? (tree.read(repo.portPath, 'utf-8') ?? '') : ''
+  const aggregatePath = resolveImport(port, className, repo.portPath)
+  const source = aggregatePath ? (tree.read(aggregatePath, 'utf-8') ?? '') : ''
+  if (!source) return []
+
+  const signatures = source
+    .split('\n')
+    .map(line => line.trim())
+    // `get x(): T {` y `metodo(args): T {` de primer nivel; nada de privados ni cuerpos
+    .filter(line => /^(get [a-z]\w*\(\)|static \w+\(|[a-z]\w*\()/.test(line))
+    // lo que parece una firma y no lo es: llamadas y palabras de control
+    .filter(line => !/^(super|constructor|if|for|while|switch|catch|return|throw|await)\b/.test(line))
+    .map(line => line.replace(/\s*\{$/, ''))
+
+  const updateProps = `${className}UpdateProps`
+  const typesPath = resolveImport(source, updateProps, aggregatePath)
+  const types = typesPath ? (tree.read(typesPath, 'utf-8') ?? '') : ''
+  const declaration = types.match(new RegExp(`export type ${updateProps} =[\\s\\S]*?\\n(?=\\n|export |$)`))?.[0].trim()
+
+  return [`### ${className}`, '', ...signatures, ...(declaration ? ['', declaration] : []), '']
+}
+
+/** La ruta del fichero que exporta `symbol`, resuelta desde los imports de `source`. */
+function resolveImport(source: string, symbol: string, from?: string): string | undefined {
+  if (!from) return undefined
+  const importPath = source.match(new RegExp(`import \\{[^}]*\\b${symbol}\\b[^}]*\\} from '([^']+)'`))?.[1]
+
+  return importPath ? `${path.join(path.dirname(from), importPath)}.ts` : undefined
 }
 
 /**
@@ -110,6 +153,7 @@ function injectedRepos(tree: Tree, file: string, source: string): InjectedRepo[]
     return {
       className,
       propertyName,
+      portPath: resolved,
       signatures: port
         .split('\n')
         .map(line => line.trim())

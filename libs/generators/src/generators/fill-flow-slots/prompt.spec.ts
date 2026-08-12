@@ -97,10 +97,32 @@ describe('fill-flow-slots — prompt por hueco (spec 39)', () => {
         ''
       ].join('\n')
     )
-    // el agregado NO entra en el prompt: el paso habla con el repositorio
     tree.write(
       `${APP}/libs/backend/src/contexts/warehouse/modules/garments/domain/garment.ts`,
-      'export class Garment {\n  private secretoDelAgregado = 1\n}\n'
+      [
+        "import { GarmentUpdateProps } from './garment-types'",
+        '',
+        'export class Garment {',
+        '  private secretoDelCuerpo = 1',
+        '',
+        '  get status(): GarmentStatus {',
+        '    return this._status',
+        '  }',
+        '',
+        '  static create(props: GarmentAggregateProps): Garment {',
+        '    return new Garment(props)',
+        '  }',
+        '',
+        '  updateDetails(updates: GarmentUpdateProps): void {',
+        '    if (updates.status !== undefined) this._status = GarmentStatus.create(updates.status)',
+        '  }',
+        '}',
+        ''
+      ].join('\n')
+    )
+    tree.write(
+      `${APP}/libs/backend/src/contexts/warehouse/modules/garments/domain/garment-types.ts`,
+      'export type GarmentUpdateProps = Partial<Omit<GarmentPrimitiveProps, \'id\'>>\n'
     )
     return tree
   }
@@ -149,12 +171,44 @@ describe('fill-flow-slots — prompt por hueco (spec 39)', () => {
     expect(prompt).toMatch(/fuera del hueco/i)
   })
 
-  it('no entra nada más: ni el agregado, ni otro flujo, ni el JSDoc de otro paso', () => {
+  it('no entra nada más: ni el cuerpo del agregado, ni otro flujo, ni el JSDoc de otro paso', () => {
     const prompt = promptFor('flow-revisar')
 
-    expect(prompt).not.toContain('secretoDelAgregado')
+    // del agregado entran las FIRMAS, nunca los cuerpos
+    expect(prompt).not.toContain('secretoDelCuerpo')
+    expect(prompt).not.toContain('GarmentStatus.create(updates.status)')
     expect(prompt).not.toContain('Devolución de material')
     expect(prompt).not.toContain('Paso 3 — Se archiva')
+  })
+
+  /**
+   * Hallazgo al rellenar de verdad (punto 2): con solo las firmas de los repos, quien
+   * rellena no puede saber CÓMO dejar la entidad en el estado que pide el paso — el
+   * agregado se muta con `updateDetails`. Sin esto, el gate rechaza todo intento.
+   */
+  it('lleva la superficie pública del agregado citado, con su tipo de actualización', () => {
+    const prompt = promptFor('flow-revisar')
+
+    expect(prompt).toContain('get status(): GarmentStatus')
+    expect(prompt).toContain('updateDetails(updates: GarmentUpdateProps): void')
+    expect(prompt).toContain("export type GarmentUpdateProps = Partial<Omit<GarmentPrimitiveProps, 'id'>>")
+  })
+
+  it('no cuela como firma lo que solo lo parece (super, constructor, control de flujo)', () => {
+    const tree = emittedApp()
+    const aggregate = `${APP}/libs/backend/src/contexts/warehouse/modules/garments/domain/garment.ts`
+    tree.write(
+      aggregate,
+      (tree.read(aggregate, 'utf-8') ?? '').replace(
+        '  private secretoDelCuerpo = 1',
+        ['  private constructor(props: GarmentAggregateProps) {', '    super()', '    if (props.id) {', '    }', '  }'].join('\n')
+      )
+    )
+
+    const prompt = buildFlowSlotPrompt(tree, APP, { file: PROCESS, id: 'flow-revisar' })
+
+    expect(prompt).not.toContain('super()')
+    expect(prompt).not.toContain('if (props.id)')
   })
 
   it('cada hueco recibe el JSDoc y la firma de SU paso, sin arrastrar el paso anterior', () => {
@@ -196,6 +250,10 @@ describe('fill-flow-slots — prompt por hueco (spec 39)', () => {
     // los DOS repos inyectados y sus firmas reales
     expect(prompt).toContain('abstract register(contract: Contract): Promise<void>')
     expect(prompt).toContain('abstract matching(criteria: Criteria): Promise<Project[]>')
+    // y cómo se muta cada agregado, que es lo que el cuerpo necesita para transicionar
+    expect(prompt).toContain('updateDetails(updates: ContractUpdateProps): void')
+    expect(prompt).toContain('updateDetails(updates: ProjectUpdateProps): void')
+    expect(prompt).toContain('get status(): ProjectStatus')
   })
 
   it('en un paso intermedio de la app real la firma no arrastra los pasos anteriores', async () => {
