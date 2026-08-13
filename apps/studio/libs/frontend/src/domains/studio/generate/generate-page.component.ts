@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
+import { productMark } from '../design/product-mark'
 import { AddonCardsComponent, ChoiceCardsComponent } from './generate-cards.component'
 import { mergeCatalog } from './generate-catalog'
 import { GenerateRunner } from './generate-runner'
@@ -40,7 +41,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
     <div class="bg-background fixed inset-0 z-50 flex flex-col" data-testid="wizard-dialog">
       <header class="bg-card studio-chrome flex items-center gap-3 border-b px-4 py-2">
         <svg class="size-7 shrink-0" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
-          <rect width="32" height="32" rx="9" fill="#1b1917" />
+          <rect width="32" height="32" rx="9" [attr.fill]="mark().background" data-testid="generate-mark-plate" />
           <text
             x="16"
             y="17"
@@ -49,7 +50,8 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
             font-size="17"
             font-weight="700"
-            fill="#f8f5f1"
+            [attr.fill]="mark().letter"
+            data-testid="generate-mark-letter"
           >
             R
           </text>
@@ -78,6 +80,15 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
         </nav>
         <span class="flex-1"></span>
 
+        <button
+          type="button"
+          class="toolbar-item"
+          [attr.title]="'Tema del estudio: ' + preview.studioTheme()"
+          data-testid="generate-theme"
+          (click)="preview.toggleStudioTheme()"
+        >
+          {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
+        </button>
         <button type="button" class="toolbar-item studio-ui" data-testid="generate-back" (click)="close.emit()">
           Volver al lienzo
         </button>
@@ -280,7 +291,9 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 export class GeneratePageComponent {
   protected readonly store = inject(DesignStore)
   private readonly http = inject(HttpClient)
-  private readonly preview = inject(PreviewSettings)
+  protected readonly preview = inject(PreviewSettings)
+  /** La marca no se hereda con el `.dark`: se invierte por cálculo, como en el lienzo. */
+  protected readonly mark = computed(() => productMark(this.preview.studioTheme()))
 
   /** Cerrar la capa es cosa del lienzo, que es quien la abrió. */
   @Output() readonly close = new EventEmitter<void>()

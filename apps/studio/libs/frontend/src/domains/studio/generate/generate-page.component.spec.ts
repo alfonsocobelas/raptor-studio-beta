@@ -87,6 +87,35 @@ describe('GeneratePageComponent', () => {
   const text = (fixture: { nativeElement: HTMLElement }): string => fixture.nativeElement.textContent ?? ''
 
   describe('la cabecera', () => {
+    /**
+     * La capa hereda el `.dark` del documento (lo pone PreviewSettings), pero la MARCA no se
+     * hereda: se invierte por cálculo. Estaba cableada a mano y se quedaba igual en noche.
+     */
+    it('la marca sigue al tema del estudio, como en el lienzo', async () => {
+      const fixture = await mount()
+
+      expect(at(fixture, 'generate-mark-plate')?.getAttribute('fill')).toBe('#1b1917')
+      expect(at(fixture, 'generate-mark-letter')?.getAttribute('fill')).toBe('#f15539')
+
+      preview.toggleStudioTheme()
+      fixture.detectChanges()
+
+      // en noche se invierte: la pastilla toma el naranja y la R, la tinta
+      expect(at(fixture, 'generate-mark-plate')?.getAttribute('fill')).toBe('#f15539')
+      expect(at(fixture, 'generate-mark-letter')?.getAttribute('fill')).toBe('#1b1917')
+    })
+
+    it('se puede cambiar el tema sin volver al lienzo', async () => {
+      const fixture = await mount()
+
+      at(fixture, 'generate-theme')?.click()
+      fixture.detectChanges()
+
+      expect(preview.studioTheme()).toBe('dark')
+      expect(document.documentElement.classList.contains('dark')).toBe(true)
+      preview.toggleStudioTheme()
+    })
+
     it('lleva el nombre del diseño y dónde está', async () => {
       store.setAppName('taller-sur')
 
