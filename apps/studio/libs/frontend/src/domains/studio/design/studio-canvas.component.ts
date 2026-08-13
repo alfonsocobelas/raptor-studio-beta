@@ -107,6 +107,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
               R
             </text>
           </svg>
+          <span class="studio-eyebrow self-start pt-1" data-testid="product-version" title="Versión beta">beta</span>
         </div>
 
         <!-- historial de diseños (spec 21): selector + indicador de guardado -->
