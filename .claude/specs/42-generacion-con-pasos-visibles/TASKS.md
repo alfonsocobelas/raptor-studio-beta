@@ -20,7 +20,7 @@
 
 ## Bloque B — el dominio de la pantalla
 
-- [ ] **TASK-03**: Tests + `generate-phases.ts`: lista declarada y reductor de eventos a
+- [x] **TASK-03**: Tests + `generate-phases.ts`: lista declarada y reductor de eventos a
       estados con duración. Casos: transición cierra la anterior con su tiempo; `install`
       omitida cuando se pidió no instalar; error marca en fallo la que estaba en curso; un
       evento repetido no reinicia el cronómetro; fases nunca alcanzadas quedan pendientes.
