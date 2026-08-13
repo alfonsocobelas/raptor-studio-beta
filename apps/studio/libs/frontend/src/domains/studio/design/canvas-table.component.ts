@@ -13,7 +13,9 @@ import {
 } from '@ng-icons/lucide'
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
+import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { detailPageIndex } from './detail-page'
 import { labelOfType } from './field-type-labels'
 import { buildSampleRows, mockTotal } from './mock-data'
 
@@ -199,7 +201,16 @@ const BADGE_CLASSES = [
             @for (row of rows(); track $index) {
               <tr class="hover:bg-muted/50 border-b last:border-0">
                 <td class="text-muted-foreground flex gap-2 px-4 py-3">
-                  <ng-icon name="lucideEye" size="15" />
+                  <button
+                    type="button"
+                    class="hover:text-foreground disabled:cursor-default disabled:hover:text-inherit"
+                    [disabled]="detailIndex() === null"
+                    [attr.data-testid]="'row-open-' + $index"
+                    [attr.title]="detailIndex() === null ? 'Esta entidad aún no tiene ficha' : 'Ir a la ficha'"
+                    (click)="openDetail($event)"
+                  >
+                    <ng-icon name="lucideEye" size="15" />
+                  </button>
                   <ng-icon name="lucidePencil" size="15" />
                   <ng-icon name="lucideTrash2" size="15" class="text-destructive" />
                 </td>
@@ -254,6 +265,7 @@ export class CanvasTableComponent {
   readonly resource = input.required<string>()
 
   protected readonly store = inject(DesignStore)
+  private readonly active = inject(ActiveViewService)
   protected readonly types = DRAFT_FIELD_TYPES
   protected readonly labelOfType = labelOfType
 
@@ -271,6 +283,20 @@ export class CanvasTableComponent {
   }
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
+
+  /**
+   * A dónde lleva el ojo: a la ficha de esta entidad, como en la app emitida, donde
+   * la puerta de entrada al detalle es la acción de la fila y no la fila entera. Si el
+   * diseño todavía no tiene esa ficha, el ojo se queda quieto en vez de mentir.
+   */
+  protected readonly detailIndex = computed(() => detailPageIndex(this.store.pages(), this.resource()))
+
+  protected openDetail(event: Event): void {
+    // el lienzo escucha el clic para elegir el bloque: aquí el gesto es irse, no seleccionar
+    event.stopPropagation()
+    const index = this.detailIndex()
+    if (index !== null) this.active.select(index)
+  }
 
   protected readonly draft = computed<DraftResource | null>(
     () => this.store.resources().find(r => r.name === this.resource()) ?? null

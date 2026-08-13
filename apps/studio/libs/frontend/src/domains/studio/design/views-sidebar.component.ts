@@ -18,6 +18,7 @@ import { BlockDragService } from './block-drag.service'
 import { CanvasNoticeService } from './canvas-notice.service'
 import { dropResource, placeBlock } from './block-drop'
 import { DesignStore } from './design-store'
+import { detailResource } from './detail-page'
 import { viewIcon } from './view-icon'
 
 const SIDEBAR_ICONS = {
@@ -56,11 +57,6 @@ interface ViewNode {
  * menciona entidades pero no lleva a ninguna ficha, así que no puede ser su madre.
  */
 const NAVIGATING_BLOCKS: BlockKind[] = ['table', 'cards']
-
-/** La entidad de la que trata una vista de ficha. */
-function detailResource(page: DesignPage): string | undefined {
-  return page.blocks.find(block => block.resource)?.resource
-}
 
 /** ¿Se llega a la ficha de esta entidad desde esta vista? */
 function opensDetailOf(page: DesignPage, resource: string): boolean {
