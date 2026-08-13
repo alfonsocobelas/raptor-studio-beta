@@ -6,7 +6,7 @@
 
 ## Bloque A — el dominio
 
-- [ ] **TASK-01**: Tests + `generate-catalog.ts`: `mergeCatalog(manifest, selection)`. Casos:
+- [x] **TASK-01**: Tests + `generate-catalog.ts`: `mergeCatalog(manifest, selection)`. Casos:
       un grupo por ranura elegible menos `design`; la tarjeta del catálogo sin proveedor sale
       `available: false` con razón «Próximamente»; un proveedor del manifiesto ajeno al
       catálogo se pinta al final con su propia etiqueta; `requires` incumplido deshabilita

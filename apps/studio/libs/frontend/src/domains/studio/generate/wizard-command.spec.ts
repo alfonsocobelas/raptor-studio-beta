@@ -6,6 +6,7 @@ import {
   buildCommand,
   buildDesignRequest,
   defaultSelection,
+  designSummary,
   hasPublishableDesign,
   isDisabled,
   type SlotsManifest,
@@ -145,6 +146,41 @@ describe('hasPublishableDesign', () => {
 })
 
 /**
+ * Lo que el raíl de «Antes de generar» le promete al usuario. Se cuenta aquí y no en la
+ * plantilla porque contar bloques a ojo en un `@for` anidado es justo donde se cuelan los
+ * off-by-one, y este número es lo único que le dice si va a generar lo que cree.
+ */
+describe('designSummary', () => {
+  const pages: DesignPage[] = [
+    { title: 'Vacía', blocks: [] },
+    { title: 'Prendas', blocks: [{ kind: 'table', resource: 'garment' }] },
+    {
+      title: 'Panel',
+      blocks: [
+        { kind: 'table', resource: 'garment' },
+        { kind: 'table', resource: 'supplier' }
+      ]
+    }
+  ]
+
+  it('cuenta vistas, bloques de todas ellas y recursos', () => {
+    expect(designSummary(pages, [{ name: 'garment' }, { name: 'supplier' }] as never)).toEqual({
+      views: 3,
+      blocks: 3,
+      resources: 2
+    })
+  })
+
+  it('una vista sin bloques cuenta como vista, y sus cero bloques no suman', () => {
+    expect(designSummary([pages[0]], [] as never)).toEqual({ views: 1, blocks: 0, resources: 0 })
+  })
+
+  it('un lienzo en blanco da ceros', () => {
+    expect(designSummary([], [] as never)).toEqual({ views: 0, blocks: 0, resources: 0 })
+  })
+})
+
+/**
  * Lo que el asistente manda a generar. El bug que lo motiva: el cuerpo se construía a
  * mano con appName/resources/pages/palette, así que el BRIEF y los FLUJOS del lienzo no
  * cruzaban la frontera. La app del taller salió sin CLAUDE.md y sin `processes/` aunque
@@ -186,7 +222,12 @@ describe('buildDesignRequest', () => {
   it('mantiene lo que ya viajaba', () => {
     const request = buildDesignRequest(design)
 
-    expect(request).toMatchObject({ appName: 'taller', resources: design.resources, pages: design.pages, palette: 'ocean' })
+    expect(request).toMatchObject({
+      appName: 'taller',
+      resources: design.resources,
+      pages: design.pages,
+      palette: 'ocean'
+    })
   })
 
   it('un diseño sin brief ni flujos no declara las claves (no las manda vacías)', () => {

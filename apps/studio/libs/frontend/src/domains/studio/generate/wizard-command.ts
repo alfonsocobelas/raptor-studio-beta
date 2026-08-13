@@ -64,6 +64,25 @@ export function hasPublishableDesign(pages: readonly DesignPage[]): boolean {
   return pages.some(page => page.blocks.length > 0)
 }
 
+export interface DesignSummary {
+  views: number
+  blocks: number
+  resources: number
+}
+
+/**
+ * Lo que el raíl de «Antes de generar» resume: qué va a salir de aquí. Vive con el resto de
+ * la lógica del asistente y no en la plantilla porque es un número que el usuario usa para
+ * decidir, no un adorno.
+ */
+export function designSummary(pages: readonly DesignPage[], resources: readonly DraftResource[]): DesignSummary {
+  return {
+    views: pages.length,
+    blocks: pages.reduce((total, page) => total + page.blocks.length, 0),
+    resources: resources.length
+  }
+}
+
 export interface DesignRequestInput {
   name: string
   resources: readonly DraftResource[]
