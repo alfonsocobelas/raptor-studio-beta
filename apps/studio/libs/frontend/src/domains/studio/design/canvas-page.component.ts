@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
-import { GENERABLE_BLOCKS, type DesignBlock } from '@app/shared/domain'
+import { generableHere, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
@@ -231,8 +231,10 @@ export class CanvasPageComponent {
     placeBlock({ store: this.store, notice: this.notice, active: this.view }, this.pageIndex(), kind, resource, at)
   }
 
+  /** El aviso «aún no generable» depende de la VISTA: ver generableHere. */
   protected generable(block: DesignBlock): boolean {
-    return GENERABLE_BLOCKS.includes(block.kind)
+    const page = this.page()
+    return page ? generableHere(page, block) : true
   }
 
   protected kpis(block: DesignBlock): { title: string; value: number; subtitle?: string; testId: string }[] {

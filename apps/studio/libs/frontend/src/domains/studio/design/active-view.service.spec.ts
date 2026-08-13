@@ -56,37 +56,6 @@ describe('ActiveViewService', () => {
   })
 })
 
-describe('ActiveViewService — seguir al bloque de ficha', () => {
-  let active: ActiveViewService
-  let store: DesignStore
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({})
-    active = TestBed.inject(ActiveViewService)
-    store = TestBed.inject(DesignStore)
-  })
-
-  it('salta a la ficha de la entidad: el bloque soltado se ve donde ha caído', () => {
-    store.addPage('list', 'Productos')
-    const resource = store.resources()[0].name
-    store.addBlock(0, { kind: 'fields', resource })
-    active.select(0)
-
-    active.showDetailOf(resource)
-
-    expect(store.pages()[1].drillDown).toBe(true)
-    expect(active.index()).toBe(1)
-  })
-
-  it('sin ficha de esa entidad no se mueve: no hay adónde ir', () => {
-    store.addPage('list', 'Productos')
-
-    active.showDetailOf(store.resources()[0].name)
-
-    expect(active.index()).toBe(0)
-  })
-})
-
 describe('ActiveViewService — la columna elegida', () => {
   let active: ActiveViewService
   let store: DesignStore

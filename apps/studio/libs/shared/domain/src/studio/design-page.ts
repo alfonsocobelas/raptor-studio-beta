@@ -97,3 +97,15 @@ export const VIEW_PRESETS: BlockPreset[] = [
 export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
 
 export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments']
+
+/**
+ * ¿El generador emite ESTE bloque en ESTA vista? La generabilidad no es solo del
+ * tipo: los datos y los ficheros de un registro se emiten dentro de la pantalla
+ * de ficha, así que en un listado o un panel son diseño y nada más. El lienzo lo
+ * marca ahí mismo en vez de mover el bloque a otra vista a espaldas de quien lo
+ * suelta (2026-08-12: eso se leía como «me ha borrado la tabla»).
+ */
+export function generableHere(page: DesignPage, block: DesignBlock): boolean {
+  if (!GENERABLE_BLOCKS.includes(block.kind)) return false
+  return !DETAIL_BLOCKS.includes(block.kind) || page.drillDown === true
+}

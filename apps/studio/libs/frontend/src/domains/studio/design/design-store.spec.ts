@@ -231,44 +231,45 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.notGenerable()).toEqual([{ page: 'Notas', blocks: ['text'] }])
   })
 
-  it('la ficha es OTRA pantalla: añadir «Datos» a una vista con tabla crea su propia vista', () => {
+  it('un bloque de ficha cae DONDE se suelta, aunque la vista no sea una ficha', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pacientes')
 
     store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+    store.addBlock(0, { kind: 'attachments', resource: 'paciente' })
 
-    expect(store.pages().map(p => p.title)).toEqual(['Pacientes', 'Ficha de paciente'])
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table'])
-    expect(store.pages()[1].blocks.map(b => b.kind)).toEqual(['fields'])
+    expect(store.pages()).toHaveLength(1)
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table', 'fields', 'attachments'])
   })
 
-  it('la vista de ficha no es navegación de primer nivel: no sale en el menú', () => {
+  it('…y la entidad declara detalle y ficheros, que es lo que sí viaja al generador', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pacientes')
-    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
-
-    expect(store.pages()[1].drillDown).toBe(true)
-    expect(store.menuPages().map(p => p.title)).toEqual(['Pacientes'])
-  })
-
-  it('los adjuntos van a la ficha, no al listado', () => {
-    const store = new DesignStore()
-    store.addPage('list', 'Pacientes')
-    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
 
     store.addBlock(0, { kind: 'attachments', resource: 'paciente' })
 
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['table'])
-    expect(store.pages()[1].blocks.map(b => b.kind)).toEqual(['fields', 'attachments'])
+    expect(store.resources()[0]).toMatchObject({ name: 'paciente', attachments: true })
   })
 
-  it('una segunda ficha de la misma entidad reutiliza la vista existente', () => {
+  it('fuera de una ficha, esos bloques son solo diseño: el generador no los emite ahí', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pacientes')
-    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
-    store.addBlock(0, { kind: 'fields', resource: 'paciente' })
+    store.addPage('detail', 'Paciente')
 
-    expect(store.pages()).toHaveLength(2)
+    store.addBlock(0, { kind: 'attachments', resource: 'paciente' })
+    store.addBlock(1, { kind: 'attachments', resource: 'paciente' })
+
+    // el del listado se reporta; el de la ficha, no: ahí sí se emite
+    expect(store.notGenerable()).toEqual([{ page: 'Pacientes', blocks: ['attachments'] }])
+  })
+
+  it('la vista de ficha sigue sin ser navegación de primer nivel', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pacientes')
+    store.addPage('detail', 'Paciente')
+
+    expect(store.pages()[1].drillDown).toBe(true)
+    expect(store.menuPages().map(p => p.title)).toEqual(['Pacientes'])
   })
 
   it('el preset «Ficha» crea directamente una vista de detalle', () => {

@@ -36,17 +36,6 @@ export class ActiveViewService {
     this._field.set(null)
   }
 
-  /**
-   * Los bloques de ficha (datos, adjuntos) no caen en la vista donde se sueltan:
-   * la ficha es otra PANTALLA y el store los desvía allí. Sin seguirlos, el gesto
-   * no tiene resultado visible —y si la ficha ya tenía ese bloque, no lo tiene en
-   * absoluto—, así que la vista activa salta a la ficha. Si no existe, nada.
-   */
-  showDetailOf(resource: string): void {
-    const index = this.store.pages().findIndex(page => page.drillDown && page.blocks.some(b => b.resource === resource))
-    if (index >= 0) this.select(index)
-  }
-
   selectResource(resource: string | null): void {
     if (resource !== this._resource()) this._field.set(null)
     this._resource.set(resource)

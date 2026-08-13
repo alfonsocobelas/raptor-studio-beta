@@ -14,10 +14,9 @@ import {
   type ResourceDefinition
 } from '@acc/schema'
 import {
-  DETAIL_BLOCKS,
-  GENERABLE_BLOCKS,
   VIEW_PRESETS,
   draftToResource,
+  generableHere,
   newDraftResource,
   type DesignBlock,
   type DesignPage,
@@ -270,11 +269,6 @@ export class DesignStore {
     if (block.kind === 'kpis' && this._pages()[pageIndex]?.blocks.some(b => b.kind === 'kpis')) {
       return this.addKpiResource(pageIndex, block.resources ?? [])
     }
-    // La ficha es otra PANTALLA (el generador la emite en <ruta>/:id): sus
-    // bloques nunca se apilan bajo el listado, se van a su propia vista.
-    if (DETAIL_BLOCKS.includes(block.kind) && block.resource && !this._pages()[pageIndex]?.drillDown) {
-      return this.addToDetailPage(block.resource, block)
-    }
     const pages = this._pages().map((page, i) => {
       if (i !== pageIndex) return page
       const blocks = [...page.blocks]
@@ -282,9 +276,12 @@ export class DesignStore {
       return { ...page, blocks }
     })
     if (block.kind === 'text') return this.mutate(this.withIntros(pages), pages)
+    // La ficha del registro la emite el generador desde las BANDERAS de la entidad,
+    // no desde la composición: por eso el bloque puede vivir donde se suelte y aun
+    // así lo que se genera es coherente — la zona de ficheros aparece en la ficha.
     const resources =
       block.kind === 'attachments' && block.resource
-        ? this._resources().map(r => (r.name === block.resource ? { ...r, attachments: true } : r))
+        ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true, attachments: true } : r))
         : block.kind === 'fields' && block.resource
           ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
           : block.kind === 'cards' && block.resource
@@ -296,27 +293,6 @@ export class DesignStore {
   /** Vistas que sí son navegación de primer nivel (las fichas se abren desde ellas). */
   menuPages(): DesignPage[] {
     return this._pages().filter(p => !p.drillDown)
-  }
-
-  /** Índice de la vista de ficha de una entidad, creándola si aún no existe. */
-  private addToDetailPage(resource: string, block: DesignBlock): boolean {
-    const label = this._resources().find(r => r.name === resource)?.labelSingular ?? resource
-    const existing = this._pages().findIndex(p => p.drillDown && p.blocks.some(b => b.resource === resource))
-    const entry = { width: 'full' as const, ...block }
-
-    const pages =
-      existing >= 0
-        ? this._pages().map((page, i) =>
-            i === existing && !page.blocks.some(b => b.kind === block.kind)
-              ? { ...page, blocks: [...page.blocks, entry] }
-              : page
-          )
-        : [...this._pages(), { title: `Ficha de ${label.toLowerCase()}`, blocks: [entry], drillDown: true }]
-
-    const resources = this._resources().map(r =>
-      r.name === resource ? { ...r, detail: true, ...(block.kind === 'attachments' ? { attachments: true } : {}) } : r
-    )
-    return this.mutate(resources, pages)
   }
 
   /**
@@ -724,7 +700,7 @@ export class DesignStore {
           blocks: [
             ...new Set(
               page.blocks
-                .filter(b => !GENERABLE_BLOCKS.includes(b.kind) && !(b.kind === 'text' && hasScreen))
+                .filter(b => !generableHere(page, b) && !(b.kind === 'text' && hasScreen))
                 .map(b => b.kind)
             )
           ]

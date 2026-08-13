@@ -63,8 +63,8 @@ describe('ViewsSidebarComponent', () => {
   it('la ficha cuelga de su listado: va detrás de él y sangrada', () => {
     store.addPage('list', 'Instalaciones')
     store.addPage('list', 'Productos')
-    // un bloque de detalle sobre la entidad del primer listado crea su ficha, al final del diseño
-    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    // la ficha se crea con su preset y reutiliza la entidad del título; va al final del diseño
+    store.addPage('detail', 'Instalación')
     const ficha = store.pages().find(page => page.drillDown)?.title
 
     const fixture = mount()
@@ -82,8 +82,8 @@ describe('ViewsSidebarComponent', () => {
     store.addPage('panel', 'Resumen')
     store.addBlock(2, { kind: 'kpis', resources: ['instalacion', 'producto'] })
     store.movePage(2, 0)
-    store.addBlock(1, { kind: 'fields', resource: 'instalacion' })
-    store.addBlock(2, { kind: 'fields', resource: 'producto' })
+    store.addPage('detail', 'Instalación')
+    store.addPage('detail', 'Producto')
 
     active.select(1) // Instalaciones: su ficha se despliega, la de Productos sigue plegada
 
@@ -94,7 +94,7 @@ describe('ViewsSidebarComponent', () => {
     expect(shape).toEqual([
       { text: 'Resumen', child: null },
       { text: 'Instalaciones', child: null },
-      { text: expect.stringContaining('Ficha de instalac'), child: 'true' },
+      { text: 'Instalación', child: 'true' },
       { text: 'Productos', child: null }
     ])
   })
@@ -102,8 +102,8 @@ describe('ViewsSidebarComponent', () => {
   it('las fichas van plegadas: solo se ven las de la vista activa', () => {
     store.addPage('list', 'Instalaciones')
     store.addPage('list', 'Productos')
-    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
-    store.addBlock(1, { kind: 'fields', resource: 'producto' })
+    store.addPage('detail', 'Instalación')
+    store.addPage('detail', 'Producto')
     active.select(0)
 
     const fixture = mount()
@@ -111,14 +111,14 @@ describe('ViewsSidebarComponent', () => {
 
     expect(visible.map(item => item.textContent?.trim())).toEqual([
       'Instalaciones',
-      expect.stringContaining('Ficha de instalac'),
+      'Instalación',
       'Productos'
     ])
   })
 
   it('la ficha abierta no se pliega bajo sus propios pies', () => {
     store.addPage('list', 'Instalaciones')
-    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    store.addPage('detail', 'Instalación')
     const ficha = store.pages().findIndex(page => page.drillDown)
     active.select(ficha)
 
@@ -130,7 +130,7 @@ describe('ViewsSidebarComponent', () => {
   it('la vista con fichas se marca como desplegable, la que no las tiene no', () => {
     store.addPage('list', 'Instalaciones')
     store.addPage('list', 'Productos')
-    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    store.addPage('detail', 'Instalación')
     active.select(1)
 
     const fixture = mount()
@@ -143,7 +143,7 @@ describe('ViewsSidebarComponent', () => {
   it('la ficha sigue seleccionando su propia vista, no la de al lado', () => {
     store.addPage('list', 'Instalaciones')
     store.addPage('list', 'Productos')
-    store.addBlock(0, { kind: 'fields', resource: 'instalacion' })
+    store.addPage('detail', 'Instalación')
     const fichaIndex = store.pages().findIndex(page => page.drillDown)
 
     const fixture = mount()
@@ -240,7 +240,7 @@ describe('ViewsSidebarComponent', () => {
     expect(testId(fixture, 'add-kpis-producto')).toBeNull()
   })
 
-  it('un bloque de ficha no te mueve de vista: el lienzo se queda donde estás', () => {
+  it('un bloque de ficha cae en la vista donde estás, sin moverte ni crear otra', () => {
     store.addPage('list', 'Productos')
 
     const fixture = mount()
@@ -248,10 +248,11 @@ describe('ViewsSidebarComponent', () => {
     fixture.detectChanges()
 
     expect(active.index()).toBe(0)
-    expect(store.pages()[1]?.drillDown).toBe(true)
+    expect(store.pages()).toHaveLength(1)
+    expect(store.pages()[0].blocks.map(block => block.kind)).toEqual(['table', 'attachments'])
   })
 
-  it('…pero lo dice, y ofrece ir a verlo', () => {
+  it('…y avisa de que ahí es solo diseño: el generador lo emite en la ficha', () => {
     store.addPage('list', 'Productos')
     const notice = TestBed.inject(CanvasNoticeService)
 
@@ -259,9 +260,21 @@ describe('ViewsSidebarComponent', () => {
     testId(fixture, 'block-tool-attachments')?.click()
     fixture.detectChanges()
 
-    expect(notice.notice()?.text).toContain('ficha')
-    notice.notice()?.action?.run()
-    expect(active.index()).toBe(1)
+    expect(notice.notice()?.text).toContain('dentro de la ficha')
+    expect(notice.notice()?.text).toContain('no llega a la app')
+  })
+
+  it('dentro de una ficha el mismo bloque no tiene nada que advertir', () => {
+    store.addPage('list', 'Productos')
+    store.addPage('detail', 'Producto')
+    active.select(1)
+    const notice = TestBed.inject(CanvasNoticeService)
+
+    const fixture = mount()
+    testId(fixture, 'block-tool-attachments')?.click()
+    fixture.detectChanges()
+
+    expect(notice.notice()).toBeNull()
   })
 
   it('cuando el gate rechaza el bloque, el aviso cuenta por qué en vez de callar', () => {
