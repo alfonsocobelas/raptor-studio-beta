@@ -12,10 +12,10 @@
       catálogo se pinta al final con su propia etiqueta; `requires` incumplido deshabilita
       con la razón traducida; los complementos mezclan plugins reales y los cuatro apagados.
 
-- [ ] **TASK-02**: Test + `designSummary(pages, resources)` en `wizard-command.ts`: cuenta
+- [x] **TASK-02**: Test + `designSummary(pages, resources)` en `wizard-command.ts`: cuenta
       vistas, bloques y recursos; un lienzo vacío da ceros.
 
-- [ ] **TASK-03**: Tests + `generate-runner.ts`: se extrae el stream NDJSON del componente a
+- [x] **TASK-03**: Tests + `generate-runner.ts`: se extrae el stream NDJSON del componente a
       un servicio con las mismas señales, sin cambiar comportamiento. Casos con `fetch`
       falso: progreso acumulado, `done` correcto, respuesta no-ok, cuerpo cortado a mitad de
       línea, y el ticker parado al terminar.
@@ -26,7 +26,7 @@
       (elección y complemento). Marcan la elegida, no dejan pulsar la apagada y enseñan la
       pastilla «Próximamente» con su razón.
 
-- [ ] **TASK-05**: Tests + `generate-page.component.ts` paso 2: capa a pantalla completa,
+- [x] **TASK-05**: Tests + `generate-page.component.ts` paso 2: capa a pantalla completa,
       cabecera con migas e indicador de pasos, columna de tarjetas, raíl con resumen y pila,
       «Volver al lienzo» y `Escape`. La corrección de ranuras incompatibles sigue viva.
 

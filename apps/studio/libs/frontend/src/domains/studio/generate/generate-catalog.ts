@@ -30,6 +30,8 @@ export interface CatalogCard {
 
 export interface CatalogGroup {
   slot: string
+  /** Etiqueta corta del manifiesto: la que cabe en el raíl. */
+  label: string
   heading: string
   subheading?: string
   cards: CatalogCard[]
@@ -133,6 +135,7 @@ function toGroup(slot: ManifestSlot, manifest: SlotsManifest, selection: Record<
 
   return {
     slot: slot.name,
+    label: slot.label,
     heading: copy?.heading ?? slot.label,
     ...(copy?.subheading ? { subheading: copy.subheading } : {}),
     cards: [...known, ...rest]

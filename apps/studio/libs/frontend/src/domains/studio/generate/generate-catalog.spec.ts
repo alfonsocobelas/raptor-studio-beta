@@ -90,6 +90,11 @@ describe('mergeCatalog', () => {
     expect(group(mergeCatalog(manifest, defaults), 'infra').heading).toBe('¿Dónde quieres alojarla?')
   })
 
+  /** El raíl no cabe con la pregunta entera: ahí la fila se llama como la ranura. */
+  it('y también la etiqueta corta del manifiesto, para el raíl', () => {
+    expect(group(mergeCatalog(manifest, defaults), 'infra').label).toBe('Infraestructura')
+  })
+
   it('lo que el manifiesto publica sale disponible, con la redacción del catálogo', () => {
     expect(card(mergeCatalog(manifest, defaults), 'infra', 'azure')).toMatchObject({
       title: 'Azure',
