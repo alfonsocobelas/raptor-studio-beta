@@ -8,6 +8,7 @@ import { productMark } from '../design/product-mark'
 import { AddonCardsComponent, ChoiceCardsComponent } from './generate-cards.component'
 import { mergeCatalog } from './generate-catalog'
 import { GenerateRunner } from './generate-runner'
+import { GenerateWorkComponent } from './generate-work.component'
 import {
   buildCommand,
   buildDesignRequest,
@@ -35,7 +36,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 @Component({
   selector: 'studio-generate-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ChoiceCardsComponent, AddonCardsComponent],
+  imports: [ChoiceCardsComponent, AddonCardsComponent, GenerateWorkComponent],
   host: { '(document:keydown.escape)': 'close.emit()' },
   template: `
     <div class="bg-background fixed inset-0 z-50 flex flex-col" data-testid="wizard-dialog">
@@ -102,14 +103,24 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
         >
           {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
         </button>
-        <button type="button" class="toolbar-item studio-ui" data-testid="generate-back" (click)="close.emit()">
-          Volver al lienzo
-        </button>
+        @if (runner.generating()) {
+          <span class="studio-eyebrow" data-testid="work-clock">Generando · {{ clock() }}</span>
+          <button type="button" class="toolbar-item studio-ui" data-testid="work-cancel" (click)="runner.cancel()">
+            Cancelar
+          </button>
+          <button type="button" class="toolbar-item studio-ui" data-testid="work-background" (click)="close.emit()">
+            Seguir en segundo plano
+          </button>
+        } @else {
+          <button type="button" class="toolbar-item studio-ui" data-testid="generate-back" (click)="close.emit()">
+            Volver al lienzo
+          </button>
+        }
       </header>
 
       <div class="flex min-h-0 flex-1">
-        <main class="min-h-0 flex-1 overflow-auto px-10 py-8">
-          @if (step() === 'infra') {
+        @if (step() === 'infra') {
+          <main class="min-h-0 flex-1 overflow-auto px-10 py-8">
             <div class="mx-auto max-w-3xl" data-testid="generate-step-infra">
               @if (catalog(); as catalog) {
                 <div data-testid="wizard-slots">
@@ -132,71 +143,8 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
                 </p>
               }
             </div>
-          } @else {
-            <div class="mx-auto max-w-3xl" data-testid="generate-step-generate">
-              @if (command(); as cmd) {
-                <div class="studio-box mb-4 mt-5">
-                  <p class="studio-eyebrow mb-2">El mismo resultado, desde la terminal</p>
-                  <code class="block break-all font-mono text-[11.5px]" data-testid="wizard-command">{{ cmd }}</code>
-                  <div class="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      class="studio-cta border-input border"
-                      data-testid="wizard-copy"
-                      (click)="copyCommand()"
-                    >
-                      {{ copied() ? 'Copiado ✓' : 'Copiar comando' }}
-                    </button>
-                    <button
-                      type="button"
-                      class="studio-cta border-input border disabled:opacity-40"
-                      [disabled]="!validName()"
-                      data-testid="wizard-download"
-                      (click)="download()"
-                    >
-                      Descargar el diseño
-                    </button>
-                  </div>
-                </div>
-              }
-
-              @if (runner.generating()) {
-                <div class="studio-box text-center" data-testid="generate-progress">
-                  <div class="mb-3 flex items-center justify-center gap-3">
-                    <span
-                      class="border-primary inline-block h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
-                    ></span>
-                    <span class="text-sm font-medium">{{ runner.step() ?? 'Generando…' }}</span>
-                  </div>
-                  <p class="text-muted-foreground studio-ui">
-                    {{ runner.filesWritten() }} ficheros escritos · {{ runner.seconds() }} s
-                  </p>
-                  @if (runner.lastFile(); as file) {
-                    <p class="text-muted-foreground mt-1 truncate font-mono text-[11px]">{{ file }}</p>
-                  }
-                  <p class="text-muted-foreground studio-ui mt-3">
-                    Instalar dependencias es lo que más tarda (un minuto y medio); el código se escribe en segundos.
-                  </p>
-                </div>
-              }
-              @if (runner.elapsed(); as ms) {
-                <p class="text-muted-foreground studio-ui mt-3" data-testid="generate-elapsed">
-                  Generado en {{ (ms / 1000).toFixed(1) }} s
-                </p>
-              }
-              @if (runner.output(); as out) {
-                <pre
-                  class="bg-muted mt-3 max-h-64 overflow-auto rounded-md p-3 text-xs"
-                  [attr.data-testid]="runner.ok() ? 'generate-ok' : 'generate-error'"
-                  >{{ out }}</pre
-                >
-              }
-            </div>
-          }
-        </main>
-
-        <aside class="studio-rail w-80 shrink-0 overflow-auto border-l px-5 py-8">
-          @if (step() === 'infra') {
+          </main>
+          <aside class="studio-rail w-80 shrink-0 overflow-auto border-l px-5 py-8">
             <!-- el nombre vive con el recibo de lo que vas a generar, no en una pantalla aparte -->
             <p class="studio-eyebrow mb-2">Cómo se va a llamar</p>
             <input
@@ -213,24 +161,22 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
             } @else {
               <p class="text-muted-foreground studio-ui mb-6">La carpeta y el proyecto Nx se llamarán así.</p>
             }
-          }
 
-          <p class="studio-eyebrow mb-2">Tu aplicación</p>
-          <p class="studio-ui text-foreground mb-6" data-testid="generate-summary">
-            {{ summaryLine() }}
-          </p>
+            <p class="studio-eyebrow mb-2">Tu aplicación</p>
+            <p class="studio-ui text-foreground mb-6" data-testid="generate-summary">
+              {{ summaryLine() }}
+            </p>
 
-          <p class="studio-eyebrow mb-2">La pila</p>
-          <div class="mb-8" data-testid="generate-stack">
-            @for (row of stack(); track row.label) {
-              <div class="studio-ui flex items-baseline justify-between gap-3 border-b py-1.5 last:border-b-0">
-                <span class="text-muted-foreground shrink-0">{{ row.label }}</span>
-                <span class="text-foreground text-right font-medium">{{ row.value }}</span>
-              </div>
-            }
-          </div>
+            <p class="studio-eyebrow mb-2">La pila</p>
+            <div class="mb-8" data-testid="generate-stack">
+              @for (row of stack(); track row.label) {
+                <div class="studio-ui flex items-baseline justify-between gap-3 border-b py-1.5 last:border-b-0">
+                  <span class="text-muted-foreground shrink-0">{{ row.label }}</span>
+                  <span class="text-foreground text-right font-medium">{{ row.value }}</span>
+                </div>
+              }
+            </div>
 
-          @if (step() === 'infra') {
             <details class="mb-4">
               <summary class="text-muted-foreground studio-ui cursor-pointer">Avanzado</summary>
               <div class="mt-3 space-y-2">
@@ -264,8 +210,50 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
               Generar aplicación
             </button>
             <p class="text-muted-foreground studio-ui mt-3 text-center">Se escribe en tu workspace, en local.</p>
-          }
-        </aside>
+          </aside>
+        } @else {
+          <studio-generate-work>
+            @if (!runner.generating() && command(); as cmd) {
+              <div class="studio-box mb-4">
+                <p class="studio-eyebrow mb-2">El mismo resultado, desde la terminal</p>
+                <code class="block break-all font-mono text-[11.5px]" data-testid="wizard-command">{{ cmd }}</code>
+                <div class="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    class="studio-cta border-input border"
+                    data-testid="wizard-copy"
+                    (click)="copyCommand()"
+                  >
+                    {{ copied() ? 'Copiado ✓' : 'Copiar comando' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="studio-cta border-input border"
+                    data-testid="wizard-download"
+                    (click)="download()"
+                  >
+                    Descargar el diseño
+                  </button>
+                </div>
+              </div>
+            }
+            @if (runner.elapsed(); as ms) {
+              <p class="text-muted-foreground studio-ui mb-3" data-testid="generate-elapsed">
+                Generado en {{ (ms / 1000).toFixed(1) }} s
+              </p>
+            }
+            @if (runner.outcome() === 'ok' && runner.output(); as out) {
+              <pre class="bg-muted mb-3 max-h-40 overflow-auto rounded-md p-3 text-xs" data-testid="generate-ok">{{
+                out
+              }}</pre>
+            }
+            @if (runner.outcome() === 'failed' && runner.output(); as out) {
+              <pre class="bg-muted mb-3 max-h-40 overflow-auto rounded-md p-3 text-xs" data-testid="generate-error">{{
+                out
+              }}</pre>
+            }
+          </studio-generate-work>
+        }
       </div>
     </div>
   `,
@@ -328,6 +316,12 @@ export class GeneratePageComponent {
   protected readonly copied = signal(false)
 
   protected readonly validName = computed(() => KEBAB.test(this.name()))
+  /** «1 min 12 s» mientras dura: el mismo segundero que lleva el runner, en palabras. */
+  protected readonly clock = computed(() => {
+    const seconds = this.runner.seconds()
+    return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
+  })
+
   /** Sin manifiesto no se sabe qué generar; sin nombre válido no hay dónde escribirlo. */
   protected readonly canGenerate = computed(() => this.catalog() !== null && this.validName())
   protected readonly command = computed(() => {

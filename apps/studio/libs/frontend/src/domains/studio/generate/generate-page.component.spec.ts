@@ -318,10 +318,16 @@ describe('GeneratePageComponent', () => {
   })
 
   describe('el paso de generar', () => {
-    /** El botón del raíl arranca la obra: para ver el paso 3 hay que generar. */
+    /**
+     * El botón del raíl arranca la obra, así que para ver el paso 3 hay que generar. El
+     * comando y la descarga viven en el DESENLACE (spec 42), no mientras se construye: hay
+     * que dejar que la generación termine antes de mirarlos.
+     */
     const mountStep3 = async () => {
+      stubGenerate()
       const fixture = await mount()
       at(fixture, 'generate-primary')?.click()
+      await settle()
       fixture.detectChanges()
       return fixture
     }
@@ -385,9 +391,11 @@ describe('GeneratePageComponent', () => {
     })
 
     it('el comando lleva las ranuras elegidas', async () => {
+      stubGenerate()
       const fixture = await mount()
       at(fixture, 'slot-infra-azure')?.click()
       at(fixture, 'generate-primary')?.click()
+      await settle()
       fixture.detectChanges()
 
       const command = at(fixture, 'wizard-command')?.textContent ?? ''

@@ -42,7 +42,7 @@
       a «Generar aplicación» y arranca la generación al pulsarlo. El paso 3 deja de pedir
       nombre.
 
-- [ ] **TASK-07**: Tests + `generate-work.component.ts`: cabecera de obra con el reloj y las
+- [x] **TASK-07**: Tests + `generate-work.component.ts`: cabecera de obra con el reloj y las
       dos salidas, barra por fases cumplidas, lista de fases con estado y tiempo, registro
       técnico plegable (abierto solo si falla) y raíl «Mientras tanto».
 
