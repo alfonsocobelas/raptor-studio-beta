@@ -40,6 +40,26 @@
 
 ## Validación
 
-- [ ] **TASK-08**: Suite del estudio en verde + comprobación en el navegador
+- [x] **TASK-08**: Suite del estudio en verde + comprobación en el navegador
       (`tools/smoke-slots.ts`): abrir la pantalla, elegir Azure + Postgres + single-tenant +
       correo, continuar, generar de verdad y ver el resultado. Captura a `docs/style/`.
+
+> **TASK-08 (2026-08-14)**: verde la suite del estudio (577 en 49 ficheros), `typecheck` y
+> —lo que de verdad manda— el **build AOT** (`npm run web:build`). El smoke de ranuras pasa
+> contra la pantalla nueva; hubo que corregir en él una aserción caducada («el comando no
+> lleva `--infra=`») escrita cuando `infra` tenía un solo proveedor: hoy tiene dos, así que
+> el flag DEBE salir. Ahora comprueba lo que toca: que no viaja `--ui=` (un proveedor) y que
+> sí viaja el `--design=` que manda el lienzo.
+>
+> Generada una app **de verdad** desde la pantalla (Azure + Postgres + single-tenant +
+> correo, sin instalar, a `apps/_smoke41`): 545 ficheros en 10,1 s, con `config/loaders/azure`,
+> el contexto IAM y los adapters de email. Borrada después; el workspace queda como estaba.
+>
+> Dos arreglos salidos de mirar la pantalla, no de los tests:
+>
+> - En oscuro el CTA del raíl salía casi blanco y **se leía como deshabilitado**. Toma el
+>   naranja de la marca, como ya hacía el botón del lienzo.
+> - El build AOT cazó dos cosas que la suite JIT y `tsc` dejaron pasar (un `CatalogGroup` sin
+>   `label`, un `??` redundante). Anotado en el DESIGN: **el runner no es semáforo suficiente**.
+>
+> Captura: `docs/style/41-antes-de-generar-{infra,paso3,oscuro}.png`.

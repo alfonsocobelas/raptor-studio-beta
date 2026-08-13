@@ -243,6 +243,12 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
     </div>
   `,
   styles: `
+    /* En noche --primary es casi blanco y el botón se lee como APAGADO, justo el contrario
+       de lo que es. Toma el naranja de la marca, como el CTA del lienzo. */
+    :host-context(.dark) [data-testid='generate-primary']:not(:disabled) {
+      background-color: #f15539;
+      color: var(--brand-foreground);
+    }
     .wizard-step[data-state='pending'] {
       color: var(--muted-foreground);
     }

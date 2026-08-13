@@ -94,7 +94,10 @@ async function main(): Promise<void> {
   await page.fill('[data-testid="wizard-name"]', 'smoke-slots')
   const command = (await page.textContent('[data-testid="wizard-command"]')) ?? ''
   await check(`el comando lleva --database=mongo (${command.trim()})`, async () => command.includes('--database=mongo'))
-  await check('el comando no lleva --infra=', async () => !command.includes('--infra='))
+  // una ranura de un solo proveedor no se pregunta y tampoco viaja como flag
+  await check('el comando no lleva --ui=', async () => !command.includes('--ui='))
+  // el preset NO se pregunta aquí, pero sí viaja: lo elige el lienzo (spec 41)
+  await check('el comando lleva el --design= que manda el lienzo', async () => command.includes('--design='))
 
   await check('sin errores de consola', async () => errors.length === 0)
   if (errors.length) console.error(errors.join('\n'))
