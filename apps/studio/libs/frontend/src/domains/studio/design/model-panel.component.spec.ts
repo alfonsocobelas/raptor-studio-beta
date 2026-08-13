@@ -50,6 +50,28 @@ describe('ModelPanelComponent', () => {
     expect((testId(fixture, 'field-name') as HTMLInputElement).value).toBe(store.resources()[0].fields[1].label)
   })
 
+  it('saltar de una columna a OTRA entidad abre la pestaña Entidad, no deja Campo vacío', () => {
+    store.addResource('Cliente')
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    active.selectResource('cliente')
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'model-tab-entity')?.getAttribute('aria-selected')).toBe('true')
+    expect(testId(fixture, 'field-empty')).toBeNull()
+  })
+
+  it('volver a la MISMA entidad no roba la pestaña que estabas usando', () => {
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    active.selectResource('producto')
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'model-tab-field')?.getAttribute('aria-selected')).toBe('true')
+  })
+
   it('cambiar el tipo de la columna lo escribe en el diseño', () => {
     active.selectField('producto', 1)
 

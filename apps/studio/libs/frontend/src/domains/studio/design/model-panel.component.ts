@@ -183,10 +183,19 @@ export class ModelPanelComponent {
   protected readonly tabs = MODEL_TABS
   protected readonly types = SELECTABLE_FIELD_TYPES
 
-  /** Elegir una columna en el diagrama trae el panel a su pestaña (igual que el de vistas). */
-  protected readonly tab = linkedSignal<number | null, ModelTab>({
-    source: () => this.active.field(),
-    computation: (field, previous) => (field !== null ? 'field' : (previous?.value ?? 'field'))
+  /**
+   * Elegir una columna en el diagrama trae el panel a su pestaña (igual que el de
+   * vistas). Y saltar a OTRA entidad lleva a Entidad: la columna elegida era de la
+   * anterior, así que quedarse en Campo enseñaría un panel vacío por respuesta.
+   */
+  protected readonly tab = linkedSignal<{ resource: string | null; field: number | null }, ModelTab>({
+    source: () => ({ resource: this.active.resource(), field: this.active.field() }),
+    computation: (current, previous) => {
+      if (current.field !== null) return 'field'
+      if (!previous) return 'field'
+      if (current.resource && current.resource !== previous.source.resource) return 'entity'
+      return previous.value
+    }
   })
 
   /** La columna elegida, con su sitio: los botones de mover necesitan saber los bordes. */
