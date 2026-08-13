@@ -209,12 +209,17 @@ const BLOCK_TOOLS: BlockTool[] = [
     </aside>
   `,
   styles: `
-    /* Un solo naranja en todo el estudio, igual que el raíl de Modelo: el token global
-       se aclara en oscuro y al lado de la marca se leería como un segundo naranja. */
+    /* De día los componentes van en tinta, no en marca: el naranja pleno pesaba demasiado
+       en un raíl claro y competía con el lienzo. Se toma el token del CTA dominante —el
+       naranja se reserva para un acento por pantalla—, así el raíl sigue al tema solo. */
     :host {
-      --brand: #f15539;
+      --brand: var(--primary);
     }
-    /* Sobre el naranja pleno el asidero se atenúa; no puede competir con la etiqueta. */
+    /* De noche el naranja sí aguanta: mismo tono aclarado que el raíl de Modelo. */
+    :host-context(.dark) {
+      --brand: #e8734f;
+    }
+    /* Sobre el fondo pleno el asidero se atenúa; no puede competir con la etiqueta. */
     .block-tool .grip {
       opacity: 0.55;
     }
