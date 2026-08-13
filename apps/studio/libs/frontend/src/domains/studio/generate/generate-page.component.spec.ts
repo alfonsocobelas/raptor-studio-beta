@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
@@ -263,6 +263,179 @@ describe('GeneratePageComponent', () => {
 
     it('sin manifiesto no se puede continuar', async () => {
       expect(at(await mount('error'), 'generate-primary')?.hasAttribute('disabled')).toBe(true)
+    })
+  })
+
+  describe('el paso de generar', () => {
+    /** Deja la pantalla en el paso 3, que es donde vive el nombre y el comando. */
+    const mountStep3 = async () => {
+      const fixture = await mount()
+      at(fixture, 'generate-primary')?.click()
+      fixture.detectChanges()
+      return fixture
+    }
+
+    const type = (fixture: { nativeElement: HTMLElement }, testid: string, value: string): void => {
+      const field = fixture.nativeElement.querySelector(`[data-testid="${testid}"]`) as HTMLInputElement
+      field.value = value
+      field.dispatchEvent(new Event('input'))
+    }
+
+    /** Un NDJSON de una sola línea: ver el resultado sin levantar el studio-api. */
+    const stubGenerate = (): { body: () => Record<string, unknown> } => {
+      const calls: string[] = []
+      const encoder = new TextEncoder()
+      const done = JSON.stringify({
+        type: 'done',
+        ok: true,
+        files: 120,
+        root: 'apps/mi-app',
+        output: 'listo',
+        elapsedMs: 4200
+      })
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: { body: string }) => {
+          calls.push(init.body)
+          let sent = false
+          return {
+            ok: true,
+            status: 200,
+            body: {
+              getReader: () => ({
+                read: async () => {
+                  if (sent) return { done: true }
+                  sent = true
+                  return { done: false, value: encoder.encode(`${done}\n`) }
+                }
+              })
+            }
+          }
+        })
+      )
+      return { body: () => JSON.parse(calls[0]) as Record<string, unknown> }
+    }
+
+    /** El stream se lee a trozos: unas cuantas microtareas y ya ha terminado. */
+    const settle = async (): Promise<void> => {
+      for (let i = 0; i < 6; i++) await Promise.resolve()
+    }
+
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('el nombre viene precargado con el del diseño, no en blanco', async () => {
+      store.setAppName('taller-sur')
+
+      const fixture = await mountStep3()
+
+      expect((at(fixture, 'wizard-name') as HTMLInputElement).value).toBe('taller-sur')
+    })
+
+    it('el comando lleva las ranuras elegidas', async () => {
+      const fixture = await mount()
+      at(fixture, 'slot-infra-azure')?.click()
+      at(fixture, 'generate-primary')?.click()
+      fixture.detectChanges()
+
+      const command = at(fixture, 'wizard-command')?.textContent ?? ''
+      expect(command).toContain('npx nx g @acc/generators:app')
+      expect(command).toContain('--infra=azure')
+      expect(command).toContain('--plugins=none')
+    })
+
+    it('un nombre que no es kebab-case no deja generar, y lo dice', async () => {
+      const fixture = await mountStep3()
+
+      type(fixture, 'wizard-name', 'Mi App')
+      fixture.detectChanges()
+
+      expect(at(fixture, 'generate-primary')?.hasAttribute('disabled')).toBe(true)
+      // el recuadro del artefacto entero desaparece: sin nombre no hay comando ni descarga
+      expect(at(fixture, 'wizard-download')).toBeNull()
+      expect(at(fixture, 'wizard-name-problem')?.textContent).toContain('kebab-case')
+    })
+
+    it('sin nombre válido tampoco hay comando que copiar', async () => {
+      const fixture = await mountStep3()
+
+      type(fixture, 'wizard-name', '')
+      fixture.detectChanges()
+
+      expect(at(fixture, 'wizard-command')).toBeNull()
+    })
+
+    it('copiar deja el comando en el portapapeles', async () => {
+      const writeText = vi.fn(() => Promise.resolve())
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+      const fixture = await mountStep3()
+
+      at(fixture, 'wizard-copy')?.click()
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('npx nx g @acc/generators:app'))
+    })
+
+    it('el botón del raíl cambia de texto y lanza la generación', async () => {
+      const sent = stubGenerate()
+      const fixture = await mountStep3()
+
+      expect(at(fixture, 'generate-primary')?.textContent).toContain('Generar aplicación')
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+      fixture.detectChanges()
+
+      expect(sent.body()).toMatchObject({ name: 'mi-app', skipInstall: false })
+      expect(at(fixture, 'generate-ok')?.textContent).toContain('apps/mi-app')
+      expect(at(fixture, 'generate-elapsed')?.textContent).toContain('4.2')
+    })
+
+    it('lo que se manda a generar lleva el diseño del lienzo, no solo las ranuras', async () => {
+      store.addResource('Prenda')
+      store.addPage('blank', 'Prendas')
+      store.addBlock(0, { kind: 'table', resource: 'prenda' })
+      const sent = stubGenerate()
+      const fixture = await mountStep3()
+
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+
+      const design = sent.body().design as { pages: unknown[]; resources: unknown[] }
+      expect(design.pages).toHaveLength(1)
+      expect(design.resources).toHaveLength(1)
+    })
+
+    it('lo avanzado viaja: sin instalar y con directorio propio', async () => {
+      const sent = stubGenerate()
+      const fixture = await mountStep3()
+
+      ;(at(fixture, 'wizard-install') as HTMLInputElement).click()
+      type(fixture, 'wizard-directory', 'apps/cliente')
+      fixture.detectChanges()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+
+      expect(sent.body()).toMatchObject({ skipInstall: true, directory: 'apps/cliente' })
+    })
+
+    it('un directorio en blanco no viaja como clave vacía', async () => {
+      const sent = stubGenerate()
+      const fixture = await mountStep3()
+
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+
+      expect('directory' in sent.body()).toBe(false)
+    })
+
+    it('se puede volver a las decisiones sin perderlas', async () => {
+      const fixture = await mount()
+      at(fixture, 'slot-infra-azure')?.click()
+      at(fixture, 'generate-primary')?.click()
+      fixture.detectChanges()
+
+      at(fixture, 'wizard-step-infra')?.click()
+      fixture.detectChanges()
+
+      expect(at(fixture, 'slot-infra-azure')?.getAttribute('aria-checked')).toBe('true')
     })
   })
 })

@@ -30,7 +30,7 @@
       cabecera con migas e indicador de pasos, columna de tarjetas, raíl con resumen y pila,
       «Volver al lienzo» y `Escape`. La corrección de ranuras incompatibles sigue viva.
 
-- [ ] **TASK-06**: Tests + paso 3 en la misma pantalla: nombre precargado de `appName` y
+- [x] **TASK-06**: Tests + paso 3 en la misma pantalla: nombre precargado de `appName` y
       validado, avanzado (instalar/directorio), comando con copiar, descargar schema,
       progreso y resultado. El botón del raíl cambia de texto y de acción.
 

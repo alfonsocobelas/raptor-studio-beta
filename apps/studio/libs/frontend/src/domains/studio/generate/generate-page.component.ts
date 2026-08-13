@@ -1,13 +1,24 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject, signal } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { firstValueFrom } from 'rxjs'
+import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
 import { AddonCardsComponent, ChoiceCardsComponent } from './generate-cards.component'
 import { mergeCatalog } from './generate-catalog'
-import { defaultSelection, designSummary, isDisabled, type SlotsManifest } from './wizard-command'
+import { GenerateRunner } from './generate-runner'
+import {
+  buildCommand,
+  buildDesignRequest,
+  defaultSelection,
+  designSummary,
+  isDisabled,
+  type SlotsManifest
+} from './wizard-command'
 
 type Step = 'infra' | 'generate'
+
+const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 
 /**
  * «Antes de generar» (spec 41, maqueta 9A): la última pantalla del estudio, a pantalla
@@ -96,7 +107,104 @@ type Step = 'infra' | 'generate'
               }
             </div>
           } @else {
-            <div class="mx-auto max-w-3xl" data-testid="generate-step-generate"></div>
+            <div class="mx-auto max-w-3xl" data-testid="generate-step-generate">
+              <h2 class="text-foreground mb-0.5 text-[15px] font-semibold">¿Cómo se va a llamar?</h2>
+              <p class="text-muted-foreground studio-ui mb-3">
+                Es el nombre de la carpeta y del proyecto Nx. En kebab-case.
+              </p>
+              <input
+                class="border-input bg-card mb-1 w-full rounded-md border px-3 py-2 text-sm"
+                [value]="name()"
+                (input)="name.set($any($event.target).value)"
+                placeholder="mi-cliente"
+                data-testid="wizard-name"
+              />
+              @if (!validName()) {
+                <p class="text-destructive studio-ui mb-3" data-testid="wizard-name-problem">
+                  Solo minúsculas, números y guiones: kebab-case, como <code>taller-sur</code>.
+                </p>
+              }
+
+              @if (command(); as cmd) {
+                <div class="studio-box mb-4 mt-5">
+                  <p class="studio-eyebrow mb-2">El mismo resultado, desde la terminal</p>
+                  <code class="block break-all font-mono text-[11.5px]" data-testid="wizard-command">{{ cmd }}</code>
+                  <div class="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      class="studio-cta border-input border"
+                      data-testid="wizard-copy"
+                      (click)="copyCommand()"
+                    >
+                      {{ copied() ? 'Copiado ✓' : 'Copiar comando' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="studio-cta border-input border disabled:opacity-40"
+                      [disabled]="!validName()"
+                      data-testid="wizard-download"
+                      (click)="download()"
+                    >
+                      Descargar el diseño
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <details class="mb-4">
+                <summary class="text-muted-foreground studio-ui cursor-pointer">Avanzado</summary>
+                <div class="mt-3 space-y-2">
+                  <label class="studio-ui flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      [checked]="install()"
+                      (change)="install.set($any($event.target).checked)"
+                      data-testid="wizard-install"
+                    />
+                    Instalar dependencias al generar (npm install + Spartan)
+                  </label>
+                  <input
+                    class="border-input bg-card w-full rounded-md border px-3 py-2 text-sm"
+                    [value]="directory()"
+                    (input)="directory.set($any($event.target).value)"
+                    placeholder="Directorio destino (por defecto apps/<nombre>)"
+                    data-testid="wizard-directory"
+                  />
+                </div>
+              </details>
+
+              @if (runner.generating()) {
+                <div class="studio-box text-center" data-testid="generate-progress">
+                  <div class="mb-3 flex items-center justify-center gap-3">
+                    <span
+                      class="border-primary inline-block h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
+                    ></span>
+                    <span class="text-sm font-medium">{{ runner.step() ?? 'Generando…' }}</span>
+                  </div>
+                  <p class="text-muted-foreground studio-ui">
+                    {{ runner.filesWritten() }} ficheros escritos · {{ runner.seconds() }} s
+                  </p>
+                  @if (runner.lastFile(); as file) {
+                    <p class="text-muted-foreground mt-1 truncate font-mono text-[11px]">{{ file }}</p>
+                  }
+                  <p class="text-muted-foreground studio-ui mt-3">
+                    Instalar dependencias es lo que más tarda (un minuto y medio); el código se escribe en segundos.
+                  </p>
+                </div>
+              }
+              @if (runner.elapsed(); as ms) {
+                <p class="text-muted-foreground studio-ui mt-3" data-testid="generate-elapsed">
+                  Generado en {{ (ms / 1000).toFixed(1) }} s
+                </p>
+              }
+              @if (runner.output(); as out) {
+                <pre
+                  class="bg-muted mt-3 max-h-64 overflow-auto rounded-md p-3 text-xs"
+                  [attr.data-testid]="runner.ok() ? 'generate-ok' : 'generate-error'"
+                  >{{ out }}</pre
+                >
+              }
+            </div>
           }
         </main>
 
@@ -119,12 +227,15 @@ type Step = 'infra' | 'generate'
           <button
             type="button"
             class="studio-cta bg-primary text-primary-foreground w-full disabled:opacity-40"
-            [disabled]="!catalog()"
+            [disabled]="!canAdvance()"
             data-testid="generate-primary"
-            (click)="step.set('generate')"
+            (click)="advance()"
           >
-            Continuar
+            {{ step() === 'infra' ? 'Continuar' : runner.generating() ? 'Generando…' : 'Generar aplicación' }}
           </button>
+          @if (step() === 'generate') {
+            <p class="text-muted-foreground studio-ui mt-3 text-center">Se escribe en tu workspace, en local.</p>
+          }
         </aside>
       </div>
     </div>
@@ -166,11 +277,29 @@ export class GeneratePageComponent {
   /** Cerrar la capa es cosa del lienzo, que es quien la abrió. */
   @Output() readonly close = new EventEmitter<void>()
 
+  protected readonly runner = inject(GenerateRunner)
+
   protected readonly step = signal<Step>('infra')
   protected readonly manifest = signal<SlotsManifest | null>(null)
   protected readonly manifestError = signal<string | null>(null)
   protected readonly selection = signal<Record<string, string>>({})
   protected readonly plugins = signal<string[]>([])
+  /** El diseño ya tiene nombre: el asistente no lo pide en blanco como el modal viejo. */
+  protected readonly name = signal(this.store.appName())
+  protected readonly install = signal(true)
+  protected readonly directory = signal('')
+  protected readonly copied = signal(false)
+
+  protected readonly validName = computed(() => KEBAB.test(this.name()))
+  protected readonly canAdvance = computed(() =>
+    this.step() === 'infra' ? this.catalog() !== null : this.validName() && !this.runner.generating()
+  )
+  protected readonly command = computed(() => {
+    const manifest = this.manifest()
+    return manifest && this.validName()
+      ? buildCommand(manifest, { name: this.name(), slots: this.selection(), plugins: this.plugins() })
+      : null
+  })
 
   /** Las tarjetas: lo que el manifiesto publica, vestido por el catálogo. */
   protected readonly catalog = computed(() => {
@@ -246,6 +375,50 @@ export class GeneratePageComponent {
 
   protected togglePlugin(plugin: string): void {
     this.plugins.update(list => (list.includes(plugin) ? list.filter(p => p !== plugin) : [...list, plugin]))
+  }
+
+  /** El botón del raíl: primero avanza de paso, luego genera. */
+  protected advance(): void {
+    if (this.step() === 'infra') {
+      this.step.set('generate')
+      return
+    }
+    void this.runner.run({
+      name: this.name(),
+      slots: this.selection(),
+      plugins: this.plugins(),
+      // lo que ves en el lienzo es lo que se genera (spec 18), y eso incluye la memoria del
+      // negocio y los procesos: se arma en buildDesignRequest, no aquí
+      design: buildDesignRequest({
+        name: this.name(),
+        resources: this.store.resources(),
+        pages: this.store.pages(),
+        palette: this.preview.palette(),
+        brief: this.store.brief(),
+        flows: this.store.flows()
+      }),
+      skipInstall: !this.install(),
+      ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
+    })
+  }
+
+  /** El artefacto de `--appFile`: el schema vivo con el nombre elegido. */
+  protected download(): void {
+    const design = {
+      ...(JSON.parse(this.store.exportJson()) as Record<string, unknown>),
+      name: this.name()
+    }
+    downloadBlob(new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' }), `${this.name()}.app.json`)
+  }
+
+  protected async copyCommand(): Promise<void> {
+    const command = this.command()
+    if (!command) {
+      return
+    }
+    await navigator.clipboard.writeText(command)
+    this.copied.set(true)
+    setTimeout(() => this.copied.set(false), 1500)
   }
 
   /** El primer paso no es un paso de esta pantalla: es el lienzo, y volver es cerrarla. */
