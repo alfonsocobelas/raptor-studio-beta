@@ -185,7 +185,7 @@ const BLOCK_TOOLS: BlockTool[] = [
         @for (tool of blockTools; track tool.kind) {
           <button
             type="button"
-            class="block-tool mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+            class="block-tool text-brand border-brand/45 hover:border-brand hover:bg-brand/10 mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left font-semibold transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
             [class.dragging]="drag.kind() === tool.kind"
             [disabled]="!ready()"
             [attr.draggable]="ready() ? 'true' : null"
@@ -209,38 +209,24 @@ const BLOCK_TOOLS: BlockTool[] = [
     </aside>
   `,
   styles: `
-    /* Mismo naranja que la rejilla del lienzo y que las guías de caída: el gesto
-       de arrastrar se reconoce por el color de punta a punta. */
-    .block-tool {
-      --studio-drag: #d75f3d;
-      /* Ficha BLANCA sobre el lino del raíl (#f8f5f1): el componente se despega del
-         panel sin gritar más que el lienzo. En oscuro un blanco fijo cegaría, así que
-         allí se sigue el --background del estudio. */
-      background-color: #fff;
-      /* Un gris explícito recorta la ficha blanca sobre el lino: el borde del tema
-         se diluía y el bloque flotaba sin contorno. */
-      border-color: #d8d4ce;
-    }
-    :host-context(.dark) .block-tool {
-      background-color: var(--background);
-      border-color: var(--border);
+    /* Un solo naranja en todo el estudio, igual que el raíl de Modelo: el token global
+       se aclara en oscuro y al lado de la marca se leería como un segundo naranja. */
+    :host {
+      --brand: #f15539;
     }
     .block-tool .grip {
-      color: color-mix(in oklab, var(--studio-drag) 55%, transparent);
-    }
-    /* Un solo píxel de trazo, como las vistas del proyecto de arriba; lo que lo hace
-       nítido es el naranja PLENO, no el grosor: al 55% se leía como un gris sucio. */
-    .block-tool:not(:disabled):hover {
-      border-color: var(--studio-drag);
+      color: color-mix(in oklab, var(--brand) 55%, transparent);
     }
     .block-tool:not(:disabled):hover .grip {
-      color: var(--studio-drag);
+      color: var(--brand);
     }
     /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
     .block-tool.dragging {
-      border-color: var(--studio-drag);
-      background-color: color-mix(in oklab, var(--studio-drag) 8%, #fff);
-      color: var(--studio-drag);
+      border-color: var(--brand);
+      background-color: color-mix(in oklab, var(--brand) 12%, transparent);
+    }
+    .block-tool.dragging .grip {
+      color: var(--brand);
     }
   `
 })
