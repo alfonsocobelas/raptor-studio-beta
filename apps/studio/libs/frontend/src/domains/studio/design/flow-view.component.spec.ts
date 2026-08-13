@@ -289,3 +289,105 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(fixture.nativeElement.querySelector('[data-testid^="flow-insert-"]')).toBeNull()
   })
 })
+
+// Reordenar las acciones (spec 40): el asa de la fila es lo único que arrastra la fila; la
+// tarjeta se sigue moviendo por su cabecera y el clic sigue seleccionando.
+describe('FlowViewComponent — reordenar las filas de una tarjeta', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'step', 'Marcar la fila')
+    store.addFlowNode(FLOW, 'step', 'Enviar correo')
+    store.addFlowNode(FLOW, 'step', 'Cerrar el aviso')
+    store.addFlowEdge(FLOW, 'inicio', 'marcar-la-fila')
+    store.addFlowEdge(FLOW, 'marcar-la-fila', 'enviar-correo')
+    store.addFlowEdge(FLOW, 'enviar-correo', 'cerrar-el-aviso')
+    store.addFlowEdge(FLOW, 'cerrar-el-aviso', 'fin')
+    store.removeFlowEdge(FLOW, 'inicio', 'fin')
+  })
+
+  /** Arrastra el asa de una fila `filas` posiciones hacia abajo (negativo = hacia arriba). */
+  function dragRow(fixture: ReturnType<typeof mount>, stepId: string, filas: number): void {
+    const asa = testId(fixture, `flow-step-grip-${stepId}`) as HTMLElement
+    if (!asa) throw new Error(`la fila ${stepId} no tiene asa de arrastre`)
+    asa.setPointerCapture = () => undefined
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 50, clientY: 100, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 50, clientY: 100 + filas * 52 }))
+    fixture.detectChanges()
+    window.dispatchEvent(new MouseEvent('pointerup', { clientX: 50, clientY: 100 + filas * 52 }))
+    fixture.detectChanges()
+  }
+
+  it('arrastrar una fila hacia arriba la sube de puesto y renumera', () => {
+    const fixture = mount()
+
+    dragRow(fixture, 'cerrar-el-aviso', -2)
+
+    expect(testId(fixture, 'flow-step-number-cerrar-el-aviso')?.textContent?.trim()).toBe('1')
+    expect(testId(fixture, 'flow-step-number-marcar-la-fila')?.textContent?.trim()).toBe('2')
+    expect(store.flows()[0].edges).toContainEqual({ from: 'inicio', to: 'cerrar-el-aviso' })
+  })
+
+  it('arrastrar una fila hacia abajo la baja de puesto', () => {
+    const fixture = mount()
+
+    dragRow(fixture, 'marcar-la-fila', 2)
+
+    expect(testId(fixture, 'flow-step-number-marcar-la-fila')?.textContent?.trim()).toBe('3')
+    expect(store.flows()[0].edges).toContainEqual({ from: 'marcar-la-fila', to: 'fin' })
+  })
+
+  it('la guía dice dónde va a caer, y solo mientras se arrastra', () => {
+    const fixture = mount()
+    const asa = testId(fixture, 'flow-step-grip-cerrar-el-aviso') as HTMLElement
+    asa.setPointerCapture = () => undefined
+
+    expect(testId(fixture, 'flow-step-drop-guide')).toBeNull()
+
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 50, clientY: 100, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 50, clientY: 100 - 52 }))
+    fixture.detectChanges()
+    expect(testId(fixture, 'flow-step-drop-guide')).not.toBeNull()
+
+    window.dispatchEvent(new MouseEvent('pointerup', { clientX: 50, clientY: 100 - 52 }))
+    fixture.detectChanges()
+    expect(testId(fixture, 'flow-step-drop-guide')).toBeNull()
+  })
+
+  it('soltar la fila donde estaba no cambia el flujo', () => {
+    const fixture = mount()
+    const antes = store.flows()[0]
+
+    dragRow(fixture, 'enviar-correo', 0)
+
+    expect(store.flows()[0]).toBe(antes)
+  })
+
+  it('el asa no selecciona la fila ni abre su edición', () => {
+    const fixture = mount()
+
+    dragRow(fixture, 'cerrar-el-aviso', -1)
+
+    expect(testId(fixture, 'flow-node-text-input')).toBeNull()
+  })
+
+  it('si el puntero se cancela a mitad, la fila se queda donde estaba', () => {
+    const fixture = mount()
+    const antes = store.flows()[0]
+    const asa = testId(fixture, 'flow-step-grip-cerrar-el-aviso') as HTMLElement
+    asa.setPointerCapture = () => undefined
+
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 50, clientY: 100, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 50, clientY: 100 - 104 }))
+    window.dispatchEvent(new MouseEvent('pointercancel', { clientX: 50, clientY: 100 - 104 }))
+    fixture.detectChanges()
+
+    expect(store.flows()[0]).toBe(antes)
+    expect(testId(fixture, 'flow-step-drop-guide')).toBeNull()
+  })
+})

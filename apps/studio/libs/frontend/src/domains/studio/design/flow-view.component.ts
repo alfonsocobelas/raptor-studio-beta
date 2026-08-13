@@ -270,11 +270,33 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   <div
                     class="group/row hover:bg-accent/40 relative flex items-center gap-2 border-t px-2.5 transition-colors"
                     [class.bg-accent]="isNodeSelected(step.id)"
+                    [class.opacity-50]="rowDrag()?.stepId === step.id"
                     [style.height.px]="groupMetrics.rowHeight"
                     [attr.data-testid]="'flow-step-' + step.id"
                     (click)="selectNode($event, step.id)"
                     (dblclick)="startEdit(step)"
                   >
+                    <!-- la guía de dónde va a caer la fila que se arrastra: se pinta ENCIMA de
+                         la fila que ocupará el puesto, y en la última, debajo -->
+                    @if (dropGuideAt(card.group, i); as borde) {
+                      <span
+                        class="bg-primary pointer-events-none absolute inset-x-0 z-20 h-0.5"
+                        [class.top-0]="borde === 'arriba'"
+                        [class.bottom-0]="borde === 'abajo'"
+                        data-testid="flow-step-drop-guide"
+                      ></span>
+                    }
+                    <!-- asa de la FILA: única zona que la arrastra, para no pelearse con el
+                         clic de seleccionar, el doble clic de editar ni el arrastre de la tarjeta -->
+                    <span
+                      class="text-muted-foreground hover:text-foreground -ml-1.5 shrink-0 cursor-grab select-none text-[11px] leading-none opacity-0 transition-opacity group-hover/row:opacity-100"
+                      [attr.data-testid]="'flow-step-grip-' + step.id"
+                      title="Arrástrame para cambiar el orden de las acciones"
+                      (pointerdown)="startRowDrag($event, card.group, step.id, i)"
+                      (click)="$event.stopPropagation()"
+                      (dblclick)="$event.stopPropagation()"
+                      >⠿</span
+                    >
                     <span
                       class="flow-step-number flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold"
                       [attr.data-testid]="'flow-step-number-' + step.id"
@@ -608,6 +630,8 @@ export class FlowViewComponent {
    * difícil; con dos clics no hay puntería que valga.
    */
   protected readonly linkFrom = signal<string | null>(null)
+  /** Fila en el aire: su tarjeta, qué acción es, de qué puesto sale y a cuál va a caer. */
+  protected readonly rowDrag = signal<{ groupId: string; stepId: string; from: number; to: number } | null>(null)
 
   /** El flujo dibujado lo elige el raíl; aquí solo se lee. */
   protected readonly activeName = this.active.flow
@@ -1018,6 +1042,56 @@ export class FlowViewComponent {
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', cerrar)
     window.addEventListener('pointercancel', cerrar)
+  }
+
+  /**
+   * Arrastre de una FILA dentro de su tarjeta (spec 40): el orden de las acciones es del
+   * diseño, no del layout, así que esto no toca `manual` —toca el flujo—. El puesto destino
+   * se calcula por altura de fila; el recableado lo hace el store al soltar, una sola vez,
+   * para no dejar el diseño con veinte versiones intermedias mientras se arrastra.
+   */
+  protected startRowDrag(down: PointerEvent, group: FlowGroup, stepId: string, fromIndex: number): void {
+    const flow = this.activeName()
+    if (!flow || group.steps.length < 2) return
+    down.preventDefault()
+    down.stopPropagation()
+    const handle = down.currentTarget as HTMLElement
+    handle.setPointerCapture?.(down.pointerId)
+    this.rowDrag.set({ groupId: group.id, stepId, from: fromIndex, to: fromIndex })
+
+    const tope = group.steps.length - 1
+    const onMove = (move: PointerEvent) => {
+      const filas = Math.round((move.clientY - down.clientY) / this.camera().zoom / this.groupMetrics.rowHeight)
+      const to = Math.min(Math.max(fromIndex + filas, 0), tope)
+      this.rowDrag.update(drag => (drag && drag.to !== to ? { ...drag, to } : drag))
+    }
+    // en la ventana, como el arrastre de bloques: la fila se redibuja al reordenar y un
+    // listener colgado de ella se quedaría a medias
+    const cerrar = (soltar: boolean) => () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onCancel)
+      const drag = this.rowDrag()
+      this.rowDrag.set(null)
+      if (soltar && drag) this.store.reorderFlowStep(flow, drag.stepId, drag.to)
+    }
+    const onUp = cerrar(true)
+    const onCancel = cerrar(false)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
+  }
+
+  /**
+   * Borde de la fila `index` donde pintar la guía, si la fila que se arrastra va a caer ahí.
+   * La guía va ARRIBA de la fila que ocupará el puesto, salvo al bajar al último, que va
+   * debajo: es lo que se lee como «esta acción pasa a ser la última».
+   */
+  protected dropGuideAt(group: FlowGroup, index: number): 'arriba' | 'abajo' | null {
+    const drag = this.rowDrag()
+    if (!drag || drag.groupId !== group.id || drag.to === drag.from) return null
+    if (drag.to !== index) return null
+    return drag.to > drag.from ? 'abajo' : 'arriba'
   }
 
   /**
