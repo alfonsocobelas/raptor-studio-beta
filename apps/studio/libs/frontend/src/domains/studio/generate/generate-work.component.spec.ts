@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { GenerateRunner } from './generate-runner'
 import { GenerateWorkComponent } from './generate-work.component'
-import { initialPhases } from './generate-phases'
+import { applyEvent, EXPECTED_INSTALL_MS, initialPhases } from './generate-phases'
 import { plannedItems } from './written-items'
 
 /**
@@ -81,6 +81,22 @@ describe('GenerateWorkComponent', () => {
       expect(at(mount(), 'phase-prepare')?.textContent).toContain('4 s')
     })
 
+    /** Durante los dos minutos de la instalación el número tiene que MOVERSE. */
+    it('la que está en curso cronometra en vivo', () => {
+      vi.useFakeTimers()
+      runner.phases.set(applyEvent(initialPhases({ skipInstall: false }), { phase: 'install' }, Date.now()))
+      const fixture = mount()
+
+      vi.advanceTimersByTime(3000)
+      fixture.detectChanges()
+      expect(at(fixture, 'phase-install')?.textContent).toContain('3 s')
+
+      vi.advanceTimersByTime(4000)
+      fixture.detectChanges()
+      expect(at(fixture, 'phase-install')?.textContent).toContain('7 s')
+      vi.useRealTimers()
+    })
+
     it('la que pasó sin medirse no enseña tiempo inventado', () => {
       runner.phases.update(phases => phases.map(p => (p.key === 'prepare' ? { ...p, status: 'done' as const } : p)))
 
@@ -123,6 +139,27 @@ describe('GenerateWorkComponent', () => {
       expect(at(fixture, 'work-progress')?.getAttribute('aria-valuenow')).toBe('2')
       expect(at(fixture, 'work-progress')?.getAttribute('aria-valuemax')).toBe('3')
       expect(fixture.nativeElement.textContent).toContain('2 de 3')
+    })
+
+    /**
+     * Instalar es el 90% del reloj y no da progreso: si la barra solo contara fases cerradas,
+     * se quedaría clavada justo en el tramo largo. Avanza con la estimación medida.
+     */
+    it('avanza DENTRO de la fase en curso, no solo al cerrarla', () => {
+      vi.useFakeTimers()
+      const started = Date.now()
+      runner.phases.set(applyEvent(initialPhases({ skipInstall: false }), { phase: 'install' }, started))
+      const fixture = mount()
+      const bar = () => (at(fixture, 'work-progress')?.firstElementChild as HTMLElement).style.width
+
+      const atStart = bar()
+      vi.advanceTimersByTime(EXPECTED_INSTALL_MS / 2)
+      fixture.detectChanges()
+
+      // dos fases cerradas de tres, más media fase instalando
+      expect(parseFloat(bar())).toBeCloseTo(((2 + 0.5) / 3) * 100, 0)
+      expect(parseFloat(bar())).toBeGreaterThan(parseFloat(atStart))
+      vi.useRealTimers()
     })
 
     it('lo omitido cuenta como resuelto: no va a pasar nada más ahí', () => {

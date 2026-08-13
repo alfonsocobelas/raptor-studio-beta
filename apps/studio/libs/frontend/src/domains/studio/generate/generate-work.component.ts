@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core'
 import { GenerateRunner } from './generate-runner'
-import type { PhaseState } from './generate-phases'
+import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
 
 /**
  * La obra en marcha (spec 42, maqueta 7C): las fases con su estado y su tiempo, el registro
  * técnico plegado, y en el raíl lo que se está escribiendo del diseño.
  *
  * Toda cifra sale del runner, que a su vez la sacó de la salida del generador o del reloj. Lo
- * que la maqueta pinta y no existe —el porcentaje, los segundos restantes, publicar en un
- * dominio, invitar al equipo, avisar por correo— no está aquí ni insinuado.
+ * que la maqueta pinta y no existe —los segundos restantes, publicar en un dominio, invitar al
+ * equipo, avisar por correo— no está aquí ni insinuado. La barra sí estima dentro de la fase
+ * en curso (`overallProgress`), pero contra tiempos MEDIDOS y sin llegar nunca al final sola.
  *
  * Se inyecta el runner en vez de recibir entradas: el estado es de la generación, no de este
  * componente, y así la pantalla se puede cerrar y reabrir sin perder nada.
@@ -32,7 +33,7 @@ import type { PhaseState } from './generate-phases'
           >
             <div
               class="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              [style.width.%]="(settled() / phases().length) * 100"
+              [style.width.%]="progress() * 100"
             ></div>
           </div>
           <span class="studio-ui text-muted-foreground shrink-0">
@@ -57,9 +58,9 @@ import type { PhaseState } from './generate-phases'
                 </span>
                 <span class="text-muted-foreground block text-[11.5px]">{{ detail(phase) }}</span>
               </span>
-              @if (phase.elapsedMs !== undefined) {
+              @if (elapsed(phase); as ms) {
                 <span class="text-muted-foreground shrink-0 font-mono text-[11.5px]">
-                  {{ (phase.elapsedMs / 1000).toFixed(0) }} s
+                  {{ (ms / 1000).toFixed(0) }} s
                 </span>
               }
             </div>
@@ -146,12 +147,32 @@ export class GenerateWorkComponent {
   protected readonly phases = this.runner.phases
 
   /**
-   * Lo que ya no va a cambiar: cumplidas, omitidas y fallidas. Es el avance que se SABE —no
-   * hay porcentaje de ficheros porque nadie sabe cuántos van a salir.
+   * Lo que ya no va a cambiar: cumplidas, omitidas y fallidas. Es lo que se dice en letra
+   * («2 de 3 fases»), porque un número redondo no debe fingir precisión.
    */
   protected readonly settled = computed(
     () => this.phases().filter(p => p.status === 'done' || p.status === 'skipped' || p.status === 'failed').length
   )
+
+  /**
+   * El latido de la pantalla. Sin él, los cronómetros de la fase en curso serían números
+   * congelados: la señal de fases solo cambia cuando el generador dice algo, y durante la
+   * instalación se calla dos minutos enteros.
+   */
+  private readonly clock = signal(Date.now())
+
+  constructor() {
+    const tick = setInterval(() => this.clock.set(Date.now()), 1000)
+    inject(DestroyRef).onDestroy(() => clearInterval(tick))
+  }
+
+  /** La barra: fases cerradas más la parte andada de la que está en curso. */
+  protected readonly progress = computed(() => overallProgress(this.phases(), this.clock()))
+
+  /** Los segundos de una fila: corriendo si está en curso, congelados en cuanto cierra. */
+  protected elapsed(phase: PhaseState): number | undefined {
+    return elapsedOf(phase, this.clock())
+  }
 
   protected readonly title = computed(() => {
     if (this.runner.generating()) {
