@@ -22,7 +22,7 @@
 
 ## Bloque B — la pantalla
 
-- [ ] **TASK-04**: Tests + `generate-cards.component.ts`: las dos filas presentacionales
+- [x] **TASK-04**: Tests + `generate-cards.component.ts`: las dos filas presentacionales
       (elección y complemento). Marcan la elegida, no dejan pulsar la apagada y enseñan la
       pastilla «Próximamente» con su razón.
 

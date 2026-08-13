@@ -152,6 +152,25 @@ Dos selectores, sin estado y sin inyecciones:
 Ambas usan `.studio-ui`, `.studio-eyebrow` y `.studio-box` para no reinventar la tipografía
 del estudio.
 
+### Entradas con decorador, no con `input()` (restricción del runner)
+
+El runner de tests es vitest **sin plugin de Angular**: compila en **JIT**, y en JIT las
+entradas y salidas de señal **no se registran**. Comprobado con una sonda:
+
+```
+@Component({ template: '{{ label() }}' })  class A { label = input('vacío') }
+@Component({ template: '{{ label }}' })    class B { @Input() label = 'vacío' }
+
+setInput('label', 'puesto') →  A: NG0303, no se puede montar
+                               B: pinta «puesto»
+```
+
+Por eso estos dos componentes usan `@Input()`/`@Output()`. No es preferencia de estilo: con
+`input()` no habría manera de montarlos en un test, y arreglarlo de verdad es cambiar el
+runner (plugin AOT), que es otra tarea. Lo mismo vale para cualquier componente nuevo de esta
+spec que haya que montar. El resto del estudio sigue con señales porque **no tiene tests de
+componente con entradas** — nadie se había topado con esto todavía.
+
 ## Compatibilidad con los smoke tools
 
 Se conservan los `data-testid`: `open-wizard`, `wizard-name`, `wizard-install`,
