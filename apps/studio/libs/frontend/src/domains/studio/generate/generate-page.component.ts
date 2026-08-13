@@ -70,11 +70,24 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
               [attr.data-testid]="'wizard-step-' + item.id"
               (click)="goTo(item.id)"
             >
-              <span class="wizard-pip">{{ item.state === 'done' ? '✓' : item.ordinal }}</span>
+              <span
+                class="wizard-pip"
+                [class.bg-emerald-500]="item.state === 'done'"
+                [class.border-emerald-500]="item.state === 'done'"
+                [attr.data-testid]="'wizard-pip-' + item.id"
+                >{{ item.state === 'done' ? '✓' : item.ordinal }}</span
+              >
               {{ item.label }}
             </button>
             @if (!$last) {
-              <span class="bg-border h-px w-6"></span>
+              <!-- el tramo se pinta cuando lo que hay AL OTRO LADO ya está cumplido. Con cuerpo
+                   (2px y redondeado): a 1px el verde no se veía. -->
+              <span
+                class="h-0.5 w-9 rounded-full"
+                [class.bg-emerald-500]="steps()[$index + 1].state === 'done'"
+                [class.bg-border]="steps()[$index + 1].state !== 'done'"
+                [attr.data-testid]="'wizard-line-' + item.id"
+              ></span>
             }
           }
         </nav>
@@ -276,10 +289,10 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
       border: 1px solid var(--border);
       font-size: 10px;
     }
+    /* El verde de lo cumplido llega por utilidad (bg-emerald-500, el mismo del indicador de
+       guardado del lienzo); aquí solo la tinta que va encima. */
     .wizard-step[data-state='done'] .wizard-pip {
-      background-color: var(--foreground);
-      border-color: var(--foreground);
-      color: var(--background);
+      color: #fff;
     }
     .wizard-step[data-state='current'] .wizard-pip {
       background-color: #f15539;

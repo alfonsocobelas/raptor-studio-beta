@@ -131,6 +131,28 @@ describe('GeneratePageComponent', () => {
       expect(at(fixture, 'wizard-step-generate')?.getAttribute('data-state')).toBe('pending')
     })
 
+    /** Lo cumplido se lee de un vistazo por el color, no por el icono: verde es «hecho». */
+    it('los pasos cumplidos se ponen verdes, y la línea que los une también', async () => {
+      const fixture = await mount()
+      const green = (testid: string): boolean => at(fixture, testid)?.classList.contains('bg-emerald-500') === true
+
+      // en el paso 2: solo Vistas está cumplido
+      expect(green('wizard-pip-views')).toBe(true)
+      expect(green('wizard-pip-infra')).toBe(false)
+      expect(green('wizard-line-views')).toBe(false)
+
+      at(fixture, 'generate-primary')?.click()
+      fixture.detectChanges()
+
+      // en el paso 3: Vistas e Infraestructura, y la línea entre ambos
+      expect(green('wizard-pip-views')).toBe(true)
+      expect(green('wizard-pip-infra')).toBe(true)
+      expect(green('wizard-line-views')).toBe(true)
+      // la línea que entra en el paso en curso NO se pinta: ese tramo no está hecho
+      expect(green('wizard-line-infra')).toBe(false)
+      expect(green('wizard-pip-generate')).toBe(false)
+    })
+
     it('volver al lienzo cierra la pantalla', async () => {
       const fixture = await mount()
       let closed = false
