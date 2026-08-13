@@ -25,7 +25,7 @@
       omitida cuando se pidió no instalar; error marca en fallo la que estaba en curso; un
       evento repetido no reinicia el cronómetro; fases nunca alcanzadas quedan pendientes.
 
-- [ ] **TASK-04**: Tests + `written-items.ts`: qué se está escribiendo, cruzando rutas de
+- [x] **TASK-04**: Tests + `written-items.ts`: qué se está escribiendo, cruzando rutas de
       `CREATE` con el diseño y las ranuras. Casos: entidad y vista del diseño se marcan al
       aparecer su ruta; el módulo de auth solo se lista si hay autenticación; una ruta que no
       casa con nada no marca nada (nunca inventa); el orden es el del diseño.
