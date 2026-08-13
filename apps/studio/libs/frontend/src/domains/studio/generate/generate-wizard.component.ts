@@ -42,7 +42,7 @@ interface GenerateEvent {
   template: `
     <button
       type="button"
-      class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
+      class="bg-primary text-primary-foreground generate-cta rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
       data-testid="open-wizard"
       [disabled]="!canPublish()"
       [title]="canPublish() ? 'Generar aplicación' : 'Diseña al menos una vista con un bloque antes de generar'"
@@ -212,6 +212,15 @@ interface GenerateEvent {
           }
         </div>
       </div>
+    }
+  `,
+  styles: `
+    /* En noche el CTA dominante se invierte a papel y un botón blanco es lo que más
+       pesa de la pantalla. Toma el naranja de la marca —el mismo #f15539— con la
+       tinta oscura encima, igual que la entidad elegida del diagrama. */
+    :host-context(.dark) .generate-cta:not(:disabled) {
+      background-color: #f15539;
+      color: var(--brand-foreground);
     }
   `
 })
