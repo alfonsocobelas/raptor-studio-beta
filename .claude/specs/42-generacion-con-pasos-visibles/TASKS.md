@@ -8,7 +8,7 @@
 
 ## Bloque A — que el borde diga lo que hace
 
-- [ ] **TASK-01**: Tests + `describeProgress` devuelve además una **clave de fase** estable
+- [x] **TASK-01**: Tests + `describeProgress` devuelve además una **clave de fase** estable
       (`prepare | write | configure | install | error`) y el **número de paquetes** de la línea
       `added N packages`. El controlador reemite `phase` y `packages` en el NDJSON. Aditivo:
       `step` sigue viajando igual.

@@ -93,7 +93,15 @@ export class StudioGenerateController {
         const progress = describeProgress(line)
         if (!progress) continue
         if (progress.file) files += 1
-        emit({ type: 'progress', step: progress.step, file: progress.file, files })
+        // `phase` y `packages` son aditivos (spec 42): quien solo mirara `step` sigue igual
+        emit({
+          type: 'progress',
+          phase: progress.phase,
+          step: progress.step,
+          file: progress.file,
+          files,
+          ...(progress.packages !== undefined ? { packages: progress.packages } : {})
+        })
       }
     }
     child.stdout.on('data', consume)
