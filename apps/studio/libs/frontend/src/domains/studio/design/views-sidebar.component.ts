@@ -226,10 +226,13 @@ const BLOCK_TOOLS: BlockTool[] = [
     .block-tool:not(:disabled):hover .grip {
       opacity: 1;
     }
-    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto: como
-       el fondo ya es la marca, lo que lo señala es el cerco, no otro color. */
+    /* El que está en el aire se VACÍA en el raíl mientras dura el gesto: pierde el
+       relleno y se queda en contorno sobre el fondo, así se ve de un vistazo cuál de
+       los componentes es el que va volando. */
     .block-tool.dragging {
-      box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 35%, transparent);
+      background-color: color-mix(in oklab, var(--brand) 10%, var(--background));
+      color: var(--brand);
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand) 55%, transparent);
     }
     .block-tool.dragging .grip {
       opacity: 1;
