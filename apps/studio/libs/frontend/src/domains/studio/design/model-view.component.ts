@@ -185,6 +185,7 @@ interface DiagramEdge {
             <div
               class="bg-card model-card group absolute cursor-pointer overflow-hidden rounded-lg border"
               [class.ring-2]="linking()?.from === node.name"
+              [class.model-card-chosen]="node.name === chosen()"
               [style.left.px]="node.box.x"
               [style.top.px]="node.box.y"
               [style.width.px]="node.box.width"
@@ -280,10 +281,17 @@ interface DiagramEdge {
       border-color: transparent;
     }
     /* En noche la tinta es papel: una cabecera blanca grita más que la caja entera.
-       La entidad elegida se tiñe de marca, igual que la columna elegida. */
+       La entidad elegida se tiñe de marca. Naranja literal y no var(--brand), porque
+       en oscuro ese token se aclara a #fe6749 (salmón) y aquí queremos el mismo
+       #f15539 de la marca del producto: dos naranjas casi iguales al lado se notan. */
     :host-context(.dark) .model-card-header-chosen {
-      background-color: var(--brand);
+      background-color: #f15539;
       color: var(--brand-foreground);
+    }
+    /* La caja elegida se recerca de naranja: solo cambia el color del borde de 1px
+       que ya tenía, así que al elegirla no se mueve ni engorda. */
+    .model-card-chosen {
+      border-color: #f15539;
     }
     /* La columna elegida se tiñe de marca, no solo se marca en negrita (19A). */
     .model-field-chosen {
