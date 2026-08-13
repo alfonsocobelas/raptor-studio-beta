@@ -392,9 +392,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     [attr.height]="diamondSide(item.box)"
                     [attr.rx]="decisionMetrics.corner"
                     [attr.transform]="'rotate(45 ' + item.box.width / 2 + ' ' + item.box.height / 2 + ')'"
-                    class="fill-card flow-diamond"
+                    class="flow-diamond"
                     [class.stroke-primary]="isNodeSelected(item.node.id)"
-                    [class.stroke-foreground]="!isNodeSelected(item.node.id)"
                     [attr.stroke-width]="isNodeSelected(item.node.id) ? 3 : isLinkTarget(item.node.id) ? 2.5 : 1.5"
                   />
                 </svg>
@@ -499,6 +498,19 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     /* El naranja de la casa, una sola vez: lo usan la rejilla y el cierre del proceso. */
     :host {
       --flow-accent: #d75f3d;
+      /* El morado de la bifurcación: el complementario del naranja de la casa, así la
+         condición se distingue de las acciones sin salirse de la paleta. Sobre el papel
+         claro va el violeta macizo; el lavanda de la captura se pierde en el crema. */
+      --flow-decision: #7c3aed;
+      /* El fondo es un tinte del mismo morado sobre el papel: sube el rombo del fondo sin
+         tapar su texto. En oscuro NO se calcula: es el valor que fijó Alfonso. */
+      --flow-decision-fill: color-mix(in oklab, var(--flow-decision) 10%, var(--card));
+    }
+    /* En oscuro el violeta macizo se enfanga contra el papel negro: ahí mandan el LAVANDA y
+       el fondo que fijó Alfonso sobre la captura (2026-08-13). */
+    :host-context(.dark) {
+      --flow-decision: #a88cf6;
+      --flow-decision-fill: #241c32;
     }
     /* Misma rejilla de PUNTOS que los lienzos de Modelo y Vistas (decisión de Alfonso,
        2026-08-11): los tres son el mismo papel, así que se dibujan igual — celda de 24px
@@ -517,9 +529,18 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
       stroke: color-mix(in oklab, var(--foreground) 35%, var(--border));
       filter: drop-shadow(0 1px 2px oklch(0 0 0 / 8%)) drop-shadow(0 6px 14px oklch(0 0 0 / 10%));
     }
-    /* El rombo lleva la misma sombra que las píldoras: flota sobre el papel igual que ellas. */
+    /* La condición va en MORADO: es el único punto del flujo donde el proceso se bifurca,
+       y con el borde negro se leía igual que una acción más. El relleno lleva la dosis
+       mínima del mismo color para que el rombo se vea teñido sin tapar su texto.
+       La sombra es la misma que las píldoras: flota sobre el papel igual que ellas. */
     .flow-diamond {
+      fill: var(--flow-decision-fill);
+      stroke: var(--flow-decision);
       filter: drop-shadow(0 1px 2px oklch(0 0 0 / 8%)) drop-shadow(0 6px 14px oklch(0 0 0 / 10%));
+    }
+    /* Seleccionado manda el color de selección; dos clases para ganarle a la utilidad. */
+    .flow-diamond.stroke-primary {
+      stroke: var(--primary);
     }
     /* Los nodos flotan sobre la rejilla, como las cajas del modelo. */
     .flow-card {
