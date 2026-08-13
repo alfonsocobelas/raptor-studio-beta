@@ -289,9 +289,16 @@ interface DiagramEdge {
       color: var(--brand-foreground);
     }
     /* Los puntitos de clave y de referencia, en naranja rebajado: señalan sin
-       competir con la columna elegida, que sí lleva el naranja pleno. */
+       competir con la columna elegida, que sí lleva el naranja pleno. Se rebaja
+       mezclando con el PAPEL de la caja y no con transparent: en noche mezclar con
+       transparent los hundía hacia el fondo y a 1.5px eso se ve como borrón. */
     .model-dot {
-      background-color: color-mix(in oklab, #f15539 38%, transparent);
+      background-color: color-mix(in oklab, #f15539 62%, var(--card));
+    }
+    /* En noche el papel resta luz en vez de sumarla, así que el punto necesita más
+       naranja para pesar lo mismo que en claro. */
+    :host-context(.dark) .model-dot {
+      background-color: color-mix(in oklab, #f15539 88%, var(--card));
     }
     /* La caja elegida se recerca de naranja: solo cambia el color del borde de 1px
        que ya tenía, así que al elegirla no se mueve ni engorda. */
