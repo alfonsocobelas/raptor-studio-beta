@@ -18,6 +18,7 @@ import {
   draftToResource,
   generableHere,
   newDraftResource,
+  reorderFlowStep,
   type DesignBlock,
   type DesignPage,
   type DraftEnumValue,
@@ -650,6 +651,22 @@ export class DesignStore {
       ...flow,
       edges: flow.edges.filter(e => !(e.from === from && e.to === to && e.label === label))
     }))
+  }
+
+  /**
+   * Mueve una acción a otra fila de SU tarjeta (spec 40). El recableado lo hace el dominio;
+   * aquí solo se decide si hay algo que guardar: si el flujo vuelve idéntico —soltar la fila
+   * donde ya estaba—, no se sustituye nada, y así el gesto en vacío no ensucia el diseño.
+   */
+  reorderFlowStep(flowName: string, stepId: string, toIndex: number): boolean {
+    const flow = this._flows().find(f => f.name === flowName)
+    if (!flow) {
+      this._lastError.set(`No existe el flujo «${flowName}»`)
+      return false
+    }
+    const reordenado = reorderFlowStep(flow, stepId, toIndex)
+    if (reordenado === flow) return true
+    return this.mutateFlows(this._flows().map(f => (f.name === flowName ? reordenado : f)))
   }
 
   private updateFlow(name: string, fn: (flow: BusinessFlow) => BusinessFlow): boolean {

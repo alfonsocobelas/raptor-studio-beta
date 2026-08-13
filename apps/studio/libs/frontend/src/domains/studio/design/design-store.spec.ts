@@ -570,3 +570,45 @@ describe('insertar un paso EN MEDIO de un tramo (el «+» de la referencia)', ()
     expect(store.flows()[0].nodes).toHaveLength(2)
   })
 })
+
+describe('reordenar las acciones de una tarjeta (spec 40)', () => {
+  const conCadena = (): DesignStore => {
+    const store = new DesignStore()
+    store.addFlow('Aviso')
+    store.addFlowNode('Aviso', 'step', 'Marcar la fila')
+    store.addFlowNode('Aviso', 'step', 'Enviar correo')
+    store.addFlowNode('Aviso', 'step', 'Cerrar el aviso')
+    store.addFlowEdge('Aviso', 'inicio', 'marcar-la-fila')
+    store.addFlowEdge('Aviso', 'marcar-la-fila', 'enviar-correo')
+    store.addFlowEdge('Aviso', 'enviar-correo', 'cerrar-el-aviso')
+    store.addFlowEdge('Aviso', 'cerrar-el-aviso', 'fin')
+    store.removeFlowEdge('Aviso', 'inicio', 'fin')
+    return store
+  }
+
+  it('mover una acción recablea la cadena del flujo guardado', () => {
+    const store = conCadena()
+
+    expect(store.reorderFlowStep('Aviso', 'cerrar-el-aviso', 0)).toBe(true)
+
+    const flow = store.flows()[0]
+    expect(flow.edges).toContainEqual({ from: 'inicio', to: 'cerrar-el-aviso' })
+    expect(flow.edges).toContainEqual({ from: 'cerrar-el-aviso', to: 'marcar-la-fila' })
+    expect(flow.edges).toContainEqual({ from: 'enviar-correo', to: 'fin' })
+  })
+
+  it('dejarla donde estaba no toca el flujo: ni una arista nueva', () => {
+    const store = conCadena()
+    const antes = store.flows()[0]
+
+    expect(store.reorderFlowStep('Aviso', 'enviar-correo', 1)).toBe(true)
+    // el MISMO objeto: sin objeto nuevo no hay guardado que hacer
+    expect(store.flows()[0]).toBe(antes)
+  })
+
+  it('sobre un flujo que no existe no hace nada', () => {
+    const store = conCadena()
+
+    expect(store.reorderFlowStep('Fantasma', 'marcar-la-fila', 1)).toBe(false)
+  })
+})
