@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
-import { GenerateRunner } from './generate-runner'
+import { GenerateRunner, type GenerateRequest } from './generate-runner'
 
 /** Un cuerpo NDJSON troceado a voluntad: así se prueba el corte a mitad de línea. */
 const streaming = (chunks: string[], ok = true): typeof fetch => {
@@ -28,6 +28,15 @@ const runner = (): GenerateRunner => {
 
 const line = (event: Record<string, unknown>): string => `${JSON.stringify(event)}\n`
 
+/** Lo mínimo que hay que mandar a generar; los tests que miran otra cosa parten de aquí. */
+const ask = (name: string): GenerateRequest => ({
+  name,
+  slots: {},
+  plugins: [],
+  skipInstall: true,
+  design: { appName: name, palette: 'ocean', resources: [], pages: [] } as unknown as GenerateRequest['design']
+})
+
 describe('GenerateRunner', () => {
   afterEach(() => vi.unstubAllGlobals())
 
@@ -50,7 +59,7 @@ describe('GenerateRunner', () => {
     )
     const run = runner()
 
-    await run.run({ name: 'taller' })
+    await run.run(ask('taller'))
 
     expect(run.filesWritten()).toBe(41)
     expect(run.lastFile()).toBe('libs/backend/orden.ts')
@@ -65,7 +74,7 @@ describe('GenerateRunner', () => {
     vi.stubGlobal('fetch', streaming([event.slice(0, 20), event.slice(20)]))
     const run = runner()
 
-    await run.run({ name: 'mini' })
+    await run.run(ask('mini'))
 
     expect(run.ok()).toBe(true)
     expect(run.filesWritten()).toBe(7)
@@ -75,7 +84,7 @@ describe('GenerateRunner', () => {
     vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 1, root: 'apps/mini' })]))
     const run = runner()
 
-    await run.run({ name: 'mini' })
+    await run.run(ask('mini'))
 
     expect(run.generating()).toBe(false)
     expect(run.step()).toBeNull()
@@ -86,7 +95,7 @@ describe('GenerateRunner', () => {
     vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 1, root: 'apps/mini' })]))
     const run = runner()
 
-    await run.run({ name: 'mini' })
+    await run.run(ask('mini'))
     const stopped = run.seconds()
     vi.advanceTimersByTime(5000)
 
@@ -98,7 +107,7 @@ describe('GenerateRunner', () => {
     vi.stubGlobal('fetch', streaming([], false))
     const run = runner()
 
-    await run.run({ name: 'mini' })
+    await run.run(ask('mini'))
 
     expect(run.ok()).toBe(false)
     expect(run.output()).toContain('500')
@@ -112,7 +121,7 @@ describe('GenerateRunner', () => {
     )
     const run = runner()
 
-    await run.run({ name: 'mini' })
+    await run.run(ask('mini'))
 
     expect(run.ok()).toBe(false)
     expect(run.output()).toBe('error: la ranura auth exige postgres')
@@ -121,13 +130,146 @@ describe('GenerateRunner', () => {
   it('una segunda generación no arrastra el resultado de la anterior', async () => {
     vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 9, root: 'apps/uno', output: 'ok' })]))
     const run = runner()
-    await run.run({ name: 'uno' })
+    await run.run(ask('uno'))
 
     vi.stubGlobal('fetch', streaming([line({ type: 'progress', step: 'Validando', files: 2 })]))
-    await run.run({ name: 'dos' })
+    await run.run(ask('dos'))
 
     expect(run.filesWritten()).toBe(2)
     expect(run.elapsed()).toBeNull()
     expect(run.output()).toBeNull()
+  })
+
+  /**
+   * Spec 42: el runner ya no cuenta solo ficheros, cuenta la OBRA — en qué fase va, qué piezas
+   * del diseño han salido y cómo acabó todo.
+   */
+  describe('la obra', () => {
+    const request: GenerateRequest = {
+      name: 'boutique',
+      slots: { auth: 'single-tenant', infra: 'none', database: 'postgres' },
+      plugins: [],
+      skipInstall: false,
+      design: {
+        appName: 'boutique',
+        palette: 'ocean',
+        resources: [
+          {
+            name: 'prenda',
+            plural: 'prendas',
+            labelSingular: 'Prenda',
+            labelPlural: 'Prendas',
+            gender: 'f',
+            fields: []
+          }
+        ],
+        pages: [{ title: 'Catálogo', blocks: [{ kind: 'table', resource: 'prenda' }] }]
+      } as unknown as GenerateRequest['design']
+    }
+
+    const status = (run: GenerateRunner, key: string): string | undefined =>
+      run.phases().find(p => p.key === key)?.status
+
+    it('antes de arrancar ya sabe qué fases van a ocurrir', async () => {
+      const run = runner()
+      vi.stubGlobal('fetch', streaming([line({ type: 'progress', phase: 'prepare', step: 'Preparando' })]))
+
+      await run.run(request)
+
+      expect(run.phases().map(p => p.key)).toEqual(['prepare', 'write', 'configure', 'install'])
+    })
+
+    it('si no se instala, esa fase queda omitida desde el principio', async () => {
+      const run = runner()
+      vi.stubGlobal('fetch', streaming([line({ type: 'progress', phase: 'prepare' })]))
+
+      await run.run({ ...request, skipInstall: true })
+
+      expect(status(run, 'install')).toBe('skipped')
+    })
+
+    it('va cerrando fases conforme el generador avanza', async () => {
+      const run = runner()
+      vi.stubGlobal(
+        'fetch',
+        streaming([
+          line({ type: 'progress', phase: 'prepare' }),
+          line({ type: 'progress', phase: 'write', files: 40, file: 'libs/x/prenda.ts' }),
+          line({ type: 'done', ok: true, files: 40, root: 'apps/boutique', output: 'listo' })
+        ])
+      )
+
+      await run.run(request)
+
+      expect(status(run, 'prepare')).toBe('done')
+      expect(status(run, 'write')).toBe('done')
+    })
+
+    it('marca lo que el diseño prometía conforme aparece su código', async () => {
+      const run = runner()
+      vi.stubGlobal(
+        'fetch',
+        streaming([line({ type: 'progress', phase: 'write', files: 1, file: 'libs/frontend/x/prenda.service.ts' })])
+      )
+
+      await run.run(request)
+
+      expect(run.written().find(i => i.label === 'Prendas')?.done).toBe(true)
+      expect(run.written().find(i => i.label === 'Autenticación')?.done).toBe(false)
+    })
+
+    it('el desenlace es explícito, no se deduce de un booleano suelto', async () => {
+      const run = runner()
+      vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 3, root: 'apps/x', output: 'ok' })]))
+      await run.run(request)
+      expect(run.outcome()).toBe('ok')
+
+      vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: false, output: 'reventó' })]))
+      await run.run(request)
+      expect(run.outcome()).toBe('failed')
+    })
+
+    it('cancelar no es fallar: se cuenta como cancelada y lo dice', async () => {
+      const run = runner()
+      // un stream que no termina nunca, como una generación de verdad a mitad
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: { signal: AbortSignal }) => ({
+          ok: true,
+          status: 200,
+          body: {
+            getReader: () => ({
+              read: () =>
+                new Promise((_resolve, reject) =>
+                  init.signal.addEventListener('abort', () => reject(new DOMException('abortada', 'AbortError')))
+                )
+            })
+          }
+        })) as unknown as typeof fetch
+      )
+
+      const running = run.run(request)
+      await Promise.resolve()
+      await Promise.resolve()
+      run.cancel()
+      await running
+
+      expect(run.outcome()).toBe('cancelled')
+      expect(run.generating()).toBe(false)
+      expect(run.output()).toContain('Cancelada')
+      expect(run.ok()).toBe(false)
+    })
+
+    it('una generación nueva no arrastra el desenlace de la anterior', async () => {
+      const run = runner()
+      vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: false, output: 'reventó' })]))
+      await run.run(request)
+
+      vi.stubGlobal('fetch', streaming([line({ type: 'progress', phase: 'prepare' })]))
+      await run.run(request)
+
+      expect(run.outcome()).toBeNull()
+      expect(run.output()).toBeNull()
+    })
   })
 })

@@ -32,7 +32,7 @@
 
 ## Bloque C — el estado
 
-- [ ] **TASK-05**: Tests + `GenerateRunner` suma `phases`, `written`, `packages`, `outcome` y
+- [x] **TASK-05**: Tests + `GenerateRunner` suma `phases`, `written`, `packages`, `outcome` y
       `cancel()` (aborta el `fetch`). Casos con `fetch` falso: cancelar deja `outcome` en
       `cancelled` y no en error; una generación nueva limpia el desenlace anterior.
 
