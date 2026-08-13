@@ -251,8 +251,10 @@
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
+/* En oscuro, #302D2B elegido por Alfonso (2026-08-13): el mismo papel de lino en
+   negativo, más claro que el cromo de la barra y del panel derecho (#1d1c21). */
 :root.dark .studio-rail {
-  background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
+  background-color: #302d2b;
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.
