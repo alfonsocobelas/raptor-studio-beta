@@ -251,12 +251,11 @@
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
-/* En oscuro, #221f1e = oklch(0.245 0.004 60): la MISMA luminancia que --card, así que
-   el raíl y las cajas del diagrama son el mismo material, y con el croma casi a cero
-   —el gris de antes lo tenía en tono 69, a 37° del naranja de marca, y lo apagaba—.
-   Con el fondo casi neutro, los botones naranjas del raíl son lo único saturado. */
+/* En oscuro, #1b1917: la tinta de la identidad —la misma que en claro es --foreground
+   y la pastilla de la marca—, ahora como fondo. Croma bajísimo, así que los botones
+   naranjas del raíl son lo único saturado del marco y suben a 5,1:1 de contraste. */
 :root.dark .studio-rail {
-  background-color: #221f1e;
+  background-color: #1b1917;
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.
