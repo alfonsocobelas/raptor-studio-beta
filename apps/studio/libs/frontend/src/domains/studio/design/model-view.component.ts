@@ -224,7 +224,7 @@ interface DiagramEdge {
                 <span class="text-foreground truncate">id</span>
                 <span class="flex items-center gap-1.5">
                   <span class="text-[10px] uppercase tracking-wider">clave</span>
-                  <span class="bg-foreground/70 inline-block size-1.5 rounded-full"></span>
+                  <span class="model-dot inline-block size-1.5 rounded-full"></span>
                 </span>
               </div>
 
@@ -243,7 +243,7 @@ interface DiagramEdge {
                   <span class="flex items-center gap-1.5">
                     <span class="text-[10px] uppercase tracking-wider">{{ field.type }}</span>
                     @if (field.isRef) {
-                      <span class="bg-foreground/70 inline-block size-1.5 rounded-full"></span>
+                      <span class="model-dot inline-block size-1.5 rounded-full"></span>
                     }
                   </span>
                 </button>
@@ -287,6 +287,11 @@ interface DiagramEdge {
     :host-context(.dark) .model-card-header-chosen {
       background-color: #f15539;
       color: var(--brand-foreground);
+    }
+    /* Los puntitos de clave y de referencia, en naranja rebajado: señalan sin
+       competir con la columna elegida, que sí lleva el naranja pleno. */
+    .model-dot {
+      background-color: color-mix(in oklab, #f15539 45%, transparent);
     }
     /* La caja elegida se recerca de naranja: solo cambia el color del borde de 1px
        que ya tenía, así que al elegirla no se mueve ni engorda. */

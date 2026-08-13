@@ -37,6 +37,25 @@ describe('ModelViewComponent', () => {
     expect(card(fixture, 'cliente').classList.contains('model-card-chosen')).toBe(false)
   })
 
+  it('el puntito de la clave es de marca, no de tinta', () => {
+    const fixture = mount()
+    const row = fixture.nativeElement.querySelector('[data-testid="model-field-producto-id"]')
+
+    expect(row.querySelector('.model-dot')).not.toBeNull()
+    expect(row.querySelector('.bg-foreground\\/70')).toBeNull()
+  })
+
+  it('el puntito de una columna que apunta a otra entidad también es de marca', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+
+    const fixture = mount()
+    const row = fixture.nativeElement.querySelector('[data-testid^="model-field-pedido-producto"]')
+    if (!row) throw new Error('falta la columna de referencia')
+
+    expect(row.querySelector('.model-dot')).not.toBeNull()
+  })
+
   it('sin entidad elegida ninguna caja lleva borde de marca', () => {
     active.selectResource(null)
 

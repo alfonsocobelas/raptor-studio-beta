@@ -82,6 +82,14 @@ import { DesignStore } from './design-store'
         Selecciona una entidad del diagrama para editar sus columnas en el inspector.
       </p>
     </aside>
+  `,
+  styles: `
+    /* Un solo naranja en todo el estudio. El token global se aclara a #fe6749 en
+       oscuro, que al lado de la marca y del cerco de la caja elegida se lee como un
+       segundo naranja; fijándolo aquí, bg-brand y text-brand del raíl caen solos. */
+    :host {
+      --brand: #f15539;
+    }
   `
 })
 export class ModelSidebarComponent {
