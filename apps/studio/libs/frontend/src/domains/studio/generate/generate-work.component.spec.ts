@@ -51,8 +51,9 @@ describe('GenerateWorkComponent', () => {
 
       expect(at(fixture, 'phase-prepare')?.textContent).toContain('Preparando el proyecto')
       expect(at(fixture, 'phase-write')?.textContent).toContain('Escribiendo el código')
-      expect(at(fixture, 'phase-configure')).not.toBeNull()
       expect(at(fixture, 'phase-install')).not.toBeNull()
+      // «Ajustando la configuración» ya no existe: no se encendía nunca (log del 2026-08-13)
+      expect(at(fixture, 'phase-configure')).toBeNull()
     })
 
     it('cada una lleva su estado, para que se lea de un vistazo', () => {
@@ -120,8 +121,8 @@ describe('GenerateWorkComponent', () => {
       const fixture = mount()
 
       expect(at(fixture, 'work-progress')?.getAttribute('aria-valuenow')).toBe('2')
-      expect(at(fixture, 'work-progress')?.getAttribute('aria-valuemax')).toBe('4')
-      expect(fixture.nativeElement.textContent).toContain('2 de 4')
+      expect(at(fixture, 'work-progress')?.getAttribute('aria-valuemax')).toBe('3')
+      expect(fixture.nativeElement.textContent).toContain('2 de 3')
     })
 
     it('lo omitido cuenta como resuelto: no va a pasar nada más ahí', () => {

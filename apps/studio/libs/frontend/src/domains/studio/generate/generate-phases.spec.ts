@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { applyDone, applyEvent, initialPhases, type PhaseState } from './generate-phases'
+import {
+  applyDone,
+  applyEvent,
+  elapsedOf,
+  EXPECTED_FILES,
+  EXPECTED_INSTALL_MS,
+  initialPhases,
+  overallProgress,
+  type PhaseState
+} from './generate-phases'
 
 const status = (phases: PhaseState[], key: string): string => phases.find(p => p.key === key)?.status ?? 'ausente'
 const phase = (phases: PhaseState[], key: string): PhaseState => {
@@ -10,9 +19,11 @@ const phase = (phases: PhaseState[], key: string): PhaseState => {
 
 describe('initialPhases', () => {
   it('las pinta todas desde el principio, pendientes y en el orden REAL del generador', () => {
-    // escribe, ajusta y por último instala: el orden de la maqueta (instalar el segundo)
-    // no es el que ocurre, y la pantalla cuenta lo que pasa, no lo que se dibujó
-    expect(initialPhases({ skipInstall: false }).map(p => p.key)).toEqual(['prepare', 'write', 'configure', 'install'])
+    // prepara, escribe y por último instala: el orden de la maqueta (instalar el segundo)
+    // no es el que ocurre, y la pantalla cuenta lo que pasa, no lo que se dibujó.
+    // «Ajustando la configuración» NO está: en la generación real (log de 1421 líneas del
+    // 2026-08-13) no salió ni un UPDATE, así que era una fila que nunca se encendía.
+    expect(initialPhases({ skipInstall: false }).map(p => p.key)).toEqual(['prepare', 'write', 'install'])
     expect(initialPhases({ skipInstall: false }).every(p => p.status === 'pending')).toBe(true)
   })
 
@@ -81,7 +92,6 @@ describe('applyEvent', () => {
 
     expect(status(phases, 'write')).toBe('done')
     expect(phase(phases, 'write').elapsedMs).toBeUndefined()
-    expect(status(phases, 'configure')).toBe('done')
   })
 
   it('no revive lo omitido: si no se instala, saltársela no la marca cumplida', () => {
@@ -91,25 +101,25 @@ describe('applyEvent', () => {
   })
 
   /**
-   * `CREATE` y `UPDATE` se intercalan en la salida de Nx. La lista es una línea de tiempo:
-   * si retrocediera, la pantalla parpadearía entre dos filas toda la generación.
+   * Las líneas de npm y los `CREATE` pueden solaparse en la salida. La lista es una línea de
+   * tiempo: si retrocediera, la pantalla parpadearía entre dos filas toda la generación.
    */
   it('no retrocede: una fase anterior que reaparece no vuelve a ponerse en curso', () => {
     const phases = [
       { phase: 'write' as const, at: 1000 },
-      { phase: 'configure' as const, at: 2000 },
+      { phase: 'install' as const, at: 2000 },
       { phase: 'write' as const, at: 2500 }
     ].reduce((state, e) => applyEvent(state, { phase: e.phase }, e.at), start)
 
-    expect(status(phases, 'configure')).toBe('running')
+    expect(status(phases, 'install')).toBe('running')
     expect(status(phases, 'write')).toBe('done')
   })
 
   it('pero sigue contando sus ficheros aunque la fase ya pasara', () => {
     const writing = applyEvent(start, { phase: 'write', files: 10 }, 1000)
-    const configuring = applyEvent(writing, { phase: 'configure' }, 2000)
+    const installing = applyEvent(writing, { phase: 'install' }, 2000)
 
-    const later = applyEvent(configuring, { phase: 'write', files: 33 }, 2500)
+    const later = applyEvent(installing, { phase: 'write', files: 33 }, 2500)
 
     expect(phase(later, 'write').files).toBe(33)
   })
@@ -127,6 +137,88 @@ describe('applyEvent', () => {
 
   it('un evento sin fase (backend viejo) se ignora sin romper', () => {
     expect(applyEvent(start, {}, 1000)).toEqual(start)
+  })
+
+  /**
+   * El backend sigue distinguiendo `UPDATE` como fase propia. Sin fila que lo cuente, ese
+   * evento es el mismo momento que escribir —Nx vuelca el árbol— y ahí se contabiliza.
+   */
+  it('un UPDATE cae en la fase que escribe, que es cuando ocurre', () => {
+    const phases = applyEvent(applyEvent(start, { phase: 'write' }, 1000), { phase: 'configure' }, 3000)
+
+    expect(status(phases, 'write')).toBe('running')
+    expect(status(phases, 'install')).toBe('pending')
+  })
+
+  it('un UPDATE antes de escribir enciende la fase que escribe', () => {
+    expect(status(applyEvent(start, { phase: 'configure' }, 1000), 'write')).toBe('running')
+  })
+})
+
+describe('elapsedOf', () => {
+  const start = initialPhases({ skipInstall: false })
+
+  it('la fase en curso cronometra en vivo: los segundos corren mientras dura', () => {
+    const phases = applyEvent(start, { phase: 'install' }, 1000)
+
+    expect(elapsedOf(phase(phases, 'install'), 4000)).toBe(3000)
+  })
+
+  it('la fase cerrada se queda con lo que tardó, no sigue corriendo', () => {
+    const phases = applyDone(applyEvent(start, { phase: 'install' }, 1000), 6000, true)
+
+    expect(elapsedOf(phase(phases, 'install'), 60000)).toBe(5000)
+  })
+
+  it('la que no ha empezado no tiene tiempo que enseñar', () => {
+    expect(elapsedOf(phase(start, 'install'), 4000)).toBeUndefined()
+  })
+})
+
+describe('overallProgress', () => {
+  const start = initialPhases({ skipInstall: false })
+
+  it('sin empezar, cero', () => {
+    expect(overallProgress(start, 0)).toBe(0)
+  })
+
+  it('todo cerrado, uno', () => {
+    const phases = applyDone(applyEvent(start, { phase: 'install' }, 1000), 2000, true)
+
+    expect(overallProgress(phases, 3000)).toBe(1)
+  })
+
+  /** Lo que escribe SÍ tiene medida real: ficheros escritos contra los que suele haber. */
+  it('mientras escribe avanza con los ficheros, no con el reloj', () => {
+    const phases = applyEvent(start, { phase: 'write', files: EXPECTED_FILES / 2 }, 1000)
+    const fraction = overallProgress(phases, 60000)
+
+    // una de tres cerrada (prepare) + media fase escribiendo
+    expect(fraction).toBeCloseTo((1 + 0.5) / 3, 5)
+  })
+
+  /**
+   * Instalar no da progreso: npm solo canta al final. Lo honesto es estimar con el tiempo
+   * que tardó la última medida (2 min en el log del 2026-08-13) y NO prometer el final.
+   */
+  it('mientras instala avanza con el reloj contra lo que suele tardar', () => {
+    const phases = applyEvent(start, { phase: 'install' }, 1000)
+
+    expect(overallProgress(phases, 1000 + EXPECTED_INSTALL_MS / 2)).toBeCloseTo((2 + 0.5) / 3, 5)
+  })
+
+  it('la estimación nunca llega al final sola: si tarda de más, se frena antes del tope', () => {
+    const phases = applyEvent(start, { phase: 'install' }, 1000)
+    const late = overallProgress(phases, 1000 + EXPECTED_INSTALL_MS * 10)
+
+    expect(late).toBeLessThan(1)
+    expect(late).toBeGreaterThan(overallProgress(phases, 1000 + EXPECTED_INSTALL_MS / 2))
+  })
+
+  it('la fase omitida cuenta como cerrada: no deja la barra corta para siempre', () => {
+    const phases = applyDone(applyEvent(initialPhases({ skipInstall: true }), { phase: 'write' }, 1000), 2000, true)
+
+    expect(overallProgress(phases, 3000)).toBe(1)
   })
 })
 
