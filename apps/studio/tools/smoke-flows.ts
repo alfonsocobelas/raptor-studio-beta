@@ -30,6 +30,7 @@ const DESIGN = {
         { id: 'bajo', kind: 'decision', text: 'stock < 10' },
         { id: 'marcar', kind: 'step', text: 'Marcar la fila en naranja' },
         { id: 'correo', kind: 'step', text: 'Enviar correo' },
+        { id: 'cerrar', kind: 'step', text: 'Cerrar el aviso' },
         { id: 'quitar', kind: 'step', text: 'Quitar el aviso' },
         { id: 'listo', kind: 'end', text: 'Listo' }
       ],
@@ -37,7 +38,8 @@ const DESIGN = {
         { from: 'disparador', to: 'bajo' },
         { from: 'bajo', to: 'marcar', label: 'sí' },
         { from: 'marcar', to: 'correo' },
-        { from: 'correo', to: 'listo' },
+        { from: 'correo', to: 'cerrar' },
+        { from: 'cerrar', to: 'listo' },
         { from: 'bajo', to: 'quitar', label: 'no' },
         { from: 'quitar', to: 'listo' }
       ]
@@ -95,10 +97,32 @@ async function main(): Promise<void> {
   for (const id of ['flow-step-marcar', 'flow-step-correo', 'flow-card-quitar']) {
     if (!(await page.getByTestId(id).count())) fail(`falta ${id} en el lienzo`)
   }
-  const rama = await page.getByTestId('flow-card-branch-marcar').textContent()
-  if (!rama?.includes('sí')) fail(`la tarjeta no dice de qué rama cuelga (leído: «${rama?.trim()}»)`)
+  // la cabecera dice QUÉ es, no de qué rama cuelga: la rama ya la dice la flecha que entra
+  const cabecera = await page.getByTestId('flow-card-branch-marcar').textContent()
+  if (cabecera?.trim() !== 'acciones') fail(`la cabecera de la tarjeta dice «${cabecera?.trim()}»`)
   // la flecha interna de la tarjeta no se dibuja
   if (await page.getByTestId('flow-edge-marcar-correo').count()) fail('la flecha interna de la tarjeta se dibuja')
+
+  // ARRASTRAR UNA FILA (spec 40): el gesto real, que vitest no ve —jsdom no tiene layout—.
+  // La tercera acción se sube a la primera fila y la tarjeta se renumera.
+  const asa = page.getByTestId('flow-step-grip-cerrar')
+  await page.getByTestId('flow-step-cerrar').hover()
+  const caja = await asa.boundingBox()
+  if (!caja) fail('la fila no tiene asa de arrastre')
+  await page.mouse.move(caja.x + caja.width / 2, caja.y + caja.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(caja.x + caja.width / 2, caja.y - 100, { steps: 10 })
+  await shot(page, 'smoke-flows-2-arrastrando-fila')
+  if (!(await page.getByTestId('flow-step-drop-guide').count())) fail('no se pinta la guía de dónde cae la fila')
+  await page.mouse.up()
+
+  const orden = await page
+    .locator('[data-testid="flow-card-cerrar"] [data-testid^="flow-step-number-"]')
+    .evaluateAll(nodes => nodes.map(node => `${node.getAttribute('data-testid')}=${node.textContent?.trim()}`))
+  if (orden.join() !== 'flow-step-number-cerrar=1,flow-step-number-marcar=2,flow-step-number-correo=3') {
+    fail(`la fila no subió de puesto: ${orden.join(' · ')}`)
+  }
+  await shot(page, 'smoke-flows-3-fila-reordenada')
 
   // el lienzo no se descoloca al editar: NADIE cambia de sitio al borrar una acción
   const antes = await positions(page)
@@ -106,13 +130,13 @@ async function main(): Promise<void> {
   await page.getByTestId('flow-step-remove-correo').click({ force: true })
   await page.getByTestId('flow-step-correo').waitFor({ state: 'detached' })
   const despues = await positions(page)
-  await shot(page, 'smoke-flows-2-tras-borrar')
+  await shot(page, 'smoke-flows-4-tras-borrar')
 
   const movidos = Object.keys(despues).filter(id => antes[id] && antes[id] !== despues[id])
   if (movidos.length) fail(`borrar una acción movió ${movidos.length} bloque(s): ${movidos.join(', ')}`)
 
   // «+ Acción» devuelve la fila a la tarjeta
-  await page.getByTestId('flow-card-add-marcar').click()
+  await page.getByTestId('flow-card-add-cerrar').click()
   await page.getByTestId('flow-node-text-input').waitFor()
 
   if (errors.length) fail(`errores en consola: ${errors.join(' | ')}`)
