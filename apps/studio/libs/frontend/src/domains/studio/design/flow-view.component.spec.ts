@@ -462,3 +462,43 @@ describe('FlowViewComponent — reordenar no recoloca el lienzo', () => {
     expect(movidos).toEqual([])
   })
 })
+
+// Borrar la PRIMERA acción también rebautiza la tarjeta (la cabeza pasa a ser la siguiente).
+// `inheritCardPosition` ya lo cubre; esto lo ata para que siga siendo verdad.
+describe('FlowViewComponent — borrar la cabeza tampoco recoloca el lienzo', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'decision', '¿hay recambio?')
+    store.addFlowNode(FLOW, 'step', 'Pedir el recambio')
+    store.addFlowNode(FLOW, 'step', 'Reparar la maquina')
+    store.addFlowNode(FLOW, 'step', 'Entregar la maquina')
+    store.addFlowEdge(FLOW, 'inicio', 'hay-recambio')
+    store.addFlowEdge(FLOW, 'hay-recambio', 'reparar-la-maquina', 'sí')
+    store.addFlowEdge(FLOW, 'reparar-la-maquina', 'entregar-la-maquina')
+    store.addFlowEdge(FLOW, 'entregar-la-maquina', 'fin')
+    store.addFlowEdge(FLOW, 'hay-recambio', 'pedir-el-recambio', 'no')
+    store.addFlowEdge(FLOW, 'pedir-el-recambio', 'hay-recambio')
+    store.removeFlowEdge(FLOW, 'inicio', 'fin')
+  })
+
+  it('la tarjeta hereda el sitio y nadie más se mueve', () => {
+    const fixture = mount()
+    const bloque = (id: string): string => {
+      const el = fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null
+      return el ? `${el.style.left},${el.style.top}` : 'sin bloque'
+    }
+    const antes = { tarjeta: bloque('flow-card-reparar-la-maquina'), otra: bloque('flow-card-pedir-el-recambio') }
+
+    testId(fixture, 'flow-step-remove-reparar-la-maquina')?.click()
+    fixture.detectChanges()
+
+    expect(bloque('flow-card-entregar-la-maquina')).toBe(antes.tarjeta)
+    expect(bloque('flow-card-pedir-el-recambio')).toBe(antes.otra)
+  })
+})
