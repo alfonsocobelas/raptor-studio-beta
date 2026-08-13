@@ -251,8 +251,12 @@
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
+/* En oscuro los dos tonos del cromo van al revés que en claro (decisión de Alfonso,
+   2026-08-13): el raíl es el lado oscuro y la barra con el panel derecho el claro.
+   El gemelo de este valor está en .studio-chrome (studio-canvas.component), y se
+   mantienen a la par a mano: la custom property compartida no sobrevive al pipeline. */
 :root.dark .studio-rail {
-  background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
+  background-color: #1d1c21;
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.

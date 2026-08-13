@@ -580,11 +580,12 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
          así el estudio no tiene dos naranjas distintos. */
       --canvas-ink: color-mix(in oklab, #d75f3d 35%, transparent);
     }
-    /* Cromo del estudio en noche: la barra de arriba y el panel de la derecha bajan a
-       #1d1c21, más oscuro que --card, para que el lienzo quede lo más claro del marco
-       y el ojo vaya al diseño. Solo en oscuro: en claro este gris sería un boquete. */
+    /* Cromo del estudio en noche: la barra de arriba y el panel de la derecha llevan el
+       gris claro —el que antes tenía el raíl— y el raíl se queda con el oscuro #1d1c21
+       (invertido por Alfonso, 2026-08-13). El gemelo de este valor está en .studio-rail
+       (styles.css). Solo en oscuro: en claro los dos siguen en --card. */
     :host-context(.dark) .studio-chrome {
-      background-color: #1d1c21;
+      background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
     }
     .canvas-surface {
       background-color: var(--background);
