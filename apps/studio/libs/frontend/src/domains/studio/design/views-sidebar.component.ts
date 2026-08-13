@@ -185,7 +185,7 @@ const BLOCK_TOOLS: BlockTool[] = [
         @for (tool of blockTools; track tool.kind) {
           <button
             type="button"
-            class="block-tool text-brand border-brand/45 hover:border-brand hover:bg-brand/10 mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] border px-2 py-2 text-left font-semibold transition-colors active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+            class="block-tool bg-brand text-brand-foreground mb-1.5 flex w-full cursor-grab items-center gap-2 studio-ui rounded-[7px] px-2 py-2 text-left font-semibold transition-opacity hover:opacity-90 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
             [class.dragging]="drag.kind() === tool.kind"
             [disabled]="!ready()"
             [attr.draggable]="ready() ? 'true' : null"
@@ -197,7 +197,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           >
             <ng-icon [name]="tool.icon" size="15" />
             <span class="flex-1">{{ tool.label }}</span>
-            <!-- el asidero: la seña de que esto se arrastra, en el naranja del arrastre -->
+            <!-- el asidero: la seña de que esto se arrastra, atenuado sobre el naranja -->
             <ng-icon class="grip" name="lucideGripVertical" size="14" />
           </button>
         }
@@ -214,19 +214,20 @@ const BLOCK_TOOLS: BlockTool[] = [
     :host {
       --brand: #f15539;
     }
+    /* Sobre el naranja pleno el asidero se atenúa; no puede competir con la etiqueta. */
     .block-tool .grip {
-      color: color-mix(in oklab, var(--brand) 55%, transparent);
+      opacity: 0.55;
     }
     .block-tool:not(:disabled):hover .grip {
-      color: var(--brand);
+      opacity: 1;
     }
-    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto. */
+    /* El que está en el aire se queda marcado en el raíl mientras dura el gesto: como
+       el fondo ya es la marca, lo que lo señala es el cerco, no otro color. */
     .block-tool.dragging {
-      border-color: var(--brand);
-      background-color: color-mix(in oklab, var(--brand) 12%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 35%, transparent);
     }
     .block-tool.dragging .grip {
-      color: var(--brand);
+      opacity: 1;
     }
   `
 })
