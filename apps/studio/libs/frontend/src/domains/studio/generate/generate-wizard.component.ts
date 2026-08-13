@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
+import { GenerateRunner } from './generate-runner'
 import {
   buildCommand,
   buildDesignRequest,
@@ -17,18 +18,6 @@ import {
 } from './wizard-command'
 
 const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
-
-/** Lo que emite el endpoint de progreso mientras genera. */
-interface GenerateEvent {
-  type: 'progress' | 'done'
-  step?: string
-  file?: string
-  files?: number
-  ok?: boolean
-  root?: string
-  output?: string
-  elapsedMs?: number
-}
 
 /**
  * Fase E: al terminar el diseño se eligen piel, motor y plugins (las opciones
@@ -187,9 +176,7 @@ interface GenerateEvent {
                 ></span>
                 <span class="text-sm font-medium">{{ step() ?? 'Generando…' }}</span>
               </div>
-              <p class="text-muted-foreground text-xs">
-                {{ filesWritten() }} ficheros escritos · {{ seconds() }} s
-              </p>
+              <p class="text-muted-foreground text-xs">{{ filesWritten() }} ficheros escritos · {{ seconds() }} s</p>
               @if (lastFile(); as file) {
                 <p class="text-muted-foreground mt-1 truncate font-mono text-[11px]">{{ file }}</p>
               }
@@ -240,16 +227,17 @@ export class GenerateWizardComponent {
   protected readonly copied = signal(false)
   protected readonly install = signal(true)
   protected readonly directory = signal('')
-  protected readonly generating = signal(false)
-  protected readonly generateOutput = signal<string | null>(null)
-  protected readonly generateOk = signal(false)
-  protected readonly elapsed = signal<number | null>(null)
-  /** Progreso real leído del generador mientras trabaja. */
-  protected readonly step = signal<string | null>(null)
-  protected readonly filesWritten = signal(0)
-  protected readonly lastFile = signal<string | null>(null)
-  protected readonly seconds = signal(0)
-  private ticker: ReturnType<typeof setInterval> | null = null
+
+  /** El progreso REAL del generador, leído por el servicio que habla con el stream. */
+  private readonly runner = inject(GenerateRunner)
+  protected readonly generating = this.runner.generating
+  protected readonly generateOutput = this.runner.output
+  protected readonly generateOk = this.runner.ok
+  protected readonly elapsed = this.runner.elapsed
+  protected readonly step = this.runner.step
+  protected readonly filesWritten = this.runner.filesWritten
+  protected readonly lastFile = this.runner.lastFile
+  protected readonly seconds = this.runner.seconds
 
   /** Sin una vista con bloques no hay nada que generar: el botón se queda apagado. */
   protected readonly canPublish = computed(() => hasPublishableDesign(this.store.pages()))
@@ -330,94 +318,24 @@ export class GenerateWizardComponent {
   }
 
   /** Fase F (opción 1): el backend LOCAL ejecuta el generador — sin terminal. */
-  /**
-   * Lee el progreso REAL del generador mientras ocurre (NDJSON): durante el
-   * minuto o dos que tarda, callar parece un cuelgue. Se usa fetch y no
-   * HttpClient porque hay que consumir el cuerpo a trozos.
-   */
-  protected async generateHere(): Promise<void> {
-    this.generating.set(true)
-    this.generateOutput.set(null)
-    this.elapsed.set(null)
-    this.filesWritten.set(0)
-    this.lastFile.set(null)
-    this.seconds.set(0)
-    this.step.set('Validando el diseño')
-    this.ticker = setInterval(() => this.seconds.update(value => value + 1), 1000)
-
-    try {
-      const response = await fetch('/api/v1/studio/generate/stream', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          name: this.name(),
-          slots: this.selection(),
-          plugins: this.plugins(),
-          // lo que ves en el lienzo es lo que se genera (spec 18), y eso incluye la
-          // memoria del negocio y los procesos: se arma en buildDesignRequest, no aquí
-          design: buildDesignRequest({
-            name: this.name(),
-            resources: this.store.resources(),
-            pages: this.store.pages(),
-            palette: this.preview.palette(),
-            brief: this.store.brief(),
-            flows: this.store.flows()
-          }),
-          skipInstall: !this.install(),
-          ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
-        })
-      })
-
-      if (!response.ok || !response.body) {
-        throw new Error(`el backend respondió ${response.status}`)
-      }
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-      for (;;) {
-        const { done, value } = await reader.read()
-        if (done) {
-          break
-        }
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const line of lines) {
-          if (line.trim()) {
-            this.applyEvent(JSON.parse(line) as GenerateEvent)
-          }
-        }
-      }
-    } catch (e) {
-      this.generateOk.set(false)
-      const detail = e instanceof Error ? e.message : String(e)
-      this.generateOutput.set(`✗ ${detail}\nSi el backend no está arrancado: npm run studio:api:bridge`)
-    } finally {
-      if (this.ticker) {
-        clearInterval(this.ticker)
-      }
-      this.ticker = null
-      this.generating.set(false)
-      this.step.set(null)
-    }
-  }
-
-  private applyEvent(event: GenerateEvent): void {
-    if (event.type === 'progress') {
-      this.step.set(event.step ?? null)
-      this.filesWritten.set(event.files ?? this.filesWritten())
-      if (event.file) {
-        this.lastFile.set(event.file)
-      }
-      return
-    }
-    this.generateOk.set(event.ok ?? false)
-    this.elapsed.set(event.elapsedMs ?? null)
-    this.filesWritten.set(event.files ?? this.filesWritten())
-    this.generateOutput.set(
-      event.ok ? `✅ Generada en ${event.root}\n\n${event.output ?? ''}` : (event.output ?? 'La generación falló.')
-    )
+  protected generateHere(): Promise<void> {
+    return this.runner.run({
+      name: this.name(),
+      slots: this.selection(),
+      plugins: this.plugins(),
+      // lo que ves en el lienzo es lo que se genera (spec 18), y eso incluye la
+      // memoria del negocio y los procesos: se arma en buildDesignRequest, no aquí
+      design: buildDesignRequest({
+        name: this.name(),
+        resources: this.store.resources(),
+        pages: this.store.pages(),
+        palette: this.preview.palette(),
+        brief: this.store.brief(),
+        flows: this.store.flows()
+      }),
+      skipInstall: !this.install(),
+      ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
+    })
   }
 
   protected async copyCommand(): Promise<void> {
