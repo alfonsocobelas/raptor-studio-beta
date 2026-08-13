@@ -291,7 +291,7 @@ interface DiagramEdge {
     /* Los puntitos de clave y de referencia, en naranja rebajado: señalan sin
        competir con la columna elegida, que sí lleva el naranja pleno. */
     .model-dot {
-      background-color: color-mix(in oklab, #f15539 45%, transparent);
+      background-color: color-mix(in oklab, #f15539 32%, transparent);
     }
     /* La caja elegida se recerca de naranja: solo cambia el color del borde de 1px
        que ya tenía, así que al elegirla no se mueve ni engorda. */
