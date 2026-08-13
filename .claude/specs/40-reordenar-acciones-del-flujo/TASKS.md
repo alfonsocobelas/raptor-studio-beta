@@ -33,7 +33,7 @@
 
 ## Validación
 
-- [ ] **TASK-07**: Suite completa del workspace + del estudio en verde, y comprobación a mano
+- [x] **TASK-07**: Suite completa del workspace + del estudio en verde, y comprobación a mano
       en el estudio (arrastrar una fila, guardar, recargar, regenerar la demo).
 
 > **TASK-06 (2026-08-13)**: `/golden-diff` en verde **sin re-baseline** — las 6 fixtures dan diff
@@ -43,6 +43,7 @@
 
 > **TASK-07 (2026-08-13)**: verde la suite del estudio (491) y la del workspace (14 proyectos,
 > 692 del generador), `/golden-diff` vacío, y el gesto comprobado en el navegador con
-> `tools/smoke-flows.ts` (capturas del arrastre y del orden nuevo). **Pendiente**: regenerar una
-> demo entera tras reordenar y leer la clase de proceso emitida — la garantía está atada por
-> tests, pero no se ha visto en una app de verdad.
+> `tools/smoke-flows.ts` (capturas del arrastre y del orden nuevo). Y app generada de verdad
+> (`nx g @acc/generators:app --appFile`) con un flujo de ramas desiguales: el fin sale numerado
+> **5** —detrás de las dos acciones— y los métodos salen en el orden de la cadena; al invertirla
+> se invierten (`cerrar, avisar`). Con el orden viejo el fin era el 3 y los pasos, 4 y 5.
