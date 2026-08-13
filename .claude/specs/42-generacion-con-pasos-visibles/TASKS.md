@@ -38,7 +38,7 @@
 
 ## Bloque D — la pantalla
 
-- [ ] **TASK-06**: Tests + el nombre y lo avanzado se mudan al raíl del paso 2; el botón pasa
+- [x] **TASK-06**: Tests + el nombre y lo avanzado se mudan al raíl del paso 2; el botón pasa
       a «Generar aplicación» y arranca la generación al pulsarlo. El paso 3 deja de pedir
       nombre.
 

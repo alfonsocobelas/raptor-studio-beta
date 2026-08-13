@@ -301,10 +301,10 @@ describe('GeneratePageComponent', () => {
       expect(at(fixture, 'generate-stack')?.textContent).toContain('Correo saliente')
     })
 
-    it('el botón lleva al paso de generar', async () => {
+    it('el botón arranca la obra y deja atrás las decisiones', async () => {
       const fixture = await mount()
 
-      expect(at(fixture, 'generate-primary')?.textContent).toContain('Continuar')
+      expect(at(fixture, 'generate-primary')?.textContent).toContain('Generar aplicación')
       at(fixture, 'generate-primary')?.click()
       fixture.detectChanges()
 
@@ -318,7 +318,7 @@ describe('GeneratePageComponent', () => {
   })
 
   describe('el paso de generar', () => {
-    /** Deja la pantalla en el paso 3, que es donde vive el nombre y el comando. */
+    /** El botón del raíl arranca la obra: para ver el paso 3 hay que generar. */
     const mountStep3 = async () => {
       const fixture = await mount()
       at(fixture, 'generate-primary')?.click()
@@ -374,12 +374,14 @@ describe('GeneratePageComponent', () => {
 
     afterEach(() => vi.unstubAllGlobals())
 
-    it('el nombre viene precargado con el del diseño, no en blanco', async () => {
+    /** El nombre y lo avanzado viven en el RAÍL del paso 2 (spec 42): el paso 3 es la obra. */
+    it('el nombre está en el raíl, precargado con el del diseño', async () => {
       store.setAppName('taller-sur')
 
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       expect((at(fixture, 'wizard-name') as HTMLInputElement).value).toBe('taller-sur')
+      expect(at(fixture, 'generate-step-infra')?.contains(at(fixture, 'wizard-name'))).toBe(false)
     })
 
     it('el comando lleva las ranuras elegidas', async () => {
@@ -395,24 +397,26 @@ describe('GeneratePageComponent', () => {
     })
 
     it('un nombre que no es kebab-case no deja generar, y lo dice', async () => {
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       type(fixture, 'wizard-name', 'Mi App')
       fixture.detectChanges()
 
       expect(at(fixture, 'generate-primary')?.hasAttribute('disabled')).toBe(true)
-      // el recuadro del artefacto entero desaparece: sin nombre no hay comando ni descarga
-      expect(at(fixture, 'wizard-download')).toBeNull()
       expect(at(fixture, 'wizard-name-problem')?.textContent).toContain('kebab-case')
     })
 
-    it('sin nombre válido tampoco hay comando que copiar', async () => {
-      const fixture = await mountStep3()
+    it('sin nombre válido no se llega a generar nada', async () => {
+      const sent = stubGenerate()
+      const fixture = await mount()
 
       type(fixture, 'wizard-name', '')
       fixture.detectChanges()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
 
-      expect(at(fixture, 'wizard-command')).toBeNull()
+      expect(() => sent.body()).toThrow()
+      expect(at(fixture, 'generate-step-generate')).toBeNull()
     })
 
     it('copiar deja el comando en el portapapeles', async () => {
@@ -425,15 +429,16 @@ describe('GeneratePageComponent', () => {
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining('npx nx g @acc/generators:app'))
     })
 
-    it('el botón del raíl cambia de texto y lanza la generación', async () => {
+    it('el botón del raíl genera y lleva a ver la obra de una vez', async () => {
       const sent = stubGenerate()
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       expect(at(fixture, 'generate-primary')?.textContent).toContain('Generar aplicación')
       at(fixture, 'generate-primary')?.click()
       await settle()
       fixture.detectChanges()
 
+      expect(at(fixture, 'generate-step-generate')).not.toBeNull()
       expect(sent.body()).toMatchObject({ name: 'mi-app', skipInstall: false })
       expect(at(fixture, 'generate-ok')?.textContent).toContain('apps/mi-app')
       expect(at(fixture, 'generate-elapsed')?.textContent).toContain('4.2')
@@ -444,7 +449,7 @@ describe('GeneratePageComponent', () => {
       store.addPage('blank', 'Prendas')
       store.addBlock(0, { kind: 'table', resource: 'prenda' })
       const sent = stubGenerate()
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       at(fixture, 'generate-primary')?.click()
       await settle()
@@ -456,7 +461,7 @@ describe('GeneratePageComponent', () => {
 
     it('lo avanzado viaja: sin instalar y con directorio propio', async () => {
       const sent = stubGenerate()
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       ;(at(fixture, 'wizard-install') as HTMLInputElement).click()
       type(fixture, 'wizard-directory', 'apps/cliente')
@@ -469,7 +474,7 @@ describe('GeneratePageComponent', () => {
 
     it('un directorio en blanco no viaja como clave vacía', async () => {
       const sent = stubGenerate()
-      const fixture = await mountStep3()
+      const fixture = await mount()
 
       at(fixture, 'generate-primary')?.click()
       await settle()
@@ -478,6 +483,7 @@ describe('GeneratePageComponent', () => {
     })
 
     it('se puede volver a las decisiones sin perderlas', async () => {
+      stubGenerate()
       const fixture = await mount()
       at(fixture, 'slot-infra-azure')?.click()
       at(fixture, 'generate-primary')?.click()
