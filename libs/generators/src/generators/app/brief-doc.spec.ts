@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import type { BusinessBrief, BusinessFlow, ResourceDefinition } from '@acc/schema'
 import { appGenerator } from './app'
-import { bfsOrder, renderClaudeMd, renderFlows, renderFlowSteps } from './brief-doc'
+import { flowOrder, renderClaudeMd, renderFlows, renderFlowSteps } from './brief-doc'
 import { MODELS, registerModels } from '../resource/models/registry'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -140,10 +140,10 @@ describe('renderFlows — el esquema numerado del proceso', () => {
 
 /**
  * Spec 39, TASK-01: las piezas del render que la derivación de procesos reutiliza
- * (mismo orden BFS y mismo mapa numerado en CLAUDE.md y en el JSDoc emitido — una
+ * (mismo orden y mismo mapa numerado en CLAUDE.md y en el JSDoc emitido — una
  * sola fuente, dos consumidores). Refactor puro: renderFlows no cambia su salida.
  */
-describe('bfsOrder y renderFlowSteps — piezas reutilizables del render (spec 39)', () => {
+describe('flowOrder y renderFlowSteps — piezas reutilizables del render (spec 39)', () => {
   const flow: BusinessFlow = {
     name: 'Ciclo de pedido',
     nodes: [
@@ -162,10 +162,10 @@ describe('bfsOrder y renderFlowSteps — piezas reutilizables del render (spec 3
     ]
   }
 
-  it('bfsOrder ordena por capas desde el start y desempata por id', () => {
-    const ids = bfsOrder(flow).map(node => node.id)
+  it('flowOrder recorre el proceso desde el start y desempata por id', () => {
+    const ids = flowOrder(flow).map(node => node.id)
 
-    // fin y subsanar comparten capa (distancia 3): gana el orden alfabético por id
+    // fin y subsanar quedan libres a la vez tras la decisión: gana el alfabético por id
     expect(ids).toEqual(['llega', 'revisar', 'aprobado', 'fin', 'subsanar'])
   })
 
@@ -206,5 +206,139 @@ describe('renderClaudeMd — sección «Procesos de negocio» (spec 28)', () => 
 
   it('sin flujos el markdown es EXACTAMENTE el de antes: fixtures del brief intactas', () => {
     expect(renderClaudeMd('tienda', brief, [])).not.toContain('Procesos de negocio')
+  })
+})
+
+/**
+ * Spec 40: el orden EMITIDO es el que se lee en el lienzo. Antes se ordenaba por
+ * profundidad BFS —primer descubrimiento—, que no es un orden topológico: con dos ramas
+ * de distinta longitud, el nodo donde se juntan se numeraba antes que las acciones que
+ * llevan a él, y las acciones de dos tarjetas hermanas se entrelazaban por capas.
+ */
+describe('flowOrder — ningún nodo antes que sus predecesores (spec 40)', () => {
+  it('el nodo donde se juntan dos ramas desiguales va DESPUÉS de las dos', () => {
+    const flow: BusinessFlow = {
+      name: 'Cambia el stock',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Cambia el stock' },
+        { id: 'bajo', kind: 'decision', text: 'stock < 10' },
+        { id: 'marcar', kind: 'step', text: 'Marcar la fila' },
+        { id: 'correo', kind: 'step', text: 'Enviar correo' },
+        { id: 'fin', kind: 'end', text: 'Listo' }
+      ],
+      edges: [
+        { from: 'inicio', to: 'bajo' },
+        { from: 'bajo', to: 'marcar', label: 'sí' },
+        { from: 'marcar', to: 'correo' },
+        { from: 'correo', to: 'fin' },
+        { from: 'bajo', to: 'fin', label: 'no' }
+      ]
+    }
+
+    expect(flowOrder(flow).map(node => node.id)).toEqual(['inicio', 'bajo', 'marcar', 'correo', 'fin'])
+  })
+
+  it('las acciones de una tarjeta salen SEGUIDAS: dos ramas no se entrelazan', () => {
+    const flow: BusinessFlow = {
+      name: 'Aviso',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Aviso' },
+        { id: 'bajo', kind: 'decision', text: '¿poco stock?' },
+        { id: 'avisar', kind: 'step', text: 'Avisar' },
+        { id: 'cerrar', kind: 'step', text: 'Cerrar' },
+        { id: 'quitar', kind: 'step', text: 'Quitar el aviso' },
+        { id: 'registrar', kind: 'step', text: 'Registrar' },
+        { id: 'fin', kind: 'end', text: 'Listo' }
+      ],
+      edges: [
+        { from: 'inicio', to: 'bajo' },
+        { from: 'bajo', to: 'avisar', label: 'sí' },
+        { from: 'avisar', to: 'cerrar' },
+        { from: 'cerrar', to: 'fin' },
+        { from: 'bajo', to: 'quitar', label: 'no' },
+        { from: 'quitar', to: 'registrar' },
+        { from: 'registrar', to: 'fin' }
+      ]
+    }
+
+    expect(flowOrder(flow).map(node => node.id)).toEqual([
+      'inicio',
+      'bajo',
+      'avisar',
+      'cerrar',
+      'quitar',
+      'registrar',
+      'fin'
+    ])
+  })
+
+  it('el orden sigue la CADENA, no el alfabeto: reordenarla cambia el orden', () => {
+    const cadena = (segundo: string, tercero: string): BusinessFlow => ({
+      name: 'Alta',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Alta' },
+        { id: 'zeta', kind: 'step', text: 'Zeta' },
+        { id: 'alfa', kind: 'step', text: 'Alfa' },
+        { id: 'fin', kind: 'end', text: 'Listo' }
+      ],
+      edges: [
+        { from: 'inicio', to: segundo },
+        { from: segundo, to: tercero },
+        { from: tercero, to: 'fin' }
+      ]
+    })
+
+    expect(flowOrder(cadena('zeta', 'alfa')).map(n => n.id)).toEqual(['inicio', 'zeta', 'alfa', 'fin'])
+    expect(flowOrder(cadena('alfa', 'zeta')).map(n => n.id)).toEqual(['inicio', 'alfa', 'zeta', 'fin'])
+  })
+
+  it('una vuelta atrás no descoloca el proceso ni lo cuelga', () => {
+    const flow: BusinessFlow = {
+      name: 'Revisión',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Llega' },
+        { id: 'revisar', kind: 'step', text: 'Revisar' },
+        { id: 'correcto', kind: 'decision', text: '¿correcto?' },
+        { id: 'subsanar', kind: 'step', text: 'Subsanar' },
+        { id: 'fin', kind: 'end', text: 'Listo' }
+      ],
+      edges: [
+        { from: 'inicio', to: 'revisar' },
+        { from: 'revisar', to: 'correcto' },
+        { from: 'correcto', to: 'fin', label: 'sí' },
+        { from: 'correcto', to: 'subsanar', label: 'no' },
+        { from: 'subsanar', to: 'revisar' }
+      ]
+    }
+
+    expect(flowOrder(flow).map(node => node.id)).toEqual(['inicio', 'revisar', 'correcto', 'fin', 'subsanar'])
+  })
+
+  it('lo que no se alcanza desde el inicio va al final, en orden alfabético', () => {
+    const flow: BusinessFlow = {
+      name: 'Con isla',
+      nodes: [
+        { id: 'inicio', kind: 'start', text: 'Empieza' },
+        { id: 'isla', kind: 'step', text: 'Suelto' },
+        { id: 'antes', kind: 'step', text: 'También suelto' },
+        { id: 'fin', kind: 'end', text: 'Listo' }
+      ],
+      edges: [{ from: 'inicio', to: 'fin' }]
+    }
+
+    expect(flowOrder(flow).map(node => node.id)).toEqual(['inicio', 'fin', 'antes', 'isla'])
+  })
+
+  it('sin nodo de inicio devuelve los nodos tal cual, sin inventar orden', () => {
+    const flow: BusinessFlow = {
+      name: 'Suelto',
+      nodes: [
+        { id: 'b', kind: 'step', text: 'B' },
+        { id: 'a', kind: 'step', text: 'A' }
+      ],
+      edges: []
+    }
+
+    expect(flowOrder(flow).map(node => node.id)).toEqual(['b', 'a'])
   })
 })

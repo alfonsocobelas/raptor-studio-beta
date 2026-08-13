@@ -1,4 +1,4 @@
-import type { BusinessBrief, BusinessFlow, FlowNode, ResourceDefinition } from '@acc/schema'
+import type { BusinessBrief, BusinessFlow, FlowEdge, FlowNode, ResourceDefinition } from '@acc/schema'
 
 /**
  * El brief aterriza como CLAUDE.md en la raíz de la app generada (spec 22): la memoria del negocio
@@ -50,7 +50,7 @@ export function renderClaudeMd(
 }
 
 /**
- * Los flujos (spec 28) como esquema numerado legible: orden BFS desde el start
+ * Los flujos (spec 28) como esquema numerado legible: orden del proceso desde el start
  * (el mismo que dibuja el estudio), ramas etiquetadas de las decisiones y saltos
  * no secuenciales explícitos. Sin flujos, cadena vacía — el brief queda como está.
  */
@@ -73,7 +73,7 @@ export function renderFlows(flows: BusinessFlow[] | undefined): string {
  * mapa numerado en todo el proyecto — divergencia imposible por construcción.
  */
 export function renderFlowSteps(flow: BusinessFlow): string[] {
-  const order = bfsOrder(flow)
+  const order = flowOrder(flow)
   const numberOf = new Map(order.map((node, i) => [node.id, i + 1]))
 
   const lines: string[] = []
@@ -100,26 +100,101 @@ function describeNode(node: FlowNode): string {
   return `${marker}${node.text}${entity}`
 }
 
-/** Capa = distancia BFS al start; dentro de cada capa, orden alfabético por id (determinista). */
-export function bfsOrder(flow: BusinessFlow): FlowNode[] {
+/**
+ * ORDEN DEL PROCESO (spec 40): un nodo nunca sale antes que los nodos de los que depende, y
+ * las acciones de una misma cadena salen SEGUIDAS. Es el orden en que se lee el flujo en el
+ * lienzo del estudio, y por tanto el orden en que se numeran los pasos y se emiten los
+ * métodos de la clase de proceso.
+ *
+ * Antes se ordenaba por profundidad BFS —primer descubrimiento—, que NO es topológico: con
+ * ramas de distinta longitud el nodo donde se juntan se colaba delante de las acciones que
+ * llevan a él, y dos tarjetas hermanas se entrelazaban capa a capa.
+ *
+ * Es un Kahn con dos precisiones:
+ * - **pila, no cola**: al liberar un nodo se atiende lo antes posible, así que una cadena se
+ *   agota antes de empezar la rama de al lado (es lo que las mantiene seguidas).
+ * - **las vueltas atrás no cuentan** como dependencia: un flujo con un bucle
+ *   («subsanar → revisar») no es un DAG y sin esto no habría orden posible. Se detectan con
+ *   un recorrido en profundidad desde el inicio: arista hacia un nodo que sigue abierto.
+ *
+ * Determinista: los empates se rompen por id, y lo inalcanzable va al final, en alfabético.
+ */
+export function flowOrder(flow: BusinessFlow): FlowNode[] {
   const start = flow.nodes.find(n => n.kind === 'start')
   if (!start) return [...flow.nodes]
 
-  const depthOf = new Map<string, number>([[start.id, 0]])
-  const queue = [start.id]
-  while (queue.length) {
-    const current = queue.shift() as string
-    const depth = depthOf.get(current) as number
-    for (const edge of flow.edges) {
-      if (edge.from !== current || depthOf.has(edge.to)) continue
-      depthOf.set(edge.to, depth + 1)
-      queue.push(edge.to)
+  const byId = new Map(flow.nodes.map(node => [node.id, node]))
+  const salidas = (id: string) => flow.edges.filter(edge => edge.from === id && byId.has(edge.to) && edge.to !== id)
+  const back = backEdges(flow, start.id, salidas)
+  const alcanzable = reachable(start.id, salidas)
+  // dependencia REAL de un nodo: una arista que viene de algo que cuelga del inicio y que no
+  // es una vuelta atrás. Sin lo primero, un nodo suelto que apunte al fin lo bloquearía.
+  const dependencias = (id: string) =>
+    flow.edges.filter(
+      edge => edge.to === id && edge.from !== id && alcanzable.has(edge.from) && !back.has(edgeKey(edge))
+    ).length
+
+  const pendientes = new Map(flow.nodes.map(node => [node.id, dependencias(node.id)]))
+  const listos = [start.id]
+  const emitido = new Set<string>()
+  const order: FlowNode[] = []
+  while (listos.length) {
+    const id = listos.pop() as string
+    if (emitido.has(id)) continue
+    emitido.add(id)
+    order.push(byId.get(id) as FlowNode)
+
+    const liberados: string[] = []
+    for (const edge of salidas(id)) {
+      if (back.has(edgeKey(edge)) || emitido.has(edge.to)) continue
+      const quedan = (pendientes.get(edge.to) as number) - 1
+      pendientes.set(edge.to, quedan)
+      if (quedan === 0) liberados.push(edge.to)
+    }
+    // se apilan al revés: la pila atiende el último, así que sale primero el menor por id
+    listos.push(...liberados.sort((a, b) => b.localeCompare(a)))
+  }
+
+  // lo que no cuelga del inicio no tiene sitio en el proceso: va detrás, en alfabético
+  const huerfanos = flow.nodes.filter(node => !emitido.has(node.id)).sort((a, b) => a.id.localeCompare(b.id))
+  return [...order, ...huerfanos]
+}
+
+const edgeKey = (edge: FlowEdge) => `${edge.from}→${edge.to}`
+
+/** Lo que cuelga del inicio siguiendo flechas; lo demás no es parte del proceso. */
+function reachable(startId: string, salidas: (id: string) => FlowEdge[]): Set<string> {
+  const vistos = new Set([startId])
+  const pila = [startId]
+  while (pila.length) {
+    for (const edge of salidas(pila.pop() as string)) {
+      if (vistos.has(edge.to)) continue
+      vistos.add(edge.to)
+      pila.push(edge.to)
     }
   }
-  const deepest = Math.max(...depthOf.values())
-  return [...flow.nodes].sort((a, b) => {
-    const da = depthOf.get(a.id) ?? deepest + 1
-    const db = depthOf.get(b.id) ?? deepest + 1
-    return da - db || a.id.localeCompare(b.id)
-  })
+  return vistos
+}
+
+/**
+ * Aristas que CIERRAN un bucle, vistas desde el inicio: las que apuntan a un nodo cuyo
+ * recorrido aún está abierto. No son dependencias —son vueltas atrás— y se ignoran al
+ * ordenar; si contaran, el nodo al que vuelven nunca quedaría libre.
+ */
+function backEdges(flow: BusinessFlow, startId: string, salidas: (id: string) => FlowEdge[]): Set<string> {
+  const back = new Set<string>()
+  const abiertos = new Set<string>()
+  const cerrados = new Set<string>()
+
+  const visitar = (id: string): void => {
+    abiertos.add(id)
+    for (const edge of salidas(id)) {
+      if (abiertos.has(edge.to)) back.add(edgeKey(edge))
+      else if (!cerrados.has(edge.to)) visitar(edge.to)
+    }
+    abiertos.delete(id)
+    cerrados.add(id)
+  }
+  visitar(startId)
+  return back
 }

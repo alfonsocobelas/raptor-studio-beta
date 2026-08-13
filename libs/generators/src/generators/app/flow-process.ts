@@ -2,7 +2,7 @@ import { generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import type { BusinessFlow, FlowNode, ResourceDefinition } from '@acc/schema'
 import { harvestAiSlots, reinjectAiSlots } from '../resource/ai-slots'
-import { bfsOrder, renderFlowSteps } from './brief-doc'
+import { flowOrder, renderFlowSteps } from './brief-doc'
 
 /**
  * Derivación de la clase de proceso que emite un flujo (spec 39). El flujo NO se
@@ -43,9 +43,9 @@ export function flowProcessNames(flow: BusinessFlow): FlowProcessNames {
   }
 }
 
-/** Solo los nodos `step` derivan método, en orden BFS (el mismo del mapa del CLAUDE.md). */
+/** Solo los nodos `step` derivan método, en el orden del proceso (el mismo del mapa del CLAUDE.md). */
 export function flowStepMethods(flow: BusinessFlow): FlowStepMethod[] {
-  const order = bfsOrder(flow)
+  const order = flowOrder(flow)
   const numberOf = new Map(order.map((node, i) => [node.id, i + 1]))
   const nodeOf = new Map(order.map(node => [node.id, node]))
 
@@ -92,7 +92,7 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
 
   const byContext = new Map<string, BusinessFlow[]>()
   for (const flow of flows) {
-    const anchor = bfsOrder(flow).find(node => node.entity)?.entity
+    const anchor = flowOrder(flow).find(node => node.entity)?.entity
     const ctx = (anchor ? contextOf.get(anchor) : undefined) ?? models[0].context
     byContext.set(ctx, [...(byContext.get(ctx) ?? []), flow])
   }
@@ -205,7 +205,7 @@ function docBlock(lines: string[]): string {
 export function flowRepoDeps(flow: BusinessFlow): FlowRepoDep[] {
   const seen = new Set<string>()
   const deps: FlowRepoDep[] = []
-  for (const node of bfsOrder(flow)) {
+  for (const node of flowOrder(flow)) {
     if (!node.entity || seen.has(node.entity)) continue
     seen.add(node.entity)
     const n = names(node.entity)
