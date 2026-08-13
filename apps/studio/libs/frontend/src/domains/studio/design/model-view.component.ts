@@ -279,6 +279,12 @@ interface DiagramEdge {
       color: var(--background);
       border-color: transparent;
     }
+    /* En noche la tinta es papel: una cabecera blanca grita más que la caja entera.
+       La entidad elegida se tiñe de marca, igual que la columna elegida. */
+    :host-context(.dark) .model-card-header-chosen {
+      background-color: var(--brand);
+      color: var(--brand-foreground);
+    }
     /* La columna elegida se tiñe de marca, no solo se marca en negrita (19A). */
     .model-field-chosen {
       background-color: color-mix(in oklab, var(--brand) 10%, var(--card));
