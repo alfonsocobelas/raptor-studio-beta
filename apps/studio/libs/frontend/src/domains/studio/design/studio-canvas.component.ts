@@ -90,7 +90,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
   },
   template: `
     <div class="flex h-screen flex-col">
-      <header class="bg-card flex items-center gap-3 border-b px-4 py-2">
+      <header class="bg-card studio-chrome flex items-center gap-3 border-b px-4 py-2">
         <!-- marca del producto -->
         <div class="flex shrink-0 items-center gap-2" data-testid="product-logo">
           <svg class="size-7" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
@@ -557,7 +557,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
           </div>
         </div>
 
-        <aside class="bg-card flex w-80 shrink-0 flex-col border-l p-4">
+        <aside class="bg-card studio-chrome flex w-80 shrink-0 flex-col border-l p-4">
           @if (mode() === 'model') {
             <studio-model-panel />
           } @else if (mode() === 'flows') {
@@ -579,6 +579,12 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
       /* La tinta de la rejilla del lienzo: la comparten los puntos y el borde del chat,
          así el estudio no tiene dos naranjas distintos. */
       --canvas-ink: color-mix(in oklab, #d75f3d 35%, transparent);
+    }
+    /* Cromo del estudio en noche: la barra de arriba y el panel de la derecha bajan a
+       #1d1c21, más oscuro que --card, para que el lienzo quede lo más claro del marco
+       y el ojo vaya al diseño. Solo en oscuro: en claro este gris sería un boquete. */
+    :host-context(.dark) .studio-chrome {
+      background-color: #1d1c21;
     }
     .canvas-surface {
       background-color: var(--background);
