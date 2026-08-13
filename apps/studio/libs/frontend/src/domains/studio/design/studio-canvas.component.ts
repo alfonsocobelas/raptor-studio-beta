@@ -90,7 +90,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
   },
   template: `
     <div class="flex h-screen flex-col">
-      <header class="bg-card studio-topbar flex items-center gap-3 border-b px-4 py-2">
+      <header class="bg-card studio-chrome flex items-center gap-3 border-b px-4 py-2">
         <!-- marca del producto -->
         <div class="flex shrink-0 items-center gap-2" data-testid="product-logo">
           <svg class="size-7" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
@@ -580,13 +580,9 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
          así el estudio no tiene dos naranjas distintos. */
       --canvas-ink: color-mix(in oklab, #d75f3d 35%, transparent);
     }
-    /* Cromo del estudio en noche, más oscuro que --card para que el marco no compita
-       con el diseño. Solo en oscuro: en claro estos grises serían un boquete.
-       La barra lleva #1b1917 —la tinta de la identidad, la misma de la marca— y el
-       panel derecho se queda en #1d1c21: son valores distintos a propósito. */
-    :host-context(.dark) .studio-topbar {
-      background-color: #1b1917;
-    }
+    /* Cromo del estudio en noche: la barra de arriba y el panel de la derecha bajan a
+       #1d1c21, más oscuro que --card, para que el lienzo quede lo más claro del marco
+       y el ojo vaya al diseño. Solo en oscuro: en claro este gris sería un boquete. */
     :host-context(.dark) .studio-chrome {
       background-color: #1d1c21;
     }
