@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core'
 import type { CatalogCard, CatalogGroup } from './generate-catalog'
 
-const EMPTY_GROUP: CatalogGroup = { slot: '', heading: '', cards: [] }
+const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] }
 
 /**
  * Las tarjetas de «Antes de generar» (maqueta 9A). Presentacionales del todo: no inyectan

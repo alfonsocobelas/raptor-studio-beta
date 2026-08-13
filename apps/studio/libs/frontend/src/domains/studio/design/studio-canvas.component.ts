@@ -57,7 +57,8 @@ import { FlowPanelComponent } from './flow-panel.component'
 import { ModelSummaryComponent } from './model-summary.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
-import { GenerateWizardComponent } from '../generate/generate-wizard.component'
+import { GeneratePageComponent } from '../generate/generate-page.component'
+import { hasPublishableDesign } from '../generate/wizard-command'
 
 /**
  * El estudio: primero eliges VISTA (en blanco o preset) y luego le sueltas
@@ -71,7 +72,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     NgIcon,
     CanvasPageComponent,
     ChatPanelComponent,
-    GenerateWizardComponent,
+    GeneratePageComponent,
     ModelViewComponent,
     FlowViewComponent,
     ViewsSidebarComponent,
@@ -223,8 +224,22 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         >
           {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
         </button>
-        <studio-generate-wizard />
+        <!-- Sin una vista con bloques no hay nada que generar: el botón se queda apagado. -->
+        <button
+          type="button"
+          class="bg-primary text-primary-foreground generate-cta rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
+          data-testid="open-wizard"
+          [disabled]="!canPublish()"
+          [title]="canPublish() ? 'Generar aplicación' : 'Diseña al menos una vista con un bloque antes de generar'"
+          (click)="wizardOpen.set(true)"
+        >
+          Generar aplicación
+        </button>
       </header>
+
+      @if (wizardOpen()) {
+        <studio-generate-page (close)="wizardOpen.set(false)" />
+      }
 
       <div class="flex min-h-0 flex-1">
         @if (mode() === 'views') {
@@ -570,6 +585,13 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
     </div>
   `,
   styles: `
+    /* En noche el CTA dominante se invierte a papel y un botón blanco es lo que más
+       pesa de la pantalla. Toma el naranja de la marca —el mismo #f15539— con la
+       tinta oscura encima, igual que la entidad elegida del diagrama. */
+    :host-context(.dark) .generate-cta:not(:disabled) {
+      background-color: #f15539;
+      color: var(--brand-foreground);
+    }
     /* Papel del lienzo: el MISMO que el de Modelo y Flujos, --background a secas
        (decisión de Alfonso, 2026-08-11: el gris cálido de docs/style oscurecía
        demasiado). Rejilla de PUNTOS con la misma geometría que allí —celda de 24px—
@@ -674,6 +696,11 @@ export class StudioCanvasComponent {
   protected readonly notice = inject(CanvasNoticeService)
 
   protected readonly pages = computed(() => this.store.pages())
+
+  /** «Antes de generar» (spec 41): una capa sobre el lienzo, no una ruta ni un diálogo. */
+  protected readonly wizardOpen = signal(false)
+  /** Sin una vista con bloques no hay nada que generar. */
+  protected readonly canPublish = computed(() => hasPublishableDesign(this.store.pages()))
 
   /** Seguir el aviso lo cierra: ya cumplió, y su sitio lo ocupará el gesto siguiente. */
   protected runNotice(action: NonNullable<CanvasNotice['action']>): void {

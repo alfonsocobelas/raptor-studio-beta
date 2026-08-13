@@ -1,7 +1,7 @@
 /**
- * Smoke del wizard de ranuras (spec 23). Verifica el circuito manifiesto → HTTP →
- * formulario: las ranuras se pintan solas, las de un proveedor no se pintan y una
- * combinación inválida queda deshabilitada en vivo.
+ * Smoke de la pantalla «Antes de generar» (specs 23 y 41). Verifica el circuito
+ * manifiesto → HTTP → tarjetas: las ranuras se pintan solas, las de un proveedor no se
+ * pintan y una combinación inválida queda deshabilitada en vivo.
  *
  * Por defecto NO intercepta: consume el endpoint real del studio-api, porque interceptar
  * la ruta ya ocultó una vez que el path del frontend no existía (404). Con STUB_SLOTS=1
@@ -49,18 +49,22 @@ async function main(): Promise<void> {
     if (!ok) failures.push(description)
   }
 
-  // 1. cada ranura elegible del manifiesto tiene su grupo de radios
-  for (const slot of manifest.slots.filter((s: { providers: unknown[] }) => s.providers.length > 1)) {
+  // El preset visual no se pregunta aquí: lo manda el lienzo (spec 41)
+  const asked = (slot: { name: string; providers: unknown[] }): boolean =>
+    slot.providers.length > 1 && slot.name !== 'design'
+
+  // 1. cada ranura elegible del manifiesto tiene su fila de tarjetas
+  for (const slot of manifest.slots.filter(asked)) {
     for (const provider of slot.providers) {
-      await check(`${slot.name}=${provider.value} está en el formulario`, async () =>
+      await check(`${slot.name}=${provider.value} está en la pantalla`, async () =>
         page.isVisible(`[data-testid="slot-${slot.name}-${provider.value}"]`)
       )
     }
   }
 
-  // 2. las ranuras de un solo proveedor no se pintan: no hay nada que elegir
-  for (const slot of manifest.slots.filter((s: { providers: unknown[] }) => s.providers.length === 1)) {
-    await check(`${slot.name} (un solo proveedor) NO se pinta`, async () => {
+  // 2. las que no se preguntan no se pintan: un solo proveedor, o el preset del lienzo
+  for (const slot of manifest.slots.filter((s: { name: string; providers: unknown[] }) => !asked(s))) {
+    await check(`${slot.name} NO se pinta`, async () => {
       return (await page.locator(`[data-testid^="slot-${slot.name}-"]`).count()) === 0
     })
   }
@@ -84,7 +88,9 @@ async function main(): Promise<void> {
     settles('[data-testid="slot-auth-single-tenant"]:disabled')
   )
 
-  // 4. el comando refleja la selección y omite la ranura no elegible
+  // 4. el comando vive en el paso 3, al que se llega con el botón del raíl
+  await page.click('[data-testid="generate-primary"]')
+  await page.waitForSelector('[data-testid="generate-step-generate"]')
   await page.fill('[data-testid="wizard-name"]', 'smoke-slots')
   const command = (await page.textContent('[data-testid="wizard-command"]')) ?? ''
   await check(`el comando lleva --database=mongo (${command.trim()})`, async () => command.includes('--database=mongo'))
@@ -98,7 +104,7 @@ async function main(): Promise<void> {
     console.error(`\n✗ ${failures.length} comprobación(es) fallaron`)
     process.exit(1)
   }
-  console.log('\n🏅 Wizard dibujado desde el manifiesto: OK')
+  console.log('\n🏅 Pantalla de generar dibujada desde el manifiesto: OK')
 }
 
 void main()

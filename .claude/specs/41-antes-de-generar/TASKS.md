@@ -34,7 +34,7 @@
       validado, avanzado (instalar/directorio), comando con copiar, descargar schema,
       progreso y resultado. El botón del raíl cambia de texto y de acción.
 
-- [ ] **TASK-07**: Enchufar en `studio-canvas.component.ts`: el botón abre la capa nueva;
+- [x] **TASK-07**: Enchufar en `studio-canvas.component.ts`: el botón abre la capa nueva;
       se borra `generate-wizard.component.ts` y su import. Todos los `data-testid` de la
       lista del DESIGN siguen presentes.
 

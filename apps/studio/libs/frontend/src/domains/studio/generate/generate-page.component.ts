@@ -88,13 +88,15 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
           @if (step() === 'infra') {
             <div class="mx-auto max-w-3xl" data-testid="generate-step-infra">
               @if (catalog(); as catalog) {
-                @for (group of catalog.groups; track group.slot) {
-                  <studio-choice-cards
-                    [group]="group"
-                    [chosen]="selection()[group.slot] ?? ''"
-                    (choose)="choose(group.slot, $event)"
-                  />
-                }
+                <div data-testid="wizard-slots">
+                  @for (group of catalog.groups; track group.slot) {
+                    <studio-choice-cards
+                      [group]="group"
+                      [chosen]="selection()[group.slot]"
+                      (choose)="choose(group.slot, $event)"
+                    />
+                  }
+                </div>
                 <section class="mb-6">
                   <h2 class="text-foreground mb-0.5 text-[15px] font-semibold">Complementos</h2>
                   <p class="text-muted-foreground studio-ui mb-3">Lo que la aplicación necesita alrededor.</p>
