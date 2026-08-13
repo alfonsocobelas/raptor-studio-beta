@@ -249,7 +249,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 [class.ring-2]="isNodeSelected(card.group.id)"
                 [class.is-target]="isLinkTarget(card.group.id)"
               >
-                <!-- cabecera: de qué rama cuelga y cuántas acciones lleva; y es el asa de arrastre -->
+                <!-- cabecera: qué es y cuántas acciones lleva; y es el asa de arrastre. La rama
+                     NO se repite aquí: ya la dice la pastilla de la flecha que entra (2026-08-13) -->
                 <div
                   class="flex cursor-move items-center gap-2 px-2.5"
                   [style.height.px]="groupMetrics.headerHeight"
@@ -260,7 +261,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     class="flow-branch-chip rounded-[5px] border px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.12em]"
                     [attr.data-testid]="'flow-card-branch-' + card.group.id"
                   >
-                    {{ card.group.branch ? 'rama ' + card.group.branch : 'acciones' }}
+                    acciones
                   </span>
                   <span class="text-muted-foreground text-[10px]">{{ card.group.steps.length }}</span>
                 </div>

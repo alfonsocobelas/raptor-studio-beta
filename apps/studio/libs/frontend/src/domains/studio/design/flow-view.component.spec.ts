@@ -63,11 +63,13 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(testId(fixture, 'flow-card-quitar-el-aviso')).not.toBeNull()
   })
 
-  it('la tarjeta dice de qué rama cuelga', () => {
+  // La rama ya la dice la pastilla de la FLECHA que entra en la tarjeta: repetirla en la
+  // cabecera era decir dos veces lo mismo. La cabecera dice qué es y cuántas lleva.
+  it('la cabecera de la tarjeta dice «acciones», nunca de qué rama cuelga', () => {
     const fixture = mount()
 
-    expect(testId(fixture, 'flow-card-branch-marcar-la-fila')?.textContent).toContain('rama sí')
-    expect(testId(fixture, 'flow-card-branch-quitar-el-aviso')?.textContent).toContain('rama no')
+    expect(testId(fixture, 'flow-card-branch-marcar-la-fila')?.textContent?.trim()).toBe('acciones')
+    expect(testId(fixture, 'flow-card-branch-quitar-el-aviso')?.textContent?.trim()).toBe('acciones')
   })
 
   it('las filas se numeran DENTRO de la tarjeta: cada rama empieza por 1', () => {
@@ -109,7 +111,7 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(store.flows()[0].nodes.some(node => node.id === 'marcar-la-fila')).toBe(false)
     // 'enviar-correo' hereda la rama: sigue colgando del 'sí' de la decisión
     expect(store.flows()[0].edges).toContainEqual({ from: 'stock-10', to: 'enviar-correo', label: 'sí' })
-    expect(testId(fixture, 'flow-card-branch-enviar-correo')?.textContent).toContain('rama sí')
+    expect(testId(fixture, 'flow-card-branch-enviar-correo')?.textContent?.trim()).toBe('acciones')
   })
 
   // El puerto sirve para RECIBIR la flecha, así que solo se ve cuando hay una en el aire.
