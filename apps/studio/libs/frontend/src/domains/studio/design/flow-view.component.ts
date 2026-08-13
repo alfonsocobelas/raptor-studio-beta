@@ -1073,13 +1073,31 @@ export class FlowViewComponent {
       window.removeEventListener('pointercancel', onCancel)
       const drag = this.rowDrag()
       this.rowDrag.set(null)
-      if (soltar && drag) this.store.reorderFlowStep(flow, drag.stepId, drag.to)
+      if (!soltar || !drag || drag.to === drag.from) return
+
+      // La tarjeta se llama por el id de su PRIMERA acción, así que reordenar puede cambiarle
+      // la identidad al bloque: para el layout sería uno nuevo, y todo el lienzo se recolocaría
+      // —lo que se ve es la fila «saltando» a otra tarjeta—. Se congela lo dibujado, como los
+      // demás gestos que tocan la topología, y el sitio de la tarjeta viaja a su nueva cabeza.
+      const sitio = this.boxes().get(group.id)
+      this.freezePositions()
+      if (!this.store.reorderFlowStep(flow, drag.stepId, drag.to)) return
+      const recolocada = this.groupOf(drag.stepId)
+      if (recolocada && sitio) {
+        this.manual.update(manual => ({ ...manual, [`${flow}:${recolocada.id}`]: { x: sitio.x, y: sitio.y } }))
+      }
     }
     const onUp = cerrar(true)
     const onCancel = cerrar(false)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     window.addEventListener('pointercancel', onCancel)
+  }
+
+  /** Tarjeta a la que pertenece una acción, ya recableada: su id es el de su primera fila. */
+  private groupOf(stepId: string): FlowGroup | undefined {
+    const flow = this.activeFlow()
+    return flow ? flowGroups(flow).find(group => group.steps.some(step => step.id === stepId)) : undefined
   }
 
   /**

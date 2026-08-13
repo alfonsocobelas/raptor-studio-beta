@@ -391,3 +391,74 @@ describe('FlowViewComponent — reordenar las filas de una tarjeta', () => {
     expect(testId(fixture, 'flow-step-drop-guide')).toBeNull()
   })
 })
+
+// La tarjeta se identifica por el id de su PRIMERA acción, así que reordenar puede cambiarle
+// la identidad al bloque. Sin congelar antes, el layout lo trata como uno nuevo y todo el
+// lienzo se recoloca: lo que se ve es la acción «saltando» a otro bloque (bug 2026-08-13).
+describe('FlowViewComponent — reordenar no recoloca el lienzo', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'decision', '¿hay recambio?')
+    store.addFlowNode(FLOW, 'step', 'Pedir el recambio')
+    store.addFlowNode(FLOW, 'step', 'Reparar la maquina')
+    store.addFlowNode(FLOW, 'step', 'Entregar la maquina')
+    store.addFlowEdge(FLOW, 'inicio', 'hay-recambio')
+    store.addFlowEdge(FLOW, 'hay-recambio', 'reparar-la-maquina', 'sí')
+    store.addFlowEdge(FLOW, 'reparar-la-maquina', 'entregar-la-maquina')
+    store.addFlowEdge(FLOW, 'entregar-la-maquina', 'fin')
+    store.addFlowEdge(FLOW, 'hay-recambio', 'pedir-el-recambio', 'no')
+    store.addFlowEdge(FLOW, 'pedir-el-recambio', 'hay-recambio')
+    store.removeFlowEdge(FLOW, 'inicio', 'fin')
+  })
+
+  /** Sitio de cada bloque del lienzo, tal como lo pinta la vista. */
+  function sitios(fixture: ReturnType<typeof mount>): Record<string, string> {
+    const bloques = fixture.nativeElement.querySelectorAll<HTMLElement>(
+      '[data-testid^="flow-card-"], [data-testid^="flow-node-"]'
+    )
+    const out: Record<string, string> = {}
+    for (const bloque of bloques) {
+      const id = bloque.getAttribute('data-testid') as string
+      if (id.includes('-branch-') || id.includes('-add-') || id.includes('-kind-')) continue
+      if (bloque.style.left) out[id] = `${bloque.style.left},${bloque.style.top}`
+    }
+    return out
+  }
+
+  function dragRow(fixture: ReturnType<typeof mount>, stepId: string, filas: number): void {
+    const asa = testId(fixture, `flow-step-grip-${stepId}`) as HTMLElement
+    asa.setPointerCapture = () => undefined
+    asa.dispatchEvent(new MouseEvent('pointerdown', { clientX: 50, clientY: 300, bubbles: true }))
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 50, clientY: 300 + filas * 52 }))
+    window.dispatchEvent(new MouseEvent('pointerup', { clientX: 50, clientY: 300 + filas * 52 }))
+    fixture.detectChanges()
+  }
+
+  it('la tarjeta se queda en su sitio aunque el reordenado le cambie la cabeza', () => {
+    const fixture = mount()
+    const antes = sitios(fixture)
+
+    dragRow(fixture, 'entregar-la-maquina', -1)
+
+    const despues = sitios(fixture)
+    // la tarjeta ahora se llama por su nueva cabeza, pero ocupa el MISMO sitio
+    expect(despues['flow-card-entregar-la-maquina']).toBe(antes['flow-card-reparar-la-maquina'])
+  })
+
+  it('y ningún otro bloque cambia de sitio', () => {
+    const fixture = mount()
+    const antes = sitios(fixture)
+
+    dragRow(fixture, 'entregar-la-maquina', -1)
+
+    const despues = sitios(fixture)
+    const movidos = Object.keys(despues).filter(id => antes[id] && antes[id] !== despues[id])
+    expect(movidos).toEqual([])
+  })
+})
