@@ -13,7 +13,7 @@
       `added N packages`. El controlador reemite `phase` y `packages` en el NDJSON. Aditivo:
       `step` sigue viajando igual.
 
-- [ ] **TASK-02**: Tests + cancelación en `studio-generate.controller.ts`: al cerrarse la
+- [x] **TASK-02**: Tests + cancelación en `studio-generate.controller.ts`: al cerrarse la
       respuesta sin haber terminado se mata el **grupo** de procesos, y se borra el directorio
       destino **solo si no existía** antes de arrancar (comprobado antes de lanzar nada, y
       nunca fuera del workspace).

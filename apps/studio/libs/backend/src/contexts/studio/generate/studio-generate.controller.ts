@@ -2,10 +2,11 @@ import { BadRequestException, Body, Controller, Get, Post, Res } from '@nestjs/c
 import type { Response } from 'express'
 import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator'
 import { execFile, spawn } from 'child_process'
-import { mkdtempSync, writeFileSync } from 'fs'
+import { existsSync, mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { buildAppFile } from './build-app-file'
+import { killGroup, removeIfGenerated } from './cancel-cleanup'
 import { describeGenerationFailure } from './generation-failure'
 import { describeProgress } from './progress'
 import { validateDesign } from '../chat/validate-proposal'
@@ -82,7 +83,12 @@ export class StudioGenerateController {
     }
 
     const startedAt = process.hrtime.bigint()
-    const child = spawn('npx', prepared.args, { cwd: this.acceleratorRoot })
+    // se pregunta ANTES de escribir nada: después, un directorio creado por esta generación
+    // es indistinguible de uno que llevara ahí un año, y de eso depende si se puede borrar
+    const existedBefore = existsSync(prepared.root)
+    // `detached` le da grupo propio: `npx nx` lanza a su vez al generador y a npm, y matar
+    // solo al padre dejaría el install corriendo huérfano el resto de la instalación
+    const child = spawn('npx', prepared.args, { cwd: this.acceleratorRoot, detached: true })
     let files = 0
     let output = `$ npx ${prepared.args.join(' ')}\n\n`
 
@@ -107,8 +113,27 @@ export class StudioGenerateController {
     child.stdout.on('data', consume)
     child.stderr.on('data', consume)
 
+    /**
+     * El cliente se fue (pulsó «Cancelar» y abortó el fetch, o cerró el estudio): se para la
+     * generación en vez de dejarla escribiendo ficheros que ya no quiere nadie.
+     */
+    let cancelled = false
+    res.on('close', () => {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        return
+      }
+      cancelled = true
+      killGroup(child.pid)
+      const removed = removeIfGenerated(prepared.root, this.acceleratorRoot, existedBefore)
+      console.log(`[generate] ${body.name}: CANCELADA${removed ? ` (borrado ${prepared.root})` : ''}`)
+    })
+
     await new Promise<void>(resolve => {
       child.on('close', code => {
+        if (cancelled) {
+          resolve()
+          return
+        }
         const elapsedMs = Number((process.hrtime.bigint() - startedAt) / 1_000_000n)
         console.log(`[generate] ${body.name}: ${code === 0 ? 'OK' : 'FALLÓ'} en ${(elapsedMs / 1000).toFixed(1)} s`)
         emit({
