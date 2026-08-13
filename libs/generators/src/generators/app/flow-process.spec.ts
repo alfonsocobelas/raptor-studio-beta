@@ -389,3 +389,51 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
     })
   })
 })
+
+/**
+ * Spec 40: el orden de los métodos emitidos es el de la CADENA del lienzo. Reordenar las
+ * acciones en el estudio cambia esa cadena, y el código emitido tiene que seguirla: si no,
+ * el gesto de arrastrar una fila sería mentira en cuanto se generase la app.
+ */
+describe('flow-process — los métodos salen en el orden de la cadena (spec 40)', () => {
+  const conRamas = (primeraRama: string[]): BusinessFlow => ({
+    name: 'Aviso de stock bajo',
+    nodes: [
+      { id: 'cambia', kind: 'start', text: 'Cambia el stock' },
+      { id: 'bajo', kind: 'decision', text: '¿stock < 10?' },
+      { id: 'avisar', kind: 'step', text: 'Avisar a compras' },
+      { id: 'cerrar', kind: 'step', text: 'Cerrar el aviso' },
+      { id: 'quitar', kind: 'step', text: 'Quitar la marca' },
+      { id: 'fin', kind: 'end', text: 'Listo' }
+    ],
+    edges: [
+      { from: 'cambia', to: 'bajo' },
+      { from: 'bajo', to: primeraRama[0], label: 'sí' },
+      { from: primeraRama[0], to: primeraRama[1] },
+      { from: primeraRama[1], to: 'fin' },
+      { from: 'bajo', to: 'quitar', label: 'no' },
+      { from: 'quitar', to: 'fin' }
+    ]
+  })
+
+  it('las acciones de una tarjeta salen SEGUIDAS, sin colar la de la otra rama', () => {
+    const methods = flowStepMethods(conRamas(['avisar', 'cerrar']))
+
+    expect(methods.map(method => method.methodName)).toEqual(['avisar', 'cerrar', 'quitar'])
+  })
+
+  it('reordenar la cadena reordena los métodos: manda la cadena, no el alfabeto', () => {
+    const methods = flowStepMethods(conRamas(['cerrar', 'avisar']))
+
+    expect(methods.map(method => method.methodName)).toEqual(['cerrar', 'avisar', 'quitar'])
+  })
+
+  it('la numeración del JSDoc sigue el mismo orden: el fin va detrás de las dos ramas', () => {
+    const methods = flowStepMethods(conRamas(['avisar', 'cerrar']))
+    const numeros = methods.map(method => method.docLines[0])
+
+    expect(numeros).toEqual(['Paso 3 — Avisar a compras', 'Paso 4 — Cerrar el aviso', 'Paso 5 — Quitar la marca'])
+    // y el destino común se numera después de la última acción, no antes
+    expect(methods[2].docLines).toContain('Va a: 6. Listo')
+  })
+})
