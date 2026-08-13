@@ -251,8 +251,12 @@
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
+/* En oscuro, #221f1e = oklch(0.245 0.004 60): la MISMA luminancia que --card, así que
+   el raíl y las cajas del diagrama son el mismo material, y con el croma casi a cero
+   —el gris de antes lo tenía en tono 69, a 37° del naranja de marca, y lo apagaba—.
+   Con el fondo casi neutro, los botones naranjas del raíl son lo único saturado. */
 :root.dark .studio-rail {
-  background-color: color-mix(in oklab, var(--muted) 65%, var(--background) 35%);
+  background-color: #221f1e;
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.
