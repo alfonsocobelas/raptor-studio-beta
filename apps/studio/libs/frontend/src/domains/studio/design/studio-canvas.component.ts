@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, isDevMode, signal
 import { FormsModule } from '@angular/forms'
 import { PreviewSettings, presetChrome } from './preview-settings'
 import { previewThemeVars } from './preview-theme'
+import { productMark } from './product-mark'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideChartNoAxesColumn,
@@ -93,7 +94,7 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
         <!-- marca del producto -->
         <div class="flex shrink-0 items-center gap-2" data-testid="product-logo">
           <svg class="size-7" viewBox="0 0 32 32" role="img" aria-label="Raptor Studio">
-            <rect width="32" height="32" rx="9" fill="#1b1917" />
+            <rect width="32" height="32" rx="9" [attr.fill]="mark().background" data-testid="product-mark-plate" />
             <text
               x="16"
               y="17"
@@ -102,7 +103,8 @@ import { GenerateWizardComponent } from '../generate/generate-wizard.component'
               font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
               font-size="17"
               font-weight="700"
-              fill="#f15539"
+              [attr.fill]="mark().letter"
+              data-testid="product-mark-letter"
             >
               R
             </text>
@@ -653,6 +655,8 @@ export class StudioCanvasComponent {
     ...previewThemeVars(this.preview.palette(), this.preview.theme()),
     ...presetChrome(this.preview.preset(), this.preview.theme())
   }))
+  /** La marca sigue al tema DEL ESTUDIO, no al de la app dibujada en el lienzo. */
+  protected readonly mark = computed(() => productMark(this.preview.studioTheme()))
 
   protected readonly modes = STUDIO_MODES
   private readonly studioMode = inject(StudioModeService)
