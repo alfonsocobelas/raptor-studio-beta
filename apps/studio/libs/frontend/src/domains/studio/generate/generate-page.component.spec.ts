@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
 import { GeneratePageComponent } from './generate-page.component'
+import { GenerateRunner } from './generate-runner'
 import type { SlotsManifest } from './wizard-command'
 
 const manifest: SlotsManifest = {
@@ -592,6 +593,37 @@ describe('GeneratePageComponent', () => {
       fixture.detectChanges()
 
       expect(at(fixture, 'generate-step-infra')).not.toBeNull()
+    })
+
+    /** TASK-09: reabrir mientras se genera (o ya generado) es volver a la obra, no empezar. */
+    it('reabrir la pantalla con la obra en marcha aterriza en la obra, no en las decisiones', async () => {
+      // un stream que no termina: la generación sigue viva cuando se reabre
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: { signal: AbortSignal }) => ({
+          ok: true,
+          status: 200,
+          body: {
+            getReader: () => ({
+              read: () =>
+                new Promise((_resolve, reject) =>
+                  init.signal.addEventListener('abort', () => reject(new DOMException('abortada', 'AbortError')))
+                )
+            })
+          }
+        }))
+      )
+      const first = await mount()
+      at(first, 'generate-primary')?.click()
+      await settle()
+      first.destroy()
+
+      const reopened = await mount()
+
+      expect(at(reopened, 'generate-step-generate')).not.toBeNull()
+      expect(at(reopened, 'generate-step-infra')).toBeNull()
+      TestBed.inject(GenerateRunner).cancel()
+      await settle()
     })
 
     it('la cancelada no se disfraza de error: su cara propia y la misma vuelta', async () => {

@@ -50,7 +50,7 @@
       arrancarla; el comando determinista con copiar y la descarga del diseño; cancelada y
       fallida con su cara y su vuelta a las decisiones.
 
-- [ ] **TASK-09**: Tests + segundo plano en `studio-canvas.component.ts`: el botón dice
+- [x] **TASK-09**: Tests + segundo plano en `studio-canvas.component.ts`: el botón dice
       «Generando…» con su segundero, reabre la pantalla en vez de arrancar otra, y al terminar
       avisa por `CanvasNoticeService` con la ruta y una salida al resultado.
 

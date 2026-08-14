@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject, signal } from '@angular/core'
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Output,
+  computed,
+  inject,
+  signal
+} from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { firstValueFrom } from 'rxjs'
 import { downloadBlob } from '../../../shared/utils/download-file'
@@ -15,6 +24,7 @@ import {
   defaultSelection,
   designSummary,
   isDisabled,
+  spelled,
   type SlotsManifest
 } from './wizard-command'
 
@@ -329,7 +339,8 @@ export class GeneratePageComponent {
 
   protected readonly runner = inject(GenerateRunner)
 
-  protected readonly step = signal<Step>('infra')
+  /** Reabrir con la obra en marcha (o acabada) es volver a verla, no empezar decisiones. */
+  protected readonly step = signal<Step>(this.runner.generating() || this.runner.outcome() !== null ? 'generate' : 'infra')
   protected readonly manifest = signal<SlotsManifest | null>(null)
   protected readonly manifestError = signal<string | null>(null)
   protected readonly selection = signal<Record<string, string>>({})
@@ -401,6 +412,9 @@ export class GeneratePageComponent {
 
   constructor() {
     void this.loadManifest()
+    // la pantalla se declara mirando la obra: mientras esté montada, el final no avisa fuera
+    this.runner.attach()
+    inject(DestroyRef).onDestroy(() => this.runner.detach())
   }
 
   /** Sin manifiesto no hay formulario: el estudio no se inventa las opciones del generador. */
@@ -504,8 +518,4 @@ export class GeneratePageComponent {
 
 function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`
-}
-
-function spelled(seconds: number): string {
-  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
 }

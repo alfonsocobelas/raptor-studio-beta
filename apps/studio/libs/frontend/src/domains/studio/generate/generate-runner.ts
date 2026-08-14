@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core'
+import { Injectable, inject, signal } from '@angular/core'
+import { CanvasNoticeService } from '../design/canvas-notice.service'
 import { applyDone, applyEvent, initialPhases, type PhaseState } from './generate-phases'
 import { markWritten, plannedItems, type WrittenItem } from './written-items'
 import type { buildDesignRequest } from './wizard-command'
@@ -57,9 +58,24 @@ export class GenerateRunner {
   /** Las piezas del diseño, marcándose según sale su código */
   readonly written = signal<WrittenItem[]>([])
   readonly outcome = signal<GenerateOutcome>(null)
+  /** El aviso de segundo plano pide reabrir la obra; el lienzo lo escucha y abre la capa. */
+  readonly viewRequested = signal(false)
 
+  private readonly noticeService = inject(CanvasNoticeService)
+  /** ¿Hay una pantalla mirando la obra? La página se declara al montarse y al morir. */
+  private watching = false
   private ticker: ReturnType<typeof setInterval> | null = null
   private aborter: AbortController | null = null
+
+  /** La pantalla de la obra está delante: el final no necesita gritar. */
+  attach(): void {
+    this.watching = true
+  }
+
+  /** «Seguir en segundo plano»: la capa se cierra y el final avisará por el lienzo. */
+  detach(): void {
+    this.watching = false
+  }
 
   async run(request: GenerateRequest): Promise<void> {
     this.reset(request)
@@ -95,7 +111,28 @@ export class GenerateRunner {
       this.generating.set(false)
       this.step.set(null)
       this.phases.update(phases => applyDone(phases, Date.now(), this.outcome() === 'ok'))
+      this.notifyIfUnwatched()
     }
+  }
+
+  /**
+   * El final de una obra que nadie miraba se cuenta por el lienzo. Cancelar no avisa: solo se
+   * cancela desde la pantalla abierta, así que quien canceló ya lo está viendo.
+   */
+  private notifyIfUnwatched(): void {
+    const outcome = this.outcome()
+    if (this.watching || outcome === null || outcome === 'cancelled') {
+      return
+    }
+    const view = { run: () => this.viewRequested.set(true) }
+    if (outcome === 'ok') {
+      this.noticeService.show(`Tu aplicación está lista en ${this.root() ?? 'el workspace'}`, {
+        label: 'Ver el resultado',
+        ...view
+      })
+      return
+    }
+    this.noticeService.show('La generación falló', { label: 'Ver el motivo', ...view })
   }
 
   /**
@@ -120,6 +157,7 @@ export class GenerateRunner {
     this.seconds.set(0)
     this.step.set('Validando el diseño')
     this.outcome.set(null)
+    this.viewRequested.set(false)
     this.phases.set(initialPhases({ skipInstall: request.skipInstall }))
     this.written.set(
       plannedItems({

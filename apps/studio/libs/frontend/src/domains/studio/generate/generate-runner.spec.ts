@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
+import { CanvasNoticeService } from '../design/canvas-notice.service'
 import { GenerateRunner, type GenerateRequest } from './generate-runner'
 
 /** Un cuerpo NDJSON troceado a voluntad: así se prueba el corte a mitad de línea. */
@@ -282,6 +283,112 @@ describe('GenerateRunner', () => {
 
       expect(run.outcome()).toBeNull()
       expect(run.output()).toBeNull()
+    })
+  })
+
+  /**
+   * TASK-09 (spec 42): «seguir en segundo plano» es cerrar la capa sin tocar nada. La pantalla
+   * se declara mirando (attach) o no (detach), y el final solo avisa cuando nadie miraba.
+   */
+  describe('el segundo plano', () => {
+    /** Un stream que aguanta abierto hasta que el test lo suelta: da tiempo a irse. */
+    const holdable = (done: Record<string, unknown>): { release: () => void } => {
+      const encoder = new TextEncoder()
+      let release: () => void = () => undefined
+      const gate = new Promise<void>(resolve => (release = resolve))
+      let sent = false
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => ({
+          ok: true,
+          status: 200,
+          body: {
+            getReader: () => ({
+              read: async () => {
+                if (sent) return { done: true }
+                await gate
+                sent = true
+                return { done: false, value: encoder.encode(`${JSON.stringify(done)}\n`) }
+              }
+            })
+          }
+        })) as unknown as typeof fetch
+      )
+      return { release }
+    }
+
+    const notice = (): CanvasNoticeService => TestBed.inject(CanvasNoticeService)
+
+    it('si nadie miraba al terminar bien, avisa con la ruta y una salida al resultado', async () => {
+      const run = runner()
+      const stream = holdable({ type: 'done', ok: true, files: 3, root: 'apps/boutique', output: 'ok' })
+
+      run.attach()
+      const running = run.run(ask('boutique'))
+      await Promise.resolve()
+      run.detach()
+      stream.release()
+      await running
+
+      expect(notice().notice()?.text).toContain('apps/boutique')
+      expect(notice().notice()?.action?.label).toBe('Ver el resultado')
+    })
+
+    it('seguir el aviso pide reabrir la obra', async () => {
+      const run = runner()
+      const stream = holdable({ type: 'done', ok: true, files: 3, root: 'apps/boutique', output: 'ok' })
+
+      run.attach()
+      const running = run.run(ask('boutique'))
+      await Promise.resolve()
+      run.detach()
+      stream.release()
+      await running
+      notice().notice()?.action?.run()
+
+      expect(run.viewRequested()).toBe(true)
+    })
+
+    it('un fallo en segundo plano también avisa, con su cara de fallo', async () => {
+      const run = runner()
+      const stream = holdable({ type: 'done', ok: false, output: 'reventó' })
+
+      run.attach()
+      const running = run.run(ask('boutique'))
+      await Promise.resolve()
+      run.detach()
+      stream.release()
+      await running
+
+      expect(notice().notice()?.text).toContain('falló')
+      expect(notice().notice()?.action?.label).toBe('Ver el motivo')
+    })
+
+    it('si la obra se estaba mirando, el final no grita', async () => {
+      const run = runner()
+      notice().dismiss()
+      vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 3, root: 'apps/x', output: 'ok' })]))
+
+      run.attach()
+      await run.run(ask('mini'))
+
+      expect(notice().notice()).toBeNull()
+    })
+
+    it('volver a mirar antes del final tampoco avisa: ya lo estás viendo', async () => {
+      const run = runner()
+      notice().dismiss()
+      const stream = holdable({ type: 'done', ok: true, files: 3, root: 'apps/x', output: 'ok' })
+
+      run.attach()
+      const running = run.run(ask('mini'))
+      await Promise.resolve()
+      run.detach()
+      run.attach()
+      stream.release()
+      await running
+
+      expect(notice().notice()).toBeNull()
     })
   })
 })

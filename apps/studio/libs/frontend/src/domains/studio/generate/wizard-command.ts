@@ -60,6 +60,11 @@ export function isDisabled(provider: ManifestProvider, selection: Record<string,
  * ¿Hay algo que generar? Una vista sin bloques no emite nada, así que el botón
  * de generar se queda apagado hasta que exista al menos una vista con un bloque.
  */
+/** «45 s» o «1 min 32 s»: la ortografía única del segundero (obra, recibo y botón del lienzo). */
+export function spelled(seconds: number): string {
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
+}
+
 export function hasPublishableDesign(pages: readonly DesignPage[]): boolean {
   return pages.some(page => page.blocks.length > 0)
 }

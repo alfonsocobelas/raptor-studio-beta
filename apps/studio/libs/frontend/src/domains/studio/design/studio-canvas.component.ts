@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, isDevMode, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, effect, inject, isDevMode, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { PreviewSettings, presetChrome } from './preview-settings'
 import { previewThemeVars } from './preview-theme'
@@ -58,7 +58,8 @@ import { ModelSummaryComponent } from './model-summary.component'
 import { CanvasHeaderComponent } from './canvas-header.component'
 import { ChatPanelComponent } from '../chat/chat-panel.component'
 import { GeneratePageComponent } from '../generate/generate-page.component'
-import { hasPublishableDesign } from '../generate/wizard-command'
+import { GenerateRunner } from '../generate/generate-runner'
+import { hasPublishableDesign, spelled } from '../generate/wizard-command'
 
 /**
  * El estudio: primero eliges VISTA (en blanco o preset) y luego le sueltas
@@ -224,16 +225,23 @@ import { hasPublishableDesign } from '../generate/wizard-command'
         >
           {{ preview.studioTheme() === 'light' ? '◐' : '◑' }}
         </button>
-        <!-- Sin una vista con bloques no hay nada que generar: el botón se queda apagado. -->
+        <!-- Sin una vista con bloques no hay nada que generar: el botón se queda apagado.
+             Con la obra en segundo plano, el botón ES la obra: cuenta el tiempo y reabre. -->
         <button
           type="button"
           class="bg-primary text-primary-foreground generate-cta rounded-md px-4 py-2 text-sm font-medium disabled:opacity-40"
           data-testid="open-wizard"
-          [disabled]="!canPublish()"
-          [title]="canPublish() ? 'Generar aplicación' : 'Diseña al menos una vista con un bloque antes de generar'"
+          [disabled]="!canPublish() && !runner.generating()"
+          [title]="
+            runner.generating()
+              ? 'La generación sigue en marcha: vuelve a verla'
+              : canPublish()
+                ? 'Generar aplicación'
+                : 'Diseña al menos una vista con un bloque antes de generar'
+          "
           (click)="wizardOpen.set(true)"
         >
-          Generar aplicación
+          {{ runner.generating() ? 'Generando · ' + workClock() : 'Generar aplicación' }}
         </button>
       </header>
 
@@ -699,6 +707,9 @@ export class StudioCanvasComponent {
 
   /** «Antes de generar» (spec 41): una capa sobre el lienzo, no una ruta ni un diálogo. */
   protected readonly wizardOpen = signal(false)
+  /** La obra en segundo plano (spec 42): el botón cuenta el tiempo y el aviso pide reabrir. */
+  protected readonly runner = inject(GenerateRunner)
+  protected readonly workClock = computed(() => spelled(this.runner.seconds()))
   /** Sin una vista con bloques no hay nada que generar. */
   protected readonly canPublish = computed(() => hasPublishableDesign(this.store.pages()))
 
@@ -725,6 +736,13 @@ export class StudioCanvasComponent {
   constructor() {
     // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue
     void this.history.init()
+    // el aviso de «terminó en segundo plano» pide ver el resultado: se atiende reabriendo
+    effect(() => {
+      if (this.runner.viewRequested()) {
+        this.runner.viewRequested.set(false)
+        this.wizardOpen.set(true)
+      }
+    })
   }
 
   /** El menú de diseños se cierra al pulsar fuera; su propio clic se reconoce por la raíz. */

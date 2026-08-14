@@ -7,6 +7,7 @@ import {
   buildDesignRequest,
   defaultSelection,
   designSummary,
+  spelled,
   hasPublishableDesign,
   isDisabled,
   type SlotsManifest,
@@ -235,5 +236,20 @@ describe('buildDesignRequest', () => {
 
     expect('brief' in request).toBe(false)
     expect('flows' in request).toBe(false)
+  })
+})
+
+/**
+ * El segundero se lee en tres sitios (la cabecera de la obra, el recibo del desenlace y el
+ * botón del lienzo en segundo plano): una sola ortografía para los tres.
+ */
+describe('spelled', () => {
+  it('por debajo del minuto son segundos a secas', () => {
+    expect(spelled(45)).toBe('45 s')
+  })
+
+  it('a partir del minuto se dice en minutos y segundos', () => {
+    expect(spelled(92)).toBe('1 min 32 s')
+    expect(spelled(60)).toBe('1 min 0 s')
   })
 })
