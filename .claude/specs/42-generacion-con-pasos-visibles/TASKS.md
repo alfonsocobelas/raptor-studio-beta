@@ -46,7 +46,7 @@
       dos salidas, barra por fases cumplidas, lista de fases con estado y tiempo, registro
       técnico plegable (abierto solo si falla) y raíl «Mientras tanto».
 
-- [ ] **TASK-08**: Tests + el desenlace en la misma pantalla: ruta, ficheros y tiempo; cómo
+- [x] **TASK-08**: Tests + el desenlace en la misma pantalla: ruta, ficheros y tiempo; cómo
       arrancarla; el comando determinista con copiar y la descarga del diseño; cancelada y
       fallida con su cara y su vuelta a las decisiones.
 

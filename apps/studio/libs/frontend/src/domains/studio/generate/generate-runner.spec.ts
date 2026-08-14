@@ -260,6 +260,18 @@ describe('GenerateRunner', () => {
       expect(run.ok()).toBe(false)
     })
 
+    /** El desenlace necesita la ruta como dato, no enterrada en el texto del registro. */
+    it('recuerda dónde quedó la app, y una generación nueva lo olvida', async () => {
+      const run = runner()
+      vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: true, files: 3, root: 'apps/boutique', output: 'ok' })]))
+      await run.run(request)
+      expect(run.root()).toBe('apps/boutique')
+
+      vi.stubGlobal('fetch', streaming([line({ type: 'progress', phase: 'prepare' })]))
+      await run.run(request)
+      expect(run.root()).toBeNull()
+    })
+
     it('una generación nueva no arrastra el desenlace de la anterior', async () => {
       const run = runner()
       vi.stubGlobal('fetch', streaming([line({ type: 'done', ok: false, output: 'reventó' })]))

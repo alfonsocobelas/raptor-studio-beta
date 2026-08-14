@@ -213,6 +213,46 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
           </aside>
         } @else {
           <studio-generate-work>
+            <!-- el desenlace: la obra acaba y AQUÍ mismo está la ruta, cómo arrancarla o por qué paró -->
+            @if (runner.outcome(); as outcome) {
+              <div class="studio-box outcome mb-4" [attr.data-state]="outcome" data-testid="generate-outcome">
+                @if (outcome === 'ok') {
+                  <p class="text-foreground mb-1 text-[15px] font-semibold">
+                    Tu aplicación está en <code class="font-mono">{{ runner.root() }}</code>
+                  </p>
+                  <p class="text-muted-foreground studio-ui mb-4">{{ receipt() }}</p>
+                  <p class="studio-eyebrow mb-2">Para verla funcionar</p>
+                  <pre
+                    class="bg-muted overflow-auto rounded-md p-3 font-mono text-[11.5px]"
+                    data-testid="generate-run-hint"
+                  >
+cd {{ runner.root() }}
+make local-setup   # postgres + npm install + seed
+make api           # http://localhost:3000/api/v1
+make web           # http://localhost:4200</pre
+                  >
+                } @else {
+                  <p class="text-foreground mb-1 text-[15px] font-semibold">
+                    {{ outcome === 'cancelled' ? 'Cancelada' : 'La generación falló' }}
+                  </p>
+                  <p class="text-muted-foreground studio-ui mb-3">
+                    {{
+                      outcome === 'cancelled'
+                        ? 'El generador se paró y el código a medias se borró. No queda nada a medias.'
+                        : 'El registro técnico de abajo cuenta el motivo. Puedes ajustar las decisiones y volver a intentarlo.'
+                    }}
+                  </p>
+                  <button
+                    type="button"
+                    class="studio-cta border-input border"
+                    data-testid="outcome-back"
+                    (click)="step.set('infra')"
+                  >
+                    Volver a las decisiones
+                  </button>
+                }
+              </div>
+            }
             @if (!runner.generating() && command(); as cmd) {
               <div class="studio-box mb-4">
                 <p class="studio-eyebrow mb-2">El mismo resultado, desde la terminal</p>
@@ -236,21 +276,6 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
                   </button>
                 </div>
               </div>
-            }
-            @if (runner.elapsed(); as ms) {
-              <p class="text-muted-foreground studio-ui mb-3" data-testid="generate-elapsed">
-                Generado en {{ (ms / 1000).toFixed(1) }} s
-              </p>
-            }
-            @if (runner.outcome() === 'ok' && runner.output(); as out) {
-              <pre class="bg-muted mb-3 max-h-40 overflow-auto rounded-md p-3 text-xs" data-testid="generate-ok">{{
-                out
-              }}</pre>
-            }
-            @if (runner.outcome() === 'failed' && runner.output(); as out) {
-              <pre class="bg-muted mb-3 max-h-40 overflow-auto rounded-md p-3 text-xs" data-testid="generate-error">{{
-                out
-              }}</pre>
             }
           </studio-generate-work>
         }
@@ -317,9 +342,13 @@ export class GeneratePageComponent {
 
   protected readonly validName = computed(() => KEBAB.test(this.name()))
   /** «1 min 12 s» mientras dura: el mismo segundero que lleva el runner, en palabras. */
-  protected readonly clock = computed(() => {
-    const seconds = this.runner.seconds()
-    return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
+  protected readonly clock = computed(() => spelled(this.runner.seconds()))
+
+  /** El recibo del desenlace bueno: «120 ficheros · 1 min 32 s», medidos, no estimados. */
+  protected readonly receipt = computed(() => {
+    const files = `${this.runner.filesWritten()} ficheros`
+    const ms = this.runner.elapsed()
+    return ms === null ? files : `${files} · ${spelled(Math.round(ms / 1000))}`
   })
 
   /** Sin manifiesto no se sabe qué generar; sin nombre válido no hay dónde escribirlo. */
@@ -475,4 +504,8 @@ export class GeneratePageComponent {
 
 function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`
+}
+
+function spelled(seconds: number): string {
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
 }

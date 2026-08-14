@@ -448,8 +448,7 @@ describe('GeneratePageComponent', () => {
 
       expect(at(fixture, 'generate-step-generate')).not.toBeNull()
       expect(sent.body()).toMatchObject({ name: 'mi-app', skipInstall: false })
-      expect(at(fixture, 'generate-ok')?.textContent).toContain('apps/mi-app')
-      expect(at(fixture, 'generate-elapsed')?.textContent).toContain('4.2')
+      expect(at(fixture, 'generate-outcome')).not.toBeNull()
     })
 
     it('lo que se manda a generar lleva el diseño del lienzo, no solo las ranuras', async () => {
@@ -501,6 +500,130 @@ describe('GeneratePageComponent', () => {
       fixture.detectChanges()
 
       expect(at(fixture, 'slot-infra-azure')?.getAttribute('aria-checked')).toBe('true')
+    })
+  })
+
+  /**
+   * TASK-08 (spec 42): al terminar, la MISMA pantalla cuenta el desenlace. Nada de volver a
+   * un paso aparte: la obra acaba y ahí mismo está la ruta, cómo arrancarla o por qué paró.
+   */
+  describe('el desenlace', () => {
+    const settle = async (): Promise<void> => {
+      for (let i = 0; i < 6; i++) await Promise.resolve()
+    }
+
+    afterEach(() => vi.unstubAllGlobals())
+
+    /** Un NDJSON de una línea con final a elegir: la obra entera sin studio-api. */
+    const stubOutcome = (done: Record<string, unknown>): void => {
+      const encoder = new TextEncoder()
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => {
+          let sent = false
+          return {
+            ok: true,
+            status: 200,
+            body: {
+              getReader: () => ({
+                read: async () => {
+                  if (sent) return { done: true }
+                  sent = true
+                  return { done: false, value: encoder.encode(`${JSON.stringify(done)}\n`) }
+                }
+              })
+            }
+          }
+        })
+      )
+    }
+
+    const generate = async (done: Record<string, unknown>) => {
+      stubOutcome(done)
+      const fixture = await mount()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+      fixture.detectChanges()
+      return fixture
+    }
+
+    it('la que acaba bien enseña ruta, ficheros y tiempo, como datos y no como log', async () => {
+      const fixture = await generate({
+        type: 'done',
+        ok: true,
+        files: 120,
+        root: 'apps/mi-app',
+        output: 'listo',
+        elapsedMs: 92000
+      })
+
+      const outcome = at(fixture, 'generate-outcome')
+      expect(outcome?.getAttribute('data-state')).toBe('ok')
+      expect(outcome?.textContent).toContain('apps/mi-app')
+      expect(outcome?.textContent).toContain('120 ficheros')
+      expect(outcome?.textContent).toContain('1 min 32 s')
+    })
+
+    it('dice cómo arrancarla, con los comandos de verdad de la app generada', async () => {
+      const fixture = await generate({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', elapsedMs: 4200 })
+
+      const hint = at(fixture, 'generate-run-hint')?.textContent ?? ''
+      expect(hint).toContain('cd apps/mi-app')
+      expect(hint).toContain('make local-setup')
+      expect(hint).toContain('make api')
+      expect(hint).toContain('make web')
+    })
+
+    it('el comando determinista y la descarga del diseño acompañan al desenlace bueno', async () => {
+      const fixture = await generate({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', elapsedMs: 4200 })
+
+      expect(at(fixture, 'wizard-command')?.textContent).toContain('npx nx g @acc/generators:app')
+      expect(at(fixture, 'wizard-copy')).not.toBeNull()
+      expect(at(fixture, 'wizard-download')).not.toBeNull()
+    })
+
+    it('la fallida tiene su cara: lo dice y ofrece volver a las decisiones', async () => {
+      const fixture = await generate({ type: 'done', ok: false, output: 'error: la ranura auth exige postgres' })
+
+      expect(at(fixture, 'generate-outcome')?.getAttribute('data-state')).toBe('failed')
+      expect(at(fixture, 'outcome-back')).not.toBeNull()
+
+      at(fixture, 'outcome-back')?.click()
+      fixture.detectChanges()
+
+      expect(at(fixture, 'generate-step-infra')).not.toBeNull()
+    })
+
+    it('la cancelada no se disfraza de error: su cara propia y la misma vuelta', async () => {
+      // un stream que no termina: la única salida es cancelar
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: { signal: AbortSignal }) => ({
+          ok: true,
+          status: 200,
+          body: {
+            getReader: () => ({
+              read: () =>
+                new Promise((_resolve, reject) =>
+                  init.signal.addEventListener('abort', () => reject(new DOMException('abortada', 'AbortError')))
+                )
+            })
+          }
+        }))
+      )
+      const fixture = await mount()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+      fixture.detectChanges()
+
+      at(fixture, 'work-cancel')?.click()
+      await settle()
+      fixture.detectChanges()
+
+      const outcome = at(fixture, 'generate-outcome')
+      expect(outcome?.getAttribute('data-state')).toBe('cancelled')
+      expect(outcome?.textContent).toContain('Cancelada')
+      expect(at(fixture, 'outcome-back')).not.toBeNull()
     })
   })
 })

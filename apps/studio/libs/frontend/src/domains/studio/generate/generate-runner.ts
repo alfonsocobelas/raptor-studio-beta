@@ -50,6 +50,8 @@ export class GenerateRunner {
   readonly output = signal<string | null>(null)
   readonly ok = signal(false)
   readonly elapsed = signal<number | null>(null)
+  /** Dónde quedó la app: el desenlace la enseña como dato, no enterrada en el registro. */
+  readonly root = signal<string | null>(null)
   /** Las fases de la obra, declaradas antes de empezar y cerrándose conforme ocurren */
   readonly phases = signal<PhaseState[]>([])
   /** Las piezas del diseño, marcándose según sale su código */
@@ -112,6 +114,7 @@ export class GenerateRunner {
     this.generating.set(true)
     this.output.set(null)
     this.elapsed.set(null)
+    this.root.set(null)
     this.filesWritten.set(0)
     this.lastFile.set(null)
     this.seconds.set(0)
@@ -165,6 +168,7 @@ export class GenerateRunner {
     this.ok.set(event.ok ?? false)
     this.outcome.set(event.ok ? 'ok' : 'failed')
     this.elapsed.set(event.elapsedMs ?? null)
+    this.root.set(event.root ?? null)
     this.filesWritten.set(event.files ?? this.filesWritten())
     this.output.set(
       event.ok ? `✅ Generada en ${event.root}\n\n${event.output ?? ''}` : (event.output ?? 'La generación falló.')
