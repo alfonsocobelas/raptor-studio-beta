@@ -17,7 +17,7 @@ type StateSelection = { kind: 'edge'; name: string; from: string } | { kind: 'no
 @Component({
   selector: 'studio-state-diagram',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:keydown.delete)': 'onDeleteKey()', '(document:keydown.backspace)': 'onDeleteKey()' },
+  host: { '(document:keydown.delete)': 'onDeleteKey($event)', '(document:keydown.backspace)': 'onDeleteKey($event)' },
   template: `
     @if (view(); as v) {
       <div class="bg-card rounded-lg border p-4 shadow-sm" data-testid="state-diagram">
@@ -79,7 +79,6 @@ type StateSelection = { kind: 'edge'; name: string; from: string } | { kind: 'no
               [attr.data-unreachable]="node.unreachable || null"
               [attr.data-selected]="isNodeChosen(node.value) || null"
               (click)="chooseNode(node.value, $event)"
-              (pointerup)="finishLink(node.value)"
             >
               @if (node.initial) {
                 <!-- el anillo del estado inicial: donde nace todo registro -->
@@ -211,37 +210,66 @@ export class StateDiagramComponent {
     return machine?.transitions.find(t => t.name === current.name)?.label ?? ''
   }
 
-  /** Arrastre desde el asa (patrón startLink de la spec 15): fantasma hasta soltar. */
+  /**
+   * Arrastre desde el asa (patrón startLink del editor de flujos): con la captura del
+   * puntero, el pointerup NUNCA llega al nodo destino — se escucha en window y el
+   * destino se resuelve por COORDENADAS contra el layout, como hace flow-view.
+   */
   protected startLink(event: PointerEvent, from: string): void {
     event.preventDefault()
     event.stopPropagation()
-    const target = event.target as Element & { setPointerCapture?: (id: number) => void }
-    target.setPointerCapture?.(event.pointerId)
+    const handle = event.target as Element & { setPointerCapture?: (id: number) => void; closest: Element['closest'] }
+    handle.setPointerCapture?.(event.pointerId)
+    const svg = handle.closest('svg')
     this.linkingFrom = from
 
     const node = this.view()?.nodes.find(n => n.value === from)
-    if (node) {
-      const x = node.x + this.nodeWidth
-      const y = node.y + this.nodeHeight / 2
-      this.ghost.set({ x1: x, y1: y, x2: x, y2: y })
+    const originX = node ? node.x + this.nodeWidth : 0
+    const originY = node ? node.y + this.nodeHeight / 2 : 0
+    this.ghost.set({ x1: originX, y1: originY, x2: originX, y2: originY })
+
+    const toWorld = (e: PointerEvent): { x: number; y: number } => {
+      const rect = svg?.getBoundingClientRect() ?? { left: 0, top: 0 }
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top }
     }
-    const clear = (): void => {
+    const onMove = (move: PointerEvent): void => {
+      const point = toWorld(move)
+      this.ghost.set({ x1: originX, y1: originY, x2: point.x, y2: point.y })
+    }
+    const cerrar = (): void => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', cerrar)
       this.ghost.set(null)
       this.linkingFrom = null
-      window.removeEventListener('pointerup', clear)
     }
-    // limpiar DESPUÉS de que el pointerup del nodo destino haya podido crear la flecha
-    window.addEventListener('pointerup', () => setTimeout(clear), { once: true })
+    const onUp = (up: PointerEvent): void => {
+      const to = this.nodeAt(toWorld(up))
+      const resource = this.resourceName()
+      if (to && to !== from && resource) {
+        this.store.addTransition(resource, from, to)
+      }
+      cerrar()
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', cerrar)
   }
 
-  /** Soltar sobre un estado cierra la flecha; el store agrupa por verbo si toca. */
-  protected finishLink(to: string): void {
-    const from = this.linkingFrom
-    if (!from || from === to) return
-    const resource = this.resourceName()
-    if (resource) this.store.addTransition(resource, from, to)
-    this.linkingFrom = null
-    this.ghost.set(null)
+  /** ¿Qué estado hay bajo el punto? Margen pequeño: acertar al píxel era lo difícil. */
+  private nodeAt(point: { x: number; y: number }): string | null {
+    const margin = 8
+    for (const node of this.view()?.nodes ?? []) {
+      if (
+        point.x >= node.x - margin &&
+        point.x <= node.x + this.nodeWidth + margin &&
+        point.y >= node.y - margin &&
+        point.y <= node.y + this.nodeHeight + margin
+      ) {
+        return node.value
+      }
+    }
+    return null
   }
 
   protected renameEdge(event: Event): void {
@@ -268,7 +296,10 @@ export class StateDiagramComponent {
     this.store.setInitialState(resource, current.value)
   }
 
-  protected onDeleteKey(): void {
+  protected onDeleteKey(event: Event): void {
+    // teclear en un input (el editor de verbo/label) jamás borra la flecha (canon flow-view)
+    const target = event.target as HTMLElement | null
+    if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
     const current = this.chosen()
     const resource = this.resourceName()
     if (current?.kind !== 'edge' || !resource) return

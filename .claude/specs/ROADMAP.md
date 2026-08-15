@@ -70,6 +70,9 @@ Principio rector acordado: **añadir componentes poco a poco**, priorizando las 
 DERIVAN de flags que el resource-schema ya declara (el schema sabe más de lo que las vistas
 explotan). El schema NO aprende a describir procesos (workflows, transiciones, permisos por
 estado): ahí empieza el inner-platform effect (regla 7) y lo raro se edita a mano.
+_Revisión 2026-08-15 (spec 43): las TRANSICIONES DE ESTADO sí entraron — no como lenguaje,
+sino como diagrama de semántica cerrada (estados + flechas = definición total, sin cuerpos
+que interpretar). El resto del principio sigue vigente._
 
 Orden acordado: **tanda A (latente) → tanda C (analítica) → tanda B (import)**, siempre por
 detrás del trabajo activo (spec 15). Una spec por componente, cada una con su gate de oro.
@@ -309,3 +312,13 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     DataTable spartan, la réplica del lienzo del estudio y el comentario del
     skeleton.
 
+## Siguiente spec acordada (brainstorming 2026-08-14/15, cierre de la spec 43)
+
+- **44 — Convergencia flujos↔transiciones**: un paso de flujo con `transition` declarada
+  (la costura ya está en el contrato y en la frontera) emite cuerpo REAL determinista
+  (cargar → `entidad.verbo()` → guardar) y AHORA SÍ su endpoint — endpoint solo donde hay
+  cuerpo real, nunca fachadas sobre huecos vacíos. Además: encadenar el relleno de los
+  huecos `@ai` restantes como fase visible de la pantalla de obra (decisión «opción b»,
+  2026-08-15). Doctrina: el vocabulario de cajas compilables crece VERBO A VERBO por regla
+  de los dos; prohibido el vocabulario genérico (asignar/condición/bucle) — ver
+  memoria «backlog-ideas-estudio» §9.

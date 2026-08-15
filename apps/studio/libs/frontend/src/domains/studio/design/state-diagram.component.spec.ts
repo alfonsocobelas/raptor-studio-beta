@@ -14,11 +14,19 @@ function at(fixture: ReturnType<typeof mount>, testid: string): HTMLElement | nu
   return fixture.nativeElement.querySelector(`[data-testid="${testid}"]`)
 }
 
-/** jsdom no trae PointerEvent: un MouseEvent con ese nombre le vale al handler. */
-function drag(source: Element, target: Element): void {
+import { STATE_NODE } from '@app/shared/domain'
+
+/**
+ * jsdom no trae PointerEvent: un MouseEvent con ese nombre le vale al handler. El destino
+ * se resuelve por coordenadas (como en flow-view): en jsdom el rect del svg es (0,0), así
+ * que las coordenadas de cliente SON las del layout del diagrama.
+ */
+function drag(source: Element, targetIndex: number): void {
   ;(source as HTMLElement & { setPointerCapture: () => void }).setPointerCapture = () => undefined
   source.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }))
-  target.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 300, clientY: 10 }))
+  const x = targetIndex * (STATE_NODE.width + STATE_NODE.gap) + STATE_NODE.width / 2
+  window.dispatchEvent(new MouseEvent('pointermove', { clientX: x, clientY: 78 }))
+  window.dispatchEvent(new MouseEvent('pointerup', { clientX: x, clientY: 78 }))
 }
 
 describe('StateDiagramComponent — los gestos (spec 43)', () => {
@@ -43,7 +51,7 @@ describe('StateDiagramComponent — los gestos (spec 43)', () => {
   it('arrastrar del asa de un estado a otro crea la transición', () => {
     const fixture = mount()
 
-    drag(at(fixture, `state-handle-${values[0]}`)!, at(fixture, `state-node-${values[1]}`)!)
+    drag(at(fixture, `state-handle-${values[0]}`)!, 1)
     fixture.detectChanges()
 
     expect(machine()?.transitions).toHaveLength(1)
@@ -79,6 +87,20 @@ describe('StateDiagramComponent — los gestos (spec 43)', () => {
     fixture.detectChanges()
 
     expect(machine()?.transitions[0].from).toEqual([values[1]])
+  })
+
+  /** Bug cazado en la validación en navegador: Backspace DENTRO del input del editor borraba la flecha. */
+  it('teclear Backspace dentro del editor no borra la flecha seleccionada', () => {
+    store.addTransition('solicitud', values[0], values[1])
+    const fixture = mount()
+    at(fixture, `state-edge-${verb(values[1])}:${values[0]}`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    fixture.detectChanges()
+
+    const input = at(fixture, 'state-edit-name') as HTMLInputElement
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }))
+    fixture.detectChanges()
+
+    expect(machine()?.transitions).toHaveLength(1)
   })
 
   it('elegir un estado ofrece hacerlo inicial', () => {
