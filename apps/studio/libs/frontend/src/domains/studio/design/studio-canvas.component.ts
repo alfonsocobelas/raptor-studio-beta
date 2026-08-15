@@ -580,7 +580,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           </div>
         </div>
 
-        <aside class="studio-rail studio-rail-end studio-chrome flex w-80 shrink-0 flex-col border-l p-4">
+        <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
           @if (mode() === 'model') {
             <studio-model-panel />
           } @else if (mode() === 'flows') {
@@ -609,12 +609,6 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
       /* La tinta de la rejilla del lienzo: la comparten los puntos y el borde del chat,
          así el estudio no tiene dos naranjas distintos. */
       --canvas-ink: color-mix(in oklab, #d75f3d 35%, transparent);
-    }
-    /* Cromo del estudio en noche: la barra de arriba y el panel de la derecha bajan a
-       #1d1c21, más oscuro que --card, para que el lienzo quede lo más claro del marco
-       y el ojo vaya al diseño. Solo en oscuro: en claro este gris sería un boquete. */
-    :host-context(.dark) .studio-chrome {
-      background-color: #1d1c21;
     }
     .canvas-surface {
       background-color: var(--background);

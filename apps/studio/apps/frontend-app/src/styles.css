@@ -264,6 +264,16 @@
   border-color: var(--border);
 }
 
+/* Cromo del estudio en noche: las barras de arriba bajan a #1d1c21, más oscuro que
+   --card, para que el lienzo quede lo más claro del marco. La regla vivía dentro del
+   componente del lienzo y por eso la barra de Generar —misma clase— no la recibía, y
+   el panel derecho la llevaba encima pisando a .studio-rail (por eso las dos columnas
+   nunca iban a juego en oscuro). Ahora el panel derecho es solo raíl y las dos barras
+   se pintan desde aquí. */
+:root.dark .studio-chrome {
+  background-color: #1d1c21;
+}
+
 /* El raíl del borde derecho (el inspector) comparte el lino del izquierdo —el marco
    se cierra simétrico y el lienzo manda (elegido 2026-08-15 tras probar blanco y un
    medio tono)—. Solo cambia la sombra, que proyecta hacia el lienzo, a su izquierda. */
