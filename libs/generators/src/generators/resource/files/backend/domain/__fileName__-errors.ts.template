@@ -5,3 +5,12 @@ export class <%- className %>Error extends BusinessRuleViolationError {
     super(message, '<%- className %>', cause)
   }
 }
+<%_ if (hasStateMachine) { _%>
+
+/** Transición ilegal de la máquina de estados (spec 43): el borde la mapea a 409. */
+export class <%- className %>InvalidTransitionError extends BusinessRuleViolationError {
+  constructor(message: string, cause?: unknown) {
+    super(message, '<%- className %>', cause)
+  }
+}
+<%_ } _%>

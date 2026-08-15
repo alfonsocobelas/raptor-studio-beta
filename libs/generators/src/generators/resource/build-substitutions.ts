@@ -92,6 +92,8 @@ export interface ResourceSubstitutions {
   labelPlural: string
   /** El recurso emite el bloque de adjuntos (spec 14) */
   attachments: boolean
+  /** El recurso declara máquina de estados (spec 43): emite el error de transición */
+  hasStateMachine: boolean
   /** Ficha del registro (spec 16): null cuando el modelo no la declara */
   detail: DetailSubstitution | null
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
@@ -365,6 +367,7 @@ export function buildSubstitutions(
     api: definition.api ?? `/api/v1/${definition.plural}`,
     labelPlural: definition.labels?.plural ?? definition.plural,
     attachments: definition.attachments ?? false,
+    hasStateMachine: definition.state !== undefined,
     detail: renderDetail(definition),
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
@@ -561,7 +564,8 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
   const dtoName = definition.dtoName ?? `${className}Dto`
 
   const formFields = Object.entries(definition.fields)
-    .filter(([, f]) => f.form && f.form.control !== 'none')
+    // el estado gobernado por máquina (spec 43) no se edita a mano: solo transiciona
+    .filter(([name, f]) => f.form && f.form.control !== 'none' && name !== definition.state?.field)
     .map(([name, f]) => renderFormField(name, f, idPrefix))
 
   const sections: FormSectionSubstitution[] = (definition.formSections ?? []).map(section => {

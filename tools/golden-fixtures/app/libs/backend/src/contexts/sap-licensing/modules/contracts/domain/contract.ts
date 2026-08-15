@@ -14,6 +14,7 @@ import {
   ContractUpdateProps,
   RegisterContractProps
 } from './contract-types'
+import { ContractInvalidTransitionError } from './contract-errors'
 import { BillingFrequency } from './value-objects/billing-frequency.vo'
 import { BusinessModel } from './value-objects/business-model.vo'
 import { CmsCaseId } from './value-objects/cms-case-id.vo'
@@ -152,7 +153,7 @@ export class Contract extends AggregateRoot {
       props.subSolutionAreas,
       props.nbrOfContracts,
       props.isFavorite,
-      props.status,
+      ContractStatus.initial(),
       props.source,
       props.totalValue,
       props.currency,
@@ -182,7 +183,6 @@ export class Contract extends AggregateRoot {
       subSolutionAreas: SubSolutionAreas.create(props.subSolutionAreas ?? []),
       nbrOfContracts: NumberOfContracts.create(props.nbrOfContracts ?? 1),
       isFavorite: IsFavorite.create(props.isFavorite ?? false),
-      status: ContractStatus.create(props.status ?? 'active'),
       source: ContractSource.create(props.source ?? 'AVVALE_SOLD'),
       totalValue: ContractValue.create(props.totalValue ?? 0),
       currency: ContractCurrency.create(props.currency ?? 'EUR'),
@@ -298,9 +298,6 @@ export class Contract extends AggregateRoot {
     if (updates.isFavorite !== undefined) {
       this._isFavorite = IsFavorite.create(updates.isFavorite)
     }
-    if (updates.status !== undefined) {
-      this._status = ContractStatus.create(updates.status)
-    }
     if (updates.source !== undefined) {
       this._source = ContractSource.create(updates.source)
     }
@@ -355,6 +352,28 @@ export class Contract extends AggregateRoot {
     }
 
     return newContractNumber
+  }
+
+  /** Transición «Terminar»: active | expiring → terminated. */
+  terminate(): void {
+    if (this._status.isTerminated()) {
+      return
+    }
+    if (!this._status.isActive() && !this._status.isExpiring()) {
+      throw new ContractInvalidTransitionError(`Cannot terminate a contract in status "${this._status.value}"`)
+    }
+    this._status = ContractStatus.terminated()
+  }
+
+  /** Transición «Expirar»: expiring → expired. */
+  expire(): void {
+    if (this._status.isExpired()) {
+      return
+    }
+    if (!this._status.isExpiring()) {
+      throw new ContractInvalidTransitionError(`Cannot expire a contract in status "${this._status.value}"`)
+    }
+    this._status = ContractStatus.expired()
   }
 
   // @ai:begin domain-extra — métodos de negocio no derivables del schema

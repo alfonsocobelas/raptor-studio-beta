@@ -59,7 +59,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   const comp = definition.composition
 
   const dtoCtxs: Ctx[] = Object.entries(definition.fields)
-    .filter(([name, f]) => name !== 'id' && !f.syncManaged && !(f.optionalPrimitive && !f.updatable))
+    // el campo promovido a estado (spec 43) ni se pide en el alta ni se edita: solo transiciona
+    .filter(([name, f]) => name !== 'id' && name !== definition.state?.field && !f.syncManaged && !(f.optionalPrimitive && !f.updatable))
     .map(([name, f]) => ({ name, field: f, required: f.required ?? false, nullable: f.nullable ?? false }))
 
   const registerDtoFields = [idDtoField('id'), ...dtoCtxs.map(c => dtoField(c, definition, false))]

@@ -9,7 +9,6 @@ import {
   BillingFrequencyEnum,
   ContractDto,
   ContractSourceEnum,
-  ContractStatusEnum,
   ContractTypeEnum,
   RenewalTypeEnum
 } from '@sap-licenses/shared/domain'
@@ -17,7 +16,6 @@ import { CustomerService } from '../../../../../../core/services/customer.servic
 import {
   BILLING_FREQUENCY_LABELS,
   CONTRACT_SOURCE_LABELS,
-  CONTRACT_STATUS_LABELS,
   CONTRACT_TYPE_LABELS,
   RENEWAL_TYPE_LABELS
 } from './contract-labels'
@@ -25,13 +23,6 @@ import {
 const CONTRACT_TYPE_OPTIONS: AppSelectOption[] = [
   { value: 'cloud', label: 'Cloud' },
   { value: 'onprem', label: 'On-premise' }
-]
-
-const STATUS_OPTIONS: AppSelectOption[] = [
-  { value: 'active', label: 'Activo' },
-  { value: 'expiring', label: 'Por expirar' },
-  { value: 'expired', label: 'Expirado' },
-  { value: 'terminated', label: 'Terminado' }
 ]
 
 const SOURCE_OPTIONS: AppSelectOption[] = [
@@ -57,7 +48,6 @@ export interface ContractFormValue {
   contractNumber: string
   customerId: string
   isFavorite: boolean
-  status: ContractStatusEnum
   source: ContractSourceEnum
   startDate: string
   endDate: string | null
@@ -126,9 +116,6 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
                 <span class="text-destructive text-sm">La fecha fin debe ser posterior a la de inicio</span>
               }
             </app-form-field>
-            <app-form-field label="Estado" for="cstatus">
-              <app-select formControlName="status" controlId="cstatus" placeholder="" [options]="statusOptions" />
-            </app-form-field>
             <app-form-field label="Moneda" for="ccurrency">
               <input id="ccurrency" appInput formControlName="currency" />
             </app-form-field>
@@ -191,7 +178,6 @@ export class ContractDialogComponent {
   )
 
   protected readonly contractTypeOptions = CONTRACT_TYPE_OPTIONS
-  protected readonly statusOptions = STATUS_OPTIONS
   protected readonly sourceOptions = SOURCE_OPTIONS
   protected readonly billingFrequencyOptions = BILLING_FREQUENCY_OPTIONS
   protected readonly renewalTypeOptions = RENEWAL_TYPE_OPTIONS
@@ -203,7 +189,6 @@ export class ContractDialogComponent {
       // null (no ''): hlm-select solo muestra el placeholder cuando el valor es null.
       customerId: this._fb.control<string | null>(null, Validators.required),
       isFavorite: [false],
-      status: [ContractStatusEnum.ACTIVE],
       source: [ContractSourceEnum.AVVALE_SOLD],
       startDate: ['', Validators.required],
       endDate: [''],
@@ -224,7 +209,6 @@ export class ContractDialogComponent {
           contractNumber: contract.contractNumber ?? '',
           customerId: contract.customerId,
           isFavorite: contract.isFavorite,
-          status: contract.status,
           source: contract.source,
           startDate: contract.startDate ?? '',
           endDate: contract.endDate ?? '',

@@ -38,7 +38,7 @@
       `borrador → firmado → archivado`) y el VO enum-estado gana factorías semánticas y
       predicados (`initial()`, una por valor, `isX()`).
 
-- [ ] **TASK-08**: `/golden-diff` + el agregado emite un método por transición (no-op en
+- [x] **TASK-08**: `/golden-diff` + el agregado emite un método por transición (no-op en
       destino, guarda OR de `from`, `InvalidTransitionError` con label), nace en `initial`,
       el campo sale de register/update props.
 

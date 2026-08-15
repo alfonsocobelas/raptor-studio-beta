@@ -31,7 +31,6 @@ export interface ContractAggregateProps {
   subSolutionAreas: SubSolutionAreas
   nbrOfContracts: NumberOfContracts
   isFavorite: IsFavorite
-  status: ContractStatus
   source: ContractSource
   totalValue: ContractValue
   currency: ContractCurrency
@@ -77,6 +76,7 @@ export type ContractUpdateProps = Partial<
   Omit<
     ContractPrimitiveProps,
     | 'id'
+    | 'status'
     | 'origin'
     | 'lifecycleStatus'
     | 'archivedAt'
@@ -100,7 +100,6 @@ export interface RegisterContractProps {
   subSolutionAreas?: string[]
   nbrOfContracts?: number
   isFavorite?: boolean
-  status?: string
   source?: string
   startDate: Nullable<string>
   endDate?: string | null

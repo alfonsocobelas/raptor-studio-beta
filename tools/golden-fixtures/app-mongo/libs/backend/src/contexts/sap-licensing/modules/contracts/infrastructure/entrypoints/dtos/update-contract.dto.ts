@@ -15,7 +15,6 @@ import {
 import { CONTRACT_CONSTRAINTS as LIMITS } from '../../../domain/contract-constants'
 import { BillingFrequency } from '../../../domain/value-objects/billing-frequency.vo'
 import { ContractSource } from '../../../domain/value-objects/contract-source.vo'
-import { ContractStatus } from '../../../domain/value-objects/contract-status.vo'
 import { ContractType } from '../../../domain/value-objects/contract-type.vo'
 import { RenewalType } from '../../../domain/value-objects/renewal-type.vo'
 
@@ -62,10 +61,6 @@ export class UpdateContractDto {
   @IsOptional()
   @IsBoolean()
   isFavorite?: boolean
-
-  @IsOptional()
-  @IsIn([...ContractStatus.VALUES])
-  status?: string
 
   @IsOptional()
   @IsIn([...ContractSource.VALUES])

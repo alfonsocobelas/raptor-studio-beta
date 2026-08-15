@@ -28,6 +28,8 @@ export interface AggregateBindings {
   uniquenessPickKeys: string[]
   registerPropsLines: string[]
   aggregateTypeNames: string[]
+  /** Un método por transición de la máquina de estados (spec 43) */
+  transitionMethods: string[]
   composition: CompositionBindings | null
 }
 
@@ -41,6 +43,8 @@ interface FieldCtx {
   unique: boolean
   isArray: boolean
   unset: boolean
+  /** Campo promovido a estado (spec 43): nace en initial() y solo cambia por transición */
+  isState: boolean
 }
 
 /**
@@ -67,6 +71,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     maint: (field.optionalPrimitive ?? false) && !(field.syncManaged ?? false),
     unique: field.unique ?? false,
     isArray: field.column?.array ?? false,
+    isState: definition.state?.field === name,
     unset:
       (typeof field.vo === 'object' && field.vo.unset === true) ||
       field.voShared?.unset === true ||
@@ -81,7 +86,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
   // El par de fechas del period se pliega en un solo miembro `period`
   const periodFields = period ? [period.start, period.end] : []
   const members = ctxs.filter(c => !periodFields.includes(c.name))
-  const editable = ctxs.filter(c => !c.sync && (!c.maint || c.field.updatable) && !periodFields.includes(c.name))
+  const editable = ctxs.filter(c => !c.sync && !c.isState && (!c.maint || c.field.updatable) && !periodFields.includes(c.name))
 
   const sharedVoNames = new Set<string>()
   for (const c of ctxs) if (c.field.voShared) sharedVoNames.add(c.field.voShared.name)
@@ -117,13 +122,14 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     ],
     createArgs: [
       'props.id',
-      ...members.map(c => (c.sync ? syncCreateDefault(c) : `props.${c.name}`)),
+      // el estado no viaja en props: toda entidad nueva nace en el valor inicial (spec 43)
+      ...members.map(c => (c.isState ? `${c.voName}.initial()` : c.sync ? syncCreateDefault(c) : `props.${c.name}`)),
       ...(period ? ['props.period'] : [])
     ],
     registerArgs: [
       `id: ${idClass}.create(props.id)`,
       ...members
-        .filter(c => !c.sync)
+        .filter(c => !c.sync && !c.isState)
         .map(c => `${c.name}: ${isUnknownAtRegister(c) ? unknownAtRegisterValue(c) : registerArg(c)}`),
       ...(period ? [`period: ${periodCreate(period, 'props')}`] : [])
     ],
@@ -144,16 +150,16 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     ],
     aggregatePropsLines: [
       `id: ${idClass}`,
-      ...members.filter(c => !c.sync).map(c => `${c.name}: ${memberType(c)}`),
+      ...members.filter(c => !c.sync && !c.isState).map(c => `${c.name}: ${memberType(c)}`),
       ...(period ? ['period: Period'] : [])
     ],
     primitivePropsLines: ['id: string', ...ctxs.map(c => primitiveLine(c))],
-    updateOmitKeys: ['id', ...ctxs.filter(c => c.sync || (c.maint && !c.field.updatable)).map(c => c.name)],
+    updateOmitKeys: ['id', ...ctxs.filter(c => c.sync || c.isState || (c.maint && !c.field.updatable)).map(c => c.name)],
     uniquenessPickKeys: ctxs.filter(c => c.unique).map(c => c.name),
     registerPropsLines: [
       'id: string',
       ...ctxs
-        .filter(c => !c.sync && !isUnknownAtRegister(c))
+        .filter(c => !c.sync && !c.isState && !isUnknownAtRegister(c))
         .map(c =>
           c.field.required
             ? `${c.name}: ${c.nullable ? `Nullable<${primitiveType(c)}>` : primitiveType(c)}`
@@ -161,6 +167,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
         )
     ],
     aggregateTypeNames,
+    transitionMethods: renderTransitionMethods(definition, className),
     composition
   }
 
@@ -196,8 +203,40 @@ function emptyBindings(): AggregateBindings {
     updateOmitKeys: [],
     uniquenessPickKeys: [],
     registerPropsLines: [],
-    aggregateTypeNames: []
+    aggregateTypeNames: [],
+    transitionMethods: []
   }
+}
+
+/**
+ * Un método por transición (spec 43), patrón archive() de la referencia: re-aplicar en el
+ * destino es no-op; un origen no declarado lanza el error tipado (409 en el borde); y el
+ * salto es asignar la factoría del destino. La regla vive en la flecha, no en un motor.
+ */
+function renderTransitionMethods(definition: ResourceDefinition, className: string): string[] {
+  const machine = definition.state
+  if (!machine) return []
+  const field = machine.field
+  const voName = voNameOf(definition.fields[field])
+
+  return machine.transitions.map(transition => {
+    const method = names(transition.name).propertyName
+    const guards = transition.from.map(origin => `!this._${field}.is${names(origin).className}()`).join(' && ')
+    return [
+      `  /** Transición «${transition.label}»: ${transition.from.join(' | ')} → ${transition.to}. */`,
+      `  ${method}(): void {`,
+      `    if (this._${field}.is${names(transition.to).className}()) {`,
+      `      return`,
+      `    }`,
+      `    if (${guards}) {`,
+      `      throw new ${className}InvalidTransitionError(`,
+      `        \`Cannot ${method} a ${definition.name} in ${field} "\${this._${field}.value}"\``,
+      `      )`,
+      `    }`,
+      `    this._${field} = ${voName}.${names(transition.to).propertyName}()`,
+      `  }`
+    ].join('\n')
+  })
 }
 
 function voNameOf(field: FieldDefinition): string {
@@ -452,6 +491,10 @@ function renderAggImports(
     ...(composition?.parentExtraTypeNames ?? [])
   ].sort()
   lines.push(`import {\n  ${typeNames.join(',\n  ')}\n} from './${n.fileName}-types'`)
+  // el error de transición (spec 43) vive con los errores del módulo, como en la referencia
+  if (definition.state) {
+    lines.push(`import { ${n.className}InvalidTransitionError } from './${n.fileName}-errors'`)
+  }
   for (const vo of [...localVoNames].sort()) {
     lines.push(`import { ${vo} } from './value-objects/${names(vo).fileName}.vo'`)
   }
