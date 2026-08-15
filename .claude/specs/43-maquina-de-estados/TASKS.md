@@ -13,12 +13,12 @@
       contrato. _Nota: el gate vive en `defineResource`, no en `defineApp` — la máquina es
       del recurso y solo el recurso conoce su enum._
 
-- [ ] **TASK-02**: Tests + frontera: `validateDesign` valida `state` (y `FlowNode.transition`
+- [x] **TASK-02**: Tests + frontera: `validateDesign` valida `state` (y `FlowNode.transition`
       contra la máquina del recurso del paso) y emite el **warning** de alcanzabilidad.
 
 ## Bloque B — estudio
 
-- [ ] **TASK-03**: Tests + conmutador «Es el estado de la entidad» en el campo enum del
+- [x] **TASK-03**: Tests + conmutador «Es el estado de la entidad» en el campo enum del
       editor de modelo (crear `state` con `initial` = primer valor; quitar con confirmación).
 
 - [ ] **TASK-04**: Tests + el canvas pinta la máquina en la vista de la entidad: nodos =

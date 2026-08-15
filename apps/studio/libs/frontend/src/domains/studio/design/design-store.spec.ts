@@ -612,3 +612,60 @@ describe('reordenar las acciones de una tarjeta (spec 40)', () => {
     expect(store.reorderFlowStep('Fantasma', 'marcar-la-fila', 1)).toBe(false)
   })
 })
+
+/**
+ * Spec 43: promover un enum a estado de la entidad. El store es la única puerta de
+ * mutación y el gate de defineResource dispara en cada cambio, así que la máquina
+ * jamás puede quedar hablando de un campo que ya no es enum: quien lo cambia, la tira.
+ */
+describe('la máquina de estados del recurso (spec 43)', () => {
+  const setup = () => {
+    const store = new DesignStore()
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    return store
+  }
+
+  it('promover un enum crea la máquina: ancla, inicial = primer valor, sin transiciones', () => {
+    const store = setup()
+
+    expect(store.promoteState('solicitud', 'nombre')).toBe(true)
+
+    const machine = store.resources()[0].state
+    expect(machine?.field).toBe('nombre')
+    expect(machine?.initial).toBe(store.resources()[0].fields[0].values?.[0]?.value)
+    expect(machine?.transitions).toEqual([])
+  })
+
+  it('un campo que no es enum no se puede promover, y el motivo queda dicho', () => {
+    const store = setup()
+    store.addField('solicitud')
+
+    expect(store.promoteState('solicitud', 'campo2')).toBe(false)
+    expect(store.lastError()).toMatch(/enum/)
+  })
+
+  it('despromover tira la máquina entera', () => {
+    const store = setup()
+    store.promoteState('solicitud', 'nombre')
+
+    expect(store.demoteState('solicitud')).toBe(true)
+    expect(store.resources()[0].state).toBeUndefined()
+  })
+
+  it('cambiar el tipo del campo ancla tira la máquina con él', () => {
+    const store = setup()
+    store.promoteState('solicitud', 'nombre')
+
+    expect(store.updateField('solicitud', 0, { type: 'string' })).toBe(true)
+    expect(store.resources()[0].state).toBeUndefined()
+  })
+
+  it('borrar el campo ancla tira la máquina con él', () => {
+    const store = setup()
+    store.promoteState('solicitud', 'nombre')
+
+    expect(store.removeField('solicitud', 0)).toBe(true)
+    expect(store.resources()[0].state).toBeUndefined()
+  })
+})

@@ -122,6 +122,26 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
                 </button>
               </div>
 
+              @if (current.type === 'enum') {
+                <!-- promover el enum a estado (spec 43): el ciclo de vida se dibuja sobre sus valores -->
+                <label class="mt-4 flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    class="mt-0.5"
+                    [checked]="isStateAnchor()"
+                    (click)="toggleState($event)"
+                    data-testid="field-state-toggle"
+                  />
+                  <span>
+                    Es el estado de la entidad
+                    <span class="text-muted-foreground block text-xs">
+                      Sus valores pasan a ser el ciclo de vida: se dibujan transiciones, el campo sale del
+                      formulario y cada registro nace en el valor inicial.
+                    </span>
+                  </span>
+                </label>
+              }
+
               @if (current.type === 'ref') {
                 <p class="text-muted-foreground mt-3 text-xs">
                   Con una referencia elegida, el campo se dibuja como flecha en el diagrama.
@@ -219,6 +239,30 @@ export class ModelPanelComponent {
   protected readonly targets = computed(() =>
     this.store.resources().filter(resource => resource.name !== this.active.resource())
   )
+
+  /** ¿La columna elegida es el ancla de la máquina de su entidad? */
+  protected readonly isStateAnchor = computed(() => {
+    const current = this.field()
+    if (!current) return false
+    return this.store.resources().find(r => r.name === current.resource)?.state?.field === current.name
+  })
+
+  /** Promover es reversible dibujando después; quitar tira transiciones y se confirma. */
+  protected toggleState(event: Event): void {
+    const current = this.field()
+    if (!current) return
+    if (!this.isStateAnchor()) {
+      if (!this.store.promoteState(current.resource, current.name)) {
+        ;(event.target as HTMLInputElement).checked = false
+      }
+      return
+    }
+    if (window.confirm('Quitar el estado tira las transiciones dibujadas. ¿Seguro?')) {
+      this.store.demoteState(current.resource)
+    } else {
+      ;(event.target as HTMLInputElement).checked = true
+    }
+  }
 
   protected repoint(event: Event): void {
     const current = this.field()

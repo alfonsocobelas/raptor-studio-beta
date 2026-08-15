@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
@@ -194,5 +194,66 @@ describe('ModelPanelComponent', () => {
     testId(fixture, 'relation-delete-0')?.click()
 
     expect(store.resources()[0].fields.some(f => f.type === 'ref')).toBe(false)
+  })
+})
+
+/**
+ * Spec 43: el conmutador «Es el estado de la entidad» vive en la columna enum. Promover
+ * crea la máquina vacía; quitar pide confirmación porque tira las transiciones dibujadas.
+ */
+describe('ModelPanelComponent — el conmutador de estado (spec 43)', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    active.selectField('solicitud', 0)
+  })
+
+  it('una columna enum ofrece el conmutador; una de texto no', () => {
+    const fixture = mount()
+    expect(testId(fixture, 'field-state-toggle')).not.toBeNull()
+
+    store.addField('solicitud')
+    active.selectField('solicitud', 1)
+    fixture.detectChanges()
+    expect(testId(fixture, 'field-state-toggle')).toBeNull()
+  })
+
+  it('marcarlo promueve el campo: nace la máquina con su inicial', () => {
+    const fixture = mount()
+
+    ;(testId(fixture, 'field-state-toggle') as HTMLInputElement).click()
+    fixture.detectChanges()
+
+    expect(store.resources()[0].state?.field).toBe('nombre')
+    expect((testId(fixture, 'field-state-toggle') as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('desmarcarlo pide confirmación y, con ella, tira la máquina', () => {
+    store.promoteState('solicitud', 'nombre')
+    const fixture = mount()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    ;(testId(fixture, 'field-state-toggle') as HTMLInputElement).click()
+    fixture.detectChanges()
+
+    expect(store.resources()[0].state).toBeUndefined()
+  })
+
+  it('sin confirmación la máquina se queda como estaba', () => {
+    store.promoteState('solicitud', 'nombre')
+    const fixture = mount()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    ;(testId(fixture, 'field-state-toggle') as HTMLInputElement).click()
+    fixture.detectChanges()
+
+    expect(store.resources()[0].state?.field).toBe('nombre')
+    expect((testId(fixture, 'field-state-toggle') as HTMLInputElement).checked).toBe(true)
   })
 })

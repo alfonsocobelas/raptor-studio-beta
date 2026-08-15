@@ -124,6 +124,13 @@ function applyFieldPatch(field: DraftField, patch: Partial<DraftField>): DraftFi
   return withoutValues
 }
 
+/** La máquina cae si su ancla ya no está (o dejó de ser enum): nunca queda huérfana. */
+function dropStateIfOrphan(draft: DraftResource, anchorName: string | undefined): DraftResource {
+  if (!draft.state || draft.state.field !== anchorName) return draft
+  const { state: _dropped, ...rest } = draft
+  return rest
+}
+
 /** El diseño completo: nombre de app + entidades dibujadas + vistas con sus bloques. */
 export interface Design {
   appName: string
@@ -382,10 +389,16 @@ export class DesignStore {
   }
 
   updateField(resource: string, index: number, patch: Partial<DraftField>): boolean {
-    return this.updateResource(resource, draft => ({
-      ...draft,
-      fields: draft.fields.map((f, i) => (i === index ? applyFieldPatch(f, patch) : f))
-    }))
+    return this.updateResource(resource, draft => {
+      const patched = {
+        ...draft,
+        fields: draft.fields.map((f, i) => (i === index ? applyFieldPatch(f, patch) : f))
+      }
+      // si el ancla dejó de ser enum, la máquina se va con el cambio (spec 43)
+      const anchor = patched.fields[index]
+      const anchorBroken = draft.state?.field === anchor?.name && anchor?.type !== 'enum'
+      return anchorBroken ? dropStateIfOrphan(patched, anchor?.name) : patched
+    })
   }
 
   /**
@@ -508,10 +521,38 @@ export class DesignStore {
   }
 
   removeField(resource: string, index: number): boolean {
+    return this.updateResource(resource, draft => {
+      const removed = draft.fields[index]
+      const survivor = { ...draft, fields: draft.fields.filter((_, i) => i !== index) }
+      // sin su campo ancla la máquina no habla de nada: se va con él (spec 43)
+      return dropStateIfOrphan(survivor, removed?.name)
+    })
+  }
+
+  /**
+   * Promueve un campo enum a estado de la entidad (spec 43): nace la máquina con el
+   * primer valor como inicial y sin transiciones — las flechas se dibujan después.
+   */
+  promoteState(resource: string, fieldName: string): boolean {
+    const field = this._resources()
+      .find(r => r.name === resource)
+      ?.fields.find(f => f.name === fieldName)
+    if (!field || field.type !== 'enum' || !field.values?.length) {
+      this._lastError.set(`«${fieldName}» no es un campo enum con valores: no se puede promover a estado`)
+      return false
+    }
     return this.updateResource(resource, draft => ({
       ...draft,
-      fields: draft.fields.filter((_, i) => i !== index)
+      state: { field: fieldName, initial: field.values![0].value, transitions: [] }
     }))
+  }
+
+  /** Quita la máquina entera; la confirmación (tira las transiciones) es de quien llama. */
+  demoteState(resource: string): boolean {
+    return this.updateResource(resource, draft => {
+      const { state: _dropped, ...rest } = draft
+      return rest
+    })
   }
 
   /**
