@@ -669,3 +669,93 @@ describe('la máquina de estados del recurso (spec 43)', () => {
     expect(store.resources()[0].state).toBeUndefined()
   })
 })
+
+/**
+ * Spec 43 (gestos): las transiciones se editan por el store, que agrupa por nombre —
+ * dos flechas con el mismo verbo hacia el mismo destino son UNA transición con dos
+ * orígenes. El gate de defineResource protege cada mutación (ancla, valores, nombres).
+ */
+describe('las transiciones de la máquina (spec 43)', () => {
+  const setup = () => {
+    const store = new DesignStore()
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    store.promoteState('solicitud', 'nombre')
+    return store
+  }
+
+  const machineOf = (store: DesignStore) => store.resources()[0].state
+  /** El verbo propuesto siempre es kebab, aunque el valor del enum sea snake. */
+  const verb = (to: string) => `a-${to.replace(/_/g, '-')}`
+
+  it('arrastrar crea la transición con nombre propuesto a-<destino>', () => {
+    const store = setup()
+    const [a, b] = store.resources()[0].fields[0].values!.map(v => v.value)
+
+    expect(store.addTransition('solicitud', a, b)).toBe(true)
+
+    const machine = machineOf(store)
+    expect(machine?.transitions).toHaveLength(1)
+    expect(machine?.transitions[0].name).toBe(verb(b))
+    expect(machine?.transitions[0].from).toEqual([a])
+    expect(machine?.transitions[0].to).toBe(b)
+    expect(machine?.transitions[0].label.length).toBeGreaterThan(0)
+  })
+
+  it('una segunda flecha del mismo verbo al mismo destino se agrupa: un solo from con dos orígenes', () => {
+    const store = setup()
+    const [a, b, c] = store.resources()[0].fields[0].values!.map(v => v.value)
+    store.addTransition('solicitud', a, c)
+
+    expect(store.addTransition('solicitud', b, c)).toBe(true)
+
+    const machine = machineOf(store)
+    expect(machine?.transitions).toHaveLength(1)
+    expect(machine?.transitions[0].from).toEqual([a, b])
+  })
+
+  it('una flecha de un valor a sí mismo no pasa el gate y no deja rastro', () => {
+    const store = setup()
+    const [a] = store.resources()[0].fields[0].values!.map(v => v.value)
+
+    expect(store.addTransition('solicitud', a, a)).toBe(false)
+    expect(machineOf(store)?.transitions).toEqual([])
+  })
+
+  it('renombrar cambia verbo y label; un nombre duplicado hacia otro destino se rechaza', () => {
+    const store = setup()
+    const [a, b, c] = store.resources()[0].fields[0].values!.map(v => v.value)
+    store.addTransition('solicitud', a, b)
+    store.addTransition('solicitud', a, c)
+
+    expect(store.updateTransition('solicitud', verb(b), { name: 'aprobar', label: 'Aprobar' })).toBe(true)
+    expect(machineOf(store)?.transitions[0]).toMatchObject({ name: 'aprobar', label: 'Aprobar' })
+
+    expect(store.updateTransition('solicitud', 'aprobar', { name: verb(c) })).toBe(false)
+    expect(machineOf(store)?.transitions[0].name).toBe('aprobar')
+  })
+
+  it('borrar una flecha quita ese origen; la última se lleva la transición entera', () => {
+    const store = setup()
+    const [a, b, c] = store.resources()[0].fields[0].values!.map(v => v.value)
+    store.addTransition('solicitud', a, c)
+    store.addTransition('solicitud', b, c)
+
+    expect(store.removeTransition('solicitud', verb(c), a)).toBe(true)
+    expect(machineOf(store)?.transitions[0].from).toEqual([b])
+
+    expect(store.removeTransition('solicitud', verb(c), b)).toBe(true)
+    expect(machineOf(store)?.transitions).toEqual([])
+  })
+
+  it('cambiar el estado inicial se aplica; un valor ajeno al enum no pasa el gate', () => {
+    const store = setup()
+    const [, b] = store.resources()[0].fields[0].values!.map(v => v.value)
+
+    expect(store.setInitialState('solicitud', b)).toBe(true)
+    expect(machineOf(store)?.initial).toBe(b)
+
+    expect(store.setInitialState('solicitud', 'limbo')).toBe(false)
+    expect(machineOf(store)?.initial).toBe(b)
+  })
+})

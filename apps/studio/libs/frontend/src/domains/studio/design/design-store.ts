@@ -10,6 +10,7 @@ import {
   type BusinessFlow,
   type FlowEdge,
   type FlowNode,
+  type StateMachine,
   type FlowNodeKind,
   type ResourceDefinition
 } from '@acc/schema'
@@ -553,6 +554,72 @@ export class DesignStore {
       const { state: _dropped, ...rest } = draft
       return rest
     })
+  }
+
+  /**
+   * La flecha del diagrama de estados (spec 43). Nombre propuesto `a-<destino>`; si ese
+   * verbo ya existe hacia el mismo destino, la flecha nueva se AGRUPA como otro origen —
+   * dos flechas con el mismo verbo son una transición con dos orígenes.
+   */
+  addTransition(resource: string, from: string, to: string): boolean {
+    return this.mutateState(resource, machine => {
+      // el verbo emite ruta y método: kebab siempre, aunque el valor del enum sea snake
+      const name = `a-${to.replace(/_/g, '-')}`
+      const existing = machine.transitions.find(t => t.name === name && t.to === to)
+      if (existing) {
+        return {
+          ...machine,
+          transitions: machine.transitions.map(t =>
+            t === existing && !t.from.includes(from) ? { ...t, from: [...t.from, from] } : t
+          )
+        }
+      }
+      const label = this.stateValueLabel(resource, to)
+      return {
+        ...machine,
+        transitions: [...machine.transitions, { name, label: `A ${label.toLowerCase()}`, from: [from], to }]
+      }
+    })
+  }
+
+  /** Renombrar el verbo o su label; el gate rechaza duplicados hacia destinos distintos. */
+  updateTransition(resource: string, name: string, patch: { name?: string; label?: string }): boolean {
+    return this.mutateState(resource, machine => ({
+      ...machine,
+      transitions: machine.transitions.map(t =>
+        t.name === name ? { ...t, ...(patch.name ? { name: patch.name } : {}), ...(patch.label ? { label: patch.label } : {}) } : t
+      )
+    }))
+  }
+
+  /** Borra UNA flecha (un origen); la transición cae entera al perder el último. */
+  removeTransition(resource: string, name: string, from: string): boolean {
+    return this.mutateState(resource, machine => ({
+      ...machine,
+      transitions: machine.transitions
+        .map(t => (t.name === name ? { ...t, from: t.from.filter(origin => origin !== from) } : t))
+        .filter(t => t.from.length > 0)
+    }))
+  }
+
+  setInitialState(resource: string, value: string): boolean {
+    return this.mutateState(resource, machine => ({ ...machine, initial: value }))
+  }
+
+  /** Toda mutación de la máquina pasa por el MISMO gate que el resto del recurso. */
+  private mutateState(resource: string, fn: (machine: StateMachine) => StateMachine): boolean {
+    const machine = this._resources().find(r => r.name === resource)?.state
+    if (!machine) {
+      this._lastError.set(`«${resource}» no tiene máquina de estados`)
+      return false
+    }
+    return this.updateResource(resource, draft => ({ ...draft, state: fn(machine) }))
+  }
+
+  private stateValueLabel(resource: string, value: string): string {
+    const draft = this._resources().find(r => r.name === resource)
+    const field = draft?.fields.find(f => f.name === draft.state?.field)
+    return field?.values?.find(v => v.value === value)?.label ?? value
   }
 
   /**

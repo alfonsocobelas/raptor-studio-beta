@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { STATE_NODE, stateDiagram } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+
+/** Lo elegido dentro del diagrama: una flecha (verbo+origen) o un estado. */
+type StateSelection = { kind: 'edge'; name: string; from: string } | { kind: 'node'; value: string } | null
 
 /**
  * El ciclo de vida de la entidad elegida (spec 43): los valores del enum promovido como
@@ -14,6 +17,7 @@ import { DesignStore } from './design-store'
 @Component({
   selector: 'studio-state-diagram',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.delete)': 'onDeleteKey()', '(document:keydown.backspace)': 'onDeleteKey()' },
   template: `
     @if (view(); as v) {
       <div class="bg-card rounded-lg border p-4 shadow-sm" data-testid="state-diagram">
@@ -36,7 +40,16 @@ import { DesignStore } from './design-store'
             </marker>
           </defs>
           @for (edge of v.edges; track edge.key) {
-            <g class="text-muted-foreground" [attr.data-testid]="'state-edge-' + edge.key">
+            <g
+              class="cursor-pointer"
+              [class.text-muted-foreground]="!isEdgeChosen(edge.name, edge.from)"
+              [attr.data-selected]="isEdgeChosen(edge.name, edge.from) || null"
+              [style.color]="isEdgeChosen(edge.name, edge.from) ? '#f15539' : null"
+              [attr.data-testid]="'state-edge-' + edge.key"
+              (click)="chooseEdge(edge.name, edge.from, $event)"
+            >
+              <!-- trazo invisible más gordo: la flecha fina sería imposible de pinchar -->
+              <path [attr.d]="edge.path" fill="none" stroke="transparent" stroke-width="12" />
               <path [attr.d]="edge.path" fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#state-arrow)" />
               <text
                 [attr.x]="edge.labelX"
@@ -48,8 +61,26 @@ import { DesignStore } from './design-store'
               </text>
             </g>
           }
+          @if (ghost(); as line) {
+            <line
+              [attr.x1]="line.x1"
+              [attr.y1]="line.y1"
+              [attr.x2]="line.x2"
+              [attr.y2]="line.y2"
+              stroke="#f15539"
+              stroke-width="1.4"
+              stroke-dasharray="5 4"
+              data-testid="state-ghost-edge"
+            />
+          }
           @for (node of v.nodes; track node.value) {
-            <g [attr.data-testid]="'state-node-' + node.value" [attr.data-unreachable]="node.unreachable || null">
+            <g
+              [attr.data-testid]="'state-node-' + node.value"
+              [attr.data-unreachable]="node.unreachable || null"
+              [attr.data-selected]="isNodeChosen(node.value) || null"
+              (click)="chooseNode(node.value, $event)"
+              (pointerup)="finishLink(node.value)"
+            >
               @if (node.initial) {
                 <!-- el anillo del estado inicial: donde nace todo registro -->
                 <rect
@@ -82,9 +113,50 @@ import { DesignStore } from './design-store'
               >
                 {{ node.label }}
               </text>
+              <!-- el asa: arrastrar desde aquí tiende la flecha fantasma hasta otro estado -->
+              <circle
+                [attr.cx]="node.x + nodeWidth"
+                [attr.cy]="node.y + nodeHeight / 2"
+                r="6"
+                class="fill-background cursor-crosshair"
+                stroke="#f15539"
+                stroke-width="1.4"
+                [attr.data-testid]="'state-handle-' + node.value"
+                (pointerdown)="startLink($event, node.value)"
+              />
             </g>
           }
         </svg>
+        @if (chosen(); as selection) {
+          <div class="mt-3 flex flex-wrap items-center gap-2 border-t pt-3" data-testid="state-editor">
+            @if (selection.kind === 'edge') {
+              <label class="studio-ui text-muted-foreground">Verbo</label>
+              <input
+                class="border-input bg-card studio-ui w-36 rounded-md border px-2 py-1"
+                [value]="selection.name"
+                (change)="renameEdge($event)"
+                data-testid="state-edit-name"
+              />
+              <label class="studio-ui text-muted-foreground">Botón</label>
+              <input
+                class="border-input bg-card studio-ui w-36 rounded-md border px-2 py-1"
+                [value]="chosenLabel()"
+                (change)="relabelEdge($event)"
+                data-testid="state-edit-label"
+              />
+              <span class="text-muted-foreground studio-ui">Supr borra la flecha</span>
+            } @else {
+              <button
+                type="button"
+                class="studio-cta border-input border"
+                data-testid="state-make-initial"
+                (click)="makeInitial()"
+              >
+                Estado inicial
+              </button>
+            }
+          </div>
+        }
         @if (v.loose.length) {
           <p class="mt-2 text-xs text-amber-600" data-testid="state-warning">
             Ninguna flecha llega a: {{ v.loose.join(', ') }}. Se puede generar igual; dibuja cómo se alcanza o
@@ -101,6 +173,109 @@ export class StateDiagramComponent {
 
   protected readonly nodeWidth = STATE_NODE.width
   protected readonly nodeHeight = STATE_NODE.height
+
+  protected readonly chosen = signal<StateSelection>(null)
+  /** La flecha fantasma mientras se arrastra desde un asa. */
+  protected readonly ghost = signal<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
+  private linkingFrom: string | null = null
+
+  private resourceName(): string | null {
+    return this.active.resource()
+  }
+
+  protected isEdgeChosen(name: string, from: string): boolean {
+    const current = this.chosen()
+    return current?.kind === 'edge' && current.name === name && current.from === from
+  }
+
+  protected isNodeChosen(value: string): boolean {
+    const current = this.chosen()
+    return current?.kind === 'node' && current.value === value
+  }
+
+  protected chooseEdge(name: string, from: string, event: Event): void {
+    event.stopPropagation()
+    this.chosen.set({ kind: 'edge', name, from })
+  }
+
+  protected chooseNode(value: string, event: Event): void {
+    event.stopPropagation()
+    this.chosen.set({ kind: 'node', value })
+  }
+
+  /** El label actual del verbo elegido, leído del diseño (no se guarda copia). */
+  protected chosenLabel(): string {
+    const current = this.chosen()
+    if (current?.kind !== 'edge') return ''
+    const machine = this.store.resources().find(r => r.name === this.resourceName())?.state
+    return machine?.transitions.find(t => t.name === current.name)?.label ?? ''
+  }
+
+  /** Arrastre desde el asa (patrón startLink de la spec 15): fantasma hasta soltar. */
+  protected startLink(event: PointerEvent, from: string): void {
+    event.preventDefault()
+    event.stopPropagation()
+    const target = event.target as Element & { setPointerCapture?: (id: number) => void }
+    target.setPointerCapture?.(event.pointerId)
+    this.linkingFrom = from
+
+    const node = this.view()?.nodes.find(n => n.value === from)
+    if (node) {
+      const x = node.x + this.nodeWidth
+      const y = node.y + this.nodeHeight / 2
+      this.ghost.set({ x1: x, y1: y, x2: x, y2: y })
+    }
+    const clear = (): void => {
+      this.ghost.set(null)
+      this.linkingFrom = null
+      window.removeEventListener('pointerup', clear)
+    }
+    // limpiar DESPUÉS de que el pointerup del nodo destino haya podido crear la flecha
+    window.addEventListener('pointerup', () => setTimeout(clear), { once: true })
+  }
+
+  /** Soltar sobre un estado cierra la flecha; el store agrupa por verbo si toca. */
+  protected finishLink(to: string): void {
+    const from = this.linkingFrom
+    if (!from || from === to) return
+    const resource = this.resourceName()
+    if (resource) this.store.addTransition(resource, from, to)
+    this.linkingFrom = null
+    this.ghost.set(null)
+  }
+
+  protected renameEdge(event: Event): void {
+    const current = this.chosen()
+    const resource = this.resourceName()
+    if (current?.kind !== 'edge' || !resource) return
+    const name = (event.target as HTMLInputElement).value.trim()
+    if (this.store.updateTransition(resource, current.name, { name })) {
+      this.chosen.set({ ...current, name })
+    }
+  }
+
+  protected relabelEdge(event: Event): void {
+    const current = this.chosen()
+    const resource = this.resourceName()
+    if (current?.kind !== 'edge' || !resource) return
+    this.store.updateTransition(resource, current.name, { label: (event.target as HTMLInputElement).value })
+  }
+
+  protected makeInitial(): void {
+    const current = this.chosen()
+    const resource = this.resourceName()
+    if (current?.kind !== 'node' || !resource) return
+    this.store.setInitialState(resource, current.value)
+  }
+
+  protected onDeleteKey(): void {
+    const current = this.chosen()
+    const resource = this.resourceName()
+    if (current?.kind !== 'edge' || !resource) return
+    if (this.store.removeTransition(resource, current.name, current.from)) {
+      this.chosen.set(null)
+    }
+  }
 
   protected readonly view = computed(() => {
     const resource = this.store.resources().find(r => r.name === this.active.resource())

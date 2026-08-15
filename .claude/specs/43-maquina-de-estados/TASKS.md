@@ -25,7 +25,7 @@
       valores del enum (labels), flechas con `label`, `initial` distinguido, nodos sueltos
       visibles. Solo pintado; `npm run web:build`.
 
-- [ ] **TASK-05**: Tests + gestos: arrastre crea transición (nombre propuesto, label inline),
+- [x] **TASK-05**: Tests + gestos: arrastre crea transición (nombre propuesto, label inline),
       selección + edición + Supr, acción «Estado inicial», agrupado por `name` al guardar
       (merge de orígenes). `npm run web:build`.
 
