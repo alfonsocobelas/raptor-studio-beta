@@ -70,3 +70,41 @@ describe('el caso de uso y el endpoint de una transición', () => {
     )
   })
 })
+
+/**
+ * Bug cazado en la validación viva (spec 44): con un verbo multi-palabra («a-en-analisis»)
+ * el módulo derivaba el fichero del PascalCase (aen-analisis-…) y no encontraba el handler
+ * emitido (a-en-analisis-…). El import del módulo debe usar el MISMO slug que el fichero.
+ */
+describe('el cableado del módulo con verbos multi-palabra', () => {
+  it('importa handler y use case con el slug exacto del fichero emitido', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { renderEntrypoints } = require('./build-entrypoints')
+    const definition = {
+      schemaVersion: 1,
+      name: 'muestra',
+      plural: 'muestras',
+      context: 'aguas',
+      schemaName: 'aguas',
+      formSections: [{ id: 'general', title: 'Datos' }],
+      state: {
+        field: 'estado',
+        initial: 'recibida',
+        transitions: [{ name: 'a-en-analisis', label: 'A en análisis', from: ['recibida'], to: 'en_analisis' }]
+      },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        estado: { type: 'string', vo: { name: 'MuestraEstado', fieldName: 'Estado', values: ['recibida', 'en_analisis'] } }
+      }
+    }
+
+    const entry = renderEntrypoints(definition, true)
+
+    expect(entry.moduleHandlerImports.join('\n')).toContain(
+      "import { AEnAnalisisMuestraHandler } from './application/handlers/a-en-analisis-muestra.handler'"
+    )
+    expect(entry.moduleUseCaseImports.join('\n')).toContain(
+      "from './application/use-cases/a-en-analisis-muestra-usecase.service'"
+    )
+  })
+})

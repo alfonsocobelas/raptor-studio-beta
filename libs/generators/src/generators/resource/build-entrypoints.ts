@@ -118,8 +118,6 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   if (writes) ops.push(['Register', n.className])
   ops.push(['Search', pluralClass], ['Get', n.className])
   if (writes) ops.push(['Update', n.className])
-  // las transiciones de la máquina de estados (spec 43): un par use-case/handler por verbo
-  for (const t of definition.state?.transitions ?? []) ops.push([names(t.name).className, n.className])
   if (removes) ops.push(['Remove', n.className])
   // la papelera (spec 29) cuelga del borrado: sin softDelete no hay nada que listar ni restaurar
   if (removes && wantsSoftDelete(definition)) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
@@ -130,10 +128,19 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   ops.push(['Export', pluralClass])
   const childOps = comp ? ['Add', 'Update', 'Remove'].map(op => `${op}${names(comp.name).className}`) : []
 
+  // las transiciones (spec 43) van APARTE de ops: su slug de fichero es el del VERBO
+  // ('a-en-analisis-muestra'), no el derivado del PascalCase compuesto ('aen-analisis-…') —
+  // un verbo multi-palabra descuadraba el import del módulo con el fichero emitido
+  const transitionWires = (definition.state?.transitions ?? []).map(t => ({
+    className: `${names(t.name).className}${n.className}`,
+    file: `${names(t.name).fileName}-${n.fileName}`
+  }))
+
   const moduleHandlerImports = [
     ...ops.map(
       ([op, t]) => `import { ${op}${t}Handler } from './application/handlers/${names(op + t).fileName}.handler'`
     ),
+    ...transitionWires.map(w => `import { ${w.className}Handler } from './application/handlers/${w.file}.handler'`),
     ...childOps.map(c => `import { ${c}Handler } from './application/handlers/${names(c).fileName}.handler'`)
   ]
   const moduleUseCaseImports = [
@@ -141,12 +148,17 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
       ([op, t]) =>
         `import { ${op}${t}UseCase } from './application/use-cases/${names(op + t).fileName}-usecase.service'`
     ),
+    ...transitionWires.map(
+      w => `import { ${w.className}UseCase } from './application/use-cases/${w.file}-usecase.service'`
+    ),
     ...childOps.map(c => `import { ${c}UseCase } from './application/use-cases/${names(c).fileName}-usecase.service'`)
   ]
   const moduleProviderNames = [
     ...ops.map(([op, t]) => `${op}${t}Handler`),
+    ...transitionWires.map(w => `${w.className}Handler`),
     ...childOps.map(c => `${c}Handler`),
     ...ops.map(([op, t]) => `${op}${t}UseCase`),
+    ...transitionWires.map(w => `${w.className}UseCase`),
     ...childOps.map(c => `${c}UseCase`)
   ]
 

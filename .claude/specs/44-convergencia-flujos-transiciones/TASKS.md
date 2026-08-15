@@ -27,9 +27,15 @@
 
 ## Validación
 
-- [ ] **TASK-05**: Suite completa + `web:build` + `/golden-diff` + navegador: transición
+- [x] **TASK-05**: Suite completa + `web:build` + `/golden-diff` + navegador: transición
       declarada en el panel, app generada y `POST /processes/…/:id` ejercitado contra la
       app corriendo (204 real y 409 desde estado ilegal). Capturas a `docs/style/`.
+      _Hecho 2026-08-15 con valida-44 (diseño aguas): máquina de muestra dibujada, transición
+      «a-en-analisis» declarada en el paso «analizar», y en vivo: nace recibida → paso de
+      proceso 204 → en_analisis, no-op 204, 409 desde validada con el mensaje del dominio,
+      404 con id falso, y el paso SIN transición sin endpoint (404). La validación cazó un
+      bug real: el cableado del módulo descuadraba el slug con verbos multi-palabra
+      (aen-analisis vs a-en-analisis) — arreglado con test y golden re-baseline._
 
 ---
 
