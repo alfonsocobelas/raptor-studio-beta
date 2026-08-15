@@ -14,5 +14,10 @@
       que consume el stream y pinta el estado por hueco; deshabilitado mientras corre;
       sin huecos no hay sección. `npm run web:build`.
 
-- [ ] **TASK-04**: Suite completa + `web:build` + prueba en vivo con el puente (una sesión
+- [x] **TASK-04**: Suite completa + `web:build` + prueba en vivo con el puente (una sesión
       respondiendo `tmp/studio-bridge`) o constancia explícita de que quedó pendiente.
+      _Hecho 2026-08-16: valida-45 (1 recurso, 1 flujo con un paso sin transición) generada
+      con install; el `done` contó `['flow-archivar']`; el stream de relleno emitió
+      pending → proposing → filled con esta sesión de Claude respondiendo el puente, y el
+      cuerpo quedó DENTRO del hueco aceptado por el gate real (typecheck + test de la app
+      emitida). App y puente limpiados después._
