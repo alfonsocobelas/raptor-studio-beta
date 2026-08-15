@@ -58,7 +58,7 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
   `,
   styles: `
     .option-card {
-      background-color: var(--card);
+      background-color: #292725;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 14px;
@@ -88,7 +88,7 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
       flex-shrink: 0;
       width: 14px;
       height: 14px;
-      border: 1px solid var(--border);
+      border: 1px solid color-mix(in oklab, var(--foreground) 40%, transparent);
       border-radius: 50%;
     }
     .option-card-chosen .option-mark {
@@ -142,7 +142,7 @@ export class ChoiceCardsComponent {
   `,
   styles: `
     .addon-card {
-      background-color: var(--card);
+      background-color: #292725;
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 14px;
@@ -174,7 +174,7 @@ export class ChoiceCardsComponent {
       width: 15px;
       height: 15px;
       margin-top: 1px;
-      border: 1px solid var(--border);
+      border: 1px solid color-mix(in oklab, var(--foreground) 40%, transparent);
       border-radius: 4px;
     }
     .addon-card-active .addon-mark {
