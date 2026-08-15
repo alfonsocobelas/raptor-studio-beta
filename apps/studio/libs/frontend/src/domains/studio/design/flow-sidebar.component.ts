@@ -37,7 +37,7 @@ const FLOW_BLOCKS: FlowBlock[] = [
         @for (block of blocks; track block.kind) {
           <button
             type="button"
-            class="hover:border-foreground/40 studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
+            class="flow-block studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
             [disabled]="blocked(block)"
             [attr.data-testid]="'flow-block-' + block.kind"
             [attr.title]="blockedReason(block)"
@@ -107,6 +107,23 @@ const FLOW_BLOCKS: FlowBlock[] = [
         Los bloques se añaden al final del flujo; enlázalos arrastrando en el lienzo.
       </p>
     </aside>
+  `,
+  styles: `
+    /* El naranja de la casa, el mismo que viste el lienzo de flujos (flow-view).
+       Token duplicado a consciencia — si cambia allí, cambia aquí. */
+    :host {
+      --flow-accent: #d75f3d;
+    }
+    /* Los botones de bloque van en el naranja macizo, con el texto invertido:
+       la paleta se ve de un vistazo como los verbos que son. */
+    .flow-block {
+      background-color: var(--flow-accent);
+      border-color: transparent;
+      color: #fff;
+    }
+    .flow-block:not(:disabled):hover {
+      background-color: color-mix(in oklab, var(--flow-accent) 88%, black);
+    }
   `
 })
 export class FlowSidebarComponent {
