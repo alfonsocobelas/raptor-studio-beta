@@ -136,7 +136,23 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       }
     })
 
-    it('acepta un relleno válido: queda en el árbol y sale del informe de pendientes', async () => {
+    /** Spec 45: sin esta línea, el puente espera 15 min en silencio y la obra parece colgada. */
+  it('anuncia por consola cada hueco ANTES de proponer: la pantalla de obra lo traduce', async () => {
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => undefined)
+    try {
+      await fillPendingFlowSlots(emittedApp(), {
+        directory: 'apps/demo',
+        executor: { name: 'fake', propose: async () => undefined },
+        gate: { run: async () => undefined }
+      })
+      const lines = spy.mock.calls.map(call => String(call[0]))
+      expect(lines.some(line => line.startsWith('→ flow-') && line.includes('proponiendo'))).toBe(true)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('acepta un relleno válido: queda en el árbol y sale del informe de pendientes', async () => {
       const tree = emittedApp()
       const executor = executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY))
       const gate = gateThat()
@@ -250,7 +266,7 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       const tree = emittedApp()
       const seen: string[] = []
 
-      await fillPendingFlowSlots(tree, {
+      await fillPendingFlowSlots(emittedApp(), {
         directory: 'apps/demo',
         executor: executorThat(current => replaceSlotBody(current, 'flow-revisar', BODY)),
         gate: {

@@ -5,7 +5,7 @@
 - [x] **TASK-01**: Tests + el `done` de `POST /studio/generate/stream` cuenta los huecos
       `flow-*` pendientes de la app emitida (`slots: ['flow-x', …]`). Aditivo.
 
-- [ ] **TASK-02**: Tests + `POST /studio/fill-slots/stream` (NDJSON): por hueco
+- [x] **TASK-02**: Tests + `POST /studio/fill-slots/stream` (NDJSON): por hueco
       `{type:'slot', id, status: proposing|filled|rejected, reason?}` y cierre
       `{type:'done', filled, rejected, pending, baseline?}`. Ejecutor puente + gate reales;
       en tests, ejecutor/gate falsos inyectados.

@@ -109,6 +109,9 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
   const rejected: FlowFillRejection[] = []
 
   for (const slot of pending) {
+    // la obra traduce esta línea a «proponiendo…» (spec 45): sin ella, el puente espera
+    // hasta 15 minutos en silencio y la pantalla parece colgada
+    console.log(`→ ${slot.id}: proponiendo por ${executor.name}…`)
     const original = tree.read(slot.file, 'utf-8') ?? ''
     const candidate = await executor.propose(buildFlowSlotPrompt(tree, directory, slot), slot, original)
 
