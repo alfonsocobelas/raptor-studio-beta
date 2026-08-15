@@ -315,3 +315,116 @@ describe('brief — la frase de negocio de la entidad (spec 22)', () => {
     )
   })
 })
+
+/**
+ * Spec 43: la máquina de estados — un enum promovido a estado con transiciones dibujables.
+ * La regla de negocio es la flecha que existe o no existe; el gate garantiza que toda
+ * flecha habla de valores reales del enum y que el código emitido no puede colisionar.
+ */
+describe('state — la máquina de estados de la entidad (spec 43)', () => {
+  const withState = (state?: unknown): ResourceDefinition => {
+    const definition = validDefinition()
+    definition.fields['status'] = {
+      type: 'string',
+      vo: { name: 'ContractStatus', fieldName: 'Status', values: ['draft', 'signed', 'archived'] },
+      form: { control: 'select', label: 'Estado' },
+      table: { show: true, label: 'Estado', minWidth: 120 }
+    }
+    return { ...definition, state: state as ResourceDefinition['state'] }
+  }
+
+  const machine = () => ({
+    field: 'status',
+    initial: 'draft',
+    transitions: [
+      { name: 'sign', label: 'Firmar', from: ['draft'], to: 'signed' },
+      { name: 'archive', label: 'Archivar', from: ['signed'], to: 'archived' }
+    ]
+  })
+
+  it('acepta una máquina válida y la conserva', () => {
+    expect(() => defineResource(withState(machine()))).not.toThrow()
+  })
+
+  it('rechaza anclarla a un campo que no existe', () => {
+    expect(problemsOf(withState({ ...machine(), field: 'ghost' }))).toContain(
+      "state.field: field 'ghost' does not exist"
+    )
+  })
+
+  it('rechaza anclarla a un campo que no es enum (sin vo.values)', () => {
+    expect(problemsOf(withState({ ...machine(), field: 'contractNumber' }))).toContain(
+      "state.field: field 'contractNumber' is not an enum (vo.values)"
+    )
+  })
+
+  it('rechaza un initial que no es valor del enum', () => {
+    expect(problemsOf(withState({ ...machine(), initial: 'nada' }))).toContain(
+      "state.initial: 'nada' is not a value of 'status'"
+    )
+  })
+
+  it('rechaza from y to fuera del enum, señalando la transición', () => {
+    const bad = machine()
+    bad.transitions[0] = { name: 'sign', label: 'Firmar', from: ['ghost'], to: 'signed' }
+    bad.transitions[1] = { name: 'archive', label: 'Archivar', from: ['signed'], to: 'limbo' }
+
+    const problems = problemsOf(withState(bad))
+
+    expect(problems).toContain("state.transitions[0]: from 'ghost' is not a value of 'status'")
+    expect(problems).toContain("state.transitions[1]: to 'limbo' is not a value of 'status'")
+  })
+
+  it('rechaza nombres duplicados de transición', () => {
+    const bad = machine()
+    bad.transitions[1] = { ...bad.transitions[1], name: 'sign' }
+
+    expect(problemsOf(withState(bad))).toContain("state.transitions: duplicated name 'sign'")
+  })
+
+  it('rechaza un name que no es kebab-case o pisa una ruta del CRUD emitido', () => {
+    const kebab = machine()
+    kebab.transitions[0] = { ...kebab.transitions[0], name: 'Sign It' }
+    expect(problemsOf(withState(kebab))).toContain('state.transitions[0]: name must be non-empty kebab-case')
+
+    const reserved = machine()
+    reserved.transitions[0] = { ...reserved.transitions[0], name: 'export' }
+    expect(problemsOf(withState(reserved))).toContain(
+      "state.transitions[0]: name 'export' collides with an emitted route"
+    )
+  })
+
+  it('rechaza from vacío y el destino dentro de su propio from', () => {
+    const empty = machine()
+    empty.transitions[0] = { ...empty.transitions[0], from: [] }
+    expect(problemsOf(withState(empty))).toContain('state.transitions[0]: from must have at least one value')
+
+    const loop = machine()
+    loop.transitions[0] = { name: 'sign', label: 'Firmar', from: ['draft', 'signed'], to: 'signed' }
+    expect(problemsOf(withState(loop))).toContain(
+      "state.transitions[0]: to 'signed' cannot be inside its own from (re-applying is already a no-op)"
+    )
+  })
+
+  it('respeta los topes: transiciones, name y label', () => {
+    const crowded = machine()
+    crowded.transitions = Array.from({ length: 21 }, (_, i) => ({
+      name: `t-${i}`,
+      label: `T${i}`,
+      from: ['draft'],
+      to: 'signed'
+    }))
+    expect(problemsOf(withState(crowded))).toContain('state.transitions: at most 20 transitions are allowed (found 21)')
+
+    const long = machine()
+    long.transitions[0] = { ...long.transitions[0], label: 'x'.repeat(41) }
+    expect(problemsOf(withState(long))).toContain('state.transitions[0]: label must be 1-40 characters')
+  })
+
+  it('dos transiciones distintas hacia el mismo destino son legales (rechazar y descartar)', () => {
+    const twin = machine()
+    twin.transitions.push({ name: 'discard', label: 'Descartar', from: ['draft'], to: 'archived' })
+
+    expect(() => defineResource(withState(twin))).not.toThrow()
+  })
+})

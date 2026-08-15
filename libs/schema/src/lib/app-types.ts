@@ -120,6 +120,12 @@ export interface FlowNode {
    * recursos. Es una anotación del mapa: NO emite máquina de estados (regla 7).
    */
   status?: string
+  /**
+   * Transición de la máquina de estados de `entity` que este paso ejecuta (spec 43, la
+   * costura de la convergencia). Aquí solo viaja el nombre; que exista en la máquina del
+   * recurso lo valida la frontera. La emisión que lo consume es la spec de convergencia.
+   */
+  transition?: string
 }
 
 export interface FlowEdge {
@@ -145,7 +151,8 @@ export const FLOW_LIMITS = {
   text: 120,
   label: 20,
   description: 300,
-  status: 40
+  status: 40,
+  transition: 30
 } as const
 
 /**

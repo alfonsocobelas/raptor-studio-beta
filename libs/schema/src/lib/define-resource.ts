@@ -1,5 +1,5 @@
 import { BRIEF_LIMITS } from './app-types'
-import { FieldDefinition, ResourceDefinition } from './resource-types'
+import { FieldDefinition, RESERVED_TRANSITION_NAMES, ResourceDefinition, STATE_LIMITS } from './resource-types'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -14,7 +14,8 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateGallery(definition),
     ...validateGantt(definition),
     ...validateCode(definition),
-    ...validateBrief(definition.brief)
+    ...validateBrief(definition.brief),
+    ...validateState(definition)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -117,6 +118,73 @@ function validateCode(definition: ResourceDefinition): string[] {
   if (definition.fields['code']) {
     problems.push("code: the resource already declares a 'code' field")
   }
+
+  return problems
+}
+
+/**
+ * La máquina de estados (spec 43): toda flecha habla de valores REALES del enum ancla, los
+ * nombres emiten rutas (kebab, sin pisar las del CRUD) y el no-op de re-aplicar no se
+ * declara (to dentro de su from sería ruido). La alcanzabilidad NO se exige aquí: un
+ * diseño a medias es legal y solo la frontera lo avisa como warning.
+ */
+function validateState(definition: ResourceDefinition): string[] {
+  const { state } = definition
+  if (!state) return []
+
+  const problems: string[] = []
+  const field = definition.fields[state.field]
+  const values = field && typeof field.vo === 'object' ? (field.vo.values ?? []) : []
+
+  if (!field) {
+    problems.push(`state.field: field '${state.field}' does not exist`)
+  } else if (!values.length) {
+    problems.push(`state.field: field '${state.field}' is not an enum (vo.values)`)
+  }
+
+  if (values.length && !values.includes(state.initial)) {
+    problems.push(`state.initial: '${state.initial}' is not a value of '${state.field}'`)
+  }
+
+  if (state.transitions.length > STATE_LIMITS.transitions) {
+    problems.push(
+      `state.transitions: at most ${STATE_LIMITS.transitions} transitions are allowed (found ${state.transitions.length})`
+    )
+  }
+
+  const seen = new Set<string>()
+  state.transitions.forEach((transition, index) => {
+    const at = `state.transitions[${index}]`
+
+    if (!KEBAB_CASE.test(transition.name) || transition.name.length > STATE_LIMITS.name) {
+      problems.push(`${at}: name must be non-empty kebab-case`)
+    } else if ((RESERVED_TRANSITION_NAMES as readonly string[]).includes(transition.name)) {
+      problems.push(`${at}: name '${transition.name}' collides with an emitted route`)
+    }
+    if (seen.has(transition.name)) {
+      problems.push(`state.transitions: duplicated name '${transition.name}'`)
+    }
+    seen.add(transition.name)
+
+    if (!transition.label.length || transition.label.length > STATE_LIMITS.label) {
+      problems.push(`${at}: label must be 1-${STATE_LIMITS.label} characters`)
+    }
+
+    if (!transition.from.length) {
+      problems.push(`${at}: from must have at least one value`)
+    }
+    if (values.length) {
+      for (const origin of transition.from) {
+        if (!values.includes(origin)) problems.push(`${at}: from '${origin}' is not a value of '${state.field}'`)
+      }
+      if (!values.includes(transition.to)) {
+        problems.push(`${at}: to '${transition.to}' is not a value of '${state.field}'`)
+      }
+    }
+    if (transition.from.includes(transition.to)) {
+      problems.push(`${at}: to '${transition.to}' cannot be inside its own from (re-applying is already a no-op)`)
+    }
+  })
 
   return problems
 }

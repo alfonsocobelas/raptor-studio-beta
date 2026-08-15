@@ -325,6 +325,52 @@ export interface ResourceLabels {
   gender?: 'm' | 'f'
 }
 
+/**
+ * Máquina de estados de la entidad (spec 43): un campo enum promovido a estado. La regla
+ * de negocio es la flecha que existe o no existe — cada transición emite método con
+ * guarda, caso de uso, endpoint POST /:id/<name> y botón en la ficha. El campo deja de
+ * pedirse en el alta (nace en `initial`) y sale del formulario de edición.
+ */
+export interface StateTransition {
+  /** Slug del verbo: nombra el método, el caso de uso y la ruta ('sign' → POST /:id/sign) */
+  name: string
+  /** El botón en la ficha y los mensajes de error ('Firmar') */
+  label: string
+  /** Valores del enum desde los que la transición es legal */
+  from: string[]
+  /** Valor del enum destino */
+  to: string
+}
+
+export interface StateMachine {
+  /** Campo enum del propio recurso (su vo declara `values`) */
+  field: string
+  /** Valor con el que nace la entidad */
+  initial: string
+  transitions: StateTransition[]
+}
+
+export const STATE_LIMITS = {
+  transitions: 20,
+  name: 30,
+  label: 40
+} as const
+
+/**
+ * Segmentos que el CRUD emitido ya cuelga (o colgará) de /:id — y los estáticos que podrían
+ * confundir al router. Lista conservadora: mejor un nombre vetado de más que una colisión.
+ */
+export const RESERVED_TRANSITION_NAMES = [
+  'attachments',
+  'contacts',
+  'deleted',
+  'download',
+  'export',
+  'history',
+  'import',
+  'restore'
+] as const
+
 export interface ResourceDefinition {
   /** Schema format version — bump only with a migration note (revision improvement) */
   schemaVersion: 1
@@ -402,6 +448,8 @@ export interface ResourceDefinition {
   code?: CodeDefinition
   /** Frase de negocio de la entidad (spec 22): documentación que viaja, nunca fuente de código */
   brief?: string
+  /** Máquina de estados: un enum promovido a estado con transiciones dibujables (spec 43) */
+  state?: StateMachine
 }
 
 /**

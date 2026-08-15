@@ -69,6 +69,17 @@ function validateNodes(nodes: FlowNode[], at: string): string[] {
         problems.push(`${at}.nodes[${index}]: status requires 'entity' (whose state is it?)`)
       }
     }
+    if (node.transition !== undefined) {
+      if (!KEBAB_CASE.test(node.transition)) {
+        problems.push(`${at}.nodes[${index}]: transition must be non-empty kebab-case`)
+      } else if (node.transition.length > FLOW_LIMITS.transition) {
+        problems.push(`${at}.nodes[${index}]: transition must be at most ${FLOW_LIMITS.transition} characters`)
+      }
+      // una transición vive en la máquina de UNA entidad: sin entidad no hay máquina
+      if (node.entity === undefined) {
+        problems.push(`${at}.nodes[${index}]: transition requires 'entity' (whose machine is it?)`)
+      }
+    }
   })
 
   return problems

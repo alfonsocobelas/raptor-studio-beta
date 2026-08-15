@@ -280,4 +280,42 @@ describe('defineApp — flujos de negocio (spec 28)', () => {
       )
     })
   })
+
+  /**
+   * Spec 43: un paso puede REFERENCIAR una transición de la máquina de estados de su
+   * entidad (la costura de la convergencia). Aquí solo la forma; que la transición exista
+   * en la máquina del recurso lo valida la frontera, como `entity` y `status`.
+   */
+  describe('transición del paso', () => {
+    const withTransition = (transition: string): BusinessFlow => {
+      const nodes = validFlow().nodes.map(node => (node.id === 'reservar' ? { ...node, transition } : node))
+      return validFlow({ nodes })
+    }
+
+    it('acepta un paso que referencia una transición de su entidad', () => {
+      expect(problemsOf(app(withTransition('reservar-plaza')))).toEqual([])
+    })
+
+    it('rechaza una transición que no es kebab-case', () => {
+      expect(problemsOf(app(withTransition('Reservar Plaza')))).toContain(
+        'flows[0].nodes[2]: transition must be non-empty kebab-case'
+      )
+    })
+
+    it('rechaza una transición de más de 30 caracteres', () => {
+      expect(problemsOf(app(withTransition('x'.repeat(31))))).toContain(
+        'flows[0].nodes[2]: transition must be at most 30 characters'
+      )
+    })
+
+    it('una transición sin entidad no tiene máquina: se rechaza', () => {
+      const nodes = validFlow().nodes.map(node =>
+        node.id === 'pedir' ? { ...node, transition: 'pedir-algo' } : node
+      )
+
+      expect(problemsOf(app(validFlow({ nodes })))).toContain(
+        "flows[0].nodes[3]: transition requires 'entity' (whose machine is it?)"
+      )
+    })
+  })
 })
