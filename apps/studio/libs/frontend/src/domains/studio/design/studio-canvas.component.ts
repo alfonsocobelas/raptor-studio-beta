@@ -622,12 +622,24 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
       background-size: 24px 24px;
       background-position: -12px -12px;
     }
-    /* Sombra corta y suave, como la de la foto: elevación sin charco. Cabe entera
-       en el padding del scroll, así el recorte del overflow no deja una línea. */
+    /* Sombreado por TODO el borde, no solo hacia abajo: un anillo de 1px que perfila
+       la tarjeta y un halo simétrico que la despega del papel también por arriba y
+       por los lados. Cabe entera en el padding del scroll (pt-6/px-10/pb-24), así
+       el recorte del overflow no deja una línea. */
     .canvas-card {
       box-shadow:
+        0 0 0 1px oklch(0 0 0 / 5%),
         0 1px 2px oklch(0 0 0 / 6%),
-        0 8px 24px -10px oklch(0 0 0 / 12%);
+        0 0 20px oklch(0 0 0 / 10%),
+        0 10px 32px -10px oklch(0 0 0 / 16%);
+    }
+    /* En noche la sombra negra se pierde contra el papel oscuro: el contorno lo hace
+       un anillo claro tenue, y el halo sube de peso para que aún se lea la elevación. */
+    :host-context(.dark) .canvas-card {
+      box-shadow:
+        0 0 0 1px oklch(1 0 0 / 12%),
+        0 0 24px oklch(0 0 0 / 45%),
+        0 12px 36px -10px oklch(0 0 0 / 55%);
     }
     /* El chat FLOTA sobre el lienzo, así que necesita sombra por los cuatro lados y
        algo más de contraste que una tarjeta apoyada: un halo corto lo separa del papel
