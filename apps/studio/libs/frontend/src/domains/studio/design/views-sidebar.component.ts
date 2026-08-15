@@ -150,7 +150,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:border-foreground/40 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
+              class="text-muted-foreground hover:border-foreground/45 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border-2 border-dashed px-2 py-2 text-left transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -205,15 +205,20 @@ const BLOCK_TOOLS: BlockTool[] = [
     </aside>
   `,
   styles: `
-    /* De día los componentes van en tinta, no en marca: el naranja pleno pesaba demasiado
-       en un raíl claro y competía con el lienzo. Se toma el token del CTA dominante —el
-       naranja se reserva para un acento por pantalla—, así el raíl sigue al tema solo. */
+    /* De día los componentes van en melocotón con la etiqueta en tinta (elegido 2026-08-15
+       tras comparar nueve fondos): es el naranja de la marca rebajado a tinte —se lee como
+       familia sin competir con el lienzo— y deja el naranja pleno para el CTA dominante.
+       El texto queda a 10,9:1 sobre el melocotón. */
     :host {
-      --brand: var(--primary);
+      --brand: #eec6b0;
+      --brand-foreground: var(--foreground);
+      --drag-ink: var(--foreground);
     }
     /* De noche el naranja sí aguanta: mismo tono aclarado que el raíl de Modelo. */
     :host-context(.dark) {
       --brand: #e8734f;
+      --brand-foreground: var(--background);
+      --drag-ink: var(--brand);
     }
     /* Sobre el fondo pleno el asidero se atenúa; no puede competir con la etiqueta. */
     .block-tool .grip {
@@ -227,7 +232,8 @@ const BLOCK_TOOLS: BlockTool[] = [
        los componentes es el que va volando. */
     .block-tool.dragging {
       background-color: color-mix(in oklab, var(--brand) 10%, var(--background));
-      color: var(--brand);
+      /* En claro el melocotón no da para texto: el contorno se escribe en tinta. */
+      color: var(--drag-ink);
       box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand) 55%, transparent);
     }
     .block-tool.dragging .grip {

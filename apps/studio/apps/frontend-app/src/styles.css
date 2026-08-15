@@ -244,10 +244,10 @@
    que tiñe el fondo del lienzo: separa el cromo sin ensuciarlo. El panel de la derecha
    se queda blanco, como la barra. */
 .studio-rail {
-  /* Elegido por Alfonso (2026-08-12): #f8f5f1, el lino de la maqueta —MÁS claro que el
-     papel del lienzo, y proyecta sobre él. En oscuro el hex no vale, así que allí se
-     sigue derivando de los tokens del estudio. */
-  background-color: #f8f5f1;
+  /* Elegido por Alfonso (2026-08-15): #f5f2ef, un punto más oscuro que el lino anterior
+     (#f8f5f1) para que los chips claros se recorten. En oscuro el hex no vale, así que
+     allí se sigue derivando de los tokens del estudio. */
+  background-color: #f5f2ef;
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
