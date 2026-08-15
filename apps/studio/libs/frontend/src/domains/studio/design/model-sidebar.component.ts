@@ -42,7 +42,7 @@ import { DesignStore } from './design-store'
         } @else {
           <button
             type="button"
-            class="bg-brand text-brand-foreground studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-opacity hover:opacity-90"
+            class="rail-verb studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-colors"
             data-testid="model-add-entity"
             (click)="creating.set(true)"
           >
@@ -54,7 +54,7 @@ import { DesignStore } from './design-store'
 
         <button
           type="button"
-          class="text-brand border-brand/45 hover:border-brand hover:bg-brand/10 studio-ui flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left font-semibold transition-colors disabled:opacity-40"
+          class="rail-verb studio-ui flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-colors disabled:opacity-40"
           [disabled]="!selected()"
           [attr.title]="selected() ? 'Añadir una columna a ' + selected() : 'Elige antes una entidad en el diagrama'"
           data-testid="model-add-field"
@@ -84,11 +84,14 @@ import { DesignStore } from './design-store'
     </aside>
   `,
   styles: `
-    /* Un solo naranja en todo el estudio. El token global se aclara a #fe6749 en
-       oscuro, que al lado de la marca y del cerco de la caja elegida se lee como un
-       segundo naranja; fijándolo aquí, bg-brand y text-brand del raíl caen solos. */
-    :host {
-      --brand: #f15539;
+    /* El mismo naranja macizo que la paleta de bloques de Flujos (flow-sidebar):
+       los verbos de todos los raíles visten igual. El token es global (styles.css). */
+    .rail-verb {
+      background-color: var(--flow-accent);
+      color: #fff;
+    }
+    .rail-verb:not(:disabled):hover {
+      background-color: color-mix(in oklab, var(--flow-accent) 88%, black);
     }
   `
 })

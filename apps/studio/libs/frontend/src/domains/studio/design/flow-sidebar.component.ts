@@ -109,12 +109,9 @@ const FLOW_BLOCKS: FlowBlock[] = [
     </aside>
   `,
   styles: `
-    /* El naranja de la casa, el mismo que viste el lienzo de flujos (flow-view).
-       Token duplicado a consciencia — si cambia allí, cambia aquí. */
-    :host {
-      --flow-accent: #d75f3d;
-    }
-    /* Los botones de bloque van en el naranja macizo, con el texto invertido:
+    /* El naranja de la casa, el mismo que viste el lienzo de flujos (flow-view);
+       el token --flow-accent es global (styles.css).
+       Los botones de bloque van en el naranja macizo, con el texto invertido:
        la paleta se ve de un vistazo como los verbos que son. */
     .flow-block {
       background-color: var(--flow-accent);

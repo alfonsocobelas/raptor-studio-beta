@@ -55,6 +55,13 @@
   --color-brand-foreground: var(--brand-foreground);
 }
 
+/* El naranja de la casa en su dosis de trabajo (#d75f3d): rejilla y cierre de los
+   lienzos y verbos de los raíles (Bloques, Componentes, Añadir). Es más sobrio que
+   --brand (#f15539), que queda para el CTA dominante. Mismo valor de día y de noche. */
+:root {
+  --flow-accent: #d75f3d;
+}
+
 :root.dark .theme-neutral {
   color-scheme: dark;
 

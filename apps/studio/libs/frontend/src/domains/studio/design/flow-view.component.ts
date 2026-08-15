@@ -518,9 +518,9 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
   `,
   styles: `
-    /* El naranja de la casa, una sola vez: lo usan la rejilla y el cierre del proceso. */
+    /* El naranja de la casa (--flow-accent, global en styles.css) lo usan la rejilla
+       y el cierre del proceso. */
     :host {
-      --flow-accent: #d75f3d;
       /* El morado de la bifurcación: el complementario del naranja de la casa, así la
          condición se distingue de las acciones sin salirse de la paleta. Sobre el papel
          claro va el violeta macizo; el lavanda de la captura se pierde en el crema. */

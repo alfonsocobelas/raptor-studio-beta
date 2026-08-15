@@ -205,21 +205,16 @@ const BLOCK_TOOLS: BlockTool[] = [
     </aside>
   `,
   styles: `
-    /* De día los componentes van en melocotón con la etiqueta en tinta (elegido 2026-08-15
-       tras comparar nueve fondos): es el naranja de la marca rebajado a tinte —se lee como
-       familia sin competir con el lienzo— y deja el naranja pleno para el CTA dominante.
-       El texto queda a 10,9:1 sobre el melocotón. */
+    /* Los componentes visten el mismo naranja macizo que la paleta de bloques de
+       Flujos (flow-sidebar, 2026-08-15): un solo tratamiento para los verbos de todos
+       los raíles, de día y de noche. Sustituye al melocotón de la comparativa de nueve
+       fondos de esa misma mañana. */
     :host {
-      --brand: #eec6b0;
-      --brand-foreground: var(--foreground);
+      --brand: var(--flow-accent);
+      --brand-foreground: #fff;
       --drag-ink: var(--foreground);
     }
-    /* De noche el naranja sí aguanta: mismo tono aclarado que el raíl de Modelo.
-       (El coral #ff7a50 se probó contra el efecto marrón del gris cálido y no bastó;
-       la solución fue enfriar el gris de la columna, no avivar el naranja.) */
     :host-context(.dark) {
-      --brand: #e8734f;
-      --brand-foreground: var(--background);
       --drag-ink: var(--brand);
     }
     /* Sobre el fondo pleno el asidero se atenúa; no puede competir con la etiqueta. */
