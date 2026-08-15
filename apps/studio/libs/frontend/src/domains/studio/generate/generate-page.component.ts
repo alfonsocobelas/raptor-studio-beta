@@ -241,6 +241,40 @@ make local-setup   # postgres + npm install + seed
 make api           # http://localhost:3000/api/v1
 make web           # http://localhost:4200</pre
                   >
+                  @if (runner.slotStates().length) {
+                    <!-- los pasos de negocio que quedaron como huecos (spec 45): el puente los rellena bajo gate -->
+                    <div class="mt-4 border-t pt-4" data-testid="fill-slots-section">
+                      <p class="studio-eyebrow mb-1">Pasos de negocio por rellenar</p>
+                      <p class="text-muted-foreground studio-ui mb-3">
+                        La IA los rellena por el puente (hace falta una sesión respondiendo
+                        <code class="font-mono">tmp/studio-bridge</code>) y cada uno pasa su gate: si algo falla, el
+                        hueco queda vacío y la app intacta.
+                      </p>
+                      @for (slot of runner.slotStates(); track slot.id) {
+                        <div
+                          class="studio-ui flex items-center gap-2 py-1"
+                          [attr.data-status]="slot.status"
+                          [attr.data-testid]="'slot-' + slot.id"
+                        >
+                          <span aria-hidden="true">{{ slotPip(slot.status) }}</span>
+                          <span class="min-w-0 flex-1 truncate font-mono text-[11.5px]">{{ slot.id }}</span>
+                          <span class="text-muted-foreground shrink-0">{{ slotLabel(slot.status) }}</span>
+                        </div>
+                        @if (slot.reason) {
+                          <p class="text-muted-foreground ml-6 text-xs">{{ slot.reason }}</p>
+                        }
+                      }
+                      <button
+                        type="button"
+                        class="studio-cta border-input mt-3 border disabled:opacity-50"
+                        [disabled]="runner.fillingSlots()"
+                        data-testid="fill-slots-run"
+                        (click)="runner.fillSlots()"
+                      >
+                        {{ runner.fillingSlots() ? 'Rellenando…' : 'Rellenar con IA (puente)' }}
+                      </button>
+                    </div>
+                  }
                 } @else {
                   <p class="text-foreground mb-1 text-[15px] font-semibold">
                     {{ outcome === 'cancelled' ? 'Cancelada' : 'La generación falló' }}
@@ -494,6 +528,20 @@ export class GeneratePageComponent {
     await navigator.clipboard.writeText(command)
     this.copied.set(true)
     setTimeout(() => this.copied.set(false), 1500)
+  }
+
+  protected slotPip(status: string): string {
+    return status === 'filled' ? '✓' : status === 'rejected' ? '✕' : status === 'proposing' ? '◐' : '·'
+  }
+
+  protected slotLabel(status: string): string {
+    return status === 'filled'
+      ? 'relleno y aceptado'
+      : status === 'rejected'
+        ? 'rechazado'
+        : status === 'proposing'
+          ? 'proponiendo…'
+          : 'pendiente'
   }
 
   /** El primer paso no es un paso de esta pantalla: es el lienzo, y volver es cerrarla. */

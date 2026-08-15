@@ -4,6 +4,14 @@ import { applyDone, applyEvent, initialPhases, type PhaseState } from './generat
 import { markWritten, plannedItems, type WrittenItem } from './written-items'
 import type { buildDesignRequest } from './wizard-command'
 
+/** Lo que emite el endpoint de relleno (spec 45) por cada hueco. */
+interface FillEvent {
+  type: 'pending' | 'slot' | 'done'
+  id?: string
+  status?: 'proposing' | 'filled' | 'rejected'
+  reason?: string
+}
+
 /** Lo que emite el endpoint de progreso mientras genera. */
 interface GenerateEvent {
   type: 'progress' | 'done'
@@ -16,6 +24,8 @@ interface GenerateEvent {
   root?: string
   output?: string
   elapsedMs?: number
+  /** Huecos flow-* que quedaron por rellenar (spec 45) */
+  slots?: string[]
 }
 
 /** Lo que se manda a generar: el nombre, las ranuras y el diseño del lienzo. */
@@ -30,6 +40,13 @@ export interface GenerateRequest {
 
 /** Cómo acabó. `null` mientras no ha acabado. */
 export type GenerateOutcome = 'ok' | 'failed' | 'cancelled' | null
+
+/** Un paso de negocio por rellenar (spec 45), con su recorrido por el puente. */
+export interface SlotState {
+  id: string
+  status: 'pending' | 'proposing' | 'filled' | 'rejected'
+  reason?: string
+}
 
 /**
  * Fase F: el backend LOCAL ejecuta el generador —sin terminal— y va contando lo que hace en
@@ -62,6 +79,11 @@ export class GenerateRunner {
   readonly viewRequested = signal(false)
   /** Lo que se pidió generar: la pantalla reabierta reconstruye su comando desde aquí. */
   readonly requested = signal<Pick<GenerateRequest, 'name' | 'slots' | 'plugins'> | null>(null)
+  /** Los pasos de negocio que quedaron por rellenar (spec 45) y su recorrido */
+  readonly slotStates = signal<SlotState[]>([])
+  readonly fillingSlots = signal(false)
+  /** Directorio relativo de la app emitida: el endpoint de relleno lo exige del workspace */
+  private requestedDir: string | null = null
 
   private readonly noticeService = inject(CanvasNoticeService)
   /** ¿Hay una pantalla mirando la obra? La página se declara al montarse y al morir. */
@@ -138,6 +160,58 @@ export class GenerateRunner {
   }
 
   /**
+   * Rellena los huecos por el puente (spec 45): consume el stream del endpoint de relleno
+   * y va pintando cada hueco. Cada hueco pasa su gate en el backend; aquí solo se cuenta.
+   */
+  async fillSlots(): Promise<void> {
+    const directory = this.requestedDir
+    if (!directory || this.fillingSlots() || !this.slotStates().length) return
+    this.fillingSlots.set(true)
+    try {
+      const response = await fetch('/api/v1/studio/fill-slots/stream', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ directory })
+      })
+      if (!response.ok || !response.body) {
+        throw new Error(`el backend respondió ${response.status}`)
+      }
+      const decoder = new TextDecoder()
+      const reader = response.body.getReader()
+      let buffer = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const raw of lines) {
+          if (!raw.trim()) continue
+          const event = JSON.parse(raw) as FillEvent
+          if (event.type !== 'slot' || !event.id || !event.status) continue
+          this.slotStates.update(states =>
+            states.map(state =>
+              state.id === event.id
+                ? {
+                    id: state.id,
+                    status: event.status as SlotState['status'],
+                    ...(event.reason ? { reason: event.reason } : {})
+                  }
+                : state
+            )
+          )
+        }
+      }
+    } catch (e) {
+      // un stream roto deja lo contado hasta ahí; los huecos siguen pendientes en disco
+      const detail = e instanceof Error ? e.message : String(e)
+      this.noticeService.show(`El relleno se cortó: ${detail}`)
+    } finally {
+      this.fillingSlots.set(false)
+    }
+  }
+
+  /**
    * Abortar el `fetch` cierra la respuesta, y eso es lo que el backend escucha para matar al
    * generador y borrar lo escrito a medias: no hace falta un endpoint de cancelación.
    */
@@ -152,6 +226,9 @@ export class GenerateRunner {
   private reset(request: GenerateRequest): void {
     this.generating.set(true)
     this.requested.set({ name: request.name, slots: request.slots, plugins: request.plugins })
+    this.requestedDir = request.directory ?? `apps/${request.name}`
+    this.slotStates.set([])
+    this.fillingSlots.set(false)
     this.output.set(null)
     this.elapsed.set(null)
     this.root.set(null)
@@ -210,6 +287,8 @@ export class GenerateRunner {
     this.outcome.set(event.ok ? 'ok' : 'failed')
     this.elapsed.set(event.elapsedMs ?? null)
     this.root.set(event.root ?? null)
+    // spec 45: los pasos de negocio que quedaron como huecos, listos para el puente
+    this.slotStates.set((event.slots ?? []).map(id => ({ id, status: 'pending' as const })))
     this.filesWritten.set(event.files ?? this.filesWritten())
     this.output.set(
       event.ok ? `✅ Generada en ${event.root}\n\n${event.output ?? ''}` : (event.output ?? 'La generación falló.')

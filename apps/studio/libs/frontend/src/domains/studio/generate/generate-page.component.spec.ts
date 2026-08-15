@@ -651,6 +651,32 @@ describe('GeneratePageComponent', () => {
       await settle()
     })
 
+    /** Spec 45: los pasos de negocio por rellenar viven en el desenlace, con su puente. */
+    it('el desenlace lista los huecos y el botón de rellenar consume el stream', async () => {
+      stubOutcome({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', slots: ['flow-cie'], elapsedMs: 900 })
+      const fixture = await mount()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+      fixture.detectChanges()
+
+      expect(at(fixture, 'fill-slots-section')).not.toBeNull()
+      expect(at(fixture, 'slot-flow-cie')?.getAttribute('data-status')).toBe('pending')
+
+      // el stream del relleno: aceptado por el gate
+      stubOutcome({ type: 'slot', id: 'flow-cie', status: 'filled' })
+      at(fixture, 'fill-slots-run')?.click()
+      await settle()
+      fixture.detectChanges()
+
+      expect(at(fixture, 'slot-flow-cie')?.getAttribute('data-status')).toBe('filled')
+    })
+
+    it('sin huecos, la sección de relleno ni aparece', async () => {
+      const fixture = await generate({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', slots: [], elapsedMs: 900 })
+
+      expect(at(fixture, 'fill-slots-section')).toBeNull()
+    })
+
     it('la cancelada no se disfraza de error: su cara propia y la misma vuelta', async () => {
       // un stream que no termina: la única salida es cancelar
       vi.stubGlobal(

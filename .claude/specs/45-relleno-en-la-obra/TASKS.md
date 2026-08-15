@@ -10,7 +10,7 @@
       `{type:'done', filled, rejected, pending, baseline?}`. Ejecutor puente + gate reales;
       en tests, ejecutor/gate falsos inyectados.
 
-- [ ] **TASK-03**: Tests + la obra: el desenlace lista los huecos, botón «Rellenar con IA»
+- [x] **TASK-03**: Tests + la obra: el desenlace lista los huecos, botón «Rellenar con IA»
       que consume el stream y pinta el estado por hueco; deshabilitado mientras corre;
       sin huecos no hay sección. `npm run web:build`.
 

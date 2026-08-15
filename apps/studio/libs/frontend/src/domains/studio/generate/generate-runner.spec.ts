@@ -392,3 +392,76 @@ describe('GenerateRunner', () => {
     })
   })
 })
+
+/**
+ * Spec 45: el desenlace cuenta los pasos de negocio por rellenar y el runner sabe
+ * rellenarlos por el puente — consumiendo el stream del endpoint de relleno.
+ */
+describe('el relleno de huecos (spec 45)', () => {
+  const request: GenerateRequest = {
+    name: 'boutique',
+    slots: {},
+    plugins: [],
+    skipInstall: true,
+    design: { appName: 'boutique', palette: 'ocean', resources: [], pages: [] } as unknown as GenerateRequest['design']
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('el done trae los huecos y el runner los deja listados como pendientes', async () => {
+    vi.stubGlobal(
+      'fetch',
+      streaming([line({ type: 'done', ok: true, files: 3, root: '/abs/apps/boutique', slots: ['flow-cie', 'flow-envio'], output: 'ok' })])
+    )
+    const run = runner()
+
+    await run.run(request)
+
+    expect(run.slotStates()).toEqual([
+      { id: 'flow-cie', status: 'pending' },
+      { id: 'flow-envio', status: 'pending' }
+    ])
+  })
+
+  it('fillSlots consume el stream: proponiendo → aceptado/rechazado con motivo', async () => {
+    vi.stubGlobal(
+      'fetch',
+      streaming([line({ type: 'done', ok: true, files: 3, root: '/abs/apps/boutique', slots: ['flow-cie', 'flow-envio'], output: 'ok' })])
+    )
+    const run = runner()
+    await run.run(request)
+
+    vi.stubGlobal(
+      'fetch',
+      streaming([
+        line({ type: 'pending', slots: ['flow-cie', 'flow-envio'] }),
+        line({ type: 'slot', id: 'flow-cie', status: 'proposing' }),
+        line({ type: 'slot', id: 'flow-cie', status: 'filled' }),
+        line({ type: 'slot', id: 'flow-envio', status: 'proposing' }),
+        line({ type: 'slot', id: 'flow-envio', status: 'rejected', reason: 'nadie respondió al puente' }),
+        line({ type: 'done', ok: true, filled: ['flow-cie'], rejected: [{ id: 'flow-envio', reason: 'nadie respondió al puente' }], pending: ['flow-envio'] })
+      ])
+    )
+    await run.fillSlots()
+
+    expect(run.fillingSlots()).toBe(false)
+    expect(run.slotStates()).toEqual([
+      { id: 'flow-cie', status: 'filled' },
+      { id: 'flow-envio', status: 'rejected', reason: 'nadie respondió al puente' }
+    ])
+  })
+
+  it('una generación nueva olvida los huecos de la anterior', async () => {
+    vi.stubGlobal(
+      'fetch',
+      streaming([line({ type: 'done', ok: true, files: 3, root: '/abs/x', slots: ['flow-cie'], output: 'ok' })])
+    )
+    const run = runner()
+    await run.run(request)
+
+    vi.stubGlobal('fetch', streaming([line({ type: 'progress', phase: 'prepare' })]))
+    await run.run(request)
+
+    expect(run.slotStates()).toEqual([])
+  })
+})
