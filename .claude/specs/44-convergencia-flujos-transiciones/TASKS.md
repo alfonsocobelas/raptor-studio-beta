@@ -7,7 +7,7 @@
 
 ## Bloque A — emisión (el corazón)
 
-- [ ] **TASK-01**: `/golden-diff` + el paso con `transition` emite cuerpo real (cargar →
+- [x] **TASK-01**: `/golden-diff` + el paso con `transition` emite cuerpo real (cargar →
       verbo → guardar, sin hueco @ai) con su JSDoc; el oro gana el paso «Se termina el
       contrato» (entity contract, transition terminate) en el flujo golden.
 

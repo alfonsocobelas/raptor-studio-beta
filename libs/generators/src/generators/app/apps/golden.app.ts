@@ -32,6 +32,8 @@ export const golden = defineApp({
         { id: 'peticion', kind: 'start', text: 'El cliente pide una implantación' },
         { id: 'contrato', kind: 'step', text: 'Se firma el contrato con su vigencia', entity: 'contract' },
         { id: 'aprueba', kind: 'decision', text: '¿El comité aprueba el alcance?' },
+        // convergencia (spec 44): paso con transition — su cuerpo y su endpoint son reales
+        { id: 'termina', kind: 'step', text: 'Se termina el contrato', entity: 'contract', transition: 'terminate' },
         { id: 'descartada', kind: 'end', text: 'Petición descartada' },
         { id: 'proyecto', kind: 'step', text: 'Se abre el proyecto de implantación', entity: 'project' },
         { id: 'desvio', kind: 'decision', text: '¿Hay desvío sobre el alcance?' },
@@ -41,7 +43,8 @@ export const golden = defineApp({
       edges: [
         { from: 'peticion', to: 'contrato' },
         { from: 'contrato', to: 'aprueba' },
-        { from: 'aprueba', to: 'descartada', label: 'no' },
+        { from: 'aprueba', to: 'termina', label: 'no' },
+        { from: 'termina', to: 'descartada' },
         { from: 'aprueba', to: 'proyecto', label: 'sí' },
         { from: 'proyecto', to: 'desvio' },
         { from: 'desvio', to: 'ampliacion', label: 'sí' },

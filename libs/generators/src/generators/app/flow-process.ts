@@ -57,6 +57,8 @@ export function flowStepMethods(flow: BusinessFlow): FlowStepMethod[] {
       // el estado en que debe quedar la entidad: es la precondición y el efecto del paso,
       // y lo que necesita saber quien escriba el cuerpo (spec 39, punto 1)
       if (node.status) docLines.push(`Deja ${node.entity} en estado: ${node.status}`)
+      // convergencia (spec 44): el paso ejecuta un verbo de la máquina — el cuerpo es real
+      if (node.transition) docLines.push(`Ejecuta la transición «${node.transition}» de ${node.entity}`)
       for (const edge of flow.edges) {
         if (edge.to !== node.id || !numberOf.has(edge.from)) continue
         const branch = edge.label !== undefined ? ` (rama «${edge.label}»)` : ''
@@ -131,6 +133,10 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
           return `import { ${n.className}Id } from '../../../shared/domain/value-objects/${pluralOf.get(entity)}/${n.fileName}-id.vo'`
         }
       )
+      // convergencia (spec 44): los pasos con cuerpo real cargan por id y pueden no encontrar
+      const errorImports = methods.some(m => m.node.transition)
+        ? [`import { EntityNotFoundError } from '../../../shared/domain/errors'`]
+        : []
       const repoImports = deps.map(dep => {
         const n = names(dep.entity)
         return `import { ${dep.className} } from '../../modules/${pluralOf.get(dep.entity)}/domain/${n.fileName}-repository'`
@@ -140,7 +146,7 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
         ...moduleSubstitutions,
         flowFileName: fileName,
         className,
-        imports: [...idImports, ...repoImports].join('\n'),
+        imports: [...errorImports, ...idImports, ...repoImports].join('\n'),
         classDoc: docBlock(flowClassDoc(flow)),
         ctorParams: deps.map(dep => `private readonly ${dep.propertyName}: ${dep.className}`).join(', '),
         methodsBlock: methods.map(renderMethod).join('\n\n')
@@ -181,12 +187,33 @@ function registerInRoot(tree: Tree, backendSrc: string, contexts: string[]): voi
   tree.write(rootPath, wired)
 }
 
-/** El cuerpo de cada paso es un hueco @ai vacío: la coreografía no se ejecuta, se documenta. */
+/**
+ * El cuerpo de cada paso es un hueco @ai vacío (spec 39) SALVO que el paso declare una
+ * transición (spec 44): entonces el cuerpo es real — cargar → verbo del agregado →
+ * guardar. La guarda vive en el verbo (spec 43); el paso no la duplica, y por eso no
+ * lleva hueco: no queda nada que rellenar.
+ */
 function renderMethod(method: FlowStepMethod): string {
+  const head = ['  /**', ...method.docLines.map(line => `   * ${line}`), '   */']
+
+  if (method.node.transition && method.node.entity) {
+    const n = names(method.node.entity)
+    const verb = names(method.node.transition).propertyName
+    return [
+      ...head,
+      `  async ${method.methodName}(${method.params}): Promise<void> {`,
+      `    const ${n.propertyName} = await this.${n.propertyName}Repository.get(id)`,
+      `    if (!${n.propertyName}) {`,
+      `      throw new EntityNotFoundError('${n.className}', id.value)`,
+      `    }`,
+      `    ${n.propertyName}.${verb}()`,
+      `    await this.${n.propertyName}Repository.save(${n.propertyName})`,
+      '  }'
+    ].join('\n')
+  }
+
   return [
-    '  /**',
-    ...method.docLines.map(line => `   * ${line}`),
-    '   */',
+    ...head,
     `  async ${method.methodName}(${method.params}): Promise<void> {`,
     `    // @ai:begin flow-${method.node.id} — ${method.node.text}`,
     '    // @ai:end',

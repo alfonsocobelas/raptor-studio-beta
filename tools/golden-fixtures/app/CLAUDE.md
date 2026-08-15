@@ -30,13 +30,14 @@ El recorrido de una venta desde que se firma el contrato hasta que el proyecto q
 1. (inicio) El cliente pide una implantación
 2. Se firma el contrato con su vigencia · entidad: contract
 3. ¿El comité aprueba el alcance?
-   - no → 4
-   - sí → 5
-4. (fin) Petición descartada
-5. Se abre el proyecto de implantación · entidad: project
-6. ¿Hay desvío sobre el alcance?
-   - sí → 7
    - no → 8
-7. Se negocia una ampliación de alcance
-   - → 5
-8. (fin) Proyecto implantado
+   - sí → 4
+4. Se abre el proyecto de implantación · entidad: project
+5. ¿Hay desvío sobre el alcance?
+   - sí → 6
+   - no → 7
+6. Se negocia una ampliación de alcance
+   - → 4
+7. (fin) Proyecto implantado
+8. Se termina el contrato · entidad: contract
+9. (fin) Petición descartada

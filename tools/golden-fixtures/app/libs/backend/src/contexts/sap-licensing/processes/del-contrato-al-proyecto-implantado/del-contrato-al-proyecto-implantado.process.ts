@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../shared/domain/errors'
 import { ContractId } from '../../../shared/domain/value-objects/contracts/contract-id.vo'
 import { ProjectId } from '../../../shared/domain/value-objects/projects/project-id.vo'
 import { ContractRepository } from '../../modules/contracts/domain/contract-repository'
@@ -12,16 +13,17 @@ import { ProjectRepository } from '../../modules/projects/domain/project-reposit
  * 1. (inicio) El cliente pide una implantación
  * 2. Se firma el contrato con su vigencia · entidad: contract
  * 3. ¿El comité aprueba el alcance?
- *    - no → 4
- *    - sí → 5
- * 4. (fin) Petición descartada
- * 5. Se abre el proyecto de implantación · entidad: project
- * 6. ¿Hay desvío sobre el alcance?
- *    - sí → 7
  *    - no → 8
- * 7. Se negocia una ampliación de alcance
- *    - → 5
- * 8. (fin) Proyecto implantado
+ *    - sí → 4
+ * 4. Se abre el proyecto de implantación · entidad: project
+ * 5. ¿Hay desvío sobre el alcance?
+ *    - sí → 6
+ *    - no → 7
+ * 6. Se negocia una ampliación de alcance
+ *    - → 4
+ * 7. (fin) Proyecto implantado
+ * 8. Se termina el contrato · entidad: contract
+ * 9. (fin) Petición descartada
  */
 @Injectable()
 export class DelContratoAlProyectoImplantadoProcess {
@@ -41,10 +43,10 @@ export class DelContratoAlProyectoImplantadoProcess {
   }
 
   /**
-   * Paso 5 — Se abre el proyecto de implantación
+   * Paso 4 — Se abre el proyecto de implantación
    * Viene de: 3. ¿El comité aprueba el alcance? (rama «sí»)
-   * Viene de: 7. Se negocia una ampliación de alcance
-   * Va a: 6. ¿Hay desvío sobre el alcance?
+   * Viene de: 6. Se negocia una ampliación de alcance
+   * Va a: 5. ¿Hay desvío sobre el alcance?
    */
   async proyecto(id: ProjectId): Promise<void> {
     // @ai:begin flow-proyecto — Se abre el proyecto de implantación
@@ -52,12 +54,27 @@ export class DelContratoAlProyectoImplantadoProcess {
   }
 
   /**
-   * Paso 7 — Se negocia una ampliación de alcance
-   * Viene de: 6. ¿Hay desvío sobre el alcance? (rama «sí»)
-   * Va a: 5. Se abre el proyecto de implantación
+   * Paso 6 — Se negocia una ampliación de alcance
+   * Viene de: 5. ¿Hay desvío sobre el alcance? (rama «sí»)
+   * Va a: 4. Se abre el proyecto de implantación
    */
   async ampliacion(): Promise<void> {
     // @ai:begin flow-ampliacion — Se negocia una ampliación de alcance
     // @ai:end
+  }
+
+  /**
+   * Paso 8 — Se termina el contrato
+   * Ejecuta la transición «terminate» de contract
+   * Viene de: 3. ¿El comité aprueba el alcance? (rama «no»)
+   * Va a: 9. Petición descartada
+   */
+  async termina(id: ContractId): Promise<void> {
+    const contract = await this.contractRepository.get(id)
+    if (!contract) {
+      throw new EntityNotFoundError('Contract', id.value)
+    }
+    contract.terminate()
+    await this.contractRepository.save(contract)
   }
 }
