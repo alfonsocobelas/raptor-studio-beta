@@ -214,7 +214,9 @@ const BLOCK_TOOLS: BlockTool[] = [
       --brand-foreground: var(--foreground);
       --drag-ink: var(--foreground);
     }
-    /* De noche el naranja sí aguanta: mismo tono aclarado que el raíl de Modelo. */
+    /* De noche el naranja sí aguanta: mismo tono aclarado que el raíl de Modelo.
+       (El coral #ff7a50 se probó contra el efecto marrón del gris cálido y no bastó;
+       la solución fue enfriar el gris de la columna, no avivar el naranja.) */
     :host-context(.dark) {
       --brand: #e8734f;
       --brand-foreground: var(--background);

@@ -255,23 +255,22 @@
   border-color: #d9d4cd;
 }
 
-/* En oscuro, #1b1917: la tinta de la identidad —la misma que en claro es --foreground
-   y la pastilla de la marca—, ahora como fondo. Croma bajísimo, así que los botones
-   naranjas del raíl son lo único saturado del marco y suben a 5,1:1 de contraste. */
+/* De noche las columnas van en gris FRÍO #1f1e22 (prueba 2026-08-15): el gris cálido
+   (#22201e) junto al naranja de los chips se leía marrón por contraste simultáneo;
+   quitarle la calidez despega el naranja sin tocarlo. Descartados también el #302e2b
+   claro (aplanaba la profundidad) y avivar el naranja (no bastaba). */
 :root.dark .studio-rail {
-  background-color: #1b1917;
-  /* De noche la costura vuelve al token: sobre tinta el borde claro ya separa solo. */
+  background-color: #1f1e22;
+  /* De noche la costura vuelve al token: sobre el marco oscuro el borde claro ya separa solo. */
   border-color: var(--border);
 }
 
-/* Cromo del estudio en noche: las barras de arriba bajan a #1d1c21, más oscuro que
-   --card, para que el lienzo quede lo más claro del marco. La regla vivía dentro del
-   componente del lienzo y por eso la barra de Generar —misma clase— no la recibía, y
-   el panel derecho la llevaba encima pisando a .studio-rail (por eso las dos columnas
-   nunca iban a juego en oscuro). Ahora el panel derecho es solo raíl y las dos barras
-   se pintan desde aquí. */
+/* Las barras de arriba se quedan en el #1d1c21 de siempre, un paso por debajo de las
+   columnas. La regla vivía dentro del componente del lienzo y solo pintaba la barra
+   del estudio y el panel derecho; ahora las dos barras se pintan desde aquí. */
 :root.dark .studio-chrome {
   background-color: #1d1c21;
+  border-color: var(--border);
 }
 
 /* El raíl del borde derecho (el inspector) comparte el lino del izquierdo —el marco
