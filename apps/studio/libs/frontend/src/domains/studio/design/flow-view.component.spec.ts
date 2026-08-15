@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
+import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
 import { FlowViewComponent } from './flow-view.component'
 
@@ -500,5 +501,205 @@ describe('FlowViewComponent — borrar la cabeza tampoco recoloca el lienzo', ()
 
     expect(bloque('flow-card-entregar-la-maquina')).toBe(antes.tarjeta)
     expect(bloque('flow-card-pedir-el-recambio')).toBe(antes.otra)
+  })
+})
+
+// Medido en el navegador (tools/smoke-flows y una captura del rombo de aguas): la CAJA del
+// texto está bien —72px dentro de un rombo de 128—, lo que se salía era el GLIFO de una
+// palabra que no puede partir, «PLAZO_AVISO_PRORROGA», pintándose fuera de su caja. Se
+// arregla dejándola partir; el recorte a cuatro líneas evita que el bloque crezca a lo alto
+// más de lo que el rombo aguanta, y el título conserva el texto entero.
+describe('FlowViewComponent — el texto del rombo no se sale', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+    store.addFlow(FLOW)
+  })
+
+  it('parte las palabras que no caben y recorta lo que sobra, sin perder el texto', () => {
+    const condicion = '¿Caduca dentro del PLAZO_AVISO_PRORROGA (30 días)?'
+    store.addFlowNode(FLOW, 'decision', condicion)
+
+    const fixture = mount()
+    const texto = testId(fixture, 'flow-node-text-caduca-dentro-del-plazo-aviso-prorroga-30-dias')
+
+    expect(texto?.className).toContain('break-words')
+    expect(texto?.className).toContain('line-clamp-4')
+    expect(texto?.getAttribute('title')).toBe(condicion)
+  })
+
+  it('el rombo sigue midiendo lo mismo: el texto no cambia la geometría', () => {
+    store.addFlowNode(FLOW, 'decision', '¿Lleva tasas?')
+    store.addFlowNode(FLOW, 'decision', '¿Caduca dentro del PLAZO_AVISO_PRORROGA (30 días)?')
+
+    const fixture = mount()
+    const corto = testId(fixture, 'flow-node-lleva-tasas')
+    const largo = testId(fixture, 'flow-node-caduca-dentro-del-plazo-aviso-prorroga-30-dias')
+
+    expect(largo?.style.width).toBe(corto?.style.width)
+  })
+})
+
+// Todo texto que se recorta en el lienzo se puede leer entero acercando el cursor: era así
+// en el rombo y no en los pasos, que es donde viven los textos largos de verdad («Se envía a
+// Operaciones el enlace aceptar/denegar la prórroga (subestado Enviada_Operaciones)»).
+describe('FlowViewComponent — lo recortado se lee entero con el cursor', () => {
+  let store: DesignStore
+
+  const LARGO = 'Se envía a Operaciones el enlace aceptar/denegar la prórroga (subestado Enviada_Operaciones)'
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+    store.addFlow(FLOW)
+  })
+
+  it('el disparador y el fin llevan su texto en el título', () => {
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-node-text-inicio')?.getAttribute('title')).toBe('Inicio')
+    expect(testId(fixture, 'flow-node-text-fin')?.getAttribute('title')).toBe('Fin')
+  })
+
+  it('la fila de una tarjeta de acciones lleva su texto en el título', () => {
+    store.addFlowNode(FLOW, 'step', LARGO)
+
+    const fixture = mount()
+    const fila = testId(
+      fixture,
+      'flow-step-text-se-envia-a-operaciones-el-enlace-aceptar-denegar-la-prorroga-subestado-enviada-operaciones'
+    )
+
+    expect(fila?.getAttribute('title')).toBe(LARGO)
+  })
+
+  it('la entidad de una fila también se lee entera', () => {
+    store.addFlowNode(FLOW, 'step', 'Se registra la muestra')
+    store.updateFlowNode(FLOW, 'se-registra-la-muestra', { entity: 'muestra' })
+
+    const fixture = mount()
+    const entidad = testId(fixture, 'flow-step-entity-se-registra-la-muestra')
+
+    expect(entidad?.getAttribute('title')).toBe('muestra')
+  })
+})
+
+describe('FlowViewComponent — la rama «no» se dibuja a rayas', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'decision', 'stock < 10')
+    store.addFlowNode(FLOW, 'step', 'Marcar la fila')
+    store.addFlowNode(FLOW, 'step', 'Quitar el aviso')
+    store.addFlowEdge(FLOW, 'inicio', 'stock-10')
+    store.addFlowEdge(FLOW, 'stock-10', 'marcar-la-fila', 'sí')
+    store.addFlowEdge(FLOW, 'marcar-la-fila', 'fin')
+    store.addFlowEdge(FLOW, 'stock-10', 'quitar-el-aviso', 'no')
+    store.addFlowEdge(FLOW, 'quitar-el-aviso', 'fin')
+    store.removeFlowEdge(FLOW, 'inicio', 'fin')
+  })
+
+  /** El trazo visible de la flecha: el primero es la zona de clic transparente. */
+  function visibleStroke(fixture: ReturnType<typeof mount>, edge: string): SVGPathElement {
+    const grupo = testId(fixture, `flow-edge-${edge}`)
+    const trazo = grupo?.querySelectorAll('path')[1]
+    if (!trazo) throw new Error(`no se encontró el trazo de la flecha ${edge}`)
+    return trazo as unknown as SVGPathElement
+  }
+
+  it('la salida «no» de la decisión va con línea discontinua y punta apagada', () => {
+    const fixture = mount()
+    const trazo = visibleStroke(fixture, 'stock-10-quitar-el-aviso')
+
+    expect(trazo.getAttribute('stroke-dasharray')).toBe('5 4')
+    expect(trazo.getAttribute('marker-end')).toBe('url(#flow-arrow-alt)')
+  })
+
+  it('la salida «sí» sigue siendo el trazo continuo de siempre', () => {
+    const fixture = mount()
+    const trazo = visibleStroke(fixture, 'stock-10-marcar-la-fila')
+
+    expect(trazo.getAttribute('stroke-dasharray')).toBeNull()
+    expect(trazo.getAttribute('marker-end')).toBe('url(#flow-arrow)')
+  })
+
+  // La segunda causa de «no veo la raya»: cuando hay ida y VUELTA entre dos bloques
+  // (la «no» va a desviación y desviación vuelve a la condición), las dos flechas
+  // calcaban el mismo trazado y la continua tapaba a la de rayas. Arqueadas, cada una
+  // pasa por su lado y las dos se leen.
+  it('la ida y la vuelta entre dos bloques no se pintan una encima de la otra', () => {
+    store.addFlowEdge(FLOW, 'quitar-el-aviso', 'stock-10')
+
+    const fixture = mount()
+    const media = (edge: string) => {
+      const [, y1, , cy1, , cy2, , y2] =
+        visibleStroke(fixture, edge).getAttribute('d')?.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? []
+      return (y1 + 3 * cy1 + 3 * cy2 + y2) / 8
+    }
+
+    expect(media('stock-10-quitar-el-aviso')).not.toBe(media('quitar-el-aviso-stock-10'))
+  })
+
+  // Lo que motivó el arreglo: al encuadrar un flujo grande el zoom cae (38% en el de
+  // aguas) y un patrón fijo de 5/4 se escala con el lienzo hasta leerse como línea
+  // continua. El patrón compensa el zoom para medir SIEMPRE lo mismo en pantalla.
+  it('alejar el zoom no borra las rayas: el patrón compensa la escala', () => {
+    TestBed.inject(CanvasViewportService).zoomBy('flows', 0.5, { x: 0, y: 0 })
+
+    const fixture = mount()
+    const trazo = visibleStroke(fixture, 'stock-10-quitar-el-aviso')
+
+    expect(trazo.getAttribute('stroke-dasharray')).toBe('10 8')
+  })
+})
+
+/**
+ * Spec 44 (fleco): el paso convergido enseña su verbo EN el diagrama. La diferencia
+ * ahora tiene consecuencias reales — cuerpo real + endpoint frente a hueco @ai — y no
+ * debe esconderse en el panel.
+ */
+describe('FlowViewComponent — el chip del verbo (spec 44)', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow('Alta')
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    store.promoteState('solicitud', 'nombre')
+    store.addTransition('solicitud', 'pendiente', 'en_curso')
+    store.addFlow('Alta')
+    store.insertFlowStep('Alta', 'inicio', 'fin', 'Se tramita')
+  })
+
+  const stepId = () => store.flows()[0].nodes.find(n => n.kind === 'step')!.id
+
+  it('el paso con transición lleva el chip del verbo junto a su entidad', () => {
+    store.updateFlowNode('Alta', stepId(), { entity: 'solicitud', transition: 'a-en-curso' })
+
+    const fixture = mount()
+    const chip = testId(fixture, `flow-step-transition-${stepId()}`)
+
+    expect(chip).not.toBeNull()
+    expect(chip?.textContent).toContain('a-en-curso')
+  })
+
+  it('sin transición no hay chip: el paso es un hueco que rellena el puente', () => {
+    store.updateFlowNode('Alta', stepId(), { entity: 'solicitud' })
+
+    const fixture = mount()
+
+    expect(testId(fixture, `flow-step-transition-${stepId()}`)).toBeNull()
+    expect(testId(fixture, `flow-step-entity-${stepId()}`)).not.toBeNull()
   })
 })

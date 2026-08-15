@@ -379,3 +379,55 @@ describe('orientación del flujo', () => {
     expect(curva.x1).toBe(arriba.x + arriba.width / 2)
   })
 })
+
+// IDA Y VUELTA: dos aristas opuestas entre los mismos bloques calcaban el mismo trazado
+// —mismos puertos, mismos tiradores— y la continua tapaba a la de rayas (la «no» de
+// «¿dentro del límite?» → «desviación» en el flujo del bote). Arqueadas, cada una se
+// aparta hacia la izquierda de su marcha y las dos se leen.
+describe('flowEdgeCurve — la ida y la vuelta no se calcan', () => {
+  const origen: NodeBox = { x: 40, y: 100, width: 180, height: 56 }
+  const destino: NodeBox = { x: 400, y: 100, width: 180, height: 56 }
+
+  /** Altura del punto medio del trazo: B(0.5) de la cúbica. */
+  function alturaMedia(d: string): number {
+    const [, y1, , cy1, , cy2, , y2] = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? []
+    return (y1 + 3 * cy1 + 3 * cy2 + y2) / 8
+  }
+
+  it('la ida se arquea hacia un lado y la vuelta hacia el otro', () => {
+    const ida = flowEdgeCurve(origen, destino, 'horizontal', true)
+    const vuelta = flowEdgeCurve(destino, origen, 'horizontal', true)
+
+    expect(alturaMedia(ida.d)).toBeLessThan(origen.y + origen.height / 2)
+    expect(alturaMedia(vuelta.d)).toBeGreaterThan(origen.y + origen.height / 2)
+  })
+
+  it('la etiqueta acompaña al arco: no se queda sobre el trazo contrario', () => {
+    const ida = flowEdgeCurve(origen, destino, 'horizontal', true)
+    const vuelta = flowEdgeCurve(destino, origen, 'horizontal', true)
+
+    expect(ida.labelY).toBeLessThan(vuelta.labelY)
+  })
+
+  it('sin arista de vuelta, el trazo sigue siendo el plano de siempre', () => {
+    const curva = flowEdgeCurve(origen, destino)
+    const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+
+    expect(cy1).toBe(curva.y1)
+    expect(cy2).toBe(curva.y2)
+  })
+
+  it('en vertical el arco se aparta en horizontal', () => {
+    const arriba: NodeBox = { x: 40, y: 40, width: 180, height: 56 }
+    const abajo: NodeBox = { x: 40, y: 240, width: 180, height: 56 }
+
+    const ida = flowEdgeCurve(arriba, abajo, 'vertical', true)
+    const vuelta = flowEdgeCurve(abajo, arriba, 'vertical', true)
+    const anchoMedio = (d: string) => {
+      const [x1, , cx1, , cx2, , x2] = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? []
+      return (x1 + 3 * cx1 + 3 * cx2 + x2) / 8
+    }
+
+    expect(anchoMedio(ida.d)).not.toBe(anchoMedio(vuelta.d))
+  })
+})

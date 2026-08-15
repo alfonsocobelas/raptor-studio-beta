@@ -165,7 +165,22 @@ export interface FlowEdgeCurve {
  * horizontal para que el trazo salga y entre plano. Si el destino queda a la izquierda
  * (un bucle hacia atrás), se invierten los lados en vez de cruzar el nodo.
  */
-export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrientation = 'horizontal'): FlowEdgeCurve {
+/** Cuánto se aparta del trazo recto cada arista de una pareja ida-y-vuelta. */
+const FLOW_EDGE_BOW = 28
+
+/**
+ * `bow` se pide cuando existe la arista INVERSA: ida y vuelta anclan en los mismos
+ * puertos con los mismos tiradores, así que se calcaban y la continua tapaba a la de
+ * rayas. Cada una se arquea hacia la izquierda de su marcha —signos opuestos al ir en
+ * sentidos opuestos— y las dos se leen. La etiqueta acompaña al arco: el punto medio
+ * de la cúbica se desplaza 3/4 del desvío de los tiradores.
+ */
+export function flowEdgeCurve(
+  from: NodeBox,
+  to: NodeBox,
+  orientation: FlowOrientation = 'horizontal',
+  bow = false
+): FlowEdgeCurve {
   if (orientation === 'vertical') {
     const haciaAbajo = to.y >= from.y
     const x1 = from.x + from.width / 2
@@ -176,14 +191,15 @@ export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrien
     const tirador = Math.max(24, Math.abs(y2 - y1) / 2)
     const cy1 = haciaAbajo ? y1 + tirador : y1 - tirador
     const cy2 = haciaAbajo ? y2 - tirador : y2 + tirador
+    const lado = bow ? (haciaAbajo ? FLOW_EDGE_BOW : -FLOW_EDGE_BOW) : 0
 
     return {
       x1,
       y1,
       x2,
       y2,
-      d: `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`,
-      labelX: (x1 + x2) / 2,
+      d: `M ${x1} ${y1} C ${x1 + lado} ${cy1}, ${x2 + lado} ${cy2}, ${x2} ${y2}`,
+      labelX: (x1 + x2) / 2 + lado * 0.75,
       labelY: (y1 + y2) / 2
     }
   }
@@ -197,15 +213,16 @@ export function flowEdgeCurve(from: NodeBox, to: NodeBox, orientation: FlowOrien
   const tirador = Math.max(24, Math.abs(x2 - x1) / 2)
   const cx1 = haciaLaDerecha ? x1 + tirador : x1 - tirador
   const cx2 = haciaLaDerecha ? x2 - tirador : x2 + tirador
+  const lado = bow ? (haciaLaDerecha ? -FLOW_EDGE_BOW : FLOW_EDGE_BOW) : 0
 
   return {
     x1,
     y1,
     x2,
     y2,
-    d: `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`,
+    d: `M ${x1} ${y1} C ${cx1} ${y1 + lado}, ${cx2} ${y2 + lado}, ${x2} ${y2}`,
     labelX: (x1 + x2) / 2,
-    labelY: (y1 + y2) / 2
+    labelY: (y1 + y2) / 2 + lado * 0.75
   }
 }
 

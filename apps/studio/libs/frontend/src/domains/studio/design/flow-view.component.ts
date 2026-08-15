@@ -167,7 +167,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         : 'stroke-foreground'
                   "
                   [attr.stroke-width]="isEdgeSelected(item) ? 2.5 : 1.5"
-                  [attr.stroke-dasharray]="item.alternate ? '5 4' : null"
+                  [attr.stroke-dasharray]="item.alternate ? edgeDash() : null"
                   [attr.marker-end]="item.alternate ? 'url(#flow-arrow-alt)' : 'url(#flow-arrow)'"
                 />
               </g>
@@ -209,7 +209,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                 [attr.y2]="ghost.y2"
                 class="stroke-primary"
                 stroke-width="1.5"
-                stroke-dasharray="5 4"
+                [attr.stroke-dasharray]="edgeDash()"
                 marker-end="url(#flow-arrow)"
                 data-testid="flow-ghost-edge"
               />
@@ -327,10 +327,33 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         </select>
                       </div>
                     } @else {
+                      <!-- lo que se recorta se lee entero acercando el cursor: las acciones son
+                           los textos largos del lienzo («…subestado Enviada_Operaciones») -->
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-[13px] font-semibold leading-tight">{{ step.text }}</span>
+                        <span
+                          class="block truncate text-[13px] font-semibold leading-tight"
+                          [attr.title]="step.text"
+                          [attr.data-testid]="'flow-step-text-' + step.id"
+                          >{{ step.text }}</span
+                        >
                         @if (step.entity) {
-                          <span class="text-muted-foreground block truncate text-[11px]">{{ step.entity }}</span>
+                          <span
+                            class="text-muted-foreground block truncate text-[11px]"
+                            [attr.title]="step.entity"
+                            [attr.data-testid]="'flow-step-entity-' + step.id"
+                            >{{ step.entity }}
+                            @if (step.transition) {
+                              <!-- convergido (spec 44): este paso ejecuta un verbo de la máquina —
+                                   sale generado con cuerpo real y endpoint, sin hueco @ai -->
+                              <span
+                                class="rounded-sm px-1 font-medium"
+                                style="color: #f15539; background: rgba(241, 85, 57, 0.1)"
+                                [attr.title]="'Ejecuta la transición «' + step.transition + '» de ' + step.entity"
+                                [attr.data-testid]="'flow-step-transition-' + step.id"
+                                >⚡ {{ step.transition }}</span
+                              >
+                            }
+                          </span>
                         }
                       </span>
                       <button
@@ -496,17 +519,28 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                       </span>
                     }
                     <!-- dentro del rombo el ancho útil es poco: el texto se parte en líneas
-                       en vez de cortarse, como el «stock < 10» de la referencia -->
+                       en vez de cortarse, como el «stock < 10» de la referencia. Las palabras
+                       que no caben parten también (medido en el navegador: la caja del texto
+                       está dentro del rombo, pero un «PLAZO_AVISO_PRORROGA» se pintaba fuera
+                       de su propia caja), y de las cuatro líneas en adelante se recorta con
+                       puntos suspensivos: el título lleva el texto entero. -->
                     <span
                       [class]="
                         item.node.kind === 'decision'
-                          ? 'block text-[11px] font-semibold leading-tight'
+                          ? 'line-clamp-4 break-words text-[11px] font-semibold leading-tight'
                           : 'block truncate font-semibold leading-tight'
                       "
+                      [attr.title]="item.node.text"
+                      [attr.data-testid]="'flow-node-text-' + item.node.id"
                       >{{ item.node.text }}</span
                     >
                     @if (item.node.entity) {
-                      <span class="block truncate text-[11px] font-normal opacity-60">{{ item.node.entity }}</span>
+                      <span
+                        class="block truncate text-[11px] font-normal opacity-60"
+                        [attr.title]="item.node.entity"
+                        [attr.data-testid]="'flow-node-entity-' + item.node.id"
+                        >{{ item.node.entity }}</span
+                      >
                     }
                   </span>
                 </span>
@@ -731,6 +765,7 @@ export class FlowViewComponent {
     const boxes = this.boxes()
     const dibujado = this.diagram()?.condensed
     const alternates = dibujado ? flowAlternateEdges(dibujado) : new Set<string>()
+    const trazadas = new Set((dibujado?.edges ?? []).map(edge => `${edge.from}→${edge.to}`))
     return (dibujado?.edges ?? []).flatMap(edge => {
       const from = boxes.get(edge.from)
       const to = boxes.get(edge.to)
@@ -741,7 +776,8 @@ export class FlowViewComponent {
               to: edge.to,
               ...(edge.label ? { label: edge.label } : {}),
               alternate: alternates.has(`${edge.from}→${edge.to}`),
-              line: flowEdgeCurve(from, to, this.orientation.value())
+              // con arista de vuelta, cada trazo se arquea hacia su lado: calcados no se leen
+              line: flowEdgeCurve(from, to, this.orientation.value(), trazadas.has(`${edge.to}→${edge.from}`))
             }
           ]
         : []
@@ -758,6 +794,17 @@ export class FlowViewComponent {
   protected readonly worldTransform = computed(() => {
     const { pan, zoom } = this.camera()
     return `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+  })
+
+  /**
+   * El patrón de la rama alternativa, en unidades del mundo: el lienzo se escala
+   * entero con el zoom, así que un «5 4» fijo se aprieta al alejarse hasta leerse
+   * como trazo continuo (al 38% de encuadrar un flujo grande ya no se ve la raya).
+   * Compensando la escala, en pantalla mide siempre 5/4.
+   */
+  protected readonly edgeDash = computed(() => {
+    const zoom = this.camera().zoom
+    return `${5 / zoom} ${4 / zoom}`
   })
 
   protected readonly gridOffset = computed(() => {
