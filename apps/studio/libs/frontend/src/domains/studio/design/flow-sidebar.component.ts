@@ -93,7 +93,7 @@ const FLOW_BLOCKS: FlowBlock[] = [
         } @else {
           <button
             type="button"
-            class="text-muted-foreground hover:border-foreground/40 hover:text-foreground studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
+            class="text-muted-foreground hover:border-foreground/45 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border-2 border-dashed px-2 py-2 text-left transition-colors"
             data-testid="flow-new"
             (click)="creating.set(true)"
           >
