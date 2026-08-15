@@ -11,7 +11,7 @@
       verbo → guardar, sin hueco @ai) con su JSDoc; el oro gana el paso «Se termina el
       contrato» (entity contract, transition terminate) en el flujo golden.
 
-- [ ] **TASK-02**: `/golden-diff` + controller de procesos por flujo con pasos convergidos
+- [x] **TASK-02**: `/golden-diff` + controller de procesos por flujo con pasos convergidos
       (`POST /processes/<flujo>/<paso>/:id` → 204, mismo 409/404 vía filtro global) y su
       cableado en `processes.module.ts`. Sin pasos convergidos → sin controller.
 

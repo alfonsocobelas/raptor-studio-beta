@@ -15,6 +15,8 @@ export interface FlowProcessNames {
   fileName: string
   /** Clase emitida: PascalCase + sufijo ('DePresupuestoALegalizacionProcess') */
   className: string
+  /** Controller de los pasos convergidos ('DePresupuestoALegalizacionController') */
+  controllerClassName: string
 }
 
 export interface FlowStepMethod {
@@ -39,7 +41,8 @@ export function flowProcessNames(flow: BusinessFlow): FlowProcessNames {
   const plain = stripDiacritics(flow.name)
   return {
     fileName: names(plain).fileName,
-    className: `${names(plain).className}Process`
+    className: `${names(plain).className}Process`,
+    controllerClassName: `${names(plain).className}Controller`
   }
 }
 
@@ -108,7 +111,14 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
     // el módulo lista TODOS los procesos del contexto: mismas substitutions en cada pasada (idempotente)
     const processNames = ctxFlows.map(flowProcessNames)
     const entities = [...new Set(ctxFlows.flatMap(flow => flowRepoDeps(flow).map(dep => dep.entity)))]
+    // convergencia (spec 44): controllers solo para los flujos con pasos convergidos
+    const withController = ctxFlows.filter(flow => flowStepMethods(flow).some(m => m.node.transition))
+    const controllerNames = withController.map(flowProcessNames)
     const moduleSubstitutions = {
+      controllerImports: controllerNames
+        .map(p => `import { ${p.controllerClassName} } from './${p.fileName}/${p.fileName}.controller'`)
+        .join('\n'),
+      controllerNames: controllerNames.map(p => p.controllerClassName).join(', '),
       moduleImports: entities
         .map(entity => {
           const plural = pluralOf.get(entity)
@@ -123,9 +133,10 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
     }
 
     for (const flow of ctxFlows) {
-      const { fileName, className } = flowProcessNames(flow)
+      const { fileName, className, controllerClassName } = flowProcessNames(flow)
       const methods = flowStepMethods(flow)
       const deps = flowRepoDeps(flow)
+      const converged = methods.filter(m => m.node.transition && m.node.entity)
 
       const idImports = [...new Set(methods.map(m => m.node.entity).filter((e): e is string => Boolean(e)))].map(
         entity => {
@@ -149,8 +160,21 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
         imports: [...errorImports, ...idImports, ...repoImports].join('\n'),
         classDoc: docBlock(flowClassDoc(flow)),
         ctorParams: deps.map(dep => `private readonly ${dep.propertyName}: ${dep.className}`).join(', '),
-        methodsBlock: methods.map(renderMethod).join('\n\n')
+        methodsBlock: methods.map(renderMethod).join('\n\n'),
+        controllerClassName,
+        sharedDomainAlias: models[0]?.sharedDomainAlias ?? '@app/shared/domain',
+        controllerIdImports: [...new Set(converged.map(m => m.node.entity as string))]
+          .map(entity => {
+            const n = names(entity)
+            return `import { ${n.className}Id } from '../../../shared/domain/value-objects/${pluralOf.get(entity)}/${n.fileName}-id.vo'`
+          })
+          .join('\n'),
+        controllerMethods: converged.map(renderControllerMethod).join('\n')
       })
+      // sin pasos convergidos no hay controller: nada de fachadas sobre huecos (spec 44)
+      if (!converged.length) {
+        tree.delete(path.join(processesDir, fileName, `${fileName}.controller.ts`))
+      }
     }
 
     reinjectAiSlots(tree, processesDir, survivors)
@@ -217,6 +241,21 @@ function renderMethod(method: FlowStepMethod): string {
     `  async ${method.methodName}(${method.params}): Promise<void> {`,
     `    // @ai:begin flow-${method.node.id} — ${method.node.text}`,
     '    // @ai:end',
+    '  }'
+  ].join('\n')
+}
+
+/** La ruta de un paso convergido: POST processes/<flujo>/<nodo>/:id → 204 (409/404 del filtro global). */
+function renderControllerMethod(method: FlowStepMethod): string {
+  const entity = names(method.node.entity as string)
+  return [
+    '',
+    '  /** ' + method.docLines[0] + ` · transición «${method.node.transition}» de ${method.node.entity}. */`,
+    `  @Post('${method.node.id}/:id')`,
+    '  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)',
+    '  @HttpCode(HttpStatus.NO_CONTENT)',
+    `  ${method.methodName}(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {`,
+    `    return this.process.${method.methodName}(${entity.className}Id.create(id))`,
     '  }'
   ].join('\n')
 }

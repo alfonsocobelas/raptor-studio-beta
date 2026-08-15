@@ -76,3 +76,65 @@ describe('el paso de flujo convergido con la máquina de estados', () => {
     expect(plainSource).toContain('@ai:begin flow-termina')
   })
 })
+
+/**
+ * Spec 44 TASK-02: el endpoint del paso convergido. Regla de oro: endpoint SOLO donde hay
+ * cuerpo real — un flujo sin pasos convergidos no emite controller (nada de fachadas).
+ */
+describe('el controller de procesos', () => {
+  const flow: BusinessFlow = {
+    name: 'Del alta a la baja',
+    nodes: [
+      { id: 'llega', kind: 'start', text: 'Llega el contrato' },
+      { id: 'firma', kind: 'step', text: 'Se firma el contrato', entity: 'contract' },
+      { id: 'termina', kind: 'step', text: 'Se termina el contrato', entity: 'contract', transition: 'terminate' },
+      { id: 'fin', kind: 'end', text: 'Terminado' }
+    ],
+    edges: [
+      { from: 'llega', to: 'firma' },
+      { from: 'firma', to: 'termina' },
+      { from: 'termina', to: 'fin' }
+    ]
+  }
+
+  const emit = (theFlow: BusinessFlow): Tree => {
+    const tree = createTreeWithEmptyWorkspace()
+    tree.write('backend/root.module.ts', 'import { HealthModule } from "x"\nimports: [HealthModule,]\n')
+    emitFlowProcesses(tree, 'backend', [theFlow], Object.values(MODELS))
+    return tree
+  }
+
+  const controllerPath = 'backend/contexts/sap-licensing/processes/del-alta-a-la-baja/del-alta-a-la-baja.controller.ts'
+
+  it('cuelga POST processes/<flujo>/<paso>/:id → 204 delegando en el proceso', () => {
+    const source = emit(flow).read(controllerPath, 'utf-8') ?? ''
+
+    expect(source).toContain("@Controller('processes/del-alta-a-la-baja')")
+    expect(source).toContain("@Post('termina/:id')")
+    expect(source).toContain('@HttpCode(HttpStatus.NO_CONTENT)')
+    expect(source).toContain('this.process.termina(ContractId.create(id))')
+    // el paso sin transición NO tiene ruta: sería una fachada sobre un hueco vacío
+    expect(source).not.toContain("'firma/:id'")
+  })
+
+  it('el módulo registra el controller', () => {
+    const module = emit(flow).read('backend/contexts/sap-licensing/processes/processes.module.ts', 'utf-8') ?? ''
+
+    expect(module).toContain('DelAltaALaBajaController')
+    expect(module).toMatch(/controllers: \[[^\]]*DelAltaALaBajaController/)
+  })
+
+  it('un flujo sin pasos convergidos no emite controller ni lo registra', () => {
+    const plain: BusinessFlow = {
+      ...flow,
+      nodes: flow.nodes.map(node => {
+        const { transition: _out, ...rest } = node
+        return rest
+      })
+    }
+    const tree = emit(plain)
+
+    expect(tree.exists(controllerPath)).toBe(false)
+    expect(tree.read('backend/contexts/sap-licensing/processes/processes.module.ts', 'utf-8')).not.toContain('Controller')
+  })
+})

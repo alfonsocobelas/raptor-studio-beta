@@ -1,9 +1,15 @@
 import { Module } from '@nestjs/common'
 <%- moduleImports %>
 <%- processImports %>
+<%_ if (controllerNames) { _%>
+<%- controllerImports %>
+<%_ } _%>
 
 @Module({
   imports: [<%- entityModules %>],
+<%_ if (controllerNames) { _%>
+  controllers: [<%- controllerNames %>],
+<%_ } _%>
   providers: [<%- processProviders %>],
   exports: [<%- processProviders %>]
 })
