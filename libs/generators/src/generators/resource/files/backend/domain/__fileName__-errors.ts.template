@@ -1,4 +1,9 @@
+<%_ if (hasStateMachine) { _%>
+import http from 'http-status'
+import { BaseCustomError, BusinessRuleViolationError } from '../../../../shared/domain/errors'
+<%_ } else { _%>
 import { BusinessRuleViolationError } from '../../../../shared/domain/errors'
+<%_ } _%>
 
 export class <%- className %>Error extends BusinessRuleViolationError {
   constructor(message: string, cause?: unknown) {
@@ -7,10 +12,11 @@ export class <%- className %>Error extends BusinessRuleViolationError {
 }
 <%_ if (hasStateMachine) { _%>
 
-/** Transición ilegal de la máquina de estados (spec 43): el borde la mapea a 409. */
-export class <%- className %>InvalidTransitionError extends BusinessRuleViolationError {
+/** Transición ilegal de la máquina de estados (spec 43): la petición es válida, es el
+ *  estado quien la rechaza — CONFLICT, no 422. */
+export class <%- className %>InvalidTransitionError extends BaseCustomError {
   constructor(message: string, cause?: unknown) {
-    super(message, '<%- className %>', cause)
+    super(`[<%- className %>]: ${message}`, http.CONFLICT, cause)
   }
 }
 <%_ } _%>

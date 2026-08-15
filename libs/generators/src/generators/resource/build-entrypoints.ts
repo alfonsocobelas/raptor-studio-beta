@@ -17,8 +17,22 @@ export interface ExportColumnBinding {
   line: string
 }
 
+export interface TransitionBinding {
+  /** Segmento de la ruta (':id/terminate') y slug de los ficheros */
+  verb: string
+  /** Nombre del método del controller y del agregado */
+  method: string
+  /** Prefijo de clase compuesto (TerminateContract) */
+  className: string
+  /** Slug de fichero compuesto (terminate-contract) */
+  file: string
+  label: string
+}
+
 export interface EntrypointBindings {
   emit: boolean
+  /** Las transiciones de la máquina de estados (spec 43) */
+  transitions: TransitionBinding[]
   registerDtoFields: DtoFieldBinding[]
   updateDtoFields: DtoFieldBinding[]
   registerValidatorImports: string[]
@@ -102,6 +116,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   if (writes) ops.push(['Register', n.className])
   ops.push(['Search', pluralClass], ['Get', n.className])
   if (writes) ops.push(['Update', n.className])
+  // las transiciones de la máquina de estados (spec 43): un par use-case/handler por verbo
+  for (const t of definition.state?.transitions ?? []) ops.push([names(t.name).className, n.className])
   if (removes) ops.push(['Remove', n.className])
   // la papelera (spec 29) cuelga del borrado: sin softDelete no hay nada que listar ni restaurar
   if (removes && wantsSoftDelete(definition)) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
@@ -132,8 +148,17 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     ...childOps.map(c => `${c}UseCase`)
   ]
 
+  const transitions = (definition.state?.transitions ?? []).map(t => ({
+    verb: t.name,
+    method: names(t.name).propertyName,
+    className: `${names(t.name).className}${n.className}`,
+    file: `${names(t.name).fileName}-${n.fileName}`,
+    label: t.label
+  }))
+
   return {
     emit: emitAggregate,
+    transitions,
     registerDtoFields,
     updateDtoFields,
     registerValidatorImports: collectValidators(registerDtoFields),

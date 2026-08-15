@@ -36,6 +36,9 @@ import { Restore<%- className %>Handler } from '../../application/handlers/resto
 import { SearchDeleted<%- pluralClassName %>Handler } from '../../application/handlers/search-deleted-<%- plural %>.handler'
 <%_ } _%>
 import { Search<%- pluralClassName %>Handler } from '../../application/handlers/search-<%- plural %>.handler'
+<%_ entry.transitions.forEach(transition => { _%>
+import { <%- transition.className %>Handler } from '../../application/handlers/<%- transition.file %>.handler'
+<%_ }) _%>
 <%_ if (app.writes) { _%>
 import { Update<%- className %>Handler } from '../../application/handlers/update-<%- fileName %>.handler'
 <%_ } _%>
@@ -72,6 +75,9 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.writes) { _%>
     private readonly update<%- className %>Handler: Update<%- className %>Handler,
 <%_ } _%>
+<%_ entry.transitions.forEach(transition => { _%>
+    private readonly <%- transition.method %><%- className %>Handler: <%- transition.className %>Handler,
+<%_ }) _%>
 <%_ if (app.removes) { _%>
     private readonly remove<%- className %>Handler: Remove<%- className %>Handler,
 <%_ } _%>
@@ -167,4 +173,14 @@ export class <%- pluralClassName %>Controller {
     return this.restore<%- className %>Handler.handle({ id })
   }
 <%_ } _%>
+<%_ entry.transitions.forEach(transition => { _%>
+
+  /** Transición «<%- transition.label %>» de la máquina de estados (spec 43): 409 si el estado la rechaza. */
+  @Post(':id/<%- transition.verb %>')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  <%- transition.method %>(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.<%- transition.method %><%- className %>Handler.handle({ id })
+  }
+<%_ }) _%>
 }

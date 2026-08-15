@@ -68,6 +68,15 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend/application'),
       substitutions
     )
+    // las transiciones de la máquina de estados (spec 43): un use case + handler por verbo
+    for (const transition of substitutions.entry.transitions) {
+      generateFiles(
+        tree,
+        path.join(__dirname, '..', 'resource', 'files-transition'),
+        path.join(outputDir, 'backend/application'),
+        { ...substitutions, transition, transitionFile: transition.file }
+      )
+    }
     for (const spec of substitutions.app.uniqueSpecs) {
       generateFiles(
         tree,

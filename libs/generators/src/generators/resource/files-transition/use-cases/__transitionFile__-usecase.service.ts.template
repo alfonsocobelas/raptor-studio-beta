@@ -1,0 +1,22 @@
+import { Injectable } from '@nestjs/common'
+import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
+
+/** Transición «<%- transition.label %>» de la máquina de estados (spec 43): cargar → transicionar → guardar. */
+@Injectable()
+export class <%- transition.className %>UseCase {
+  constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
+
+  async invoke(input: { id: string }): Promise<void> {
+    const <%- propertyName %>Id = <%- className %>Id.create(input.id)
+    const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
+
+    if (!<%- propertyName %>) {
+      throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+    <%- propertyName %>.<%- transition.method %>()
+    await this.<%- propertyName %>Repository.save(<%- propertyName %>)
+  }
+}

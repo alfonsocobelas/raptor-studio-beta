@@ -10,6 +10,8 @@ import { ExportContractsHandler } from '../../application/handlers/export-contra
 import { GetContractHandler } from '../../application/handlers/get-contract.handler'
 import { RegisterContractHandler } from '../../application/handlers/register-contract.handler'
 import { SearchContractsHandler } from '../../application/handlers/search-contracts.handler'
+import { TerminateContractHandler } from '../../application/handlers/terminate-contract.handler'
+import { ExpireContractHandler } from '../../application/handlers/expire-contract.handler'
 import { UpdateContractHandler } from '../../application/handlers/update-contract.handler'
 import { ContractPrimitiveProps, ContractUpdateProps } from '../../domain/contract-types'
 import { ExportContractsQueryDto } from './dtos/export-contracts-query.dto'
@@ -24,6 +26,8 @@ export class ContractsController {
     private readonly searchContractsHandler: SearchContractsHandler,
     private readonly getContractHandler: GetContractHandler,
     private readonly updateContractHandler: UpdateContractHandler,
+    private readonly terminateContractHandler: TerminateContractHandler,
+    private readonly expireContractHandler: ExpireContractHandler,
     private readonly exportContractsHandler: ExportContractsHandler
   ) {}
 
@@ -60,5 +64,21 @@ export class ContractsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: UpdateContractDto): Promise<void> {
     return this.updateContractHandler.handle({ id, updates: body as ContractUpdateProps })
+  }
+
+  /** Transición «Terminar» de la máquina de estados (spec 43): 409 si el estado la rechaza. */
+  @Post(':id/terminate')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  terminate(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.terminateContractHandler.handle({ id })
+  }
+
+  /** Transición «Expirar» de la máquina de estados (spec 43): 409 si el estado la rechaza. */
+  @Post(':id/expire')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  expire(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
+    return this.expireContractHandler.handle({ id })
   }
 }

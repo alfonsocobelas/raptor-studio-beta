@@ -42,7 +42,7 @@
       destino, guarda OR de `from`, `InvalidTransitionError` con label), nace en `initial`,
       el campo sale de register/update props.
 
-- [ ] **TASK-09**: `/golden-diff` + caso de uso por transición (cargar → transicionar →
+- [x] **TASK-09**: `/golden-diff` + caso de uso por transición (cargar → transicionar →
       guardar) y endpoint `POST /{plural}/:id/{name}` → 204; error de transición → 409 por
       tipo; 404 si no existe. Tests e2e emitidos.
 
