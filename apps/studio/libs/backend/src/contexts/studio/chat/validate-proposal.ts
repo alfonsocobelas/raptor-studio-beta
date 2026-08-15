@@ -52,6 +52,21 @@ export function validateDesign(design: DesignPayload): DesignPayload {
       if (node.entity !== undefined && !knownEntities.has(node.entity)) {
         throw new Error(`El flujo «${flow.name}» alude a una entidad inexistente: ${node.entity}`)
       }
+      // spec 43: la transición del paso debe existir en la máquina de SU entidad — el
+      // error llega al diseñar, no al emitir la convergencia
+      if (node.transition !== undefined && node.entity !== undefined) {
+        const machine = design.resources.find(r => r.name === node.entity)?.state
+        if (!machine) {
+          throw new Error(
+            `El flujo «${flow.name}» referencia la transición «${node.transition}», pero ${node.entity} no declara máquina de estados`
+          )
+        }
+        if (!machine.transitions.some(transition => transition.name === node.transition)) {
+          throw new Error(
+            `El flujo «${flow.name}» referencia una transición inexistente: «${node.transition}» no está en la máquina de ${node.entity}`
+          )
+        }
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import type { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import type { FieldDefinition, ResourceDefinition, StateMachine } from '@acc/schema'
 
 /**
  * Entidad DIBUJADA en el lienzo: lo mínimo que el usuario (o la IA) declara.
@@ -52,6 +52,8 @@ export interface DraftResource {
   subtitle?: string
   /** Frase de negocio de la entidad, destilada del chat (spec 22) */
   brief?: string
+  /** Máquina de estados: un campo enum promovido a estado con transiciones (spec 43) */
+  state?: StateMachine
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
@@ -301,6 +303,9 @@ export function draftToResource(
       ...(draft.subtitle ? { subtitle: draft.subtitle } : {})
     },
     ...(draft.brief ? { brief: draft.brief } : {}),
+    // la máquina viaja tal cual: los nombres de campo del draft son los del schema, y el
+    // gate de defineResource (spec 43) valida aquí mismo que hable de valores reales
+    ...(draft.state ? { state: draft.state } : {}),
     formSections: [{ id: 'general', title: `Datos de ${draft.labelSingular.toLowerCase()}` }],
     constraintsConst: `${snake(draft.name)}_CONSTRAINTS`,
     audit: true,

@@ -222,3 +222,112 @@ describe('validateDesign — los flujos pasan por el gate (spec 28)', () => {
     expect(() => validateDesign({ ...base(), flows: [flow] })).toThrow(/fantasma/)
   })
 })
+
+/**
+ * Spec 43: la máquina de estados cruza la frontera. El draft la declara, draftToResource
+ * la pasa al schema (donde dispara el gate de defineResource), y los pasos de flujo que
+ * referencian una transición deben apuntar a una que exista en la máquina de su entidad.
+ */
+describe('validateDesign — la máquina de estados (spec 43)', () => {
+  const solicitud = () => ({
+    name: 'solicitud',
+    plural: 'solicitudes',
+    labelSingular: 'Solicitud',
+    labelPlural: 'Solicitudes',
+    gender: 'f' as const,
+    fields: [
+      { name: 'titulo', label: 'Título', type: 'string' as const },
+      {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum' as const,
+        values: [
+          { value: 'pendiente', label: 'Pendiente' },
+          { value: 'aprobada', label: 'Aprobada' },
+          { value: 'descartada', label: 'Descartada' }
+        ]
+      }
+    ],
+    state: {
+      field: 'estado',
+      initial: 'pendiente',
+      transitions: [
+        { name: 'aprobar', label: 'Aprobar', from: ['pendiente'], to: 'aprobada' },
+        { name: 'descartar', label: 'Descartar', from: ['pendiente'], to: 'descartada' }
+      ]
+    }
+  })
+
+  const base = (resource = solicitud(), flows?: BusinessFlow[]): DesignPayload => ({
+    appName: 'tramites',
+    resources: [resource],
+    pages: [{ title: 'Solicitudes', blocks: [{ kind: 'table', resource: 'solicitud' }] }],
+    ...(flows ? { flows } : {})
+  })
+
+  it('acepta un diseño cuya entidad declara una máquina válida', () => {
+    expect(() => validateDesign(base())).not.toThrow()
+  })
+
+  it('una máquina que no pasa el gate del schema se rechaza con su motivo', () => {
+    const broken = solicitud()
+    broken.state = { ...broken.state, initial: 'limbo' }
+
+    expect(() => validateDesign(base(broken))).toThrow(/limbo/)
+  })
+
+  it('un paso de flujo puede referenciar una transición que existe en la máquina', () => {
+    const flow: BusinessFlow = {
+      name: 'Tramitación',
+      nodes: [
+        { id: 'entra', kind: 'start', text: 'Entra la solicitud' },
+        { id: 'aprueba', kind: 'step', text: 'Se aprueba', entity: 'solicitud', transition: 'aprobar' },
+        { id: 'fin', kind: 'end', text: 'Tramitada' }
+      ],
+      edges: [
+        { from: 'entra', to: 'aprueba' },
+        { from: 'aprueba', to: 'fin' }
+      ]
+    }
+
+    expect(() => validateDesign(base(solicitud(), [flow]))).not.toThrow()
+  })
+
+  it('una transición que no existe en la máquina de su entidad se rechaza', () => {
+    const flow: BusinessFlow = {
+      name: 'Tramitación',
+      nodes: [
+        { id: 'entra', kind: 'start', text: 'Entra la solicitud' },
+        { id: 'aprueba', kind: 'step', text: 'Se aprueba', entity: 'solicitud', transition: 'fantasma' },
+        { id: 'fin', kind: 'end', text: 'Tramitada' }
+      ],
+      edges: [
+        { from: 'entra', to: 'aprueba' },
+        { from: 'aprueba', to: 'fin' }
+      ]
+    }
+
+    expect(() => validateDesign(base(solicitud(), [flow]))).toThrow(
+      /«Tramitación».*transición inexistente.*fantasma.*solicitud/
+    )
+  })
+
+  it('una transición sobre una entidad sin máquina se rechaza: no hay dónde mirarla', () => {
+    const noMachine = { ...solicitud() } as Record<string, unknown>
+    delete noMachine['state']
+    const flow: BusinessFlow = {
+      name: 'Tramitación',
+      nodes: [
+        { id: 'entra', kind: 'start', text: 'Entra la solicitud' },
+        { id: 'aprueba', kind: 'step', text: 'Se aprueba', entity: 'solicitud', transition: 'aprobar' },
+        { id: 'fin', kind: 'end', text: 'Tramitada' }
+      ],
+      edges: [
+        { from: 'entra', to: 'aprueba' },
+        { from: 'aprueba', to: 'fin' }
+      ]
+    }
+
+    expect(() => validateDesign(base(noMachine as never, [flow]))).toThrow(/no declara máquina de estados/)
+  })
+})
