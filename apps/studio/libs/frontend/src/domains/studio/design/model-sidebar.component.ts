@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideIdCard, lucidePlus, lucideTable } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { EntityDraftService } from './entity-draft.service'
 
 /**
  * Raíl izquierdo del modo Modelo: lo que se puede añadir al diagrama. No hay
@@ -20,37 +21,18 @@ import { DesignStore } from './design-store'
       <section>
         <h2 class="studio-eyebrow mb-2 px-1">Añadir</h2>
 
-        @if (creating()) {
-          <form class="mb-1.5 flex items-center gap-1" (submit)="onSubmit($event)">
-            <input
-              class="border-input w-full rounded-md border px-2 py-1 text-xs"
-              name="entityName"
-              placeholder="Nombre de la entidad…"
-              [value]="entityName()"
-              (input)="onName($event)"
-              data-testid="model-new-entity-name"
-            />
-            <button
-              type="button"
-              class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs"
-              data-testid="model-new-entity-ok"
-              (click)="confirmEntity()"
-            >
-              ✓
-            </button>
-          </form>
-        } @else {
-          <button
-            type="button"
-            class="rail-verb studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-colors"
-            data-testid="model-add-entity"
-            (click)="creating.set(true)"
-          >
-            <ng-icon name="lucideTable" size="15" />
-            <span class="flex-1">Entidad</span>
-            <span class="text-[9px] uppercase opacity-60">E</span>
-          </button>
-        }
+        <button
+          type="button"
+          class="rail-verb studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left font-semibold transition-colors"
+          [class.ring-2]="draft.pending()"
+          data-testid="model-add-entity"
+          title="Crea la caja en el diagrama y la nombras allí mismo"
+          (click)="draft.start()"
+        >
+          <ng-icon name="lucideTable" size="15" />
+          <span class="flex-1">Entidad</span>
+          <span class="text-[9px] uppercase opacity-60">E</span>
+        </button>
 
         <button
           type="button"
@@ -98,9 +80,7 @@ import { DesignStore } from './design-store'
 export class ModelSidebarComponent {
   private readonly store = inject(DesignStore)
   private readonly active = inject(ActiveViewService)
-
-  protected readonly creating = signal(false)
-  protected readonly entityName = signal('')
+  protected readonly draft = inject(EntityDraftService)
 
   /** La entidad elegida en el diagrama: a ella se le añaden los campos. */
   protected readonly selected = computed(() => this.active.resource())
@@ -118,33 +98,12 @@ export class ModelSidebarComponent {
 
     if (event.key === 'e' || event.key === 'E') {
       event.preventDefault()
-      this.creating.set(true)
+      this.draft.start()
     }
     if (event.key === 'c' || event.key === 'C') {
       event.preventDefault()
       this.addField()
     }
-  }
-
-  protected onName(event: Event): void {
-    this.entityName.set((event.target as HTMLInputElement).value)
-  }
-
-  protected onSubmit(event: Event): void {
-    event.preventDefault()
-    this.confirmEntity()
-  }
-
-  /** Misma puerta que el resto del lienzo: el store valida y decide. */
-  protected confirmEntity(): void {
-    const label = this.entityName().trim()
-    if (!label) return
-    if (!this.store.addResource(label)) return
-    this.creating.set(false)
-    this.entityName.set('')
-    // recién creada queda elegida: lo siguiente que se hace es darle campos
-    const created = this.store.resources().at(-1)
-    if (created) this.active.selectResource(created.name)
   }
 
   protected addField(): void {

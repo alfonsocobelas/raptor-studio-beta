@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { EntityDraftService } from './entity-draft.service'
 import { ModelSidebarComponent } from './model-sidebar.component'
 
 function mount() {
@@ -17,11 +18,13 @@ function testId(fixture: ReturnType<typeof mount>, id: string): HTMLElement | nu
 describe('ModelSidebarComponent', () => {
   let store: DesignStore
   let active: ActiveViewService
+  let draft: EntityDraftService
 
   beforeEach(() => {
     TestBed.configureTestingModule({})
     store = TestBed.inject(DesignStore)
     active = TestBed.inject(ActiveViewService)
+    draft = TestBed.inject(EntityDraftService)
   })
 
   it('ofrece añadir entidad y campo, que es lo que el diseño sabe hacer', () => {
@@ -62,28 +65,24 @@ describe('ModelSidebarComponent', () => {
     expect(store.resources().find(r => r.name === 'producto')?.fields.length).toBe(antes)
   })
 
-  it('crear una entidad desde el raíl la deja elegida, lista para recibir campos', async () => {
+  it('el botón no pide el nombre en el raíl: abre el alta en el lienzo', () => {
     const fixture = mount()
+
     testId(fixture, 'model-add-entity')?.click()
     fixture.detectChanges()
-    const input = testId(fixture, 'model-new-entity-name') as HTMLInputElement
-    input.value = 'Movimientos'
-    input.dispatchEvent(new Event('input'))
-    await Promise.resolve()
-    fixture.detectChanges()
-    testId(fixture, 'model-new-entity-ok')?.click()
 
-    expect(store.resources().map(r => r.name)).toEqual(['movimiento'])
-    expect(active.resource()).toBe('movimiento')
+    expect(draft.pending()).toBe(true)
+    // el raíl no se transforma: el botón sigue donde estaba
+    expect(testId(fixture, 'model-add-entity')).not.toBeNull()
+    expect(testId(fixture, 'model-new-entity-name')).toBeNull()
   })
 
-  it('la tecla E abre el alta de entidad, como anuncia su atajo', async () => {
-    const fixture = mount()
+  it('la tecla E abre el alta de entidad, como anuncia su atajo', () => {
+    mount()
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', bubbles: true }))
-    fixture.detectChanges()
 
-    expect(testId(fixture, 'model-new-entity-name')).not.toBeNull()
+    expect(draft.pending()).toBe(true)
   })
 
   it('la tecla C añade un campo a la entidad elegida', () => {
