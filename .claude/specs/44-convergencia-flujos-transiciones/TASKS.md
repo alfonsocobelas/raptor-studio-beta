@@ -17,7 +17,7 @@
 
 ## Bloque B — estudio
 
-- [ ] **TASK-03**: Tests + el chat declara `transition` (prompt + schema de salida).
+- [x] **TASK-03**: Tests + el chat declara `transition` (prompt + schema de salida).
 
 - [ ] **TASK-04**: Tests + panel del paso: desplegable «Transición» con los verbos de la
       máquina de la entidad aludida («— ninguna —» lo quita); el nodo del canvas enseña el

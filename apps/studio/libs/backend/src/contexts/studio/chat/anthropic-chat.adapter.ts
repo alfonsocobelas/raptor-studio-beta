@@ -97,8 +97,11 @@ const SYSTEM_PROMPT = [
   'name, description opcional, nodes [{id slug-kebab único, kind start|step|decision|end,',
   'text corto, entity opcional = name de una entidad de resources}] y edges [{from, to,',
   'label}]. Exactamente UN start y al menos un end; toda salida de una decisión lleva label',
-  '(«sí», «no»…); todos los nodos alcanzables desde start; sin auto-bucles. Los flujos NO',
-  'generan código: son contexto del negocio que viaja con el diseño.',
+  '(«sí», «no»…); todos los nodos alcanzables desde start; sin auto-bucles. Un paso cuya',
+  'acción ES un verbo de la máquina de estados de su entity declara transition con ese',
+  'name («se aprueba el presupuesto» → transition:"aprobar"): ese paso gana cuerpo real y',
+  'endpoint al generar. NO inventes transition si el paso no ejecuta un verbo declarado.',
+  'El resto de pasos son contexto: quedan como huecos que la IA rellena después.',
   '',
   'Reglas: parte SIEMPRE del diseño vigente adjunto a la petición; aplica el cambio mínimo',
   'pedido; conserva lo que el usuario no ha pedido cambiar; nombres de campo en camelCase;',
@@ -212,7 +215,8 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
                     id: { type: 'string' },
                     kind: { type: 'string', enum: ['start', 'step', 'decision', 'end'] },
                     text: { type: 'string' },
-                    entity: { type: 'string' }
+                    entity: { type: 'string' },
+                    transition: { type: 'string' }
                   },
                   required: ['id', 'kind', 'text'],
                   additionalProperties: false

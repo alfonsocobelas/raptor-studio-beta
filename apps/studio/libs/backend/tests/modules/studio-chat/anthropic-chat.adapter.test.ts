@@ -142,4 +142,38 @@ describe('AnthropicChatAdapter', () => {
     expect(system).toContain('initial')
     expect(system).toMatch(/ciclo de vida/i)
   })
+
+  /**
+   * Spec 44: la convergencia. El chat declara `transition` en los pasos de flujo que
+   * ejecutan un verbo de la máquina de su entidad — y NO la inventa en los demás.
+   */
+  it('el esquema de salida admite transition en los nodos de flujo', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const nodesSchema = JSON.stringify(
+      (createMock.mock.calls[0][0].output_config.format.schema as { properties: { design: { properties: { flows: { items: { properties: { nodes: unknown } } } } } } })
+        .properties.design.properties.flows.items.properties.nodes
+    )
+
+    expect(nodesSchema).toContain('"transition"')
+  })
+
+  it('el prompt enseña cuándo un paso declara transition y cuándo no', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const system = createMock.mock.calls[0][0].system as string
+
+    expect(system).toMatch(/transition/)
+    expect(system).toMatch(/endpoint|cuerpo real/i)
+  })
 })
