@@ -2,7 +2,7 @@
 
 > Cada tarea = un commit atómico en develop (mandos delegados 2026-08-15).
 
-- [ ] **TASK-01**: Tests + el `done` de `POST /studio/generate/stream` cuenta los huecos
+- [x] **TASK-01**: Tests + el `done` de `POST /studio/generate/stream` cuenta los huecos
       `flow-*` pendientes de la app emitida (`slots: ['flow-x', …]`). Aditivo.
 
 - [ ] **TASK-02**: Tests + `POST /studio/fill-slots/stream` (NDJSON): por hueco

@@ -6,6 +6,7 @@ import { existsSync, mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { buildAppFile } from './build-app-file'
+import { pendingFlowSlotIds } from './pending-slots'
 import { killGroup, removeIfGenerated } from './cancel-cleanup'
 import { describeGenerationFailure } from './generation-failure'
 import { describeProgress } from './progress'
@@ -142,6 +143,8 @@ export class StudioGenerateController {
           files,
           elapsedMs,
           root: prepared.root,
+          // spec 45: la obra cuenta los pasos de negocio que quedaron por rellenar
+          ...(code === 0 ? { slots: pendingFlowSlotIds(prepared.root) } : {}),
           output: code === 0 ? output : `${output}\nEl generador terminó con código ${code}.`
         })
         res.end()
