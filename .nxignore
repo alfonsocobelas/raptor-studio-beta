@@ -6,4 +6,13 @@ tmp
 tools/golden-fixtures
 apps/soporte
 apps/solaris
-apps/taller
+apps/aguas
+apps/_smoke41
+apps/_smoke42
+apps/_probe42b
+apps/_probe42c
+apps/valida-42
+apps/valida-42-cancel
+apps/valida-43
+apps/valida-44
+apps/valida-45
