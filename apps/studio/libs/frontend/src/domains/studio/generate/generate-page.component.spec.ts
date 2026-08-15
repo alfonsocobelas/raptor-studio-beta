@@ -319,20 +319,6 @@ describe('GeneratePageComponent', () => {
   })
 
   describe('el paso de generar', () => {
-    /**
-     * El botón del raíl arranca la obra, así que para ver el paso 3 hay que generar. El
-     * comando y la descarga viven en el DESENLACE (spec 42), no mientras se construye: hay
-     * que dejar que la generación termine antes de mirarlos.
-     */
-    const mountStep3 = async () => {
-      stubGenerate()
-      const fixture = await mount()
-      at(fixture, 'generate-primary')?.click()
-      await settle()
-      fixture.detectChanges()
-      return fixture
-    }
-
     const type = (fixture: { nativeElement: HTMLElement }, testid: string, value: string): void => {
       const field = fixture.nativeElement.querySelector(`[data-testid="${testid}"]`) as HTMLInputElement
       field.value = value
@@ -391,20 +377,6 @@ describe('GeneratePageComponent', () => {
       expect(at(fixture, 'generate-step-infra')?.contains(at(fixture, 'wizard-name'))).toBe(false)
     })
 
-    it('el comando lleva las ranuras elegidas', async () => {
-      stubGenerate()
-      const fixture = await mount()
-      at(fixture, 'slot-infra-azure')?.click()
-      at(fixture, 'generate-primary')?.click()
-      await settle()
-      fixture.detectChanges()
-
-      const command = at(fixture, 'wizard-command')?.textContent ?? ''
-      expect(command).toContain('npx nx g @acc/generators:app')
-      expect(command).toContain('--infra=azure')
-      expect(command).toContain('--plugins=none')
-    })
-
     it('un nombre que no es kebab-case no deja generar, y lo dice', async () => {
       const fixture = await mount()
 
@@ -426,16 +398,6 @@ describe('GeneratePageComponent', () => {
 
       expect(() => sent.body()).toThrow()
       expect(at(fixture, 'generate-step-generate')).toBeNull()
-    })
-
-    it('copiar deja el comando en el portapapeles', async () => {
-      const writeText = vi.fn(() => Promise.resolve())
-      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
-      const fixture = await mountStep3()
-
-      at(fixture, 'wizard-copy')?.click()
-
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('npx nx g @acc/generators:app'))
     })
 
     it('el botón del raíl genera y lleva a ver la obra de una vez', async () => {
@@ -575,14 +537,6 @@ describe('GeneratePageComponent', () => {
       expect(hint).toContain('make web')
     })
 
-    it('el comando determinista y la descarga del diseño acompañan al desenlace bueno', async () => {
-      const fixture = await generate({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', elapsedMs: 4200 })
-
-      expect(at(fixture, 'wizard-command')?.textContent).toContain('npx nx g @acc/generators:app')
-      expect(at(fixture, 'wizard-copy')).not.toBeNull()
-      expect(at(fixture, 'wizard-download')).not.toBeNull()
-    })
-
     it('la fallida tiene su cara: lo dice y ofrece volver a las decisiones', async () => {
       const fixture = await generate({ type: 'done', ok: false, output: 'error: la ranura auth exige postgres' })
 
@@ -593,31 +547,6 @@ describe('GeneratePageComponent', () => {
       fixture.detectChanges()
 
       expect(at(fixture, 'generate-step-infra')).not.toBeNull()
-    })
-
-    /**
-     * El comando promete «el mismo resultado»: tiene que reproducir LO GENERADO aunque la
-     * pantalla se haya reabierto (la capa nueva reiniciaba nombre y ranuras desde el diseño
-     * y el comando pasaba a describir otra generación — visto en la validación de TASK-10).
-     */
-    it('el comando del desenlace reproduce lo generado aunque se reabra la pantalla', async () => {
-      stubOutcome({ type: 'done', ok: true, files: 3, root: 'apps/valida', elapsedMs: 4200 })
-      const first = await mount()
-      const field = first.nativeElement.querySelector('[data-testid="wizard-name"]') as HTMLInputElement
-      field.value = 'valida'
-      field.dispatchEvent(new Event('input'))
-      first.detectChanges()
-      at(first, 'slot-infra-azure')?.click()
-      first.detectChanges()
-      at(first, 'generate-primary')?.click()
-      await settle()
-      first.destroy()
-
-      const reopened = await mount()
-
-      const command = at(reopened, 'wizard-command')?.textContent ?? ''
-      expect(command).toContain('app valida')
-      expect(command).toContain('--infra=azure')
     })
 
     /** TASK-09: reabrir mientras se genera (o ya generado) es volver a la obra, no empezar. */

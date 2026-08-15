@@ -10,7 +10,6 @@ import {
 } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { firstValueFrom } from 'rxjs'
-import { downloadBlob } from '../../../shared/utils/download-file'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
 import { productMark } from '../design/product-mark'
@@ -19,7 +18,6 @@ import { mergeCatalog } from './generate-catalog'
 import { GenerateRunner } from './generate-runner'
 import { GenerateWorkComponent } from './generate-work.component'
 import {
-  buildCommand,
   buildDesignRequest,
   defaultSelection,
   designSummary,
@@ -297,30 +295,6 @@ make web           # http://localhost:4200</pre
                 }
               </div>
             }
-            @if (!runner.generating() && command(); as cmd) {
-              <div class="studio-box mb-4">
-                <p class="studio-eyebrow mb-2">El mismo resultado, desde la terminal</p>
-                <code class="block break-all font-mono text-[11.5px]" data-testid="wizard-command">{{ cmd }}</code>
-                <div class="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    class="studio-cta border-input border"
-                    data-testid="wizard-copy"
-                    (click)="copyCommand()"
-                  >
-                    {{ copied() ? 'Copiado ✓' : 'Copiar comando' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="studio-cta border-input border"
-                    data-testid="wizard-download"
-                    (click)="download()"
-                  >
-                    Descargar el diseño
-                  </button>
-                </div>
-              </div>
-            }
           </studio-generate-work>
         }
       </div>
@@ -386,7 +360,6 @@ export class GeneratePageComponent {
   )
   protected readonly install = signal(true)
   protected readonly directory = signal('')
-  protected readonly copied = signal(false)
 
   protected readonly validName = computed(() => KEBAB.test(this.name()))
   /** «1 min 12 s» mientras dura: el mismo segundero que lleva el runner, en palabras. */
@@ -401,12 +374,6 @@ export class GeneratePageComponent {
 
   /** Sin manifiesto no se sabe qué generar; sin nombre válido no hay dónde escribirlo. */
   protected readonly canGenerate = computed(() => this.catalog() !== null && this.validName())
-  protected readonly command = computed(() => {
-    const manifest = this.manifest()
-    return manifest && this.validName()
-      ? buildCommand(manifest, { name: this.name(), slots: this.selection(), plugins: this.plugins() })
-      : null
-  })
 
   /** Las tarjetas: lo que el manifiesto publica, vestido por el catálogo. */
   protected readonly catalog = computed(() => {
@@ -509,25 +476,6 @@ export class GeneratePageComponent {
       skipInstall: !this.install(),
       ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
     })
-  }
-
-  /** El artefacto de `--appFile`: el schema vivo con el nombre elegido. */
-  protected download(): void {
-    const design = {
-      ...(JSON.parse(this.store.exportJson()) as Record<string, unknown>),
-      name: this.name()
-    }
-    downloadBlob(new Blob([JSON.stringify(design, null, 2)], { type: 'application/json' }), `${this.name()}.app.json`)
-  }
-
-  protected async copyCommand(): Promise<void> {
-    const command = this.command()
-    if (!command) {
-      return
-    }
-    await navigator.clipboard.writeText(command)
-    this.copied.set(true)
-    setTimeout(() => this.copied.set(false), 1500)
   }
 
   protected slotPip(status: string): string {
