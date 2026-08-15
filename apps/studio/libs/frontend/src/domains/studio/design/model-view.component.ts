@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, output, signal, viewChild } from '@angular/core'
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  output,
+  signal,
+  viewChild
+} from '@angular/core'
 import {
   MODEL_NODE,
   autoLayout,
@@ -8,6 +18,7 @@ import {
   nodeAt,
   nodeBox,
   overlayLayout,
+  screenToWorld,
   type EdgeCurve,
   type ModelEdge,
   type NodeBox,
@@ -15,9 +26,14 @@ import {
 } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { CanvasControlsComponent } from './canvas-controls.component'
+import { StateDiagramComponent } from './state-diagram.component'
 import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
+import { EntityDraftService } from './entity-draft.service'
 import { shortLabelOfType } from './field-type-labels'
+
+/** Nombre reservado del hueco que ocupa la caja fantasma mientras se la nombra. */
+const DRAFT_SLOT = '__draft__'
 
 interface DiagramField {
   name: string
@@ -47,15 +63,19 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CanvasControlsComponent],
+  imports: [CanvasControlsComponent, StateDiagramComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
-    @if (!nodes().length) {
-      <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-model">
+    @if (!nodes().length && !draft.pending()) {
+      <div
+        class="flex h-full flex-col items-center justify-center text-center"
+        data-testid="empty-model"
+        (dblclick)="draft.start()"
+      >
         <p class="text-muted-foreground mb-2 text-lg">Sin entidades todavía</p>
         <p class="text-muted-foreground max-w-md text-sm">
-          Crea una con <strong>Entidad</strong> en el panel de la izquierda, con una vista de datos o pidiéndosela al
-          chat.
+          Haz doble clic aquí, pulsa <strong>Entidad</strong> en el panel de la izquierda, créala con una vista de datos
+          o pídesela al chat.
         </p>
       </div>
     } @else {
@@ -68,11 +88,16 @@ interface DiagramEdge {
         [style.background-size]="gridSize()"
         [class.cursor-grabbing]="panning()"
         data-testid="model-viewport"
+        (dblclick)="startDraftAt($event)"
         (pointerdown)="startPan($event)"
         (wheel)="onWheel($event)"
       >
         <div class="absolute right-4 top-4 z-30">
           <studio-canvas-controls (fit)="fitToView()" />
+        </div>
+        <!-- el ciclo de vida de la entidad elegida (spec 43): capa fija, fuera del pan/zoom -->
+        <div class="absolute bottom-4 left-4 z-30 max-w-full overflow-x-auto">
+          <studio-state-diagram />
         </div>
         <div
           #surfaceEl
@@ -250,6 +275,44 @@ interface DiagramEdge {
               }
             </div>
           }
+
+          <!-- Alta en curso: la caja se dibuja donde va a vivir y se nombra encima. No
+               existe en el diseño hasta confirmar, así que cancelar no borra nada. -->
+          @if (draft.pending()) {
+            <form
+              class="bg-card model-draft absolute overflow-hidden rounded-lg border-2 border-dashed"
+              [style.left.px]="draftBox().x"
+              [style.top.px]="draftBox().y"
+              [style.width.px]="draftBox().width"
+              data-testid="model-draft-node"
+              (click)="$event.stopPropagation()"
+              (submit)="confirmDraft($event)"
+            >
+              <div
+                class="studio-ui flex items-center px-2 font-semibold"
+                [style.height.px]="headerHeight"
+              >
+                <input
+                  #draftInput
+                  class="w-full bg-transparent outline-none placeholder:font-normal"
+                  placeholder="Nombre de la entidad…"
+                  autocomplete="off"
+                  data-testid="model-draft-name"
+                  [value]="draftName()"
+                  (input)="onDraftName($event)"
+                  (keydown.escape)="cancelDraft()"
+                />
+              </div>
+              <!-- el id lo emite siempre el generador: la caja ya lo enseña de nacimiento -->
+              <div
+                class="text-muted-foreground flex items-center justify-between border-t px-3 text-xs"
+                [style.height.px]="rowHeight"
+              >
+                <span>id</span>
+                <span class="text-[10px] uppercase tracking-wider">clave</span>
+              </div>
+            </form>
+          }
         </div>
       </div>
     }
@@ -305,6 +368,11 @@ interface DiagramEdge {
     .model-card-chosen {
       border-color: #f15539;
     }
+    /* La caja que se está nombrando: trazo discontinuo en el naranja del raíl, la misma
+       seña de «esto todavía no existe» que las guías de caída del lienzo de Vistas. */
+    .model-draft {
+      border-color: #d75f3d;
+    }
     /* La columna elegida se tiñe de marca, no solo se marca en negrita (19A). */
     .model-field-chosen {
       background-color: color-mix(in oklab, var(--brand) 10%, var(--card));
@@ -350,6 +418,71 @@ export class ModelViewComponent {
 
   protected readonly headerHeight = MODEL_NODE.headerHeight
   protected readonly rowHeight = MODEL_NODE.rowHeight
+
+  /** El alta en curso: la pide el raíl (o la tecla E) y se atiende aquí. */
+  protected readonly draft = inject(EntityDraftService)
+  protected readonly draftName = signal('')
+
+  /**
+   * La caja fantasma ocupa el hueco que le tocaría a la siguiente entidad, así que
+   * nace ya en su sitio de la retícula y no salta al confirmarse.
+   */
+  protected readonly draftBox = computed(() => {
+    const at = this.draft.at()
+    if (at) return nodeBox(at, 1)
+    const names = this.store.resources().map(r => r.name)
+    return nodeBox(autoLayout([...names, DRAFT_SLOT])[DRAFT_SLOT], 1)
+  })
+
+  /**
+   * Doble clic en el papel: la caja nace bajo la mano, centrada en el puntero. Sobre
+   * una caja no vale —ahí se está editando, no creando—, así que el gesto solo cuenta
+   * cuando el doble clic no viene de dentro de una.
+   */
+  protected startDraftAt(event: MouseEvent): void {
+    if ((event.target as HTMLElement | null)?.closest('.model-card, .model-draft')) return
+    const rect = this.viewportRef()?.nativeElement.getBoundingClientRect()
+    const point = screenToWorld(
+      { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) },
+      this.camera()
+    )
+    this.draft.start({ x: point.x - MODEL_NODE.width / 2, y: point.y - MODEL_NODE.headerHeight / 2 })
+  }
+
+  private readonly draftInputRef = viewChild<ElementRef<HTMLInputElement>>('draftInput')
+
+  constructor() {
+    // el campo nace con el foco puesto: el gesto es pulsar y escribir, sin picar
+    effect(() => this.draftInputRef()?.nativeElement.focus())
+  }
+
+  protected onDraftName(event: Event): void {
+    this.draftName.set((event.target as HTMLInputElement).value)
+  }
+
+  /**
+   * Confirmar crea la entidad de verdad y la deja elegida, lista para recibir campos.
+   * Si el store la rechaza (nombre repetido) el alta sigue abierta con lo escrito: el
+   * error ya lo cuenta el store y cerrar aquí perdería el texto.
+   */
+  protected confirmDraft(event: Event): void {
+    event.preventDefault()
+    const label = this.draftName().trim()
+    if (!label) return this.cancelDraft()
+    if (!this.store.addResource(label)) return
+
+    const created = this.store.resources().at(-1)
+    if (created) {
+      this.active.selectResource(created.name)
+      this.select.emit(created.name)
+    }
+    this.cancelDraft()
+  }
+
+  protected cancelDraft(): void {
+    this.draftName.set('')
+    this.draft.cancel()
+  }
 
   /** Posiciones arrastradas: SOLO memoria de la sesión — el layout es cosmético (spec 15 §4). */
   private readonly manual = signal<Record<string, NodePosition>>({})
@@ -484,7 +617,9 @@ export class ModelViewComponent {
   }
 
   /** Tamaño del SVG de aristas: cubre el contenido, ya no dimensiona el lienzo. */
-  protected readonly surface = computed(() => canvasExtent(this.nodes().map(n => n.box)))
+  protected readonly surface = computed(() =>
+    canvasExtent([...this.nodes().map(n => n.box), ...(this.draft.pending() ? [this.draftBox()] : [])])
+  )
 
   private readonly viewportRef = viewChild<ElementRef<HTMLElement>>('viewportEl')
   protected readonly camera = this.viewport.of('model')

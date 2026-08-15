@@ -21,7 +21,7 @@
 - [x] **TASK-03**: Tests + conmutador «Es el estado de la entidad» en el campo enum del
       editor de modelo (crear `state` con `initial` = primer valor; quitar con confirmación).
 
-- [ ] **TASK-04**: Tests + el canvas pinta la máquina en la vista de la entidad: nodos =
+- [x] **TASK-04**: Tests + el canvas pinta la máquina en la vista de la entidad: nodos =
       valores del enum (labels), flechas con `label`, `initial` distinguido, nodos sueltos
       visibles. Solo pintado; `npm run web:build`.
 
