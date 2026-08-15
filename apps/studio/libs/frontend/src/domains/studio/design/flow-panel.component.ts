@@ -38,6 +38,24 @@ import { DesignStore } from './design-store'
             </select>
           </div>
 
+          @if (machine(); as m) {
+            <!-- convergencia (spec 44): el paso que ejecuta un verbo gana cuerpo real y endpoint -->
+            <div class="studio-row">
+              <label for="flow-node-transition">Transición</label>
+              <select
+                id="flow-node-transition"
+                [value]="current.transition ?? ''"
+                (change)="retransition($event)"
+                data-testid="flow-node-transition"
+              >
+                <option value="">— ninguna —</option>
+                @for (transition of m.transitions; track transition.name) {
+                  <option [value]="transition.name">{{ transition.label }}</option>
+                }
+              </select>
+            </div>
+          }
+
           <div class="studio-row">
             <label>Tipo</label>
             <span class="studio-ui text-muted-foreground" data-testid="flow-node-kind">{{
@@ -86,6 +104,13 @@ export class FlowPanelComponent {
     return id ? (this.flow()?.nodes.find(node => node.id === id) ?? null) : null
   })
 
+  /** La máquina de la entidad aludida por el paso elegido; sin ella no hay verbos que ofrecer. */
+  protected readonly machine = computed(() => {
+    const node = this.node()
+    if (!node || node.kind !== 'step' || !node.entity) return null
+    return this.store.resources().find(resource => resource.name === node.entity)?.state ?? null
+  })
+
   protected readonly prose = computed(() => {
     const flow = this.flow()
     return flow ? flowToProse(flow) : 'Todavía no hay ningún flujo dibujado.'
@@ -105,7 +130,16 @@ export class FlowPanelComponent {
     const flow = this.flow()
     const node = this.node()
     const entity = (event.target as HTMLSelectElement).value
-    if (flow && node) this.store.updateFlowNode(flow.name, node.id, { entity: entity || undefined })
+    // cambiar de entidad tira la transición: apuntaría a la máquina de OTRA entidad
+    if (flow && node)
+      this.store.updateFlowNode(flow.name, node.id, { entity: entity || undefined, transition: undefined })
+  }
+
+  protected retransition(event: Event): void {
+    const flow = this.flow()
+    const node = this.node()
+    const transition = (event.target as HTMLSelectElement).value
+    if (flow && node) this.store.updateFlowNode(flow.name, node.id, { transition: transition || undefined })
   }
 
   protected remove(): void {

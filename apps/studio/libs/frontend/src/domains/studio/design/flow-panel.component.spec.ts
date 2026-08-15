@@ -85,3 +85,76 @@ describe('FlowPanelComponent', () => {
     expect(store.flows()[0].nodes.some(n => n.id === 'revisar')).toBe(false)
   })
 })
+
+/**
+ * Spec 44: la transición del paso se declara en el panel. Solo se ofrece cuando el paso
+ * alude a una entidad CON máquina; cambiar de entidad la tira (la frontera la validaría
+ * contra otra máquina). El canvas la cuenta vía la prosa (flow-view lleva WIP ajeno).
+ */
+describe('FlowPanelComponent — la transición del paso (spec 44)', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    store.promoteState('solicitud', 'nombre')
+    store.addTransition('solicitud', 'pendiente', 'en_curso')
+    store.addFlow('Tramitación')
+    store.insertFlowStep('Tramitación', 'inicio', 'fin', 'Se tramita')
+    active.selectFlow('Tramitación')
+  })
+
+  const stepId = () => store.flows()[0].nodes.find(n => n.kind === 'step')!.id
+
+  it('un paso sobre una entidad con máquina ofrece sus verbos', () => {
+    store.updateFlowNode('Tramitación', stepId(), { entity: 'solicitud' })
+    active.selectFlowNode(stepId())
+
+    const fixture = mount()
+    const select = testId(fixture, 'flow-node-transition') as HTMLSelectElement
+
+    expect(select).not.toBeNull()
+    expect(select.textContent).toContain('A en curso')
+  })
+
+  it('elegir el verbo lo escribe en el nodo; «— ninguna —» lo quita', () => {
+    store.updateFlowNode('Tramitación', stepId(), { entity: 'solicitud' })
+    active.selectFlowNode(stepId())
+    const fixture = mount()
+    const select = testId(fixture, 'flow-node-transition') as HTMLSelectElement
+
+    select.value = 'a-en-curso'
+    select.dispatchEvent(new Event('change'))
+    expect(store.flows()[0].nodes.find(n => n.id === stepId())?.transition).toBe('a-en-curso')
+
+    select.value = ''
+    select.dispatchEvent(new Event('change'))
+    expect(store.flows()[0].nodes.find(n => n.id === stepId())?.transition).toBeUndefined()
+  })
+
+  it('sin máquina en la entidad (o sin entidad) no se ofrece', () => {
+    store.addResource('Nota')
+    store.updateFlowNode('Tramitación', stepId(), { entity: 'nota' })
+    active.selectFlowNode(stepId())
+
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-node-transition')).toBeNull()
+  })
+
+  it('cambiar la entidad del paso tira la transición declarada', () => {
+    store.updateFlowNode('Tramitación', stepId(), { entity: 'solicitud', transition: 'a-en-curso' })
+    active.selectFlowNode(stepId())
+    const fixture = mount()
+
+    const entity = testId(fixture, 'flow-node-entity') as HTMLSelectElement
+    entity.value = ''
+    entity.dispatchEvent(new Event('change'))
+
+    expect(store.flows()[0].nodes.find(n => n.id === stepId())?.transition).toBeUndefined()
+  })
+})

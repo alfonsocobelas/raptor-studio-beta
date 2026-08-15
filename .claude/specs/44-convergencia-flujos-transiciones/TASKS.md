@@ -19,9 +19,11 @@
 
 - [x] **TASK-03**: Tests + el chat declara `transition` (prompt + schema de salida).
 
-- [ ] **TASK-04**: Tests + panel del paso: desplegable «Transición» con los verbos de la
-      máquina de la entidad aludida («— ninguna —» lo quita); el nodo del canvas enseña el
-      verbo. `npm run web:build`. ⚠️ WIP de Alfonso en estos ficheros.
+- [x] **TASK-04**: Tests + panel del paso: desplegable «Transición» con los verbos de la
+      máquina de la entidad aludida («— ninguna —» lo quita; cambiar de entidad la tira).
+      `npm run web:build`. _Nota: el chip del verbo EN EL NODO del canvas queda aplazado —
+      `flow-view/flow-diagram` llevan WIP de Alfonso sin commitear y no se pisan; retomarlo
+      cuando ese WIP consolide._
 
 ## Validación
 
