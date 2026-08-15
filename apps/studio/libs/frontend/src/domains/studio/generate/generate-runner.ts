@@ -60,6 +60,8 @@ export class GenerateRunner {
   readonly outcome = signal<GenerateOutcome>(null)
   /** El aviso de segundo plano pide reabrir la obra; el lienzo lo escucha y abre la capa. */
   readonly viewRequested = signal(false)
+  /** Lo que se pidió generar: la pantalla reabierta reconstruye su comando desde aquí. */
+  readonly requested = signal<Pick<GenerateRequest, 'name' | 'slots' | 'plugins'> | null>(null)
 
   private readonly noticeService = inject(CanvasNoticeService)
   /** ¿Hay una pantalla mirando la obra? La página se declara al montarse y al morir. */
@@ -149,6 +151,7 @@ export class GenerateRunner {
 
   private reset(request: GenerateRequest): void {
     this.generating.set(true)
+    this.requested.set({ name: request.name, slots: request.slots, plugins: request.plugins })
     this.output.set(null)
     this.elapsed.set(null)
     this.root.set(null)

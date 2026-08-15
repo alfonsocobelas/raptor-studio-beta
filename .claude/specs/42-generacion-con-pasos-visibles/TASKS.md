@@ -56,7 +56,7 @@
 
 ## Validación
 
-- [ ] **TASK-10**: Suite del estudio y del backend en verde, `npm run web:build`, y
+- [x] **TASK-10**: Suite del estudio y del backend en verde, `npm run web:build`, y
       comprobación en el navegador: generar de verdad viendo las fases; **cancelar a mitad y
       comprobar que no queda ningún proceso vivo** (`pgrep -f nx`) ni el directorio; cerrar en
       segundo plano y volver. Capturas a `docs/style/`.

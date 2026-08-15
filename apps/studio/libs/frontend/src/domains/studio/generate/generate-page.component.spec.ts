@@ -595,6 +595,31 @@ describe('GeneratePageComponent', () => {
       expect(at(fixture, 'generate-step-infra')).not.toBeNull()
     })
 
+    /**
+     * El comando promete «el mismo resultado»: tiene que reproducir LO GENERADO aunque la
+     * pantalla se haya reabierto (la capa nueva reiniciaba nombre y ranuras desde el diseño
+     * y el comando pasaba a describir otra generación — visto en la validación de TASK-10).
+     */
+    it('el comando del desenlace reproduce lo generado aunque se reabra la pantalla', async () => {
+      stubOutcome({ type: 'done', ok: true, files: 3, root: 'apps/valida', elapsedMs: 4200 })
+      const first = await mount()
+      const field = first.nativeElement.querySelector('[data-testid="wizard-name"]') as HTMLInputElement
+      field.value = 'valida'
+      field.dispatchEvent(new Event('input'))
+      first.detectChanges()
+      at(first, 'slot-infra-azure')?.click()
+      first.detectChanges()
+      at(first, 'generate-primary')?.click()
+      await settle()
+      first.destroy()
+
+      const reopened = await mount()
+
+      const command = at(reopened, 'wizard-command')?.textContent ?? ''
+      expect(command).toContain('app valida')
+      expect(command).toContain('--infra=azure')
+    })
+
     /** TASK-09: reabrir mientras se genera (o ya generado) es volver a la obra, no empezar. */
     it('reabrir la pantalla con la obra en marcha aterriza en la obra, no en las decisiones', async () => {
       // un stream que no termina: la generación sigue viva cuando se reabre

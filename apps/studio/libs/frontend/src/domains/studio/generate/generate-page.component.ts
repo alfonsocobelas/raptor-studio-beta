@@ -340,13 +340,16 @@ export class GeneratePageComponent {
   protected readonly runner = inject(GenerateRunner)
 
   /** Reabrir con la obra en marcha (o acabada) es volver a verla, no empezar decisiones. */
-  protected readonly step = signal<Step>(this.runner.generating() || this.runner.outcome() !== null ? 'generate' : 'infra')
+  private readonly resuming = this.runner.generating() || this.runner.outcome() !== null
+  protected readonly step = signal<Step>(this.resuming ? 'generate' : 'infra')
   protected readonly manifest = signal<SlotsManifest | null>(null)
   protected readonly manifestError = signal<string | null>(null)
   protected readonly selection = signal<Record<string, string>>({})
-  protected readonly plugins = signal<string[]>([])
-  /** El diseño ya tiene nombre: el asistente no lo pide en blanco como el modal viejo. */
-  protected readonly name = signal(this.store.appName())
+  protected readonly plugins = signal<string[]>(this.resuming ? (this.runner.requested()?.plugins ?? []) : [])
+  /** El diseño ya tiene nombre; al reanudar manda lo GENERADO, para que el comando no mienta. */
+  protected readonly name = signal(
+    this.resuming ? (this.runner.requested()?.name ?? this.store.appName()) : this.store.appName()
+  )
   protected readonly install = signal(true)
   protected readonly directory = signal('')
   protected readonly copied = signal(false)
@@ -422,8 +425,10 @@ export class GeneratePageComponent {
     try {
       const manifest = await firstValueFrom(this.http.get<SlotsManifest>('/api/v1/studio/generate/slots'))
       this.manifest.set(manifest)
-      // el preset elegido en el lienzo manda: lo que se ve dibujado es lo que se genera
-      this.selection.set({ ...defaultSelection(manifest), design: this.preview.preset() })
+      // el preset elegido en el lienzo manda: lo que se ve dibujado es lo que se genera.
+      // Al reanudar mandan las ranuras de lo generado: el comando debe reproducirlo.
+      const requested = this.resuming ? this.runner.requested() : null
+      this.selection.set({ ...defaultSelection(manifest), design: this.preview.preset(), ...(requested?.slots ?? {}) })
     } catch {
       this.manifestError.set(
         'No se pudieron cargar las opciones del generador. Arranca el backend local: npm run studio:api'
