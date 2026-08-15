@@ -30,6 +30,25 @@ export class <%- vo.voClassName %> extends EnumValueObject<<%- vo.valueTypeName 
     this.ensureIsValidEnum(value as <%- vo.valueTypeName %>, this.VALUES)
     return new <%- vo.voClassName %>(value as <%- vo.valueTypeName %>)
   }
+<%_ if (vo.stateMachine) { _%>
+
+  /** El valor con el que nace la entidad (máquina de estados, spec 43). */
+  static initial(): <%- vo.voClassName %> {
+    return new <%- vo.voClassName %>('<%- vo.stateMachine.initial %>')
+  }
+<%_ vo.stateMachine.values.forEach(function (state) { _%>
+
+  static <%- state.method %>(): <%- vo.voClassName %> {
+    return new <%- vo.voClassName %>('<%- state.value %>')
+  }
+<%_ }) _%>
+<%_ vo.stateMachine.values.forEach(function (state) { _%>
+
+  <%- state.predicate %>(): boolean {
+    return this.value === '<%- state.value %>'
+  }
+<%_ }) _%>
+<%_ } _%>
 }
 <%_ } else if (vo.kind === 'boolean') { _%>
 import { BooleanValueObject } from '../../../../../shared/domain/value-objects/boolean-value-object'

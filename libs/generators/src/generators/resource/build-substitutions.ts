@@ -162,6 +162,8 @@ export interface VoSubstitution {
   valuesUnion: string
   valuesList: string
   valueTypeName: string
+  /** Solo el VO del campo promovido a estado (spec 43): factorías semánticas y predicados */
+  stateMachine?: { initial: string; values: { value: string; method: string; predicate: string }[] }
 }
 
 export interface TestBindings {
@@ -425,7 +427,20 @@ function renderVos(definition: ResourceDefinition, className: string): VoSubstit
         unset: vo.unset ?? false,
         valuesUnion: (vo.values ?? []).map(v => `'${v}'`).join(' | '),
         valuesList: (vo.values ?? []).map(v => `'${v}'`).join(', '),
-        valueTypeName: `${vo.name}Value`
+        valueTypeName: `${vo.name}Value`,
+        // el ancla de la máquina (spec 43) habla en verbos: initial() + factoría y predicado por valor
+        ...(definition.state?.field === name && vo.values?.length
+          ? {
+              stateMachine: {
+                initial: definition.state.initial,
+                values: vo.values.map(value => ({
+                  value,
+                  method: names(value).propertyName,
+                  predicate: `is${names(value).className}`
+                }))
+              }
+            }
+          : {})
       }
     })
 }

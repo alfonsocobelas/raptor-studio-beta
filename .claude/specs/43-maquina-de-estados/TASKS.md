@@ -34,7 +34,7 @@
 
 ## Bloque C — plantillas backend
 
-- [ ] **TASK-07**: `/golden-diff` + la app de oro declara una máquina (contrato:
+- [x] **TASK-07**: `/golden-diff` + la app de oro declara una máquina (contrato:
       `borrador → firmado → archivado`) y el VO enum-estado gana factorías semánticas y
       predicados (`initial()`, una por valor, `isX()`).
 
