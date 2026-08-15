@@ -68,13 +68,20 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
       cursor: not-allowed;
     }
     .option-card:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--foreground) 35%, var(--border));
+      border-color: color-mix(in oklab, var(--brand) 45%, var(--border));
     }
-    /* La elegida lleva la tinta del estudio, como en la maqueta: borde marcado y el
-       circulito relleno. Sin color de marca: aquí el acento es la decisión, no el producto. */
+    /* La elegida se enciende con el naranja de marca (lavado 2026-08-15): fondo --brand
+       sólido y texto invertido, para que la decisión se vea de un vistazo. */
     .option-card-chosen {
-      border-color: var(--foreground);
-      box-shadow: 0 1px 3px oklch(0 0 0 / 8%);
+      border-color: var(--brand);
+      background-color: var(--brand);
+      box-shadow: 0 1px 3px oklch(0 0 0 / 12%);
+    }
+    .option-card-chosen .text-foreground {
+      color: var(--brand-foreground);
+    }
+    .option-card-chosen .text-muted-foreground {
+      color: color-mix(in oklab, var(--brand-foreground) 78%, var(--brand));
     }
     .option-mark {
       display: inline-block;
@@ -85,7 +92,7 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
       border-radius: 50%;
     }
     .option-card-chosen .option-mark {
-      border: 4px solid var(--foreground);
+      border: 4px solid var(--brand-foreground);
     }
   `
 })
@@ -145,10 +152,19 @@ export class ChoiceCardsComponent {
       cursor: not-allowed;
     }
     .addon-card:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--foreground) 35%, var(--border));
+      border-color: color-mix(in oklab, var(--brand) 45%, var(--border));
     }
+    /* Mismo lenguaje que las opciones: la activa se enciende en naranja de marca. */
     .addon-card-active {
-      border-color: var(--foreground);
+      border-color: var(--brand);
+      background-color: var(--brand);
+      box-shadow: 0 1px 3px oklch(0 0 0 / 12%);
+    }
+    .addon-card-active .text-foreground {
+      color: var(--brand-foreground);
+    }
+    .addon-card-active .text-muted-foreground {
+      color: color-mix(in oklab, var(--brand-foreground) 78%, var(--brand));
     }
     .addon-mark {
       display: inline-flex;
@@ -162,11 +178,11 @@ export class ChoiceCardsComponent {
       border-radius: 4px;
     }
     .addon-card-active .addon-mark {
-      background-color: var(--foreground);
-      border-color: var(--foreground);
+      background-color: var(--brand-foreground);
+      border-color: var(--brand-foreground);
     }
     .addon-tick {
-      color: var(--background);
+      color: var(--brand);
       font-size: 10px;
       line-height: 1;
     }
