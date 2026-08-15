@@ -244,11 +244,15 @@
    que tiñe el fondo del lienzo: separa el cromo sin ensuciarlo. El panel de la derecha
    se queda blanco, como la barra. */
 .studio-rail {
-  /* Elegido por Alfonso (2026-08-15): #f5f2ef, un punto más oscuro que el lino anterior
-     (#f8f5f1) para que los chips claros se recorten. En oscuro el hex no vale, así que
-     allí se sigue derivando de los tokens del estudio. */
+  /* Elegido por Alfonso (2026-08-15): #f5f2ef, el lino cálido — prefirió su matiz crema
+     tras probar las piedras neutras; las dos columnas lo comparten y la costura
+     oscurecida separa los planos (descartados #f8f5f1, #f0ede8, #efeeeb y #f2f1ee).
+     En oscuro el hex no vale, así que allí se sigue derivando de los tokens del estudio. */
   background-color: #f5f2ef;
   box-shadow: 2px 0 8px -4px oklch(0 0 0 / 10%);
+  /* El filo contra el lienzo, un paso más oscuro que --border (prueba 2026-08-15):
+     con marco y papel tan cercanos, la costura es quien separa los planos. */
+  border-color: #d9d4cd;
 }
 
 /* En oscuro, #1b1917: la tinta de la identidad —la misma que en claro es --foreground
@@ -256,6 +260,15 @@
    naranjas del raíl son lo único saturado del marco y suben a 5,1:1 de contraste. */
 :root.dark .studio-rail {
   background-color: #1b1917;
+  /* De noche la costura vuelve al token: sobre tinta el borde claro ya separa solo. */
+  border-color: var(--border);
+}
+
+/* El raíl del borde derecho (el inspector) comparte el lino del izquierdo —el marco
+   se cierra simétrico y el lienzo manda (elegido 2026-08-15 tras probar blanco y un
+   medio tono)—. Solo cambia la sombra, que proyecta hacia el lienzo, a su izquierda. */
+.studio-rail-end {
+  box-shadow: -2px 0 8px -4px oklch(0 0 0 / 10%);
 }
 
 /* La pestaña activa de la barra lleva el papel del lienzo, no el gris de --accent.

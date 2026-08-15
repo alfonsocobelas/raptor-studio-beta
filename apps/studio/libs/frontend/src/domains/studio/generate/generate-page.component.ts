@@ -154,7 +154,7 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
               }
             </div>
           </main>
-          <aside class="studio-rail w-80 shrink-0 overflow-auto border-l px-5 py-8">
+          <aside class="studio-rail studio-rail-end w-80 shrink-0 overflow-auto border-l px-5 py-8">
             <!-- el nombre vive con el recibo de lo que vas a generar, no en una pantalla aparte -->
             <p class="studio-eyebrow mb-2">Cómo se va a llamar</p>
             <input

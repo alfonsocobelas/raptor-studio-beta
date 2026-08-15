@@ -580,7 +580,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           </div>
         </div>
 
-        <aside class="bg-card studio-chrome flex w-80 shrink-0 flex-col border-l p-4">
+        <aside class="studio-rail studio-rail-end studio-chrome flex w-80 shrink-0 flex-col border-l p-4">
           @if (mode() === 'model') {
             <studio-model-panel />
           } @else if (mode() === 'flows') {

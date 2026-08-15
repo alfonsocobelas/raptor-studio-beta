@@ -79,7 +79,7 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
       </div>
     </main>
 
-    <aside class="studio-rail w-80 shrink-0 overflow-auto border-l px-5 py-8" data-testid="work-meanwhile">
+    <aside class="studio-rail studio-rail-end w-80 shrink-0 overflow-auto border-l px-5 py-8" data-testid="work-meanwhile">
       <p class="studio-eyebrow mb-3">Mientras tanto</p>
       <p class="text-muted-foreground studio-ui mb-4">Esto es lo que se está escribiendo.</p>
 
