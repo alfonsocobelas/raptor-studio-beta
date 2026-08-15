@@ -81,6 +81,16 @@ const SYSTEM_PROMPT = [
   'afinar, nunca borrar ni inventar lo que no se ha dicho. No repreguntes lo que el brief ya',
   'responde.',
   '',
+  'MÁQUINA DE ESTADOS: si una entidad tiene CICLO DE VIDA (sus registros pasan por fases:',
+  'una solicitud se aprueba o descarta, una muestra se analiza y certifica), su campo enum',
+  'de estado se promueve con state: {field: nombre del campo enum, initial: valor con el que',
+  'nace, transitions: [{name: verbo kebab («aprobar»), label: el botón («Aprobar»),',
+  'from: [valores origen], to: valor destino}]}. La regla de negocio es la flecha que existe',
+  'o NO existe: no declares transiciones que el negocio prohíbe («una descartada no vuelve»).',
+  'Los name son únicos, nunca restore/history/export/import/download/attachments/contacts/',
+  'deleted, y to nunca está en su propio from. CONSERVA la máquina existente — el usuario',
+  'pudo dibujarla a mano. Un enum SIN ciclo de vida (tipo, categoría) NO lleva máquina.',
+  '',
   'FLUJOS: design.flows son los PROCESOS del negocio, como diagramas. Propón un flujo cuando',
   'el usuario describa un proceso con pasos o ramas («cuando llega un pedido se revisa y si',
   'falta stock…»); CONSERVA los existentes — el usuario pudo dibujarlos a mano. Cada flujo:',
@@ -135,6 +145,29 @@ const RESPONSE_SCHEMA: Record<string, unknown> = {
               gender: { type: 'string', enum: ['m', 'f'] },
               brief: { type: 'string' },
               attachments: { type: 'boolean' },
+              state: {
+                type: 'object',
+                properties: {
+                  field: { type: 'string' },
+                  initial: { type: 'string' },
+                  transitions: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        label: { type: 'string' },
+                        from: { type: 'array', items: { type: 'string' } },
+                        to: { type: 'string' }
+                      },
+                      required: ['name', 'label', 'from', 'to'],
+                      additionalProperties: false
+                    }
+                  }
+                },
+                required: ['field', 'initial', 'transitions'],
+                additionalProperties: false
+              },
               fields: {
                 type: 'array',
                 items: {

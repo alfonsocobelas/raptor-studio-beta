@@ -29,7 +29,7 @@
       selección + edición + Supr, acción «Estado inicial», agrupado por `name` al guardar
       (merge de orígenes). `npm run web:build`.
 
-- [ ] **TASK-06**: Tests + el chat propone `state`: prompt con ejemplos, el diseño devuelto
+- [x] **TASK-06**: Tests + el chat propone `state`: prompt con ejemplos, el diseño devuelto
       pasa el gate, autosave como siempre.
 
 ## Bloque C — plantillas backend

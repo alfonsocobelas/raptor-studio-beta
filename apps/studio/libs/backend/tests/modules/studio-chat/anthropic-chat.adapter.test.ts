@@ -106,4 +106,40 @@ describe('AnthropicChatAdapter', () => {
     expect(system).toMatch(/enum/i)
     expect(system).toMatch(/estado|prioridad/i)
   })
+
+  /**
+   * Spec 43: la máquina de estados. El chat es quien la propone desde el texto del
+   * usuario («una muestra se recoge, se analiza y se certifica o se rechaza»): el
+   * schema de salida debe admitirla y el prompt debe enseñar a declararla.
+   */
+  it('el esquema de salida admite la máquina de estados del recurso', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const schema = JSON.stringify(createMock.mock.calls[0][0].output_config.format.schema)
+
+    expect(schema).toContain('"state"')
+    expect(schema).toContain('transitions')
+    expect(schema).toContain('initial')
+  })
+
+  it('el prompt enseña a promover el enum a estado con sus transiciones', async () => {
+    createMock.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: JSON.stringify({ reply: 'ok', design }) }]
+    })
+    const adapter = new AnthropicChatAdapter()
+
+    await adapter.propose([{ role: 'user', text: 'x' }], design)
+    const system = createMock.mock.calls[0][0].system as string
+
+    expect(system).toMatch(/MÁQUINA DE ESTADOS/i)
+    expect(system).toContain('transitions')
+    expect(system).toContain('initial')
+    expect(system).toMatch(/ciclo de vida/i)
+  })
 })
