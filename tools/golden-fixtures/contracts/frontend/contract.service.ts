@@ -41,6 +41,11 @@ export class ContractService {
       )
   })
 
+  /** Carga un registro por id: lo que necesita la ficha (spec 16). */
+  findOne(id: string): Promise<ContractDto> {
+    return firstValueFrom(this._http.get<ContractDto>(`${API_URL}/${id}`))
+  }
+
   create(dto: RegisterContractDto): Promise<void> {
     return firstValueFrom(this._http.post<void>(API_URL, dto)).then(() => {
       this.contracts.reload()

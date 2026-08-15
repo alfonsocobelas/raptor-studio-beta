@@ -27,6 +27,8 @@ export interface TransitionBinding {
   /** Slug de fichero compuesto (terminate-contract) */
   file: string
   label: string
+  /** Expresión de visibilidad del botón en la ficha: from.includes(estado actual) */
+  fromCheck: string
 }
 
 export interface EntrypointBindings {
@@ -153,7 +155,9 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     method: names(t.name).propertyName,
     className: `${names(t.name).className}${n.className}`,
     file: `${names(t.name).fileName}-${n.fileName}`,
-    label: t.label
+    label: t.label,
+    // la visibilidad del botón ES la máquina: solo se pinta si el from incluye el estado actual
+    fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`
   }))
 
   return {

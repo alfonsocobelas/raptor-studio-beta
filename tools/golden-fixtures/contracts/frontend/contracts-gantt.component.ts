@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
+import { Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { ContractDto } from '@sap-licenses/shared/domain'
 import { ContractService, OffsetPaginatedOutput } from '../../../../../../core/services/contract.service'
@@ -71,6 +72,12 @@ interface GanttRow {
                 } @else {
                   <span class="text-muted-foreground absolute top-2 text-xs italic">sin fechas</span>
                 }
+                <button
+                  type="button"
+                  class="absolute inset-0 cursor-pointer"
+                  [attr.aria-label]="'Abrir ' + row.label"
+                  (click)="open(row)"
+                ></button>
               </div>
             </div>
           }
@@ -103,6 +110,7 @@ interface GanttRow {
 })
 export class ContractsGanttComponent {
   private readonly _service = inject(ContractService)
+  private readonly _router = inject(Router)
 
   /** Campos resueltos por el generador desde el modelo (period + primer texto buscable). */
   readonly barLabel = 'contractNumber'
@@ -190,6 +198,10 @@ export class ContractsGanttComponent {
 
   onPage(page: number): void {
     this._service.request.update(r => ({ ...r, page }))
+  }
+
+  open(row: GanttRow): void {
+    void this._router.navigate(['/sap-licensing/contracts', row.id])
   }
 
   private percent(time: number, scale: { min: number; max: number }): number {

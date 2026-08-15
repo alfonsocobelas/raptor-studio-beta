@@ -17,17 +17,18 @@ const record = () => ({ id: '019eb800-0000-7000-8000-000000000001', <%- detail.t
 
 describe('<%- className %>DetailComponent — ficha', () => {
   const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
+    const service = { findOne, update: vi.fn(), remove: vi.fn()<%- entry.transitions.map(t => `, ${t.method}: vi.fn().mockResolvedValue(undefined)`).join('') %> }
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: ActivatedRoute, useValue: routeWith(id) },
-        { provide: <%- className %>Service, useValue: { findOne, update: vi.fn(), remove: vi.fn() } },
+        { provide: <%- className %>Service, useValue: service },
         // el componente se declara como proveedor: sin plantilla que renderizar,
         // TestBed.inject basta para ejercitar su lógica de carga
         <%- className %>DetailComponent
       ]
     })
-    return { component: TestBed.inject(<%- className %>DetailComponent), findOne }
+    return { component: TestBed.inject(<%- className %>DetailComponent), findOne, service }
   }
 
   beforeEach(() => TestBed.resetTestingModule())
@@ -61,4 +62,17 @@ describe('<%- className %>DetailComponent — ficha', () => {
 
     expect(component.format({ ...record(), <%- detail.titleField %>: null } as never, { key: '<%- detail.titleField %>', label: 'x' })).toBe('—')
   })
+<%_ entry.transitions.forEach(transition => { _%>
+
+  it('la transición «<%- transition.label %>» llama al verbo del servicio y recarga la ficha', async () => {
+    const { component, findOne, service } = setup(record().id)
+
+    await component.<%- transition.method %>(record().id)
+
+    expect(service.<%- transition.method %>).toHaveBeenCalledWith(record().id)
+    // la carga del constructor más la recarga tras transicionar
+    expect(findOne).toHaveBeenCalledTimes(2)
+    expect(component.transitioning()).toBe(false)
+  })
+<%_ }) _%>
 })

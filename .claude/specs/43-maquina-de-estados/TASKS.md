@@ -51,7 +51,7 @@
 - [x] **TASK-10**: `/golden-diff` + servicio emitido con un método por transición y el campo
       estado excluido de los formularios de alta/edición (sigue en listado/ficha/filtros).
 
-- [ ] **TASK-11**: `/golden-diff` + botones de acción en la ficha emitida: visibles según
+- [x] **TASK-11**: `/golden-diff` + botones de acción en la ficha emitida: visibles según
       `from`, disabled+spinner, POST → reload, 409 → toast + recarga. Tests emitidos.
 
 ## Validación

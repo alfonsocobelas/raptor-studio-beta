@@ -29,6 +29,8 @@ export const contract = defineResource({
   period: { start: 'startDate', end: 'endDate' },
   // Cronograma (spec 30): las vigencias de contrato dibujadas como barras
   gantt: {},
+  // Ficha (spec 16): los botones de transición de la spec 43 viven en su cabecera
+  detail: {},
   // Máquina de estados (spec 43): status promovido — ejercita from múltiple (terminate)
   // y simple (expire). La regla es la flecha que NO existe: un terminated no revive.
   state: {

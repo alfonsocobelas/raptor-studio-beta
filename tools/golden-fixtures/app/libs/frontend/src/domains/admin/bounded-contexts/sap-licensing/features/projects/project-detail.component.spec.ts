@@ -18,17 +18,18 @@ const record = () =>
 
 describe('ProjectDetailComponent — ficha', () => {
   const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
+    const service = { findOne, update: vi.fn(), remove: vi.fn() }
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: ActivatedRoute, useValue: routeWith(id) },
-        { provide: ProjectService, useValue: { findOne, update: vi.fn(), remove: vi.fn() } },
+        { provide: ProjectService, useValue: service },
         // el componente se declara como proveedor: sin plantilla que renderizar,
         // TestBed.inject basta para ejercitar su lógica de carga
         ProjectDetailComponent
       ]
     })
-    return { component: TestBed.inject(ProjectDetailComponent), findOne }
+    return { component: TestBed.inject(ProjectDetailComponent), findOne, service }
   }
 
   beforeEach(() => TestBed.resetTestingModule())

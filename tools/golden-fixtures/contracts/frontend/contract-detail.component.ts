@@ -1,138 +1,240 @@
-import { DatePipe } from '@angular/common'
-import { HttpErrorResponse } from '@angular/common/http'
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { NgIcon, provideIcons } from '@ng-icons/core'
-import { lucideArrowLeft, lucideEye } from '@ng-icons/lucide'
-import { HlmBadgeImports } from '@spartan-ng/helm/badge'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
-import { HlmCardImports } from '@spartan-ng/helm/card'
-import { HlmSeparatorImports } from '@spartan-ng/helm/separator'
-import { ContractDetailService } from '../../../../../../core/services/contract-detail.service'
-import { ColumnDef, DataTable } from '../../../../../../shared/components/data-table'
-import { BILLING_FREQUENCY_LABELS, RENEWAL_TYPE_LABELS } from './contract-labels'
+import { provideIcons } from '@ng-icons/core'
+import { NgIcon } from '@ng-icons/core'
+import { lucideArrowLeft, lucidePencil } from '@ng-icons/lucide'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AuthService } from '../../../../../../core/services/auth.service'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
+import { ContractDialogComponent, ContractFormValue } from './contract-dialog.component'
+import { ContractDto } from '@sap-licenses/shared/domain'
+import { ContractService } from '../../../../../../core/services/contract.service'
+import { formatValue } from '../../../../../../shared/utils/format-value'
+import { RelatedTable } from '../../../../../../shared/components/related-table'
 
-const CURRENCY_FMT = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 0
-})
-
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Activo',
-  expiring: 'Por expirar',
-  expired: 'Expirado',
-  terminated: 'Terminado'
+/** Una fila de la ficha: qué campo, cómo se llama y cómo se formatea. */
+interface DetailRow {
+  key: string
+  label: string
+  type?: 'date' | 'number' | 'boolean'
+  /** Etiquetas de un conjunto cerrado: el valor guardado se lee como en el listado */
+  labels?: Record<string, string>
 }
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  active: 'default',
-  expiring: 'outline',
-  expired: 'secondary',
-  terminated: 'destructive'
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  cloud: 'Cloud',
-  onprem: 'On-premise',
-  mixed: 'Mixto',
-  maintenance: 'Mantenimiento'
-}
-
-const TYPE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  cloud: 'default',
-  onprem: 'secondary',
-  mixed: 'outline',
-  maintenance: 'outline'
-}
-
+/**
+ * Ficha de Contratos: el destino de la acción «ver» del listado. Carga el
+ * registro por el id de la ruta y muestra sus campos; las escrituras reutilizan
+ * el mismo diálogo y la misma confirmación que el listado.
+ */
 @Component({
   selector: 'app-contract-detail',
-  imports: [DatePipe, NgIcon, DataTable, HlmBadgeImports, HlmButtonImports, HlmCardImports, HlmSeparatorImports],
-  providers: [provideIcons({ lucideArrowLeft, lucideEye })],
+  imports: [NgIcon, RelatedTable, AppDialog, ContractDialogComponent],
+  providers: [provideIcons({ lucideArrowLeft, lucidePencil })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './contract-detail.component.html'
+  template: `
+    <div class="min-w-0 space-y-6">
+      <button type="button" class="text-muted-foreground flex items-center gap-2 text-sm" (click)="back()">
+        <ng-icon name="lucideArrowLeft" size="16" />
+        Volver a Contratos
+      </button>
+
+      @if (loading()) {
+        <p class="text-muted-foreground py-12 text-center text-sm">Cargando contratos…</p>
+      } @else if (notFound()) {
+        <p class="text-muted-foreground py-12 text-center text-sm">No se encontró el registro solicitado.</p>
+      } @else if (error()) {
+        <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los contratos</p>
+      } @else if (contract(); as item) {
+        <div class="flex items-start justify-between gap-4">
+          <h1 class="text-2xl font-bold tracking-tight">{{ item.contractNumber }}</h1>
+          <div class="flex gap-2">
+            @if (canWrite() && ['active', 'expiring'].includes(item.status)) {
+              <button
+                type="button"
+                class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                [disabled]="transitioning()"
+                data-testid="transition-terminate"
+                (click)="terminate(item.id)"
+              >
+                Terminar
+              </button>
+            }
+            @if (canWrite() && ['expiring'].includes(item.status)) {
+              <button
+                type="button"
+                class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                [disabled]="transitioning()"
+                data-testid="transition-expire"
+                (click)="expire(item.id)"
+              >
+                Expirar
+              </button>
+            }
+            @if (canWrite()) {
+              <button
+                type="button"
+                class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                (click)="openEdit(item)"
+              >
+                <ng-icon name="lucidePencil" size="16" />
+                Editar
+              </button>
+            }
+          </div>
+        </div>
+
+        <dl class="bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
+          @for (row of rows; track row.key) {
+            <div class="min-w-0">
+              <dt class="text-muted-foreground text-xs uppercase tracking-wide">{{ row.label }}</dt>
+              <dd class="truncate text-sm font-medium">{{ format(item, row) }}</dd>
+            </div>
+          }
+        </dl>
+
+        <app-related-table
+          title="Licencias"
+          endpoint="/api/v1/licenses"
+          field="contractId"
+          [value]="item.id"
+          [columns]="[
+            { key: 'customerName', label: 'Cliente' },
+            { key: 'subSolutionAreaName', label: 'Solución' },
+            { key: 'contractNumber', label: 'Contrato' },
+            { key: 'metric', label: 'Métrica' }
+          ]"
+          route="/sap-licensing/licenses"
+        />
+      }
+    </div>
+
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
+      @if (dialogOpen()) {
+        <app-contract-dialog [contract]="contract()" (saved)="onSave($event)" (close)="dialogOpen.set(false)" />
+      }
+    </app-dialog>
+  `
 })
 export class ContractDetailComponent {
   private readonly _route = inject(ActivatedRoute)
   private readonly _router = inject(Router)
-  private readonly _service = inject(ContractDetailService)
+  private readonly _service = inject(ContractService)
+  private readonly _auth = inject(AuthService)
+  private readonly _notify = inject(NotificationService)
 
-  // value() lanza si el resource está en error: hasValue() es la única lectura segura.
-  readonly contract = computed(() => (this._service.contract.hasValue() ? this._service.contract.value() : undefined))
-  readonly loading = this._service.contract.isLoading
-  // Un 404 significa "no existe", no "falló la carga": va al estado not-found, no al de error.
-  readonly notFound = computed(() => {
-    const error = this._service.contract.error()
-    return error instanceof HttpErrorResponse && error.status === 404
-  })
-  readonly loadError = computed(() => this._service.contract.error() !== undefined && !this.notFound())
+  protected readonly canWrite = computed(() => this._auth.canWrite())
 
-  readonly licensesLoading = computed(() => this._service.licenses.isLoading())
-  readonly licensesError = computed(() => this._service.licenses.error())
-  readonly contractLicenses = computed(
-    () => (this._service.licenses.value()?.items ?? []) as unknown as Record<string, unknown>[]
-  )
+  readonly contract = signal<ContractDto | null>(null)
+  readonly loading = signal(true)
+  readonly notFound = signal(false)
+  readonly error = signal(false)
+  readonly dialogOpen = signal(false)
 
-  readonly licenseActions = [{ icon: 'lucideEye', label: 'Ver detalle', action: 'view' }]
-
-  // Mismas columnas que el prototipo (Solución, Métrica, Unidades, Precio/ud., Estado).
-  readonly licenseColumns: ColumnDef[] = [
-    { key: 'solutionName', label: 'Solución', minWidth: 200 },
-    { key: 'metric', label: 'Métrica', minWidth: 100 },
-    { key: 'licensedUnits', label: 'Unidades', type: 'number', minWidth: 120 },
-    { key: 'pricePerUnit', label: 'Precio/ud.', type: 'number', minWidth: 120 },
+  /** Filas derivadas del modelo: el generador decide qué se ve y en qué orden. */
+  readonly rows: DetailRow[] = [
+    {
+      key: 'contractType',
+      label: 'Tipo',
+      labels: { cloud: 'Cloud', onprem: 'On-premise', mixed: 'Mixto', maintenance: 'Mantenimiento' }
+    },
+    { key: 'customerName', label: 'Cliente' },
+    { key: 'isFavorite', label: 'Marcar como favorito', type: 'boolean' },
     {
       key: 'status',
       label: 'Estado',
-      type: 'badge',
-      minWidth: 110,
-      badgeMap: {
-        active: { label: 'Activa', variant: 'default' },
-        suspended: { label: 'Suspendida', variant: 'outline' },
-        expired: { label: 'Expirada', variant: 'secondary' }
-      }
-    }
+      labels: { active: 'Activo', expiring: 'Por expirar', expired: 'Expirado', terminated: 'Terminado' }
+    },
+    { key: 'source', label: 'Origen' },
+    { key: 'startDate', label: 'Inicio', type: 'date' },
+    { key: 'endDate', label: 'Fin', type: 'date' },
+    { key: 'totalValue', label: 'Valor total', type: 'number' },
+    { key: 'currency', label: 'Moneda' },
+    { key: 'billingFrequency', label: 'Facturación' },
+    { key: 'renewalType', label: 'Renovación' },
+    { key: 'notes', label: 'Notas internas' }
   ]
 
-  readonly billingFrequencyLabels = BILLING_FREQUENCY_LABELS
-  readonly renewalTypeLabels = RENEWAL_TYPE_LABELS
-
   constructor() {
-    this._service.contractId.set(this._route.snapshot.paramMap.get('id') ?? undefined)
+    void this.load()
   }
 
-  formatCurrency(value: number): string {
-    return CURRENCY_FMT.format(value)
-  }
-
-  statusLabel(status: string): string {
-    return STATUS_LABELS[status] ?? status
-  }
-
-  statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-    return STATUS_VARIANTS[status] ?? 'secondary'
-  }
-
-  typeLabel(type: string): string {
-    return TYPE_LABELS[type] ?? type
-  }
-
-  typeVariant(type: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-    return TYPE_VARIANTS[type] ?? 'secondary'
-  }
-
-  onLicenseAction(event: { action: string; row: Record<string, unknown> }): void {
-    if (event.action === 'view') {
-      this._router.navigate(['/sap-licensing/licenses', event.row['id']])
+  async load(): Promise<void> {
+    const id = this._route.snapshot.paramMap.get('id')
+    if (!id) {
+      this.notFound.set(true)
+      this.loading.set(false)
+      return
+    }
+    try {
+      this.contract.set(await this._service.findOne(id))
+    } catch (e) {
+      const status = (e as { status?: number }).status
+      if (status === 404) this.notFound.set(true)
+      else this.error.set(true)
+    } finally {
+      this.loading.set(false)
     }
   }
 
-  navigateToCustomer(customerId: string): void {
-    this._router.navigate(['/sap-licensing/customers', customerId])
+  back(): void {
+    void this._router.navigate(['/sap-licensing/contracts'])
   }
 
-  goBack(): void {
-    this._router.navigate(['/sap-licensing/contracts'])
+  /** Un valor se lee igual aquí que en el listado: mismo formateador (kernel). */
+  format(item: ContractDto, row: DetailRow): string {
+    const value = (item as unknown as Record<string, unknown>)[row.key]
+    return formatValue(value, { type: row.type, labels: row.labels })
   }
+
+  openEdit(item: ContractDto): void {
+    this.contract.set(item)
+    this.dialogOpen.set(true)
+  }
+
+  async onSave(value: ContractFormValue): Promise<void> {
+    const current = this.contract()
+    if (!current) return
+    try {
+      await this._service.update(current.id, value)
+      this.dialogOpen.set(false)
+      this._notify.success('Contrato actualizado correctamente')
+      await this.load()
+    } catch {
+      this._notify.error('No se pudo actualizar el contrato')
+    }
+  }
+
+  /** Una transición en vuelo deshabilita todos los botones: no hay dobles saltos. */
+  readonly transitioning = signal(false)
+
+  /** Transición «Terminar» (spec 43): un 409 es el estado rechazándola — avisa y recarga. */
+  async terminate(id: string): Promise<void> {
+    this.transitioning.set(true)
+    try {
+      await this._service.terminate(id)
+    } catch (e) {
+      const message = (e as { error?: { message?: string } }).error?.message
+      this._notify.error(message ?? 'No se pudo aplicar «Terminar»')
+    } finally {
+      this.transitioning.set(false)
+      await this.load()
+    }
+  }
+
+  /** Transición «Expirar» (spec 43): un 409 es el estado rechazándola — avisa y recarga. */
+  async expire(id: string): Promise<void> {
+    this.transitioning.set(true)
+    try {
+      await this._service.expire(id)
+    } catch (e) {
+      const message = (e as { error?: { message?: string } }).error?.message
+      this._notify.error(message ?? 'No se pudo aplicar «Expirar»')
+    } finally {
+      this.transitioning.set(false)
+      await this.load()
+    }
+  }
+
+  // @ai:begin detail-extra — bloques propios de esta ficha (relaciones, acciones de dominio)
+  // @ai:end
 }

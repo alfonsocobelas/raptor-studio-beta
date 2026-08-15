@@ -29,6 +29,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sap-licensing/contracts/:id',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/contracts/contract-detail.component').then(
+        m => m.ContractDetailComponent
+      )
+  },
+  {
     path: 'sap-licensing/licenses',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/licenses/licenses-list.component').then(
