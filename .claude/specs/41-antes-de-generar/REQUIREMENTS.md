@@ -74,7 +74,7 @@ un raíl a la derecha que resume lo que vas a obtener. Decidido con Alfonso (202
   descargar ni copiar.
 - WHEN el usuario despliega «Avanzado» THEN puede desmarcar la instalación de dependencias y
   fijar un directorio destino, como hoy.
-- WHEN hay nombre válido THEN se ve el comando determinista (`npx nx g @acc/generators:app …`)
+- WHEN hay nombre válido THEN se ve el comando determinista (`npx nx g @raptor/generators:app …`)
   con su botón de copiar, y el de descargar el app-schema.
 - WHILE el generador trabaja THEN el centro de la pantalla muestra el paso actual, los
   ficheros escritos, el segundero y el último fichero, leídos del NDJSON como hoy.

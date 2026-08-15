@@ -17,10 +17,10 @@ apps/studio/                        (workspace generado; luego editado a mano, c
 
 Dependencias del estudio (package.json del workspace studio):
 
-- `@acc/schema` → `file:` al dist local (tipos + `defineApp`/`defineResource`).
+- `@raptor/schema` → `file:` al dist local (tipos + `defineApp`/`defineResource`).
 - Los datos canónicos (modelos de oro + app demo) y `composeApp` se importan del dist de
-  `@acc/generators` por subpath (módulos puros, browser-safe). Deuda consciente: cuando la
-  fase C necesite mutar schemas se extraerá un `@acc/catalog`; hoy sería una lib especulativa.
+  `@raptor/generators` por subpath (módulos puros, browser-safe). Deuda consciente: cuando la
+  fase C necesite mutar schemas se extraerá un `@raptor/catalog`; hoy sería una lib especulativa.
 
 ## Flujo de datos
 
@@ -48,7 +48,7 @@ APPS.demo + MODELS ──composeApp──> AppComposition (congelada)
 
 ## Decisiones técnicas
 
-- **Dogfooding del scaffold**: `nx g @acc/generators:app studio --app=demo` — valida la fase A
+- **Dogfooding del scaffold**: `nx g @raptor/generators:app studio --app=demo` — valida la fase A
   sobre un caso real y da Angular+Spartan+vitest gratis. La baseline se commitea sin tocar.
 - **El visor vive en `domains/studio`** dentro del layout canónico emitido (una feature más),
   no en un árbol paralelo.
@@ -61,7 +61,7 @@ APPS.demo + MODELS ──composeApp──> AppComposition (congelada)
 
 ## Riesgos identificados
 
-- Deep imports del dist de `@acc/generators` (subpaths no contractuales) → aceptado como deuda
+- Deep imports del dist de `@raptor/generators` (subpaths no contractuales) → aceptado como deuda
   de fase B; se rompe en build del estudio si cambia la estructura, no en runtime silencioso.
 - Deriva del workspace studio respecto al canon emitido cuando se edite a mano → asumido: es
   exactamente el modelo de uso del acelerador (generar + editar).

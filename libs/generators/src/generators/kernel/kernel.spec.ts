@@ -116,7 +116,7 @@ describe('kernel generator', () => {
 
   it('parametrizes the shared DTO alias and keeps app-specific config out', () => {
     const roles = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/auth/roles.decorator.ts', 'utf-8') ?? ''
-    expect(roles).toContain("from '@acc/shared/domain'")
+    expect(roles).toContain("from '@raptor/shared/domain'")
 
     const types = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/config-types.ts', 'utf-8') ?? ''
     expect(types).not.toContain('SapSync')

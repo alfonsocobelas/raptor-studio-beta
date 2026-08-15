@@ -212,7 +212,7 @@ Detalle completo en `contrato-unidad-vista-rag.md`.
 
 ## 5. Multi-tenant
 
-Decisión más difícil de revertir. Recomendación: **columna discriminadora (`tenant_id`) + Row-Level Security de PostgreSQL** por defecto, tras una abstracción (`@acc/tenant` con `AsyncLocalStorage`) que permita migrar a **DB-por-tenant como tier premium** sin tocar el código de negocio. El `tenant_id` nunca se pasa a mano: lo inyecta un interceptor desde el contexto de request y RLS lo blinda en BD. Encaja con que todo cuelga de `CUSTOMER`. Trade-offs completos en el ADR.
+Decisión más difícil de revertir. Recomendación: **columna discriminadora (`tenant_id`) + Row-Level Security de PostgreSQL** por defecto, tras una abstracción (`@raptor/tenant` con `AsyncLocalStorage`) que permita migrar a **DB-por-tenant como tier premium** sin tocar el código de negocio. El `tenant_id` nunca se pasa a mano: lo inyecta un interceptor desde el contexto de request y RLS lo blinda en BD. Encaja con que todo cuelga de `CUSTOMER`. Trade-offs completos en el ADR.
 
 ---
 

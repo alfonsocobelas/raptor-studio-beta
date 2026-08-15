@@ -1,4 +1,4 @@
-import { defineApp } from '@acc/schema'
+import { defineApp } from '@raptor/schema'
 
 /**
  * Solaris Energía — instaladora de fotovoltaica (demo 2026-08-10, diseñada en el chat

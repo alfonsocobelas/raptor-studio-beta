@@ -1,4 +1,4 @@
-import type { BadgeEntry, FieldDefinition, ResourceDefinition } from '@acc/schema'
+import type { BadgeEntry, FieldDefinition, ResourceDefinition } from '@raptor/schema'
 
 /**
  * Datos de muestra del visor: TODO deriva del resource-schema y es determinista

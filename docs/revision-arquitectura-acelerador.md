@@ -86,7 +86,7 @@ Relacionado técnico (para cuando llegue): RLS con pool de conexiones exige `SET
 
 ### C1. Coherencia front↔back que sobreviva a la edición manual
 
-Hoy la coherencia "sale gratis" **en el momento de generar**: `columns[]` y `ALLOWED_FILTERS` nacen del mismo array. Pero con "generar y poseer", en cuanto alguien edite uno de los dos a mano, la desincronización vuelve (el problema original del comentario). Mejora: en lugar de generar dos artefactos gemelos, generar **una sola constante compartida** (`libs/contracts/<recurso>.fields.ts` con los campos filtrables/ordenables/buscables) que importan tanto el `search-config` del back como el `columns[]` del front. La coherencia pasa de ser una propiedad del instante de generación a ser una propiedad estructural del código en runtime. Coste: una plantilla más; encaja con el `@acc/contracts` que ADR-001 ya preveía.
+Hoy la coherencia "sale gratis" **en el momento de generar**: `columns[]` y `ALLOWED_FILTERS` nacen del mismo array. Pero con "generar y poseer", en cuanto alguien edite uno de los dos a mano, la desincronización vuelve (el problema original del comentario). Mejora: en lugar de generar dos artefactos gemelos, generar **una sola constante compartida** (`libs/contracts/<recurso>.fields.ts` con los campos filtrables/ordenables/buscables) que importan tanto el `search-config` del back como el `columns[]` del front. La coherencia pasa de ser una propiedad del instante de generación a ser una propiedad estructural del código en runtime. Coste: una plantilla más; encaja con el `@raptor/contracts` que ADR-001 ya preveía.
 
 ### C2. Normalizar los 4 módulos a mano _antes_ de perseguir el diff vacío
 

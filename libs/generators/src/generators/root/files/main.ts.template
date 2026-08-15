@@ -1,5 +1,5 @@
 // Telemetry must initialize before any other import so the APM SDK patches modules early.
-// Descomentar al conectar el plugin de observabilidad (@acc/infra-observability-azure):
+// Descomentar al conectar el plugin de observabilidad (@raptor/infra-observability-azure):
 // import './contexts/shared/infrastructure/telemetry/instrument'
 import { NestFactory } from '@nestjs/core'
 import { RootModule } from './root.module'

@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import { FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@raptor/schema'
 
 /**
  * Application layer synthesis (use cases + handlers + input DTOs + uniqueness

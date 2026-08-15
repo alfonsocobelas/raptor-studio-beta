@@ -1,4 +1,4 @@
-# Espejo de storage.tf: bucket privado para el FileStoragePort (@acc/infra-storage-s3).
+# Espejo de storage.tf: bucket privado para el FileStoragePort (@raptor/infra-storage-s3).
 resource "aws_s3_bucket" "storage" {
   bucket = "${local.name}-storage"
 }

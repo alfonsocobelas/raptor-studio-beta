@@ -1,4 +1,4 @@
-import { Clock } from '@acc/infra-ports'
+import { Clock } from '@raptor/infra-ports'
 import { GithubLoginProvider } from './github-login-provider'
 import { GoogleOidcProvider } from './google-oidc-provider'
 import { MicrosoftOidcProvider } from './microsoft-oidc-provider'

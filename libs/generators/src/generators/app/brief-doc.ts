@@ -1,4 +1,4 @@
-import type { BusinessBrief, BusinessFlow, FlowEdge, FlowNode, ResourceDefinition } from '@acc/schema'
+import type { BusinessBrief, BusinessFlow, FlowEdge, FlowNode, ResourceDefinition } from '@raptor/schema'
 
 /**
  * El brief aterriza como CLAUDE.md en la raíz de la app generada (spec 22): la memoria del negocio

@@ -44,6 +44,6 @@
 > **TASK-07 (2026-08-13)**: verde la suite del estudio (491) y la del workspace (14 proyectos,
 > 692 del generador), `/golden-diff` vacío, y el gesto comprobado en el navegador con
 > `tools/smoke-flows.ts` (capturas del arrastre y del orden nuevo). Y app generada de verdad
-> (`nx g @acc/generators:app --appFile`) con un flujo de ramas desiguales: el fin sale numerado
+> (`nx g @raptor/generators:app --appFile`) con un flujo de ramas desiguales: el fin sale numerado
 > **5** —detrás de las dos acciones— y los métodos salen en el orden de la cadena; al invertirla
 > se invierten (`cerrar, avisar`). Con el orden viejo el fin era el 3 y los pasos, 4 y 5.

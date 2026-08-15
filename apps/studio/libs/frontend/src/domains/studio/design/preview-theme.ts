@@ -1,4 +1,4 @@
-import { DEFAULT_THEME_ID, deriveTheme, findTheme } from '@acc/schema'
+import { DEFAULT_THEME_ID, deriveTheme, findTheme } from '@raptor/schema'
 import type { PreviewTheme } from './preview-settings'
 
 /**

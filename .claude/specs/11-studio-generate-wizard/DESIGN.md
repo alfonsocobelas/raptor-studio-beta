@@ -23,7 +23,7 @@
        │ confirmar
        ▼
   descarga <name>.app.json  (definición viva del store, name ← nombre elegido)
-  comando: npx nx g @acc/generators:app <name> --appFile=<name>.app.json \
+  comando: npx nx g @raptor/generators:app <name> --appFile=<name>.app.json \
            --ui=<ui> --database=<db> --plugins=<lista|none>   [copiar]
 ```
 

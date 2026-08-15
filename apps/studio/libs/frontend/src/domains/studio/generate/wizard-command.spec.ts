@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AppDefinition } from '@acc/schema'
+import type { AppDefinition } from '@raptor/schema'
 import type { DesignPage } from '@app/shared/domain'
 import {
   buildAppFile,
@@ -99,7 +99,7 @@ describe('defaultSelection', () => {
 describe('buildCommand', () => {
   it('monta un flag por ranura elegible, en el orden del manifiesto', () => {
     expect(buildCommand(manifest, options)).toBe(
-      'npx nx g @acc/generators:app tienda-sur --appFile=tienda-sur.app.json --database=mongo --ui=alt --auth=none --plugins=email'
+      'npx nx g @raptor/generators:app tienda-sur --appFile=tienda-sur.app.json --database=mongo --ui=alt --auth=none --plugins=email'
     )
   })
 

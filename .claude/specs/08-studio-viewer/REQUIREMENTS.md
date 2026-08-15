@@ -24,10 +24,10 @@ visor se escriben a mano encima — exactamente el flujo que el acelerador propo
 
 ## Criterios de aceptación
 
-- [ ] `apps/studio` existe, scaffoldado con `@acc/generators:app --app=demo` (baseline commiteada tal cual).
+- [ ] `apps/studio` existe, scaffoldado con `@raptor/generators:app --app=demo` (baseline commiteada tal cual).
 - [ ] Ruta `/studio` con el visor: nav de páginas + render por tipo de página.
 - [ ] Los datos de muestra se derivan del schema de forma determinista (misma entrada → mismas filas).
-- [ ] El visor importa el contrato desde `@acc/schema` (dist local); nada de tipos duplicados.
+- [ ] El visor importa el contrato desde `@raptor/schema` (dist local); nada de tipos duplicados.
 - [ ] Tests del view-model (muestras + selección de página) verdes en el workspace del estudio.
 - [ ] El monorepo raíz sigue verde (suite + golden-diff sin cambios).
 

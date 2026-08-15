@@ -42,7 +42,7 @@ export function describeProgress(line: string): Progress | null {
       ...(added ? { packages: Number(added[1]) } : {})
     }
   }
-  if (/Generating @acc\/generators/.test(text)) return { phase: 'prepare', step: 'Preparando el generador' }
+  if (/Generating @raptor\/generators/.test(text)) return { phase: 'prepare', step: 'Preparando el generador' }
 
   return null
 }

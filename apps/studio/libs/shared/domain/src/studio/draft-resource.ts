@@ -1,4 +1,4 @@
-import type { FieldDefinition, ResourceDefinition, StateMachine } from '@acc/schema'
+import type { FieldDefinition, ResourceDefinition, StateMachine } from '@raptor/schema'
 
 /**
  * Entidad DIBUJADA en el lienzo: lo mínimo que el usuario (o la IA) declara.

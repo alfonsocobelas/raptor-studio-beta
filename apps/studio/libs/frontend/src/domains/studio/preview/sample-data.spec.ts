@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { sampleRows, sampleTotal, visibleColumns } from './sample-data'
 
 const model = {

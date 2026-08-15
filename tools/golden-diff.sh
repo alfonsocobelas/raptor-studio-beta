@@ -26,7 +26,7 @@ is_skipped() {                     # <fixture> <ruta relativa>
 rm -rf "$OUT" && mkdir -p "$OUT"
 for entry in "${MODELS[@]}"; do
   name="${entry%%:*}"; plural="${entry##*:}"
-  if ! npx nx generate @acc/generators:resource "$name" --directory="$RUN_REL/$plural" >/dev/null 2>&1; then
+  if ! npx nx generate @raptor/generators:resource "$name" --directory="$RUN_REL/$plural" >/dev/null 2>&1; then
     summary+=" $name: ❌ generación falló |"; failures=$((failures+1)); continue
   fi
   entity_fail=0; covered=0
@@ -62,7 +62,7 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
   local fixture="$1"; shift
   local out="$OUT/$app"
 
-  if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app "$app" \
+  if ! NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @raptor/generators:app "$app" \
         "$@" --directory="$RUN_REL/$app" --skipInstall --no-interactive >/dev/null 2>&1; then
     summary+=" $label: ❌ generación falló |"; failures=$((failures+1)); return
   fi

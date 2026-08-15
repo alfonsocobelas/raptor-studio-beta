@@ -58,7 +58,7 @@ Decisiones cerradas en el brainstorming (2026-08-07):
 
 ## Criterios de aceptación
 
-- [ ] Contrato `BusinessFlow` en `@acc/schema` con gate estructural en `defineApp`
+- [ ] Contrato `BusinessFlow` en `@raptor/schema` con gate estructural en `defineApp`
 - [ ] Vista **Flujos** en el lienzo (conmutador Vistas / Modelo / Flujos)
 - [ ] Edición visual completa: paleta, arrastre, conexión con flecha fantasma,
       etiquetas en salidas de decisión, selección y borrado

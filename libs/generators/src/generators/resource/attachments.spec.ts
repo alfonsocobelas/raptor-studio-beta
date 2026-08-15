@@ -3,7 +3,7 @@ import type { Tree } from '@nx/devkit'
 import resourceGenerator from './resource'
 import kernelGenerator from '../kernel/kernel'
 import { MODELS, registerModels } from './models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Spec 14: `attachments: true` emite la pieza de subida de ficheros como módulo

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'crypto'
-import { GeneratedToken, SecureTokenGenerator } from '@acc/infra-ports'
+import { GeneratedToken, SecureTokenGenerator } from '@raptor/infra-ports'
 
 /** Session token entropy of the reference AUTH_POLICY; override per app if needed. */
 export const DEFAULT_TOKEN_BYTES = 32

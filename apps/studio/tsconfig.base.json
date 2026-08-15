@@ -32,8 +32,8 @@
       "@spartan-ng/helm/sonner": ["./libs/ui/sonner/src/index.ts"],
       "@spartan-ng/helm/table": ["./libs/ui/table/src/index.ts"],
       "@spartan-ng/helm/tooltip": ["./libs/ui/tooltip/src/index.ts"],
-      "@acc/schema": ["../../libs/schema/src/index.ts"],
-      "@acc/generators/src/*": ["../../libs/generators/src/*"]
+      "@raptor/schema": ["../../libs/schema/src/index.ts"],
+      "@raptor/generators/src/*": ["../../libs/generators/src/*"]
     }
   }
 }

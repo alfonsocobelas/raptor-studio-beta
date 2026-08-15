@@ -1,4 +1,4 @@
-import type { AppDefinition, ResourceDefinition } from '@acc/schema'
+import type { AppDefinition, ResourceDefinition } from '@raptor/schema'
 import { dashboardSubstitutions } from './app'
 import { composeApp } from './composition'
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { BusinessFlow } from '@acc/schema'
+import type { BusinessFlow } from '@raptor/schema'
 import { flowToProse } from './flow-prose'
 
 const flujo = (nodes: BusinessFlow['nodes'], edges: BusinessFlow['edges']): BusinessFlow => ({

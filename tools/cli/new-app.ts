@@ -21,7 +21,7 @@ interface CliArgs {
 /**
  * CLI de creación de apps: `npm run new`. Pregunta lo mismo que el formulario del
  * generador pero con selección múltiple real (modelos y plugins con checkbox), y
- * delega en `nx g @acc/generators:app`. Cualquier respuesta puede venir por flag
+ * delega en `nx g @raptor/generators:app`. Cualquier respuesta puede venir por flag
  * (--name, --models, --ui, --plugins, --skip-install) para uso no interactivo/CI.
  *
  * Las migraciones no se preguntan: vienen de fábrica (decisión 2026-07-31).
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
   }
 
   const flags = [
-    `@acc/generators:app`,
+    `@raptor/generators:app`,
     name,
     `--models=${models.join(',')}`,
     `--ui=${ui}`,

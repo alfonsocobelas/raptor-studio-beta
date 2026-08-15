@@ -1,5 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
-import { containsVaultReferences, resolvePlaceholders } from '@acc/infra-ports'
+import { containsVaultReferences, resolvePlaceholders } from '@raptor/infra-ports'
 
 export class AwsSecretsError extends Error {
   constructor(

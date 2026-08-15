@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
-import type { FlowNodeKind } from '@acc/schema'
+import type { FlowNodeKind } from '@raptor/schema'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideCircleDot, lucideDiamond, lucidePlus, lucideSquare, lucideZap } from '@ng-icons/lucide'
 import { FLOW_KIND_LABELS, FLOW_KIND_STARTERS } from '@app/shared/domain'

@@ -24,7 +24,7 @@ describe('describeProgress', () => {
   })
 
   it('reconoce el arranque del generador', () => {
-    expect(describeProgress('NX  Generating @acc/generators:app')?.step).toBe('Preparando el generador')
+    expect(describeProgress('NX  Generating @raptor/generators:app')?.step).toBe('Preparando el generador')
   })
 
   it('las líneas sin significado no producen etapa: no se inventa progreso', () => {
@@ -43,7 +43,7 @@ describe('describeProgress', () => {
    */
   describe('la clave de fase', () => {
     it('acompaña a cada etapa reconocida', () => {
-      expect(describeProgress('NX  Generating @acc/generators:app')?.phase).toBe('prepare')
+      expect(describeProgress('NX  Generating @raptor/generators:app')?.phase).toBe('prepare')
       expect(describeProgress('CREATE apps/x/main.ts')?.phase).toBe('write')
       expect(describeProgress('UPDATE package.json')?.phase).toBe('configure')
       expect(describeProgress('DELETE viejo.ts')?.phase).toBe('configure')

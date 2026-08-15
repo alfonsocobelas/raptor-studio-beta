@@ -64,7 +64,7 @@ describe('buildGeneratorArgs — argv del generador, validado en el borde', () =
     expect(buildGeneratorArgs(base)).toEqual([
       'nx',
       'g',
-      '@acc/generators:app',
+      '@raptor/generators:app',
       'tienda-sur',
       '--appFile=/tmp/tienda-sur.app.json',
       '--database=mongo',

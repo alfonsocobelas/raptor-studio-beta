@@ -1,5 +1,5 @@
-import { DEFAULT_THEME_ID, resolveThemeId } from '@acc/schema'
-import type { AppDefinition, BusinessBrief, BusinessFlow, PageDefinition, PortsDefinition, ResourceDefinition } from '@acc/schema'
+import { DEFAULT_THEME_ID, resolveThemeId } from '@raptor/schema'
+import type { AppDefinition, BusinessBrief, BusinessFlow, PageDefinition, PortsDefinition, ResourceDefinition } from '@raptor/schema'
 
 /**
  * Composición normalizada de una app: el único vocabulario del que el generador

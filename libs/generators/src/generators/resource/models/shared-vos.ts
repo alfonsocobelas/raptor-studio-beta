@@ -1,4 +1,4 @@
-import { ResourceDefinition, SharedVoDefinition } from '@acc/schema'
+import { ResourceDefinition, SharedVoDefinition } from '@raptor/schema'
 
 /**
  * Registro de los VOs de la capa COMPARTIDA del contexto (spec 27).

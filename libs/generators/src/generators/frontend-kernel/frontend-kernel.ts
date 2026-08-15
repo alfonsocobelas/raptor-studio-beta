@@ -18,7 +18,7 @@ export interface FrontendKernelGeneratorSchema {
 export async function frontendKernelGenerator(tree: Tree, options: FrontendKernelGeneratorSchema) {
   const outputDir = options.directory ?? path.join('tmp', 'generated', 'frontend-kernel')
 
-  const substitutions = { sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain' }
+  const substitutions = { sharedDomainAlias: options.sharedDomainAlias ?? '@raptor/shared/domain' }
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
   // Implementación de los contratos UI segun la librería elegida: misma API pública,

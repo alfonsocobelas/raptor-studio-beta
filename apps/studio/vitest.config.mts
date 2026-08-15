@@ -5,14 +5,14 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   resolve: {
     alias: [
-      // En tests, los paquetes @acc/* se resuelven a los FUENTES del monorepo (Vite compila el
+      // En tests, los paquetes @raptor/* se resuelven a los FUENTES del monorepo (Vite compila el
       // TS directo); el build Angular usa los dist por file: — mismo código, dos resoluciones.
       // El deep-path va antes que el paquete raíz (orden de matching de Vite).
       {
-        find: /^@acc\/generators\/src\/(.*)$/,
+        find: /^@raptor\/generators\/src\/(.*)$/,
         replacement: fileURLToPath(new URL('../../libs/generators/src/', import.meta.url)) + '$1'
       },
-      { find: '@acc/schema', replacement: fileURLToPath(new URL('../../libs/schema/src/index.ts', import.meta.url)) },
+      { find: '@raptor/schema', replacement: fileURLToPath(new URL('../../libs/schema/src/index.ts', import.meta.url)) },
       // La librería de componentes vive en el propio repo (libs/ui/<nombre>), igual que
       // en el build: sin esto, montar un componente que use spartan no resuelve.
       {

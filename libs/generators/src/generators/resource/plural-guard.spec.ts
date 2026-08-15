@@ -1,7 +1,7 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import resourceGenerator from './resource'
 import { MODELS, registerModels } from './models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * GUARD de pluralización. Los cuatro modelos de oro pluralizan todos en «+s»

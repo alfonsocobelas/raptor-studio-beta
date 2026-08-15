@@ -1,4 +1,4 @@
-import type { AppDefinition } from '@acc/schema'
+import type { AppDefinition } from '@raptor/schema'
 import type { DesignPage } from './design-page'
 
 /**

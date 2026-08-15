@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model: closed and in-flight dealership operations.
 // Vehicle and client are denormalised on purpose: the demo exercises the canonical

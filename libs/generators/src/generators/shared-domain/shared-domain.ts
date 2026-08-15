@@ -1,7 +1,7 @@
 import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { selectModels } from '../resource/models/registry'
-import { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
 
 export interface SharedDomainGeneratorSchema {
   /** Comma-separated model names to include; defaults to the whole registry */

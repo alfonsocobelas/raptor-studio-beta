@@ -1,7 +1,7 @@
 import { renderFrontendColumns } from './build-substitutions'
 import * as fs from 'fs'
 import * as path from 'path'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Defecto 17 (visto en motorhub): «Terminada» salía como true/false en el

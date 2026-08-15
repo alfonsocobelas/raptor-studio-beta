@@ -1,5 +1,5 @@
 import { Counter, Histogram, Registry, collectDefaultMetrics } from 'prom-client'
-import { MetricsPort } from '@acc/infra-ports'
+import { MetricsPort } from '@raptor/infra-ports'
 
 export interface PrometheusMetricsOptions {
   /** Prefix for every metric name (e.g. 'acc_') */

@@ -20,8 +20,8 @@
     "studio:api:bridge": "STUDIO_CHAT_BRIDGE=1 npm run studio:api"
   },
   "dependencies": {
-    "@acc/generators": "file:../../dist/libs/generators",
-    "@acc/schema": "file:../../dist/libs/schema",
+    "@raptor/generators": "file:../../dist/libs/generators",
+    "@raptor/schema": "file:../../dist/libs/schema",
     "@angular/cdk": "21.2.6",
     "@angular/common": "21.2.8",
     "@angular/compiler": "21.2.8",

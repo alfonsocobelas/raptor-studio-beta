@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Faithful transcription of the golden reference module `licenses` (the richest one:
 // consumption snapshot columns, soft delete, observability thresholds).

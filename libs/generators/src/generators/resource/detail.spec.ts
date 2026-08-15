@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import resourceGenerator from './resource'
 import { MODELS, registerModels } from './models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Spec 16: declarar `detail` emite la ficha del registro — el destino que la

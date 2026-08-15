@@ -302,18 +302,18 @@ export class UsersController extends BaseController<User> {
 
 Cada capacidad común se empaqueta como **módulo NestJS configurable** (`forRoot`/`forRootAsync`) reutilizable entre proyectos:
 
-- **`@acc/files`** — subida/descarga con abstracción de storage (local, S3, Azure Blob), validación de tipo/tamaño, streaming de descargas.
-- **`@acc/auth`** — JWT/refresh, integración OIDC, y contexto de tenant.
-- **`@acc/rbac`** — roles y permisos con guards e decoradores.
-- **`@acc/tenant`** — resolución de tenant y aplicación transparente del aislamiento (ver sección 6).
+- **`@raptor/files`** — subida/descarga con abstracción de storage (local, S3, Azure Blob), validación de tipo/tamaño, streaming de descargas.
+- **`@raptor/auth`** — JWT/refresh, integración OIDC, y contexto de tenant.
+- **`@raptor/rbac`** — roles y permisos con guards e decoradores.
+- **`@raptor/tenant`** — resolución de tenant y aplicación transparente del aislamiento (ver sección 6).
 
 ### 5.4 Contrato compartido front-back
 
-El **ResourceSchema** vive una sola vez. Del lado backend define entidad + configuración de query; del lado frontend define la vista. Se comparte en un paquete `@acc/contracts` del monorepo, y OpenAPI (Swagger de Nest) genera los tipos del cliente Angular, garantizando que front y back nunca se desincronicen.
+El **ResourceSchema** vive una sola vez. Del lado backend define entidad + configuración de query; del lado frontend define la vista. Se comparte en un paquete `@raptor/contracts` del monorepo, y OpenAPI (Swagger de Nest) genera los tipos del cliente Angular, garantizando que front y back nunca se desincronicen.
 
 ```mermaid
 graph LR
-    RS["@acc/contracts<br/>ResourceSchema"] --> BE["NestJS: entidad + query cfg"]
+    RS["@raptor/contracts<br/>ResourceSchema"] --> BE["NestJS: entidad + query cfg"]
     RS --> FE["Angular: ResourceView"]
     BE -->|Swagger / OpenAPI| GEN["Generador de tipos"]
     GEN --> FE
@@ -378,7 +378,7 @@ El eje es **aislamiento vs. coste/complejidad operativa**. Para un acelerador qu
 
 ### Recomendación
 
-**Empezar con Opción A (columna discriminadora) + Row-Level Security**, diseñando la capa de acceso (`@acc/tenant`) detrás de una **abstracción que permita migrar a schema-per-tenant sin tocar el código de negocio**. Concretamente:
+**Empezar con Opción A (columna discriminadora) + Row-Level Security**, diseñando la capa de acceso (`@raptor/tenant`) detrás de una **abstracción que permita migrar a schema-per-tenant sin tocar el código de negocio**. Concretamente:
 
 - El `tenant_id` nunca se pasa manualmente en las queries: lo inyecta un interceptor/subscriber a partir del contexto de request (JWT/subdominio), y RLS lo blinda a nivel de BD.
 - Para clientes enterprise que exijan aislamiento físico o residencia regional, se ofrece **Opción C como tier premium** reutilizando la misma capa de conexión (solo cambia el enrutado de datasource por tenant).
@@ -448,7 +448,7 @@ Nx aporta: límites de dependencia forzados (un feature no puede importar un ada
 2. [ ] Implementar el primer adapter (Material) como referencia.
 3. [ ] Prototipar el Render Engine con el esquema `ResourceView` y una tabla end-to-end.
 4. [ ] Construir `nest-core`: `QueryBuilderService`, `BaseController/Service`, DTOs de listado.
-5. [ ] Implementar `@acc/tenant` con AsyncLocalStorage + RLS en PostgreSQL.
+5. [ ] Implementar `@raptor/tenant` con AsyncLocalStorage + RLS en PostgreSQL.
 6. [ ] Configurar el monorepo Nx con límites de dependencia y un generador de recurso.
 7. [ ] Validar el desacoplamiento levantando la misma app con dos adapters distintos.
 

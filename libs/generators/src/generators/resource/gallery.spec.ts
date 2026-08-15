@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import resourceGenerator from './resource'
 import { MODELS, registerModels } from './models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Spec 17: la galería es OTRA LECTURA del listado — mismo servicio, mismo

@@ -9,8 +9,8 @@
 import { chromium } from 'playwright'
 import { FakeChatAdapter } from '../libs/backend/src/contexts/studio/chat/fake-chat.adapter'
 import { validateProposal } from '../libs/backend/src/contexts/studio/chat/validate-proposal'
-import { MODELS } from '@acc/generators/src/generators/resource/models/registry'
-import type { AppDefinition } from '@acc/schema'
+import { MODELS } from '@raptor/generators/src/generators/resource/models/registry'
+import type { AppDefinition } from '@raptor/schema'
 import type { ChatMessage } from '../libs/backend/src/contexts/studio/chat/chat.types'
 
 const adapter = new FakeChatAdapter(MODELS)

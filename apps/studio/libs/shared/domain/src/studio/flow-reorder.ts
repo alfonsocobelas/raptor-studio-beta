@@ -1,4 +1,4 @@
-import type { BusinessFlow, FlowEdge } from '@acc/schema'
+import type { BusinessFlow, FlowEdge } from '@raptor/schema'
 import { flowGroups } from './flow-groups'
 
 /**

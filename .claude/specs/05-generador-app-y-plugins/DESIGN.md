@@ -4,7 +4,7 @@
 
 ## Composición, no monolito
 
-`@acc/generators:app` ORQUESTA los generadores existentes (kernel, root, shared-domain,
+`@raptor/generators:app` ORQUESTA los generadores existentes (kernel, root, shared-domain,
 frontend-kernel, resource×N) sobre un staging y RECOLOCA su salida al layout del canon:
 
 ```

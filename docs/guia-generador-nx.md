@@ -241,10 +241,10 @@ Fíjate que **la coherencia front↔back sale gratis**: `filterable`/`sortable` 
 
 ```
 # preview sin escribir nada (ver qué ficheros crearía)
-nx generate @acc/generators:resource contract --dry-run
+nx generate @raptor/generators:resource contract --dry-run
 
 # generación real
-nx generate @acc/generators:resource contract
+nx generate @raptor/generators:resource contract
 ```
 
 Sale el módulo `contracts` completo (dominio + persistencia + aplicación + front), formateado con tus reglas de prettier, listo para que lo edites donde el caso lo pida.

@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import { readFileSync } from 'fs'
 import * as path from 'path'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { appGenerator, shellSubstitutions } from './app'
 import { composeFlat } from './composition'
 

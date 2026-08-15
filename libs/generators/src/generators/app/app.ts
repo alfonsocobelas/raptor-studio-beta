@@ -1,5 +1,5 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
-import { defineApp, defineResource, wantsSoftDelete, type AppDefinition, type ResourceDefinition } from '@acc/schema'
+import { defineApp, defineResource, wantsSoftDelete, type AppDefinition, type ResourceDefinition } from '@raptor/schema'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'

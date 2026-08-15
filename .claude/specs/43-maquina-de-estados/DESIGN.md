@@ -21,7 +21,7 @@ Las reglas de negocio que el emitido pierde frente a la referencia caen en cinco
 La 2 es la única con: mucho valor (la mitad de los métodos de negocio de la referencia son
 transiciones), derivación 100% determinista desde un dibujo, y editor visual ya construido.
 
-## 1. Contrato (`@acc/schema`) y gate
+## 1. Contrato (`@raptor/schema`) y gate
 
 ```ts
 export interface StateTransition {

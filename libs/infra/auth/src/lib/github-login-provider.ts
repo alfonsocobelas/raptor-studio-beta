@@ -1,4 +1,4 @@
-import { SocialIdentity, SocialLoginProvider } from '@acc/infra-ports'
+import { SocialIdentity, SocialLoginProvider } from '@raptor/infra-ports'
 import { OidcFetchLike } from './oidc-code-flow-provider'
 
 export interface GithubLoginOptions {

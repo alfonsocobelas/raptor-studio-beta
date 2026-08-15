@@ -48,7 +48,7 @@ export class StudioFillController {
     const args = [
       'nx',
       'generate',
-      '@acc/generators:fill-flow-slots',
+      '@raptor/generators:fill-flow-slots',
       `--directory=${body.directory}`,
       '--bridge=tmp/studio-bridge',
       '--no-interactive'

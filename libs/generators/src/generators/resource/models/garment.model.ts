@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model: clothing warehouse inventory.
 export const garment = defineResource({

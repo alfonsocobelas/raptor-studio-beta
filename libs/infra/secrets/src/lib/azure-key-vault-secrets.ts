@@ -1,5 +1,5 @@
-import { SecretsPort } from '@acc/infra-ports'
-import { SecretReader } from '@acc/infra-config-azure'
+import { SecretsPort } from '@raptor/infra-ports'
+import { SecretReader } from '@raptor/infra-config-azure'
 
 /** Azure Key Vault adapter over the same structural SecretReader used by config-azure. */
 export class AzureKeyVaultSecrets extends SecretsPort {

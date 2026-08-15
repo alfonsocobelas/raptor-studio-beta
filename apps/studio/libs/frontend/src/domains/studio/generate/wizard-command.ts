@@ -1,4 +1,4 @@
-import type { AppDefinition, BusinessBrief, BusinessFlow } from '@acc/schema'
+import type { AppDefinition, BusinessBrief, BusinessFlow } from '@raptor/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 /**
@@ -127,7 +127,7 @@ export function buildDesignRequest(input: DesignRequestInput): {
 export function buildCommand(manifest: SlotsManifest, options: WizardOptions): string {
   const plugins = options.plugins.length ? options.plugins.join(',') : 'none'
   return [
-    `npx nx g @acc/generators:app ${options.name}`,
+    `npx nx g @raptor/generators:app ${options.name}`,
     `--appFile=${options.name}.app.json`,
     ...choosableSlots(manifest).map(slot => `--${slot.name}=${options.slots[slot.name] ?? slot.default}`),
     `--plugins=${plugins}`

@@ -13,7 +13,7 @@ import {
   type StateMachine,
   type FlowNodeKind,
   type ResourceDefinition
-} from '@acc/schema'
+} from '@raptor/schema'
 import {
   VIEW_PRESETS,
   draftToResource,

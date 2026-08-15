@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import type { ResourceDefinition, SharedVoDefinition } from '@acc/schema'
+import type { ResourceDefinition, SharedVoDefinition } from '@raptor/schema'
 import { SHARED_VOS, sharedVosOf } from '../resource/models/shared-vos'
 
 /** Los VOs compartidos que un contexto necesita, con el contexto que los aloja. */

@@ -2,7 +2,7 @@
 
 ## Fase 1 — Color completo
 
-- [x] TASK-01 — `deriveTheme` en `@acc/schema`: escala L + semillas → juego completo de tokens (neutral reproduce los valores actuales)
+- [x] TASK-01 — `deriveTheme` en `@raptor/schema`: escala L + semillas → juego completo de tokens (neutral reproduce los valores actuales)
 - [x] TASK-02 — el catálogo de temas sustituye a `PALETTES`; `theme.id` en el app-schema con `palette` como alias
 - [x] TASK-03 — `styles.css` pasa a plantilla EJS alimentada por `deriveTheme`; muere `palette.ts`. Gate: golden diff vacío en neutral
 - [x] TASK-04 — el lienzo previsualiza con los mismos tokens derivados

@@ -79,7 +79,7 @@ export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'res
 
 /** Aspecto de la app emitida: el tema viste la app entera (spec 20). */
 export interface ThemeDefinition {
-  /** Id de un tema del catálogo (@acc/schema THEMES) */
+  /** Id de un tema del catálogo (@raptor/schema THEMES) */
   id?: string
   /** @deprecated nombre que usó la spec 18; se sigue leyendo como alias de `id` */
   palette?: string

@@ -36,7 +36,7 @@ export function buildGeneratorArgs(input: GenerateArgsInput): string[] {
   return [
     'nx',
     'g',
-    '@acc/generators:app',
+    '@raptor/generators:app',
     input.name,
     `--appFile=${input.appFile}`,
     ...slotFlags,

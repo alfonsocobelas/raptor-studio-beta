@@ -1,7 +1,7 @@
 import { buildSubstitutions } from './build-substitutions'
 import { contract } from './models/contract.model'
 import { customer } from './models/customer.model'
-import { ResourceDefinition } from '@acc/schema'
+import { ResourceDefinition } from '@raptor/schema'
 
 describe('buildSubstitutions', () => {
   describe('name variants', () => {

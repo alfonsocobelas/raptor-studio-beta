@@ -1,6 +1,6 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { resourceGenerator } from '../resource/resource'
 import { shellSubstitutions } from './app'
 import { composeFlat } from './composition'

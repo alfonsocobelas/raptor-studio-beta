@@ -9,7 +9,7 @@ Piezas concretas a reutilizar: `autoLayout`/`overlayLayout`/`nodeBox`/
 `model-view.component.ts` (`setPointerCapture` sobre el handle, coordenadas
 vía `surface.getBoundingClientRect()`)._
 
-## 1. Contrato (`@acc/schema`, app-types.ts)
+## 1. Contrato (`@raptor/schema`, app-types.ts)
 
 ```ts
 export type FlowNodeKind = 'start' | 'step' | 'decision' | 'end'

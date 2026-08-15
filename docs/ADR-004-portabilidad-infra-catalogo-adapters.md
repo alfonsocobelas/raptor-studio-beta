@@ -122,7 +122,7 @@ Disciplina del puerto: se diseña por lo que **todos** los proveedores objetivo 
 - **Azure como referencia** (tu mayoritario): define puertos + adapter real.
 - **AWS como segundo adapter, bajo demanda**: el segundo proveedor es el que _demuestra_ que la abstracción aguanta (como la referencia de oro del generador). Con dos reales, el tercero es barato.
 - **Cloudflare, no especulativo**, y con el aviso de runtime por delante.
-- **Empezar por `StoragePort`** (el más uniforme; ya previsto como `@acc/files`), no por auth ni cómputo.
+- **Empezar por `StoragePort`** (el más uniforme; ya previsto como `@raptor/files`), no por auth ni cómputo.
 
 No construir todos-los-proveedores × todos-los-servicios de golpe.
 

@@ -1,8 +1,8 @@
-# Publicación de los paquetes @acc/\* (GitHub Packages)
+# Publicación de los paquetes @raptor/\* (GitHub Packages)
 
 Pipeline preparado en `.github/workflows/release.yml` (manual, `workflow_dispatch`).
 `nx release` versiona por Conventional Commits, genera changelog por proyecto y publica
-los 12 paquetes (`@acc/schema` + los 11 `@acc/infra-*`).
+los 12 paquetes (`@raptor/schema` + los 11 `@raptor/infra-*`).
 
 ## Pasos que quedan del lado humano (una vez)
 
@@ -10,7 +10,7 @@ los 12 paquetes (`@acc/schema` + los 11 `@acc/infra-*`).
 2. **Regla dura de GitHub Packages**: el scope npm debe coincidir con el owner del repo.
    - Si el owner va a ser la organización `acc` → nada que tocar.
    - Si va a ser otra (p. ej. `avvale-es`), renombrar el scope en los `package.json`
-     y en los import paths (`@acc/...` → `@avvale-es/...`). Es un buscar/reemplazar +
+     y en los import paths (`@raptor/...` → `@avvale-es/...`). Es un buscar/reemplazar +
      re-verificar el smoke de instalación (npm pack + install en proyecto externo).
 3. Añadir `"repository": { "type": "git", "url": "https://github.com/<owner>/<repo>.git" }`
    a cada `package.json` publicable (GitHub Packages lo exige para enlazar paquete↔repo).
@@ -25,6 +25,6 @@ en verde **y** el diff de oro vacío. Si cualquiera falla, no se publica nada.
 
 ```
 # .npmrc del proyecto consumidor
-@acc:registry=https://npm.pkg.github.com
+@raptor:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```

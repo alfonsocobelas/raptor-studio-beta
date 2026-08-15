@@ -3,7 +3,7 @@ import type { Tree } from '@nx/devkit'
 import kernelGenerator from './kernel'
 import { appGenerator } from '../app/app'
 import { MODELS, registerModels } from '../resource/models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * TASK-01 (spec 25): las reglas de fichero (nombre, MIME, tamaño) suben al DOMINIO como value

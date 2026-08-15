@@ -16,7 +16,7 @@ acelerador/
 │   ├── almacen/  concesionario/   #   verificación end-to-end del código emitido
 ├── libs/
 │   ├── schema/                    # defineResource + tipos (TS puro, sin frameworks)
-│   ├── generators/                # Plugin Nx @acc/generators — 5 generadores:
+│   ├── generators/                # Plugin Nx @raptor/generators — 5 generadores:
 │   │   └── src/generators/
 │   │       ├── resource/          #   modelo → módulo completo (~50 ficheros/recurso)
 │   │       │   ├── models/        #   registro de modelos (registry.ts + *.model.ts)
@@ -29,7 +29,7 @@ acelerador/
 │   │       ├── frontend-kernel/   #   kernel Angular (DataTable, guards, interceptors; ui skins)
 │   │       ├── shared-domain/     #   lib DTOs front⇄back derivada del registro
 │   │       └── root/              #   composition root (root.module + main + environments)
-│   └── infra/                     # Catálogo de adapters (ADR-004) — paquetes @acc/infra-*:
+│   └── infra/                     # Catálogo de adapters (ADR-004) — paquetes @raptor/infra-*:
 │       ├── ports/                 #   puertos abstractos + contratos estructurales
 │       ├── storage-{azure,s3,gcs} #   FileStoragePort (conformidad real: Azurite/MinIO)
 │       ├── config-{azure,aws}     #   resolución vault.* (Key Vault / Secrets Manager)

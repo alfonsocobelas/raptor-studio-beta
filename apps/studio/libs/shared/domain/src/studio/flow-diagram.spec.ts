@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { BusinessFlow } from '@acc/schema'
+import type { BusinessFlow } from '@raptor/schema'
 import {
   FLOW_DECISION,
   FLOW_GRID,

@@ -1,5 +1,5 @@
 import { designPagesToAppPages, draftToResource } from '@app/shared/domain'
-import type { AppDefinition, ResourceDefinition } from '@acc/schema'
+import type { AppDefinition, ResourceDefinition } from '@raptor/schema'
 import type { DesignPayload } from '../chat/chat.types'
 
 export interface AppFileContent extends AppDefinition {

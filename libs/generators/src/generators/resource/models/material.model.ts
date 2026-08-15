@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model (Solaris Energía): catálogo de paneles, inversores, baterías y estructura.
 // Estrena DOS piezas que ningún modelo registrado usaba: la galería de tarjetas (spec 17)

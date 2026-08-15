@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { StateMachine } from '@acc/schema'
+import type { StateMachine } from '@raptor/schema'
 import { STATE_NODE, stateDiagram } from './state-diagram'
 
 /**

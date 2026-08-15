@@ -1,4 +1,4 @@
-import type { FlowNodeKind } from '@acc/schema'
+import type { FlowNodeKind } from '@raptor/schema'
 
 /**
  * Cómo se llaman los bloques EN PANTALLA (nomenclatura acordada 2026-08-11). El contrato

@@ -1,4 +1,4 @@
-import { SessionRecord } from '@acc/infra-ports'
+import { SessionRecord } from '@raptor/infra-ports'
 import { RedisLike, RedisSessionStore } from './redis-session-store'
 
 const record = (over: Partial<SessionRecord> = {}): SessionRecord => ({

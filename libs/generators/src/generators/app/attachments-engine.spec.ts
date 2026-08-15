@@ -2,7 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import { appGenerator } from './app'
 import { MODELS, registerModels } from '../resource/models/registry'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * TASK-03 (spec 25): los adjuntos emiten hoy una entidad TypeORM, así que pedirlos en una app

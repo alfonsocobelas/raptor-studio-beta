@@ -4,8 +4,8 @@ Config JSON por entorno, bundle-safe (imports estáticos, patrón `config-source
 Los valores `vault.*` son **marcadores**: los resuelve en arranque el loader del
 proveedor elegido contra su gestor de secretos:
 
-- Azure Key Vault → `@acc/infra-config-azure` (`resolveAzureConfig`)
-- AWS Secrets Manager → `@acc/infra-config-aws` (`resolveAwsConfig`)
+- Azure Key Vault → `@raptor/infra-config-azure` (`resolveAzureConfig`)
+- AWS Secrets Manager → `@raptor/infra-config-aws` (`resolveAwsConfig`)
 
 Reglas:
 

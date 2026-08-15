@@ -9,7 +9,7 @@ y el artefacto no se hablan. La paleta debe viajar en el app-schema y el
 generador debe emitir sus tokens.
 
 - `theme: { palette }` en `AppDefinition`, con un catálogo CERRADO de paletas
-  compartido entre estudio y generador (vive en `@acc/schema`, que es el
+  compartido entre estudio y generador (vive en `@raptor/schema`, que es el
   contrato común). Sin colores libres: el lienzo no es un editor de temas.
 - El generador reescribe `--primary`, `--primary-foreground` y `--ring` en
   `styles.css` (bloque claro y bloque oscuro). El resto de tokens no se tocan:

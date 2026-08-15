@@ -65,7 +65,7 @@ Tu rol es **Senior Software Engineer y Arquitecto de Software con más de 20 añ
 
 ## Stack en una línea
 
-Nx monorepo + plugin local (`@acc/generators`, EJS) · Código emitido: Angular 21 + Signals + Spartan NG · NestJS 11 + TypeORM + PostgreSQL · Node 24+
+Nx monorepo + plugin local (`@raptor/generators`, EJS) · Código emitido: Angular 21 + Signals + Spartan NG · NestJS 11 + TypeORM + PostgreSQL · Node 24+
 
 ---
 

@@ -32,7 +32,7 @@ trap cleanup EXIT
 
 echo "▶ generando app emitida (${ARGS[*]})"
 rm -rf "$STAGING"
-if ! (cd "$ROOT" && NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @acc/generators:app "$NAME" \
+if ! (cd "$ROOT" && NX_PREFER_NODE_STRIP_TYPES=false npx nx generate @raptor/generators:app "$NAME" \
       "${ARGS[@]}" --directory="tmp/$NAME" --skipInstall --no-interactive >/dev/null 2>&1); then
   echo "❌ la generación falló"
   exit 1

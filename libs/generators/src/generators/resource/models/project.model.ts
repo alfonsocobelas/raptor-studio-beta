@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Faithful transcription of the golden reference module `projects`.
 // Canonical primitives-style mapper: all 5 files are emitted for this resource.

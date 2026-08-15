@@ -54,7 +54,7 @@ decoradores `@Column`/`@Index` por campo, tipos TS. Sin lógica: recibe todo mas
 ## Validación (a mano en esta spec)
 
 ```
-nx generate @acc/generators:resource contract → tmp
+nx generate @raptor/generators:resource contract → tmp
 diff tmp/... docs/referencia/libs/backend/src/contexts/sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity.ts
 ```
 

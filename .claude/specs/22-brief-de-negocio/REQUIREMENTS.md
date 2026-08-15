@@ -31,7 +31,7 @@ Decisiones tomadas en el brainstorming (2026-08-03):
 ## Contrato
 
 ```ts
-// @acc/schema — app-types.ts
+// @raptor/schema — app-types.ts
 export interface BusinessBrief {
   business: string                              // prosa: qué hace este negocio
   rules?: string[]                              // reglas que la IA debe respetar
@@ -39,7 +39,7 @@ export interface BusinessBrief {
 }
 export interface AppDefinition { …; brief?: BusinessBrief }
 
-// @acc/schema — resource-types.ts
+// @raptor/schema — resource-types.ts
 export interface ResourceDefinition { …; brief?: string }
 ```
 
@@ -88,7 +88,7 @@ prompt con el uso): `business` ≤ 1200 chars · `rules` ≤ 20 × 240 ·
 ## Criterios de aceptación
 
 - [ ] `defineApp`/`defineResource` aceptan brief válido, rechazan `business`
-      vacío y cortan por tope (tests en `@acc/schema`).
+      vacío y cortan por tope (tests en `@raptor/schema`).
 - [ ] Contar el negocio en el chat y recargar: el panel de contexto muestra lo
       destilado y el siguiente turno no repregunta (verificado con bridge).
 - [ ] El brief es editable en el panel del chat (app) y en el inspector
@@ -98,7 +98,7 @@ prompt con el uso): `business` ≤ 1200 chars · `rules` ≤ 20 × 240 ·
       contenido del brief; sin brief → sin fichero.
 - [ ] `/golden-diff` vacío en las tareas que no tocan plantillas; la fixture
       nueva con brief se baseline-a en su propio commit.
-- [ ] Suite verde en `@acc/schema`, generadores y estudio (back y front).
+- [ ] Suite verde en `@raptor/schema`, generadores y estudio (back y front).
 
 ## Referencias
 

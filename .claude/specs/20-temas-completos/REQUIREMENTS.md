@@ -35,7 +35,7 @@ tema = { escala L fija (la de shadcn, compartida por todos los temas) }
      + { fuente }        (fase 3)
                 │
                 ▼
-       deriveTheme(tema) : ThemeTokens      ← TypeScript puro, en @acc/schema
+       deriveTheme(tema) : ThemeTokens      ← TypeScript puro, en @raptor/schema
                 │
         ┌───────┴────────┐
         ▼                ▼

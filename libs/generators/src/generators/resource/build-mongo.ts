@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import type { FieldDefinition, FieldType, ResourceDefinition } from '@acc/schema'
+import type { FieldDefinition, FieldType, ResourceDefinition } from '@raptor/schema'
 
 /**
  * Bindings de la persistencia Mongoose de un recurso (spec 06). Toda la lógica vive aquí:

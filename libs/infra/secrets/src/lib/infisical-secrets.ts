@@ -1,4 +1,4 @@
-import { SecretsPort } from '@acc/infra-ports'
+import { SecretsPort } from '@raptor/infra-ports'
 import { FetchLike } from './doppler-secrets'
 
 export interface InfisicalSecretsOptions {

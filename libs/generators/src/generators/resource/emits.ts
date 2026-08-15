@@ -1,4 +1,4 @@
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Qué piezas emite un recurso, derivado SOLO de su modelo.

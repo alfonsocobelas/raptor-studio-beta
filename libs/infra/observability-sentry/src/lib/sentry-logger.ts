@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AppLogger, LoggerSanitizer } from '@acc/infra-ports'
+import { AppLogger, LoggerSanitizer } from '@raptor/infra-ports'
 
 /** Structural contract over the Sentry SDK so tests inject a fake (@sentry/node satisfies it). */
 export interface SentryLike {

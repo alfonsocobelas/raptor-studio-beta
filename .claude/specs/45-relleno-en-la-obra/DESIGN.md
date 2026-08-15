@@ -9,7 +9,7 @@ existe desde la spec 39 y NO se toca en su lógica: esta spec la invoca y la aso
   aún vacíos en la app emitida, contados con un escáner de disco propio del studio-api
   (regex del hueco vacío; el generador no puede prestarnos el suyo sin un Tree de nx).
 - **`POST /studio/fill-slots/stream`** `{directory}`: lanza
-  `npx nx g @acc/generators:fill-flow-slots --directory=… --bridge=tmp/studio-bridge`
+  `npx nx g @raptor/generators:fill-flow-slots --directory=… --bridge=tmp/studio-bridge`
   como proceso hijo (mismo patrón que generate) y traduce su consola a NDJSON:
 
 ```

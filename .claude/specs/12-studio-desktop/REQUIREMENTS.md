@@ -6,7 +6,7 @@ Cierre de la visión (`docs/vision-editor-visual-schema.md`). **Decisión de Alf
 (2026-07-31): opción 1 — generación in situ vía backend local, sin empaquetar app de
 escritorio; Electron queda como comparativa opcional si da tiempo.** El navegador no puede
 ejecutar el generador; el backend Nest local del estudio sí. Al pulsar «Generar aquí», el
-backend ejecuta `nx g @acc/generators:app … --appFile=…` sobre el workspace del acelerador y
+backend ejecuta `nx g @raptor/generators:app … --appFile=…` sobre el workspace del acelerador y
 devuelve el log — el usuario diseña y genera sin tocar la terminal.
 
 ## User stories (formato EARS)

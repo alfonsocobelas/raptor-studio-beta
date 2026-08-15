@@ -1,4 +1,4 @@
-import { defineApp } from '@acc/schema'
+import { defineApp } from '@raptor/schema'
 
 /**
  * App canónica de demostración: dashboard de KPIs + los cuatro recursos de oro.

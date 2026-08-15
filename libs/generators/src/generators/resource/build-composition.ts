@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
 
 /**
  * Composition (B3): child entity owned by the aggregate (e.g. customer contacts).

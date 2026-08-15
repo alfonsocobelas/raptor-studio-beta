@@ -1,5 +1,5 @@
-import type { StateMachine } from '@acc/schema'
-import { unreachableStates } from '@acc/schema'
+import type { StateMachine } from '@raptor/schema'
+import { unreachableStates } from '@raptor/schema'
 import type { DraftEnumValue } from './draft-resource'
 
 /**

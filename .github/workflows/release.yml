@@ -1,4 +1,4 @@
-# Publica los paquetes @acc/* en GitHub Packages con nx release.
+# Publica los paquetes @raptor/* en GitHub Packages con nx release.
 # Requisitos previos (una sola vez, lado humano — ver docs/PUBLISHING.md):
 #   1. Repo subido a GitHub bajo la organización cuyo nombre coincide con el scope npm.
 #   2. El scope de los paquetes debe coincidir con el owner del repo (regla de GitHub Packages).

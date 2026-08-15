@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model: dealership inventory. Written from scratch against the canonical DSL
 // (not transcribed from a golden module) to exercise the generator on a new domain.

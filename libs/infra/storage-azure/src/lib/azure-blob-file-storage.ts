@@ -1,5 +1,5 @@
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob'
-import { FileStoragePort } from '@acc/infra-ports'
+import { FileStoragePort } from '@raptor/infra-ports'
 
 export interface AzureBlobFileStorageOptions {
   /** Azure Storage connection string; 'UseDevelopmentStorage=true' targets local Azurite */

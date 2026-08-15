@@ -1,4 +1,4 @@
-import { defineApp } from '@acc/schema'
+import { defineApp } from '@raptor/schema'
 
 /**
  * App del almacén (mismo set que la demo boutique verificada en la spec 05):

@@ -1,4 +1,4 @@
-import { Clock } from '@acc/infra-ports'
+import { Clock } from '@raptor/infra-ports'
 import { OidcCodeFlowOptions, OidcCodeFlowProvider, OidcFetchLike } from './oidc-code-flow-provider'
 
 export interface MicrosoftOidcOptions extends OidcCodeFlowOptions {

@@ -71,7 +71,7 @@ export async function resourceGenerator(tree: Tree, options: ResourceSchema) {
 ## Flujo de trabajo con plantillas (TDD adaptado)
 
 1. Escribe/ajusta el `*.model.ts` de una entidad de oro (p.ej. contract).
-2. Genera a carpeta temporal: `nx generate @acc/generators:resource contract --dry-run` primero.
+2. Genera a carpeta temporal: `nx generate @raptor/generators:resource contract --dry-run` primero.
 3. **Diff contra la fixture de oro** (`tools/golden-fixtures/contracts/…`). El diff fallando es tu test RED.
 4. Ajusta plantilla/generator hasta diff vacío (GREEN). Refactoriza la plantilla si se ensució.
 5. Regenera las 4 entidades de oro antes de commitear (gate `/golden-diff`).

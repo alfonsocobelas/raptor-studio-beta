@@ -1,6 +1,6 @@
 import { names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import { ColumnDefinition, FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@acc/schema'
+import { ColumnDefinition, FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@raptor/schema'
 import { byDependency } from '../dependency-order'
 import { definePlugin, type PluginContext } from './plugin'
 

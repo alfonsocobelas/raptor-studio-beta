@@ -1,4 +1,4 @@
-import { Nullable, TenantRequestContext, TenantResolver } from '@acc/infra-ports'
+import { Nullable, TenantRequestContext, TenantResolver } from '@raptor/infra-ports'
 
 export interface HeaderTenantResolverOptions {
   /** Header carrying the tenant id; defaults to 'x-tenant-id' */

@@ -41,9 +41,9 @@ Decisiones cerradas en brainstorming (2026-07-31):
 
 ## Criterios de aceptación
 
-- [ ] `nx g @acc/generators:app --database=mongo` genera una app que compila, arranca y pasa su suite
+- [ ] `nx g @raptor/generators:app --database=mongo` genera una app que compila, arranca y pasa su suite
       completa (unit + integración contra mongo docker + e2e)
-- [ ] `nx g @acc/generators:app` (sin opción) produce salida idéntica a la baseline actual: `/golden-diff`
+- [ ] `nx g @raptor/generators:app` (sin opción) produce salida idéntica a la baseline actual: `/golden-diff`
       de la fixture Postgres queda vacío
 - [ ] Nueva fixture golden mongo congelada e incorporada a `tools/golden-diff.sh`
 - [x] ~~IDs `_id` string UUIDv7 (no ObjectId)~~ → **cambiado por decisión de Alfonso el 2026-08-04**:

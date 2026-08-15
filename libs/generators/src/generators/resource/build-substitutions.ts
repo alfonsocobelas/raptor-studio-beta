@@ -24,7 +24,7 @@ import {
   ResourceDefinition,
   VoDefinition,
   wantsSoftDelete
-} from '@acc/schema'
+} from '@raptor/schema'
 
 export interface ColumnSubstitution {
   name: string
@@ -352,7 +352,7 @@ export function buildSubstitutions(
     toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
     toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f)),
     route: definition.route ?? `/${definition.context}/${definition.plural}`,
-    sharedDomainAlias: definition.sharedDomainAlias ?? '@acc/shared/domain',
+    sharedDomainAlias: definition.sharedDomainAlias ?? '@raptor/shared/domain',
     ui: renderUiStrings(definition, wantsSoftDelete(definition) ? buildDragTree(definition, others).length > 0 : false),
     frontendColumns: renderFrontendColumns(definition),
     valueMapImports: [

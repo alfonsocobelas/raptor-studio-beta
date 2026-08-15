@@ -1,4 +1,4 @@
-import { SecretsPort } from '@acc/infra-ports'
+import { SecretsPort } from '@raptor/infra-ports'
 
 /**
  * Minimal structural contract over the GCP client (SecretManagerServiceClient satisfies

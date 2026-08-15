@@ -19,7 +19,7 @@ Convenciones comunes a los tres:
 - **Naming**: `${project}-${env}` como prefijo de todo; tags/labels `project/environment/managed_by`.
 - **Secretos**: los stacks escriben en el gestor del proveedor las MISMAS claves
   que consumen los loaders (`vault.typeorm.password` → `typeorm-password`, `typeorm-host`, `typeorm-username`, `typeorm-database`)
-  vía `@acc/infra-config-azure` / `config-aws`. Nunca secretos en tfvars commiteados.
+  vía `@raptor/infra-config-azure` / `config-aws`. Nunca secretos en tfvars commiteados.
 - **Bootstrap en dos apply**: el primero crea registro+datos (sin servicios de
   cómputo: la imagen aún no existe); tras el primer push se rellena
   `backend_image`/`frontend_image` y el segundo apply crea los servicios.

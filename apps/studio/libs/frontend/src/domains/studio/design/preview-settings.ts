@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core'
-import { THEMES } from '@acc/schema'
+import { THEMES } from '@raptor/schema'
 
 export type PreviewTheme = 'light' | 'dark'
 

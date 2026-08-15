@@ -2,7 +2,7 @@
 
 ## Contexto de negocio
 
-Primera spec del acelerador. Crea el workspace Nx y el plugin local `@acc/generators` con su primer
+Primera spec del acelerador. Crea el workspace Nx y el plugin local `@raptor/generators` con su primer
 generador (`resource`), y demuestra el mecanismo completo end-to-end con **una sola plantilla**: la
 entidad TypeORM de `contract`, validada por diff contra el código real de la referencia. Es el paso 1-2
 de la ruta de aprendizaje de `docs/guia-generador-nx.md` §9 y el "siguiente paso" del documento maestro §12.
@@ -12,7 +12,7 @@ modelo → generator.ts → plantilla EJS → diff funcione y quede commiteado c
 
 ## User stories (formato EARS)
 
-- WHEN ejecuto `nx generate @acc/generators:resource contract --dry-run` THEN veo el preview de los ficheros que se generarían, sin escribir nada
+- WHEN ejecuto `nx generate @raptor/generators:resource contract --dry-run` THEN veo el preview de los ficheros que se generarían, sin escribir nada
 - WHEN ejecuto la generación real de `contract` THEN se emite `typeorm-contract.entity.ts` formateado con las reglas de prettier del repo
 - IF comparo el fichero emitido con `docs/referencia/libs/backend/src/contexts/sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity.ts` THEN el diff es vacío (o solo cosmético justificado y documentado)
 - IF la plantilla menciona una entidad concreta (hardcodea "contract") THEN es un defecto — la misma plantilla debe servir para cualquier entidad
@@ -21,7 +21,7 @@ modelo → generator.ts → plantilla EJS → diff funcione y quede commiteado c
 ## Criterios de aceptación
 
 - [ ] Workspace Nx inicializado (Node 24+, prettier/eslint con las convenciones del proyecto)
-- [ ] Plugin local `libs/generators` registrado y ejecutable vía `nx generate @acc/generators:resource`
+- [ ] Plugin local `libs/generators` registrado y ejecutable vía `nx generate @raptor/generators:resource`
 - [ ] `contract.model.ts` escrito como dato puro (forma mínima del resource-schema, guía §3)
 - [ ] La entidad TypeORM emitida reproduce la real de la referencia (diff vacío)
 - [ ] `--dry-run` funciona

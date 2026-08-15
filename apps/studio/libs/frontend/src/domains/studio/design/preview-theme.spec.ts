@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import * as schema from '@acc/schema'
-import { THEMES, deriveTheme, findTheme } from '@acc/schema'
+import * as schema from '@raptor/schema'
+import { THEMES, deriveTheme, findTheme } from '@raptor/schema'
 import { previewThemeVars } from './preview-theme'
 
 describe('previewThemeVars — el lienzo pinta con los tokens que se van a emitir', () => {

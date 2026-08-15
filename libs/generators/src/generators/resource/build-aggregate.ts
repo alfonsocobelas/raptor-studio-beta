@@ -1,6 +1,6 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
-import { FieldDefinition, ResourceDefinition, VoDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition, VoDefinition } from '@raptor/schema'
 import { CompositionBindings, renderComposition } from './build-composition'
 
 /**

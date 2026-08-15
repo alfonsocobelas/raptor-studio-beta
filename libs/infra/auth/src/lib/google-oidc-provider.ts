@@ -1,4 +1,4 @@
-import { Clock } from '@acc/infra-ports'
+import { Clock } from '@raptor/infra-ports'
 import { OidcCodeFlowOptions, OidcCodeFlowProvider, OidcFetchLike } from './oidc-code-flow-provider'
 
 /** Google Identity (OIDC). Credenciales de una OAuth 2.0 Client ID de tipo Web application. */

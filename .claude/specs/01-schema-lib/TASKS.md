@@ -1,4 +1,4 @@
-# Tareas atómicas: Schema lib (`@acc/schema`)
+# Tareas atómicas: Schema lib (`@raptor/schema`)
 
 > Cada tarea = un commit atómico en develop. Implementar UNA, commitear, esperar revisión, siguiente.
 
@@ -6,7 +6,7 @@
 
 ## La lib
 
-- [x] **TASK-01**: Scaffold de `libs/schema` (`@nx/js:library`, importPath `@acc/schema`, jest, sin bundler) + limpiar el ejemplo generado; lint y test verdes
+- [x] **TASK-01**: Scaffold de `libs/schema` (`@nx/js:library`, importPath `@raptor/schema`, jest, sin bundler) + limpiar el ejemplo generado; lint y test verdes
 - [x] **TASK-02**: `resource-types.ts` (formato canónico completo del DESIGN) + `validation-errors.ts` (`SchemaValidationError` con lista de problemas) + barrel — sin tests (tipos y clase de error sin lógica)
 
 ## defineResource (TDD)
@@ -15,7 +15,7 @@
 
 ## Migración del generador
 
-- [x] **TASK-04**: Migrar `libs/generators` a `@acc/schema`: `contract.model.ts` con `defineResource` y fields keyed, `build-substitutions.ts` sobre `ResourceDefinition` (`Object.entries`), adaptar tests existentes, eliminar `model-types.ts`
+- [x] **TASK-04**: Migrar `libs/generators` a `@raptor/schema`: `contract.model.ts` con `defineResource` y fields keyed, `build-substitutions.ts` sobre `ResourceDefinition` (`Object.entries`), adaptar tests existentes, eliminar `model-types.ts`
 
 ## Cierre
 

@@ -1,4 +1,4 @@
-import { SecretsPort } from '@acc/infra-ports'
+import { SecretsPort } from '@raptor/infra-ports'
 
 /**
  * Structural contract over the Bitwarden Secrets Manager SDK (@bitwarden/sdk-napi).

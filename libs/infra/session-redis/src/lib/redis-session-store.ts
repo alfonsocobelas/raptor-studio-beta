@@ -1,4 +1,4 @@
-import { Nullable, SessionRecord, SessionStore } from '@acc/infra-ports'
+import { Nullable, SessionRecord, SessionStore } from '@raptor/infra-ports'
 
 /**
  * Minimal structural contract over the redis client (ioredis satisfies it), so tests

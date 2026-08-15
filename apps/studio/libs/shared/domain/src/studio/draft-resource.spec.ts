@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 import {
   DRAFT_FIELD_TYPES,
   SELECTABLE_FIELD_TYPES,

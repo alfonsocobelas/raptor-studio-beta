@@ -1,6 +1,6 @@
 import { generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import type { BusinessFlow, FlowNode, ResourceDefinition } from '@acc/schema'
+import type { BusinessFlow, FlowNode, ResourceDefinition } from '@raptor/schema'
 import { harvestAiSlots, reinjectAiSlots } from '../resource/ai-slots'
 import { flowOrder, renderFlowSteps } from './brief-doc'
 

@@ -1,5 +1,5 @@
 {
-  "name": "@acc/infra-session-redis",
+  "name": "@raptor/infra-session-redis",
   "version": "0.0.1",
   "private": false,
   "type": "commonjs",
@@ -7,7 +7,7 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@acc/infra-ports": "0.0.1"
+    "@raptor/infra-ports": "0.0.1"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com",

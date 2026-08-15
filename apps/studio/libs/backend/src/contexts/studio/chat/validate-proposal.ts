@@ -1,4 +1,4 @@
-import { BRIEF_LIMITS, briefProblems, defineResource, validateFlows } from '@acc/schema'
+import { BRIEF_LIMITS, briefProblems, defineResource, validateFlows } from '@raptor/schema'
 import { draftToResource } from '@app/shared/domain'
 import type { DesignPayload } from './chat.types'
 

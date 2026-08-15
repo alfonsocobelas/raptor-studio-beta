@@ -69,7 +69,7 @@ export async function kernelGenerator(tree: Tree, options: KernelGeneratorSchema
   }))
 
   const substitutions = {
-    sharedDomainAlias: options.sharedDomainAlias ?? '@acc/shared/domain',
+    sharedDomainAlias: options.sharedDomainAlias ?? '@raptor/shared/domain',
     codeSequences,
     databaseName: [...new Set(MODEL_LIST.map(m => m.schemaName))][0] ?? 'app',
     entities,

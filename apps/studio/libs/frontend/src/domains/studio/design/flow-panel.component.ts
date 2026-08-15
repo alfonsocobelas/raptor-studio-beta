@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import type { FlowNodeKind } from '@acc/schema'
+import type { FlowNodeKind } from '@raptor/schema'
 import { FLOW_KIND_LABELS, flowToProse } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'

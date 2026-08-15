@@ -1,7 +1,7 @@
 import { names } from '@nx/devkit'
 import { SHARED_VOS } from './models/shared-vos'
 import { MODELS } from './models/registry'
-import { FieldDefinition, ResourceDefinition } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
 import { softDeleteContract } from './drag-tree'
 
 /**

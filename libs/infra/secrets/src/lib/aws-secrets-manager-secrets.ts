@@ -1,6 +1,6 @@
 import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
-import { SecretsPort } from '@acc/infra-ports'
-import { AwsSecretsReader } from '@acc/infra-config-aws'
+import { SecretsPort } from '@raptor/infra-ports'
+import { AwsSecretsReader } from '@raptor/infra-config-aws'
 
 /** AWS Secrets Manager adapter for the SecretsPort (missing secret → null, as the port mandates). */
 export class AwsSecretsManagerSecrets extends SecretsPort {

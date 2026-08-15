@@ -1,6 +1,6 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
-import type { BusinessFlow } from '@acc/schema'
+import type { BusinessFlow } from '@raptor/schema'
 import { MODELS } from '../resource/models/registry'
 import { emitFlowProcesses } from './flow-process'
 

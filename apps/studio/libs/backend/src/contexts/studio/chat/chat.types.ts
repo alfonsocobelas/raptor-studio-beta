@@ -1,4 +1,4 @@
-import type { BusinessBrief, BusinessFlow, PortsDefinition } from '@acc/schema'
+import type { BusinessBrief, BusinessFlow, PortsDefinition } from '@raptor/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 export interface ChatMessage {
@@ -11,7 +11,7 @@ export interface DesignPayload {
   appName: string
   resources: DraftResource[]
   pages: DesignPage[]
-  /** Paleta elegida en el lienzo (id del catálogo de @acc/schema) */
+  /** Paleta elegida en el lienzo (id del catálogo de @raptor/schema) */
   palette?: string
   /** Puertos elegidos para ejecutar la app en local (hallazgo 14) */
   ports?: PortsDefinition

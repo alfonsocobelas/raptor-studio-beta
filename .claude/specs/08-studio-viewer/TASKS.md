@@ -2,9 +2,9 @@
 
 > Cada tarea = un commit. TDD donde hay lógica (sample-data, view-model).
 
-- [x] TASK-01: scaffold `apps/studio` con `nx g @acc/generators:app studio --app=demo`
+- [x] TASK-01: scaffold `apps/studio` con `nx g @raptor/generators:app studio --app=demo`
       (baseline generada, commit tal cual, sin edición manual).
-- [x] TASK-02: dependencias del contrato en el workspace studio (`@acc/schema` por file:dist,
+- [x] TASK-02: dependencias del contrato en el workspace studio (`@raptor/schema` por file:dist,
       subpath del dist de generators para modelos/app/composición) + `active-app.ts` con la
       composición congelada. Smoke: build del estudio verde.
 - [x] TASK-03: `sample-data.ts` (filas, totales y columnas visibles deterministas) — TDD puro.

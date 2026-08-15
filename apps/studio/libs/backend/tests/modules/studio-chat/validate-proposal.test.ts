@@ -1,6 +1,6 @@
 import { validateDesign } from '@app/backend/contexts/studio/chat/validate-proposal'
 import type { DesignPayload } from '@app/backend/contexts/studio/chat/chat.types'
-import type { BusinessFlow } from '@acc/schema'
+import type { BusinessFlow } from '@raptor/schema'
 
 const vehiculo = {
   name: 'vehiculo',

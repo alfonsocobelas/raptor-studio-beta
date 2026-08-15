@@ -12,7 +12,7 @@ exacto de generación. La invocación directa del generador desde el estudio que
 
 ## User stories (formato EARS)
 
-- WHEN ejecuto `nx g @acc/generators:app x --appFile=ruta.json` THEN el generador carga el
+- WHEN ejecuto `nx g @raptor/generators:app x --appFile=ruta.json` THEN el generador carga el
   app-schema del fichero, lo valida (defineApp + catálogo) y genera exactamente igual que con
   `--app` (equivalencia byte a byte con un fichero equivalente a `boutique`).
 - IF el fichero no existe o el JSON no valida THEN el generador falla antes de emitir nada.

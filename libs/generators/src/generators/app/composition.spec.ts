@@ -1,4 +1,4 @@
-import { defineApp, type AppDefinition, type ResourceDefinition } from '@acc/schema'
+import { defineApp, type AppDefinition, type ResourceDefinition } from '@raptor/schema'
 import { composeApp, composeFlat } from './composition'
 
 const model = (name: string, plural: string, labelPlural?: string): ResourceDefinition =>

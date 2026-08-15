@@ -1,4 +1,4 @@
-import type { BusinessFlow, FlowNodeKind } from '@acc/schema'
+import type { BusinessFlow, FlowNodeKind } from '@raptor/schema'
 import type { NodeBox, NodePosition } from './model-diagram'
 
 /**

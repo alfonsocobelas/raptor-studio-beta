@@ -1,5 +1,5 @@
 {
-  "name": "@acc/generators",
+  "name": "@raptor/generators",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
@@ -7,7 +7,7 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "@nx/devkit": "23.1.0",
-    "@acc/schema": "0.0.1"
+    "@raptor/schema": "0.0.1"
   },
   "generators": "./generators.json"
 }

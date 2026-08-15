@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model (Solaris Energía): la visita de un técnico a una obra.
 // Entra en bloque desde la app de campo, así que estrena el import CSV con un lookup

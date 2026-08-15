@@ -1,4 +1,4 @@
-import { ResourceDefinition, wantsSoftDelete } from '@acc/schema'
+import { ResourceDefinition, wantsSoftDelete } from '@raptor/schema'
 
 /**
  * Un nivel del arrastre: la entidad que cae, el campo por el que cuelga de su padre y de

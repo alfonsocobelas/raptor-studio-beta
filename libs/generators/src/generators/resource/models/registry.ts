@@ -1,4 +1,4 @@
-import { ResourceDefinition } from '@acc/schema'
+import { ResourceDefinition } from '@raptor/schema'
 import { expandCode } from '../expand-code'
 import { contract } from './contract.model'
 import { customer } from './customer.model'

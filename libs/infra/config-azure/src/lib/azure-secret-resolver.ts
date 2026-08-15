@@ -1,6 +1,6 @@
 import { SecretClient } from '@azure/keyvault-secrets'
 import { DefaultAzureCredential } from '@azure/identity'
-import { containsVaultReferences, resolvePlaceholders } from '@acc/infra-ports'
+import { containsVaultReferences, resolvePlaceholders } from '@raptor/infra-ports'
 
 export { containsVaultReferences }
 
@@ -25,7 +25,7 @@ export interface SecretReader {
 
 /**
  * Deep-clones `config`, replacing every `vault.*` string with its Key Vault
- * secret value (shared walker in @acc/infra-ports; naming: dots → dashes).
+ * secret value (shared walker in @raptor/infra-ports; naming: dots → dashes).
  */
 export async function resolveSecrets<T>(config: T, client: SecretReader): Promise<T> {
   return resolvePlaceholders(config, name => getSecretValue(name, client))

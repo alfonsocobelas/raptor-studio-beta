@@ -1,4 +1,4 @@
-import { Nullable, SessionRecord, SessionStore } from '@acc/infra-ports'
+import { Nullable, SessionRecord, SessionStore } from '@raptor/infra-ports'
 
 /** Local/test adapter: sessions live in process memory. Expiry enforced on read. */
 export class InMemorySessionStore extends SessionStore {

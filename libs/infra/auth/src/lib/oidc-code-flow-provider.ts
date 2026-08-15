@@ -1,4 +1,4 @@
-import { Clock, Nullable, SocialIdentity, SocialLoginProvider } from '@acc/infra-ports'
+import { Clock, Nullable, SocialIdentity, SocialLoginProvider } from '@raptor/infra-ports'
 import { SystemClock } from './system-clock'
 
 /** Contrato estructural de fetch (mismo patrón que Doppler/Infisical): tests sin red. */

@@ -16,7 +16,7 @@ elegir". Esta spec cubre ese salto: de módulos a producto.
 ## User stories (formato EARS)
 
 - WHEN ejecuto `npm run new` THEN un CLI me pregunta nombre, modelos (multiselección desde el registro), librería de componentes y plugins opcionales, y genera la app completa
-- WHEN ejecuto `nx g @acc/generators:app <n> --models=… --ui=… --plugins=…` THEN obtengo un proyecto con el layout del canon de referencia (apps/backend-api, apps/frontend-app, libs/backend, libs/frontend, libs/shared/domain, libs/ui) que instala, migra, siembra, compila, testea y corre
+- WHEN ejecuto `nx g @raptor/generators:app <n> --models=… --ui=… --plugins=…` THEN obtengo un proyecto con el layout del canon de referencia (apps/backend-api, apps/frontend-app, libs/backend, libs/frontend, libs/shared/domain, libs/ui) que instala, migra, siembra, compila, testea y corre
 - IF no elijo ningún plugin THEN la app trae igualmente migraciones TypeORM (de fábrica, decisión 2026-07-31): migración inicial derivada de los modelos, synchronize:false y scripts generate/run/revert
 - IF elijo `email` sin `auth` THEN auth se añade automáticamente (email publica adaptadores tras el puerto EmailSender que instala auth)
 - WHEN elijo `--ui=material` THEN la misma app funciona con Angular Material sin que ninguna pantalla emitida cambie (ADR-003 nivel 1)

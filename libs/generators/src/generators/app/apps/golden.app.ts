@@ -1,4 +1,4 @@
-import { defineApp } from '@acc/schema'
+import { defineApp } from '@raptor/schema'
 
 /**
  * La app del gate de oro postgres (spec 22): la MISMA composición que producían las opciones

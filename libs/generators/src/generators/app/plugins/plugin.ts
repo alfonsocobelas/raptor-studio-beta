@@ -1,5 +1,5 @@
 import type { Tree } from '@nx/devkit'
-import { ResourceDefinition } from '@acc/schema'
+import { ResourceDefinition } from '@raptor/schema'
 
 /** Lo que un plugin sabe de la app que se está generando. */
 export interface PluginContext {

@@ -1,4 +1,4 @@
-import type { AppDefinition } from '@acc/schema'
+import type { AppDefinition } from '@raptor/schema'
 import { demo } from './demo.app'
 import { boutique } from './boutique.app'
 import { golden } from './golden.app'

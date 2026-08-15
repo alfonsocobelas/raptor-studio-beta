@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model (Solaris Energía): la obra, de presupuesto a legalización.
 // Es el modelo más cargado del registro a propósito — reúne en una sola entidad el código de

@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model: warehouse stock movements (goods in / goods out).
 export const movement = defineResource({

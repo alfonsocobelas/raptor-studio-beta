@@ -1,4 +1,4 @@
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { buildDragTree } from './drag-tree'
 import { buildSubstitutions } from './build-substitutions'
 import { MODELS } from './models/registry'

@@ -8,9 +8,9 @@ const base = {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }]
   },
   moduleNameMapper: {
-    // @acc/* llegan por file:../../dist (symlink): en tests se resuelven a los fuentes del monorepo
-    '^@acc/schema$': '<rootDir>/../../libs/schema/src/index.ts',
-    '^@acc/generators/src/(.*)$': '<rootDir>/../../libs/generators/src/$1',
+    // @raptor/* llegan por file:../../dist (symlink): en tests se resuelven a los fuentes del monorepo
+    '^@raptor/schema$': '<rootDir>/../../libs/schema/src/index.ts',
+    '^@raptor/generators/src/(.*)$': '<rootDir>/../../libs/generators/src/$1',
     '^@app/shared/domain$': '<rootDir>/libs/shared/domain/src/index.ts',
     '^@app/backend/(.*)$': '<rootDir>/libs/backend/src/$1'
   },

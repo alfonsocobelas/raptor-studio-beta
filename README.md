@@ -17,13 +17,13 @@ bordes mediante un catálogo de adapters. Sin IA en el núcleo.
 
 ```bash
 # preview (no escribe nada)
-npx nx generate @acc/generators:resource contract --dry-run
+npx nx generate @raptor/generators:resource contract --dry-run
 
 # generación real → tmp/generated/contracts/
-npx nx generate @acc/generators:resource contract
+npx nx generate @raptor/generators:resource contract
 
 # a un directorio concreto
-npx nx generate @acc/generators:resource contract --directory tmp/probe
+npx nx generate @raptor/generators:resource contract --directory tmp/probe
 ```
 
 > Nota: si el destino ya contiene el fichero con contenido idéntico, Nx no imprime `CREATE`
@@ -39,7 +39,7 @@ La prueba de que el generador es correcto es un **diff vacío** contra el códig
 proyecto de referencia — no una impresión:
 
 ```bash
-npx nx generate @acc/generators:resource contract
+npx nx generate @raptor/generators:resource contract
 
 diff tmp/generated/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity.ts \
      docs/referencia/libs/backend/src/contexts/sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.entity.ts
@@ -59,7 +59,7 @@ npx nx run-many -t lint,test
 ## Estructura
 
 ```
-libs/generators/                      # plugin Nx local (@acc/generators)
+libs/generators/                      # plugin Nx local (@raptor/generators)
 └── src/generators/resource/
     ├── resource.ts                   # generador: registro de modelos + generateFiles
     ├── build-substitutions.ts        # TODA la lógica de renderizado (plantillas tontas)

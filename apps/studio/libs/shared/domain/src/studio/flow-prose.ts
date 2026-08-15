@@ -1,4 +1,4 @@
-import type { BusinessFlow, FlowNode } from '@acc/schema'
+import type { BusinessFlow, FlowNode } from '@raptor/schema'
 
 /**
  * El flujo contado en una frase, para leerlo de un vistazo en el inspector.

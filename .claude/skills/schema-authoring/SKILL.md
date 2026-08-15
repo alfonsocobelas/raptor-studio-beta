@@ -19,7 +19,7 @@ El schema es **entrada de un generador**, no un intérprete de runtime. Cubre el
 ## Forma canónica
 
 ```typescript
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 export const customerResource = defineResource({
   name: 'customer',

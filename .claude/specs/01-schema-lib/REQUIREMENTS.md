@@ -1,11 +1,11 @@
-# Spec: Schema lib (`@acc/schema`)
+# Spec: Schema lib (`@raptor/schema`)
 
 ## Contexto de negocio
 
 El resource-schema es **el contrato único del acelerador**: de él salen a la vez el backend y el
 frontend generados. Hoy vive de forma provisional como tipos mínimos dentro del generador
 (`libs/generators/.../models/model-types.ts`, spec 00). Esta spec lo formaliza como lib propia
-`libs/schema` (`@acc/schema`): `defineResource()`, los tipos completos del formato canónico
+`libs/schema` (`@raptor/schema`): `defineResource()`, los tipos completos del formato canónico
 (campos con vo/query/table/form, list, relations, detail) y la validación estructural del modelo,
 incorporando las 5 decisiones ratificadas el 2026-07-30 (skill `schema-authoring`).
 
@@ -19,18 +19,18 @@ esta spec **unifica en uno**.
 - IF un campo declara `table.show: true` sin `label` THEN la validación lo rechaza con un mensaje que nombra el campo y lo que falta
 - IF un campo declara `unique: true` y es opcional THEN la semántica registrada es `ifPresent` (decisión 1)
 - IF un campo declara `relation` hacia otro recurso THEN el drill-down del padre es derivable desde ese dato (decisión 3), sin duplicarlo en el padre
-- WHEN el generador consume un modelo THEN lo hace a través de los tipos de `@acc/schema` (se elimina `model-types.ts` provisional)
+- WHEN el generador consume un modelo THEN lo hace a través de los tipos de `@raptor/schema` (se elimina `model-types.ts` provisional)
 - WHILE `libs/schema` exista THEN no importa ningún framework ni tooling (`@nestjs/*`, `@angular/*`, `typeorm`, `ejs`, `@nx/devkit`) — es TypeScript puro (regla 11 de architecture-guard, vigilada por el guard de hooks)
 
 ## Criterios de aceptación
 
-- [ ] Lib `libs/schema` creada (`@acc/schema`), TypeScript puro, con barrel único
+- [ ] Lib `libs/schema` creada (`@raptor/schema`), TypeScript puro, con barrel único
 - [ ] Formato **unificado**: un solo shape de schema (decidir array vs objeto keyed en DESIGN, con criterio)
 - [ ] Tipos completos del formato canónico: identidad del recurso, `fields` (type/origin/vo/constraints/query/table/form/unique/relation), `list`, `relations`, `detail`
 - [ ] `defineResource()` con validación estructural y mensajes de error útiles (campo + motivo)
 - [ ] Las 5 decisiones ratificadas codificadas en tipos/validación donde aplique
 - [ ] `schemaVersion` incluido (mejora C-schemaVersion de la revisión: coste cero hoy, evita arqueología mañana)
-- [ ] El generador de la spec 00 migrado a `@acc/schema` (adiós `model-types.ts`), con el **diff de oro de contract aún vacío**
+- [ ] El generador de la spec 00 migrado a `@raptor/schema` (adiós `model-types.ts`), con el **diff de oro de contract aún vacío**
 - [ ] Suite verde (tests de validación con TDD) y lint con boundaries
 
 ## Referencias (proyecto de referencia y diseño)

@@ -1,5 +1,5 @@
 {
-  "name": "@acc/infra-ports",
+  "name": "@raptor/infra-ports",
   "version": "0.0.1",
   "private": false,
   "type": "commonjs",

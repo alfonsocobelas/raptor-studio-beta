@@ -1,7 +1,7 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
 import { SHARED_VOS } from './models/shared-vos'
-import { FieldDefinition, ResourceDefinition, VoDefinition, wantsSoftDelete } from '@acc/schema'
+import { FieldDefinition, ResourceDefinition, VoDefinition, wantsSoftDelete } from '@raptor/schema'
 
 /**
  * Entrypoints synthesis: REST controller, class-validator body DTOs, export

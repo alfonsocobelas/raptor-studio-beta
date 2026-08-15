@@ -1,4 +1,4 @@
-# Espejo de storage.tf: bucket privado para el FileStoragePort (@acc/infra-storage-gcs).
+# Espejo de storage.tf: bucket privado para el FileStoragePort (@raptor/infra-storage-gcs).
 resource "google_storage_bucket" "storage" {
   name                        = "${local.name}-storage"
   location                    = var.region

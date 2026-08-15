@@ -1,4 +1,4 @@
-import { Nullable, SessionRecord, SessionStore } from '@acc/infra-ports'
+import { Nullable, SessionRecord, SessionStore } from '@raptor/infra-ports'
 
 /**
  * Multi-tenant decorator over ANY SessionStore (in-memory, redis, typeorm):

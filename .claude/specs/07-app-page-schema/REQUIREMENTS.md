@@ -28,7 +28,7 @@ de app la consuma. Sin UI: es trabajo puro de schema + generador, útil por sí 
 
 - [ ] `defineApp` existe en `libs/schema`, exportado, con validación agregada y objeto congelado.
 - [ ] Registro estático de apps en el plugin (mismo patrón que `MODELS`) con `selectApp(name)`.
-- [ ] `nx g @acc/generators:app <n> --app=<app>` genera derivando todo del app-schema.
+- [ ] `nx g @raptor/generators:app <n> --app=<app>` genera derivando todo del app-schema.
 - [ ] Test de equivalencia: app-schema canónico ≡ opciones planas → mismo árbol emitido.
 - [ ] El orden de páginas del app-schema gobierna nav y rutas (no el orden del registro).
 - [ ] Suite verde + golden-diff limpio antes de cada commit que toque el generador.

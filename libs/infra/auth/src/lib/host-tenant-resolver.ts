@@ -1,4 +1,4 @@
-import { Nullable, TenantRequestContext, TenantResolver } from '@acc/infra-ports'
+import { Nullable, TenantRequestContext, TenantResolver } from '@raptor/infra-ports'
 
 export interface HostTenantResolverOptions {
   /** Allowlist: first host label ('acme' in acme.example.com) → tenant id */

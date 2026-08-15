@@ -1,6 +1,6 @@
 import type { Tree } from '@nx/devkit'
 import { updateJson } from '@nx/devkit'
-import { DEFAULT_THEME_ID, TOKEN_ORDER, deriveTheme, findTheme, seedTheme } from '@acc/schema'
+import { DEFAULT_THEME_ID, TOKEN_ORDER, deriveTheme, findTheme, seedTheme } from '@raptor/schema'
 
 /**
  * Sustituciones del tema para el styles.css y el index.html emitidos (spec 20).

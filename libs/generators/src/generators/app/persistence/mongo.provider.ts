@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { renderMongo } from '../../resource/build-mongo'
 import { definePersistence } from './provider'
 

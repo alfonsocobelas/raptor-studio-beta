@@ -24,7 +24,7 @@ describe('frontend-kernel generator', () => {
 
   it('parametrizes the shared DTO alias', async () => {
     const guard = tree.read('tmp/generated/frontend-kernel/core/guards/auth.guard.ts', 'utf-8') ?? ''
-    expect(guard).toContain("from '@acc/shared/domain'")
+    expect(guard).toContain("from '@raptor/shared/domain'")
     expect(guard).not.toContain('sap-licenses')
 
     const custom = createTreeWithEmptyWorkspace()

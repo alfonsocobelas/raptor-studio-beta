@@ -7,7 +7,7 @@
 
 ## Bloque A — contrato y gate
 
-- [x] **TASK-01**: Tests + `StateMachine`/`StateTransition` en `@acc/schema` y gate completo
+- [x] **TASK-01**: Tests + `StateMachine`/`StateTransition` en `@raptor/schema` y gate completo
       en `defineResource` (campo enum existente, valores válidos, `name` únicos y no
       reservados, `from` no vacío, `to ∉ from`, topes). `FlowNode.transition?` entra en el
       contrato. _Nota: el gate vive en `defineResource`, no en `defineApp` — la máquina es

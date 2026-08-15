@@ -1,5 +1,5 @@
 {
-  "name": "@acc/schema",
+  "name": "@raptor/schema",
   "version": "0.0.1",
   "private": false,
   "type": "commonjs",

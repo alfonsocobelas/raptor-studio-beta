@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Faithful transcription of the golden reference module `customers`.
 // Note (C2): its mapper uses a different style (VO .value reads + contacts composition),

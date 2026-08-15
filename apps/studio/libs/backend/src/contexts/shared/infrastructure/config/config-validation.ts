@@ -105,7 +105,7 @@ export class RootValidator {
   @Type(() => SmtpValidator)
   smtp?: SmtpValidator
 
-  // Sección opcional: solo si el proyecto usa el puerto de storage (@acc/infra-ports).
+  // Sección opcional: solo si el proyecto usa el puerto de storage (@raptor/infra-ports).
   @IsOptional()
   @ValidateNested()
   @Type(() => StorageValidator)

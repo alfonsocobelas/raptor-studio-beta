@@ -19,7 +19,7 @@ Corolario: el schema **no** aspira a modelar todo. Modela lo repetible; lo raro 
 ## 2. El schema de `customers`
 
 ```typescript
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 export const customerResource = defineResource({
   // — Identidad del recurso —

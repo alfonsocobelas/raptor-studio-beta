@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import type { BusinessFlow, FlowNode, FlowNodeKind } from '@acc/schema'
+import type { BusinessFlow, FlowNode, FlowNodeKind } from '@raptor/schema'
 import {
   FLOW_DECISION,
   FLOW_GRID,

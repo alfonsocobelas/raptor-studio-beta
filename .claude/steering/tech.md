@@ -4,7 +4,7 @@
 
 | Plano                                                  | Tecnología                                                                                                          |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| **El acelerador** (este repo)                          | Nx + plugin local `@acc/generators` (generators + EJS) · TypeScript 5 · Node `>=24` · Jest/Vitest para el generador |
+| **El acelerador** (este repo)                          | Nx + plugin local `@raptor/generators` (generators + EJS) · TypeScript 5 · Node `>=24` · Jest/Vitest para el generador |
 | **El código emitido** (lo que producen las plantillas) | Angular 21 (Signals, `resource()`) + Spartan NG + Tailwind v4 · NestJS 11 + TypeORM + PostgreSQL                    |
 
 El código emitido debe ser indistinguible del escrito a mano en `docs/referencia/libs/` — mismas convenciones, mismos patrones.
@@ -28,8 +28,8 @@ El código emitido debe ser indistinguible del escrito a mano en `docs/referenci
 Hasta que exista el workspace Nx (TASK-01 de la spec 00), no hay Makefile. Cuando exista, replicar el patrón de la referencia (`make` como fachada de npm scripts):
 
 ```bash
-nx generate @acc/generators:resource <entidad> --dry-run   # preview
-nx generate @acc/generators:resource <entidad>             # generación real
+nx generate @raptor/generators:resource <entidad> --dry-run   # preview
+nx generate @raptor/generators:resource <entidad>             # generación real
 # gate de oro: regenerar los 4 módulos y comparar con tools/golden-fixtures/
 ```
 
@@ -58,7 +58,7 @@ El patrón de config de la referencia (JSON bundleado + placeholders `vault.*` +
 ## Path aliases previstos
 
 ```
-@acc/schema      →  libs/schema/src/index.ts
-@acc/generators  →  libs/generators (plugin local, registrado en generators.json)
-@acc/infra/*     →  libs/infra/* (catálogo de adapters)
+@raptor/schema      →  libs/schema/src/index.ts
+@raptor/generators  →  libs/generators (plugin local, registrado en generators.json)
+@raptor/infra/*     →  libs/infra/* (catálogo de adapters)
 ```

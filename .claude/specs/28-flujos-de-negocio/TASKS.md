@@ -6,7 +6,7 @@
 
 ## Fase 1 — el contrato
 
-- [x] TASK-01 — Contrato en `@acc/schema`: `FlowNode`/`FlowEdge`/`BusinessFlow` +
+- [x] TASK-01 — Contrato en `@raptor/schema`: `FlowNode`/`FlowEdge`/`BusinessFlow` +
       `AppDefinition.flows` + gate estructural completo en `defineApp` (ids únicos,
       aristas válidas, un start / ≥1 end, aridad por kind, alcanzabilidad BFS,
       auto-bucle rechazado, topes). Tests: válido pasa, cada regla rechaza con
@@ -54,12 +54,12 @@
         el de antes y los 6 golden quedan vacíos
       · el esquema numera en BFS (el orden del lienzo), lista las ramas etiquetadas
         de las decisiones y hace explícitos los saltos no secuenciales (→ 2)
-- [x] TASK-08 — Validación final: `/golden-diff` vacío, suites de `@acc/schema`
+- [x] TASK-08 — Validación final: `/golden-diff` vacío, suites de `@raptor/schema`
       + estudio + generadores verdes, e2e con captura (flujo dibujado →
       `CLAUDE.md` de la app generada lo contiene).
       · 2026-08-08: golden 6/6 vacíos · schema 122 · generadores 455 · estudio 243+206
       · e2e real (e2e-16-flujo-para-claudemd.png): entidad + brief del panel + flujo
-        con entidad en el nodo → app.json exportado → `nx g @acc/generators:app` →
+        con entidad en el nodo → app.json exportado → `nx g @raptor/generators:app` →
         el CLAUDE.md emitido contiene «Procesos de negocio» con el esquema numerado
         («1. (inicio) Llega un pedido · entidad: pedido»)
 

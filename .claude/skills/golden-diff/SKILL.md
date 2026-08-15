@@ -18,7 +18,7 @@ Es el equivalente en este proyecto del gate visual de sap-licences: **la prueba 
 ```
 para cada entidad de oro (customer, contract, license, project):
   1. su <entidad>.model.ts está escrito y versionado
-  2. nx generate @acc/generators:resource <entidad> → carpeta temporal
+  2. nx generate @raptor/generators:resource <entidad> → carpeta temporal
   3. diff -ru  <generado>  tools/golden-fixtures/<entidad>/
   4. objetivo: diff VACÍO (o solo cosmético justificado)
 ```

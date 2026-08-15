@@ -1,4 +1,4 @@
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Padres antes que hijos. Lo necesitan DOS sitios por el mismo motivo —la clave

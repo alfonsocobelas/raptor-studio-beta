@@ -1,4 +1,4 @@
-# Diseño técnico: Schema lib (`@acc/schema`)
+# Diseño técnico: Schema lib (`@raptor/schema`)
 
 > REQUIREMENTS aprobado (2026-07-30).
 
@@ -6,7 +6,7 @@
 
 ## La lib
 
-- `nx g @nx/js:library libs/schema --importPath=@acc/schema --unitTestRunner=jest --bundler=none --linter=eslint`
+- `nx g @nx/js:library libs/schema --importPath=@raptor/schema --unitTestRunner=jest --bundler=none --linter=eslint`
 - TypeScript puro. Cero dependencias de runtime. Barrel único `src/index.ts`.
 - El guard de hooks ya vigila su pureza (regla 11 de architecture-guard).
 
@@ -119,9 +119,9 @@ Reglas de validación (v1, solo estructurales):
 7. `column.transformer: 'nullableNumeric'` ⇒ `nullable: true` (evita el dato corrupto que el transformer previene).
 8. `min <= max` cuando ambos existen.
 
-## Migración del generador (spec 00 → `@acc/schema`)
+## Migración del generador (spec 00 → `@raptor/schema`)
 
-- `libs/generators` añade dependencia a `@acc/schema` (boundary permitido: generators → schema).
+- `libs/generators` añade dependencia a `@raptor/schema` (boundary permitido: generators → schema).
 - `contract.model.ts` se reescribe con `defineResource` y `fields` keyed; los datos no cambian.
 - `build-substitutions.ts` consume `ResourceDefinition`: `Object.entries(fields)`, `column.tsType`
   con fallback al tipo base, resto igual (los tests existentes se adaptan, no se relajan).

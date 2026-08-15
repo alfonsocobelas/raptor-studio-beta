@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /** Ancho de la columna: el mismo criterio (y motivo) que la migración. */
 const CODE_MAX_LENGTH = 50

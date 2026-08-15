@@ -1,5 +1,5 @@
 import { names, type Tree } from '@nx/devkit'
-import type { ResourceDefinition } from '@acc/schema'
+import type { ResourceDefinition } from '@raptor/schema'
 import { definePersistence } from './provider'
 
 /**

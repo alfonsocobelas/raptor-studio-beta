@@ -1,4 +1,4 @@
-# Espejo de key-vault.tf: secretos que resuelve @acc/infra-config-gcp/aws (marcadores vault.*).
+# Espejo de key-vault.tf: secretos que resuelve @raptor/infra-config-gcp/aws (marcadores vault.*).
 locals {
   secrets = {
     "typeorm-password" = random_password.db.result

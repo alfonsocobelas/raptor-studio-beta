@@ -11,7 +11,7 @@
     },
     "sharedDomainAlias": {
       "type": "string",
-      "description": "Import alias of the shared DTO lib (default '@acc/shared/domain')"
+      "description": "Import alias of the shared DTO lib (default '@raptor/shared/domain')"
     }
   }
 }

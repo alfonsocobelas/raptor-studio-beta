@@ -1,4 +1,4 @@
-import { defineResource } from '@acc/schema'
+import { defineResource } from '@raptor/schema'
 
 // Demo model (Solaris Energía): quien contrata la instalación fotovoltaica.
 // La baja es reversible — el modelo estrena papelera en una demo con lookup entrante.

@@ -63,7 +63,7 @@ no solo como punto de extensión manual.
 
 ## Criterios de aceptación
 
-- [x] `nx g @acc/generators:app` con el diseño solaris emite
+- [x] `nx g @raptor/generators:app` con el diseño solaris emite
       `contexts/solaris/processes/de-presupuesto-a-legalizacion/` con la clase
       cableada: 5 métodos (`presupuesto`, `planifica`, `montaje`, `averia`, `cie`),
       repos `InstalacionRepository` y `ParteRepository` inyectados, huecos vacíos.

@@ -1,4 +1,4 @@
-import { describeFileStorageConformance } from '@acc/infra-ports'
+import { describeFileStorageConformance } from '@raptor/infra-ports'
 import { AzureBlobFileStorage } from './azure-blob-file-storage'
 
 // Conformidad contra Azurite real (make docker-local-start). Activar con INTEGRATION=1.
