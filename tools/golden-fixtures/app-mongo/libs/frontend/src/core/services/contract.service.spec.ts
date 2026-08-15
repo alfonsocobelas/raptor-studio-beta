@@ -156,6 +156,26 @@ describe('ContractService — mutaciones', () => {
     expect(httpPut).toHaveBeenCalledWith(`/api/v1/contracts/${id}`, { isFavorite: true })
     expect(reload).toHaveBeenCalledOnce()
   })
+
+  it('terminate posts to /api/v1/contracts/:id/terminate and reloads the list', async () => {
+    const reload = vi.spyOn(service.contracts, 'reload')
+    const id = '019eb713-19bb-7000-8000-000000000010'
+
+    await service.terminate(id)
+
+    expect(httpPost).toHaveBeenCalledWith(`/api/v1/contracts/${id}/terminate`, {})
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('expire posts to /api/v1/contracts/:id/expire and reloads the list', async () => {
+    const reload = vi.spyOn(service.contracts, 'reload')
+    const id = '019eb713-19bb-7000-8000-000000000010'
+
+    await service.expire(id)
+
+    expect(httpPost).toHaveBeenCalledWith(`/api/v1/contracts/${id}/expire`, {})
+    expect(reload).toHaveBeenCalledOnce()
+  })
 })
 
 describe('ContractService — export', () => {

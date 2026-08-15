@@ -48,7 +48,7 @@
 
 ## Bloque D — plantillas frontend
 
-- [ ] **TASK-10**: `/golden-diff` + servicio emitido con un método por transición y el campo
+- [x] **TASK-10**: `/golden-diff` + servicio emitido con un método por transición y el campo
       estado excluido de los formularios de alta/edición (sigue en listado/ficha/filtros).
 
 - [ ] **TASK-11**: `/golden-diff` + botones de acción en la ficha emitida: visibles según

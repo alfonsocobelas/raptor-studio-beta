@@ -155,6 +155,18 @@ describe('<%- className %>Service — mutaciones', () => {
     expect(reload).toHaveBeenCalledOnce()
   })
 <%_ } _%>
+<%_ entry.transitions.forEach(transition => { _%>
+
+  it('<%- transition.method %> posts to <%- api %>/:id/<%- transition.verb %> and reloads the list', async () => {
+    const reload = vi.spyOn(service.<%- plural %>, 'reload')
+    const id = '019eb713-19bb-7000-8000-000000000010'
+
+    await service.<%- transition.method %>(id)
+
+    expect(httpPost).toHaveBeenCalledWith(`<%- api %>/${id}/<%- transition.verb %>`, {})
+    expect(reload).toHaveBeenCalledOnce()
+  })
+<%_ }) _%>
 <%_ if (features.delete) { _%>
 
   it('remove deletes <%- api %>/:id and reloads the list', async () => {

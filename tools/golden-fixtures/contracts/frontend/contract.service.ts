@@ -53,6 +53,20 @@ export class ContractService {
     })
   }
 
+  /** Transición «Terminar» de la máquina de estados (spec 43). */
+  terminate(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/terminate`, {})).then(() => {
+      this.contracts.reload()
+    })
+  }
+
+  /** Transición «Expirar» de la máquina de estados (spec 43). */
+  expire(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/expire`, {})).then(() => {
+      this.contracts.reload()
+    })
+  }
+
   // Downloads the full filtered contract set from the backend, matching the current filters and order.
   async export(format: ExportFormat): Promise<{ blob: Blob; filename: string }> {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }

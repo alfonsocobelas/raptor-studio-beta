@@ -80,6 +80,15 @@ export class <%- className %>Service {
     })
   }
 <%_ } _%>
+<%_ entry.transitions.forEach(transition => { _%>
+
+  /** Transición «<%- transition.label %>» de la máquina de estados (spec 43). */
+  <%- transition.method %>(id: string): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/<%- transition.verb %>`, {})).then(() => {
+      this.<%- plural %>.reload()
+    })
+  }
+<%_ }) _%>
 <%_ if (features.delete) { _%>
 
   remove(id: string): Promise<void> {
