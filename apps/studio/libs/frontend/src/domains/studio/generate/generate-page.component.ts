@@ -294,9 +294,9 @@ make web           # http://localhost:4200</pre
   `,
   styles: `
     /* En noche --primary es casi blanco y el botón se lee como APAGADO, justo el contrario
-       de lo que es. Toma el naranja de la marca, como el CTA del lienzo. */
+       de lo que es. Toma el naranja de la marca, como el CTA del lienzo y las tarjetas elegidas. */
     :host-context(.dark) [data-testid='generate-primary']:not(:disabled) {
-      background-color: #f15539;
+      background-color: var(--brand);
       color: var(--brand-foreground);
     }
     .wizard-step[data-state='pending'] {
