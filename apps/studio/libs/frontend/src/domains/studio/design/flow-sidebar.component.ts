@@ -52,20 +52,36 @@ const FLOW_BLOCKS: FlowBlock[] = [
       <section>
         <h2 class="studio-eyebrow mb-2 px-1">Flujos</h2>
         @for (flow of store.flows(); track flow.name) {
-          <button
-            type="button"
-            class="hover:ring-foreground/25 studio-ui mb-0.5 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left transition-shadow hover:ring-1"
-            [class.bg-background]="flow.name === active.flow()"
-            [class.font-semibold]="flow.name === active.flow()"
-            [class.shadow-sm]="flow.name === active.flow()"
-            [class.ring-1]="flow.name === active.flow()"
-            [attr.aria-current]="flow.name === active.flow() ? 'true' : null"
-            [attr.data-testid]="'flow-item-' + flow.name"
-            (click)="active.selectFlow(flow.name)"
-          >
-            <span class="min-w-0 flex-1 truncate">{{ flow.name }}</span>
-            <span class="text-muted-foreground shrink-0 text-[10px]">{{ flow.nodes.length }}</span>
-          </button>
+          <!-- La fila se parte en dos pulsables: elegir el flujo y borrarlo. Un botón dentro
+               de otro sería HTML inválido, y la cruz necesita su propia zona de clic para no
+               quedar a un despiste del gesto frecuente (elegir). -->
+          <div class="group mb-0.5 flex items-center">
+            <button
+              type="button"
+              class="hover:ring-foreground/25 studio-ui flex min-w-0 flex-1 items-center gap-2 rounded-[7px] px-2 py-2 text-left transition-shadow hover:ring-1"
+              [class.bg-background]="flow.name === active.flow()"
+              [class.font-semibold]="flow.name === active.flow()"
+              [class.shadow-sm]="flow.name === active.flow()"
+              [class.ring-1]="flow.name === active.flow()"
+              [attr.aria-current]="flow.name === active.flow() ? 'true' : null"
+              [attr.data-testid]="'flow-item-' + flow.name"
+              (click)="active.selectFlow(flow.name)"
+            >
+              <span class="min-w-0 flex-1 truncate">{{ flow.name }}</span>
+            </button>
+            <!-- Solo asoma al pasar por la fila, y en gris hasta que se apunta: el rojo es
+                 escaso y llega en el instante de pulsar. Se esconde con opacidad, no con
+                 hidden, para que el hueco siga reservado y el nombre no se re-recorte. -->
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-destructive focus-visible:opacity-100 -mr-1 flex h-9 w-6 shrink-0 items-center justify-center text-xs leading-none opacity-0 transition-[color,opacity] group-hover:opacity-100"
+              [attr.data-testid]="'flow-remove-' + flow.name"
+              [attr.title]="'Borrar el flujo ' + flow.name"
+              (click)="store.removeFlow(flow.name)"
+            >
+              ✕
+            </button>
+          </div>
         }
         @if (!store.flows().length) {
           <p class="text-muted-foreground px-1 py-1 text-xs" data-testid="flow-empty">Todavía no hay flujos</p>

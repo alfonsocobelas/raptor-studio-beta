@@ -95,6 +95,57 @@ describe('FlowSidebarComponent', () => {
     expect(active.flow()).toBe('Alta de proveedor')
   })
 
+  it('la cruz de cada flujo lo saca del diseño', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+
+    const fixture = mount()
+    testId(fixture, 'flow-remove-Aviso de stock bajo')?.click()
+
+    expect(store.flows().map(f => f.name)).toEqual(['Resumen semanal'])
+  })
+
+  // El flujo borrado era el que se estaba dibujando: el lienzo no puede quedar
+  // apuntando a un nombre fantasma, cae al que sobrevive.
+  it('borrar el flujo al mando pasa el mando al que queda', () => {
+    store.addFlow('Aviso de stock bajo')
+    store.addFlow('Resumen semanal')
+    active.selectFlow('Resumen semanal')
+
+    const fixture = mount()
+    testId(fixture, 'flow-remove-Resumen semanal')?.click()
+
+    expect(active.flow()).toBe('Aviso de stock bajo')
+  })
+
+  it('borrar el último flujo deja el raíl vacío, no un hueco', () => {
+    store.addFlow('Aviso de stock bajo')
+
+    const fixture = mount()
+    testId(fixture, 'flow-remove-Aviso de stock bajo')?.click()
+    fixture.detectChanges()
+
+    expect(active.flow()).toBeNull()
+    expect(testId(fixture, 'flow-empty')).not.toBeNull()
+  })
+
+  // La cruz solo asoma al pasar por la fila, y en gris hasta que se apunta: un raíl con
+  // una alarma encendida por flujo deja de avisar de nada. Se esconde con opacidad para
+  // que el hueco siga reservado, y el teclado la recupera al enfocarla.
+  it('la cruz asoma al hover, en gris, sin mover la fila', () => {
+    store.addFlow('Aviso de stock bajo')
+
+    const fixture = mount()
+    const cruz = testId(fixture, 'flow-remove-Aviso de stock bajo') as HTMLElement
+
+    expect(cruz.className).toContain('opacity-0')
+    expect(cruz.className).toContain('group-hover:opacity-100')
+    expect(cruz.className).toContain('focus-visible:opacity-100')
+    expect(cruz.className).toContain('text-muted-foreground')
+    expect(cruz.className).toContain('hover:text-destructive')
+    expect(cruz.className).not.toContain('hidden')
+  })
+
   it('sin flujo elegido no se pueden añadir bloques: no hay dónde ponerlos', () => {
     const fixture = mount()
 
