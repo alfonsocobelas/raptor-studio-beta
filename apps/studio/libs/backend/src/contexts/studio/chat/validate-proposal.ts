@@ -70,6 +70,25 @@ export function validateDesign(design: DesignPayload): DesignPayload {
     }
   }
 
+  // spec 46: la matriz de accesos habla de verbos REALES de la máquina de SU entidad — el
+  // mensaje accionable llega al diseñar, como las transiciones de la 43; roles y duplicados
+  // los vigila el defineResource de abajo
+  for (const resource of design.resources) {
+    const verbs = resource.access?.transitions ? Object.keys(resource.access.transitions) : []
+    if (!verbs.length) continue
+    if (!resource.state) {
+      throw new Error(
+        `La matriz de accesos cita transiciones, pero ${resource.name} no declara máquina de estados`
+      )
+    }
+    const machine = resource.state
+    for (const verb of verbs) {
+      if (!machine.transitions.some(transition => transition.name === verb)) {
+        throw new Error(`La matriz de accesos cita una transición inexistente: «${verb}» no está en la máquina de ${resource.name}`)
+      }
+    }
+  }
+
   const clean: DesignPayload = JSON.parse(JSON.stringify(design)) as DesignPayload
 
   // Las referencias se validan sobre el DRAFT: una vez expandido, un destino

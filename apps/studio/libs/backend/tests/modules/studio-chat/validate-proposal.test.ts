@@ -331,3 +331,65 @@ describe('validateDesign — la máquina de estados (spec 43)', () => {
     expect(() => validateDesign(base(noMachine as never, [flow]))).toThrow(/no declara máquina de estados/)
   })
 })
+
+/**
+ * Spec 46: la matriz de accesos pasa el gate en la frontera con mensaje accionable,
+ * como las transiciones de la 43 — el error llega al diseñar, no al generar.
+ */
+describe('validateDesign — matriz de accesos (spec 46)', () => {
+  const factura = {
+    name: 'factura',
+    plural: 'facturas',
+    labelSingular: 'Factura',
+    labelPlural: 'Facturas',
+    gender: 'f' as const,
+    fields: [
+      { name: 'nombre', label: 'Nombre', type: 'string' as const },
+      {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum' as const,
+        values: [
+          { value: 'borrador', label: 'Borrador' },
+          { value: 'aprobada', label: 'Aprobada' }
+        ]
+      }
+    ],
+    state: {
+      field: 'estado',
+      initial: 'borrador',
+      transitions: [{ name: 'aprobar', label: 'Aprobar', from: ['borrador'], to: 'aprobada' }]
+    }
+  }
+
+  it('acepta una matriz válida (incluidos arrays vacíos: solo admin)', () => {
+    const design: DesignPayload = {
+      appName: 'ventas',
+      resources: [{ ...factura, access: { view: ['user'], manage: [], transitions: { aprobar: [] } } }],
+      pages: []
+    }
+
+    expect(() => validateDesign(design)).not.toThrow()
+  })
+
+  it('rechaza transitions sobre una entidad sin máquina, con mensaje accionable', () => {
+    const { state: _out, ...sinMaquina } = factura
+    const design: DesignPayload = {
+      appName: 'ventas',
+      resources: [{ ...sinMaquina, fields: [factura.fields[0]], access: { transitions: { aprobar: ['user'] } } }],
+      pages: []
+    }
+
+    expect(() => validateDesign(design)).toThrow(/factura no declara máquina de estados/)
+  })
+
+  it('rechaza un verbo que no existe en la máquina de la entidad', () => {
+    const design: DesignPayload = {
+      appName: 'ventas',
+      resources: [{ ...factura, access: { transitions: { fantasma: ['user'] } } }],
+      pages: []
+    }
+
+    expect(() => validateDesign(design)).toThrow(/«fantasma» no está en la máquina de factura/)
+  })
+})

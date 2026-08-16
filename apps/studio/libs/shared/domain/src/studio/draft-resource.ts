@@ -1,4 +1,4 @@
-import type { FieldDefinition, ResourceDefinition, StateMachine } from '@raptor/schema'
+import type { AccessDefinition, FieldDefinition, ResourceDefinition, StateMachine } from '@raptor/schema'
 
 /**
  * Entidad DIBUJADA en el lienzo: lo mínimo que el usuario (o la IA) declara.
@@ -54,6 +54,8 @@ export interface DraftResource {
   brief?: string
   /** Máquina de estados: un campo enum promovido a estado con transiciones (spec 43) */
   state?: StateMachine
+  /** Matriz de accesos actor→capacidad (spec 46); ausente = política actual */
+  access?: AccessDefinition
 }
 
 export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
@@ -306,6 +308,8 @@ export function draftToResource(
     // la máquina viaja tal cual: los nombres de campo del draft son los del schema, y el
     // gate de defineResource (spec 43) valida aquí mismo que hable de valores reales
     ...(draft.state ? { state: draft.state } : {}),
+    // la matriz de accesos también viaja tal cual (spec 46): el gate vigila roles y verbos
+    ...(draft.access ? { access: draft.access } : {}),
     formSections: [{ id: 'general', title: `Datos de ${draft.labelSingular.toLowerCase()}` }],
     constraintsConst: `${snake(draft.name)}_CONSTRAINTS`,
     audit: true,

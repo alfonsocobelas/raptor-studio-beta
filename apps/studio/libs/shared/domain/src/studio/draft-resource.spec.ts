@@ -347,3 +347,31 @@ describe('el tipo uuid', () => {
     expect(resource.fields['externo'].column).toMatchObject({ type: 'uuid' })
   })
 })
+
+/**
+ * Spec 46: la matriz de accesos viaja tal cual del draft al resource-schema — el gate de
+ * defineResource (roles legales, verbos existentes) aplica en la misma frontera que la
+ * máquina de estados.
+ */
+describe('draftToResource — matriz de accesos (spec 46)', () => {
+  const base: DraftResource = {
+    name: 'factura',
+    plural: 'facturas',
+    labelSingular: 'Factura',
+    labelPlural: 'Facturas',
+    gender: 'f',
+    fields: [{ name: 'nombre', label: 'Nombre', type: 'string' }]
+  }
+
+  it('copia access tal cual cuando el draft lo declara', () => {
+    const draft: DraftResource = { ...base, access: { view: ['user'], manage: [] } }
+
+    const resource = draftToResource(draft, 'mi-app')
+
+    expect(resource.access).toEqual({ view: ['user'], manage: [] })
+  })
+
+  it('sin access no aparece la clave (ausente = política actual)', () => {
+    expect('access' in draftToResource(base, 'mi-app')).toBe(false)
+  })
+})

@@ -5,6 +5,7 @@ import {
   briefProblems,
   defineApp,
   defineResource,
+  type AccessDefinition,
   type AppDefinition,
   type BusinessBrief,
   type BusinessFlow,
@@ -604,6 +605,17 @@ export class DesignStore {
 
   setInitialState(resource: string, value: string): boolean {
     return this.mutateState(resource, machine => ({ ...machine, initial: value }))
+  }
+
+  /** La matriz de accesos de una entidad (spec 46); undefined la quita (vuelve la política actual). */
+  setResourceAccess(name: string, access: AccessDefinition | undefined): boolean {
+    return this.updateResource(name, draft => {
+      if (!access) {
+        const { access: _gone, ...rest } = draft
+        return rest
+      }
+      return { ...draft, access }
+    })
   }
 
   /** Toda mutación de la máquina pasa por el MISMO gate que el resto del recurso. */
