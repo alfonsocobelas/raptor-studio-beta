@@ -58,7 +58,10 @@ export class CanvasControlsComponent {
   private readonly studioMode = inject(StudioModeService)
 
   /** El lienzo es el modo: estos controles solo salen sobre un diagrama. */
-  protected readonly canvas = computed<CanvasId>(() => (this.studioMode.mode() === 'flows' ? 'flows' : 'model'))
+  protected readonly canvas = computed<CanvasId>(() => {
+    const mode = this.studioMode.mode()
+    return mode === 'flows' || mode === 'access' ? mode : 'model'
+  })
 
   /** Encajar necesita medir el lienzo, y eso lo sabe quien lo pinta. */
   readonly fit = output<void>()

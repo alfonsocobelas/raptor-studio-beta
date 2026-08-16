@@ -52,6 +52,7 @@ import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { FlowSidebarComponent } from './flow-sidebar.component'
 import { AccessSidebarComponent } from './access-sidebar.component'
+import { AccessViewComponent } from './access-view.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
 import { FlowPanelComponent } from './flow-panel.component'
@@ -81,6 +82,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     ModelSidebarComponent,
     FlowSidebarComponent,
     AccessSidebarComponent,
+    AccessViewComponent,
     DesignPanelComponent,
     ModelPanelComponent,
     FlowPanelComponent,
@@ -288,15 +290,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
             } @else if (mode() === 'flows') {
               <studio-flow-view />
             } @else if (mode() === 'access') {
-              <div
-                class="flex h-full flex-col items-center justify-center text-center"
-                data-testid="access-placeholder"
-              >
-                <p class="text-muted-foreground mb-2 text-lg">Accesos</p>
-                <p class="text-muted-foreground max-w-md text-sm">
-                  Quién entra y qué puede hacer. Todavía no está: se diseña en la siguiente tanda.
-                </p>
-              </div>
+              <studio-access-view />
             } @else if (!pages().length) {
               <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
                 <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
