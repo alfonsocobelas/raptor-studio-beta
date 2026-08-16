@@ -150,6 +150,40 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.notGenerable()).toEqual([])
   })
 
+  // spec 48: el bloque formulario enciende la bandera y viaja como página form
+  it('el formulario es generable: marca la entidad y viaja al app-schema como página form', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Solicitud')
+    store.addBlock(1, { kind: 'form', resource: 'pedido' })
+
+    expect(store.toAppSchema().pages.map(p => p.kind)).toEqual(['resource', 'form'])
+    expect(store.resources()[0].form).toBe(true)
+    expect(store.notGenerable()).toEqual([])
+  })
+
+  it('quitar el bloque formulario apaga la bandera de la entidad', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addPage('blank', 'Solicitud')
+    store.addBlock(1, { kind: 'form', resource: 'pedido' })
+
+    store.removeBlock(1, 0)
+
+    expect(store.resources()[0].form).toBe(false)
+    expect(store.toAppSchema().pages.map(p => p.kind)).toEqual(['resource'])
+  })
+
+  it('el export expande la bandera form al resource-schema', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addBlock(0, { kind: 'form', resource: 'pedido' })
+
+    const exported = JSON.parse(store.exportJson()) as { resources: { form?: unknown }[] }
+
+    expect(exported.resources[0].form).toEqual({})
+  })
+
   it('una vista con solo KPIs se exporta como dashboard', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')

@@ -297,7 +297,9 @@ export class DesignStore {
           ? this._resources().map(r => (r.name === block.resource ? { ...r, detail: true } : r))
           : block.kind === 'cards' && block.resource
             ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
-            : this._resources()
+            : block.kind === 'form' && block.resource
+              ? this._resources().map(r => (r.name === block.resource ? { ...r, form: true } : r))
+              : this._resources()
     return this.mutate(resources, pages)
   }
 
@@ -337,7 +339,9 @@ export class DesignStore {
           ? this._resources().map(r => (r.name === removed.resource ? { ...r, detail: false } : r))
           : removed?.kind === 'cards' && removed.resource
             ? this._resources().map(r => (r.name === removed.resource ? { ...r, gallery: false } : r))
-            : this._resources()
+            : removed?.kind === 'form' && removed.resource
+              ? this._resources().map(r => (r.name === removed.resource ? { ...r, form: false } : r))
+              : this._resources()
     return this.mutate(resources, pages)
   }
 
