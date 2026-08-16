@@ -1,0 +1,1269 @@
+{
+  "appName": "aguas",
+  "resources": [
+    {
+      "name": "cliente",
+      "plural": "clientes",
+      "labelSingular": "Cliente",
+      "labelPlural": "Clientes",
+      "gender": "m",
+      "brief": "Quien encarga los análisis: un ayuntamiento, una comunidad de regantes o una empresa de alimentación.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Ayuntamiento de Tudela de Duero",
+            "Comunidad de Regantes del Canal del Duero",
+            "Lácteas Pisuerga SL",
+            "Ayuntamiento de Medina del Campo",
+            "Cárnicas Torozos SA",
+            "Comunidad de Regantes de La Nava",
+            "Bodegas Valdecuevas SL",
+            "Ayuntamiento de Íscar",
+            "Conservas del Cerrato SL",
+            "Comunidad de Regantes del Bajo Duero"
+          ]
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo",
+          "type": "enum",
+          "values": [
+            {
+              "value": "ayuntamiento",
+              "label": "Ayuntamiento"
+            },
+            {
+              "value": "regantes",
+              "label": "Comunidad de regantes"
+            },
+            {
+              "value": "alimentacion",
+              "label": "Empresa de alimentación"
+            }
+          ],
+          "samples": [
+            "ayuntamiento",
+            "regantes",
+            "alimentacion",
+            "ayuntamiento",
+            "alimentacion",
+            "regantes",
+            "alimentacion",
+            "ayuntamiento",
+            "alimentacion",
+            "regantes"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "983 52 10 04",
+            "983 37 88 21",
+            "983 44 09 15",
+            "983 81 12 60",
+            "983 29 74 33",
+            "979 84 21 07",
+            "983 60 55 18",
+            "983 61 30 42",
+            "979 78 66 90",
+            "983 55 47 26"
+          ]
+        },
+        {
+          "name": "localidad",
+          "label": "Localidad",
+          "type": "string",
+          "samples": [
+            "Tudela de Duero",
+            "Valladolid",
+            "Cabezón de Pisuerga",
+            "Medina del Campo",
+            "Villanubla",
+            "Becerril de Campos",
+            "Serrada",
+            "Íscar",
+            "Baltanás",
+            "Zamora"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "manage": [
+          "user"
+        ]
+      }
+    },
+    {
+      "name": "punto",
+      "plural": "puntos",
+      "labelSingular": "Punto de muestreo",
+      "labelPlural": "Puntos de muestreo",
+      "gender": "m",
+      "brief": "El sitio del cliente donde se recoge el agua: siempre el mismo, y algunos son control obligatorio por normativa.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Depósito municipal alto",
+            "Toma del canal km 12",
+            "Salida de planta de lavado",
+            "Grifo red centro urbano",
+            "Efluente de depuradora",
+            "Pozo de riego n.º 3",
+            "Entrada de proceso embotellado",
+            "Depósito de cabecera",
+            "Balsa de decantación",
+            "Acequia de La Overuela"
+          ]
+        },
+        {
+          "name": "tipoAgua",
+          "label": "Tipo de agua",
+          "type": "enum",
+          "values": [
+            {
+              "value": "potable",
+              "label": "Potable"
+            },
+            {
+              "value": "riego",
+              "label": "Riego"
+            },
+            {
+              "value": "residual",
+              "label": "Residual"
+            },
+            {
+              "value": "proceso",
+              "label": "De proceso"
+            }
+          ],
+          "samples": [
+            "potable",
+            "riego",
+            "proceso",
+            "potable",
+            "residual",
+            "riego",
+            "proceso",
+            "potable",
+            "residual",
+            "riego"
+          ]
+        },
+        {
+          "name": "direccion",
+          "label": "Dirección",
+          "type": "string",
+          "samples": [
+            "Camino del Cerro s/n, Tudela de Duero",
+            "Canal del Duero, km 12, Valladolid",
+            "Pol. Ind. San Cristóbal, nave 44, Valladolid",
+            "Plaza Mayor 1, Medina del Campo",
+            "Ctra. de Adanero km 3, Villanubla",
+            "Paraje La Nava, parcela 118, Becerril de Campos",
+            "Ctra. de Rueda 7, Serrada",
+            "Calle del Depósito 2, Íscar",
+            "Camino de la Vega s/n, Baltanás",
+            "Acequia de La Overuela, Valladolid"
+          ]
+        },
+        {
+          "name": "coordenadas",
+          "label": "Coordenadas",
+          "type": "string",
+          "samples": [
+            "41.5872, -4.5804",
+            "41.6420, -4.6910",
+            "41.6015, -4.6883",
+            "41.3128, -4.9147",
+            "41.7025, -4.8511",
+            "42.0338, -4.6402",
+            "41.5163, -4.8025",
+            "41.3567, -4.5312",
+            "41.9351, -4.2604",
+            "41.6874, -4.7539"
+          ]
+        },
+        {
+          "name": "obligatorio",
+          "label": "Control obligatorio",
+          "type": "boolean",
+          "samples": [
+            true,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            true,
+            false,
+            false
+          ]
+        },
+        {
+          "name": "cliente",
+          "label": "Cliente",
+          "type": "ref",
+          "refTo": "cliente",
+          "samples": [
+            "Ayuntamiento de Tudela de Duero",
+            "Comunidad de Regantes del Canal del Duero",
+            "Lácteas Pisuerga SL",
+            "Ayuntamiento de Medina del Campo",
+            "Cárnicas Torozos SA",
+            "Comunidad de Regantes de La Nava",
+            "Bodegas Valdecuevas SL",
+            "Ayuntamiento de Íscar",
+            "Conservas del Cerrato SL",
+            "Comunidad de Regantes del Bajo Duero"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "muestra",
+      "plural": "muestras",
+      "labelSingular": "Muestra",
+      "labelPlural": "Muestras",
+      "gender": "f",
+      "attachments": true,
+      "detail": true,
+      "brief": "El bote de agua de principio a fin: entra, se analiza, se compara con los límites legales, se valida, se informa y se factura.",
+      "fields": [
+        {
+          "name": "codigo",
+          "label": "Código",
+          "type": "string",
+          "samples": [
+            "M-2026-0412",
+            "M-2026-0418",
+            "M-2026-0425",
+            "M-2026-0431",
+            "M-2026-0437",
+            "M-2026-0444",
+            "M-2026-0450",
+            "M-2026-0456",
+            "M-2026-0463",
+            "M-2026-0470"
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "recibida",
+              "label": "Recibida"
+            },
+            {
+              "value": "en_analisis",
+              "label": "En análisis"
+            },
+            {
+              "value": "fuera_de_rango",
+              "label": "Fuera de rango"
+            },
+            {
+              "value": "validada",
+              "label": "Validada"
+            },
+            {
+              "value": "informada",
+              "label": "Informada"
+            },
+            {
+              "value": "facturada",
+              "label": "Facturada"
+            }
+          ],
+          "samples": [
+            "recibida",
+            "en_analisis",
+            "fuera_de_rango",
+            "validada",
+            "informada",
+            "facturada",
+            "en_analisis",
+            "fuera_de_rango",
+            "informada",
+            "recibida"
+          ]
+        },
+        {
+          "name": "tecnico",
+          "label": "Técnico",
+          "type": "string",
+          "samples": [
+            "Nuria Bragado",
+            "Álvaro Sanz",
+            "Lucía Herrero",
+            "Diego Calleja",
+            "Nuria Bragado",
+            "Álvaro Sanz",
+            "Lucía Herrero",
+            "Diego Calleja",
+            "Nuria Bragado",
+            "Álvaro Sanz"
+          ]
+        },
+        {
+          "name": "recogida",
+          "label": "Recogida",
+          "type": "date",
+          "samples": [
+            "2026-07-06",
+            "2026-07-09",
+            "2026-07-14",
+            "2026-07-17",
+            "2026-07-21",
+            "2026-07-24",
+            "2026-07-28",
+            "2026-07-31",
+            "2026-08-04",
+            "2026-08-11"
+          ]
+        },
+        {
+          "name": "limiteInforme",
+          "label": "Límite de informe",
+          "type": "date",
+          "samples": [
+            "2026-07-13",
+            "2026-07-16",
+            "2026-07-21",
+            "2026-07-24",
+            "2026-07-28",
+            "2026-07-31",
+            "2026-08-04",
+            "2026-08-07",
+            "2026-08-11",
+            "2026-08-18"
+          ]
+        },
+        {
+          "name": "importe",
+          "label": "Importe",
+          "type": "number",
+          "samples": [
+            148.5,
+            312,
+            96.75,
+            540.2,
+            218.9,
+            1105.4,
+            74.6,
+            389.15,
+            262.3,
+            830
+          ]
+        },
+        {
+          "name": "punto",
+          "label": "Punto de muestreo",
+          "type": "ref",
+          "refTo": "punto",
+          "samples": [
+            "Depósito municipal alto",
+            "Toma del canal km 12",
+            "Salida de planta de lavado",
+            "Grifo red centro urbano",
+            "Efluente de depuradora",
+            "Pozo de riego n.º 3",
+            "Entrada de proceso embotellado",
+            "Depósito de cabecera",
+            "Balsa de decantación",
+            "Acequia de La Overuela"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parametro",
+      "plural": "parametros",
+      "labelSingular": "Parámetro",
+      "labelPlural": "Parámetros",
+      "gender": "m",
+      "brief": "El catálogo de analíticas con su método, su límite legal y su precio: se carga del CSV de tarifas del proveedor.",
+      "fields": [
+        {
+          "name": "codigo",
+          "label": "Código",
+          "type": "string",
+          "samples": [
+            "PA-001",
+            "PA-014",
+            "PA-022",
+            "PA-030",
+            "PA-041",
+            "PA-055",
+            "PA-063",
+            "PA-078",
+            "PA-084",
+            "PA-097"
+          ]
+        },
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Nitratos",
+            "Escherichia coli",
+            "Cloro libre residual",
+            "Turbidez",
+            "Conductividad a 20 °C",
+            "Arsénico",
+            "Plomo",
+            "Amonio",
+            "pH",
+            "Coliformes totales"
+          ]
+        },
+        {
+          "name": "metodo",
+          "label": "Método",
+          "type": "string",
+          "samples": [
+            "UNE-EN ISO 10304-1",
+            "UNE-EN ISO 9308-1",
+            "UNE-EN ISO 7393-2",
+            "UNE-EN ISO 7027-1",
+            "UNE-EN 27888",
+            "UNE-EN ISO 17294-2",
+            "UNE-EN ISO 17294-2",
+            "UNE-EN ISO 11732",
+            "UNE-EN ISO 10523",
+            "UNE-EN ISO 9308-1"
+          ]
+        },
+        {
+          "name": "limiteLegal",
+          "label": "Límite legal",
+          "type": "number",
+          "samples": [
+            50,
+            0,
+            1,
+            4,
+            2500,
+            0.01,
+            0.005,
+            0.5,
+            9.5,
+            0
+          ]
+        },
+        {
+          "name": "precio",
+          "label": "Precio",
+          "type": "number",
+          "samples": [
+            18.4,
+            26.5,
+            9.8,
+            12.3,
+            8.75,
+            42,
+            44.6,
+            15.2,
+            6.5,
+            24.9
+          ]
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Panel",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "resources": [
+            "muestra",
+            "punto",
+            "cliente"
+          ],
+          "width": "full"
+        },
+        {
+          "kind": "table",
+          "resource": "muestra",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Muestras",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "muestra",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha de la muestra",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "muestra",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "muestra",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Clientes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "cliente",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Puntos de muestreo",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "punto",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Parámetros",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "parametro",
+          "width": "full"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "De la recepción del bote al informe facturado",
+      "description": "El recorrido de una muestra desde que entra el bote en recepción hasta que administración la factura.",
+      "nodes": [
+        {
+          "id": "llega-bote",
+          "kind": "start",
+          "text": "Llega el bote del punto de muestreo"
+        },
+        {
+          "id": "registrar",
+          "kind": "step",
+          "text": "Se registra la muestra en recepción",
+          "entity": "muestra",
+          "status": "recibida"
+        },
+        {
+          "id": "analizar",
+          "kind": "step",
+          "text": "El técnico analiza la muestra",
+          "entity": "muestra",
+          "status": "en_analisis"
+        },
+        {
+          "id": "dentro-limite",
+          "kind": "decision",
+          "text": "¿Todos los parámetros dentro del límite legal?"
+        },
+        {
+          "id": "desviacion",
+          "kind": "step",
+          "text": "Se marca la desviación y se repite el análisis",
+          "entity": "muestra",
+          "status": "fuera_de_rango"
+        },
+        {
+          "id": "validar",
+          "kind": "step",
+          "text": "El responsable valida los resultados",
+          "entity": "muestra",
+          "status": "validada"
+        },
+        {
+          "id": "informar",
+          "kind": "step",
+          "text": "Se emite el informe al cliente",
+          "entity": "muestra",
+          "status": "informada"
+        },
+        {
+          "id": "facturar",
+          "kind": "step",
+          "text": "Administración factura la muestra",
+          "entity": "muestra",
+          "status": "facturada"
+        },
+        {
+          "id": "cerrada",
+          "kind": "end",
+          "text": "Muestra cerrada"
+        }
+      ],
+      "edges": [
+        {
+          "from": "llega-bote",
+          "to": "registrar"
+        },
+        {
+          "from": "registrar",
+          "to": "analizar"
+        },
+        {
+          "from": "analizar",
+          "to": "dentro-limite"
+        },
+        {
+          "from": "dentro-limite",
+          "to": "validar",
+          "label": "sí"
+        },
+        {
+          "from": "dentro-limite",
+          "to": "desviacion",
+          "label": "no"
+        },
+        {
+          "from": "desviacion",
+          "to": "dentro-limite"
+        },
+        {
+          "from": "validar",
+          "to": "informar"
+        },
+        {
+          "from": "informar",
+          "to": "facturar"
+        },
+        {
+          "from": "facturar",
+          "to": "cerrada"
+        }
+      ]
+    },
+    {
+      "name": "Prueba Jaime",
+      "nodes": [
+        {
+          "id": "inicio",
+          "kind": "start",
+          "text": "Inicio"
+        },
+        {
+          "id": "fin",
+          "kind": "end",
+          "text": "Fin"
+        }
+      ],
+      "edges": [
+        {
+          "from": "inicio",
+          "to": "fin"
+        }
+      ]
+    },
+    {
+      "name": "JOB · Permisos próximos a caducar",
+      "description": "El job diario mira qué permisos caducan dentro del PLAZO_AVISO_PRORROGA y arranca la responsabilidad de la prórroga.",
+      "nodes": [
+        {
+          "id": "job-diario",
+          "kind": "start",
+          "text": "El job diario recorre los permisos vigentes"
+        },
+        {
+          "id": "proximo-caducar",
+          "kind": "decision",
+          "text": "¿Caduca dentro del PLAZO_AVISO_PRORROGA (30 días)?"
+        },
+        {
+          "id": "arrancar-responsabilidad",
+          "kind": "step",
+          "text": "Se arranca la responsabilidad de solicitud de prórroga"
+        },
+        {
+          "id": "fin-arrancada",
+          "kind": "end",
+          "text": "→ Flujo: Responsabilidad Solicitud de PRÓRROGA"
+        },
+        {
+          "id": "fin-sin-aviso",
+          "kind": "end",
+          "text": "Nada que avisar: el permiso se revisa en la siguiente pasada"
+        }
+      ],
+      "edges": [
+        {
+          "from": "job-diario",
+          "to": "proximo-caducar"
+        },
+        {
+          "from": "proximo-caducar",
+          "to": "arrancar-responsabilidad",
+          "label": "dentro de plazo"
+        },
+        {
+          "from": "proximo-caducar",
+          "to": "fin-sin-aviso",
+          "label": "fuera de plazo"
+        },
+        {
+          "from": "arrancar-responsabilidad",
+          "to": "fin-arrancada"
+        }
+      ]
+    },
+    {
+      "name": "Responsabilidad Solicitud de PRÓRROGA",
+      "description": "Encrucijada del proceso: decide si la prórroga la lleva Tramitaciones (fase I) u Operaciones (fase II). Aquí vuelven los caminos que no salen adelante.",
+      "nodes": [
+        {
+          "id": "hay-que-decidir",
+          "kind": "start",
+          "text": "Hay una prórroga que asignar"
+        },
+        {
+          "id": "comprobar-fase",
+          "kind": "decision",
+          "text": "¿Fase I o fase II?"
+        },
+        {
+          "id": "fase-i",
+          "kind": "step",
+          "text": "Fase I: la responsabilidad es de TRAMITACIONES"
+        },
+        {
+          "id": "fase-ii",
+          "kind": "step",
+          "text": "Fase II: la responsabilidad es de OPERACIONES"
+        },
+        {
+          "id": "fin-fase-i",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud de PRÓRROGA · Fase I - Tramitaciones"
+        },
+        {
+          "id": "fin-fase-ii",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud de PRÓRROGA · Fase II - Operaciones"
+        }
+      ],
+      "edges": [
+        {
+          "from": "hay-que-decidir",
+          "to": "comprobar-fase"
+        },
+        {
+          "from": "comprobar-fase",
+          "to": "fase-i",
+          "label": "fase I"
+        },
+        {
+          "from": "comprobar-fase",
+          "to": "fase-ii",
+          "label": "fase II"
+        },
+        {
+          "from": "fase-i",
+          "to": "fin-fase-i"
+        },
+        {
+          "from": "fase-ii",
+          "to": "fin-fase-ii"
+        }
+      ]
+    },
+    {
+      "name": "Solicitud de PRÓRROGA · Fase I - Tramitaciones",
+      "description": "Tramitaciones decide entre prorrogar o pedir licencia nueva. Los cinco impedimentos (no admite prórrogas, supera el máximo, permiso caducado, fuera de plazo, denegado por el organismo) cierran la vía de la prórroga.",
+      "nodes": [
+        {
+          "id": "recibe-tramitaciones",
+          "kind": "start",
+          "text": "Tramitaciones recibe la solicitud de prórroga"
+        },
+        {
+          "id": "prorroga-o-nueva",
+          "kind": "decision",
+          "text": "¿Prórroga o licencia nueva?"
+        },
+        {
+          "id": "se-puede-prorrogar",
+          "kind": "decision",
+          "text": "¿Se puede prorrogar? (admite, máximo, permiso vigente, en plazo, no denegado)"
+        },
+        {
+          "id": "abrir-prorroga",
+          "kind": "step",
+          "text": "Se abre la solicitud de prórroga (subestado Pendiente)"
+        },
+        {
+          "id": "fin-a-prorroga",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud de PRÓRROGA"
+        },
+        {
+          "id": "fin-vuelve-responsabilidad",
+          "kind": "end",
+          "text": "→ Flujo: Responsabilidad Solicitud de PRÓRROGA (subestado Pendiente)"
+        },
+        {
+          "id": "se-puede-nueva",
+          "kind": "decision",
+          "text": "¿Se puede pedir licencia nueva?"
+        },
+        {
+          "id": "abrir-nueva",
+          "kind": "step",
+          "text": "Se abre la solicitud de licencia nueva (subestado Pendiente)"
+        },
+        {
+          "id": "fin-a-nueva",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud NUEVA de licencia/permiso"
+        },
+        {
+          "id": "fin-cancelada",
+          "kind": "end",
+          "text": "Solicitud cancelada"
+        }
+      ],
+      "edges": [
+        {
+          "from": "recibe-tramitaciones",
+          "to": "prorroga-o-nueva"
+        },
+        {
+          "from": "prorroga-o-nueva",
+          "to": "se-puede-prorrogar",
+          "label": "prórroga"
+        },
+        {
+          "from": "prorroga-o-nueva",
+          "to": "se-puede-nueva",
+          "label": "licencia nueva"
+        },
+        {
+          "from": "se-puede-prorrogar",
+          "to": "abrir-prorroga",
+          "label": "sí"
+        },
+        {
+          "from": "se-puede-prorrogar",
+          "to": "fin-vuelve-responsabilidad",
+          "label": "no"
+        },
+        {
+          "from": "abrir-prorroga",
+          "to": "fin-a-prorroga"
+        },
+        {
+          "from": "se-puede-nueva",
+          "to": "abrir-nueva",
+          "label": "sí"
+        },
+        {
+          "from": "se-puede-nueva",
+          "to": "fin-cancelada",
+          "label": "no"
+        },
+        {
+          "from": "abrir-nueva",
+          "to": "fin-a-nueva"
+        }
+      ]
+    },
+    {
+      "name": "Solicitud de PRÓRROGA · Fase II - Operaciones",
+      "description": "Operaciones recibe el enlace de aceptar o denegar. Si acepta la prórroga se comprueba el PLAZO_ACEPTACION_PRORROGA_INTERNO antes de pasarla a Tramitaciones.",
+      "nodes": [
+        {
+          "id": "recibe-operaciones",
+          "kind": "start",
+          "text": "Operaciones recibe la solicitud"
+        },
+        {
+          "id": "prorroga-o-nueva-ii",
+          "kind": "decision",
+          "text": "¿Prórroga o licencia nueva?"
+        },
+        {
+          "id": "enviar-enlace-prorroga",
+          "kind": "step",
+          "text": "Se envía a Operaciones el enlace aceptar/denegar la prórroga (subestado Enviada_Operaciones)"
+        },
+        {
+          "id": "respuesta-prorroga",
+          "kind": "decision",
+          "text": "¿Qué responde Operaciones a la prórroga?"
+        },
+        {
+          "id": "prorroga-aceptada-ops",
+          "kind": "step",
+          "text": "Prórroga aceptada por Operaciones (subestado Aceptada_Operaciones)"
+        },
+        {
+          "id": "plazo-interno",
+          "kind": "decision",
+          "text": "¿Dentro del PLAZO_ACEPTACION_PRORROGA_INTERNO (15 días)?"
+        },
+        {
+          "id": "fin-a-tramitaciones",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud de PRÓRROGA por Tramitaciones (automático)"
+        },
+        {
+          "id": "avisar-fuera-plazo",
+          "kind": "step",
+          "text": "Se comunica a Operaciones la aceptación fuera de plazo"
+        },
+        {
+          "id": "fin-vuelve-responsabilidad-ii",
+          "kind": "end",
+          "text": "→ Flujo: Responsabilidad Solicitud de PRÓRROGA (automático)"
+        },
+        {
+          "id": "fin-prorroga-denegada-ops",
+          "kind": "end",
+          "text": "Prórroga denegada por Operaciones (subestado Denegada_Operaciones)"
+        },
+        {
+          "id": "fin-prorroga-sin-accion",
+          "kind": "end",
+          "text": "Sin respuesta de Operaciones (subestado Enviada_Operaciones)"
+        },
+        {
+          "id": "enviar-enlace-nueva",
+          "kind": "step",
+          "text": "Se envía a Operaciones el enlace aceptar/denegar la licencia nueva (subestado Enviada_Operaciones)"
+        },
+        {
+          "id": "respuesta-nueva",
+          "kind": "decision",
+          "text": "¿Qué responde Operaciones a la licencia nueva?"
+        },
+        {
+          "id": "nueva-aceptada-ops",
+          "kind": "step",
+          "text": "Licencia nueva aceptada por Operaciones (subestado Aceptada_Operaciones)"
+        },
+        {
+          "id": "fin-nueva-a-tramitaciones",
+          "kind": "end",
+          "text": "→ Flujo: Solicitud NUEVA por Tramitaciones (automático)"
+        },
+        {
+          "id": "fin-nueva-denegada-ops",
+          "kind": "end",
+          "text": "Licencia nueva denegada por Operaciones (subestado Denegada_Operaciones)"
+        },
+        {
+          "id": "fin-nueva-sin-accion",
+          "kind": "end",
+          "text": "Sin respuesta de Operaciones (subestado Enviada_Operaciones)"
+        }
+      ],
+      "edges": [
+        {
+          "from": "recibe-operaciones",
+          "to": "prorroga-o-nueva-ii"
+        },
+        {
+          "from": "prorroga-o-nueva-ii",
+          "to": "enviar-enlace-prorroga",
+          "label": "prórroga"
+        },
+        {
+          "from": "prorroga-o-nueva-ii",
+          "to": "enviar-enlace-nueva",
+          "label": "licencia nueva"
+        },
+        {
+          "from": "enviar-enlace-prorroga",
+          "to": "respuesta-prorroga"
+        },
+        {
+          "from": "respuesta-prorroga",
+          "to": "prorroga-aceptada-ops",
+          "label": "aceptada"
+        },
+        {
+          "from": "respuesta-prorroga",
+          "to": "fin-prorroga-denegada-ops",
+          "label": "denegada"
+        },
+        {
+          "from": "respuesta-prorroga",
+          "to": "fin-prorroga-sin-accion",
+          "label": "sin acción"
+        },
+        {
+          "from": "prorroga-aceptada-ops",
+          "to": "plazo-interno"
+        },
+        {
+          "from": "plazo-interno",
+          "to": "fin-a-tramitaciones",
+          "label": "dentro de plazo"
+        },
+        {
+          "from": "plazo-interno",
+          "to": "avisar-fuera-plazo",
+          "label": "fuera de plazo"
+        },
+        {
+          "from": "avisar-fuera-plazo",
+          "to": "fin-vuelve-responsabilidad-ii"
+        },
+        {
+          "from": "enviar-enlace-nueva",
+          "to": "respuesta-nueva"
+        },
+        {
+          "from": "respuesta-nueva",
+          "to": "nueva-aceptada-ops",
+          "label": "aceptada"
+        },
+        {
+          "from": "respuesta-nueva",
+          "to": "fin-nueva-denegada-ops",
+          "label": "denegada"
+        },
+        {
+          "from": "respuesta-nueva",
+          "to": "fin-nueva-sin-accion",
+          "label": "sin acción"
+        },
+        {
+          "from": "nueva-aceptada-ops",
+          "to": "fin-nueva-a-tramitaciones"
+        }
+      ]
+    },
+    {
+      "name": "Solicitud de PRÓRROGA",
+      "description": "La prórroga en sí: plantilla con trazabilidad, tasas si las lleva, presentación al organismo y resolución. Si el organismo deniega, el caso vuelve a la encrucijada de fases.",
+      "nodes": [
+        {
+          "id": "prepara-tramitaciones",
+          "kind": "start",
+          "text": "Tramitaciones prepara la prórroga"
+        },
+        {
+          "id": "rellenar-plantilla",
+          "kind": "step",
+          "text": "Se rellena la plantilla: N_LICENCIA_ORIGINAL, cuándo, qué y por qué"
+        },
+        {
+          "id": "lleva-tasas",
+          "kind": "decision",
+          "text": "¿Lleva tasas?"
+        },
+        {
+          "id": "pagar-tasas",
+          "kind": "step",
+          "text": "Se pagan las tasas de la prórroga (mismas acciones que el pago de tasas ordinario)"
+        },
+        {
+          "id": "presentar-organismo",
+          "kind": "step",
+          "text": "Se presenta la solicitud al organismo (subestado Presentada)"
+        },
+        {
+          "id": "registrar-comunicacion",
+          "kind": "step",
+          "text": "Se registra la comunicación al organismo: quién, cuándo y qué"
+        },
+        {
+          "id": "resolucion-organismo",
+          "kind": "decision",
+          "text": "¿Qué resuelve el organismo? (se registra quién, cuándo y qué)"
+        },
+        {
+          "id": "fin-aceptada",
+          "kind": "end",
+          "text": "Prórroga aceptada (estado Aceptada)"
+        },
+        {
+          "id": "fin-denegada-organismo",
+          "kind": "end",
+          "text": "→ Flujo: Responsabilidad Solicitud de PRÓRROGA"
+        }
+      ],
+      "edges": [
+        {
+          "from": "prepara-tramitaciones",
+          "to": "rellenar-plantilla"
+        },
+        {
+          "from": "rellenar-plantilla",
+          "to": "lleva-tasas"
+        },
+        {
+          "from": "lleva-tasas",
+          "to": "pagar-tasas",
+          "label": "sí"
+        },
+        {
+          "from": "lleva-tasas",
+          "to": "presentar-organismo",
+          "label": "no"
+        },
+        {
+          "from": "pagar-tasas",
+          "to": "presentar-organismo"
+        },
+        {
+          "from": "presentar-organismo",
+          "to": "registrar-comunicacion"
+        },
+        {
+          "from": "registrar-comunicacion",
+          "to": "resolucion-organismo"
+        },
+        {
+          "from": "resolucion-organismo",
+          "to": "fin-aceptada",
+          "label": "aceptada"
+        },
+        {
+          "from": "resolucion-organismo",
+          "to": "fin-denegada-organismo",
+          "label": "denegada"
+        }
+      ]
+    },
+    {
+      "name": "Solicitud NUEVA de licencia/permiso",
+      "description": "Cuando la prórroga no es posible: se pide licencia nueva por email, sede electrónica o presencialmente, y a partir de ahí es la solicitud genérica de licencia/permiso/autorización.",
+      "nodes": [
+        {
+          "id": "necesita-nueva",
+          "kind": "start",
+          "text": "Hace falta una licencia o permiso nuevo"
+        },
+        {
+          "id": "via-presentacion",
+          "kind": "decision",
+          "text": "¿Por qué vía se presenta?"
+        },
+        {
+          "id": "via-email",
+          "kind": "step",
+          "text": "Se presenta por email al organismo"
+        },
+        {
+          "id": "via-sede",
+          "kind": "step",
+          "text": "Se presenta en la sede electrónica"
+        },
+        {
+          "id": "via-presencial",
+          "kind": "step",
+          "text": "Se presenta presencialmente en el organismo"
+        },
+        {
+          "id": "tramitar-generica",
+          "kind": "step",
+          "text": "Sigue la solicitud genérica de licencia/permiso/autorización"
+        },
+        {
+          "id": "fin-nueva-resuelta",
+          "kind": "end",
+          "text": "La licencia nueva se resuelve en el flujo genérico"
+        }
+      ],
+      "edges": [
+        {
+          "from": "necesita-nueva",
+          "to": "via-presentacion"
+        },
+        {
+          "from": "via-presentacion",
+          "to": "via-email",
+          "label": "email"
+        },
+        {
+          "from": "via-presentacion",
+          "to": "via-sede",
+          "label": "sede"
+        },
+        {
+          "from": "via-presentacion",
+          "to": "via-presencial",
+          "label": "presencial"
+        },
+        {
+          "from": "via-email",
+          "to": "tramitar-generica"
+        },
+        {
+          "from": "via-sede",
+          "to": "tramitar-generica"
+        },
+        {
+          "from": "via-presencial",
+          "to": "tramitar-generica"
+        },
+        {
+          "from": "tramitar-generica",
+          "to": "fin-nueva-resuelta"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Laboratorio de análisis de aguas en Valladolid: cuatro técnicos de laboratorio y un comercial. Los clientes son ayuntamientos, comunidades de regantes y empresas de alimentación. El trabajo se organiza por muestras: llega un bote de agua tomado en un punto de muestreo, un técnico lo analiza, se comparan los resultados con los límites legales, se valida y se emite el informe. Lo que más duele es una muestra que se pasa de la fecha límite del informe sin que nadie lo vea, y un bote que lleva más de 24 horas desde la recogida y ya no sirve.",
+    "rules": [
+      "Una muestra no se puede validar si algún parámetro está fuera del límite legal: pasa a fuera de rango y se repite el análisis.",
+      "Una muestra facturada no se reabre nunca.",
+      "No se emite informe sin la cadena de custodia firmada adjunta en la muestra.",
+      "Una muestra recibida con más de 24 horas desde la recogida se marca como caducada y no se analiza."
+    ],
+    "glossary": [
+      {
+        "term": "muestra",
+        "means": "El bote de agua y su análisis de principio a fin"
+      },
+      {
+        "term": "punto de muestreo",
+        "means": "El sitio del cliente donde se recoge el agua, siempre el mismo"
+      },
+      {
+        "term": "cadena de custodia",
+        "means": "El documento firmado que acredita quién tuvo la muestra desde la recogida"
+      },
+      {
+        "term": "fuera de rango",
+        "means": "Algún parámetro supera el límite legal y hay que repetir el análisis"
+      }
+    ]
+  }
+}

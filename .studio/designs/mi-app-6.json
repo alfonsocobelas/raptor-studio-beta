@@ -1,0 +1,31 @@
+{
+  "appName": "mi-app",
+  "resources": [
+    {
+      "name": "paciente",
+      "plural": "pacientes",
+      "labelSingular": "Paciente",
+      "labelPlural": "Pacientes",
+      "gender": "m",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Pacientes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "paciente",
+          "width": "full"
+        }
+      ]
+    }
+  ]
+}
