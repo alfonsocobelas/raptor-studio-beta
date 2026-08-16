@@ -7,13 +7,13 @@
 
 ## Fase 1 — Schema (el contrato)
 
-- [ ] **TASK-01**: `@raptor/schema` — `AccessDefinition` gana `create/edit/delete` (con `manage`
+- [x] **TASK-01**: `@raptor/schema` — `AccessDefinition` gana `create/edit/delete` (con `manage`
       como azúcar legado) y `resolveAccess` resuelve la granularidad. Tests en `access.spec.ts`:
       defectos sin `access`, solo `manage`, granular gana a `manage`, transiciones intactas.
 
 ## Fase 2 — Estudio: lógica derivada (pura)
 
-- [ ] **TASK-02**: `access-table.ts` en `apps/studio/libs/shared/domain` — `accessRows`,
+- [x] **TASK-02**: `access-table.ts` en `apps/studio/libs/shared/domain` — `accessRows`,
       `toggleCapability`, `roleSummary`, `applyColumn` con sus tests. La matriz resultante es
       siempre explícita y sin `manage`.
 - [ ] **TASK-03**: `access-diagram.ts` — elipses Ver/Crear/Editar/Borrar + transiciones con
