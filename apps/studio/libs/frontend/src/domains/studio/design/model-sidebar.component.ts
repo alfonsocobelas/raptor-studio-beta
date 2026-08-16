@@ -31,7 +31,6 @@ import { EntityDraftService } from './entity-draft.service'
         >
           <ng-icon name="lucideTable" size="15" />
           <span class="flex-1">Entidad</span>
-          <span class="text-[9px] uppercase opacity-60">E</span>
         </button>
 
         <button
@@ -44,7 +43,6 @@ import { EntityDraftService } from './entity-draft.service'
         >
           <ng-icon name="lucideIdCard" size="15" />
           <span class="flex-1">Campo</span>
-          <span class="text-[9px] uppercase opacity-60">C</span>
         </button>
 
         <p class="text-muted-foreground mt-3 px-1 text-xs" data-testid="model-add-hint">
@@ -86,7 +84,7 @@ export class ModelSidebarComponent {
   protected readonly selected = computed(() => this.active.resource())
 
   /**
-   * Atajos anunciados en los botones: E abre el alta de entidad, C añade campo. Si el
+   * Atajos de teclado: E abre el alta de entidad, C añade campo. Si el
    * foco está escribiendo, no se disparan — teclear «campo» en un nombre no puede
    * crear cinco cosas por el camino.
    */
