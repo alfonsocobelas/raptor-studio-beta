@@ -48,6 +48,39 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'cards', resource: 'tratamiento', label: 'Tratamientos' }])
   })
 
+  // spec 48: el bloque formulario cruza como página form
+  it('una vista con formulario se emite como página form', () => {
+    const pages: DesignPage[] = [{ title: 'Solicitud', blocks: [{ kind: 'form', resource: 'muestra' }] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'form', resource: 'muestra', label: 'Solicitud' }])
+  })
+
+  it('no repite la página form de una entidad aunque el bloque aparezca dos veces', () => {
+    const pages: DesignPage[] = [
+      { title: 'Solicitud', blocks: [{ kind: 'form', resource: 'muestra' }] },
+      { title: 'Otra', blocks: [{ kind: 'form', resource: 'muestra' }] }
+    ]
+
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'form', resource: 'muestra', label: 'Solicitud' }])
+  })
+
+  it('una vista mixta (tabla + formulario) emite ambas páginas y el título nombra solo la primera', () => {
+    const pages: DesignPage[] = [
+      {
+        title: 'Muestras',
+        blocks: [
+          { kind: 'table', resource: 'muestra' },
+          { kind: 'form', resource: 'muestra' }
+        ]
+      }
+    ]
+
+    expect(designPagesToAppPages(pages)).toEqual([
+      { kind: 'resource', resource: 'muestra', label: 'Muestras' },
+      { kind: 'form', resource: 'muestra' }
+    ])
+  })
+
   it('descarta los bloques aún no generables (texto)', () => {
     const pages: DesignPage[] = [{ title: 'Notas', blocks: [{ kind: 'text', text: 'hola' }] }]
 

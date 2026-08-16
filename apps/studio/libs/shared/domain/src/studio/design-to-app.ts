@@ -5,8 +5,8 @@ import type { DesignPage } from './design-page'
  * Traduce las VISTAS del lienzo (composición de bloques) a las páginas del
  * app-schema. Es la frontera de la regla 7: solo cruzan los bloques que el
  * generador sabe emitir hoy — tabla → listado, KPIs → dashboard, galería →
- * tarjetas. El resto se queda en el diseño (el lienzo ya los marca «aún no
- * generable»).
+ * tarjetas, formulario → página form (spec 48). El resto se queda en el diseño
+ * (el lienzo ya los marca «aún no generable»).
  *
  * Vive en dominio compartido porque la usan los DOS lados: el lienzo para
  * previsualizar el schema y el backend para construir el --appFile. Tenerla
@@ -32,14 +32,13 @@ export function designPagesToAppPages(pages: DesignPage[]): AppDefinition['pages
     // ya produjo el dashboard, los listados usan su propia etiqueta por defecto
     let titleTaken = kpis.length > 0
     for (const block of page.blocks) {
-      const isList = block.kind === 'table'
-      const isGallery = block.kind === 'cards'
-      if ((!isList && !isGallery) || !block.resource) continue
+      const kind = block.kind === 'table' ? 'resource' : block.kind === 'cards' ? 'cards' : block.kind === 'form' ? 'form' : null
+      if (kind === null || !block.resource) continue
       const key = `${block.kind}:${block.resource}`
       if (listed.has(key)) continue
       listed.add(key)
       result.push({
-        kind: isList ? 'resource' : 'cards',
+        kind,
         resource: block.resource,
         ...(titleTaken ? {} : { label: page.title })
       })
