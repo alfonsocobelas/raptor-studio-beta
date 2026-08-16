@@ -22,6 +22,11 @@ output "storage_bucket" {
   value = aws_s3_bucket.storage.bucket
 }
 
+# Nombre que la app pone en su sección de config `cloudwatch.logGroup`.
+output "log_group_name" {
+  value = aws_cloudwatch_log_group.backend.name
+}
+
 # Registros DNS que IT debe publicar para verificar el dominio remitente en SES.
 output "ses_dkim_tokens" {
   value = var.sender_domain == "" ? [] : aws_sesv2_email_identity.sender[0].dkim_signing_attributes[0].tokens
