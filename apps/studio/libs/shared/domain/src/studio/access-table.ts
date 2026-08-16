@@ -131,12 +131,17 @@ function rebuild(
     create: fn(resolved.create, 'create'),
     edit: fn(resolved.edit, 'edit'),
     delete: fn(resolved.delete, 'delete'),
-    transitions: Object.fromEntries(
-      (resource.state?.transitions ?? []).map(transition => [
-        transition.name,
-        fn(resolved.transitions[transition.name] ?? [], transition.name)
-      ])
-    )
+    // sin máquina no hay clave: defineResource rechaza transitions en un recurso sin estado
+    ...(resource.state
+      ? {
+          transitions: Object.fromEntries(
+            resource.state.transitions.map(transition => [
+              transition.name,
+              fn(resolved.transitions[transition.name] ?? [], transition.name)
+            ])
+          )
+        }
+      : {})
   }
 }
 

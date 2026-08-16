@@ -18,7 +18,7 @@
       siempre explícita y sin `manage`.
 - [x] **TASK-03**: `access-diagram.ts` — elipses Ver/Crear/Editar/Borrar + transiciones con
       roles granulares; tests de `access-diagram.spec.ts` actualizados.
-- [ ] **TASK-04**: `design-store-access.spec.ts` extendido al shape nuevo (persistencia de la
+- [x] **TASK-04**: `design-store-access.spec.ts` extendido al shape nuevo (persistencia de la
       matriz granular vía `setResourceAccess`; sin cambios de API en el store si no hacen falta).
 
 ## Fase 3 — Estudio: la pestaña nueva

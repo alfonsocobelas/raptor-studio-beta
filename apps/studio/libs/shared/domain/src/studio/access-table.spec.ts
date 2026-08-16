@@ -77,9 +77,12 @@ describe('toggleCapability', () => {
       view: ['user', 'viewer'],
       create: ['user'],
       edit: ['user'],
-      delete: ['user', 'viewer'],
-      transitions: {}
+      delete: ['user', 'viewer']
     })
+  })
+
+  it('omits the transitions key when the entity has no state machine', () => {
+    expect('transitions' in toggleCapability(cliente(), 'view', 'viewer')).toBe(false)
   })
 
   it('flips a granted capability off', () => {

@@ -39,6 +39,29 @@ describe('DesignStore — matriz de accesos (spec 46)', () => {
     expect(store.lastError()).toContain('state machine')
   })
 
+  it('guarda la matriz granular completa create/edit/delete (spec 49)', () => {
+    store.addResource('Factura')
+    const matriz = {
+      view: ['user' as const, 'viewer' as const],
+      create: ['user' as const],
+      edit: ['user' as const],
+      delete: []
+    }
+
+    expect(store.setResourceAccess('factura', matriz)).toBe(true)
+    expect(store.resources()[0].access).toEqual(matriz)
+    expect(store.lastError()).toBeNull()
+  })
+
+  it('rechaza roles ilegales también en las claves granulares', () => {
+    store.addResource('Factura')
+
+    const ok = store.setResourceAccess('factura', { delete: ['admin' as never] })
+
+    expect(ok).toBe(false)
+    expect(store.lastError()).toContain('grantable')
+  })
+
   it('la matriz viaja al resource expandido del export (la frontera la ve)', () => {
     store.addResource('Factura')
     store.setResourceAccess('factura', { manage: [] })
