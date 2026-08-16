@@ -68,6 +68,8 @@ export const golden = defineApp({
     },
     { kind: 'resource', resource: 'contract' },
     { kind: 'gantt', resource: 'contract' },
-    { kind: 'resource', resource: 'project' }
+    { kind: 'resource', resource: 'project' },
+    // spec 48: la página-formulario, con entrada de menú propia
+    { kind: 'form', resource: 'project', label: 'Nuevo proyecto' }
   ]
 })

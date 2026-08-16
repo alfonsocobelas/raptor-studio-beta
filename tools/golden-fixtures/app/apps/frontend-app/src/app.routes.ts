@@ -60,6 +60,20 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sap-licensing/projects/formulario',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/project-form-page.component').then(
+        m => m.ProjectFormPageComponent
+      )
+  },
+  {
+    path: 'sap-licensing/projects/formulario/:id',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/project-form-page.component').then(
+        m => m.ProjectFormPageComponent
+      )
+  },
+  {
     path: 'sap-licensing/projects/papelera',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-trash.component').then(

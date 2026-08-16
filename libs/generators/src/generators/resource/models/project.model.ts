@@ -21,6 +21,9 @@ export const project = defineResource({
   // «ver» en el listado para que sea alcanzable
   list: { features: { view: true, delete: true, import: true } },
   detail: {},
+  // spec 48: la página-formulario del gate de oro vive aquí — project ejercita
+  // secciones, dateRange de grupo y fechas opcionales
+  form: {},
   attachments: true,
   period: { start: 'startDate', end: 'endDate' },
   formSections: [{ id: 'general', title: 'Datos generales' }],
