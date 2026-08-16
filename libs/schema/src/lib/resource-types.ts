@@ -371,6 +371,22 @@ export const RESERVED_TRANSITION_NAMES = [
   'restore'
 ] as const
 
+/** Roles que obtienen la capacidad ADEMÁS de admin (admin siempre puede todo, spec 46) */
+export type AccessRole = 'user' | 'viewer'
+
+/**
+ * Matriz actor→capacidad (spec 46). Ausente = política actual: lecturas abiertas a
+ * viewer, escrituras admin+user — ningún diseño existente cambia de significado.
+ */
+export interface AccessDefinition {
+  /** Defecto: ['user', 'viewer'] */
+  view?: AccessRole[]
+  /** Defecto: ['user'] */
+  manage?: AccessRole[]
+  /** Por verbo de la máquina de estados; defecto: ['user'] */
+  transitions?: Record<string, AccessRole[]>
+}
+
 export interface ResourceDefinition {
   /** Schema format version — bump only with a migration note (revision improvement) */
   schemaVersion: 1
@@ -450,6 +466,8 @@ export interface ResourceDefinition {
   brief?: string
   /** Máquina de estados: un enum promovido a estado con transiciones dibujables (spec 43) */
   state?: StateMachine
+  /** Matriz de accesos actor→capacidad (spec 46); ausente = política actual */
+  access?: AccessDefinition
 }
 
 /**

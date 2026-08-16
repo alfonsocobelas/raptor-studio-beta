@@ -428,3 +428,71 @@ describe('state — la máquina de estados de la entidad (spec 43)', () => {
     expect(() => defineResource(withState(twin))).not.toThrow()
   })
 })
+
+/**
+ * Spec 46: la matriz de accesos actor→capacidad. Admin es implícito y no negociable;
+ * el gate solo vigila que la matriz hable de roles legales y de verbos que existen.
+ * Un array vacío es LEGAL: «solo admin» es una decisión, no un error.
+ */
+describe('access — la matriz de accesos (spec 46)', () => {
+  const withAccess = (access: unknown, state?: unknown): ResourceDefinition => {
+    const definition = validDefinition()
+    definition.fields['status'] = {
+      type: 'string',
+      vo: { name: 'ContractStatus', fieldName: 'Status', values: ['draft', 'signed'] }
+    }
+    return {
+      ...definition,
+      state: state as ResourceDefinition['state'],
+      access: access as ResourceDefinition['access']
+    }
+  }
+
+  const machine = () => ({
+    field: 'status',
+    initial: 'draft',
+    transitions: [{ name: 'sign', label: 'Firmar', from: ['draft'], to: 'signed' }]
+  })
+
+  it('acepta una matriz completa y válida', () => {
+    const access = { view: ['user', 'viewer'], manage: ['user'], transitions: { sign: ['user'] } }
+
+    expect(() => defineResource(withAccess(access, machine()))).not.toThrow()
+  })
+
+  it('acepta arrays vacíos: «solo admin» es una decisión', () => {
+    expect(() => defineResource(withAccess({ view: [], manage: [] }))).not.toThrow()
+  })
+
+  it('rechaza roles ilegales en view y manage', () => {
+    const problems = problemsOf(withAccess({ view: ['admin'], manage: ['boss'] }))
+
+    expect(problems).toContain("access.view: 'admin' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
+    expect(problems).toContain("access.manage: 'boss' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
+  })
+
+  it('rechaza duplicados en cada array', () => {
+    expect(problemsOf(withAccess({ view: ['user', 'user'] }))).toContain("access.view: duplicated role 'user'")
+  })
+
+  it('rechaza transitions sobre un recurso sin máquina de estados', () => {
+    expect(problemsOf(withAccess({ transitions: { sign: ['user'] } }))).toContain(
+      'access.transitions: the resource has no state machine'
+    )
+  })
+
+  it('rechaza un verbo que no existe en la máquina', () => {
+    expect(problemsOf(withAccess({ transitions: { ghost: ['user'] } }, machine()))).toContain(
+      "access.transitions: 'ghost' is not a transition of the state machine (has: sign)"
+    )
+  })
+
+  it('vigila roles ilegales y duplicados también dentro de transitions', () => {
+    const problems = problemsOf(withAccess({ transitions: { sign: ['admin', 'user', 'user'] } }, machine()))
+
+    expect(problems).toContain(
+      "access.transitions.sign: 'admin' is not a grantable role (use 'user' or 'viewer'; admin is implicit)"
+    )
+    expect(problems).toContain("access.transitions.sign: duplicated role 'user'")
+  })
+})

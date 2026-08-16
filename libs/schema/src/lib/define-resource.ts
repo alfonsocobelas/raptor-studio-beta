@@ -15,7 +15,8 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateGantt(definition),
     ...validateCode(definition),
     ...validateBrief(definition.brief),
-    ...validateState(definition)
+    ...validateState(definition),
+    ...validateAccess(definition)
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -185,6 +186,51 @@ function validateState(definition: ResourceDefinition): string[] {
       problems.push(`${at}: to '${transition.to}' cannot be inside its own from (re-applying is already a no-op)`)
     }
   })
+
+  return problems
+}
+
+const GRANTABLE_ROLES = ['user', 'viewer'] as const
+
+/**
+ * La matriz de accesos (spec 46): admin es implícito y no se declara; la matriz solo
+ * reparte entre user y viewer. Un array vacío es LEGAL («solo admin» es una decisión).
+ * Las claves de transitions hablan de verbos REALES de la máquina — ambos viven en el
+ * recurso, así que se valida aquí y no en la frontera.
+ */
+function validateAccess(definition: ResourceDefinition): string[] {
+  const { access } = definition
+  if (!access) return []
+
+  const problems: string[] = []
+
+  const checkRoles = (at: string, roles: string[]) => {
+    const seen = new Set<string>()
+    for (const role of roles) {
+      if (!(GRANTABLE_ROLES as readonly string[]).includes(role)) {
+        problems.push(`${at}: '${role}' is not a grantable role (use 'user' or 'viewer'; admin is implicit)`)
+      }
+      if (seen.has(role)) problems.push(`${at}: duplicated role '${role}'`)
+      seen.add(role)
+    }
+  }
+
+  if (access.view) checkRoles('access.view', access.view)
+  if (access.manage) checkRoles('access.manage', access.manage)
+
+  if (access.transitions) {
+    if (!definition.state) {
+      problems.push('access.transitions: the resource has no state machine')
+    } else {
+      const verbs = definition.state.transitions.map(t => t.name)
+      for (const [verb, roles] of Object.entries(access.transitions)) {
+        if (!verbs.includes(verb)) {
+          problems.push(`access.transitions: '${verb}' is not a transition of the state machine (has: ${verbs.join(', ')})`)
+        }
+        checkRoles(`access.transitions.${verb}`, roles)
+      }
+    }
+  }
 
   return problems
 }
