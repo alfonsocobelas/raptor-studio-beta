@@ -329,8 +329,8 @@ make web           # http://localhost:4200</pre
       color: #fff;
     }
     .wizard-step[data-state='current'] .wizard-pip {
-      background-color: #f15539;
-      border-color: #f15539;
+      background-color: #c86647;
+      border-color: #c86647;
       color: #fff;
     }
   `

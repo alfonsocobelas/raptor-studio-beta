@@ -39,9 +39,7 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
           <button
             type="button"
             class="hover:ring-foreground/25 studio-ui mb-1.5 flex w-full items-center gap-3 rounded-[9px] border px-3 py-2.5 text-left transition-shadow hover:ring-1"
-            [class.border-primary]="card.role === ui.role()"
-            [class.ring-primary]="card.role === ui.role()"
-            [class.ring-1]="card.role === ui.role()"
+            [class.role-card-active]="card.role === ui.role()"
             [class.bg-background]="card.role === ui.role()"
             [class.border-transparent]="card.role !== ui.role()"
             [attr.aria-current]="card.role === ui.role() ? 'true' : null"
@@ -96,6 +94,12 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
     /* Recuadro de la inicial en el naranja terracota #C86647 que eligió Alfonso, con la letra en
        blanco encima (blanco fijo, no --brand-foreground: en oscuro ese token es tinta). Va en CSS y no con utilidades para no depender de --primary, que en claro es
        tinta casi negra. Mismo tono de día y de noche: es una insignia, no un estado. */
+    /* El rol elegido se marca con el MISMO terracota de su insignia; --primary daría tinta negra
+       de día y blanco de noche, que es lo que se veía antes. */
+    .role-card-active {
+      border-color: #c86647;
+      box-shadow: 0 0 0 1px #c86647;
+    }
     .role-badge {
       background-color: #c86647;
       color: #ffffff;

@@ -603,10 +603,10 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
   `,
   styles: `
     /* En noche el CTA dominante se invierte a papel y un botón blanco es lo que más
-       pesa de la pantalla. Toma el naranja de la marca —el mismo #f15539— con la
+       pesa de la pantalla. Toma el naranja de la marca —el mismo #c86647— con la
        tinta oscura encima, igual que la entidad elegida del diagrama. */
     :host-context(.dark) .generate-cta:not(:disabled) {
-      background-color: #f15539;
+      background-color: #c86647;
       color: var(--brand-foreground);
     }
     /* Papel del lienzo: el MISMO que el de Modelo y Flujos, --background a secas

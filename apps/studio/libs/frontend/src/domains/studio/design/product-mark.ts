@@ -2,7 +2,7 @@ import type { PreviewTheme } from './preview-settings'
 
 /** Los dos colores de la marca; en noche cambian de sitio, no de valor. */
 const INK = '#1b1917'
-const BRAND = '#f15539'
+const BRAND = '#c86647'
 
 export interface ProductMarkColors {
   background: string
