@@ -116,7 +116,8 @@
       "description": "Infrastructure provider of the emitted app (exclusive slot)",
       "enum": [
         "none",
-        "azure"
+        "azure",
+        "aws"
       ],
       "x-prompt": {
         "message": "¿Qué infraestructura?",
@@ -129,6 +130,10 @@
           {
             "value": "azure",
             "label": "Azure (Key Vault, Blob Storage, App Insights)"
+          },
+          {
+            "value": "aws",
+            "label": "AWS (Secrets Manager, S3, CloudWatch Logs)"
           }
         ]
       }

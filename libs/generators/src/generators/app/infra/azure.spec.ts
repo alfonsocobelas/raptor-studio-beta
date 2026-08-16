@@ -19,8 +19,8 @@ describe('proveedor infra=azure', () => {
   const read = (file: string): string => tree.read(`apps/demo/${file}`, 'utf-8') ?? ''
 
   it('está registrado como proveedor elegible de la ranura', () => {
-    expect(Object.keys(INFRA)).toEqual(['none', 'azure'])
-    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure'])
+    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws'])
+    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws'])
   })
 
   it('emite el resolver de secretos de Key Vault y el adapter de Blob', () => {

@@ -43,6 +43,26 @@ export const azureInfra = defineInfra({
 })
 
 /**
+ * AWS (spec 47): los secretos se resuelven contra Secrets Manager (marcadores `vault.*`
+ * con el prefijo de AWS_SECRETS_PREFIX). A diferencia de Azure no hay `instrument.ts`:
+ * el logger base ya escribe JSON estructurado a stdout — App Runner lo envía solo a
+ * CloudWatch Logs (consultable en Log Insights) — y el transporte directo llega en
+ * TASK-04 para los despliegues donde nada recoge stdout.
+ */
+export const awsInfra = defineInfra({
+  value: 'aws',
+  label: 'AWS (Secrets Manager, S3, CloudWatch Logs)',
+  files: 'files-infra-aws',
+  dependencies: {
+    '@aws-sdk/client-secrets-manager': '^3.700.0'
+  },
+
+  apply(tree: Tree, context: PluginContext): void {
+    useAwsConfigLoader(tree, context)
+  }
+})
+
+/**
  * La telemetría se inicializa antes que cualquier otro import: el SDK de Azure Monitor debe
  * parchear los módulos (http, pg…) antes de que la app los cargue.
  */
@@ -140,5 +160,15 @@ function useAzureConfigLoader(tree: Tree, context: PluginContext): void {
   tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/azure/azure-config-loader'"))
 }
 
+/** Espejo de useAzureConfigLoader: la costura de secretos apunta al loader de Secrets Manager. */
+function useAwsConfigLoader(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('aws-config-loader')) {
+    return
+  }
+  tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/aws/aws-config-loader'"))
+}
+
 /** Orden del registro = orden en el formulario. */
-export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra]
+export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra, awsInfra]
