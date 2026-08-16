@@ -125,6 +125,8 @@ export interface ResourceSubstitutions {
   formGroupLines: string[]
   formPatchLines: string[]
   dialogSharedImports: string
+  /** Solo los enums del form (sin el DTO): lo que importa la página-formulario (spec 48) */
+  formEnumImports: string
   needsSelect: boolean
   savedEmitLines: string[]
   /** const value = … con los mismos ajustes que savedEmitLines, para la página-formulario (spec 48) */
@@ -547,6 +549,7 @@ type FormBindings = Pick<
   | 'formGroupLines'
   | 'formPatchLines'
   | 'dialogSharedImports'
+  | 'formEnumImports'
   | 'needsSelect'
   | 'savedEmitLines'
   | 'formValueBuildLines'
@@ -612,6 +615,7 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     formGroupLines: formFields.map(renderFormGroupLine),
     formPatchLines: formFields.map(f => renderFormPatchLine(f, propertyName, definition.fields[f.name])),
     dialogSharedImports: sharedTypes.join(', '),
+    formEnumImports: [...new Set(enumSelects.map(f => f.optionsType as string))].sort().join(', '),
     needsSelect: selects.length > 0,
     savedEmitLines: renderSavedEmit(formFields, lookups),
     formValueBuildLines: renderFormValueBuild(formFields, lookups),

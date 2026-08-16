@@ -81,6 +81,16 @@ describe('resource generator — página-formulario (spec 48)', () => {
     expect(page).toContain('notFound')
   })
 
+  it('importa los enums que el grupo del form referencia (sin arrastrar el DTO)', async () => {
+    registerModels([{ ...MODELS['project'], form: {} } as ResourceDefinition, MODELS['customer']])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'project', directory: 'out' })
+    const page = tree.read('out/frontend/project-form-page.component.ts', 'utf-8') ?? ''
+
+    expect(page).toContain("import { ProjectImplementerEnum, ProjectStatusEnum } from '@sap-licenses/shared/domain'")
+    expect(page).not.toContain('ProjectDto')
+  })
+
   it('sin form no cambia nada de lo demás emitido', async () => {
     const con = await generate(withForm())
     const sin = await generate({ ...withForm(), form: undefined })
