@@ -91,6 +91,16 @@ describe('resource generator — página-formulario (spec 48)', () => {
     expect(page).not.toContain('ProjectDto')
   })
 
+  it('emite el spec de la página con los servicios de lookup mockeados', async () => {
+    registerModels([{ ...MODELS['project'], form: {} } as ResourceDefinition, MODELS['customer']])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'project', directory: 'out' })
+    const spec = tree.read('out/frontend/project-form-page.component.spec.ts', 'utf-8') ?? ''
+
+    expect(spec).toContain('ProjectFormPageComponent')
+    expect(spec).toContain('{ provide: CustomerService, useValue: { customers: { value: () => undefined } } }')
+  })
+
   it('sin form no cambia nada de lo demás emitido', async () => {
     const con = await generate(withForm())
     const sin = await generate({ ...withForm(), form: undefined })

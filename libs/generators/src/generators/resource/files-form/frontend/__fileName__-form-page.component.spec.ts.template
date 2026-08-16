@@ -1,0 +1,84 @@
+import { provideZonelessChangeDetection } from '@angular/core'
+import { TestBed } from '@angular/core/testing'
+import { ActivatedRoute, Router } from '@angular/router'
+import { vi } from 'vitest'
+import { <%- className %>FormPageComponent } from './<%- fileName %>-form-page.component'
+import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ lookupServiceImports.forEach(r => { _%>
+import { <%- r.charAt(0).toUpperCase() + r.slice(1) %>Service } from '../../../../../../core/services/<%- r %>.service'
+<%_ }) _%>
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AuthService } from '../../../../../../core/services/auth.service'
+<%_ if (entry.accessDeclared) { _%>
+import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+<%_ } _%>
+
+const routeWith = (id: string | null) => ({ snapshot: { paramMap: { get: () => id } } })
+
+const RECORD_ID = '019eb800-0000-7000-8000-000000000001'
+
+describe('<%- className %>FormPageComponent — página-formulario', () => {
+  const setup = (id: string | null, findOne = vi.fn().mockResolvedValue({ id: RECORD_ID })) => {
+    const service = { findOne, create: vi.fn().mockResolvedValue(undefined), update: vi.fn().mockResolvedValue(undefined) }
+    const router = { navigate: vi.fn() }
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: ActivatedRoute, useValue: routeWith(id) },
+        { provide: <%- className %>Service, useValue: service },
+        { provide: Router, useValue: router },
+        { provide: NotificationService, useValue: { success: vi.fn(), error: vi.fn() } },
+<%_ if (entry.accessDeclared) { _%>
+        { provide: AuthService, useValue: { currentUser: () => ({ role: CAN_MANAGE_ROLES[0] }) } },
+<%_ } else { _%>
+        { provide: AuthService, useValue: { canWrite: () => true } },
+<%_ } _%>
+<%_ formPageLookupProviders.forEach(line => { _%>
+        <%- line %>,
+<%_ }) _%>
+        // el componente se declara como proveedor: sin plantilla que renderizar,
+        // TestBed.inject basta para ejercitar la lógica de carga y guardado
+        <%- className %>FormPageComponent
+      ]
+    })
+    return { component: TestBed.inject(<%- className %>FormPageComponent), findOne, service, router }
+  }
+
+  beforeEach(() => TestBed.resetTestingModule())
+
+  it('sin id en la ruta nace en modo alta y no carga nada', () => {
+    const { component, findOne } = setup(null)
+
+    expect(component.editingId()).toBeNull()
+    expect(findOne).not.toHaveBeenCalled()
+  })
+
+  it('con id carga el registro y queda en modo edición', async () => {
+    const { component, findOne } = setup(RECORD_ID)
+    await component.load(RECORD_ID)
+
+    expect(findOne).toHaveBeenCalledWith(RECORD_ID)
+    expect(component.editingId()).toBe(RECORD_ID)
+    expect(component.notFound()).toBe(false)
+    expect(component.loading()).toBe(false)
+  })
+
+  it('un registro inexistente marca notFound', async () => {
+    const { component } = setup(RECORD_ID, vi.fn().mockRejectedValue({ status: 404 }))
+    await component.load(RECORD_ID)
+
+    expect(component.notFound()).toBe(true)
+    expect(component.loading()).toBe(false)
+  })
+<%_ const hasRequired = formSections.some(s => s.fields.some(f => f.required)) _%>
+<%_ if (hasRequired) { _%>
+
+  it('con el form inválido guardar no llama al service', async () => {
+    const { component, service } = setup(null)
+    await component.save()
+
+    expect(service.create).not.toHaveBeenCalled()
+    expect(service.update).not.toHaveBeenCalled()
+  })
+<%_ } _%>
+})

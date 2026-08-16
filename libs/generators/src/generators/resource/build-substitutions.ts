@@ -127,6 +127,8 @@ export interface ResourceSubstitutions {
   dialogSharedImports: string
   /** Solo los enums del form (sin el DTO): lo que importa la página-formulario (spec 48) */
   formEnumImports: string
+  /** Providers de TestBed que mockean los servicios de lookup en el spec de la página (spec 48) */
+  formPageLookupProviders: string[]
   needsSelect: boolean
   savedEmitLines: string[]
   /** const value = … con los mismos ajustes que savedEmitLines, para la página-formulario (spec 48) */
@@ -550,6 +552,7 @@ type FormBindings = Pick<
   | 'formPatchLines'
   | 'dialogSharedImports'
   | 'formEnumImports'
+  | 'formPageLookupProviders'
   | 'needsSelect'
   | 'savedEmitLines'
   | 'formValueBuildLines'
@@ -616,6 +619,11 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     formPatchLines: formFields.map(f => renderFormPatchLine(f, propertyName, definition.fields[f.name])),
     dialogSharedImports: sharedTypes.join(', '),
     formEnumImports: [...new Set(enumSelects.map(f => f.optionsType as string))].sort().join(', '),
+    formPageLookupProviders: lookups.map(f => {
+      const resource = f.lookup?.resource ?? ''
+      const service = `${resource.charAt(0).toUpperCase()}${resource.slice(1)}Service`
+      return `{ provide: ${service}, useValue: { ${pluralOfResource(resource)}: { value: () => undefined } } }`
+    }),
     needsSelect: selects.length > 0,
     savedEmitLines: renderSavedEmit(formFields, lookups),
     formValueBuildLines: renderFormValueBuild(formFields, lookups),
