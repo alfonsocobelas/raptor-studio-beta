@@ -54,11 +54,14 @@ export const awsInfra = defineInfra({
   label: 'AWS (Secrets Manager, S3, CloudWatch Logs)',
   files: 'files-infra-aws',
   dependencies: {
+    '@aws-sdk/client-s3': '^3.700.0',
     '@aws-sdk/client-secrets-manager': '^3.700.0'
   },
 
   apply(tree: Tree, context: PluginContext): void {
     useAwsConfigLoader(tree, context)
+    reshapeStorageConfigForS3(tree, context)
+    bindS3Storage(tree, context)
   }
 })
 
@@ -158,6 +161,108 @@ function useAzureConfigLoader(tree: Tree, context: PluginContext): void {
     return
   }
   tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/azure/azure-config-loader'"))
+}
+
+/**
+ * La sección `storage` del kernel tiene la forma de Azure (connectionString + container);
+ * con S3 pasa a bucket/region/endpoint. endpoint/forcePathStyle no son especulación: cubren
+ * MinIO local con la MISMA sección, igual que el adapter del catálogo (storage-s3).
+ */
+function reshapeStorageConfigForS3(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('bucket: string')) {
+    tree.write(
+      typesPath,
+      types.replace(
+        `export interface StorageConfig {
+  connectionString: string
+  container: string
+}`,
+        `export interface StorageConfig {
+  bucket: string
+  region?: string
+  /** S3-compatible endpoint: omit for AWS, set it (plus forcePathStyle) for local MinIO */
+  endpoint?: string
+  forcePathStyle?: boolean
+}`
+      )
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('bucket!: string')) {
+    tree.write(
+      validationPath,
+      validation.replace(
+        `class StorageValidator {
+  @IsString()
+  connectionString!: string
+
+  @IsString()
+  container!: string
+}`,
+        `class StorageValidator {
+  @IsString()
+  bucket!: string
+
+  @IsOptional()
+  @IsString()
+  region?: string
+
+  @IsOptional()
+  @IsString()
+  endpoint?: string
+
+  @IsOptional()
+  @IsBoolean()
+  forcePathStyle?: boolean
+}`
+      )
+    )
+  }
+}
+
+/**
+ * Espejo de bindBlobStorage (azure): el adapter de ficheros lo decide la CONFIG, no el
+ * build — con `storage.bucket` configurado los ficheros van a S3; sin él, a disco local.
+ */
+function bindS3Storage(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/storage/storage.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('S3FileStorage')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    `import { Global, Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { FileStoragePort } from '../../domain/storage/file-storage.port'
+import { S3FileStorage } from './s3-file-storage'
+import { LocalFileStorage } from './local-file-storage'
+
+/**
+ * Global: cualquier módulo con adjuntos inyecta FileStoragePort sin re-declararlo.
+ *
+ * El adapter lo decide la CONFIG, no el build: con la sección \`storage\` configurada los ficheros
+ * van a S3; sin ella, a disco local. Así el mismo binario sirve para local y para la nube.
+ */
+@Global()
+@Module({
+  providers: [
+    {
+      provide: FileStoragePort,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        config.get<string>('storage.bucket') ? new S3FileStorage(config) : new LocalFileStorage()
+    }
+  ],
+  exports: [FileStoragePort]
+})
+export class StorageModule {}
+`
+  )
 }
 
 /** Espejo de useAzureConfigLoader: la costura de secretos apunta al loader de Secrets Manager. */
