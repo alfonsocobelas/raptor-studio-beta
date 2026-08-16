@@ -344,11 +344,11 @@ interface DiagramEdge {
       border-color: transparent;
     }
     /* En noche la tinta es papel: una cabecera blanca grita más que la caja entera.
-       La entidad elegida se tiñe de marca. Naranja literal y no var(--brand), porque
-       en oscuro ese token se aclara a #fe6749 (salmón) y aquí queremos el mismo
-       #f15539 de la marca del producto: dos naranjas casi iguales al lado se notan. */
+       La entidad elegida viste el mismo naranja macizo que los verbos del raíl
+       izquierdo (--flow-accent), no el de la marca: dos naranjas casi iguales
+       al lado se notan. */
     :host-context(.dark) .model-card-header-chosen {
-      background-color: #f15539;
+      background-color: var(--flow-accent);
       color: var(--brand-foreground);
     }
     /* Los puntitos de clave y de referencia, en naranja rebajado: señalan sin
