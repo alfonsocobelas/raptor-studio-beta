@@ -1,0 +1,209 @@
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { accessRows, toggleCapability, type AccessCapabilityCell, type AccessTableRow } from '@app/shared/domain'
+import { AccessUiService } from './access-ui.service'
+import { DesignStore } from './design-store'
+import { StudioModeService } from './studio-mode.service'
+
+const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta' } as const
+
+/**
+ * La tabla central de Accesos (spec 49, mockups 30A/31B): qué puede hacer el rol activo.
+ * Filas de entidad con su subtítulo derivado; celdas Ver/Crear/Editar/Borrar y un
+ * conmutador por transición. Cada click persiste la matriz explícita completa. Admin
+ * se mira pero no se toca: su poder no se negocia.
+ */
+@Component({
+  selector: 'studio-access-table',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    @if (!store.resources().length) {
+      <div
+        class="flex h-full flex-col items-center justify-center text-center"
+        data-testid="access-table-empty"
+      >
+        <p class="text-muted-foreground mb-2 text-lg">Sin entidades todavía</p>
+        <p class="text-muted-foreground max-w-md text-sm">
+          Los accesos se reparten sobre el diseño: crea entidades en la pestaña <strong>Modelo</strong> y aquí
+          decidirás quién ve, crea, edita y borra cada una.
+        </p>
+        <button
+          type="button"
+          class="text-primary mt-3 text-sm underline underline-offset-4"
+          data-testid="access-go-model"
+          (click)="modeService.mode.set('model')"
+        >
+          Ir al Modelo
+        </button>
+      </div>
+    } @else {
+      <div class="mx-auto flex h-full max-w-4xl flex-col px-8 pt-8">
+        <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Qué puede hacer {{ roleLabel() }}</h1>
+            <p class="text-muted-foreground mt-1 text-sm">
+              @if (ui.role() === 'admin') {
+                Admin siempre puede todo; elige otro rol para repartir permisos.
+              } @else {
+                Pulsa una celda para cambiar el permiso de esa entidad.
+              }
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              type="search"
+              class="border-input bg-background w-44 rounded-md border px-3 py-1.5 text-sm"
+              placeholder="Buscar entidad"
+              [value]="ui.search()"
+              (input)="onSearch($event)"
+              data-testid="access-search"
+            />
+            <div class="bg-foreground/5 flex rounded-lg p-0.5" role="group" aria-label="Filtrar entidades">
+              <button
+                type="button"
+                class="studio-ui rounded-md px-2.5 py-1 text-xs transition-colors"
+                [class.bg-background]="!ui.onlyWithAccess()"
+                [class.shadow-sm]="!ui.onlyWithAccess()"
+                [class.font-semibold]="!ui.onlyWithAccess()"
+                [class.text-muted-foreground]="ui.onlyWithAccess()"
+                data-testid="access-filter-all"
+                (click)="ui.onlyWithAccess.set(false)"
+              >
+                Todas
+              </button>
+              <button
+                type="button"
+                class="studio-ui rounded-md px-2.5 py-1 text-xs transition-colors"
+                [class.bg-background]="ui.onlyWithAccess()"
+                [class.shadow-sm]="ui.onlyWithAccess()"
+                [class.font-semibold]="ui.onlyWithAccess()"
+                [class.text-muted-foreground]="!ui.onlyWithAccess()"
+                data-testid="access-filter-granted"
+                (click)="ui.onlyWithAccess.set(true)"
+              >
+                Con acceso
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div class="bg-background min-h-0 flex-1 overflow-auto rounded-xl border">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-muted-foreground border-b">
+                <th class="studio-eyebrow px-4 py-3 text-left font-normal">Entidad</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Ver</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Crear</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Editar</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Borrar</th>
+                @if (hasTransitions()) {
+                  <th class="studio-eyebrow px-4 py-3 text-left font-normal">Transiciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.name) {
+                <tr class="border-border/60 border-b last:border-b-0" [attr.data-testid]="'access-row-' + row.name">
+                  <td class="px-4 py-3.5">
+                    <span class="block font-medium">{{ row.label }}</span>
+                    <span class="studio-eyebrow mt-0.5 block">{{ row.subtitle }}</span>
+                  </td>
+                  @for (cell of crudCells(row); track cell.capability) {
+                    <td class="px-2 py-3.5 text-center">
+                      <button
+                        type="button"
+                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
+                        [class]="cellClasses(cell)"
+                        [attr.aria-pressed]="granted(cell)"
+                        [attr.aria-label]="cell.label + ' ' + row.label"
+                        [disabled]="ui.role() === 'admin'"
+                        [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
+                        (click)="toggle(row, cell)"
+                      >
+                        {{ granted(cell) ? '✓' : '—' }}
+                      </button>
+                    </td>
+                  }
+                  @if (hasTransitions()) {
+                    <td class="px-4 py-3.5">
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (cell of transitionCells(row); track cell.capability) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                            [class]="cellClasses(cell)"
+                            [attr.aria-pressed]="granted(cell)"
+                            [disabled]="ui.role() === 'admin'"
+                            [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
+                            (click)="toggle(row, cell)"
+                          >
+                            {{ granted(cell) ? '✓ ' : '— ' }}{{ cell.label }}
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="studio-eyebrow py-3" data-testid="access-count">
+          {{ rows().length }} de {{ store.resources().length }} entidades
+        </p>
+      </div>
+    }
+  `
+})
+export class AccessTableComponent {
+  protected readonly store = inject(DesignStore)
+  protected readonly ui = inject(AccessUiService)
+  protected readonly modeService = inject(StudioModeService)
+
+  protected readonly roleLabel = computed(() => ROLE_LABELS[this.ui.role()])
+
+  protected readonly rows = computed<AccessTableRow[]>(() => {
+    const term = this.ui.search().trim().toLowerCase()
+    const role = this.ui.role()
+    return accessRows(this.store.resources())
+      .filter(row => !term || row.label.toLowerCase().includes(term) || row.name.includes(term))
+      .filter(row => {
+        if (!this.ui.onlyWithAccess() || role === 'admin') return true
+        return row.cells.some(cell => cell.capability === 'view' && cell.roles.includes(role))
+      })
+  })
+
+  protected readonly hasTransitions = computed(() => this.rows().some(row => row.cells.some(c => c.kind === 'transition')))
+
+  protected crudCells(row: AccessTableRow): AccessCapabilityCell[] {
+    return row.cells.filter(cell => cell.kind === 'crud')
+  }
+
+  protected transitionCells(row: AccessTableRow): AccessCapabilityCell[] {
+    return row.cells.filter(cell => cell.kind === 'transition')
+  }
+
+  protected granted(cell: AccessCapabilityCell): boolean {
+    const role = this.ui.role()
+    return role === 'admin' || cell.roles.includes(role)
+  }
+
+  /** Ver concedido en verde, escritura en el acento; sin permiso, guion tenue CON contraste (31B). */
+  protected cellClasses(cell: AccessCapabilityCell): string {
+    if (!this.granted(cell)) return 'border-dashed border-border text-muted-foreground'
+    if (cell.capability === 'view') return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600'
+    return 'border-primary/50 bg-primary/10 text-primary'
+  }
+
+  protected toggle(row: AccessTableRow, cell: AccessCapabilityCell): void {
+    const role = this.ui.role()
+    if (role === 'admin') return
+    const resource = this.store.resources().find(r => r.name === row.name)
+    if (!resource) return
+    this.store.setResourceAccess(row.name, toggleCapability(resource, cell.capability, role))
+  }
+
+  protected onSearch(event: Event): void {
+    this.ui.search.set((event.target as HTMLInputElement).value)
+  }
+}
