@@ -51,6 +51,7 @@ import { FlowViewComponent } from './flow-view.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { FlowSidebarComponent } from './flow-sidebar.component'
+import { AccessSidebarComponent } from './access-sidebar.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
 import { FlowPanelComponent } from './flow-panel.component'
@@ -79,6 +80,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     ViewsSidebarComponent,
     ModelSidebarComponent,
     FlowSidebarComponent,
+    AccessSidebarComponent,
     DesignPanelComponent,
     ModelPanelComponent,
     FlowPanelComponent,
@@ -256,6 +258,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           <studio-model-sidebar />
         } @else if (mode() === 'flows') {
           <studio-flow-sidebar />
+        } @else if (mode() === 'access') {
+          <studio-access-sidebar />
         }
         <div
           class="relative flex min-h-0 min-w-0 flex-1 flex-col"
