@@ -48,12 +48,10 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
             [attr.data-testid]="'access-role-' + card.role"
             (click)="ui.role.set(card.role)"
           >
+            <!-- la inicial va SIEMPRE en el naranja de marca; el rol activo se distingue por el
+                 borde y el anillo de su tarjeta, no por invertir la insignia -->
             <span
-              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold"
-              [class.bg-primary]="card.role === ui.role()"
-              [class.text-primary-foreground]="card.role === ui.role()"
-              [class.bg-foreground/10]="card.role !== ui.role()"
-              [class.text-foreground]="card.role !== ui.role()"
+              class="role-badge flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold"
               aria-hidden="true"
             >
               {{ card.initial }}
@@ -93,6 +91,15 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
 
       <p class="text-muted-foreground mt-auto px-1 text-xs">Admin siempre puede todo; su fila no es editable.</p>
     </aside>
+  `,
+  styles: `
+    /* Recuadro de la inicial en el naranja terracota #C86647 que eligió Alfonso, con la letra en
+       blanco encima (blanco fijo, no --brand-foreground: en oscuro ese token es tinta). Va en CSS y no con utilidades para no depender de --primary, que en claro es
+       tinta casi negra. Mismo tono de día y de noche: es una insignia, no un estado. */
+    .role-badge {
+      background-color: #c86647;
+      color: #ffffff;
+    }
   `
 })
 export class AccessSidebarComponent {
