@@ -1,6 +1,7 @@
 import { generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
-import type { BusinessFlow, FlowNode, ResourceDefinition } from '@raptor/schema'
+import { resolveAccess, type BusinessFlow, type FlowNode, type ResourceDefinition } from '@raptor/schema'
+import { rolesArgs } from '../resource/build-entrypoints'
 import { harvestAiSlots, reinjectAiSlots } from '../resource/ai-slots'
 import { flowOrder, renderFlowSteps } from './brief-doc'
 
@@ -94,6 +95,9 @@ export function flowClassDoc(flow: BusinessFlow): string[] {
 export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: BusinessFlow[], models: ResourceDefinition[]): void {
   const pluralOf = new Map(models.map(model => [model.name, model.plural]))
   const contextOf = new Map(models.map(model => [model.name, model.context]))
+  // los roles del endpoint convergido son los del VERBO que ejecuta (spec 46): misma matriz
+  // que el endpoint de la transición del recurso — divergencia imposible
+  const transitionRolesOf = new Map(models.map(model => [model.name, resolveAccess(model).transitions]))
 
   const byContext = new Map<string, BusinessFlow[]>()
   for (const flow of flows) {
@@ -169,7 +173,16 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
             return `import { ${n.className}Id } from '../../../shared/domain/value-objects/${pluralOf.get(entity)}/${n.fileName}-id.vo'`
           })
           .join('\n'),
-        controllerMethods: converged.map(renderControllerMethod).join('\n')
+        controllerMethods: converged
+          .map(method =>
+            renderControllerMethod(
+              method,
+              rolesArgs(
+                transitionRolesOf.get(method.node.entity as string)?.[method.node.transition as string] ?? ['user']
+              )
+            )
+          )
+          .join('\n')
       })
       // sin pasos convergidos no hay controller: nada de fachadas sobre huecos (spec 44)
       if (!converged.length) {
@@ -246,13 +259,13 @@ function renderMethod(method: FlowStepMethod): string {
 }
 
 /** La ruta de un paso convergido: POST processes/<flujo>/<nodo>/:id → 204 (409/404 del filtro global). */
-function renderControllerMethod(method: FlowStepMethod): string {
+function renderControllerMethod(method: FlowStepMethod, roles: string): string {
   const entity = names(method.node.entity as string)
   return [
     '',
     '  /** ' + method.docLines[0] + ` · transición «${method.node.transition}» de ${method.node.entity}. */`,
     `  @Post('${method.node.id}/:id')`,
-    '  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)',
+    `  @Roles(${roles})`,
     '  @HttpCode(HttpStatus.NO_CONTENT)',
     `  ${method.methodName}(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {`,
     `    return this.process.${method.methodName}(${entity.className}Id.create(id))`,

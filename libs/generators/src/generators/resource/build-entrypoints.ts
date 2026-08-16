@@ -29,6 +29,8 @@ export interface TransitionBinding {
   label: string
   /** Expresión de visibilidad del botón en la ficha: from.includes(estado actual) */
   fromCheck: string
+  /** Argumentos de @Roles(...) del endpoint, desde la matriz de accesos (spec 46) */
+  roles: string
 }
 
 export interface EntrypointBindings {
@@ -168,6 +170,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     ...childOps.map(c => `${c}UseCase`)
   ]
 
+  const access = resolveAccess(definition)
+
   const transitions = (definition.state?.transitions ?? []).map(t => ({
     verb: t.name,
     method: names(t.name).propertyName,
@@ -175,10 +179,9 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     file: `${names(t.name).fileName}-${n.fileName}`,
     label: t.label,
     // la visibilidad del botón ES la máquina: solo se pinta si el from incluye el estado actual
-    fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`
+    fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`,
+    roles: rolesArgs(access.transitions[t.name] ?? ['user'])
   }))
-
-  const access = resolveAccess(definition)
 
   return {
     emit: emitAggregate,
@@ -224,7 +227,7 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
 }
 
 /** La matriz efectiva a los argumentos del decorador: admin implícito, siempre primero. */
-function rolesArgs(roles: AccessRole[]): string {
+export function rolesArgs(roles: AccessRole[]): string {
   return ['UserRoleEnum.ADMIN', ...roles.map(role => `UserRoleEnum.${role.toUpperCase()}`)].join(', ')
 }
 

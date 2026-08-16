@@ -177,7 +177,7 @@ export class <%- pluralClassName %>Controller {
 
   /** Transición «<%- transition.label %>» de la máquina de estados (spec 43): 409 si el estado la rechaza. */
   @Post(':id/<%- transition.verb %>')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- transition.roles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   <%- transition.method %>(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.<%- transition.method %><%- className %>Handler.handle({ id })

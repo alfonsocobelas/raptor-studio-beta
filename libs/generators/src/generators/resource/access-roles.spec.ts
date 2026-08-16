@@ -23,10 +23,22 @@ const permit = (): ResourceDefinition =>
     attachments: true,
     detail: { title: 'name' },
     history: true,
-    access: { view: ['user'], manage: [] },
+    access: { view: ['user'], manage: [], transitions: { approve: [] } },
     list: { features: { delete: true, import: true } },
+    state: {
+      field: 'status',
+      initial: 'draft',
+      transitions: [
+        { name: 'approve', label: 'Aprobar', from: ['draft'], to: 'approved' },
+        { name: 'reject', label: 'Rechazar', from: ['draft'], to: 'rejected' }
+      ]
+    },
     fields: {
       id: { type: 'uuid', pk: true },
+      status: {
+        type: 'string',
+        vo: { name: 'PermitStatus', fieldName: 'Status', values: ['draft', 'approved', 'rejected'] }
+      },
       name: {
         type: 'string',
         required: true,
@@ -103,6 +115,56 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
     })
   })
 
+  describe('las transiciones usan transitionRoles[verbo] (TASK-03)', () => {
+    let tree: Tree
+    const read = (path: string): string => tree.read(`out/${path}`, 'utf-8') ?? ''
+
+    beforeAll(async () => {
+      registerModels([permit()])
+      tree = createTreeWithEmptyWorkspace()
+      await resourceGenerator(tree, { name: 'permit', directory: 'out' })
+    })
+
+    it('el endpoint de la transición declarada lleva sus roles («solo admin»)', () => {
+      const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
+
+      expect(controller).toMatch(/@Post\(':id\/approve'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
+    })
+
+    it('la transición sin declarar lleva el defecto admin+user', () => {
+      const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
+
+      expect(controller).toMatch(/@Post\(':id\/reject'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
+    })
+  })
+
+  describe('el paso de proceso convergido (spec 44) usa los roles de su transición', () => {
+    it('el endpoint del paso lleva los roles del verbo que ejecuta', () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { emitFlowProcesses } = require('../app/flow-process')
+      const tree = createTreeWithEmptyWorkspace()
+      tree.write('backend/root.module.ts', 'import { HealthModule } from "x"\nimports: [HealthModule,]\n')
+      const flow = {
+        name: 'De alta a aprobado',
+        nodes: [
+          { id: 'llega', kind: 'start', text: 'Llega el permiso' },
+          { id: 'aprueba', kind: 'step', text: 'Se aprueba', entity: 'permit', transition: 'approve' },
+          { id: 'fin', kind: 'end', text: 'Aprobado' }
+        ],
+        edges: [
+          { from: 'llega', to: 'aprueba' },
+          { from: 'aprueba', to: 'fin' }
+        ]
+      }
+      emitFlowProcesses(tree, 'backend', [flow], [permit()])
+
+      const controller =
+        tree.read('backend/contexts/works/processes/de-alta-a-aprobado/de-alta-a-aprobado.controller.ts', 'utf-8') ?? ''
+
+      expect(controller).toMatch(/@Post\('aprueba\/:id'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
+    })
+  })
+
   describe('renderEntrypoints calcula las cadenas (plantillas tontas)', () => {
     it('mapea la matriz a UserRoleEnum con admin siempre primero', () => {
       const entry = renderEntrypoints(permit(), true)
@@ -110,6 +172,10 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(entry.readRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
       expect(entry.writeRoles).toBe('UserRoleEnum.ADMIN')
       expect(entry.accessDeclared).toBe(true)
+      expect(entry.transitions.map(t => [t.verb, t.roles])).toEqual([
+        ['approve', 'UserRoleEnum.ADMIN'],
+        ['reject', 'UserRoleEnum.ADMIN, UserRoleEnum.USER']
+      ])
     })
 
     it('sin access resuelve la política actual', () => {
