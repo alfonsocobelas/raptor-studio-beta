@@ -29,7 +29,7 @@
 - [x] **TASK-06**: `access-table.component.ts` — pivote Rol completo: tabla entidad×capacidad,
       celdas-botón con `aria-pressed`, guion «sin permiso» con contraste, búsqueda, filtro
       Todas|Con acceso, subtítulos derivados, pie «N de M entidades», fila admin solo lectura.
-- [ ] **TASK-07**: `access-summary.component.ts` — resumen derivado + barra + acciones de
+- [x] **TASK-07**: `access-summary.component.ts` — resumen derivado + barra + acciones de
       columna (Todo ver, Nada editar, Copiar de {rol}); oculto/informativo con admin.
 - [ ] **TASK-08**: pivote Entidad en `access-table.component.ts` (filas de rol, selector de
       entidad) y extracción del lienzo a `access-diagram-view.component.ts`; `access-view`
