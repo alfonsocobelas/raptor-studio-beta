@@ -96,7 +96,8 @@ export function accessDiagram(entities: AccessDiagramEntity[]): AccessDiagramLay
     // capacidades en orden fijo: Ver, Gestionar y una por transición de su máquina
     const caps: { capability: string; label: string; roles: string[] }[] = [
       { capability: 'view', label: `Ver ${entity.labelPlural}`, roles: resolved.view },
-      { capability: 'manage', label: `Gestionar ${entity.labelPlural}`, roles: resolved.manage },
+      // shim spec 49 (TASK-03 pinta las cuatro capacidades): edit resuelve igual que manage
+      { capability: 'manage', label: `Gestionar ${entity.labelPlural}`, roles: resolved.edit },
       ...(entity.state?.transitions ?? []).map(transition => ({
         capability: transition.name,
         label: transition.label,

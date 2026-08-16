@@ -381,7 +381,13 @@ export type AccessRole = 'user' | 'viewer'
 export interface AccessDefinition {
   /** Defecto: ['user', 'viewer'] */
   view?: AccessRole[]
-  /** Defecto: ['user'] */
+  /** Defecto: manage ?? ['user'] */
+  create?: AccessRole[]
+  /** Defecto: manage ?? ['user'] */
+  edit?: AccessRole[]
+  /** Defecto: manage ?? ['user'] */
+  delete?: AccessRole[]
+  /** Azúcar legado (spec 46): create+edit+delete de golpe. La clave granular le gana (spec 49). */
   manage?: AccessRole[]
   /** Por verbo de la máquina de estados; defecto: ['user'] */
   transitions?: Record<string, AccessRole[]>

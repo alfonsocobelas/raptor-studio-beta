@@ -471,6 +471,20 @@ describe('access — la matriz de accesos (spec 46)', () => {
     expect(problems).toContain("access.manage: 'boss' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
   })
 
+  it('acepta la matriz granular create/edit/delete (spec 49)', () => {
+    const access = { view: ['user', 'viewer'], create: ['user'], edit: ['user', 'viewer'], delete: [] }
+
+    expect(() => defineResource(withAccess(access))).not.toThrow()
+  })
+
+  it('rechaza roles ilegales en create, edit y delete', () => {
+    const problems = problemsOf(withAccess({ create: ['boss'], edit: ['admin'], delete: ['boss'] }))
+
+    expect(problems).toContain("access.create: 'boss' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
+    expect(problems).toContain("access.edit: 'admin' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
+    expect(problems).toContain("access.delete: 'boss' is not a grantable role (use 'user' or 'viewer'; admin is implicit)")
+  })
+
   it('rechaza duplicados en cada array', () => {
     expect(problemsOf(withAccess({ view: ['user', 'user'] }))).toContain("access.view: duplicated role 'user'")
   })

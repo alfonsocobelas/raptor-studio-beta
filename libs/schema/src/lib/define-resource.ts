@@ -216,6 +216,9 @@ function validateAccess(definition: ResourceDefinition): string[] {
   }
 
   if (access.view) checkRoles('access.view', access.view)
+  if (access.create) checkRoles('access.create', access.create)
+  if (access.edit) checkRoles('access.edit', access.edit)
+  if (access.delete) checkRoles('access.delete', access.delete)
   if (access.manage) checkRoles('access.manage', access.manage)
 
   if (access.transitions) {

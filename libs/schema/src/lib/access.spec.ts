@@ -29,7 +29,9 @@ describe('resolveAccess', () => {
     const resolved = resolveAccess(baseDefinition())
 
     expect(resolved.view).toEqual(['user', 'viewer'])
-    expect(resolved.manage).toEqual(['user'])
+    expect(resolved.create).toEqual(['user'])
+    expect(resolved.edit).toEqual(['user'])
+    expect(resolved.delete).toEqual(['user'])
     expect(resolved.transitions).toEqual({ approve: ['user'], reject: ['user'] })
   })
 
@@ -46,13 +48,55 @@ describe('resolveAccess', () => {
     const resolved = resolveAccess(definition)
 
     expect(resolved.view).toEqual(['user'])
-    expect(resolved.manage).toEqual(['user'])
+    expect(resolved.create).toEqual(['user'])
+    expect(resolved.edit).toEqual(['user'])
+    expect(resolved.delete).toEqual(['user'])
+  })
+
+  it('resolves each granular capability independently', () => {
+    const definition = {
+      ...baseDefinition(),
+      access: { create: ['user' as const], edit: ['user' as const, 'viewer' as const], delete: [] }
+    }
+
+    const resolved = resolveAccess(definition)
+
+    expect(resolved.create).toEqual(['user'])
+    expect(resolved.edit).toEqual(['user', 'viewer'])
+    expect(resolved.delete).toEqual([])
+  })
+
+  it('expands legacy manage as the fallback for create, edit and delete', () => {
+    const definition = { ...baseDefinition(), access: { manage: ['user' as const, 'viewer' as const] } }
+
+    const resolved = resolveAccess(definition)
+
+    expect(resolved.create).toEqual(['user', 'viewer'])
+    expect(resolved.edit).toEqual(['user', 'viewer'])
+    expect(resolved.delete).toEqual(['user', 'viewer'])
+  })
+
+  it('lets a granular capability win over legacy manage', () => {
+    const definition = {
+      ...baseDefinition(),
+      access: { manage: ['user' as const, 'viewer' as const], delete: [] }
+    }
+
+    const resolved = resolveAccess(definition)
+
+    expect(resolved.create).toEqual(['user', 'viewer'])
+    expect(resolved.edit).toEqual(['user', 'viewer'])
+    expect(resolved.delete).toEqual([])
   })
 
   it('respects an empty array as an admin-only decision', () => {
     const definition = { ...baseDefinition(), access: { manage: [] } }
 
-    expect(resolveAccess(definition).manage).toEqual([])
+    const resolved = resolveAccess(definition)
+
+    expect(resolved.create).toEqual([])
+    expect(resolved.edit).toEqual([])
+    expect(resolved.delete).toEqual([])
   })
 
   it('defaults the transitions not named in access.transitions', () => {

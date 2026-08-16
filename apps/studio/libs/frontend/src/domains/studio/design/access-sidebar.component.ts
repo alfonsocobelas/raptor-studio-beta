@@ -106,7 +106,8 @@ export class AccessSidebarComponent {
         resource,
         rows: [
           { capability: 'view', label: `Ver ${resource.labelPlural}`, roles: resolved.view },
-          { capability: 'manage', label: `Gestionar ${resource.labelPlural}`, roles: resolved.manage },
+          // shim spec 49 (TASK-05+ reescribe la pestaña): edit resuelve igual que manage
+          { capability: 'manage', label: `Gestionar ${resource.labelPlural}`, roles: resolved.edit },
           ...(resource.state?.transitions ?? []).map(transition => ({
             capability: transition.name,
             label: transition.label,
@@ -128,7 +129,7 @@ export class AccessSidebarComponent {
 
     const access: AccessDefinition = {
       view: flip(resolved.view, 'view'),
-      manage: flip(resolved.manage, 'manage'),
+      manage: flip(resolved.edit, 'manage'),
       ...(resource.state
         ? {
             transitions: Object.fromEntries(

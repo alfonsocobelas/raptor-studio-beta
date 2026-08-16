@@ -186,7 +186,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   return {
     emit: emitAggregate,
     readRoles: rolesArgs(access.view),
-    writeRoles: rolesArgs(access.manage),
+    // shim spec 49 (TASK-10 lo hace granular): edit resuelve igual que el manage legado
+    writeRoles: rolesArgs(access.edit),
     accessDeclared: definition.access !== undefined,
     transitions,
     registerDtoFields,
