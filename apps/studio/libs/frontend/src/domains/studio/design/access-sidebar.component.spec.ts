@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { AccessSidebarComponent } from './access-sidebar.component'
-import { DesignStore } from './design-store'
+import { AccessUiService } from './access-ui.service'
 
 function mount() {
   const fixture = TestBed.createComponent(AccessSidebarComponent)
@@ -9,90 +9,67 @@ function mount() {
   return fixture
 }
 
-function testId(fixture: ReturnType<typeof mount>, id: string): HTMLInputElement | null {
+function testId(fixture: ReturnType<typeof mount>, id: string): HTMLButtonElement | null {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
 }
 
 /**
- * Spec 46 TASK-07: el raíl de Accesos edita la matriz por entidad — filas Ver/Gestionar y
- * una por transición de su máquina; columnas Usuario y Consulta, Admin fija y atenuada.
- * Sin entidades, el estado vacío manda al Modelo.
+ * Spec 49: el raíl de Accesos es la lista de ROLES (mockups 30A/31B) — el activo se
+ * resalta y gobierna la tabla central — más el conmutador Rol|Entidad|Diagrama y la
+ * nota de admin. La matriz ya no se edita aquí: se edita en la tabla.
  */
 describe('AccessSidebarComponent', () => {
-  let store: DesignStore
+  let ui: AccessUiService
 
   beforeEach(() => {
     TestBed.configureTestingModule({})
-    store = TestBed.inject(DesignStore)
+    ui = TestBed.inject(AccessUiService)
+    ui.role.set('user')
+    ui.pivot.set('role')
   })
 
-  it('sin entidades muestra el estado vacío que manda al Modelo', () => {
+  it('pinta los tres roles fijos con Usuario activo por defecto', () => {
     const fixture = mount()
 
-    const empty = testId(fixture, 'access-empty')
-    expect(empty).not.toBeNull()
-    expect(empty?.textContent).toContain('Modelo')
+    expect(testId(fixture, 'access-role-admin')?.textContent).toContain('Administrador')
+    expect(testId(fixture, 'access-role-user')?.textContent).toContain('Usuario')
+    expect(testId(fixture, 'access-role-viewer')?.textContent).toContain('Consulta')
+    expect(testId(fixture, 'access-role-user')?.getAttribute('aria-current')).toBe('true')
+    expect(testId(fixture, 'access-role-admin')?.getAttribute('aria-current')).toBeNull()
   })
 
-  it('una entidad sin máquina ofrece solo Ver y Gestionar', () => {
-    store.addResource('Cliente')
-
+  it('elegir un rol lo activa para la tabla', () => {
     const fixture = mount()
 
-    expect(testId(fixture, 'access-cliente-view-user')).not.toBeNull()
-    expect(testId(fixture, 'access-cliente-manage-viewer')).not.toBeNull()
-    expect(fixture.nativeElement.querySelectorAll('[data-testid^="access-cliente-"]')).toHaveLength(6)
-  })
-
-  it('con máquina aparece una fila por transición', () => {
-    store.addResource('Factura')
-    store.addField('factura')
-    store.updateField('factura', 1, {
-      name: 'estado',
-      label: 'Estado',
-      type: 'enum',
-      values: [
-        { value: 'borrador', label: 'Borrador' },
-        { value: 'aprobada', label: 'Aprobada' }
-      ]
-    })
-    store.promoteState('factura', 'estado')
-    store.addTransition('factura', 'borrador', 'aprobada')
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-factura-a-aprobada-user')).not.toBeNull()
-    expect(testId(fixture, 'access-factura-a-aprobada-viewer')).not.toBeNull()
-  })
-
-  it('la columna Admin va marcada, deshabilitada y atenuada', () => {
-    store.addResource('Cliente')
-
-    const fixture = mount()
-    const admin = testId(fixture, 'access-cliente-view-admin')
-
-    expect(admin?.checked).toBe(true)
-    expect(admin?.disabled).toBe(true)
-  })
-
-  it('sin matriz pinta la política actual: Consulta ve pero no gestiona', () => {
-    store.addResource('Cliente')
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-cliente-view-viewer')?.checked).toBe(true)
-    expect(testId(fixture, 'access-cliente-manage-viewer')?.checked).toBe(false)
-    expect(testId(fixture, 'access-cliente-manage-user')?.checked).toBe(true)
-  })
-
-  it('un click persiste la matriz explícita en el diseño', () => {
-    store.addResource('Cliente')
-
-    const fixture = mount()
-    testId(fixture, 'access-cliente-manage-user')?.click()
+    testId(fixture, 'access-role-viewer')?.click()
     fixture.detectChanges()
 
-    expect(store.resources()[0].access).toEqual({ view: ['user', 'viewer'], manage: [] })
-    expect(testId(fixture, 'access-cliente-manage-user')?.checked).toBe(false)
+    expect(ui.role()).toBe('viewer')
+    expect(testId(fixture, 'access-role-viewer')?.getAttribute('aria-current')).toBe('true')
+  })
+
+  it('la tarjeta de admin recuerda que puede TODO', () => {
+    const fixture = mount()
+
+    expect(testId(fixture, 'access-role-admin')?.textContent).toContain('Todo')
+  })
+
+  it('el conmutador cambia el pivote entre Rol, Entidad y Diagrama', () => {
+    const fixture = mount()
+
+    testId(fixture, 'access-pivot-diagram')?.click()
+    fixture.detectChanges()
+
+    expect(ui.pivot()).toBe('diagram')
+    expect(testId(fixture, 'access-pivot-diagram')?.getAttribute('aria-current')).toBe('true')
+
+    testId(fixture, 'access-pivot-entity')?.click()
+    expect(ui.pivot()).toBe('entity')
+  })
+
+  it('lleva la nota de que la fila de admin no se edita', () => {
+    const fixture = mount()
+
+    expect(fixture.nativeElement.textContent).toContain('Admin siempre puede todo')
   })
 })

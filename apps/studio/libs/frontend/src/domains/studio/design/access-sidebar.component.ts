@@ -1,146 +1,100 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import { resolveAccess, type AccessDefinition, type AccessRole } from '@raptor/schema'
-import type { DraftResource } from '@app/shared/domain'
-import { DesignStore } from './design-store'
-import { StudioModeService } from './studio-mode.service'
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
+import type { AccessActorRole } from '@app/shared/domain'
+import { AccessUiService, type AccessPivot } from './access-ui.service'
 
-interface AccessRow {
-  /** 'view' | 'manage' | verbo de la transición */
-  capability: string
+interface RoleCard {
+  role: AccessActorRole
   label: string
-  roles: AccessRole[]
+  initial: string
+  /** El subtítulo de la tarjeta; solo admin lo tiene (su poder no se negocia) */
+  note?: string
 }
 
-interface AccessSection {
-  resource: DraftResource
-  rows: AccessRow[]
-}
+/** Los tres actores fijos del modelo de accesos (spec 46); admin es implícito y total. */
+const ROLE_CARDS: RoleCard[] = [
+  { role: 'admin', label: 'Administrador', initial: 'A', note: 'Todo' },
+  { role: 'user', label: 'Usuario', initial: 'U' },
+  { role: 'viewer', label: 'Consulta', initial: 'C' }
+]
+
+const PIVOTS: { pivot: AccessPivot; label: string }[] = [
+  { pivot: 'role', label: 'Rol' },
+  { pivot: 'entity', label: 'Entidad' },
+  { pivot: 'diagram', label: 'Diagrama' }
+]
 
 /**
- * Raíl del modo Accesos (spec 46): la matriz actor→capacidad por entidad. Filas Ver /
- * Gestionar / cada transición de su máquina; columnas Usuario y Consulta editables y
- * Admin fija y atenuada (admin es implícito y no se negocia). Cada click persiste la
- * matriz EXPLÍCITA completa — lo marcado es lo que hay, sin defectos escondidos.
+ * Raíl del modo Accesos (spec 49, mockups 30A/31B): la lista de roles — el activo se
+ * resalta y gobierna la tabla central — y el conmutador de pivote. La matriz se edita
+ * en la tabla; aquí solo se elige desde qué ángulo mirarla.
  */
 @Component({
   selector: 'studio-access-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <aside class="studio-rail flex h-full w-72 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
-      @if (!sections().length) {
-        <div class="text-muted-foreground px-1 py-2 text-xs" data-testid="access-empty">
-          Todavía no hay entidades. Créalas en la pestaña <strong>Modelo</strong> y aquí repartirás quién ve, quién
-          gestiona y quién ejecuta cada transición.
+    <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
+      <section>
+        <h2 class="studio-eyebrow mb-2 px-1">Roles</h2>
+        @for (card of roleCards; track card.role) {
           <button
             type="button"
-            class="text-primary mt-2 block underline underline-offset-4"
-            data-testid="access-go-model"
-            (click)="modeService.mode.set('model')"
+            class="hover:ring-foreground/25 studio-ui mb-1.5 flex w-full items-center gap-3 rounded-[9px] border px-3 py-2.5 text-left transition-shadow hover:ring-1"
+            [class.border-primary]="card.role === ui.role()"
+            [class.ring-primary]="card.role === ui.role()"
+            [class.ring-1]="card.role === ui.role()"
+            [class.bg-background]="card.role === ui.role()"
+            [class.border-transparent]="card.role !== ui.role()"
+            [attr.aria-current]="card.role === ui.role() ? 'true' : null"
+            [attr.data-testid]="'access-role-' + card.role"
+            (click)="ui.role.set(card.role)"
           >
-            Ir al Modelo
-          </button>
-        </div>
-      }
-      @for (section of sections(); track section.resource.name) {
-        <section [attr.data-testid]="'access-entity-' + section.resource.name">
-          <h2 class="studio-eyebrow mb-2 px-1">{{ section.resource.labelPlural }}</h2>
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-muted-foreground">
-                <th class="px-1 py-1 text-left font-normal">Capacidad</th>
-                <th class="w-10 px-1 py-1 text-center font-normal opacity-50" title="Admin siempre puede todo">
-                  Admin
-                </th>
-                <th class="w-10 px-1 py-1 text-center font-normal">Usuario</th>
-                <th class="w-10 px-1 py-1 text-center font-normal">Consulta</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of section.rows; track row.capability) {
-                <tr class="border-border/60 border-t">
-                  <td class="truncate px-1 py-1.5" [title]="row.label">{{ row.label }}</td>
-                  <td class="px-1 py-1.5 text-center opacity-50">
-                    <input
-                      type="checkbox"
-                      checked
-                      disabled
-                      [attr.data-testid]="'access-' + section.resource.name + '-' + row.capability + '-admin'"
-                    />
-                  </td>
-                  @for (role of editableRoles; track role) {
-                    <td class="px-1 py-1.5 text-center">
-                      <input
-                        type="checkbox"
-                        class="accent-primary"
-                        [checked]="row.roles.includes(role)"
-                        [attr.data-testid]="'access-' + section.resource.name + '-' + row.capability + '-' + role"
-                        (change)="toggle(section.resource, row.capability, role)"
-                      />
-                    </td>
-                  }
-                </tr>
+            <span
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold"
+              [class.bg-primary]="card.role === ui.role()"
+              [class.text-primary-foreground]="card.role === ui.role()"
+              [class.bg-foreground/10]="card.role !== ui.role()"
+              [class.text-foreground]="card.role !== ui.role()"
+              aria-hidden="true"
+            >
+              {{ card.initial }}
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate font-medium">{{ card.label }}</span>
+              @if (card.note) {
+                <span class="studio-eyebrow block">{{ card.note }}</span>
               }
-            </tbody>
-          </table>
-        </section>
-      }
+            </span>
+          </button>
+        }
+      </section>
 
-      @if (sections().length) {
-        <p class="text-muted-foreground mt-auto px-1 text-xs">
-          Admin siempre puede todo. Lo demás lo decide esta matriz, y viaja hasta la app generada.
-        </p>
-      }
+      <section>
+        <h2 class="studio-eyebrow mb-2 px-1">Ver la tabla por</h2>
+        <div class="bg-foreground/5 flex rounded-lg p-0.5" role="group" aria-label="Ver la tabla por">
+          @for (option of pivots; track option.pivot) {
+            <button
+              type="button"
+              class="studio-ui flex-1 rounded-md px-2 py-1.5 text-center text-xs transition-colors"
+              [class.bg-background]="option.pivot === ui.pivot()"
+              [class.shadow-sm]="option.pivot === ui.pivot()"
+              [class.font-semibold]="option.pivot === ui.pivot()"
+              [class.text-muted-foreground]="option.pivot !== ui.pivot()"
+              [attr.aria-current]="option.pivot === ui.pivot() ? 'true' : null"
+              [attr.data-testid]="'access-pivot-' + option.pivot"
+              (click)="ui.pivot.set(option.pivot)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <p class="text-muted-foreground mt-auto px-1 text-xs">Admin siempre puede todo; su fila no es editable.</p>
     </aside>
   `
 })
 export class AccessSidebarComponent {
-  protected readonly store = inject(DesignStore)
-  protected readonly modeService = inject(StudioModeService)
-
-  protected readonly editableRoles: AccessRole[] = ['user', 'viewer']
-
-  protected readonly sections = computed<AccessSection[]>(() =>
-    this.store.resources().map(resource => {
-      const resolved = resolveAccess(resource)
-      return {
-        resource,
-        rows: [
-          { capability: 'view', label: `Ver ${resource.labelPlural}`, roles: resolved.view },
-          // shim spec 49 (TASK-05+ reescribe la pestaña): edit resuelve igual que manage
-          { capability: 'manage', label: `Gestionar ${resource.labelPlural}`, roles: resolved.edit },
-          ...(resource.state?.transitions ?? []).map(transition => ({
-            capability: transition.name,
-            label: transition.label,
-            roles: resolved.transitions[transition.name] ?? []
-          }))
-        ]
-      }
-    })
-  )
-
-  protected toggle(resource: DraftResource, capability: string, role: AccessRole): void {
-    const resolved = resolveAccess(resource)
-    const flip = (roles: AccessRole[], target: string): AccessRole[] => {
-      if (capability !== target) return roles
-      const next = roles.includes(role) ? roles.filter(r => r !== role) : [...roles, role]
-      // orden estable user→viewer: el emitido no debe depender del orden de los clicks
-      return this.editableRoles.filter(r => next.includes(r))
-    }
-
-    const access: AccessDefinition = {
-      view: flip(resolved.view, 'view'),
-      manage: flip(resolved.edit, 'manage'),
-      ...(resource.state
-        ? {
-            transitions: Object.fromEntries(
-              (resource.state.transitions ?? []).map(transition => [
-                transition.name,
-                flip(resolved.transitions[transition.name] ?? [], transition.name)
-              ])
-            )
-          }
-        : {})
-    }
-    this.store.setResourceAccess(resource.name, access)
-  }
+  protected readonly ui = inject(AccessUiService)
+  protected readonly roleCards = ROLE_CARDS
+  protected readonly pivots = PIVOTS
 }

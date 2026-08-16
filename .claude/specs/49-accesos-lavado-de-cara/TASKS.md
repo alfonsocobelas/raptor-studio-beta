@@ -23,7 +23,7 @@
 
 ## Fase 3 — Estudio: la pestaña nueva
 
-- [ ] **TASK-05**: `AccessUiService` (rol, pivote, búsqueda, filtro, entidad) + reescritura de
+- [x] **TASK-05**: `AccessUiService` (rol, pivote, búsqueda, filtro, entidad) + reescritura de
       `access-sidebar.component.ts` como raíl de roles con conmutador Rol|Entidad|Diagrama y
       nota de admin. Gate AOT `npm run web:build`.
 - [ ] **TASK-06**: `access-table.component.ts` — pivote Rol completo: tabla entidad×capacidad,
