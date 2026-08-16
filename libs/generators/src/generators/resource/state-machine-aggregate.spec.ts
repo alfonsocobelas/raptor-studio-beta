@@ -66,3 +66,22 @@ describe('el agregado con máquina de estados', () => {
     expect(aggregate).toMatch(/fromPrimitives[\s\S]*ContractStatus\.create\(props\.status\)/)
   })
 })
+
+/**
+ * Bug cazado por typecheck-emitted (spec 46): el builder de tests pasaba el campo de
+ * estado a Aggregate.create(), pero AggregateProps lo excluye (toda entidad nueva nace
+ * en initial) → TS2353 en el emitido. El create() del builder no debe citarlo; el
+ * build() (fromPrimitives) sí, que es como los tests montan un estado concreto.
+ */
+describe('el builder de tests con máquina de estados', () => {
+  it('create() no pasa el campo de estado; build() lo conserva vía primitives', async () => {
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'contract', directory: 'out' })
+    const builder = tree.read('out/backend-tests/contract.builder.ts', 'utf-8') ?? ''
+
+    expect(builder).not.toContain('status: ContractStatus.create(this.props.status)')
+    // el default de primitives y el withStatus siguen: build() monta cualquier estado
+    expect(builder).toContain("status: 'active'")
+    expect(builder).toContain('withStatus(status: string)')
+  })
+})

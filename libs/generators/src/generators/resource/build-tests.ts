@@ -55,6 +55,8 @@ interface Ctx {
   maint: boolean
   unique: boolean
   unset: boolean
+  /** Campo promovido a estado (spec 43): AggregateProps lo excluye — nace en initial */
+  isState: boolean
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -80,6 +82,7 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
       sync: field.syncManaged ?? false,
       maint: (field.optionalPrimitive ?? false) && !(field.syncManaged ?? false),
       unique: field.unique ?? false,
+      isState: definition.state?.field === name,
       unset:
         (typeof field.vo === 'object' && field.vo.unset === true) ||
         field.voShared?.unset === true ||
@@ -135,7 +138,8 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     builderWiths: withFields.map(c => ({ cap: cap(c.name), name: c.name, tsType: builderWithType(c) })),
     builderCreateArgs: [
       `id: ${className}Id.create(this.props.id)`,
-      ...ctxs.filter(c => !c.sync && !periodFields.includes(c.name)).map(c => `${c.name}: ${createArg(c)}`),
+      // el campo de estado no viaja a create(): AggregateProps lo excluye (nace en initial)
+      ...ctxs.filter(c => !c.sync && !c.isState && !periodFields.includes(c.name)).map(c => `${c.name}: ${createArg(c)}`),
       ...(period
         ? [
             `period: Period.create(\n        this.props.${period.start} ? ContractDate.create(new Date(this.props.${period.start})) : null,\n        this.props.${period.end} ? ContractDate.create(new Date(this.props.${period.end})) : null\n      )`
