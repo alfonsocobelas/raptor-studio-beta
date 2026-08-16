@@ -569,6 +569,37 @@ describe('insertar un paso EN MEDIO de un tramo (el «+» de la referencia)', ()
     expect(store.insertFlowStep('Aviso', 'inicio', 'fantasma', 'Paso')).toBe(false)
     expect(store.flows()[0].nodes).toHaveLength(2)
   })
+
+  // ENCADENAR CONDICIONES: meter un rombo en medio de un tramo es el gesto natural
+  // de «y si además…». El camino que ya existía sigue siendo el principal: la salida
+  // de la condición nueva hacia el destino original nace etiquetada «sí», y la rama
+  // «no» queda pendiente de dibujar (el gate de borrador lo permite).
+  it('insertar una CONDICIÓN parte el tramo y el camino original sale por su «sí»', () => {
+    const store = conTramo()
+
+    expect(store.insertFlowNode('Aviso', 'inicio', 'fin', 'decision', '¿urgente?')).toBe(true)
+
+    const flow = store.flows()[0]
+    const nueva = flow.nodes.find(n => n.text === '¿urgente?')
+    expect(nueva?.kind).toBe('decision')
+    expect(flow.edges).toEqual([
+      { from: 'inicio', to: nueva?.id },
+      { from: nueva?.id, to: 'fin', label: 'sí' }
+    ])
+  })
+
+  it('insertar una condición en una rama conserva la etiqueta de entrada', () => {
+    const store = conTramo()
+    store.addFlowNode('Aviso', 'decision', '¿Menos de 10?')
+    store.addFlowEdge('Aviso', 'menos-de-10', 'fin', 'sí')
+
+    store.insertFlowNode('Aviso', 'menos-de-10', 'fin', 'decision', '¿proveedor activo?', 'sí')
+
+    const flow = store.flows()[0]
+    const nueva = flow.nodes.find(n => n.text === '¿proveedor activo?')
+    expect(flow.edges).toContainEqual({ from: 'menos-de-10', to: nueva?.id, label: 'sí' })
+    expect(flow.edges).toContainEqual({ from: nueva?.id, to: 'fin', label: 'sí' })
+  })
 })
 
 describe('reordenar las acciones de una tarjeta (spec 40)', () => {

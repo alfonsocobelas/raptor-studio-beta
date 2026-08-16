@@ -16,6 +16,7 @@ import {
   FLOW_GRID,
   FLOW_GROUP,
   FLOW_KIND_LABELS,
+  FLOW_KIND_STARTERS,
   canvasExtent,
   flowAlternateEdges,
   flowBranchLabel,
@@ -244,6 +245,35 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
             >
               ×
             </button>
+          }
+
+          <!-- insertar EN el tramo seleccionado: partirlo por un paso o por una condición
+             (encadenar decisiones sin cirugía de borrar la rama y enlazar dos veces) -->
+          @if (insertButtonsAt(); as at) {
+            <div
+              class="absolute z-20 flex -translate-x-1/2 gap-1"
+              [style.left.px]="at.x"
+              [style.top.px]="at.y"
+            >
+              <button
+                type="button"
+                class="studio-ui bg-card hover:border-foreground/45 rounded-full border px-2 py-0.5 text-[10px] shadow"
+                data-testid="flow-insert-step"
+                title="Insertar un paso en el tramo"
+                (click)="$event.stopPropagation(); insertOnSelected('step')"
+              >
+                + paso
+              </button>
+              <button
+                type="button"
+                class="studio-ui bg-card hover:border-foreground/45 rounded-full border px-2 py-0.5 text-[10px] shadow"
+                data-testid="flow-insert-decision"
+                title="Insertar una condición en el tramo"
+                (click)="$event.stopPropagation(); insertOnSelected('decision')"
+              >
+                + condición
+              </button>
+            </div>
           }
 
           <!-- TARJETAS DE ACCIONES: las acciones seguidas de una rama se leen juntas,
@@ -1079,6 +1109,37 @@ export class FlowViewComponent {
     const edge = this.edges().find(e => e.from === sel.from && e.to === sel.to && e.label === sel.label)
     return edge ? { x: (edge.line.x1 + edge.line.x2) / 2, y: (edge.line.y1 + edge.line.y2) / 2 + 12 } : null
   })
+
+  /** Los botones de insertar viven bajo la × del tramo elegido. */
+  protected readonly insertButtonsAt = computed<NodePosition | null>(() => {
+    const sel = this.selected()
+    if (sel?.kind !== 'edge') return null
+    const edge = this.edges().find(e => e.from === sel.from && e.to === sel.to && e.label === sel.label)
+    return edge ? { x: (edge.line.x1 + edge.line.x2) / 2, y: (edge.line.y1 + edge.line.y2) / 2 + 36 } : null
+  })
+
+  /**
+   * Parte el tramo elegido por un bloque nuevo, que queda elegido y en edición (como
+   * «+ Acción»). Insertar una condición es ENCADENAR decisiones: el camino que ya
+   * existía sigue por el «sí» y la rama «no» queda pendiente de dibujar.
+   */
+  protected insertOnSelected(kind: 'step' | 'decision'): void {
+    const sel = this.selected()
+    const name = this.activeName()
+    if (sel?.kind !== 'edge' || !name) return
+    this.freezePositions()
+    const texto = kind === 'decision' ? FLOW_KIND_STARTERS.decision : NEW_ACTION_TEXT
+    if (!this.store.insertFlowNode(name, sel.from, sel.to, kind, texto, sel.label)) return
+    const creado = this.store
+      .flows()
+      .find(f => f.name === name)
+      ?.nodes.at(-1)
+    if (!creado) return
+    this.selected.set({ kind: 'node', id: creado.id })
+    this.active.selectFlowNode(creado.id)
+    this.editing.set(creado.id)
+    this.draft.set(creado.id)
+  }
 
   protected deleteSelected(): void {
     const sel = this.selected()

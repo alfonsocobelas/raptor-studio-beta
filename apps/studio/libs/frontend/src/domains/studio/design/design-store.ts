@@ -16,6 +16,7 @@ import {
   type ResourceDefinition
 } from '@raptor/schema'
 import {
+  FLOW_BRANCHES,
   VIEW_PRESETS,
   draftToResource,
   generableHere,
@@ -720,6 +721,16 @@ export class DesignStore {
    * saliendo de la decisión — moverla al segundo tramo cambiaría de rama el resto.
    */
   insertFlowStep(flowName: string, from: string, to: string, text: string, label?: string): boolean {
+    return this.insertFlowNode(flowName, from, to, 'step', text, label)
+  }
+
+  /**
+   * La forma general del insert: también admite meter una CONDICIÓN en el tramo, que
+   * es el gesto de encadenar decisiones. El camino que ya existía sigue siendo el
+   * principal: la salida de la condición nueva hacia el destino original nace con el
+   * «sí», y la rama «no» queda pendiente de dibujar (el gate de borrador lo permite).
+   */
+  insertFlowNode(flowName: string, from: string, to: string, kind: FlowNodeKind, text: string, label?: string): boolean {
     const flow = this._flows().find(f => f.name === flowName)
     const tramo = flow?.edges.find(edge => edge.from === from && edge.to === to && edge.label === label)
     if (!flow || !tramo) {
@@ -728,16 +739,14 @@ export class DesignStore {
     }
 
     const id = freeNodeId(flow, text)
+    const salida = kind === 'decision' ? { from: id, to, label: FLOW_BRANCHES[0] } : { from: id, to }
 
     return this.updateFlow(flowName, current => ({
       ...current,
-      nodes: [...current.nodes, { id, kind: 'step' as const, text }],
+      nodes: [...current.nodes, { id, kind, text }],
       edges: current.edges.flatMap(edge =>
         edge === tramo || (edge.from === from && edge.to === to && edge.label === label)
-          ? [
-              { from, to: id, ...(label ? { label } : {}) },
-              { from: id, to }
-            ]
+          ? [{ from, to: id, ...(label ? { label } : {}) }, salida]
           : [edge]
       )
     }))

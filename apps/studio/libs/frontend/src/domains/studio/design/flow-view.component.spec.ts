@@ -756,3 +756,70 @@ describe('FlowViewComponent — el bloque nuevo aterriza a la vista', () => {
     expect(primero?.style.left).toBe(segundo?.style.left)
   })
 })
+
+/**
+ * ENCADENAR CONDICIONES: meter un rombo en medio de un tramo es el gesto natural de
+ * «y si además…». Antes exigía cirugía (borrar la rama, enlazar dos veces); ahora la
+ * arista seleccionada ofrece «+ paso» y «+ condición».
+ */
+describe('FlowViewComponent — insertar en un tramo', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow('Pedido')
+    store.addFlow('Pedido')
+  })
+
+  function clickEdge(fixture: ReturnType<typeof mount>, edge: string): void {
+    const grupo = testId(fixture, `flow-edge-${edge}`)
+    if (!grupo) throw new Error(`no existe la arista ${edge}`)
+    grupo.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    fixture.detectChanges()
+  }
+
+  it('«+ condición» parte el tramo por un rombo y el camino original sale por su «sí»', () => {
+    const fixture = mount()
+
+    clickEdge(fixture, 'inicio-fin')
+    const boton = testId(fixture, 'flow-insert-decision')
+    expect(boton).not.toBeNull()
+    boton?.click()
+    fixture.detectChanges()
+
+    const flow = store.flows()[0]
+    const rombo = flow.nodes.find(n => n.kind === 'decision')
+    expect(rombo).toBeDefined()
+    expect(flow.edges).toContainEqual({ from: 'inicio', to: rombo?.id })
+    expect(flow.edges).toContainEqual({ from: rombo?.id, to: 'fin', label: 'sí' })
+    // y el rombo queda dibujado y en edición, listo para escribir la pregunta
+    expect(testId(fixture, `flow-node-${rombo?.id}`)).not.toBeNull()
+    expect(testId(fixture, 'flow-node-text-input')).not.toBeNull()
+  })
+
+  it('«+ paso» hace lo mismo con un paso, sin etiquetar su salida', () => {
+    const fixture = mount()
+
+    clickEdge(fixture, 'inicio-fin')
+    testId(fixture, 'flow-insert-step')?.click()
+    fixture.detectChanges()
+
+    const flow = store.flows()[0]
+    const paso = flow.nodes.find(n => n.kind === 'step')
+    expect(paso).toBeDefined()
+    expect(flow.edges).toContainEqual({ from: 'inicio', to: paso?.id })
+    expect(flow.edges).toContainEqual({ from: paso?.id, to: 'fin' })
+  })
+
+  it('con un nodo seleccionado no se ofrecen los botones de insertar', () => {
+    const fixture = mount()
+
+    const inicio = testId(fixture, 'flow-card-inicio') ?? testId(fixture, 'flow-node-inicio')
+    inicio?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'flow-insert-decision')).toBeNull()
+    expect(testId(fixture, 'flow-insert-step')).toBeNull()
+  })
+})
