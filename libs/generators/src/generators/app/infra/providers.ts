@@ -54,14 +54,18 @@ export const awsInfra = defineInfra({
   label: 'AWS (Secrets Manager, S3, CloudWatch Logs)',
   files: 'files-infra-aws',
   dependencies: {
+    '@aws-sdk/client-cloudwatch-logs': '^3.700.0',
     '@aws-sdk/client-s3': '^3.700.0',
-    '@aws-sdk/client-secrets-manager': '^3.700.0'
+    '@aws-sdk/client-secrets-manager': '^3.700.0',
+    'winston-transport': '^4.7.0'
   },
 
   apply(tree: Tree, context: PluginContext): void {
     useAwsConfigLoader(tree, context)
     reshapeStorageConfigForS3(tree, context)
     bindS3Storage(tree, context)
+    addCloudWatchConfigSection(tree, context)
+    addAwsLogTransport(tree, context)
   }
 })
 
@@ -222,6 +226,79 @@ function reshapeStorageConfigForS3(tree: Tree, context: PluginContext): void {
       )
     )
   }
+}
+
+/** Sección opcional `cloudwatch` en tipos y validación: presente → transporte directo. */
+function addCloudWatchConfigSection(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('CloudWatchConfig')) {
+    tree.write(
+      typesPath,
+      types
+        .replace(
+          'export interface StorageConfig {',
+          `export interface CloudWatchConfig {
+  logGroup: string
+  /** Default: the runtime env name */
+  logStream?: string
+}
+
+export interface StorageConfig {`
+        )
+        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  cloudwatch?: CloudWatchConfig')
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('CloudWatchValidator')) {
+    tree.write(
+      validationPath,
+      validation
+        .replace(
+          'class StorageValidator {',
+          `class CloudWatchValidator {
+  @IsString()
+  logGroup!: string
+
+  @IsOptional()
+  @IsString()
+  logStream?: string
+}
+
+class StorageValidator {`
+        )
+        .replace(
+          '  storage?: StorageValidator\n}',
+          `  storage?: StorageValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CloudWatchValidator)
+  cloudwatch?: CloudWatchValidator
+}`
+        )
+    )
+  }
+}
+
+/** Espejo de addAzureLogTransport: enchufa el transporte CloudWatch en la costura del logger. */
+function addAwsLogTransport(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/logger/logger.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('awsLogTransportsProvider')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    source
+      .replace(
+        "import { AppLoggerService } from './app-logger.service'",
+        "import { AppLoggerService } from './app-logger.service'\nimport { awsLogTransportsProvider } from './aws-log-transports'"
+      )
+      .replace('  providers: [\n    AppLoggerService,', '  providers: [\n    awsLogTransportsProvider,\n    AppLoggerService,')
+  )
 }
 
 /**

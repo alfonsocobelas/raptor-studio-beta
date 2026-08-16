@@ -120,4 +120,54 @@ export class StorageModule {}
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)
     })
   })
+
+  /**
+   * TASK-04: sin instrument.ts ni OTel — el logger base ya escribe JSON a stdout (App Runner
+   * lo envía solo a CloudWatch). El transporte directo entra por la costura EXTRA_LOG_TRANSPORTS
+   * y solo si la sección `cloudwatch` está configurada (despliegues donde nada recoge stdout).
+   */
+  describe('logs', () => {
+    it('emite el transporte CloudWatch y su provider para la costura del logger', () => {
+      expect(
+        tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/cloudwatch-logs-transport.ts')
+      ).toBe(true)
+      expect(
+        tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/aws-log-transports.ts')
+      ).toBe(true)
+    })
+
+    it('enchufa su transporte en la costura del logger, sin tocar el logger base', () => {
+      const loggerModule = read('libs/backend/src/contexts/shared/infrastructure/logger/logger.module.ts')
+      expect(loggerModule).toContain('awsLogTransportsProvider')
+
+      const baseLogger = read('libs/backend/src/contexts/shared/infrastructure/logger/app-logger.service.ts')
+      expect(baseLogger).not.toContain("from '@aws-sdk/")
+    })
+
+    it('el transporte se activa por la sección cloudwatch de config, no por build', () => {
+      const provider = read('libs/backend/src/contexts/shared/infrastructure/logger/aws-log-transports.ts')
+      expect(provider).toContain("config.get<string>('cloudwatch.logGroup')")
+
+      const types = read('libs/backend/src/contexts/shared/infrastructure/config/config-types.ts')
+      expect(types).toContain('cloudwatch?: CloudWatchConfig')
+
+      const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
+      expect(validation).toContain('CloudWatchValidator')
+    })
+
+    it('declara el SDK de CloudWatch Logs y la base de transportes de winston', () => {
+      const pkg = JSON.parse(read('package.json')) as { dependencies: Record<string, string> }
+
+      expect(pkg.dependencies['@aws-sdk/client-cloudwatch-logs']).toBeDefined()
+      expect(pkg.dependencies['winston-transport']).toBeDefined()
+    })
+
+    it('no emite telemetría de arranque: no hay SDK que parchear antes de los imports', () => {
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/telemetry/instrument.ts')).toBe(
+        false
+      )
+      const main = read('apps/backend-api/src/main.ts')
+      expect(main).not.toContain('telemetry/instrument')
+    })
+  })
 })

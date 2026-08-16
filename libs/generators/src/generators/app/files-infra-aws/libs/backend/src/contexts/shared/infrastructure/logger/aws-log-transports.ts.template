@@ -1,0 +1,25 @@
+import { ConfigService } from '@nestjs/config'
+import type { Provider } from '@nestjs/common'
+import * as winston from 'winston'
+import { EXTRA_LOG_TRANSPORTS } from './app-logger.service'
+import { CloudWatchLogsTransport } from './cloudwatch-logs-transport'
+
+/**
+ * Transporte extra del logger, enchufado en la costura que deja el logger base. Lo decide
+ * la CONFIG, no el build: con la sección `cloudwatch` presente los logs viajan además a
+ * CloudWatch Logs (Log Insights); sin ella se quedan en stdout — que en App Runner ya
+ * llega solo a CloudWatch, así que la sección solo hace falta donde nada recoge stdout.
+ */
+export const awsLogTransportsProvider: Provider = {
+  provide: EXTRA_LOG_TRANSPORTS,
+  inject: [ConfigService],
+  useFactory: (config: ConfigService): winston.transport[] => {
+    const logGroupName = config.get<string>('cloudwatch.logGroup')
+    if (!logGroupName) {
+      return []
+    }
+
+    const logStreamName = config.get<string>('cloudwatch.logStream') ?? config.get<string>('env') ?? 'app'
+    return [new CloudWatchLogsTransport({ logGroupName, logStreamName })]
+  }
+}
