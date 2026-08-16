@@ -168,4 +168,46 @@ describe('AccessTableComponent', () => {
 
     expect(row?.textContent).toContain('campos')
   })
+
+  describe('pivote Entidad', () => {
+    beforeEach(() => {
+      ui.pivot.set('entity')
+    })
+
+    it('pinta una fila por rol para la entidad elegida, admin solo lectura', () => {
+      store.addResource('Cliente')
+      ui.entity.set('')
+
+      const fixture = mount()
+
+      expect(fixture.nativeElement.textContent).toContain('Quién puede con Clientes')
+      const admin = testId(fixture, 'access-ecell-admin-view')
+      expect(admin?.getAttribute('aria-pressed')).toBe('true')
+      expect(admin?.disabled).toBe(true)
+      expect(pressed(fixture, 'access-ecell-user-delete')).toBe(true)
+      expect(pressed(fixture, 'access-ecell-viewer-create')).toBe(false)
+    })
+
+    it('el selector cambia de entidad', () => {
+      store.addResource('Cliente')
+      store.addResource('Factura')
+      ui.entity.set('factura')
+
+      const fixture = mount()
+
+      expect(fixture.nativeElement.textContent).toContain('Quién puede con Facturas')
+    })
+
+    it('un click en la celda persiste el permiso del rol de esa fila', () => {
+      store.addResource('Cliente')
+      ui.entity.set('cliente')
+
+      const fixture = mount()
+      testId(fixture, 'access-ecell-viewer-create')?.click()
+      fixture.detectChanges()
+
+      expect(store.resources()[0].access?.create).toEqual(['user', 'viewer'])
+      expect(pressed(fixture, 'access-ecell-viewer-create')).toBe(true)
+    })
+  })
 })

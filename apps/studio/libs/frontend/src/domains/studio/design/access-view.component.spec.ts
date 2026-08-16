@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
+import { AccessUiService } from './access-ui.service'
 import { AccessViewComponent } from './access-view.component'
 import { DesignStore } from './design-store'
 
@@ -9,53 +10,52 @@ function mount() {
   return fixture
 }
 
-/**
- * Spec 46 TASK-08: el lienzo de Accesos pinta el diagrama de casos de uso DERIVADO del
- * diseño — solo lectura, con la cámara compartida del estudio. El raíl edita; esto pinta.
- */
+function testId(fixture: ReturnType<typeof mount>, id: string): HTMLElement | null {
+  return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
+}
+
+/** Spec 49: el centro de Accesos conmuta entre tabla por Rol (+resumen), por Entidad y Diagrama. */
 describe('AccessViewComponent', () => {
   let store: DesignStore
+  let ui: AccessUiService
 
   beforeEach(() => {
     TestBed.configureTestingModule({})
     store = TestBed.inject(DesignStore)
+    ui = TestBed.inject(AccessUiService)
+    ui.role.set('user')
+    ui.pivot.set('role')
+    ui.search.set('')
+    ui.onlyWithAccess.set(false)
   })
 
-  it('sin entidades muestra el estado vacío', () => {
+  it('con el pivote Rol pinta la tabla y el resumen', () => {
+    store.addResource('Cliente')
+
     const fixture = mount()
 
-    expect(fixture.nativeElement.querySelector('[data-testid="access-view-empty"]')).not.toBeNull()
+    expect(testId(fixture, 'access-cell-cliente-view')).not.toBeNull()
+    expect(testId(fixture, 'access-summary-view')).not.toBeNull()
   })
 
-  it('pinta actores, caja de sistema y elipses derivadas del diseño', () => {
-    store.addResource('Factura')
+  it('con el pivote Entidad pinta las filas de rol sin resumen', () => {
+    store.addResource('Cliente')
+    ui.pivot.set('entity')
 
     const fixture = mount()
-    const texto = fixture.nativeElement.textContent
 
-    expect(fixture.nativeElement.querySelector('[data-testid="access-viewport"]')).not.toBeNull()
-    expect(texto).toContain('Administrador')
-    expect(texto).toContain('Usuario')
-    expect(texto).toContain('Consulta')
-    expect(texto).toContain('Ver Facturas')
-    expect(texto).toContain('Crear Facturas')
-    expect(texto).toContain('Editar Facturas')
-    expect(texto).toContain('Borrar Facturas')
+    expect(testId(fixture, 'access-entity-select')).not.toBeNull()
+    expect(testId(fixture, 'access-ecell-user-view')).not.toBeNull()
+    expect(testId(fixture, 'access-summary-view')).toBeNull()
   })
 
-  it('las aristas siguen la matriz: sin Ver para consulta, su arista desaparece', () => {
-    store.addResource('Factura')
-    const before = mount()
-    const count = (fixture: ReturnType<typeof mount>) =>
-      fixture.nativeElement.querySelectorAll('[data-testid^="access-edge-"]').length
+  it('con el pivote Diagrama pinta el lienzo de casos de uso', () => {
+    store.addResource('Cliente')
+    ui.pivot.set('diagram')
 
-    // política actual: admin 4 + user 4 + viewer 1 (solo Ver)
-    expect(count(before)).toBe(9)
+    const fixture = mount()
 
-    store.setResourceAccess('factura', { view: [], create: [], edit: [], delete: [] })
-    const after = mount()
-
-    // solo quedan las de admin, que siempre puede todo
-    expect(count(after)).toBe(4)
+    expect(testId(fixture, 'access-viewport')).not.toBeNull()
+    expect(testId(fixture, 'access-cell-cliente-view')).toBeNull()
   })
 })

@@ -1,10 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import { accessRows, toggleCapability, type AccessCapabilityCell, type AccessTableRow } from '@app/shared/domain'
+import {
+  accessRows,
+  toggleCapability,
+  type AccessActorRole,
+  type AccessCapabilityCell,
+  type AccessTableRow
+} from '@app/shared/domain'
 import { AccessUiService } from './access-ui.service'
 import { DesignStore } from './design-store'
 import { StudioModeService } from './studio-mode.service'
 
 const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta' } as const
+const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
 
 /**
  * La tabla central de Accesos (spec 49, mockups 30A/31B): qué puede hacer el rol activo.
@@ -34,6 +41,92 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
         >
           Ir al Modelo
         </button>
+      </div>
+    } @else if (ui.pivot() === 'entity') {
+      <div class="mx-auto flex h-full max-w-3xl flex-col px-8 pt-8">
+        <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Quién puede con {{ selectedRow()?.label }}</h1>
+            <p class="text-muted-foreground mt-1 text-sm">
+              Una fila por rol; pulsa una celda para cambiar el permiso. {{ selectedRow()?.subtitle }}.
+            </p>
+          </div>
+          <select
+            class="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+            aria-label="Entidad"
+            [value]="selectedRow()?.name"
+            (change)="onEntity($event)"
+            data-testid="access-entity-select"
+          >
+            @for (resource of store.resources(); track resource.name) {
+              <option [value]="resource.name">{{ resource.labelPlural }}</option>
+            }
+          </select>
+        </header>
+
+        <div class="bg-background rounded-xl border">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-muted-foreground border-b">
+                <th class="studio-eyebrow px-4 py-3 text-left font-normal">Rol</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Ver</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Crear</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Editar</th>
+                <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Borrar</th>
+                @if (selectedHasTransitions()) {
+                  <th class="studio-eyebrow px-4 py-3 text-left font-normal">Transiciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (role of roleRows; track role) {
+                <tr class="border-border/60 border-b last:border-b-0" [class.opacity-70]="role === 'admin'">
+                  <td class="px-4 py-3.5">
+                    <span class="block font-medium">{{ roleLabels[role] }}</span>
+                    @if (role === 'admin') {
+                      <span class="studio-eyebrow mt-0.5 block">Todo</span>
+                    }
+                  </td>
+                  @for (cell of crudCells(selectedRow()!); track cell.capability) {
+                    <td class="px-2 py-3.5 text-center">
+                      <button
+                        type="button"
+                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
+                        [class]="cellClasses(cell, role)"
+                        [attr.aria-pressed]="granted(cell, role)"
+                        [attr.aria-label]="cell.label + ' — ' + roleLabels[role]"
+                        [disabled]="role === 'admin'"
+                        [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
+                        (click)="toggleAs(selectedRow()!, cell, role)"
+                      >
+                        {{ granted(cell, role) ? '✓' : '—' }}
+                      </button>
+                    </td>
+                  }
+                  @if (selectedHasTransitions()) {
+                    <td class="px-4 py-3.5">
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (cell of transitionCells(selectedRow()!); track cell.capability) {
+                          <button
+                            type="button"
+                            class="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                            [class]="cellClasses(cell, role)"
+                            [attr.aria-pressed]="granted(cell, role)"
+                            [disabled]="role === 'admin'"
+                            [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
+                            (click)="toggleAs(selectedRow()!, cell, role)"
+                          >
+                            {{ granted(cell, role) ? '✓ ' : '— ' }}{{ cell.label }}
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     } @else {
       <div class="mx-auto flex h-full max-w-4xl flex-col px-8 pt-8">
@@ -112,14 +205,14 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
                       <button
                         type="button"
                         class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
-                        [class]="cellClasses(cell)"
-                        [attr.aria-pressed]="granted(cell)"
+                        [class]="cellClasses(cell, ui.role())"
+                        [attr.aria-pressed]="granted(cell, ui.role())"
                         [attr.aria-label]="cell.label + ' ' + row.label"
                         [disabled]="ui.role() === 'admin'"
                         [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
                         (click)="toggle(row, cell)"
                       >
-                        {{ granted(cell) ? '✓' : '—' }}
+                        {{ granted(cell, ui.role()) ? '✓' : '—' }}
                       </button>
                     </td>
                   }
@@ -130,13 +223,13 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
                           <button
                             type="button"
                             class="rounded-full border px-2.5 py-1 text-xs transition-colors"
-                            [class]="cellClasses(cell)"
-                            [attr.aria-pressed]="granted(cell)"
+                            [class]="cellClasses(cell, ui.role())"
+                            [attr.aria-pressed]="granted(cell, ui.role())"
                             [disabled]="ui.role() === 'admin'"
                             [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
                             (click)="toggle(row, cell)"
                           >
-                            {{ granted(cell) ? '✓ ' : '— ' }}{{ cell.label }}
+                            {{ granted(cell, ui.role()) ? '✓ ' : '— ' }}{{ cell.label }}
                           </button>
                         }
                       </div>
@@ -175,6 +268,19 @@ export class AccessTableComponent {
 
   protected readonly hasTransitions = computed(() => this.rows().some(row => row.cells.some(c => c.kind === 'transition')))
 
+  protected readonly roleRows = ROLE_ROWS
+  protected readonly roleLabels = ROLE_LABELS
+
+  /** La entidad del pivote Entidad: la elegida, o la primera del diseño si no hay elección. */
+  protected readonly selectedRow = computed<AccessTableRow | undefined>(() => {
+    const rows = accessRows(this.store.resources())
+    return rows.find(row => row.name === this.ui.entity()) ?? rows[0]
+  })
+
+  protected readonly selectedHasTransitions = computed(
+    () => this.selectedRow()?.cells.some(c => c.kind === 'transition') ?? false
+  )
+
   protected crudCells(row: AccessTableRow): AccessCapabilityCell[] {
     return row.cells.filter(cell => cell.kind === 'crud')
   }
@@ -183,20 +289,22 @@ export class AccessTableComponent {
     return row.cells.filter(cell => cell.kind === 'transition')
   }
 
-  protected granted(cell: AccessCapabilityCell): boolean {
-    const role = this.ui.role()
+  protected granted(cell: AccessCapabilityCell, role: AccessActorRole): boolean {
     return role === 'admin' || cell.roles.includes(role)
   }
 
   /** Ver concedido en verde, escritura en el acento; sin permiso, guion tenue CON contraste (31B). */
-  protected cellClasses(cell: AccessCapabilityCell): string {
-    if (!this.granted(cell)) return 'border-dashed border-border text-muted-foreground'
+  protected cellClasses(cell: AccessCapabilityCell, role: AccessActorRole): string {
+    if (!this.granted(cell, role)) return 'border-dashed border-border text-muted-foreground'
     if (cell.capability === 'view') return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600'
     return 'border-primary/50 bg-primary/10 text-primary'
   }
 
   protected toggle(row: AccessTableRow, cell: AccessCapabilityCell): void {
-    const role = this.ui.role()
+    this.toggleAs(row, cell, this.ui.role())
+  }
+
+  protected toggleAs(row: AccessTableRow, cell: AccessCapabilityCell, role: AccessActorRole): void {
     if (role === 'admin') return
     const resource = this.store.resources().find(r => r.name === row.name)
     if (!resource) return
@@ -205,5 +313,9 @@ export class AccessTableComponent {
 
   protected onSearch(event: Event): void {
     this.ui.search.set((event.target as HTMLInputElement).value)
+  }
+
+  protected onEntity(event: Event): void {
+    this.ui.entity.set((event.target as HTMLSelectElement).value)
   }
 }

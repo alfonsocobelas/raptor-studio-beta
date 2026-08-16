@@ -31,7 +31,7 @@
       Todas|Con acceso, subtítulos derivados, pie «N de M entidades», fila admin solo lectura.
 - [x] **TASK-07**: `access-summary.component.ts` — resumen derivado + barra + acciones de
       columna (Todo ver, Nada editar, Copiar de {rol}); oculto/informativo con admin.
-- [ ] **TASK-08**: pivote Entidad en `access-table.component.ts` (filas de rol, selector de
+- [x] **TASK-08**: pivote Entidad en `access-table.component.ts` (filas de rol, selector de
       entidad) y extracción del lienzo a `access-diagram-view.component.ts`; `access-view`
       queda como conmutador de los tres pivotes. Estados vacíos conservados.
 - [ ] **TASK-09**: repaso visual contra 30A/31B en claro y oscuro (temas, espaciados, activo
