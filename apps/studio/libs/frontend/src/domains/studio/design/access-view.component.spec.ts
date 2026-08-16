@@ -29,16 +29,23 @@ describe('AccessViewComponent', () => {
     ui.onlyWithAccess.set(false)
   })
 
-  it('con el pivote Rol pinta la tabla y el resumen', () => {
+  it('con el pivote Rol pinta la tabla del rol activo', () => {
     store.addResource('Cliente')
 
     const fixture = mount()
 
     expect(testId(fixture, 'access-cell-cliente-view')).not.toBeNull()
-    expect(testId(fixture, 'access-summary-view')).not.toBeNull()
   })
 
-  it('con el pivote Entidad pinta las filas de rol sin resumen', () => {
+  it('el resumen NO vive en el centro: es el panel derecho del estudio', () => {
+    store.addResource('Cliente')
+
+    const fixture = mount()
+
+    expect(testId(fixture, 'access-summary-view')).toBeNull()
+  })
+
+  it('con el pivote Entidad pinta las filas de rol', () => {
     store.addResource('Cliente')
     ui.pivot.set('entity')
 
@@ -46,7 +53,6 @@ describe('AccessViewComponent', () => {
 
     expect(testId(fixture, 'access-entity-select')).not.toBeNull()
     expect(testId(fixture, 'access-ecell-user-view')).not.toBeNull()
-    expect(testId(fixture, 'access-summary-view')).toBeNull()
   })
 
   it('con el pivote Diagrama pinta el lienzo de casos de uso', () => {

@@ -52,6 +52,8 @@ import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { FlowSidebarComponent } from './flow-sidebar.component'
 import { AccessSidebarComponent } from './access-sidebar.component'
+import { AccessSummaryComponent } from './access-summary.component'
+import { AccessUiService } from './access-ui.service'
 import { AccessViewComponent } from './access-view.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
@@ -82,6 +84,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     ModelSidebarComponent,
     FlowSidebarComponent,
     AccessSidebarComponent,
+    AccessSummaryComponent,
     AccessViewComponent,
     DesignPanelComponent,
     ModelPanelComponent,
@@ -578,15 +581,23 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           </div>
         </div>
 
-        <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
-          @if (mode() === 'model') {
-            <studio-model-panel />
-          } @else if (mode() === 'flows') {
-            <studio-flow-panel />
-          } @else {
-            <studio-design-panel />
-          }
-        </aside>
+<!-- Accesos trae su propio panel derecho (el resumen del rol) y solo en el pivote Rol:
+             el de Vistas no pinta nada ahí, y una cuarta columna sobra. -->
+        @if (mode() !== 'access') {
+          <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
+            @if (mode() === 'model') {
+              <studio-model-panel />
+            } @else if (mode() === 'flows') {
+              <studio-flow-panel />
+            } @else {
+              <studio-design-panel />
+            }
+          </aside>
+        } @else if (accessUi.pivot() === 'role') {
+          <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
+            <studio-access-summary />
+          </aside>
+        }
       </div>
     </div>
   `,
@@ -700,6 +711,7 @@ export class StudioCanvasComponent {
 
   protected readonly modes = STUDIO_MODES
   private readonly studioMode = inject(StudioModeService)
+  protected readonly accessUi = inject(AccessUiService)
   protected readonly mode = this.studioMode.mode
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')

@@ -16,7 +16,7 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (store.resources().length) {
-      <aside class="studio-rail flex h-full w-72 shrink-0 flex-col gap-6 overflow-y-auto border-l p-4">
+      <div class="flex min-h-0 flex-col gap-6 overflow-y-auto">
         <section class="bg-background rounded-xl border p-4">
           <h2 class="studio-eyebrow mb-3">{{ roleLabel() }} · resumen</h2>
           <dl class="space-y-2 text-sm">
@@ -60,7 +60,7 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
             </div>
           </section>
         }
-      </aside>
+      </div>
     }
   `,
   styles: `
