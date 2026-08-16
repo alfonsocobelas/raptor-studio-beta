@@ -250,6 +250,32 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         </p>
       </div>
     }
+  `,
+  styles: `
+    /* El verde y el rojo se pintan aquí, no con utilidades: Tailwind v4 resuelve 'dark:' por
+       preferencia del sistema y el estudio conmuta el tema con la clase .dark en :root, así que
+       la única forma fiable de tener dos tonos por tema es :host-context(.dark). Relleno con
+       cuerpo suficiente para verse de un vistazo — al 10% el verde no se apreciaba. */
+    .cell-yes {
+      background-color: #d1fae5;
+      border-color: #6ee7b7;
+      color: #047857;
+    }
+    .cell-no {
+      background-color: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+    :host-context(.dark) .cell-yes {
+      background-color: rgb(16 185 129 / 0.28);
+      border-color: rgb(16 185 129 / 0.6);
+      color: #6ee7b7;
+    }
+    :host-context(.dark) .cell-no {
+      background-color: rgb(239 68 68 / 0.24);
+      border-color: rgb(239 68 68 / 0.55);
+      color: #fca5a5;
+    }
   `
 })
 export class AccessTableComponent {
@@ -297,10 +323,9 @@ export class AccessTableComponent {
     return role === 'admin' || cell.roles.includes(role)
   }
 
-  /** Se lee de un vistazo: concedido en verde, denegado en rojo. Sin grises que interpretar. */
+  /** Se lee de un vistazo: concedido en verde, denegado en rojo (ver los estilos del componente). */
   protected cellClasses(cell: AccessCapabilityCell, role: AccessActorRole): string {
-    if (!this.granted(cell, role)) return 'border-red-500/40 bg-red-500/10 text-red-600'
-    return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600'
+    return this.granted(cell, role) ? 'cell-yes' : 'cell-no'
   }
 
   protected toggle(row: AccessTableRow, cell: AccessCapabilityCell): void {
