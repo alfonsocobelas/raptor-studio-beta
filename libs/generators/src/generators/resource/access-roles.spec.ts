@@ -165,6 +165,56 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
     })
   })
 
+  describe('el frontend condicionado por rol (TASK-04)', () => {
+    let tree: Tree
+    const read = (path: string): string => tree.read(`out/${path}`, 'utf-8') ?? ''
+
+    beforeAll(async () => {
+      registerModels([permit()])
+      tree = createTreeWithEmptyWorkspace()
+      await resourceGenerator(tree, { name: 'permit', directory: 'out' })
+    })
+
+    it('emite las constantes de acceso del dominio desde la matriz', () => {
+      const access = read('frontend/permit-access.ts')
+
+      expect(access).toContain('export const CAN_MANAGE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN]')
+      expect(access).toContain("'approve': [UserRoleEnum.ADMIN]")
+      expect(access).toContain("'reject': [UserRoleEnum.ADMIN, UserRoleEnum.USER]")
+    })
+
+    it('la lista deriva canWrite de CAN_MANAGE_ROLES (Nuevo/editar/borrar siguen)', () => {
+      const list = read('frontend/permits-list.component.ts')
+
+      expect(list).toContain("import { CAN_MANAGE_ROLES } from './permit-access'")
+      expect(list).toContain('CAN_MANAGE_ROLES.includes(role)')
+      expect(list).not.toContain('inject(AuthService).canWrite')
+    })
+
+    it('el botón de importar solo se pinta con Gestionar', () => {
+      const list = read('frontend/permits-list.component.ts')
+
+      expect(list).toMatch(/@if \(canWrite\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
+    })
+
+    it('la ficha condiciona cada botón de transición con sus roles', () => {
+      const detail = read('frontend/permit-detail.component.ts')
+
+      expect(detail).toContain("import { CAN_MANAGE_ROLES, TRANSITION_ROLES } from './permit-access'")
+      expect(detail).toMatch(/@if \(canTransition\('approve'\) &&/)
+      expect(detail).toMatch(/@if \(canTransition\('reject'\) &&/)
+      expect(detail).toContain('TRANSITION_ROLES[verb]')
+    })
+
+    it('sin matriz no hay fichero de acceso y la lista sigue con AuthService.canWrite', async () => {
+      const clean = createTreeWithEmptyWorkspace()
+      await resourceGenerator(clean, { name: 'project', directory: 'out' })
+
+      expect(clean.exists('out/frontend/project-access.ts')).toBe(false)
+      expect(clean.read('out/frontend/projects-list.component.ts', 'utf-8')).toContain('inject(AuthService).canWrite')
+    })
+  })
+
   describe('renderEntrypoints calcula las cadenas (plantillas tontas)', () => {
     it('mapea la matriz a UserRoleEnum con admin siempre primero', () => {
       const entry = renderEntrypoints(permit(), true)

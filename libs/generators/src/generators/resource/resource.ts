@@ -34,6 +34,12 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
 
   generateFiles(tree, path.join(__dirname, 'files'), outputDir, substitutions)
 
+  // las constantes de acceso del dominio (spec 46) solo existen si el modelo declara matriz:
+  // sin ella los componentes siguen con AuthService.canWrite y el golden no se mueve
+  if (!substitutions.entry.accessDeclared) {
+    tree.delete(path.join(outputDir, 'frontend', `${substitutions.fileName}-access.ts`))
+  }
+
   // persistencia del recurso: la manda el manifiesto del motor, no un if aquí (spec 23).
   // Los bindings que necesitan sus plantillas los aporta el propio manifiesto.
   const persistenceSubstitutions = { ...substitutions, ...persistence.resourceSubstitutions?.(model) }

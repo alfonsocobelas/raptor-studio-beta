@@ -1,5 +1,13 @@
 import { formatFiles, generateFiles, names, type GeneratorCallback, type Tree } from '@nx/devkit'
-import { defineApp, defineResource, wantsSoftDelete, type AppDefinition, type ResourceDefinition } from '@raptor/schema'
+import {
+  defineApp,
+  defineResource,
+  resolveAccess,
+  wantsSoftDelete,
+  type AppDefinition,
+  type ResourceDefinition
+} from '@raptor/schema'
+import { rolesArgs } from '../resource/build-entrypoints'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -286,6 +294,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // los puertos y el nombre del contenedor se ajustan sobre lo ya copiado (hallazgo 14)
   applyPorts(tree, root, options.name, composition.ports)
 
+  // la nav por rol (spec 46) se parchea sobre el shell ya elegido (esqueleto/piel/preset)
+  const shell = shellSubstitutions(composition)
+  if (shell.accessAnywhere) {
+    applyNavAccess(tree, root, SCOPE)
+  }
+
   // 4a-bis. la memoria del negocio aterriza en la raíz (spec 22): markdown construido aquí
   //          (regla 8), plantilla tonta; sin brief no hay fichero y las fixtures no cambian
   if (composition.brief) {
@@ -314,7 +328,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // viola la clave ajena (visto en fincaraiz).
   const seedable = byDependency(models.filter(emitsSeeder))
   generateFiles(tree, path.join(__dirname, 'files'), root, {
-    ...shellSubstitutions(composition),
+    ...shell,
     persistenceDir: persistence.persistenceDir,
     themeClass: theme.themeClass,
     seedImports: seedable
@@ -682,6 +696,7 @@ export function shellSubstitutions(composition: AppComposition): {
   defaultRoute: string
   routeEntries: string
   navItems: string
+  accessAnywhere: boolean
 } {
   const modelOf = (resource: string): ResourceDefinition => {
     const model = composition.models.find(m => m.name === resource)
@@ -777,13 +792,55 @@ export function shellSubstitutions(composition: AppComposition): {
     if (model.detail) routes.push(detailRoute(model))
   }
 
+  // la entrada de nav gana sus roles de Ver SOLO si el modelo declara matriz (spec 46):
+  // sin matriz en ningún modelo lo emitido no cambia y el golden no se mueve
+  const navRolesOf = (page: AppComposition['pages'][number]): string => {
+    if (page.kind === 'dashboard') return ''
+    const model = modelOf(page.resource)
+    if (!model.access) return ''
+    return `, roles: [${rolesArgs(resolveAccess(model).view)}]`
+  }
+
   return {
     defaultRoute: pathOf(composition.pages[0]),
     routeEntries: routes.join(',\n'),
     // Una entrada por VISTA: si el mismo recurso tiene tabla y galería, son dos
     // vistas y por tanto dos entradas, cada una con su propio título.
-    navItems: composition.pages.map(page => `  { label: '${page.label}', route: '/${pathOf(page)}' }`).join(',\n')
+    navItems: composition.pages
+      .map(page => `  { label: '${page.label}', route: '/${pathOf(page)}'${navRolesOf(page)} }`)
+      .join(',\n'),
+    accessAnywhere: composition.models.some(model => model.access !== undefined)
   }
+}
+
+/**
+ * El shell oculta la entrada de nav sin Ver (spec 46): se parchea sobre lo ya copiado
+ * (los 4 shells comparten las tres costuras), mismo patrón que el plugin de auth.
+ * Solo se aplica cuando algún modelo declara matriz: sin ella el shell queda intacto.
+ */
+export function applyNavAccess(tree: Tree, root: string, scope: string): void {
+  const shellPath = path.join(root, 'apps/frontend-app/src/app.component.ts')
+  const source = tree.read(shellPath, 'utf-8')
+  if (!source || source.includes('AuthService')) return
+
+  const filtered = [
+    'private readonly _navAuth = inject(AuthService)',
+    '',
+    '  // la entrada sin Ver se oculta (spec 46): evita el enlace que acaba en un 403',
+    '  protected readonly navItems = computed(() => {',
+    '    const role = this._navAuth.currentUser()?.role',
+    '    return NAV_ITEMS.filter(item => !item.roles || (role !== undefined && item.roles.includes(role)))',
+    '  })'
+  ].join('\n')
+
+  const patched = source
+    .replace(
+      "import { NAV_ITEMS } from './nav'",
+      `import { NAV_ITEMS } from './nav'\nimport { AuthService } from '${scope}/frontend/core/services/auth.service'`
+    )
+    .replace('@for (item of navItems; track item.route) {', '@for (item of navItems(); track item.route) {')
+    .replace('protected readonly navItems = NAV_ITEMS', filtered)
+  tree.write(shellPath, patched)
 }
 
 /**

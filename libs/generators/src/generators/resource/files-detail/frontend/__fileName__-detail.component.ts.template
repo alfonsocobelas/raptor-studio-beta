@@ -16,6 +16,9 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 <%_ } _%>
 import { <%- features.history ? `AuditEventDto, ${dtoName}` : dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.transitions.length)) { _%>
+import { <%- entry.transitions.length ? 'CAN_MANAGE_ROLES, TRANSITION_ROLES' : 'CAN_MANAGE_ROLES' %> } from './<%- fileName %>-access'
+<%_ } _%>
 import { formatValue } from '../../../../../../shared/utils/format-value'
 <%_ if (related.length) { _%>
 import { RelatedTable } from '../../../../../../shared/components/related-table'
@@ -61,7 +64,7 @@ interface DetailRow {
           <h1 class="text-2xl font-bold tracking-tight">{{ item.<%- detail.titleField %> }}</h1>
           <div class="flex gap-2">
 <%_ entry.transitions.forEach(transition => { _%>
-            @if (canWrite() && <%- transition.fromCheck %>) {
+            @if (<%- entry.accessDeclared ? `canTransition('${transition.verb}')` : 'canWrite()' %> && <%- transition.fromCheck %>) {
               <button
                 type="button"
                 class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
@@ -184,7 +187,24 @@ export class <%- className %>DetailComponent {
   private readonly _route = inject(ActivatedRoute)
   private readonly _router = inject(Router)
   private readonly _service = inject(<%- className %>Service)
-<%_ if (features.edit || features.delete || entry.transitions.length) { _%>
+<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.transitions.length)) { _%>
+  private readonly _auth = inject(AuthService)
+  private readonly _notify = inject(NotificationService)
+
+  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que los @Roles emitidos
+  protected readonly canWrite = computed(() => {
+    const role = this._auth.currentUser()?.role
+    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+  })
+<%_ if (entry.transitions.length) { _%>
+
+  /** Cada botón de transición obedece a los roles de su verbo en la matriz. */
+  protected canTransition(verb: string): boolean {
+    const role = this._auth.currentUser()?.role
+    return role !== undefined && (TRANSITION_ROLES[verb] ?? []).includes(role)
+  }
+<%_ } _%>
+<%_ } else if (features.edit || features.delete || entry.transitions.length) { _%>
   private readonly _auth = inject(AuthService)
   private readonly _notify = inject(NotificationService)
 

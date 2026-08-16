@@ -22,6 +22,9 @@ import { <%- dtoName %>, ExportFormat } from '<%- sharedDomainAlias %>'
 import { AuthService } from '../../../../../../core/services/auth.service'
 <%_ } _%>
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ if (entry.accessDeclared && (features.edit || features.delete)) { _%>
+import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+<%_ } _%>
 <%_ if (valueMapImports.length) { _%>
 import { <%- valueMapImports.join(', ') %> } from './<%- fileName %>-labels'
 <%_ } _%>
@@ -58,7 +61,18 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
           <p class="text-muted-foreground"><%- ui.subtitle %></p>
         </div>
         <div class="flex items-center gap-3">
-<%_ if (features.import) { _%>
+<%_ if (features.import && entry.accessDeclared && (features.edit || features.delete)) { _%>
+          @if (canWrite()) {
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+              data-testid="open-import"
+              (click)="importOpen.set(true)"
+            >
+              Importar
+            </button>
+          }
+<%_ } else if (features.import) { _%>
           <button
             type="button"
             class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
@@ -161,7 +175,15 @@ export class <%- className %>sListComponent {
 <%_ if (features.view) { _%>
   private readonly _router = inject(Router)
 <%_ } _%>
-<%_ if (features.edit || features.delete) { _%>
+<%_ if (entry.accessDeclared && (features.edit || features.delete)) { _%>
+  private readonly _sessionUser = inject(AuthService).currentUser
+  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que el @Roles emitido
+  protected readonly canWrite = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+  })
+  private readonly _notify = inject(NotificationService)
+<%_ } else if (features.edit || features.delete) { _%>
   protected readonly canWrite = inject(AuthService).canWrite
   private readonly _notify = inject(NotificationService)
 <%_ } _%>
