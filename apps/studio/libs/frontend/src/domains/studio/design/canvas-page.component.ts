@@ -11,6 +11,7 @@ import { DesignStore } from './design-store'
 import { CanvasTableComponent } from './canvas-table.component'
 import { CanvasDetailComponent } from './canvas-detail.component'
 import { CanvasCardsComponent } from './canvas-cards.component'
+import { CanvasFormComponent } from './canvas-form.component'
 import { mockTotal } from './mock-data'
 
 /**
@@ -20,7 +21,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, NgIcon],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, NgIcon],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -87,6 +88,9 @@ import { mockTotal } from './mock-data'
               }
               @case ('cards') {
                 <studio-canvas-cards [resource]="block.resource ?? ''" />
+              }
+              @case ('form') {
+                <studio-canvas-form [resource]="block.resource ?? ''" />
               }
               @case ('kpis') {
                 <div

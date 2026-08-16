@@ -13,6 +13,11 @@ describe('viewIcon', () => {
     expect(viewIcon(page([{ kind: 'fields', resource: 'producto' }], true))).toBe('lucideIdCard')
   })
 
+  // spec 48: la vista-formulario tiene icono propio
+  it('una vista de formulario se ve como formulario', () => {
+    expect(viewIcon(page([{ kind: 'form', resource: 'muestra' }]))).toBe('lucideClipboardList')
+  })
+
   it('un panel de KPIs NO es una tabla', () => {
     const icono = viewIcon(page([{ kind: 'kpis', resources: ['producto'] }]))
 

@@ -5,6 +5,7 @@ import {
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
+  lucideClipboardList,
   lucideGripVertical,
   lucideIdCard,
   lucideLayoutGrid,
@@ -25,6 +26,7 @@ const SIDEBAR_ICONS = {
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
+  lucideClipboardList,
   lucideGripVertical,
   lucideIdCard,
   lucideLayoutGrid,
@@ -64,14 +66,15 @@ function opensDetailOf(page: DesignPage, resource: string): boolean {
 }
 
 /**
- * Los bloques que el generador emite de verdad. Aquí no hay «gráfico» ni
- * «formulario»: mientras `BlockKind` no los tenga, ofrecerlos sería prometer
- * código que nadie escribe.
+ * Los bloques que el generador emite de verdad. Aquí no hay «gráfico»:
+ * mientras `BlockKind` no lo tenga, ofrecerlo sería prometer código que
+ * nadie escribe. El formulario entró con la spec 48.
  */
 const BLOCK_TOOLS: BlockTool[] = [
   { kind: 'table', icon: 'lucideTable', label: 'Tabla' },
   { kind: 'kpis', icon: 'lucideChartNoAxesColumn', label: 'KPIs' },
   { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería' },
+  { kind: 'form', icon: 'lucideClipboardList', label: 'Formulario' },
   { kind: 'attachments', icon: 'lucidePaperclip', label: 'Adjuntos' },
   { kind: 'fields', icon: 'lucideIdCard', label: 'Datos · ficha' }
 ]

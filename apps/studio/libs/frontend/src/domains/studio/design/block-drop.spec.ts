@@ -46,5 +46,7 @@ describe('blockFor', () => {
 
   it('el resto de bloques llevan su entidad', () => {
     expect(blockFor('table', 'producto')).toEqual({ kind: 'table', resource: 'producto' })
+    // spec 48: el formulario lleva su entidad como cualquier bloque de datos
+    expect(blockFor('form', 'producto')).toEqual({ kind: 'form', resource: 'producto' })
   })
 })

@@ -6,7 +6,8 @@ const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
   cards: 'lucideLayoutGrid',
   kpis: 'lucideChartNoAxesColumn',
   fields: 'lucideIdCard',
-  attachments: 'lucidePaperclip'
+  attachments: 'lucidePaperclip',
+  form: 'lucideClipboardList'
 }
 
 /**
