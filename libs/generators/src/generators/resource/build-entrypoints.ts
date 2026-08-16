@@ -1,7 +1,7 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
 import { SHARED_VOS } from './models/shared-vos'
-import { FieldDefinition, ResourceDefinition, VoDefinition, wantsSoftDelete } from '@raptor/schema'
+import { AccessRole, FieldDefinition, ResourceDefinition, resolveAccess, VoDefinition, wantsSoftDelete } from '@raptor/schema'
 
 /**
  * Entrypoints synthesis: REST controller, class-validator body DTOs, export
@@ -33,6 +33,12 @@ export interface TransitionBinding {
 
 export interface EntrypointBindings {
   emit: boolean
+  /** Argumentos de @Roles(...) para las lecturas, con admin siempre primero (spec 46) */
+  readRoles: string
+  /** Argumentos de @Roles(...) para las escrituras */
+  writeRoles: string
+  /** El recurso declara matriz: los adjuntos (hoy sin decoradores) los ganan solo entonces */
+  accessDeclared: boolean
   /** Las transiciones de la máquina de estados (spec 43) */
   transitions: TransitionBinding[]
   registerDtoFields: DtoFieldBinding[]
@@ -172,8 +178,13 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`
   }))
 
+  const access = resolveAccess(definition)
+
   return {
     emit: emitAggregate,
+    readRoles: rolesArgs(access.view),
+    writeRoles: rolesArgs(access.manage),
+    accessDeclared: definition.access !== undefined,
     transitions,
     registerDtoFields,
     updateDtoFields,
@@ -210,6 +221,11 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     seedItems: seedRowNumbers(definition).map(i => renderSeedItem(definition, dtoCtxs, i)),
     seedConst: `SEED_${names(definition.plural).constantName}`
   }
+}
+
+/** La matriz efectiva a los argumentos del decorador: admin implícito, siempre primero. */
+function rolesArgs(roles: AccessRole[]): string {
+  return ['UserRoleEnum.ADMIN', ...roles.map(role => `UserRoleEnum.${role.toUpperCase()}`)].join(', ')
 }
 
 /**

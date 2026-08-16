@@ -90,7 +90,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.writes) { _%>
 
   @Post()
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   register(@Body() body: Register<%- className %>Dto): Promise<void> {
     return this.register<%- className %>Handler.handle(body)
   }
@@ -99,14 +99,14 @@ export class <%- pluralClassName %>Controller {
 
   // Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción.
   @Post('import')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   importRows(@Body() body: Import<%- pluralClassName %>Dto): Promise<Import<%- pluralClassName %>Output> {
     return this.import<%- pluralClassName %>Handler.handle({ rows: body.rows })
   }
 <%_ } _%>
 
   @Get()
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  @Roles(<%- entry.readRoles %>)
   search(
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
@@ -115,7 +115,7 @@ export class <%- pluralClassName %>Controller {
 
   // Exports the full filtered <%- fileName %> set (no pagination) as CSV/XLSX. Declared before `:id`.
   @Get('export')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  @Roles(<%- entry.readRoles %>)
   async export(@Query(new ParseCriteriaPipe()) query: Export<%- pluralClassName %>QueryDto): Promise<StreamableFile> {
     const rows = await this.export<%- pluralClassName %>Handler.handle(query)
     return buildExportFile(rows, <%- constantName %>_EXPORT_COLUMNS, query.format, '<%- entry.exportFileName %>')
@@ -124,7 +124,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.trash) { _%>
   // La papelera: el mismo search sobre lo soft-borrado. Declarada antes de `:id`.
   @Get('deleted')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  @Roles(<%- entry.readRoles %>)
   searchDeleted(
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
@@ -135,21 +135,21 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.history) { _%>
   // La timeline de la ficha (spec 31): los últimos eventos del registro.
   @Get(':id/history')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  @Roles(<%- entry.readRoles %>)
   history(@Param('id', ParseUUIDv7Pipe) id: string): Promise<AuditEvent[]> {
     return this.get<%- className %>HistoryHandler.handle({ id })
   }
 
 <%_ } _%>
   @Get(':id')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  @Roles(<%- entry.readRoles %>)
   getById(@Param('id', ParseUUIDv7Pipe) id: string): Promise<<%- className %><%- aggregate.composition ? 'DetailOutput' : 'PrimitiveProps' %>> {
     return this.get<%- className %>Handler.handle({ id })
   }
 <%_ if (app.writes) { _%>
 
   @Put(':id')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Update<%- className %>Dto): Promise<void> {
     return this.update<%- className %>Handler.handle({ id, updates: body as <%- className %>UpdateProps })
@@ -158,7 +158,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.removes) { _%>
 
   @Delete(':id')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.remove<%- className %>Handler.handle({ id })
@@ -167,7 +167,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.trash) { _%>
 
   @Post(':id/restore')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   restore(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.restore<%- className %>Handler.handle({ id })

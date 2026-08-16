@@ -11,8 +11,14 @@ import {
   UseInterceptors
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+<%_ if (entry.accessDeclared) { _%>
+import { UserRoleEnum } from '<%- sharedDomainAlias %>'
+<%_ } _%>
 import { MAX_ATTACHMENT_SIZE_BYTES } from '../../../../../shared/domain/storage/attachment-constants'
 import { ParseUUIDv7Pipe } from '../../../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
+<%_ if (entry.accessDeclared) { _%>
+import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
+<%_ } _%>
 import { <%= className %>AttachmentDto, <%= className %>AttachmentsService } from './<%= fileName %>-attachments.service'
 
 /** Adjuntos de <%= labelPlural %>: subir, listar, descargar y borrar. */
@@ -21,6 +27,9 @@ export class <%= className %>AttachmentsController {
   constructor(private readonly attachments: <%= className %>AttachmentsService) {}
 
   @Get()
+<%_ if (entry.accessDeclared) { _%>
+  @Roles(<%- entry.readRoles %>)
+<%_ } _%>
   list(@Param('<%= propertyName %>Id', ParseUUIDv7Pipe) <%= propertyName %>Id: string): Promise<<%= className %>AttachmentDto[]> {
     return this.attachments.list(<%= propertyName %>Id)
   }
@@ -28,6 +37,9 @@ export class <%= className %>AttachmentsController {
   // Tope de tamaño en multer antes de que el buffer llegue a memoria; el servicio
   // revalida tamaño y MIME antes de tocar el almacenamiento.
   @Post()
+<%_ if (entry.accessDeclared) { _%>
+  @Roles(<%- entry.writeRoles %>)
+<%_ } _%>
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_ATTACHMENT_SIZE_BYTES } }))
   upload(
     @Param('<%= propertyName %>Id', ParseUUIDv7Pipe) <%= propertyName %>Id: string,
@@ -42,6 +54,9 @@ export class <%= className %>AttachmentsController {
   }
 
   @Get(':id/download')
+<%_ if (entry.accessDeclared) { _%>
+  @Roles(<%- entry.readRoles %>)
+<%_ } _%>
   async download(
     @Param('<%= propertyName %>Id', ParseUUIDv7Pipe) <%= propertyName %>Id: string,
     @Param('id', ParseUUIDv7Pipe) id: string
@@ -51,6 +66,9 @@ export class <%= className %>AttachmentsController {
   }
 
   @Delete(':id')
+<%_ if (entry.accessDeclared) { _%>
+  @Roles(<%- entry.writeRoles %>)
+<%_ } _%>
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('<%= propertyName %>Id', ParseUUIDv7Pipe) <%= propertyName %>Id: string,

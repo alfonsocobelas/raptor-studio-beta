@@ -17,13 +17,13 @@ export class <%- entry.childControllerClass %> {
   ) {}
 
   @Post(':id/<%- aggregate.composition.childrenProp %>')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   add(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Add<%- aggregate.composition.childClass %>Dto): Promise<void> {
     return this.add<%- aggregate.composition.childClass %>Handler.handle({ <%- aggregate.composition.parentField %>: id, <%- aggregate.composition.childProp %>: body })
   }
 
   @Put(':id/<%- aggregate.composition.childrenProp %>/:<%- aggregate.composition.childProp %>Id')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(
     @Param('id', ParseUUIDv7Pipe) id: string,
@@ -34,7 +34,7 @@ export class <%- entry.childControllerClass %> {
   }
 
   @Delete(':id/<%- aggregate.composition.childrenProp %>/:<%- aggregate.composition.childProp %>Id')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @Roles(<%- entry.writeRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDv7Pipe) id: string,
