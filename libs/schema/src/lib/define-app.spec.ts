@@ -1,6 +1,6 @@
 import { defineApp } from './define-app'
 import { THEME_IDS, THEMES } from './themes'
-import { AppDefinition } from './app-types'
+import { AppDefinition, GENERABLE_PAGE_KINDS } from './app-types'
 import { SchemaValidationError } from './validation-errors'
 
 const validDefinition = (): AppDefinition => ({
@@ -101,6 +101,31 @@ describe('defineApp', () => {
       definition.pages = [{ kind: 'resource', resource: 'customer' }]
 
       expect(problemsOf(definition)).toEqual([])
+    })
+
+    // spec 48: la página-formulario (alta y edición en página) es un kind de pleno derecho
+    it('accepts a form page and marks it as generable', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        { kind: 'resource', resource: 'customer' },
+        { kind: 'form', resource: 'customer', label: 'Solicitud' }
+      ]
+
+      expect(problemsOf(definition)).toEqual([])
+    })
+
+    it('declares the form page as generable', () => {
+      expect(GENERABLE_PAGE_KINDS).toContain('form')
+    })
+
+    it('rejects duplicated form pages for the same resource', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        { kind: 'form', resource: 'customer' },
+        { kind: 'form', resource: 'customer' }
+      ]
+
+      expect(problemsOf(definition)).not.toEqual([])
     })
   })
 

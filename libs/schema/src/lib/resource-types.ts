@@ -457,6 +457,8 @@ export interface ResourceDefinition {
   gallery?: GalleryDefinition
   /** Cronograma de barras sobre el mismo listado (spec 30); exige period */
   gantt?: GanttDefinition
+  /** Página-formulario de alta y edición, convive con el diálogo del listado (spec 48) */
+  form?: Record<string, never>
   /** Historial de cambios (spec 31): los use cases de escritura registran eventos
    *  en la tabla global audit_events y la ficha muestra la timeline */
   history?: boolean

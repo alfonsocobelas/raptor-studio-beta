@@ -72,10 +72,17 @@ export interface GanttPage {
   label?: string
 }
 
-export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage
+/** Página-formulario: alta en `/{ruta}/formulario` y edición en `/{ruta}/formulario/:id` (spec 48). */
+export interface FormPage {
+  kind: 'form'
+  resource: string
+  label?: string
+}
+
+export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage | FormPage
 
 /** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
-export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource']
+export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource', 'form']
 
 /** Aspecto de la app emitida: el tema viste la app entera (spec 20). */
 export interface ThemeDefinition {
