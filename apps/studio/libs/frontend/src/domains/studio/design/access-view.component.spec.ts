@@ -38,7 +38,9 @@ describe('AccessViewComponent', () => {
     expect(texto).toContain('Usuario')
     expect(texto).toContain('Consulta')
     expect(texto).toContain('Ver Facturas')
-    expect(texto).toContain('Gestionar Facturas')
+    expect(texto).toContain('Crear Facturas')
+    expect(texto).toContain('Editar Facturas')
+    expect(texto).toContain('Borrar Facturas')
   })
 
   it('las aristas siguen la matriz: sin Ver para consulta, su arista desaparece', () => {
@@ -47,13 +49,13 @@ describe('AccessViewComponent', () => {
     const count = (fixture: ReturnType<typeof mount>) =>
       fixture.nativeElement.querySelectorAll('[data-testid^="access-edge-"]').length
 
-    // política actual: admin 2 + user 2 + viewer 1 (solo Ver)
-    expect(count(before)).toBe(5)
+    // política actual: admin 4 + user 4 + viewer 1 (solo Ver)
+    expect(count(before)).toBe(9)
 
-    store.setResourceAccess('factura', { view: [], manage: [] })
+    store.setResourceAccess('factura', { view: [], create: [], edit: [], delete: [] })
     const after = mount()
 
     // solo quedan las de admin, que siempre puede todo
-    expect(count(after)).toBe(2)
+    expect(count(after)).toBe(4)
   })
 })

@@ -16,7 +16,7 @@
 - [x] **TASK-02**: `access-table.ts` en `apps/studio/libs/shared/domain` — `accessRows`,
       `toggleCapability`, `roleSummary`, `applyColumn` con sus tests. La matriz resultante es
       siempre explícita y sin `manage`.
-- [ ] **TASK-03**: `access-diagram.ts` — elipses Ver/Crear/Editar/Borrar + transiciones con
+- [x] **TASK-03**: `access-diagram.ts` — elipses Ver/Crear/Editar/Borrar + transiciones con
       roles granulares; tests de `access-diagram.spec.ts` actualizados.
 - [ ] **TASK-04**: `design-store-access.spec.ts` extendido al shape nuevo (persistencia de la
       matriz granular vía `setResourceAccess`; sin cambios de API en el store si no hacen falta).

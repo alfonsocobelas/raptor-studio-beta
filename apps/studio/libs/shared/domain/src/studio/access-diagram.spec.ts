@@ -30,16 +30,24 @@ describe('accessDiagram', () => {
     expect(diagram.actors.every(a => a.x + ACCESS_LAYOUT.actor.width < boxLeft)).toBe(true)
   })
 
-  it('una caja de sistema por entidad con Ver, Gestionar y una elipse por transición', () => {
+  it('una caja de sistema por entidad con las cuatro capacidades y una elipse por transición', () => {
     const diagram = accessDiagram([factura(), cliente])
 
     expect(diagram.boxes.map(b => b.entity)).toEqual(['factura', 'cliente'])
     const deFactura = diagram.capabilities.filter(c => c.entity === 'factura')
-    expect(deFactura.map(c => c.label)).toEqual(['Ver Facturas', 'Gestionar Facturas', 'Aprobar'])
+    expect(deFactura.map(c => c.label)).toEqual([
+      'Ver Facturas',
+      'Crear Facturas',
+      'Editar Facturas',
+      'Borrar Facturas',
+      'Aprobar'
+    ])
     // sin máquina no hay elipses de transición
     expect(diagram.capabilities.filter(c => c.entity === 'cliente').map(c => c.label)).toEqual([
       'Ver Clientes',
-      'Gestionar Clientes'
+      'Crear Clientes',
+      'Editar Clientes',
+      'Borrar Clientes'
     ])
     // cada elipse queda dentro de la caja de su entidad
     for (const capability of deFactura) {
@@ -54,19 +62,36 @@ describe('accessDiagram', () => {
     const edgesOf = (role: string) =>
       diagram.edges.filter(e => e.role === role).map(e => e.capability)
 
-    expect(edgesOf('admin')).toEqual(['factura:view', 'factura:manage', 'factura:aprobar'])
-    expect(edgesOf('user')).toEqual(['factura:view', 'factura:manage', 'factura:aprobar'])
+    const todas = ['factura:view', 'factura:create', 'factura:edit', 'factura:delete', 'factura:aprobar']
+    expect(edgesOf('admin')).toEqual(todas)
+    expect(edgesOf('user')).toEqual(todas)
     expect(edgesOf('viewer')).toEqual(['factura:view'])
   })
 
-  it('la matriz declarada gobierna las aristas; admin conecta con todo aunque quede solo', () => {
-    const diagram = accessDiagram([factura({ view: ['user'], manage: [], transitions: { aprobar: [] } })])
+  it('la matriz granular gobierna las aristas; admin conecta con todo aunque quede solo', () => {
+    const diagram = accessDiagram([
+      factura({ view: ['user'], create: [], edit: ['user'], delete: [], transitions: { aprobar: [] } })
+    ])
     const edgesOf = (role: string) =>
       diagram.edges.filter(e => e.role === role).map(e => e.capability)
 
-    expect(edgesOf('admin')).toEqual(['factura:view', 'factura:manage', 'factura:aprobar'])
-    expect(edgesOf('user')).toEqual(['factura:view'])
+    expect(edgesOf('admin')).toEqual([
+      'factura:view',
+      'factura:create',
+      'factura:edit',
+      'factura:delete',
+      'factura:aprobar'
+    ])
+    expect(edgesOf('user')).toEqual(['factura:view', 'factura:edit'])
     expect(edgesOf('viewer')).toEqual([])
+  })
+
+  it('el azúcar legado manage sigue gobernando las tres capacidades de escritura', () => {
+    const diagram = accessDiagram([factura({ manage: ['user', 'viewer'] })])
+    const edgesOf = (role: string) =>
+      diagram.edges.filter(e => e.role === role).map(e => e.capability)
+
+    expect(edgesOf('viewer')).toEqual(['factura:view', 'factura:create', 'factura:edit', 'factura:delete'])
   })
 
   it('las aristas van del borde derecho del actor al vértice izquierdo de la elipse', () => {
