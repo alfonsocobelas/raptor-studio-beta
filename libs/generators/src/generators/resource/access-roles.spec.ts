@@ -185,35 +185,51 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       await resourceGenerator(tree, { name: 'permit', directory: 'out' })
     })
 
-    it('emite las constantes de acceso del dominio desde la matriz', () => {
+    it('emite las constantes granulares de acceso desde la matriz (spec 49)', () => {
       const access = read('frontend/permit-access.ts')
 
-      // TASK-11 parte CAN_MANAGE en tres; mientras, la constante lleva los roles de Editar
+      expect(access).toContain('export const CAN_CREATE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN]')
       expect(access).toContain(
-        'export const CAN_MANAGE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER]'
+        'export const CAN_EDIT_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER]'
       )
+      expect(access).toContain('export const CAN_DELETE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN]')
+      expect(access).not.toContain('CAN_MANAGE_ROLES')
       expect(access).toContain("'approve': [UserRoleEnum.ADMIN]")
       expect(access).toContain("'reject': [UserRoleEnum.ADMIN, UserRoleEnum.USER]")
     })
 
-    it('la lista deriva canWrite de CAN_MANAGE_ROLES (Nuevo/editar/borrar siguen)', () => {
+    it('la lista separa Nuevo (crear) de las acciones de fila (editar/borrar)', () => {
       const list = read('frontend/permits-list.component.ts')
 
-      expect(list).toContain("import { CAN_MANAGE_ROLES } from './permit-access'")
-      expect(list).toContain('CAN_MANAGE_ROLES.includes(role)')
+      expect(list).toContain("import { CAN_CREATE_ROLES, CAN_DELETE_ROLES, CAN_EDIT_ROLES } from './permit-access'")
+      expect(list).toContain('[showCreate]="canCreate()"')
+      expect(list).toMatch(/this\.canEdit\(\)[\s\S]{0,160}lucidePencil/)
+      expect(list).toMatch(/this\.canDelete\(\)[\s\S]{0,160}lucideTrash2/)
+      expect(list).not.toContain('CAN_MANAGE_ROLES')
       expect(list).not.toContain('inject(AuthService).canWrite')
     })
 
-    it('el botón de importar solo se pinta con Gestionar', () => {
+    it('el botón de importar solo se pinta con Crear', () => {
       const list = read('frontend/permits-list.component.ts')
 
-      expect(list).toMatch(/@if \(canWrite\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
+      expect(list).toMatch(/@if \(canCreate\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
     })
 
-    it('la ficha condiciona cada botón de transición con sus roles', () => {
+    it('la papelera restaura solo con Borrar', () => {
+      const trash = read('frontend/permits-trash.component.ts')
+
+      expect(trash).toContain("import { CAN_DELETE_ROLES } from './permit-access'")
+      expect(trash).toContain('CAN_DELETE_ROLES.includes(role)')
+    })
+
+    it('la ficha condiciona editar, borrar y cada transición con sus roles', () => {
       const detail = read('frontend/permit-detail.component.ts')
 
-      expect(detail).toContain("import { CAN_MANAGE_ROLES, TRANSITION_ROLES } from './permit-access'")
+      expect(detail).toContain(
+        "import { CAN_DELETE_ROLES, CAN_EDIT_ROLES, TRANSITION_ROLES } from './permit-access'"
+      )
+      expect(detail).toMatch(/@if \(canEdit\(\)\) \{[\s\S]{0,300}lucidePencil/)
+      expect(detail).toMatch(/@if \(canDelete\(\)\) \{[\s\S]{0,300}lucideTrash2/)
       expect(detail).toMatch(/@if \(canTransition\('approve'\) &&/)
       expect(detail).toMatch(/@if \(canTransition\('reject'\) &&/)
       expect(detail).toContain('TRANSITION_ROLES[verb]')

@@ -10,7 +10,7 @@ import { <%- r.charAt(0).toUpperCase() + r.slice(1) %>Service } from '../../../.
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 <%_ if (entry.accessDeclared) { _%>
-import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+import { CAN_CREATE_ROLES } from './<%- fileName %>-access'
 <%_ } _%>
 
 const routeWith = (id: string | null) => ({ snapshot: { paramMap: { get: () => id } } })
@@ -29,7 +29,7 @@ describe('<%- className %>FormPageComponent — página-formulario', () => {
         { provide: Router, useValue: router },
         { provide: NotificationService, useValue: { success: vi.fn(), error: vi.fn() } },
 <%_ if (entry.accessDeclared) { _%>
-        { provide: AuthService, useValue: { currentUser: () => ({ role: CAN_MANAGE_ROLES[0] }) } },
+        { provide: AuthService, useValue: { currentUser: () => ({ role: CAN_CREATE_ROLES[0] }) } },
 <%_ } else { _%>
         { provide: AuthService, useValue: { canWrite: () => true } },
 <%_ } _%>

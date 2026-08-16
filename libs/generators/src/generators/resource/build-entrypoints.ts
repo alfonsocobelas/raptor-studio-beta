@@ -43,6 +43,16 @@ export interface EntrypointBindings {
   updateRoles: string
   /** Argumentos de @Roles(...) para borrar: DELETE y restore */
   deleteRoles: string
+  /** Import de constantes de acceso para la lista (solo con matriz declarada) */
+  listAccessImports: string
+  /** Import de constantes de acceso para la ficha (solo con matriz declarada) */
+  detailAccessImports: string
+  /** Expresión de guardia de crear en plantillas compartidas: canCreate() o canWrite() */
+  canCreateExpr: string
+  /** Expresión de guardia de editar */
+  canEditExpr: string
+  /** Expresión de guardia de borrar */
+  canDeleteExpr: string
   /** El recurso declara matriz: los adjuntos (hoy sin decoradores) los ganan solo entonces */
   accessDeclared: boolean
   /** Las transiciones de la máquina de estados (spec 43) */
@@ -187,13 +197,34 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     roles: rolesArgs(access.transitions[t.name] ?? ['user'])
   }))
 
+  // mismos defectos que resolveFeatures (build-substitutions): edit/view abiertos, delete/import opt-in
+  const canEdit = definition.list?.features?.edit ?? true
+  const canDelete = definition.list?.features?.delete ?? false
+  const canImport = definition.list?.features?.import ?? false
+  const accessDeclared = definition.access !== undefined
+  const listImports = [
+    canEdit || canImport ? 'CAN_CREATE_ROLES' : null,
+    canDelete ? 'CAN_DELETE_ROLES' : null,
+    canEdit ? 'CAN_EDIT_ROLES' : null
+  ].filter((name): name is string => name !== null)
+  const detailImports = [
+    canDelete ? 'CAN_DELETE_ROLES' : null,
+    canEdit ? 'CAN_EDIT_ROLES' : null,
+    (definition.state?.transitions?.length ?? 0) > 0 ? 'TRANSITION_ROLES' : null
+  ].filter((name): name is string => name !== null)
+
   return {
     emit: emitAggregate,
     readRoles: rolesArgs(access.view),
     createRoles: rolesArgs(access.create),
     updateRoles: rolesArgs(access.edit),
     deleteRoles: rolesArgs(access.delete),
-    accessDeclared: definition.access !== undefined,
+    listAccessImports: listImports.join(', '),
+    detailAccessImports: detailImports.join(', '),
+    canCreateExpr: accessDeclared ? 'canCreate()' : 'canWrite()',
+    canEditExpr: accessDeclared ? 'canEdit()' : 'canWrite()',
+    canDeleteExpr: accessDeclared ? 'canDelete()' : 'canWrite()',
+    accessDeclared,
     transitions,
     registerDtoFields,
     updateDtoFields,

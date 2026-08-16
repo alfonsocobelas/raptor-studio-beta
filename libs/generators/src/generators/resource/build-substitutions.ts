@@ -369,7 +369,7 @@ export function buildSubstitutions(
     features: resolveFeatures(definition),
     icons: renderIcons(resolveFeatures(definition)),
     rowActionsComment: renderRowActionsComment(resolveFeatures(definition)),
-    rowWriteActions: renderRowWriteActions(resolveFeatures(definition)),
+    rowWriteActions: renderRowWriteActions(resolveFeatures(definition), definition.access !== undefined),
     deleteLabelField: definition.list?.deleteLabelField ?? 'name',
     dtoName: definition.dtoName ?? `${n.className}Dto`,
     api: definition.api ?? `/api/v1/${definition.plural}`,
@@ -875,13 +875,22 @@ function renderRowActionsComment(features: { delete: boolean }): string[] {
  * plantilla porque la FORMA depende del número de acciones: con una sola, el canon castea el
  * elemento; con dos, el array. Emitir siempre la forma de dos ensuciaría el diff de oro.
  */
-function renderRowWriteActions(features: { edit: boolean; delete: boolean }): string[] {
+function renderRowWriteActions(features: { edit: boolean; delete: boolean }, accessDeclared: boolean): string[] {
   const entries: string[] = []
   if (features.edit) entries.push("{ icon: 'lucidePencil', label: 'Editar', action: 'edit' }")
   if (features.delete) {
     entries.push("{ icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }")
   }
   if (entries.length === 0) return []
+  if (accessDeclared) {
+    // matriz granular (spec 49): cada acción obedece a SU capacidad, no a un canWrite común
+    const guards: string[] = []
+    if (features.edit) guards.push(`    ...(this.canEdit() ? [${entries[0]} as TableAction] : [])`)
+    if (features.delete) {
+      guards.push(`    ...(this.canDelete() ? [${entries[entries.length - 1]} as TableAction] : [])`)
+    }
+    return guards.map((line, index) => (index < guards.length - 1 ? `${line},` : line))
+  }
   if (entries.length === 1) return [`    ...(this.canWrite() ? [${entries[0]} as TableAction] : [])`]
   return [
     '    ...(this.canWrite()',

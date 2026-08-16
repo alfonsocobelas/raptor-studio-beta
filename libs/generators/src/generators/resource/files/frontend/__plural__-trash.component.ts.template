@@ -7,7 +7,7 @@ import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
 <%_ if (entry.accessDeclared) { _%>
-import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+import { CAN_DELETE_ROLES } from './<%- fileName %>-access'
 <%_ } _%>
 <%_ if (valueMapImports.length) { _%>
 import { <%- valueMapImports.join(', ') %> } from './<%- fileName %>-labels'
@@ -75,10 +75,10 @@ export class <%- pluralClassName %>TrashComponent {
   private readonly _notify = inject(NotificationService)
 <%_ if (entry.accessDeclared) { _%>
   private readonly _sessionUser = inject(AuthService).currentUser
-  // Gestionar sale de la matriz de accesos (spec 46): restaurar es una escritura
+  // Restaurar es el reverso del borrado (spec 49): obedece a los roles de Borrar
   protected readonly canWrite = computed(() => {
     const role = this._sessionUser()?.role
-    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+    return role !== undefined && CAN_DELETE_ROLES.includes(role)
   })
 <%_ } else { _%>
   protected readonly canWrite = inject(AuthService).canWrite

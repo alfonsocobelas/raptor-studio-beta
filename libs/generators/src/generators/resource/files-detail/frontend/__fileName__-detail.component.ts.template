@@ -17,7 +17,7 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 import { <%- features.history ? `AuditEventDto, ${dtoName}` : dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
 <%_ if (entry.accessDeclared && (features.edit || features.delete || entry.transitions.length)) { _%>
-import { <%- entry.transitions.length ? 'CAN_MANAGE_ROLES, TRANSITION_ROLES' : 'CAN_MANAGE_ROLES' %> } from './<%- fileName %>-access'
+import { <%- entry.detailAccessImports %> } from './<%- fileName %>-access'
 <%_ } _%>
 import { formatValue } from '../../../../../../shared/utils/format-value'
 <%_ if (related.length) { _%>
@@ -77,7 +77,7 @@ interface DetailRow {
             }
 <%_ }) _%>
 <%_ if (features.edit) { _%>
-            @if (canWrite()) {
+            @if (<%- entry.canEditExpr %>) {
               <button
                 type="button"
                 class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
@@ -89,7 +89,7 @@ interface DetailRow {
             }
 <%_ } _%>
 <%_ if (features.delete) { _%>
-            @if (canWrite()) {
+            @if (<%- entry.canDeleteExpr %>) {
               <button
                 type="button"
                 class="text-destructive hover:bg-accent flex items-center gap-2 rounded-md px-3 py-2 text-sm"
@@ -191,11 +191,19 @@ export class <%- className %>DetailComponent {
   private readonly _auth = inject(AuthService)
   private readonly _notify = inject(NotificationService)
 
-  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que los @Roles emitidos
-  protected readonly canWrite = computed(() => {
+  // La matriz granular (spec 49): cada botón obedece a los mismos roles que su @Roles emitido
+<%_ if (features.edit) { _%>
+  protected readonly canEdit = computed(() => {
     const role = this._auth.currentUser()?.role
-    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+    return role !== undefined && CAN_EDIT_ROLES.includes(role)
   })
+<%_ } _%>
+<%_ if (features.delete) { _%>
+  protected readonly canDelete = computed(() => {
+    const role = this._auth.currentUser()?.role
+    return role !== undefined && CAN_DELETE_ROLES.includes(role)
+  })
+<%_ } _%>
 <%_ if (entry.transitions.length) { _%>
 
   /** Cada botón de transición obedece a los roles de su verbo en la matriz. */

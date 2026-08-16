@@ -23,7 +23,7 @@ import { AuthService } from '../../../../../../core/services/auth.service'
 <%_ } _%>
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
 <%_ if (entry.accessDeclared && (features.edit || features.delete)) { _%>
-import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+import { <%- entry.listAccessImports %> } from './<%- fileName %>-access'
 <%_ } _%>
 <%_ if (valueMapImports.length) { _%>
 import { <%- valueMapImports.join(', ') %> } from './<%- fileName %>-labels'
@@ -62,7 +62,7 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
         </div>
         <div class="flex items-center gap-3">
 <%_ if (features.import && entry.accessDeclared && (features.edit || features.delete)) { _%>
-          @if (canWrite()) {
+          @if (canCreate()) {
             <button
               type="button"
               class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
@@ -117,7 +117,7 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
           [search]="search()"
           [loading]="isLoading()"
 <%_ if (features.edit) { _%>
-          [showCreate]="canWrite()"
+          [showCreate]="<%- entry.canCreateExpr %>"
           createLabel="<%- ui.createLabel %>"
 <%_ } _%>
 <%_ if (features.edit || features.delete) { _%>
@@ -177,11 +177,25 @@ export class <%- className %>sListComponent {
 <%_ } _%>
 <%_ if (entry.accessDeclared && (features.edit || features.delete)) { _%>
   private readonly _sessionUser = inject(AuthService).currentUser
-  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que el @Roles emitido
-  protected readonly canWrite = computed(() => {
+  // La matriz granular (spec 49): cada acción obedece a los mismos roles que su @Roles emitido
+<%_ if (features.edit || features.import) { _%>
+  protected readonly canCreate = computed(() => {
     const role = this._sessionUser()?.role
-    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+    return role !== undefined && CAN_CREATE_ROLES.includes(role)
   })
+<%_ } _%>
+<%_ if (features.edit) { _%>
+  protected readonly canEdit = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_EDIT_ROLES.includes(role)
+  })
+<%_ } _%>
+<%_ if (features.delete) { _%>
+  protected readonly canDelete = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_DELETE_ROLES.includes(role)
+  })
+<%_ } _%>
   private readonly _notify = inject(NotificationService)
 <%_ } else if (features.edit || features.delete) { _%>
   protected readonly canWrite = inject(AuthService).canWrite
@@ -254,6 +268,16 @@ export class <%- className %>sListComponent {
 <%_ rowWriteActions.forEach(line => { _%>
 <%- line %>
 <%_ }) _%>
+  ])
+<%_ } else if (entry.accessDeclared) { _%>
+  // Un rol sin la capacidad no ve su acción: son escrituras que el backend rechazaría con 403.
+  readonly actions = computed<TableAction[]>(() => [
+<%_ if (features.edit) { _%>
+    ...(this.canEdit() ? [{ icon: 'lucidePencil', label: 'Editar', action: 'edit' } as TableAction] : [])<%- features.delete ? ',' : '' %>
+<%_ } _%>
+<%_ if (features.delete) { _%>
+    ...(this.canDelete() ? [{ icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' } as TableAction] : [])
+<%_ } _%>
   ])
 <%_ } else { _%>
   // Un viewer no ve ninguna: son escrituras que el backend rechazaría con 403.

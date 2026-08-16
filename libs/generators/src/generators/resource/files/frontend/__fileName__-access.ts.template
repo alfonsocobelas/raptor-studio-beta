@@ -1,10 +1,12 @@
 import { UserRoleEnum } from '<%- sharedDomainAlias %>'
 
 /**
- * Roles con Gestionar (spec 46), admin implícito — calculados de la matriz de accesos.
+ * Roles por capacidad (spec 49), admin implícito — calculados de la matriz de accesos.
  * El backend emite exactamente los mismos roles en sus @Roles(...): una sola fuente.
  */
-export const CAN_MANAGE_ROLES: readonly UserRoleEnum[] = [<%- entry.updateRoles %>]
+export const CAN_CREATE_ROLES: readonly UserRoleEnum[] = [<%- entry.createRoles %>]
+export const CAN_EDIT_ROLES: readonly UserRoleEnum[] = [<%- entry.updateRoles %>]
+export const CAN_DELETE_ROLES: readonly UserRoleEnum[] = [<%- entry.deleteRoles %>]
 <%_ if (entry.transitions.length) { _%>
 
 /** Roles por transición de la máquina de estados. */

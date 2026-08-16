@@ -18,7 +18,7 @@ import { <%- className %>Service } from '../../../../../../core/services/<%- fil
 import { <%- r.charAt(0).toUpperCase() + r.slice(1) %>Service } from '../../../../../../core/services/<%- r %>.service'
 <%_ }) _%>
 <%_ if (entry.accessDeclared) { _%>
-import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+import { CAN_CREATE_ROLES, CAN_EDIT_ROLES } from './<%- fileName %>-access'
 <%_ } _%>
 <%_ if (labelsModuleImports.length) { _%>
 import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
@@ -163,10 +163,10 @@ export class <%- className %>FormPageComponent {
   private readonly _notify = inject(NotificationService)
 <%_ if (entry.accessDeclared) { _%>
   private readonly _sessionUser = inject(AuthService).currentUser
-  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que el @Roles emitido
+  // La matriz granular (spec 49): alta con Crear, edición con Editar — como los @Roles emitidos
   protected readonly canWrite = computed(() => {
     const role = this._sessionUser()?.role
-    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+    return role !== undefined && (this.editingId() ? CAN_EDIT_ROLES : CAN_CREATE_ROLES).includes(role)
   })
 <%_ } else { _%>
   protected readonly canWrite = inject(AuthService).canWrite
