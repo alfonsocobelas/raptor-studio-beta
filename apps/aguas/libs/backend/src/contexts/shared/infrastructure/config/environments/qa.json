@@ -1,0 +1,28 @@
+{
+  "env": "qa",
+  "app": {
+    "port": 3000,
+    "baseUrl": "vault.app.base-url"
+  },
+  "cors": {
+    "origin": "vault.cors.origin"
+  },
+  "logger": {
+    "level": "info"
+  },
+  "typeorm": {
+    "type": "postgres",
+    "host": "vault.typeorm.host",
+    "port": 5432,
+    "username": "vault.typeorm.username",
+    "password": "vault.typeorm.password",
+    "database": "vault.typeorm.database",
+    "ssl": true,
+    "autoLoadEntities": true,
+    "synchronize": false,
+    "dropSchema": false,
+    "logging": false,
+    "migrationsRun": true,
+    "migrationsTransactionMode": "all"
+  }
+}
