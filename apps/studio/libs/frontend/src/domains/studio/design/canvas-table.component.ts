@@ -76,9 +76,7 @@ const BADGE_CLASSES = [
           Buscar en todas las columnas...
         </div>
         <div class="flex gap-2">
-          <span class="chrome-btn"><ng-icon name="lucideListFilter" size="14" /> Filtros</span>
-          <span class="chrome-btn"><ng-icon name="lucideSettings2" size="14" /> Columnas</span>
-          <span class="chrome-btn"><ng-icon name="lucideDownload" size="14" /> Exportar</span>
+          <!-- el crear va primero: mismo orden que el DataTable emitido -->
           <button
             type="button"
             class="bg-primary text-primary-foreground flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium"
@@ -88,6 +86,9 @@ const BADGE_CLASSES = [
             <ng-icon name="lucidePlus" size="14" />
             {{ createLabel() }}
           </button>
+          <span class="chrome-btn"><ng-icon name="lucideListFilter" size="14" /> Filtros</span>
+          <span class="chrome-btn"><ng-icon name="lucideSettings2" size="14" /> Columnas</span>
+          <span class="chrome-btn"><ng-icon name="lucideDownload" size="14" /> Exportar</span>
         </div>
       </div>
 
