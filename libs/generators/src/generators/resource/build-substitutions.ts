@@ -125,6 +125,8 @@ export interface ResourceSubstitutions {
   dialogSharedImports: string
   needsSelect: boolean
   savedEmitLines: string[]
+  /** const value = … con los mismos ajustes que savedEmitLines, para la página-formulario (spec 48) */
+  formValueBuildLines: string[]
   formHelperLines: string[]
   lookupInjectLines: string[]
   lookupComputedLines: string[]
@@ -544,6 +546,7 @@ type FormBindings = Pick<
   | 'dialogSharedImports'
   | 'needsSelect'
   | 'savedEmitLines'
+  | 'formValueBuildLines'
   | 'formHelperLines'
   | 'lookupInjectLines'
   | 'lookupComputedLines'
@@ -608,6 +611,7 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     dialogSharedImports: sharedTypes.join(', '),
     needsSelect: selects.length > 0,
     savedEmitLines: renderSavedEmit(formFields, lookups),
+    formValueBuildLines: renderFormValueBuild(formFields, lookups),
     // la plantilla solo puede leer miembros de la clase: se expone la constante
     formHelperLines: enumSelects
       .filter(f => !f.lookup && f.optionsConst)
@@ -678,7 +682,8 @@ function renderHelpers(
   return lines
 }
 
-function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {
+/** Ajustes de tipo/valor entre el rawValue del form y el FormValue emitido (los comparten diálogo y página). */
+function formValueExtras(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {
   const casts = formFields
     .filter(f => f.optionsType && !f.default)
     .map(f => `${f.name}: raw.${f.name} as ${f.optionsType}`)
@@ -705,9 +710,20 @@ function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormField
   const dateNulls = formFields
     .filter(f => f.control === 'date' && !f.required)
     .map(f => `${f.name}: raw.${f.name} || null`)
-  const extras = [...casts, ...selectCasts, ...numberCasts, ...lookupFixes, ...denormLines, ...dateNulls]
+  return [...casts, ...selectCasts, ...numberCasts, ...lookupFixes, ...denormLines, ...dateNulls]
+}
+
+function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {
+  const extras = formValueExtras(formFields, lookups)
   if (!extras.length) return ['this.saved.emit(raw)']
   return ['this.saved.emit({', `  ...raw,`, ...extras.map(e => `  ${e},`), '})']
+}
+
+/** La página-formulario construye el MISMO valor que el diálogo, pero para llamar al service (spec 48). */
+function renderFormValueBuild(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {
+  const extras = formValueExtras(formFields, lookups)
+  if (!extras.length) return ['const value = raw']
+  return ['const value = {', `  ...raw,`, ...extras.map(e => `  ${e},`), '}']
 }
 
 function renderGroupValidatorDef(v: { kind: string; startField: string; endField: string }): string {

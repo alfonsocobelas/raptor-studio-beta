@@ -167,6 +167,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-detail'), outputDir, substitutions)
   }
 
+  // página-formulario (spec 48): el formulario del diálogo con ruta propia
+  if (model.form) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-form'), outputDir, substitutions)
+  }
+
   // galería (spec 17): otra lectura del listado, en tarjetas
   if (model.gallery) {
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gallery'), outputDir, substitutions)

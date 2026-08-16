@@ -1,0 +1,207 @@
+import { ChangeDetectionStrategy, Component, <% if (needsComputed || entry.accessDeclared) { %>computed, <% } %>inject } from '@angular/core'
+import { <% if (needsGroupValidatorTypes) { %>AbstractControl, <% } %>FormBuilder, ReactiveFormsModule, <% if (needsGroupValidatorTypes) { %>ValidationErrors, <% } %>Validators } from '@angular/forms'
+import { Router } from '@angular/router'
+import { AppButton } from '../../../../../../shared/components/ui/button.directive'
+import { AppFormField } from '../../../../../../shared/components/ui/form-field'
+import { AppInput } from '../../../../../../shared/components/ui/input.directive'
+<%_ if (needsSelect) { _%>
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+<%_ } _%>
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AuthService } from '../../../../../../core/services/auth.service'
+import { generateId } from '../../../../../../shared/utils/uuid'
+import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ lookupServiceImports.forEach(r => { _%>
+import { <%- r.charAt(0).toUpperCase() + r.slice(1) %>Service } from '../../../../../../core/services/<%- r %>.service'
+<%_ }) _%>
+<%_ if (entry.accessDeclared) { _%>
+import { CAN_MANAGE_ROLES } from './<%- fileName %>-access'
+<%_ } _%>
+<%_ if (labelsModuleImports.length) { _%>
+import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
+<%_ } _%>
+<%_ inlineLabelConsts.forEach(block => { _%>
+
+<%- block %>
+<%_ }) _%>
+<%_ groupValidatorDefs.forEach(def => { _%>
+
+<%- def %>
+<%_ }) _%>
+
+/**
+ * Página-formulario de <%- ui.title %> (spec 48): el mismo formulario del diálogo,
+ * como página con ruta propia. Convive con el diálogo del listado; al guardar
+ * navega al listado. Con :id en la ruta funciona como edición.
+ */
+@Component({
+  selector: 'app-<%- fileName %>-form-page',
+  imports: [
+    ReactiveFormsModule,
+    AppButton,
+    AppFormField,
+    AppInput<%- needsSelect ? ',' : '' %>
+<%_ if (needsSelect) { _%>
+    AppSelect
+<%_ } _%>
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section class="mx-auto max-w-2xl">
+      <h1 class="text-2xl font-bold"><%- ui.createLabel %></h1>
+      <p class="text-muted-foreground mt-1 text-sm"><%- ui.dialogCreateDescription %></p>
+
+      @if (canWrite()) {
+        <form class="space-y-6 py-6" [formGroup]="form" (ngSubmit)="save()">
+<%_ formSections.forEach(section => { _%>
+        <div>
+          <h4 class="mb-3 text-sm font-semibold"><%- section.title %></h4>
+<%_ if (section.grid) { _%>
+          <div class="grid gap-4 sm:grid-cols-2">
+<%_ } _%>
+<%_ section.fields.forEach(f => { _%>
+<%_ const pad = section.grid ? '            ' : '          ' _%>
+<%_ const fieldOpen = '<app-form-field label="' + f.label + '" for="' + f.id + '"' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
+<%_ if (f.lookup) { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <app-select
+<%- pad %>    formControlName="<%- f.name %>"
+<%- pad %>    controlId="<%- f.id %>"
+<%- pad %>    placeholder="<%- f.placeholder %>"
+<%- pad %>    [options]="<%- f.name %>Options()"
+<%- pad %>  />
+<%_ if (f.required) { _%>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
+<%- pad %>  }
+<%_ } _%>
+<%- pad %></app-form-field>
+<%_ } else if (f.control === 'select') { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <app-select
+<%- pad %>    formControlName="<%- f.name %>"
+<%- pad %>    controlId="<%- f.id %>"
+<%- pad %>    placeholder="<%- f.placeholder %>"
+<%- pad %>    [options]="<%- f.name %>Options"
+<%- pad %>  />
+<%_ if (f.required && !f.default) { _%>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
+<%- pad %>  }
+<%_ } _%>
+<%- pad %></app-form-field>
+<%_ } else if (f.control === 'checkbox') { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <label class="flex items-center gap-2 text-sm font-medium">
+<%- pad %>    <input type="checkbox" formControlName="<%- f.name %>" />
+<%- pad %>    <%- f.label %>
+<%- pad %>  </label>
+<%- pad %></app-form-field>
+<%_ } else if (f.control === 'textarea') { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <textarea id="<%- f.id %>" class="resize-none" appInput formControlName="<%- f.name %>" rows="<%- f.rows %>"></textarea>
+<%- pad %></app-form-field>
+<%_ } else if (f.control === 'date') { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <input id="<%- f.id %>" type="date" appInput formControlName="<%- f.name %>" />
+<%_ if (f.required) { _%>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
+<%- pad %>  }
+<%_ } _%>
+<%_ if (f.groupErrorMessage) { _%>
+<%- pad %>  <!-- dateRange es un error de grupo: se pinta a mano porque el control
+<%- pad %>       <%- f.name %> está válido y app-form-field solo mira su propio error. -->
+<%- pad %>  @if (form.errors?.['dateRange']) {
+<%- pad %>    <span class="text-destructive text-sm"><%- f.groupErrorMessage %></span>
+<%- pad %>  }
+<%_ } _%>
+<%- pad %></app-form-field>
+<%_ } else { _%>
+<%- pad %><%- fieldOpen %>
+<%- pad %>  <input id="<%- f.id %>"<%- f.control === 'number' ? ' type="number"' : '' %> appInput formControlName="<%- f.name %>" />
+<%_ if (f.required) { _%>
+<%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
+<%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>
+<%- pad %>  }
+<%_ } _%>
+<%- pad %></app-form-field>
+<%_ } _%>
+<%_ }) _%>
+<%_ if (section.grid) { _%>
+          </div>
+<%_ } _%>
+        </div>
+
+<%_ }) _%>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" appBtn variant="outline" (click)="cancel()">Cancelar</button>
+          <button type="submit" [disabled]="form.invalid" appBtn>Crear</button>
+        </div>
+        </form>
+      } @else {
+        <p class="text-muted-foreground mt-6 rounded-md border p-4 text-sm">
+          Tu rol no permite crear registros aquí.
+        </p>
+      }
+    </section>
+  `
+})
+export class <%- className %>FormPageComponent {
+  private readonly _fb = inject(FormBuilder)
+  private readonly _service = inject(<%- className %>Service)
+  private readonly _router = inject(Router)
+  private readonly _notify = inject(NotificationService)
+<%_ if (entry.accessDeclared) { _%>
+  private readonly _sessionUser = inject(AuthService).currentUser
+  // Gestionar sale de la matriz de accesos (spec 46): los mismos roles que el @Roles emitido
+  protected readonly canWrite = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_MANAGE_ROLES.includes(role)
+  })
+<%_ } else { _%>
+  protected readonly canWrite = inject(AuthService).canWrite
+<%_ } _%>
+<%_ lookupInjectLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+<%_ if (lookupComputedLines.length) { _%>
+
+<%_ lookupComputedLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+<%_ } _%>
+<%_ if (formHelperLines.length) { _%>
+
+<%_ formHelperLines.forEach(line => { _%>
+  <%- line %>
+<%_ }) _%>
+<%_ } _%>
+
+  readonly form = this._fb.nonNullable.group(<%- groupValidatorOption ? '\n    {' : '{' %>
+<%_ formGroupLines.forEach(line => { _%>
+    <%- line %>,
+<%_ }) _%>
+<%- groupValidatorOption ? '    }' + groupValidatorOption : '  }' %>)
+
+  async save(): Promise<void> {
+    if (this.form.invalid) {
+      return
+    }
+    const raw = this.form.getRawValue()
+<%_ formValueBuildLines.forEach(line => { _%>
+    <%- line %>
+<%_ }) _%>
+    try {
+      await this._service.create({ id: generateId(), ...value })
+      this._notify.success('<%- ui.toastCreated %>')
+      void this._router.navigate(['<%- route %>'])
+    } catch {
+      this._notify.error('<%- ui.toastCreateError %>')
+    }
+  }
+
+  cancel(): void {
+    void this._router.navigate(['<%- route %>'])
+  }
+}
