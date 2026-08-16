@@ -44,7 +44,7 @@
       composición, adjuntos según el mapa del DESIGN. Gate `/golden-diff` + re-baseline.
 - [x] **TASK-11**: frontend emitido — `__fileName__-access.ts` parte `CAN_MANAGE_ROLES` en las
       tres constantes; `list` y `trash` las consumen por acción. Golden + re-baseline.
-- [ ] **TASK-12**: verificación de punta a punta — regenerar una demo, suite verde, revisar
+- [x] **TASK-12**: verificación de punta a punta — regenerar una demo, suite verde, revisar
       que los guards emitidos y la visibilidad de botones respetan una matriz con
       create≠edit≠delete. Cierre de spec.
 
