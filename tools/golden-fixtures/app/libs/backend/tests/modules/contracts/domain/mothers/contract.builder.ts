@@ -125,7 +125,6 @@ export class ContractBuilder {
       subSolutionAreas: SubSolutionAreas.create(this.props.subSolutionAreas),
       nbrOfContracts: NumberOfContracts.create(this.props.nbrOfContracts),
       isFavorite: IsFavorite.create(this.props.isFavorite),
-      status: ContractStatus.create(this.props.status),
       source: ContractSource.create(this.props.source),
       totalValue: ContractValue.create(this.props.totalValue),
       currency: ContractCurrency.create(this.props.currency),
