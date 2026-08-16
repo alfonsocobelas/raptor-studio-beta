@@ -168,6 +168,48 @@ describe('shellSubstitutions — ruta de la galería (spec 17)', () => {
   })
 })
 
+describe('shellSubstitutions — página-formulario (spec 48)', () => {
+  const model = (extra: object = {}): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'customer',
+      plural: 'customers',
+      context: 'crm',
+      schemaName: 'crm',
+      fields: { id: { type: 'uuid', pk: true } },
+      ...extra
+    }) as ResourceDefinition
+
+  const withFormPage = (m: ResourceDefinition) => {
+    const flat = composeFlat([m], false)
+    return {
+      ...flat,
+      pages: [...flat.pages, { kind: 'form' as const, resource: m.name, label: 'Solicitud' }]
+    }
+  }
+
+  it('registra alta y edición con su entrada de menú', () => {
+    const subs = shellSubstitutions(withFormPage(model({ form: {} })))
+
+    expect(subs.routeEntries).toContain("path: 'crm/customers/formulario'")
+    expect(subs.routeEntries).toContain("path: 'crm/customers/formulario/:id'")
+    expect(subs.routeEntries).toContain('CustomerFormPageComponent')
+    expect(subs.navItems).toContain("{ label: 'Solicitud', route: '/crm/customers/formulario' }")
+  })
+
+  it('el formulario va ANTES de :id, o la ficha capturaría «formulario» como id', () => {
+    const subs = shellSubstitutions(withFormPage(model({ form: {}, detail: {} })))
+
+    expect(subs.routeEntries.indexOf('customers/formulario')).toBeLessThan(subs.routeEntries.indexOf('customers/:id'))
+  })
+
+  it('sin bandera form no hay rutas de formulario', () => {
+    const subs = shellSubstitutions(composeFlat([model()], false))
+
+    expect(subs.routeEntries).not.toContain('formulario')
+  })
+})
+
 describe('shellSubstitutions — vista SOLO de galería (spec 17)', () => {
   const tratamiento = {
     schemaVersion: 1,

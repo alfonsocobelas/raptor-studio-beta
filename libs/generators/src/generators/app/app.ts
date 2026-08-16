@@ -705,12 +705,14 @@ export function shellSubstitutions(composition: AppComposition): {
   }
   const galleryPath = (model: ResourceDefinition): string => `${routeOf(model)}/galeria`
   const ganttPath = (model: ResourceDefinition): string => `${routeOf(model)}/cronograma`
+  const formPath = (model: ResourceDefinition): string => `${routeOf(model)}/formulario`
   // Una vista de tarjetas apunta a la galería; una de cronograma, al gantt; una de tabla, al listado.
   const pathOf = (page: AppComposition['pages'][number]): string => {
     if (page.kind === 'dashboard') return 'dashboard'
     const model = modelOf(page.resource)
     if (page.kind === 'cards') return galleryPath(model)
     if (page.kind === 'gantt') return ganttPath(model)
+    if (page.kind === 'form') return formPath(model)
     return routeOf(model)
   }
 
@@ -755,6 +757,22 @@ export function shellSubstitutions(composition: AppComposition): {
       ).then(m => m.${names(model.plural).className}TrashComponent)
   }`
 
+  // alta y edición comparten componente: la página decide el modo por la presencia de :id (spec 48)
+  const formRoute = (model: ResourceDefinition): string => `  {
+    path: '${formPath(model)}',
+    loadComponent: () =>
+      import(
+        '${featureOf(model)}/${names(model.name).fileName}-form-page.component'
+      ).then(m => m.${names(model.name).className}FormPageComponent)
+  },
+  {
+    path: '${formPath(model)}/:id',
+    loadComponent: () =>
+      import(
+        '${featureOf(model)}/${names(model.name).fileName}-form-page.component'
+      ).then(m => m.${names(model.name).className}FormPageComponent)
+  }`
+
   const detailRoute = (model: ResourceDefinition): string => `  {
     path: '${routeOf(model)}/:id',
     loadComponent: () =>
@@ -783,11 +801,13 @@ export function shellSubstitutions(composition: AppComposition): {
     const wantsList = composition.pages.some(p => p.kind === 'resource' && p.resource === model.name)
     const wantsGallery = Boolean(model.gallery)
     const wantsGantt = Boolean(model.gantt)
+    const wantsForm = Boolean(model.form)
     // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
     const wantsTrash = wantsSoftDelete(model) && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
     if (wantsGantt) routes.push(ganttRoute(model))
+    if (wantsForm) routes.push(formRoute(model))
     if (wantsTrash) routes.push(trashRoute(model))
     if (model.detail) routes.push(detailRoute(model))
   }

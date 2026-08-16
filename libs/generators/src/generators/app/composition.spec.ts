@@ -45,6 +45,34 @@ describe('composeFlat', () => {
   })
 })
 
+describe('composeApp — página form (spec 48)', () => {
+  it('resuelve la página form contra el registro y etiqueta por defecto con sufijo', () => {
+    const app = defineApp({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [
+        { kind: 'resource', resource: 'customer' },
+        { kind: 'form', resource: 'customer' }
+      ]
+    })
+
+    const composition = composeApp(app, registry)
+
+    expect(composition.models).toEqual([customer])
+    expect(composition.pages[1]).toEqual({ kind: 'form', resource: 'customer', label: 'Clientes · formulario' })
+  })
+
+  it('la etiqueta del diseño manda cuando existe', () => {
+    const app = defineApp({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'form', resource: 'customer', label: 'Solicitud' }]
+    })
+
+    expect(composeApp(app, registry).pages[0]).toEqual({ kind: 'form', resource: 'customer', label: 'Solicitud' })
+  })
+})
+
 describe('composeApp', () => {
   it('derives models, pages and kpis from the app definition, page order first', () => {
     const app = defineApp({
