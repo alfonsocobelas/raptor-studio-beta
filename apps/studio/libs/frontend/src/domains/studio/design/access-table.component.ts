@@ -43,7 +43,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         </button>
       </div>
     } @else if (ui.pivot() === 'entity') {
-      <div class="mx-auto flex h-full max-w-3xl flex-col px-8 pt-8">
+      <div class="flex h-full flex-col px-8 pt-8">
         <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 class="text-2xl font-semibold">Quién puede con {{ selectedRow()?.label }}</h1>
@@ -64,7 +64,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
           </select>
         </header>
 
-        <div class="bg-background rounded-xl border">
+        <div class="border-y">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-muted-foreground border-b">
@@ -99,7 +99,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
                         (click)="toggleAs(selectedRow()!, cell, role)"
                       >
-                        {{ granted(cell, role) ? '✓' : '—' }}
+                        {{ granted(cell, role) ? '✓' : '✕' }}
                       </button>
                     </td>
                   }
@@ -116,7 +116,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                             [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
                             (click)="toggleAs(selectedRow()!, cell, role)"
                           >
-                            {{ granted(cell, role) ? '✓ ' : '— ' }}{{ cell.label }}
+                            {{ granted(cell, role) ? '✓ ' : '✕ ' }}{{ cell.label }}
                           </button>
                         }
                       </div>
@@ -129,7 +129,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         </div>
       </div>
     } @else {
-      <div class="mx-auto flex h-full max-w-4xl flex-col px-8 pt-8">
+      <div class="flex h-full flex-col px-8 pt-8">
         <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 class="text-2xl font-semibold">Qué puede hacer {{ roleLabel() }}</h1>
@@ -183,7 +183,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
           </div>
         </header>
 
-        <div class="bg-background min-h-0 flex-1 overflow-auto rounded-xl border">
+        <div class="min-h-0 flex-1 overflow-auto border-y">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-muted-foreground border-b">
@@ -216,7 +216,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
                         (click)="toggle(row, cell)"
                       >
-                        {{ granted(cell, ui.role()) ? '✓' : '—' }}
+                        {{ granted(cell, ui.role()) ? '✓' : '✕' }}
                       </button>
                     </td>
                   }
@@ -233,7 +233,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                             [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
                             (click)="toggle(row, cell)"
                           >
-                            {{ granted(cell, ui.role()) ? '✓ ' : '— ' }}{{ cell.label }}
+                            {{ granted(cell, ui.role()) ? '✓ ' : '✕ ' }}{{ cell.label }}
                           </button>
                         }
                       </div>
@@ -297,11 +297,10 @@ export class AccessTableComponent {
     return role === 'admin' || cell.roles.includes(role)
   }
 
-  /** Ver concedido en verde, escritura en el acento; sin permiso, guion tenue CON contraste (31B). */
+  /** Se lee de un vistazo: concedido en verde, denegado en rojo. Sin grises que interpretar. */
   protected cellClasses(cell: AccessCapabilityCell, role: AccessActorRole): string {
-    if (!this.granted(cell, role)) return 'border-dashed border-border text-muted-foreground'
-    if (cell.capability === 'view') return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600'
-    return 'border-primary/50 bg-primary/10 text-primary'
+    if (!this.granted(cell, role)) return 'border-red-500/40 bg-red-500/10 text-red-600'
+    return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600'
   }
 
   protected toggle(row: AccessTableRow, cell: AccessCapabilityCell): void {

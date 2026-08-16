@@ -268,8 +268,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
         }
         <div
           class="relative flex min-h-0 min-w-0 flex-1 flex-col"
-          [class.canvas-surface]="mode() === 'views' || mode() === 'access'"
-          [class.bg-background]="mode() === 'model' || mode() === 'flows'"
+          [class.canvas-surface]="mode() === 'views'"
+          [class.bg-background]="mode() !== 'views'"
         >
           <!-- el hueco inferior deja pasar la sombra del mockup y el alto del chat en reposo;
                justo eso y nada más, para que el chat quede pegado a la vista -->

@@ -160,10 +160,13 @@ escribe EXPLÍCITA y completa con las claves granulares, nunca `manage`).
 
 ### B4. Estética
 
-Reutilizar los tokens/clases del lavado de cara existente (`studio-rail`, `studio-eyebrow`,
-`canvas-surface`): 30A/31B son el mismo lenguaje visual que Vistas/Modelo/Flujos. El guion «—»
-de sin-permiso con el contraste corregido (nota de 31B): celda con borde discontinuo tenue y
-guion `text-muted-foreground`, nunca invisible en claro. Celdas = botones (`<button>` con
+Reutilizar los tokens/clases del lavado de cara existente (`studio-rail`, `studio-eyebrow`):
+30A/31B son el mismo lenguaje visual que Vistas/Modelo/Flujos, pero **sin rejilla de lienzo** —
+Accesos es una tabla, no un papel de dibujo: fondo liso (`--background`) y la tabla estirada al
+ancho del hueco, separada por líneas en vez de flotar como tarjeta. Semáforo explícito
+(decisión de Alfonso 2026-08-17): **concedido = ✓ sobre verde claro, denegado = ✕ sobre rojo
+claro**, en las cuatro capacidades por igual y también en los chips de transición; nada de
+grises que haya que interpretar. Celdas = botones (`<button>` con
 `aria-pressed`), fila de Auditoría… no existe; la fila admin en pivote Entidad va atenuada y
 `disabled` como los checkboxes de admin hoy.
 
