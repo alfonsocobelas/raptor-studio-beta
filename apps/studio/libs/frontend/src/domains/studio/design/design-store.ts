@@ -709,6 +709,18 @@ export class DesignStore {
   }
 
   addFlowEdge(flowName: string, from: string, to: string, label?: string): boolean {
+    // '' es el aviso de flowBranchLabel: las dos ramas de la decisión ya están puestas.
+    // Dejarlo pasar acababa en «la etiqueta debe tener entre 1 y 20 caracteres», un
+    // error críptico de un campo que el usuario nunca escribió.
+    if (label === '') {
+      const texto = this._flows()
+        .find(f => f.name === flowName)
+        ?.nodes.find(n => n.id === from)?.text
+      this._lastError.set(
+        `Las salidas «sí» y «no» de «${texto ?? from}» ya están dibujadas: borra una para redirigirla`
+      )
+      return false
+    }
     return this.updateFlow(flowName, flow => ({
       ...flow,
       edges: [...flow.edges, { from, to, ...(label !== undefined ? { label } : {}) }]

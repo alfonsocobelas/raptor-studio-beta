@@ -600,6 +600,24 @@ describe('insertar un paso EN MEDIO de un tramo (el «+» de la referencia)', ()
     expect(flow.edges).toContainEqual({ from: 'menos-de-10', to: nueva?.id, label: 'sí' })
     expect(flow.edges).toContainEqual({ from: nueva?.id, to: 'fin', label: 'sí' })
   })
+
+  // La etiqueta '' es el aviso del dominio de que «sí» y «no» ya están repartidos
+  // (flowBranchLabel). Dejarla pasar acababa en «la etiqueta debe tener entre 1 y 20
+  // caracteres»: un error críptico de un campo que el usuario nunca escribió.
+  it('la tercera salida de una decisión se rechaza contando QUÉ pasa y QUÉ hacer', () => {
+    const store = conTramo()
+    store.addFlowNode('Aviso', 'decision', '¿Menos de 10?')
+    store.addFlowNode('Aviso', 'step', 'Avisar')
+    store.addFlowEdge('Aviso', 'menos-de-10', 'fin', 'sí')
+    store.addFlowEdge('Aviso', 'menos-de-10', 'avisar', 'no')
+
+    expect(store.addFlowEdge('Aviso', 'menos-de-10', 'avisar', '')).toBe(false)
+
+    expect(store.lastError()).toContain('«sí» y «no»')
+    expect(store.lastError()).toContain('borra una')
+    // y el flujo no se ha tocado
+    expect(store.flows()[0].edges.filter(e => e.from === 'menos-de-10')).toHaveLength(2)
+  })
 })
 
 describe('reordenar las acciones de una tarjeta (spec 40)', () => {
