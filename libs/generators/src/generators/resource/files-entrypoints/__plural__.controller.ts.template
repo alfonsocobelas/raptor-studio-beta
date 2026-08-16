@@ -90,7 +90,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.writes) { _%>
 
   @Post()
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.createRoles %>)
   register(@Body() body: Register<%- className %>Dto): Promise<void> {
     return this.register<%- className %>Handler.handle(body)
   }
@@ -99,7 +99,7 @@ export class <%- pluralClassName %>Controller {
 
   // Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción.
   @Post('import')
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.createRoles %>)
   importRows(@Body() body: Import<%- pluralClassName %>Dto): Promise<Import<%- pluralClassName %>Output> {
     return this.import<%- pluralClassName %>Handler.handle({ rows: body.rows })
   }
@@ -149,7 +149,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.writes) { _%>
 
   @Put(':id')
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.updateRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Update<%- className %>Dto): Promise<void> {
     return this.update<%- className %>Handler.handle({ id, updates: body as <%- className %>UpdateProps })
@@ -158,7 +158,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.removes) { _%>
 
   @Delete(':id')
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.deleteRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.remove<%- className %>Handler.handle({ id })
@@ -167,7 +167,7 @@ export class <%- pluralClassName %>Controller {
 <%_ if (app.trash) { _%>
 
   @Post(':id/restore')
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.deleteRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   restore(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
     return this.restore<%- className %>Handler.handle({ id })

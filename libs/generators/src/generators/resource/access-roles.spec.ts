@@ -6,10 +6,10 @@ import { renderEntrypoints } from './build-entrypoints'
 import { resourceGenerator } from './resource'
 
 /**
- * Spec 46 TASK-02: los @Roles(...) del CRUD y satélites salen de la matriz de accesos
- * (resolveAccess) calculados en generator.ts — las plantillas solo interpolan. Ausente =
- * política actual (el golden no se mueve); la matriz no-default ejercita las costuras:
- * view sin viewer, manage vacío («solo admin») y adjuntos con decoradores propios.
+ * Spec 46 TASK-02 + spec 49: los @Roles(...) del CRUD y satélites salen de la matriz de
+ * accesos (resolveAccess) calculados en generator.ts — las plantillas solo interpolan.
+ * Ausente = política actual (el golden no se mueve); la matriz granular ejercita cada
+ * costura por separado: create solo admin, edit admin+user, delete solo admin.
  */
 const permit = (): ResourceDefinition =>
   defineResource({
@@ -23,7 +23,7 @@ const permit = (): ResourceDefinition =>
     attachments: true,
     detail: { title: 'name' },
     history: true,
-    access: { view: ['user'], manage: [], transitions: { approve: [] } },
+    access: { view: ['user'], create: [], edit: ['user'], delete: [], transitions: { approve: [] } },
     list: { features: { delete: true, import: true } },
     state: {
       field: 'status',
@@ -52,7 +52,7 @@ const permit = (): ResourceDefinition =>
   })
 
 describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
-  describe('con la matriz no-default (view sin viewer, manage vacío)', () => {
+  describe('con la matriz granular (view sin viewer; create/edit/delete distintos)', () => {
     let tree: Tree
     const read = (path: string): string => tree.read(`out/${path}`, 'utf-8') ?? ''
 
@@ -72,23 +72,33 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(controller).not.toContain('UserRoleEnum.VIEWER')
     })
 
-    it('las escrituras con manage vacío quedan solo para admin', () => {
+    it('crear protege POST e import con los roles de Crear (solo admin)', () => {
       const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
 
       expect(controller).toMatch(/@Post\(\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
       expect(controller).toMatch(/@Post\('import'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
-      expect(controller).toMatch(/@Put\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
+    })
+
+    it('editar protege PUT con los roles de Editar (admin+user)', () => {
+      const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
+
+      expect(controller).toMatch(/@Put\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
+    })
+
+    it('borrar protege DELETE y restore con los roles de Borrar (solo admin)', () => {
+      const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
+
       expect(controller).toMatch(/@Delete\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
       expect(controller).toMatch(/@Post\(':id\/restore'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
     })
 
-    it('los adjuntos declaran roles: lecturas de Ver, escrituras de Gestionar', () => {
+    it('los adjuntos declaran roles: lecturas de Ver, escrituras de Editar', () => {
       const controller = read('backend/infrastructure/attachments/permit-attachments.controller.ts')
 
       expect(controller).toMatch(/@Get\(\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
       expect(controller).toMatch(/@Get\(':id\/download'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
-      expect(controller).toMatch(/@Post\(\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
-      expect(controller).toMatch(/@Delete\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
+      expect(controller).toMatch(/@Post\(\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
+      expect(controller).toMatch(/@Delete\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
     })
   })
 
@@ -178,7 +188,10 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
     it('emite las constantes de acceso del dominio desde la matriz', () => {
       const access = read('frontend/permit-access.ts')
 
-      expect(access).toContain('export const CAN_MANAGE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN]')
+      // TASK-11 parte CAN_MANAGE en tres; mientras, la constante lleva los roles de Editar
+      expect(access).toContain(
+        'export const CAN_MANAGE_ROLES: readonly UserRoleEnum[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER]'
+      )
       expect(access).toContain("'approve': [UserRoleEnum.ADMIN]")
       expect(access).toContain("'reject': [UserRoleEnum.ADMIN, UserRoleEnum.USER]")
     })
@@ -216,11 +229,13 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
   })
 
   describe('renderEntrypoints calcula las cadenas (plantillas tontas)', () => {
-    it('mapea la matriz a UserRoleEnum con admin siempre primero', () => {
+    it('mapea la matriz granular a UserRoleEnum con admin siempre primero', () => {
       const entry = renderEntrypoints(permit(), true)
 
       expect(entry.readRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
-      expect(entry.writeRoles).toBe('UserRoleEnum.ADMIN')
+      expect(entry.createRoles).toBe('UserRoleEnum.ADMIN')
+      expect(entry.updateRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
+      expect(entry.deleteRoles).toBe('UserRoleEnum.ADMIN')
       expect(entry.accessDeclared).toBe(true)
       expect(entry.transitions.map(t => [t.verb, t.roles])).toEqual([
         ['approve', 'UserRoleEnum.ADMIN'],
@@ -233,7 +248,9 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       const entry = renderEntrypoints({ ...definition, access: undefined }, true)
 
       expect(entry.readRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER')
-      expect(entry.writeRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
+      expect(entry.createRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
+      expect(entry.updateRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
+      expect(entry.deleteRoles).toBe('UserRoleEnum.ADMIN, UserRoleEnum.USER')
       expect(entry.accessDeclared).toBe(false)
     })
   })

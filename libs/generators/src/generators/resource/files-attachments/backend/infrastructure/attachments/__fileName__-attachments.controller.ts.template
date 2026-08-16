@@ -38,7 +38,7 @@ export class <%= className %>AttachmentsController {
   // revalida tamaño y MIME antes de tocar el almacenamiento.
   @Post()
 <%_ if (entry.accessDeclared) { _%>
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.updateRoles %>)
 <%_ } _%>
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_ATTACHMENT_SIZE_BYTES } }))
   upload(
@@ -67,7 +67,7 @@ export class <%= className %>AttachmentsController {
 
   @Delete(':id')
 <%_ if (entry.accessDeclared) { _%>
-  @Roles(<%- entry.writeRoles %>)
+  @Roles(<%- entry.updateRoles %>)
 <%_ } _%>
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

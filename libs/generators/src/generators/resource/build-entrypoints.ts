@@ -37,8 +37,12 @@ export interface EntrypointBindings {
   emit: boolean
   /** Argumentos de @Roles(...) para las lecturas, con admin siempre primero (spec 46) */
   readRoles: string
-  /** Argumentos de @Roles(...) para las escrituras */
-  writeRoles: string
+  /** Argumentos de @Roles(...) para crear: POST e import (spec 49) */
+  createRoles: string
+  /** Argumentos de @Roles(...) para editar: PUT, composición y escrituras de adjuntos */
+  updateRoles: string
+  /** Argumentos de @Roles(...) para borrar: DELETE y restore */
+  deleteRoles: string
   /** El recurso declara matriz: los adjuntos (hoy sin decoradores) los ganan solo entonces */
   accessDeclared: boolean
   /** Las transiciones de la máquina de estados (spec 43) */
@@ -186,8 +190,9 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   return {
     emit: emitAggregate,
     readRoles: rolesArgs(access.view),
-    // shim spec 49 (TASK-10 lo hace granular): edit resuelve igual que el manage legado
-    writeRoles: rolesArgs(access.edit),
+    createRoles: rolesArgs(access.create),
+    updateRoles: rolesArgs(access.edit),
+    deleteRoles: rolesArgs(access.delete),
     accessDeclared: definition.access !== undefined,
     transitions,
     registerDtoFields,
