@@ -76,6 +76,8 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
               type="button"
               class="studio-ui flex-1 rounded-md px-2 py-1.5 text-center text-xs transition-colors"
               [class.bg-background]="option.pivot === ui.pivot()"
+              [class.ring-1]="option.pivot === ui.pivot()"
+              [class.ring-border]="option.pivot === ui.pivot()"
               [class.shadow-sm]="option.pivot === ui.pivot()"
               [class.font-semibold]="option.pivot === ui.pivot()"
               [class.text-muted-foreground]="option.pivot !== ui.pivot()"

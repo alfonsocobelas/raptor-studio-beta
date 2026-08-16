@@ -34,7 +34,7 @@
 - [x] **TASK-08**: pivote Entidad en `access-table.component.ts` (filas de rol, selector de
       entidad) y extracción del lienzo a `access-diagram-view.component.ts`; `access-view`
       queda como conmutador de los tres pivotes. Estados vacíos conservados.
-- [ ] **TASK-09**: repaso visual contra 30A/31B en claro y oscuro (temas, espaciados, activo
+- [x] **TASK-09**: repaso visual contra 30A/31B en claro y oscuro (temas, espaciados, activo
       del raíl) y actualización de `tools/smoke-access.ts` + capturas `smoke-access-*.png`.
 
 ## Fase 4 — Generador (fontanería)
