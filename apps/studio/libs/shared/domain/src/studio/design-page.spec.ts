@@ -23,4 +23,9 @@ describe('generableHere', () => {
   it('lo que el generador no emite en ningún sitio, tampoco aquí', () => {
     expect(generableHere(ficha, { kind: 'text', text: 'hola' })).toBe(false)
   })
+
+  // spec 48: el bloque formulario nace generable, como la tabla
+  it('un formulario se emite en cualquier vista', () => {
+    expect(generableHere(listado, { kind: 'form', resource: 'paciente' })).toBe(true)
+  })
 })

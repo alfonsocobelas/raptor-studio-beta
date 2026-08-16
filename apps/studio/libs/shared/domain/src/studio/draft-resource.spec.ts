@@ -117,6 +117,25 @@ describe('draftToResource — ficha (spec 16)', () => {
   })
 })
 
+describe('draftToResource — página-formulario (spec 48)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Pacientes'),
+    ...extra
+  })
+
+  it('sin formulario declarado no emite form', () => {
+    expect(draftToResource(draft(), 'clinica').form).toBeUndefined()
+  })
+
+  it('con formulario declarado emite form vacío (mismo patrón que detail/gallery)', () => {
+    expect(draftToResource(draft({ form: true }), 'clinica').form).toEqual({})
+  })
+
+  it('el resource con form sigue pasando defineResource', () => {
+    expect(() => defineResource(draftToResource(draft({ form: true }), 'clinica'))).not.toThrow()
+  })
+})
+
 describe('draftToResource — galería (spec 17)', () => {
   const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
     ...newDraftResource('Tratamientos'),

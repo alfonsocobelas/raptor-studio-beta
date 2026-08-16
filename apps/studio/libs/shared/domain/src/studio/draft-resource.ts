@@ -48,6 +48,8 @@ export interface DraftResource {
   detail?: boolean
   /** La entidad se muestra como galería de tarjetas (spec 17) */
   gallery?: boolean
+  /** La entidad tiene página-formulario de alta y edición (spec 48) */
+  form?: boolean
   /** Entradilla de la pantalla: el texto que la vista puso junto a la tabla (spec 18) */
   subtitle?: string
   /** Frase de negocio de la entidad, destilada del chat (spec 22) */
@@ -292,6 +294,7 @@ export function draftToResource(
     ...(draft.attachments ? { attachments: true } : {}),
     ...(hasDetail ? { detail: {} } : {}),
     ...(draft.gallery ? { gallery: {} } : {}),
+    ...(draft.form ? { form: {} } : {}),
     schemaVersion: 1,
     name: draft.name,
     plural: draft.plural,
