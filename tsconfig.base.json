@@ -29,7 +29,8 @@
       "@raptor/infra-metrics-prometheus": ["./libs/infra/metrics-prometheus/src/index.ts"],
       "@raptor/infra-storage-gcs": ["./libs/infra/storage-gcs/src/index.ts"],
       "@raptor/infra-observability-sentry": ["./libs/infra/observability-sentry/src/index.ts"],
-      "@raptor/infra-config-aws": ["./libs/infra/config-aws/src/index.ts"]
+      "@raptor/infra-config-aws": ["./libs/infra/config-aws/src/index.ts"],
+      "@raptor/infra-observability-aws": ["./libs/infra/observability-aws/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp", "dist", "docs/referencia"]
