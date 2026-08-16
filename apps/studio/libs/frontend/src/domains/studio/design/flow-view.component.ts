@@ -392,7 +392,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                                    sale generado con cuerpo real y endpoint, sin hueco @ai -->
                               <span
                                 class="rounded-sm px-1 font-medium"
-                                style="color: #c86647; background: rgba(241, 85, 57, 0.1)"
+                                style="color: #f15539; background: rgba(241, 85, 57, 0.1)"
                                 [attr.title]="'Ejecuta la transición «' + step.transition + '» de ' + step.entity"
                                 [attr.data-testid]="'flow-step-transition-' + step.id"
                                 >⚡ {{ step.transition }}</span

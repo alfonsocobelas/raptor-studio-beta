@@ -356,17 +356,17 @@ interface DiagramEdge {
        mezclando con el PAPEL de la caja y no con transparent: en noche mezclar con
        transparent los hundía hacia el fondo y a 1.5px eso se ve como borrón. */
     .model-dot {
-      background-color: color-mix(in oklab, #c86647 62%, var(--card));
+      background-color: color-mix(in oklab, #f15539 62%, var(--card));
     }
     /* En noche el papel resta luz en vez de sumarla, así que el punto necesita más
        naranja para pesar lo mismo que en claro. */
     :host-context(.dark) .model-dot {
-      background-color: color-mix(in oklab, #c86647 88%, var(--card));
+      background-color: color-mix(in oklab, #f15539 88%, var(--card));
     }
     /* La caja elegida se recerca de naranja: solo cambia el color del borde de 1px
        que ya tenía, así que al elegirla no se mueve ni engorda. */
     .model-card-chosen {
-      border-color: #c86647;
+      border-color: #f15539;
     }
     /* La caja que se está nombrando: trazo discontinuo en el naranja del raíl, la misma
        seña de «esto todavía no existe» que las guías de caída del lienzo de Vistas. */

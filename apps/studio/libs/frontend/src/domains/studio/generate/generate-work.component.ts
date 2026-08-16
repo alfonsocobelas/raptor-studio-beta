@@ -107,7 +107,7 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
       opacity: 0.5;
     }
     .phase-row[data-state='running'] {
-      border-color: #c86647;
+      border-color: #f15539;
     }
     .phase-row[data-state='failed'] {
       border-color: var(--destructive);
@@ -129,8 +129,8 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
       color: #fff;
     }
     .phase-row[data-state='running'] .phase-pip {
-      border-color: #c86647;
-      color: #c86647;
+      border-color: #f15539;
+      color: #f15539;
     }
     .written-pip {
       width: 12px;

@@ -96,13 +96,13 @@ describe('GeneratePageComponent', () => {
       const fixture = await mount()
 
       expect(at(fixture, 'generate-mark-plate')?.getAttribute('fill')).toBe('#1b1917')
-      expect(at(fixture, 'generate-mark-letter')?.getAttribute('fill')).toBe('#c86647')
+      expect(at(fixture, 'generate-mark-letter')?.getAttribute('fill')).toBe('#f15539')
 
       preview.toggleStudioTheme()
       fixture.detectChanges()
 
       // en noche se invierte: la pastilla toma el naranja y la R, la tinta
-      expect(at(fixture, 'generate-mark-plate')?.getAttribute('fill')).toBe('#c86647')
+      expect(at(fixture, 'generate-mark-plate')?.getAttribute('fill')).toBe('#f15539')
       expect(at(fixture, 'generate-mark-letter')?.getAttribute('fill')).toBe('#1b1917')
     })
 
