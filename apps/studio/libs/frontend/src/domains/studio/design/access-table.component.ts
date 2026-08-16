@@ -67,7 +67,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         <div class="border-y">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-muted-foreground table-head border-b">
+              <tr class="text-muted-foreground border-b">
                 <th class="studio-eyebrow px-4 py-3 text-left font-normal">Rol</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Ver</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Crear</th>
@@ -186,7 +186,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         <div class="min-h-0 flex-1 overflow-auto border-y">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-muted-foreground table-head border-b">
+              <tr class="text-muted-foreground border-b">
                 <th class="studio-eyebrow px-4 py-3 text-left font-normal">Entidad</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Ver</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Crear</th>
@@ -267,12 +267,6 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
     }
     :host-context(.dark) .mark-no {
       color: #e8695e;
-    }
-    .table-head {
-      background-color: rgb(120 113 108 / 0.09);
-    }
-    :host-context(.dark) .table-head {
-      background-color: rgb(255 255 255 / 0.05);
     }
     .chip-yes {
       background-color: rgb(68 186 130 / 0.16);
