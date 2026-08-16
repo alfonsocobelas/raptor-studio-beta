@@ -91,7 +91,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     <td class="px-2 py-3.5 text-center">
                       <button
                         type="button"
-                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
+                        class="hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
                         [class]="cellClasses(cell, role)"
                         [attr.aria-pressed]="granted(cell, role)"
                         [attr.aria-label]="cell.label + ' — ' + roleLabels[role]"
@@ -110,7 +110,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                           <button
                             type="button"
                             class="rounded-full border px-2.5 py-1 text-xs transition-colors"
-                            [class]="cellClasses(cell, role)"
+                            [class]="chipClasses(cell, role)"
                             [attr.aria-pressed]="granted(cell, role)"
                             [disabled]="role === 'admin'"
                             [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
@@ -208,7 +208,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     <td class="px-2 py-3.5 text-center">
                       <button
                         type="button"
-                        class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors"
+                        class="hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
                         [class]="cellClasses(cell, ui.role())"
                         [attr.aria-pressed]="granted(cell, ui.role())"
                         [attr.aria-label]="cell.label + ' ' + row.label"
@@ -227,7 +227,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                           <button
                             type="button"
                             class="rounded-full border px-2.5 py-1 text-xs transition-colors"
-                            [class]="cellClasses(cell, ui.role())"
+                            [class]="chipClasses(cell, ui.role())"
                             [attr.aria-pressed]="granted(cell, ui.role())"
                             [disabled]="ui.role() === 'admin'"
                             [attr.data-testid]="'access-cell-' + row.name + '-' + cell.capability"
@@ -252,29 +252,41 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
     }
   `,
   styles: `
-    /* El verde y el rojo se pintan aquí, no con utilidades: Tailwind v4 resuelve 'dark:' por
-       preferencia del sistema y el estudio conmuta el tema con la clase .dark en :root, así que
-       la única forma fiable de tener dos tonos por tema es :host-context(.dark). Relleno con
-       cuerpo suficiente para verse de un vistazo — al 10% el verde no se apreciaba. */
-    .cell-yes {
-      background-color: #d1fae5;
-      border-color: #6ee7b7;
-      color: #047857;
+    /* El color se pinta aquí, no con utilidades: Tailwind v4 resuelve 'dark:' por preferencia del
+       sistema y el estudio conmuta el tema con la clase .dark en :root, así que la única forma
+       fiable de tener dos tonos por tema es :host-context(.dark). Verde jade #44BA82 (elección de
+       Alfonso). Las celdas van SIN caja: la marca sola basta y la tabla respira. */
+    .mark-yes {
+      color: #2f9e6d;
     }
-    .cell-no {
-      background-color: #fee2e2;
-      border-color: #fca5a5;
-      color: #b91c1c;
+    .mark-no {
+      color: #d1493f;
     }
-    :host-context(.dark) .cell-yes {
-      background-color: rgb(16 185 129 / 0.28);
-      border-color: rgb(16 185 129 / 0.6);
-      color: #6ee7b7;
+    :host-context(.dark) .mark-yes {
+      color: #44ba82;
     }
-    :host-context(.dark) .cell-no {
-      background-color: rgb(239 68 68 / 0.24);
-      border-color: rgb(239 68 68 / 0.55);
-      color: #fca5a5;
+    :host-context(.dark) .mark-no {
+      color: #e8695e;
+    }
+    .chip-yes {
+      background-color: rgb(68 186 130 / 0.16);
+      border-color: rgb(68 186 130 / 0.5);
+      color: #2f8a62;
+    }
+    .chip-no {
+      background-color: rgb(209 73 63 / 0.12);
+      border-color: rgb(209 73 63 / 0.4);
+      color: #b93f36;
+    }
+    :host-context(.dark) .chip-yes {
+      background-color: rgb(68 186 130 / 0.26);
+      border-color: rgb(68 186 130 / 0.55);
+      color: #7fd7b0;
+    }
+    :host-context(.dark) .chip-no {
+      background-color: rgb(232 105 94 / 0.22);
+      border-color: rgb(232 105 94 / 0.5);
+      color: #f0938b;
     }
   `
 })
@@ -323,9 +335,14 @@ export class AccessTableComponent {
     return role === 'admin' || cell.roles.includes(role)
   }
 
-  /** Se lee de un vistazo: concedido en verde, denegado en rojo (ver los estilos del componente). */
+  /** La marca desnuda: sin caja, solo el símbolo en color (ver los estilos del componente). */
   protected cellClasses(cell: AccessCapabilityCell, role: AccessActorRole): string {
-    return this.granted(cell, role) ? 'cell-yes' : 'cell-no'
+    return this.granted(cell, role) ? 'mark-yes' : 'mark-no'
+  }
+
+  /** El chip de transición sí conserva forma: lleva texto, y sin borde se leería como prosa suelta. */
+  protected chipClasses(cell: AccessCapabilityCell, role: AccessActorRole): string {
+    return this.granted(cell, role) ? 'chip-yes' : 'chip-no'
   }
 
   protected toggle(row: AccessTableRow, cell: AccessCapabilityCell): void {
