@@ -52,7 +52,7 @@ export class <%- className %>Service {
         })
       )
   })
-<%_ if (detail) { _%>
+<%_ if (detail || formPage) { _%>
 
   /** Carga un registro por id: lo que necesita la ficha (spec 16). */
   findOne(id: string): Promise<<%- dtoName %>> {

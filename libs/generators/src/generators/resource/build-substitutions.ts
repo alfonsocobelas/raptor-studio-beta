@@ -96,6 +96,8 @@ export interface ResourceSubstitutions {
   hasStateMachine: boolean
   /** Ficha del registro (spec 16): null cuando el modelo no la declara */
   detail: DetailSubstitution | null
+  /** La página-formulario está declarada (spec 48): emite findOne aunque no haya ficha */
+  formPage: boolean
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
   gallery: GallerySubstitution | null
   gantt: GanttSubstitution | null
@@ -371,6 +373,7 @@ export function buildSubstitutions(
     attachments: definition.attachments ?? false,
     hasStateMachine: definition.state !== undefined,
     detail: renderDetail(definition),
+    formPage: Boolean(definition.form),
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
     labelsModule: renderLabelsModule(definition),

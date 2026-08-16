@@ -53,6 +53,34 @@ describe('resource generator — página-formulario (spec 48)', () => {
     expect(groupOf(page)).toBe(groupOf(dialog))
   })
 
+  it('con :id carga el registro, precarga el form y guarda con update', async () => {
+    const tree = await generate(withForm())
+    const page = tree.read('out/frontend/invoice-form-page.component.ts', 'utf-8') ?? ''
+
+    expect(page).toContain("this._route.snapshot.paramMap.get('id')")
+    expect(page).toContain('await this._service.findOne(id)')
+    expect(page).toContain('this.form.patchValue')
+    expect(page).toContain('await this._service.update(id, value)')
+  })
+
+  it('la cabecera y el botón cambian con el modo, con los textos del diálogo', async () => {
+    const tree = await generate(withForm())
+    const page = tree.read('out/frontend/invoice-form-page.component.ts', 'utf-8') ?? ''
+    const dialog = tree.read('out/frontend/invoice-dialog.component.ts', 'utf-8') ?? ''
+
+    const editTitle = dialog.match(/\? '([^']+)' : '/)?.[1] ?? '__no-title__'
+    expect(page).toContain(editTitle)
+    expect(page).toContain("? 'Guardar' : 'Crear'")
+  })
+
+  it('mientras carga el registro no se pinta el formulario, y el 404 tiene aviso', async () => {
+    const tree = await generate(withForm())
+    const page = tree.read('out/frontend/invoice-form-page.component.ts', 'utf-8') ?? ''
+
+    expect(page).toContain('loading')
+    expect(page).toContain('notFound')
+  })
+
   it('sin form no cambia nada de lo demás emitido', async () => {
     const con = await generate(withForm())
     const sin = await generate({ ...withForm(), form: undefined })
