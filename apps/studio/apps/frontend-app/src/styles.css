@@ -62,6 +62,21 @@
   --flow-accent: #d75f3d;
 }
 
+/* Las tarjetas de «Antes de generar» (paso Infraestructura). No van en --card a propósito:
+   llevan su propio papel para que la elegida, en naranja de marca, destaque sola.
+   Los tres tokens se declaran DENTRO de los bloques del tema, no en :root suelto: si el
+   valor referencia --brand o --border (que solo existen en .theme-neutral), fuera de aquí
+   la sustitución falla, el color queda inválido y el fondo cae a transparente. */
+:root .theme-neutral {
+  --studio-option-card: #f5f2f0;
+  /* La costura va bien por debajo de --border (#e7e3de), que sobre este papel se disolvía:
+     con fondo y tarjeta tan cercanos, el contorno es lo único que las dibuja. */
+  --studio-option-card-border: #c4bcb1;
+  /* Al pasar por encima el papel no va al blanco sino a un naranja lavadísimo (elegido por
+     Alfonso, 2026-08-16): la tarjeta anticipa el color que la va a llenar si la pulsas. */
+  --studio-option-card-hover: #fef7f3;
+}
+
 :root.dark .theme-neutral {
   color-scheme: dark;
 
@@ -95,6 +110,13 @@
   --sidebar-accent-foreground: oklch(0.985 0.003 85);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.7 0.19 33);
+
+  /* Las tarjetas de «Antes de generar», en negativo. El hover se ACLARA como de día:
+     se sube primero el gris a #3a3733 (un escalón sobre el papel de la tarjeta) y ahí
+     se tiñe la marca. Mezclarla contra el #292725 la hundía hacia el fondo. */
+  --studio-option-card: #292725;
+  --studio-option-card-border: oklch(1 0 0 / 16%);
+  --studio-option-card-hover: color-mix(in oklab, var(--brand) 14%, #3a3733);
 }
 
 @layer base {

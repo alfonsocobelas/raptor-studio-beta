@@ -58,17 +58,30 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
   `,
   styles: `
     .option-card {
-      background-color: #292725;
-      border: 1px solid var(--border);
+      background-color: var(--studio-option-card);
+      border: 1px solid var(--studio-option-card-border);
       border-radius: 10px;
       padding: 12px 14px;
+      transition:
+        border-color 130ms ease,
+        background-color 130ms ease,
+        box-shadow 130ms ease,
+        transform 130ms ease;
     }
     .option-card:disabled {
       opacity: 0.45;
       cursor: not-allowed;
     }
+    /* Al pasar por encima la tarjeta se despega un punto: el papel sube hacia el blanco,
+       la costura se tiñe de marca y aparece la sombra. Nada de esto toca a la elegida,
+       que ya está en naranja sólido. */
     .option-card:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--brand) 45%, var(--border));
+      border-color: var(--brand);
+    }
+    .option-card:not(:disabled):not(.option-card-chosen):hover {
+      background-color: var(--studio-option-card-hover);
+      box-shadow: 0 2px 6px -2px oklch(0 0 0 / 12%);
+      transform: translateY(-1px);
     }
     /* La elegida se enciende con el naranja de marca (lavado 2026-08-15): fondo --brand
        sólido y texto invertido, para que la decisión se vea de un vistazo. */
@@ -84,15 +97,49 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
       color: color-mix(in oklab, var(--brand-foreground) 78%, var(--brand));
     }
     .option-mark {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
       width: 14px;
       height: 14px;
       border: 1px solid color-mix(in oklab, var(--foreground) 40%, transparent);
       border-radius: 50%;
+      transition: border-color 130ms ease;
+    }
+    /* El círculo va en papel blanco, no en el de la tarjeta: así el punto naranja del
+       hover cae dentro de algo, y no sobre el mismo tono del fondo. */
+    .option-card:not(.option-card-chosen) .option-mark {
+      background-color: var(--card);
+    }
+    /* El punto de dentro: invisible en reposo, se abre al pasar por encima. Anticipa la
+       elección —es el mismo naranja que va a llenar la tarjeta si pulsas—. */
+    .option-mark::after {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--brand);
+      opacity: 0;
+      transform: scale(0.4);
+      transition:
+        opacity 130ms ease,
+        transform 130ms ease;
+    }
+    .option-card:not(:disabled):not(.option-card-chosen):hover .option-mark {
+      border-color: var(--brand);
+    }
+    .option-card:not(:disabled):not(.option-card-chosen):hover .option-mark::after {
+      opacity: 1;
+      transform: scale(1);
     }
     .option-card-chosen .option-mark {
       border: 4px solid var(--brand-foreground);
+    }
+    /* En la elegida el círculo ya es el propio anillo: el punto sobra. */
+    .option-card-chosen .option-mark::after {
+      display: none;
     }
   `
 })
@@ -142,17 +189,29 @@ export class ChoiceCardsComponent {
   `,
   styles: `
     .addon-card {
-      background-color: #292725;
-      border: 1px solid var(--border);
+      background-color: var(--studio-option-card);
+      border: 1px solid var(--studio-option-card-border);
       border-radius: 10px;
       padding: 12px 14px;
+      transition:
+        border-color 130ms ease,
+        background-color 130ms ease,
+        box-shadow 130ms ease,
+        transform 130ms ease;
     }
     .addon-card:disabled {
       opacity: 0.45;
       cursor: not-allowed;
     }
+    /* Mismo despegue que las opciones: si las dos rejillas se ven iguales, tienen que
+       reaccionar igual. */
     .addon-card:not(:disabled):hover {
-      border-color: color-mix(in oklab, var(--brand) 45%, var(--border));
+      border-color: var(--brand);
+    }
+    .addon-card:not(:disabled):not(.addon-card-active):hover {
+      background-color: var(--studio-option-card-hover);
+      box-shadow: 0 2px 6px -2px oklch(0 0 0 / 12%);
+      transform: translateY(-1px);
     }
     /* Mismo lenguaje que las opciones: la activa se enciende en naranja de marca. */
     .addon-card-active {
@@ -176,6 +235,34 @@ export class ChoiceCardsComponent {
       margin-top: 1px;
       border: 1px solid color-mix(in oklab, var(--foreground) 40%, transparent);
       border-radius: 4px;
+      transition: border-color 130ms ease;
+    }
+    .addon-card:not(.addon-card-active) .addon-mark {
+      background-color: var(--card);
+    }
+    /* La casilla también anticipa: un cuadradito de marca dentro al pasar por encima. */
+    .addon-mark::after {
+      content: '';
+      display: block;
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      background-color: var(--brand);
+      opacity: 0;
+      transform: scale(0.4);
+      transition:
+        opacity 130ms ease,
+        transform 130ms ease;
+    }
+    .addon-card:not(:disabled):not(.addon-card-active):hover .addon-mark {
+      border-color: var(--brand);
+    }
+    .addon-card:not(:disabled):not(.addon-card-active):hover .addon-mark::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .addon-card-active .addon-mark::after {
+      display: none;
     }
     .addon-card-active .addon-mark {
       background-color: var(--brand-foreground);

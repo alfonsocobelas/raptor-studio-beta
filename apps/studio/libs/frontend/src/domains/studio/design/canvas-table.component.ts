@@ -14,9 +14,11 @@ import {
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
+import { CanvasFormDialogComponent } from './canvas-form-dialog.component'
 import { DesignStore } from './design-store'
 import { detailPageIndex } from './detail-page'
 import { labelOfType } from './field-type-labels'
+import { formDialogTitle, type FormDialogMode } from './form-preview'
 import { buildSampleRows, mockTotal } from './mock-data'
 
 // 5 filas: en el lienzo la tabla convive con otros bloques y no debe comérselos
@@ -49,7 +51,7 @@ const BADGE_CLASSES = [
 @Component({
   selector: 'studio-canvas-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgIcon],
+  imports: [CanvasFormDialogComponent, FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideDownload,
@@ -77,6 +79,15 @@ const BADGE_CLASSES = [
           <span class="chrome-btn"><ng-icon name="lucideListFilter" size="14" /> Filtros</span>
           <span class="chrome-btn"><ng-icon name="lucideSettings2" size="14" /> Columnas</span>
           <span class="chrome-btn"><ng-icon name="lucideDownload" size="14" /> Exportar</span>
+          <button
+            type="button"
+            class="bg-primary text-primary-foreground flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium"
+            data-testid="table-create"
+            (click)="openCreate($event)"
+          >
+            <ng-icon name="lucidePlus" size="14" />
+            {{ createLabel() }}
+          </button>
         </div>
       </div>
 
@@ -211,7 +222,15 @@ const BADGE_CLASSES = [
                   >
                     <ng-icon name="lucideEye" size="15" />
                   </button>
-                  <ng-icon name="lucidePencil" size="15" />
+                  <button
+                    type="button"
+                    class="hover:text-foreground"
+                    title="Editar (abre el formulario)"
+                    [attr.data-testid]="'row-edit-' + $index"
+                    (click)="openEdit($event, row)"
+                  >
+                    <ng-icon name="lucidePencil" size="15" />
+                  </button>
                   <ng-icon name="lucideTrash2" size="15" class="text-destructive" />
                 </td>
                 @for (field of resource.fields; track field.name) {
@@ -246,6 +265,15 @@ const BADGE_CLASSES = [
           <span class="chrome-btn">›</span>
         </span>
       </div>
+
+      @if (formMode(); as mode) {
+        <studio-canvas-form-dialog
+          [resource]="resource"
+          [mode]="mode"
+          [row]="formRow()"
+          (closed)="formMode.set(null)"
+        />
+      }
     }
   `,
   styles: `
@@ -283,6 +311,28 @@ export class CanvasTableComponent {
   }
   protected readonly hovered = signal<number | null>(null)
   protected readonly editing = signal<number | null>(null)
+
+  /** Diálogo de formulario mock: null = cerrado. En edición lleva la fila del lápiz. */
+  protected readonly formMode = signal<FormDialogMode | null>(null)
+  protected readonly formRow = signal<Record<string, unknown> | null>(null)
+
+  /** Mismo rótulo que el botón emitido: la fórmula de género del generador. */
+  protected readonly createLabel = computed(() => {
+    const draft = this.draft()
+    return draft ? formDialogTitle(draft, 'create') : ''
+  })
+
+  protected openCreate(event: Event): void {
+    event.stopPropagation()
+    this.formRow.set(null)
+    this.formMode.set('create')
+  }
+
+  protected openEdit(event: Event, row: Record<string, unknown>): void {
+    event.stopPropagation()
+    this.formRow.set(row)
+    this.formMode.set('edit')
+  }
 
   /**
    * A dónde lleva el ojo: a la ficha de esta entidad, como en la app emitida, donde
