@@ -120,7 +120,7 @@ const FLOW_BLOCKS: FlowBlock[] = [
       </section>
 
       <p class="text-muted-foreground mt-auto px-1 text-xs">
-        Los bloques se añaden al final del flujo; enlázalos arrastrando en el lienzo.
+        Los bloques nuevos caen en el centro del lienzo; enlázalos arrastrando.
       </p>
     </aside>
   `,

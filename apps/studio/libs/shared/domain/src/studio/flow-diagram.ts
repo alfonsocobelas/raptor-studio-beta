@@ -1,5 +1,6 @@
 import type { BusinessFlow, FlowNodeKind } from '@raptor/schema'
 import type { NodeBox, NodePosition } from './model-diagram'
+import { screenToWorld, type Viewport } from './viewport'
 
 /**
  * Helpers puros de la vista de flujos (spec 28). Como en la vista de modelo,
@@ -146,6 +147,29 @@ export function flowLayout(
     })
   }
   return positions
+}
+
+/**
+ * Dónde aterriza un bloque NUEVO de la paleta: centrado en la cámara actual y, si ese
+ * hueco está pillado, un carril más abajo hasta encontrar sitio. La capa de huérfanos
+ * del layout queda para lo que ya venía suelto; un bloque recién pulsado tiene que
+ * aparecer donde el ojo está mirando.
+ */
+export function flowLoosePosition(
+  viewport: Viewport,
+  size: { width: number; height: number },
+  taken: NodeBox[],
+  nodeSize: { width: number; height: number } = FLOW_NODE
+): NodePosition {
+  const centro = screenToWorld({ x: size.width / 2, y: size.height / 2 }, viewport)
+  const slot = (paso: number): NodePosition => ({
+    x: centro.x - nodeSize.width / 2,
+    y: centro.y - nodeSize.height / 2 + paso * (nodeSize.height + FLOW_GRID.gapAcross)
+  })
+  let paso = 0
+  // mismo tope defensivo que el layout: mejor un solape que un bucle en un render
+  while (paso < 50 && taken.some(puesta => seSolapan({ ...slot(paso), ...nodeSize }, puesta))) paso++
+  return slot(paso)
 }
 
 export interface FlowEdgeCurve {

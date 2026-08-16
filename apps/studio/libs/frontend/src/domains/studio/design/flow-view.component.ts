@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core'
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@raptor/schema'
 import {
@@ -14,7 +24,9 @@ import {
   flowGroupBox,
   flowGroups,
   flowLayout,
+  flowLoosePosition,
   flowNodeBox,
+  flowNodeSize,
   nodeAt,
   type FlowEdgeCurve,
   type FlowGroup,
@@ -43,6 +55,9 @@ interface FlowDiagramEdge {
 
 /** Nombre de partida de una acción recién creada: mientras lo conserve, es un borrador. */
 const NEW_ACTION_TEXT = 'Nueva acción'
+
+/** Lienzo sin medida (jsdom, primer render): un tamaño nominal mantiene el aterrizaje. */
+export const FLOW_CANVAS_FALLBACK = { width: 1280, height: 720 } as const
 
 /** Margen de gracia al soltar una flecha: cerca del bloque cuenta como dentro. */
 const FLOW_LINK_SNAP = 16
@@ -647,6 +662,46 @@ export class FlowViewComponent {
   protected readonly active = inject(ActiveViewService)
   private readonly viewport = inject(CanvasViewportService)
   protected readonly orientation = inject(FlowOrientationService)
+
+  constructor() {
+    // Un bloque NUEVO de la paleta aterriza donde el ojo mira. El layout manda lo
+    // suelto a la capa de los huérfanos (tras la capa más profunda), y con un flujo
+    // de varias capas eso cae fuera del viewport: «pulso Condición y no pasa nada».
+    effect(() => {
+      const flow = this.activeFlow()
+      if (!flow) return
+      const conectados = new Set(flow.edges.flatMap(edge => [edge.from, edge.to]))
+      const sueltos = flow.nodes.filter(node => !conectados.has(node.id))
+      if (sueltos.length) untracked(() => this.placeLoose(flow.name, sueltos))
+    })
+  }
+
+  /** Coloca los bloques sueltos que aún no tienen sitio, centrados en la cámara. */
+  private placeLoose(flowName: string, sueltos: FlowNode[]): void {
+    const sinSitio = sueltos.filter(node => !this.manual()[`${flowName}:${node.id}`])
+    if (!sinSitio.length) return
+    this.freezePositions()
+
+    const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
+    const size = caja?.width ? { width: caja.width, height: caja.height } : FLOW_CANVAS_FALLBACK
+    const camara = this.viewport.of('flows')()
+    const pendientes = new Set(sinSitio.map(node => node.id))
+    // lo ya dibujado cuenta como ocupado, MENOS los que van a recolocarse ahora
+    const ocupadas = [...this.boxes()].filter(([id]) => !pendientes.has(id)).map(([, box]) => box)
+
+    this.manual.update(manual => {
+      const colocadas = { ...manual }
+      for (const node of sinSitio) {
+        // el tamaño real ya está dibujado (un paso suelto es una tarjeta, no una píldora)
+        const propio = this.boxes().get(node.id)
+        const nodeSize = propio ? { width: propio.width, height: propio.height } : flowNodeSize(node.kind)
+        const position = flowLoosePosition(camara, size, ocupadas, nodeSize)
+        colocadas[`${flowName}:${node.id}`] = position
+        ocupadas.push({ ...position, ...nodeSize })
+      }
+      return colocadas
+    })
+  }
 
   /** Posiciones arrastradas por flujo:nodo — SOLO memoria de sesión (layout cosmético). */
   private readonly manual = signal<Record<string, NodePosition>>({})

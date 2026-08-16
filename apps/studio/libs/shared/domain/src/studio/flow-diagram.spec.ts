@@ -8,8 +8,10 @@ import {
   flowBranchLabel,
   flowEdgeCurve,
   flowLayout,
+  flowLoosePosition,
   flowNodeBox
 } from './flow-diagram'
+import { INITIAL_VIEWPORT } from './viewport'
 import type { NodeBox } from './model-diagram'
 
 const pedidoFlow = (): BusinessFlow => ({
@@ -90,6 +92,42 @@ describe('flowLayout — capas BFS desde el start', () => {
     flow.nodes = flow.nodes.filter(n => n.kind !== 'start')
 
     expect(flowLayout(flow)).toEqual({})
+  })
+})
+
+// Un bloque NUEVO de la paleta aterriza donde el ojo está mirando: centrado en la
+// cámara actual. La capa de huérfanos del layout queda solo para lo que ya venía
+// suelto; pulsar «Condición» y que el rombo caiga a 1600px del viewport era «pulso
+// y no pasa nada».
+describe('flowLoosePosition — dónde aterriza un bloque nuevo', () => {
+  const SIZE = { width: 1200, height: 800 }
+
+  it('sin cámara movida, el bloque cae centrado en el lienzo', () => {
+    const position = flowLoosePosition(INITIAL_VIEWPORT, SIZE, [])
+
+    expect(position).toEqual({ x: 600 - FLOW_NODE.width / 2, y: 400 - FLOW_NODE.height / 2 })
+  })
+
+  it('con la cámara desplazada y ampliada, cae en el centro de LO QUE SE VE (coordenadas de mundo)', () => {
+    const viewport = { pan: { x: -400, y: -100 }, zoom: 2 }
+
+    const position = flowLoosePosition(viewport, SIZE, [])
+
+    // centro de pantalla (600,400) → mundo ((600+400)/2, (400+100)/2) = (500,250), menos media caja
+    expect(position).toEqual({ x: 500 - FLOW_NODE.width / 2, y: 250 - FLOW_NODE.height / 2 })
+  })
+
+  it('si el centro ya está ocupado, se aparta un carril hacia abajo hasta un hueco libre', () => {
+    const centro = flowLoosePosition(INITIAL_VIEWPORT, SIZE, [])
+    const paso = FLOW_NODE.height + FLOW_GRID.gapAcross
+    const ocupadas: NodeBox[] = [
+      { ...centro, width: FLOW_NODE.width, height: FLOW_NODE.height },
+      { ...centro, y: centro.y + paso, width: FLOW_NODE.width, height: FLOW_NODE.height }
+    ]
+
+    const position = flowLoosePosition(INITIAL_VIEWPORT, SIZE, ocupadas)
+
+    expect(position).toEqual({ x: centro.x, y: centro.y + 2 * paso })
   })
 })
 

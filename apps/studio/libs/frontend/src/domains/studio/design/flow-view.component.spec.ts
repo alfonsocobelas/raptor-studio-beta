@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
+import { INITIAL_VIEWPORT, flowLoosePosition, flowNodeSize } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
-import { FlowViewComponent } from './flow-view.component'
+import { FLOW_CANVAS_FALLBACK, FlowViewComponent } from './flow-view.component'
 
 // El lienzo de flujos AGRUPA las acciones seguidas en una tarjeta (referencia 12A):
 // «RAMA SÍ · 1 Marcar la fila · 2 Enviar correo · + Acción». Aquí se prueba lo que se
@@ -701,5 +702,57 @@ describe('FlowViewComponent — el chip del verbo (spec 44)', () => {
 
     expect(testId(fixture, `flow-step-transition-${stepId()}`)).toBeNull()
     expect(testId(fixture, `flow-step-entity-${stepId()}`)).not.toBeNull()
+  })
+})
+
+/**
+ * Un bloque nuevo de la paleta tiene que aparecer DONDE EL OJO MIRA. El layout manda
+ * los nodos sueltos a la capa de los huérfanos (tras la capa más profunda), que con
+ * un flujo de varias capas queda fuera del viewport: «pulso Condición y no pasa nada».
+ */
+describe('FlowViewComponent — el bloque nuevo aterriza a la vista', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'decision', 'stock < 10')
+    store.addFlowEdge(FLOW, 'inicio', 'stock-10')
+    store.addFlowEdge(FLOW, 'stock-10', 'fin', 'sí')
+    store.removeFlowEdge(FLOW, 'inicio', 'fin')
+  })
+
+  it('una condición suelta se pinta centrada en la cámara, no tras la última capa', () => {
+    const fixture = mount()
+
+    store.addFlowNode(FLOW, 'decision', '¿campo = valor?')
+    fixture.detectChanges()
+
+    const rombo = testId(fixture, 'flow-node-campo-valor')
+    expect(rombo).not.toBeNull()
+    // jsdom no mide el lienzo: manda el tamaño nominal de respaldo del componente
+    const size = flowNodeSize('decision')
+    const esperado = flowLoosePosition(INITIAL_VIEWPORT, FLOW_CANVAS_FALLBACK, [], size)
+    expect(rombo?.style.left).toBe(`${esperado.x}px`)
+    expect(rombo?.style.top).toBe(`${esperado.y}px`)
+  })
+
+  it('dos bloques seguidos no se pisan: el segundo cae un carril más abajo', () => {
+    const fixture = mount()
+
+    store.addFlowNode(FLOW, 'step', 'Paso nuevo')
+    fixture.detectChanges()
+    store.addFlowNode(FLOW, 'step', 'Otro paso')
+    fixture.detectChanges()
+
+    const primero = testId(fixture, 'flow-card-paso-nuevo') ?? testId(fixture, 'flow-node-paso-nuevo')
+    const segundo = testId(fixture, 'flow-card-otro-paso') ?? testId(fixture, 'flow-node-otro-paso')
+    expect(primero).not.toBeNull()
+    expect(segundo).not.toBeNull()
+    expect(segundo?.style.top).not.toBe(primero?.style.top)
+    expect(primero?.style.left).toBe(segundo?.style.left)
   })
 })
