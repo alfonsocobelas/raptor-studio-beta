@@ -91,17 +91,21 @@ const PIVOTS: { pivot: AccessPivot; label: string }[] = [
     </aside>
   `,
   styles: `
-    /* Recuadro de la inicial en el naranja terracota #C86647 que eligió Alfonso, con la letra en
-       blanco encima (blanco fijo, no --brand-foreground: en oscuro ese token es tinta). Va en CSS y no con utilidades para no depender de --primary, que en claro es
+    /* El terracota #C86647 lo pipeteó Alfonso de SU pantalla (Display P3): para que su cuentagotas
+       lea ese valor hay que declararlo en P3 — escrito en sRGB, sobre P3 se lee #BC6B4F. El hex
+       queda como fallback para navegadores sin color(). Letra en blanco fijo (no
+       --brand-foreground: en oscuro ese token es tinta). Va en CSS y no con utilidades para no depender de --primary, que en claro es
        tinta casi negra. Mismo tono de día y de noche: es una insignia, no un estado. */
     /* El rol elegido se marca con el MISMO terracota de su insignia; --primary daría tinta negra
        de día y blanco de noche, que es lo que se veía antes. */
     .role-card-active {
       border-color: #c86647;
-      box-shadow: 0 0 0 1px #c86647;
+      border-color: color(display-p3 0.7843 0.4 0.2784);
+      box-shadow: 0 0 0 1px color(display-p3 0.7843 0.4 0.2784);
     }
     .role-badge {
       background-color: #c86647;
+      background-color: color(display-p3 0.7843 0.4 0.2784);
       color: #ffffff;
     }
   `
