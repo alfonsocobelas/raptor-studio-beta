@@ -381,9 +381,11 @@ interface DiagramEdge {
       font-weight: 600;
     }
     /* Las cajas flotan sobre la rejilla: sin sombra el borde de 1px se pierde entre
-       las líneas de la malla. Tres capas cortas, como la referencia. */
+       las líneas de la malla. Tres capas cortas, como la referencia, más una hacia
+       arriba: sin ella la cabecera quedaba plana contra los puntos del lienzo. */
     .model-card {
       box-shadow:
+        0 -2px 6px -2px oklch(0 0 0 / 10%),
         0 1px 2px oklch(0 0 0 / 8%),
         0 6px 14px -6px oklch(0 0 0 / 14%),
         0 16px 32px -20px oklch(0 0 0 / 22%);
