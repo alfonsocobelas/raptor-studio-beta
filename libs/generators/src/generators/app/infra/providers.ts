@@ -82,10 +82,15 @@ export const raptorInfra = defineInfra({
   value: 'raptor',
   label: 'Raptor Cloud (Infisical, R2, Grafana Loki, Brevo — low cost)',
   files: 'files-infra-raptor',
-  dependencies: {},
+  dependencies: {
+    // R2 habla el protocolo de S3; es el único SDK de nube que entra en este proveedor.
+    '@aws-sdk/client-s3': '^3.700.0'
+  },
 
   apply(tree: Tree, context: PluginContext): void {
     useInfisicalConfigLoader(tree, context)
+    reshapeStorageConfigForR2(tree, context)
+    bindS3Storage(tree, context)
   }
 })
 
@@ -370,6 +375,57 @@ function useAwsConfigLoader(tree: Tree, context: PluginContext): void {
     return
   }
   tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/aws/aws-config-loader'"))
+}
+
+/**
+ * Como `reshapeStorageConfigForS3`, pero la sección lleva además las credenciales: R2 no
+ * tiene rol de instancia del que colgarse, así que las llaves viajan como marcadores
+ * `vault.*` y las resuelve Infisical al arrancar.
+ */
+function reshapeStorageConfigForR2(tree: Tree, context: PluginContext): void {
+  reshapeStorageConfigForS3(tree, context)
+
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('accessKeyId?: string')) {
+    tree.write(
+      typesPath,
+      types.replace(
+        '  forcePathStyle?: boolean\n}',
+        `  forcePathStyle?: boolean
+  /** Resolved from Infisical: R2 has no instance role to inherit credentials from */
+  accessKeyId?: string
+  secretAccessKey?: string
+}`
+      )
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('accessKeyId?: string')) {
+    tree.write(
+      validationPath,
+      validation.replace(
+        `  @IsOptional()
+  @IsBoolean()
+  forcePathStyle?: boolean
+}`,
+        `  @IsOptional()
+  @IsBoolean()
+  forcePathStyle?: boolean
+
+  @IsOptional()
+  @IsString()
+  accessKeyId?: string
+
+  @IsOptional()
+  @IsString()
+  secretAccessKey?: string
+}`
+      )
+    )
+  }
 }
 
 /** Espejo de useAwsConfigLoader: la costura de secretos apunta al loader de Infisical. */

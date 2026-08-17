@@ -1,0 +1,56 @@
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3'
+import { FileStoragePort } from '../../domain/storage/file-storage.port'
+
+/**
+ * S3-compatible adapter for the FileStoragePort. One adapter covers Cloudflare R2,
+ * Backblaze B2 and local MinIO through the same config section: point `endpoint` at the
+ * provider and set `forcePathStyle`.
+ *
+ * Unlike AWS there is no instance role to borrow, so the keys come from the config
+ * section — which means they are `vault.*` placeholders resolved from Infisical, never
+ * literals in the JSON. Without them the client still falls back to the standard AWS
+ * environment, which is what local MinIO usually does.
+ */
+@Injectable()
+export class S3FileStorage extends FileStoragePort {
+  private readonly client: S3Client
+  private readonly bucket: string
+
+  constructor(configService: ConfigService) {
+    super()
+    this.bucket = configService.get<string>('storage.bucket') ?? ''
+    const endpoint = configService.get<string>('storage.endpoint')
+    const region = configService.get<string>('storage.region')
+    const forcePathStyle = configService.get<boolean>('storage.forcePathStyle')
+    const accessKeyId = configService.get<string>('storage.accessKeyId')
+    const secretAccessKey = configService.get<string>('storage.secretAccessKey')
+    const config: S3ClientConfig = {
+      ...(region && { region }),
+      ...(endpoint && { endpoint }),
+      ...(forcePathStyle !== undefined && { forcePathStyle }),
+      ...(accessKeyId && secretAccessKey && { credentials: { accessKeyId, secretAccessKey } })
+    }
+    this.client = new S3Client(config)
+  }
+
+  async upload(key: string, content: Buffer, mimeType: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: content, ContentType: mimeType })
+    )
+  }
+
+  async download(key: string): Promise<Buffer> {
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }))
+    const bytes = await result.Body?.transformToByteArray()
+    if (!bytes) {
+      throw new Error(`Empty body downloading key [${key}] from bucket [${this.bucket}]`)
+    }
+    return Buffer.from(bytes)
+  }
+
+  async delete(key: string): Promise<void> {
+    await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }))
+  }
+}
