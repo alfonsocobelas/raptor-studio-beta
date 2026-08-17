@@ -8,7 +8,7 @@ import { SLOTS } from '../plugins/slots'
  */
 describe('INFRA', () => {
   it('registra un manifiesto por proveedor y cada uno declara su valor', () => {
-    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws'])
+    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws', 'raptor'])
     for (const [value, provider] of Object.entries(INFRA)) {
       expect(provider.value).toBe(value)
       expect(provider.label.length).toBeGreaterThan(0)
@@ -35,6 +35,6 @@ describe('selectInfra', () => {
   })
 
   it('rechaza un proveedor desconocido listando los disponibles', () => {
-    expect(() => selectInfra('nube-de-mi-primo')).toThrow(/Unknown infra 'nube-de-mi-primo'.*none, azure, aws/)
+    expect(() => selectInfra('nube-de-mi-primo')).toThrow(/Unknown infra 'nube-de-mi-primo'.*none, azure, aws, raptor/)
   })
 })

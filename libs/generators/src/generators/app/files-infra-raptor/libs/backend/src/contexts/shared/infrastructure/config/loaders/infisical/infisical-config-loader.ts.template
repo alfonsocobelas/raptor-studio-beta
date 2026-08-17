@@ -1,0 +1,16 @@
+import { RootValidator, validate } from '../../config-validation'
+import { loadRawConfig } from '../config-sources'
+import { containsVaultReferences, createInfisicalReader, resolveSecrets } from './infisical-secret-resolver'
+
+/**
+ * Infisical-backed loader: bundled JSON with every `vault.*` placeholder resolved
+ * against Infisical. When the config has no placeholders (local/test) it skips
+ * Infisical entirely, so no machine identity is needed there.
+ */
+export default async (): Promise<RootValidator> => {
+  const config = loadRawConfig()
+
+  const resolved = containsVaultReferences(config) ? await resolveSecrets(config, createInfisicalReader()) : config
+
+  return validate(resolved)
+}

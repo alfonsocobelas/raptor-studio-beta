@@ -64,6 +64,10 @@
         {
           "value": "aws",
           "label": "AWS (Secrets Manager, S3, CloudWatch Logs)"
+        },
+        {
+          "value": "raptor",
+          "label": "Raptor Cloud (Infisical, R2, Grafana Loki, Brevo — low cost)"
         }
       ]
     },

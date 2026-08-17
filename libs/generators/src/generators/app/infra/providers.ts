@@ -70,6 +70,26 @@ export const awsInfra = defineInfra({
 })
 
 /**
+ * Raptor Cloud (spec 50): la composición low-cost. No es una nube, es un stack de servicios
+ * con capa gratuita —Infisical para secretos, Cloudflare R2 para ficheros, Grafana Cloud
+ * Loki para logs, Brevo para email— sobre un VPS de Hetzner (ver `iac/hetzner`).
+ *
+ * Su rasgo de diseño: los adapters hablan HTTP con el `fetch` de la plataforma en vez de
+ * traer SDK propietarios. Un proveedor cuyo argumento es el coste no puede arrastrar 30 MB
+ * de dependencias; la única que entra es el cliente de S3, porque R2 habla ese protocolo.
+ */
+export const raptorInfra = defineInfra({
+  value: 'raptor',
+  label: 'Raptor Cloud (Infisical, R2, Grafana Loki, Brevo — low cost)',
+  files: 'files-infra-raptor',
+  dependencies: {},
+
+  apply(tree: Tree, context: PluginContext): void {
+    useInfisicalConfigLoader(tree, context)
+  }
+})
+
+/**
  * La telemetría se inicializa antes que cualquier otro import: el SDK de Azure Monitor debe
  * parchear los módulos (http, pg…) antes de que la app los cargue.
  */
@@ -352,5 +372,18 @@ function useAwsConfigLoader(tree: Tree, context: PluginContext): void {
   tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/aws/aws-config-loader'"))
 }
 
+/** Espejo de useAwsConfigLoader: la costura de secretos apunta al loader de Infisical. */
+function useInfisicalConfigLoader(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('infisical-config-loader')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    source.replace("from './loaders/config-loader'", "from './loaders/infisical/infisical-config-loader'")
+  )
+}
+
 /** Orden del registro = orden en el formulario. */
-export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra, awsInfra]
+export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra, awsInfra, raptorInfra]
