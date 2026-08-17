@@ -39,6 +39,10 @@ export function buildFlowSlotPrompt(tree: Tree, directory: string, slot: AiSlotR
     '## Los agregados que devuelven esos repositorios (así se leen y se mutan)',
     '',
     ...repos.map(repo => aggregateSection(tree, repo).join('\n')),
+    '## Lo que el fichero ya importa (lo único con nombre que puedes usar)',
+    '',
+    ...importedNames(source).map(name => `- ${name}`),
+    '',
     '## El contrato de la coreografía (no negociable)',
     '',
     '- El cuerpo debe ser AUTOSUFICIENTE: hace su parte del trabajo y termina.',
@@ -48,8 +52,28 @@ export function buildFlowSlotPrompt(tree: Tree, directory: string, slot: AiSlotR
     '  no el código. Encadenarlos rompe la coreografía.',
     '- NO escribas nada fuera del hueco: ni imports, ni campos, ni otros métodos. Cualquier',
     '  edición fuera de los marcadores invalida el resultado.',
-    '- Usa solo los repositorios de arriba y sus firmas tal y como están.'
+    '- Usa solo los repositorios de arriba y sus firmas tal y como están.',
+    '- Para lanzar, usa un error de la lista de imports o `throw new Error(...)`: un error que el',
+    '  fichero no importa no compila, y añadir el import invalida el resultado.'
   ].join('\n')
+}
+
+/**
+ * Los identificadores que el fichero YA importa, en orden de aparición. Sin esta lista quien
+ * rellena no puede saber si `EntityNotFoundError` está a mano (solo lo importan los procesos
+ * con pasos de transición), y como el contrato prohíbe añadir imports, el gate tumbaba el
+ * hueco por un error de compilación evitable (demo taller, 2026-08-18).
+ */
+function importedNames(source: string): string[] {
+  const names: string[] = []
+  for (const [, group] of source.matchAll(/import\s+(?:type\s+)?{([^}]*)}\s+from/g)) {
+    for (const raw of group.split(',')) {
+      const name = raw.replace(/^\s*type\s+/, '').trim()
+      if (name && !names.includes(name)) names.push(name)
+    }
+  }
+
+  return names
 }
 
 interface InjectedRepo {

@@ -162,6 +162,22 @@ describe('fill-flow-slots — prompt por hueco (spec 39)', () => {
     expect(prompt).not.toContain('@ai:begin port-extra')
   })
 
+  /**
+   * Hallazgo de la demo taller (2026-08-18): el contrato prohíbe añadir imports y exige
+   * empezar por la guarda, pero un proceso SIN pasos de transición no importa
+   * `EntityNotFoundError` — la guarda de «no existe» era inexpresable y el gate tumbaba
+   * los tres huecos. El prompt dice qué identificadores hay disponibles.
+   */
+  it('dice qué identificadores importa ya el fichero, para no escribir imports imposibles', () => {
+    const prompt = promptFor('flow-revisar')
+
+    expect(prompt).toMatch(/ya importa/i)
+    expect(prompt).toContain('GarmentId')
+    expect(prompt).toContain('GarmentRepository')
+    // lo que el fichero NO importa no se anuncia como disponible
+    expect(prompt).not.toContain('EntityNotFoundError')
+  })
+
   it('lleva el contrato coreográfico completo', () => {
     const prompt = promptFor('flow-revisar')
 
