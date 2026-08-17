@@ -68,4 +68,49 @@ describe('plugin metrics — endpoint', () => {
     expect(guard).toContain("'Bearer '")
     expect(guard).toContain('UnauthorizedException')
   })
+
+  /**
+   * TASK-04: candado y composición. Sin el plugin, ni rastro de métricas; con auth al lado,
+   * el guard de sesión (global) y el de token (del controller) conviven — @Public() exime de
+   * la sesión al raspador y el token sigue delante.
+   */
+  describe('candado y composición', () => {
+    it('una app sin el plugin no nombra prom-client ni /metrics en ningún fichero', async () => {
+      const plain: Tree = createTreeWithEmptyWorkspace()
+      await appGenerator(plain, { name: 'demo', models: 'contract', skipInstall: true })
+
+      const offenders = plain
+        .listChanges()
+        .filter(change => change.path.startsWith('apps/demo/'))
+        .filter(change => /prom-client|MetricsInterceptor|MetricsTokenGuard/.test(change.content?.toString('utf-8') ?? ''))
+        .map(change => change.path)
+      expect(offenders).toEqual([])
+
+      const pkg = JSON.parse(plain.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
+        dependencies?: Record<string, string>
+      }
+      expect(pkg.dependencies?.['prom-client']).toBeUndefined()
+    })
+
+    it('auth,email,metrics compone: sesión global, token en el controller y Public del kernel', async () => {
+      const full: Tree = createTreeWithEmptyWorkspace()
+      await appGenerator(full, {
+        name: 'demo',
+        models: 'contract',
+        skipInstall: true,
+        plugins: 'auth,email,metrics'
+      })
+
+      const controller =
+        full.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/metrics.controller.ts', 'utf-8') ??
+        ''
+      const authModule =
+        full.read('apps/demo/libs/backend/src/contexts/iam/modules/auth/auth.module.ts', 'utf-8') ?? ''
+
+      // el decorador que lee el SessionGuard es el mismo que importa el controller
+      expect(controller).toContain("from '../auth/public.decorator'")
+      expect(controller).toContain('@UseGuards(MetricsTokenGuard)')
+      expect(authModule).toContain('APP_GUARD')
+    })
+  })
 })
