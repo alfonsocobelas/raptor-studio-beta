@@ -97,9 +97,9 @@
           "user",
           "viewer"
         ],
-        "manage": [
-          "user"
-        ]
+        "create": [],
+        "edit": [],
+        "delete": []
       }
     },
     {
@@ -231,7 +231,16 @@
             "Comunidad de Regantes del Bajo Duero"
           ]
         }
-      ]
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
     },
     {
       "name": "muestra",
@@ -389,7 +398,17 @@
             "Acequia de La Overuela"
           ]
         }
-      ]
+      ],
+      "form": false,
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
     },
     {
       "name": "parametro",
@@ -484,7 +503,16 @@
             24.9
           ]
         }
-      ]
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
     }
   ],
   "pages": [
