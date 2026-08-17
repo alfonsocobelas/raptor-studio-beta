@@ -66,6 +66,30 @@ describe('app generator — una app sin infra no lleva Azure dentro', () => {
   })
 
   /**
+   * Spec 50: mismo candado para Raptor Cloud. Aquí no hay SDK que buscar (sus adapters
+   * hablan HTTP), así que el candado mira los NOMBRES: si el loader de Infisical, el
+   * transporte de Loki o el de Sentry se colaran en la base, aparecerían aquí.
+   */
+  it('ningún fichero nombra Infisical, Loki ni Sentry', () => {
+    const offenders = emitted()
+      .filter(file => /Infisical|INFISICAL_|LokiTransport|SentryTransport/.test(file.content))
+      .map(file => file.path)
+
+    expect(offenders).toEqual([])
+  })
+
+  it('el package.json no declara dependencias de los adapters de Raptor', () => {
+    const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
+      dependencies?: Record<string, string>
+      devDependencies?: Record<string, string>
+    }
+    const all = { ...pkg.dependencies, ...pkg.devDependencies }
+
+    expect(Object.keys(all).filter(name => name.startsWith('@sentry/'))).toEqual([])
+    expect(Object.keys(all).filter(name => name.includes('infisical'))).toEqual([])
+  })
+
+  /**
    * La excepción documentada: el plugin `email` declara @aws-sdk/client-ses A PROPÓSITO
    * (el factory carga el SDK perezosamente al activar la sección `ses`). Es del plugin,
    * no de la ranura infra: una app auth,email sin infra lo lleva, y solo ese.
@@ -80,5 +104,30 @@ describe('app generator — una app sin infra no lleva Azure dentro', () => {
     const awsDeps = Object.keys(pkg.dependencies ?? {}).filter(name => name.startsWith('@aws-sdk/'))
 
     expect(awsDeps).toEqual(['@aws-sdk/client-ses'])
+  })
+
+  /**
+   * Spec 50, TASK-07: la composición que vende Raptor Cloud — infra + auth + email. Brevo
+   * (capa gratuita) ya venía del plugin `email`; lo que se verifica aquí es que la ranura y
+   * el plugin componen sin pisarse, que es lo único que esta spec podía romper.
+   */
+  it('raptor con auth,email compone: los emails salen por Brevo y los secretos por Infisical', async () => {
+    const full: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(full, {
+      name: 'demo',
+      models: 'contract',
+      skipInstall: true,
+      infra: 'raptor',
+      plugins: 'auth,email'
+    })
+
+    const configTypes =
+      full.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/config/config-types.ts', 'utf-8') ?? ''
+    const configModule =
+      full.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/config/config.module.ts', 'utf-8') ?? ''
+
+    expect(configTypes).toContain('BrevoConfig')
+    expect(configTypes).toContain('LokiConfig')
+    expect(configModule).toContain("from './loaders/infisical/infisical-config-loader'")
   })
 })
