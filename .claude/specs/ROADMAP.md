@@ -325,3 +325,26 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
   2026-08-15). Doctrina: el vocabulario de cajas compilables crece VERBO A VERBO por regla
   de los dos; prohibido el vocabulario genérico (asignar/condición/bucle) — ver
   memoria «backlog-ideas-estudio» §9.
+
+## Hallazgos de la demo taller (2026-08-18)
+
+23. **El lienzo no dice que promover un enum a máquina le quita el campo del formulario.**
+    Alfonso preguntó, con la demo delante, si al editar un registro y cambiar el estado se
+    harían las validaciones. La respuesta es que ese gesto no existe: el campo sale del alta
+    y de la edición (spec 43), y el estado solo se mueve por transición — verificado contra
+    la app corriendo (`PUT` con `estado` → 400 «property estado should not exist»; transición
+    ilegal → 409 con el mensaje del dominio). La decisión es correcta; **lo que falta es que
+    se vea**: quien diseña marca «Es el estado de la entidad» y nada en el lienzo le cuenta
+    que acaba de sacar ese campo del formulario y de ganar botones en la ficha. Es la
+    pregunta que va a hacer cualquiera que diseñe en el estudio.
+
+24. **Precondiciones declarativas sobre datos** — el siguiente salto de valor, por encima de
+    más vocabulario de flujo. La demo dejó el límite nítido por dos sitios:
+    - Las reglas de la casa que NO son flechas no se emiten: «no se factura una orden sin
+      horas de mano de obra apuntadas», «no se entrega sin el parte de trabajo firmado
+      adjunto». Hoy el botón *Facturar* aparece igual con cero horas y sin adjunto: la única
+      guarda emitida es el estado de origen.
+    - Los pasos que no son transición piden anotar cosas que el modelo no tiene (dónde queda
+      registrada la reclamación al proveedor), y el cuerpo honesto acaba siendo solo guardas.
+    Es la categoría 2 de reglas de negocio: una precondición declarada sobre campos y
+    adjuntos, derivable a guarda en el agregado + 409 + botón deshabilitado en la ficha.
