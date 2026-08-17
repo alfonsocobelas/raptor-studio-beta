@@ -1,0 +1,39 @@
+import { ConfigService } from '@nestjs/config'
+import type { Provider } from '@nestjs/common'
+import * as winston from 'winston'
+import { EXTRA_LOG_TRANSPORTS } from './app-logger.service'
+import { LokiTransport } from './loki-transport'
+
+/** El generador lo fija al nombre de la app; es una etiqueta de stream, no configuración. */
+const APP_NAME = 'app'
+
+/**
+ * Transporte extra del logger, enchufado en la costura que deja el logger base. Lo decide
+ * la CONFIG, no el build: con la sección `loki` presente los logs viajan además a Grafana
+ * Cloud (o al Loki que tengas); sin ella se quedan en stdout, que es lo que basta en local.
+ *
+ * Las etiquetas se mantienen cortas y de baja cardinalidad a propósito (Loki las indexa):
+ * el resto del contexto viaja en la línea JSON, donde LogQL puede filtrarlo igual.
+ */
+export const raptorLogTransportsProvider: Provider = {
+  provide: EXTRA_LOG_TRANSPORTS,
+  inject: [ConfigService],
+  useFactory: (config: ConfigService): winston.transport[] => {
+    const url = config.get<string>('loki.url')
+    if (!url) {
+      return []
+    }
+
+    return [
+      new LokiTransport({
+        url,
+        user: config.get<string>('loki.user'),
+        apiKey: config.get<string>('loki.apiKey'),
+        labels: {
+          app: APP_NAME,
+          env: config.get<string>('env') ?? 'local'
+        }
+      })
+    ]
+  }
+}

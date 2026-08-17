@@ -150,4 +150,60 @@ export class StorageModule {}
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)
     })
   })
+
+  /**
+   * TASK-05: sin instrument.ts ni OTel, igual que aws — el logger base ya escribe JSON a
+   * stdout y el transporte a Loki entra por la costura EXTRA_LOG_TRANSPORTS, decidido por
+   * la sección `loki` de config.
+   */
+  describe('logs', () => {
+    it('emite el transporte de Loki y su provider para la costura del logger', () => {
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/loki-transport.ts')).toBe(
+        true
+      )
+      expect(
+        tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/raptor-log-transports.ts')
+      ).toBe(true)
+    })
+
+    it('enchufa su transporte en la costura del logger, sin tocar el logger base', () => {
+      const loggerModule = read('libs/backend/src/contexts/shared/infrastructure/logger/logger.module.ts')
+      expect(loggerModule).toContain('raptorLogTransportsProvider')
+
+      const baseLogger = read('libs/backend/src/contexts/shared/infrastructure/logger/app-logger.service.ts')
+      expect(baseLogger).not.toContain('loki-transport')
+    })
+
+    it('el transporte se activa por la sección loki de config, no por build', () => {
+      const provider = read('libs/backend/src/contexts/shared/infrastructure/logger/raptor-log-transports.ts')
+      expect(provider).toContain("config.get<string>('loki.url')")
+
+      const types = read('libs/backend/src/contexts/shared/infrastructure/config/config-types.ts')
+      expect(types).toContain('loki?: LokiConfig')
+
+      const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
+      expect(validation).toContain('LokiValidator')
+    })
+
+    it('etiqueta los streams con la app y el entorno, nada de alta cardinalidad', () => {
+      const provider = read('libs/backend/src/contexts/shared/infrastructure/logger/raptor-log-transports.ts')
+
+      expect(provider).toContain("const APP_NAME = 'demo'")
+      expect(provider).toContain("config.get<string>('env')")
+    })
+
+    it('declara la base de transportes de winston y ningún SDK de logs', () => {
+      const pkg = JSON.parse(read('package.json')) as { dependencies: Record<string, string> }
+
+      expect(pkg.dependencies['winston-transport']).toBeDefined()
+      expect(Object.keys(pkg.dependencies).filter(name => name.includes('loki'))).toEqual([])
+    })
+
+    it('no emite telemetría de arranque: no hay SDK que parchear antes de los imports', () => {
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/telemetry/instrument.ts')).toBe(
+        false
+      )
+      expect(read('apps/backend-api/src/main.ts')).not.toContain('telemetry/instrument')
+    })
+  })
 })

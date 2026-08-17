@@ -84,13 +84,17 @@ export const raptorInfra = defineInfra({
   files: 'files-infra-raptor',
   dependencies: {
     // R2 habla el protocolo de S3; es el único SDK de nube que entra en este proveedor.
-    '@aws-sdk/client-s3': '^3.700.0'
+    '@aws-sdk/client-s3': '^3.700.0',
+    'winston-transport': '^4.7.0'
   },
 
   apply(tree: Tree, context: PluginContext): void {
     useInfisicalConfigLoader(tree, context)
     reshapeStorageConfigForR2(tree, context)
     bindS3Storage(tree, context)
+    addLokiConfigSection(tree, context)
+    nameLokiStream(tree, context)
+    addRaptorLogTransport(tree, context)
   }
 })
 
@@ -426,6 +430,101 @@ function reshapeStorageConfigForR2(tree: Tree, context: PluginContext): void {
       )
     )
   }
+}
+
+/** Sección opcional `loki` en tipos y validación: presente → los logs salen también a Loki. */
+function addLokiConfigSection(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('LokiConfig')) {
+    tree.write(
+      typesPath,
+      types
+        .replace(
+          'export interface StorageConfig {',
+          `export interface LokiConfig {
+  url: string
+  /** Grafana Cloud user id; omit both credentials for an unauthenticated self-hosted Loki */
+  user?: string
+  apiKey?: string
+}
+
+export interface StorageConfig {`
+        )
+        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  loki?: LokiConfig')
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('LokiValidator')) {
+    tree.write(
+      validationPath,
+      validation
+        .replace(
+          'class StorageValidator {',
+          `class LokiValidator {
+  @IsString()
+  url!: string
+
+  @IsOptional()
+  @IsString()
+  user?: string
+
+  @IsOptional()
+  @IsString()
+  apiKey?: string
+}
+
+class StorageValidator {`
+        )
+        .replace(
+          '  storage?: StorageValidator\n}',
+          `  storage?: StorageValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LokiValidator)
+  loki?: LokiValidator
+}`
+        )
+    )
+  }
+}
+
+/**
+ * La etiqueta `app` de los streams de Loki se fija al generar: no es configuración de
+ * despliegue (el binario de esta app siempre es esta app), y la config emitida no tiene
+ * un `appName` del que leerla.
+ */
+function nameLokiStream(tree: Tree, context: PluginContext): void {
+  const providerPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/logger/raptor-log-transports.ts')
+  const source = tree.read(providerPath, 'utf-8')
+  if (!source) {
+    return
+  }
+  tree.write(providerPath, source.replace("const APP_NAME = 'app'", `const APP_NAME = '${context.appName}'`))
+}
+
+/** Espejo de addAwsLogTransport: enchufa el transporte de Loki en la costura del logger. */
+function addRaptorLogTransport(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/logger/logger.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('raptorLogTransportsProvider')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    source
+      .replace(
+        "import { AppLoggerService } from './app-logger.service'",
+        "import { AppLoggerService } from './app-logger.service'\nimport { raptorLogTransportsProvider } from './raptor-log-transports'"
+      )
+      .replace(
+        '  providers: [\n    AppLoggerService,',
+        '  providers: [\n    raptorLogTransportsProvider,\n    AppLoggerService,'
+      )
+  )
 }
 
 /** Espejo de useAwsConfigLoader: la costura de secretos apunta al loader de Infisical. */
