@@ -152,8 +152,8 @@
     "plugins": {
       "type": "string",
       "default": "none",
-      "description": "Comma-separated additive plugins (email); migrations is built in, authentication and observability are slots",
-      "x-prompt": "¿Qué plugins añado? (email — separados por comas; 'none' para ninguno)"
+      "description": "Comma-separated additive plugins (email, metrics); migrations is built in, authentication and observability are slots",
+      "x-prompt": "¿Qué plugins añado? (email, metrics — separados por comas; 'none' para ninguno)"
     }
   },
   "required": [

@@ -30,8 +30,9 @@ describe('selectPlugins', () => {
   })
 
   it('offers only the additive capabilities: migrations is built in, auth and observability are slots', () => {
-    // spec 23: auth es decisión excluyente ⇒ SLOTS. spec 24: observability la absorbe infra=azure
-    expect(Object.keys(PLUGINS)).toEqual(['email'])
+    // spec 23: auth es decisión excluyente ⇒ SLOTS. spec 24: observability la absorbe infra=azure.
+    // spec 51: metrics es aditivo (cualquier infra, incluso ninguna, puede medir)
+    expect(Object.keys(PLUGINS)).toEqual(['email', 'metrics'])
   })
 
   it('resolves plugins without judging the engine (combination rules live in validateCombination)', () => {

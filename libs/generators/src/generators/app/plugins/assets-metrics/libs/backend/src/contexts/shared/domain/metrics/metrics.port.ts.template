@@ -1,0 +1,9 @@
+// Stable port for application metrics. Adapters: Prometheus (free, self-hosted or via
+// Grafana Cloud), future StatsD/OTel-metrics. Least common denominator: counters,
+// histograms and an exposition endpoint body.
+export abstract class MetricsPort {
+  abstract incrementCounter(name: string, labels?: Record<string, string>): void
+  abstract observeHistogram(name: string, value: number, labels?: Record<string, string>): void
+  /** Exposition payload for the /metrics endpoint (Prometheus text format). */
+  abstract render(): Promise<string>
+}

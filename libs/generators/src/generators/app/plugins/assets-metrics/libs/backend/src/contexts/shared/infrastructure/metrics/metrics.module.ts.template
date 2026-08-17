@@ -1,0 +1,28 @@
+import { Global, Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { MetricsPort } from '../../domain/metrics/metrics.port'
+import { PrometheusMetrics } from './prometheus-metrics'
+
+/**
+ * Global: cualquier módulo incrementa contadores inyectando MetricsPort sin re-declararlo.
+ *
+ * El adapter se construye siempre (medir es barato y no habla con nadie); lo que decide la
+ * CONFIG es la EXPOSICIÓN: sin sección `metrics` no se registra el endpoint (ver
+ * metrics.controller.ts), así que nada de lo medido sale de la app.
+ */
+@Global()
+@Module({
+  providers: [
+    {
+      provide: MetricsPort,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        new PrometheusMetrics({
+          prefix: config.get<string>('metrics.prefix') ?? '',
+          defaultMetrics: config.get<boolean>('metrics.defaultMetrics') ?? true
+        })
+    }
+  ],
+  exports: [MetricsPort]
+})
+export class MetricsModule {}

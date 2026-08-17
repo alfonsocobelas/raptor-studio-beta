@@ -95,6 +95,10 @@
     {
       "name": "email",
       "description": "Adaptadores de email: Azure ACS, Amazon SES y Brevo (gratuito)"
+    },
+    {
+      "name": "metrics",
+      "description": "Métricas HTTP en formato Prometheus tras MetricsPort (endpoint con token)"
     }
   ]
 }

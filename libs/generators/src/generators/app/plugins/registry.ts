@@ -1,4 +1,5 @@
 import { emailPlugin } from './email.plugin'
+import { metricsPlugin } from './metrics.plugin'
 import { migrationsPlugin } from './migrations.plugin'
 import type { AppPlugin } from './plugin'
 
@@ -8,7 +9,8 @@ import type { AppPlugin } from './plugin'
  * Añadir uno aquí basta para que aparezca en el formulario del generador.
  */
 export const PLUGINS: Record<string, AppPlugin> = {
-  email: emailPlugin
+  email: emailPlugin,
+  metrics: metricsPlugin
 }
 
 export function selectPlugins(names: string | undefined): AppPlugin[] {
