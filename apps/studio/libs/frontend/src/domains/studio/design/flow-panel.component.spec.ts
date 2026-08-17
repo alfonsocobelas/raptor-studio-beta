@@ -29,7 +29,8 @@ describe('FlowPanelComponent', () => {
     const fixture = mount()
 
     expect(testId(fixture, 'flow-node-empty')).not.toBeNull()
-    expect(testId(fixture, 'flow-prose')?.textContent).toContain('Empieza en «Inicio»')
+    // la gramática de la prosa la fija flow-prose.spec; aquí basta con que el panel la pinte
+    expect(testId(fixture, 'flow-prose')?.textContent).toContain('Inicio')
   })
 
   it('con un nodo elegido enseña su texto y su tipo', () => {
