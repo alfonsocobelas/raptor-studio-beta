@@ -1,7 +1,6 @@
 import type { AccessDefinition, AccessRole } from '@raptor/schema'
 import { resolveAccess } from '@raptor/schema'
 import type { DraftResource } from './draft-resource'
-import type { AccessActorRole } from './access-diagram'
 
 /**
  * La tabla de accesos (spec 49): proyección PURA del diseño, misma doctrina que el
@@ -9,6 +8,9 @@ import type { AccessActorRole } from './access-diagram'
  * transiciones de su máquina. Toda mutación devuelve la matriz EXPLÍCITA completa y
  * granular (nunca el azúcar legado `manage`): lo marcado es lo que hay.
  */
+
+/** Los tres actores del modelo de accesos (spec 46); admin es implícito y puede todo. */
+export type AccessActorRole = 'admin' | 'user' | 'viewer'
 
 /** Orden estable user→viewer: el emitido no depende del orden de los clicks. */
 const ROLE_ORDER: AccessRole[] = ['user', 'viewer']

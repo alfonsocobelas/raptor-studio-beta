@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core'
 import type { AccessActorRole } from '@app/shared/domain'
 
-export type AccessPivot = 'role' | 'entity' | 'diagram'
+export type AccessPivot = 'role' | 'entity'
 
 /**
  * Estado de SESIÓN de la pestaña Accesos (spec 49): rol activo, pivote de la tabla,

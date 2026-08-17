@@ -54,17 +54,17 @@ describe('AccessSidebarComponent', () => {
     expect(testId(fixture, 'access-role-admin')?.textContent).toContain('Todo')
   })
 
-  it('el conmutador cambia el pivote entre Rol, Entidad y Diagrama', () => {
+  it('el conmutador cambia el pivote entre Rol y Entidad', () => {
     const fixture = mount()
 
-    testId(fixture, 'access-pivot-diagram')?.click()
+    testId(fixture, 'access-pivot-entity')?.click()
     fixture.detectChanges()
 
-    expect(ui.pivot()).toBe('diagram')
-    expect(testId(fixture, 'access-pivot-diagram')?.getAttribute('aria-current')).toBe('true')
-
-    testId(fixture, 'access-pivot-entity')?.click()
     expect(ui.pivot()).toBe('entity')
+    expect(testId(fixture, 'access-pivot-entity')?.getAttribute('aria-current')).toBe('true')
+
+    testId(fixture, 'access-pivot-role')?.click()
+    expect(ui.pivot()).toBe('role')
   })
 
   it('lleva la nota de que la fila de admin no se edita', () => {

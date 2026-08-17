@@ -52,9 +52,8 @@ crear y editar sin poder borrar.
   activo: «Todo ver», «Nada editar», «Copiar de {otro rol}»
 - WHEN el panel derecho pinta el resumen THEN muestra métricas derivadas (entidades visibles
   X de Y, puede crear/editar/borrar) con la barra de proporción
-- WHEN el usuario conmuta «Ver la tabla por» THEN alterna entre **Rol** (tabla del mockup),
-  **Entidad** (pivote: filas de rol para una entidad) y **Diagrama** (el lienzo de casos de uso
-  de la spec 46, que se conserva)
+- WHEN el usuario conmuta «Ver la tabla por» THEN alterna entre **Rol** (tabla del mockup) y
+  **Entidad** (pivote: filas de rol para una entidad)
 - WHILE no hay entidades en el diseño THEN se muestra el estado vacío con el enlace a Modelo
   (como hoy)
 
@@ -70,8 +69,6 @@ crear y editar sin poder borrar.
       y filtro, panel derecho de resumen y acciones de columna
 - [ ] Tema claro y oscuro correctos (30A oscuro, 31B claro; el guion de «sin permiso» mantiene
       el contraste corregido)
-- [ ] El diagrama de casos de uso sigue accesible como tercer pivote y refleja la nueva
-      granularidad
 - [ ] Los e2e/capturas del estudio se actualizan (smoke-access)
 
 ## Referencias (proyecto de referencia y diseño)
@@ -88,6 +85,13 @@ crear y editar sin poder borrar.
 - La matriz persiste EXPLÍCITA y completa: lo marcado es lo que hay, sin defectos escondidos
 - Borrado = borrado suave (spec 38): la capacidad `delete` gobierna soft-delete, papelera y restore
 - Nada de datos falsos ni botones muertos en el estudio (doctrina «sin demos»)
+
+## Retirado sobre la marcha
+
+- **El diagrama de casos de uso de la spec 46**: se rehízo con el lenguaje de Flujos (maquetas
+  26B/26C) y aun así Alfonso lo retiró el 2026-08-17 — la pestaña se queda con la tabla y sus
+  dos pivotes. El código (grafo del dominio + lienzo) sale del árbol; vive en el historial si
+  algún día se quiere recuperar.
 
 ## Fuera de scope (deliberado)
 

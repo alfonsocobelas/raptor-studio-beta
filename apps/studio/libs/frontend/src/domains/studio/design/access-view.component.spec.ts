@@ -14,7 +14,7 @@ function testId(fixture: ReturnType<typeof mount>, id: string): HTMLElement | nu
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
 }
 
-/** Spec 49: el centro de Accesos conmuta entre tabla por Rol (+resumen), por Entidad y Diagrama. */
+/** Spec 49: el centro de Accesos es la tabla del pivote elegido; el resumen es el panel derecho. */
 describe('AccessViewComponent', () => {
   let store: DesignStore
   let ui: AccessUiService
@@ -53,15 +53,5 @@ describe('AccessViewComponent', () => {
 
     expect(testId(fixture, 'access-entity-select')).not.toBeNull()
     expect(testId(fixture, 'access-ecell-user-view')).not.toBeNull()
-  })
-
-  it('con el pivote Diagrama pinta el lienzo de casos de uso', () => {
-    store.addResource('Cliente')
-    ui.pivot.set('diagram')
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-viewport')).not.toBeNull()
-    expect(testId(fixture, 'access-cell-cliente-view')).toBeNull()
   })
 })

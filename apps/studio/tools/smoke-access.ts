@@ -1,8 +1,7 @@
 /**
  * Smoke del modo ACCESOS (spec 49): raíl de roles + tabla entidad×capacidad (Ver/Crear/
- * Editar/Borrar), panel de resumen con acciones de columna, pivote Entidad y el diagrama
- * de casos de uso (spec 46) como tercer pivote. Quitar «Ver» a Consulta deja la matriz
- * granular explícita en el schema exportado y tumba su arista del diagrama.
+ * Editar/Borrar), panel de resumen con acciones de columna y pivote Entidad. Quitar «Ver»
+ * a Consulta deja la matriz granular explícita en el schema exportado.
  *
  *   npx tsx tools/smoke-access.ts   (con `npm run web` corriendo)
  *   BASE_URL y SHOTS_DIR opcionales (capturas solo si SHOTS_DIR está definido)
@@ -88,28 +87,7 @@ async function main(): Promise<void> {
   await shot(page, 'smoke-access-3-pivote-entidad')
   console.log('✓ pivote Entidad: filas de rol coherentes con la matriz')
 
-  // pivote Diagrama (maquetas 26B/26C): un rol cada vez, con el idioma de Flujos
-  await page.getByTestId('access-pivot-diagram').click()
-  await page.getByTestId('access-diagram').waitFor()
-  await page.getByTestId('access-role-node').waitFor()
-  // Consulta se quedó sin Ver en factura: su entidad pierde la flecha y queda «sin acceso»
-  await page.getByTestId('access-edge-factura').waitFor({ state: 'detached' })
-  const tarjeta = (await page.getByTestId('access-card-factura').getAttribute('data-badge')) ?? ''
-  if (tarjeta !== 'sin acceso') fail(`la tarjeta no refleja la retirada de permisos: «${tarjeta}»`)
-
-  // con Usuario el grafo se repinta: vuelve la flecha, y en el tono de la escritura
-  await page.getByTestId('access-role-user').click()
-  // 'attached': una curva horizontal tiene caja de altura 0 y Playwright la daría por oculta
-  const flecha = page.getByTestId('access-edge-factura')
-  await flecha.waitFor({ state: 'attached' })
-  const tono = await flecha.getAttribute('data-tone')
-  const acento = await flecha.getAttribute('data-accent')
-  if (tono !== 'write' || acento !== 'user') fail(`la flecha no toma el color del rol activo: ${acento}/${tono}`)
-  await shot(page, 'smoke-access-4-diagrama')
-  console.log('✓ diagrama: un rol cada vez y las flechas cambian de color con el rol')
-
   // tema oscuro sobre la tabla por rol
-  await page.getByTestId('access-role-viewer').click()
   await page.getByTestId('access-pivot-role').click()
   await page.getByTestId('studio-theme').click()
   await page.getByTestId('access-cell-factura-view').waitFor()

@@ -19,8 +19,7 @@ const ROLE_CARDS: RoleCard[] = [
 
 const PIVOTS: { pivot: AccessPivot; label: string }[] = [
   { pivot: 'role', label: 'Rol' },
-  { pivot: 'entity', label: 'Entidad' },
-  { pivot: 'diagram', label: 'Diagrama' }
+  { pivot: 'entity', label: 'Entidad' }
 ]
 
 /**

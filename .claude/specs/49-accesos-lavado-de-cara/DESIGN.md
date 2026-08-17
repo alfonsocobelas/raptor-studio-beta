@@ -110,7 +110,7 @@ re-baseline justificado.
 │ VER LA     │  └─────────┴────┴─────┴─────┴──────┴───┘ │  [barra]         │
 │ TABLA POR  │  («...» = una columna por transición)    │  APLICAR COLUMNA │
 │ Rol│Entid. │                                          │  Todo ver        │
-│ │Diagrama  │  N DE M ENTIDADES                        │  Nada editar     │
+│            │  N DE M ENTIDADES                        │  Nada editar     │
 │            │                                          │  Copiar de {rol} │
 │ nota admin │                                          │                  │
 └────────────┴──────────────────────────────────────────┴──────────────────┘
@@ -118,10 +118,9 @@ re-baseline justificado.
 
 - **`access-sidebar.component.ts`** (se reescribe): raíl de roles — tarjetas Administrador
   («TODO»), Usuario, Consulta con el activo resaltado (borde primary como el mockup); debajo el
-  conmutador «Ver la tabla por» **Rol | Entidad | Diagrama**; al pie la nota «Admin siempre
+  conmutador «Ver la tabla por» **Rol | Entidad**; al pie la nota «Admin siempre
   puede todo; su fila no es editable». Sin contadores de personas (no existen).
-- **`access-view.component.ts`** (se convierte en conmutador): según el pivote pinta
-  la tabla por rol, la tabla por entidad o el diagrama de la spec 46.
+- **`access-view.component.ts`**: el centro del modo; monta la tabla, que decide su pivote.
 - **`access-table.component.ts`** (nuevo): la tabla central. Pivote Rol: filas = entidades,
   columnas = Ver·Crear·Editar·Borrar + una por transición **del conjunto de la fila** (cada
   entidad pinta solo sus verbos; celda vacía si la entidad no tiene esa transición). Pivote
@@ -133,13 +132,14 @@ re-baseline justificado.
   visibles X de Y, puede crear/editar/borrar) + barra de proporción + acciones de columna:
   «Todo ver», «Nada editar» (limpia create/edit/delete y transiciones del rol), «Copiar de
   {el otro rol}». Con Administrador activo, el panel solo informa (sin acciones).
-- **El diagrama existente** se extrae tal cual a `access-diagram-view.component.ts` (pan/zoom
-  incluidos) y `access-view` lo monta cuando el pivote es Diagrama.
+- **El diagrama de casos de uso** (spec 46) llegó a extraerse a `access-diagram-view` y a
+  rehacerse con el idioma de Flujos, pero Alfonso lo retiró el 2026-08-17: la pestaña se queda
+  con la tabla. `AccessActorRole` se mudó a `access-table.ts` al borrar el módulo.
 
 ### B2. Estado de UI — `AccessUiService` (nuevo, no persiste)
 
-Señales: `role: 'admin' | 'user' | 'viewer'` (defecto `user`), `pivot: 'role' | 'entity' |
-'diagram'` (defecto `role`), `search: string`, `onlyWithAccess: boolean`, `entity: string`
+Señales: `role: 'admin' | 'user' | 'viewer'` (defecto `user`), `pivot: 'role' | 'entity'`
+(defecto `role`), `search: string`, `onlyWithAccess: boolean`, `entity: string`
 (pivote Entidad). Es estado de sesión de la pestaña, NO viaja al diseño — el diseño solo
 persiste la matriz vía `DesignStore.setResourceAccess` (misma puerta que hoy; la matriz se
 escribe EXPLÍCITA y completa con las claves granulares, nunca `manage`).
@@ -149,14 +149,11 @@ escribe EXPLÍCITA y completa con las claves granulares, nunca `manage`).
 `apps/studio/libs/shared/domain/src/studio/access-table.ts` (nuevo, funciones puras + tests):
 
 - `accessRows(resources)` → filas con capacidades `view/create/edit/delete` + transiciones y
-  roles efectivos (usa `resolveAccess`; misma fuente que el diagrama — divergencia imposible).
+  roles efectivos (usa `resolveAccess`: una sola fuente de la política, igual que el generador).
 - `toggleCapability(resource, capability, role)` → la `AccessDefinition` explícita siguiente
   (absorbe el `flip` que hoy vive en el componente).
 - `roleSummary(resources, role)` → métricas del panel derecho.
 - `applyColumn(resources, role, action)` → lote «todo ver» / «nada editar» / «copiar de rol».
-
-`access-diagram.ts` se actualiza: elipses `Ver/Crear/Editar/Borrar {plural}` + transiciones
-(4+t por entidad en vez de 2+t) con los roles granulares.
 
 ### B4. Estética
 
@@ -188,7 +185,7 @@ grises que haya que interpretar. Celdas = botones (`<button>` con
 2. Estudio: helpers puros → componentes (tabla, raíl, resumen, pivotes) — la parte visible
    que valida el diseño con los mockups.
 3. Generador: entrypoints + plantillas + golden re-baseline.
-4. Diagrama actualizado + smoke/capturas.
+4. Smoke y capturas.
 
 ---
 
