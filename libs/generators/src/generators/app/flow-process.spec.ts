@@ -40,6 +40,17 @@ describe('flow-process — derivación de nombres (spec 39)', () => {
     expect(derived.className).toBe('DePresupuestoALegalizacionProcess')
   })
 
+  it('el nombre del fichero es ASCII kebab aunque el flujo lleve puntuación', () => {
+    // los nombres reales del estudio llevan separadores («JOB · Órdenes paradas…») y
+    // Nx los cuela tal cual en la ruta: quedaba la carpeta 'job-·-ordenes-paradas…',
+    // fuera de la convención kebab y con un carácter no ASCII en disco (demo taller)
+    const derived = flowProcessNames({ ...flow, name: 'JOB · Órdenes paradas por recambio' })
+
+    expect(derived.fileName).toBe('job-ordenes-paradas-por-recambio')
+    // la clase ya salía limpia (Nx tira la puntuación al pasar a PascalCase)
+    expect(derived.className).toBe('JOBOrdenesParadasPorRecambioProcess')
+  })
+
   it('solo los nodos step derivan método, en orden BFS y con nombre camelCase', () => {
     // WHEN
     const methods = flowStepMethods(flow)

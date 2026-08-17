@@ -39,7 +39,7 @@ export interface FlowRepoDep {
 }
 
 export function flowProcessNames(flow: BusinessFlow): FlowProcessNames {
-  const plain = stripDiacritics(flow.name)
+  const plain = asciiWords(flow.name)
   return {
     fileName: names(plain).fileName,
     className: `${names(plain).className}Process`,
@@ -296,4 +296,15 @@ export function flowRepoDeps(flow: BusinessFlow): FlowRepoDep[] {
 /** «legalización» → 'legalizacion': el nombre del flujo es prosa; el fichero, ASCII. */
 function stripDiacritics(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+/**
+ * El nombre del flujo lo escribe una persona: llega con acentos y con separadores (\u00abJOB \u00b7
+ * \u00d3rdenes\u2026\u00bb, \u00abFase I / II\u00bb) que `names()` cuela tal cual en la ruta emitida. Se reduce a
+ * palabras ASCII antes de derivar fichero y clase para que la carpeta siga siendo kebab.
+ */
+function asciiWords(text: string): string {
+  return stripDiacritics(text)
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
+    .trim()
 }
