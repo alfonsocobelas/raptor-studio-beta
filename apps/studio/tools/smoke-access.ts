@@ -62,9 +62,9 @@ async function main(): Promise<void> {
     .and(page.locator('[aria-pressed="false"]'))
     .waitFor()
   const visibles = (await page.getByTestId('access-summary-view').textContent()) ?? ''
-  if (!/Puede ver\s*0/.test(visibles)) fail(`el resumen no refleja la retirada de Ver: «${visibles.trim()}»`)
+  if (!/Puede ver\s*0\/1/.test(visibles)) fail(`el resumen no refleja la retirada de Ver: «${visibles.trim()}»`)
   const completo = (await page.getByTestId('access-summary-full').textContent()) ?? ''
-  if (!completo.includes('0 de 1')) fail(`el acceso completo debería ser 0 de 1: «${completo.trim()}»`)
+  if (!completo.includes('0/1')) fail(`el acceso completo debería ser 0/1: «${completo.trim()}»`)
   await shot(page, 'smoke-access-2-viewer-sin-ver')
 
   const json = (await page.getByTestId('schema-json').textContent()) ?? '{}'

@@ -39,10 +39,11 @@ describe('AccessSummaryComponent', () => {
     const texto = fixture.nativeElement.textContent
 
     expect(texto).toContain('Puede ver')
-    expect(testId(fixture, 'access-summary-view')?.textContent).toContain('2')
-    expect(testId(fixture, 'access-summary-create')?.textContent).toContain('2')
-    expect(testId(fixture, 'access-summary-edit')?.textContent).toContain('2')
-    expect(testId(fixture, 'access-summary-delete')?.textContent).toContain('1')
+    // cada capacidad dice cuántas entidades del total: se lee sin comparar de cabeza
+    expect(testId(fixture, 'access-summary-view')?.textContent).toContain('2/2')
+    expect(testId(fixture, 'access-summary-create')?.textContent).toContain('2/2')
+    expect(testId(fixture, 'access-summary-edit')?.textContent).toContain('2/2')
+    expect(testId(fixture, 'access-summary-delete')?.textContent).toContain('1/2')
     expect(texto).toContain('Usuario')
   })
 
@@ -101,7 +102,7 @@ describe('AccessSummaryComponent', () => {
 
     expect(testId(fixture, 'access-bar-full')?.style.width).toBe('50%')
     expect(testId(fixture, 'access-bar-partial')?.style.width).toBe('50%')
-    expect(testId(fixture, 'access-summary-full')?.textContent).toContain('1 de 2')
+    expect(testId(fixture, 'access-summary-full')?.textContent).toContain('1/2')
   })
 
   it('sin ningún permiso la barra no tiene tramo verde', () => {
@@ -130,7 +131,7 @@ describe('AccessSummaryComponent', () => {
 
     const fixture = mount()
 
-    expect(testId(fixture, 'access-summary-view')?.textContent).toContain('1')
+    expect(testId(fixture, 'access-summary-view')?.textContent).toContain('1/1')
     expect(testId(fixture, 'access-grant-view')).toBeNull()
     expect(testId(fixture, 'access-revoke-writes')).toBeNull()
     expect(testId(fixture, 'access-copy-from')).toBeNull()

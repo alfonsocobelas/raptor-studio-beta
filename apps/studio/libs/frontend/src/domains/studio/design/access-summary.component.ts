@@ -22,26 +22,41 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
           <dl class="space-y-2 text-sm">
             <div class="flex items-baseline justify-between" data-testid="access-summary-view">
               <dt class="text-muted-foreground">Puede ver</dt>
-              <dd class="text-primary font-semibold">{{ summary().view }}</dd>
+              <dd class="font-semibold">
+                <span class="text-primary">{{ summary().view }}</span
+                ><span class="text-muted-foreground">/{{ summary().total }}</span>
+              </dd>
             </div>
             <div class="flex items-baseline justify-between" data-testid="access-summary-create">
               <dt class="text-muted-foreground">Puede crear</dt>
-              <dd class="text-primary font-semibold">{{ summary().create }}</dd>
+              <dd class="font-semibold">
+                <span class="text-primary">{{ summary().create }}</span
+                ><span class="text-muted-foreground">/{{ summary().total }}</span>
+              </dd>
             </div>
             <div class="flex items-baseline justify-between" data-testid="access-summary-edit">
               <dt class="text-muted-foreground">Puede editar</dt>
-              <dd class="text-primary font-semibold">{{ summary().edit }}</dd>
+              <dd class="font-semibold">
+                <span class="text-primary">{{ summary().edit }}</span
+                ><span class="text-muted-foreground">/{{ summary().total }}</span>
+              </dd>
             </div>
             <div class="flex items-baseline justify-between" data-testid="access-summary-delete">
               <dt class="text-muted-foreground">Puede borrar</dt>
-              <dd class="text-primary font-semibold">{{ summary().delete }}</dd>
+              <dd class="font-semibold">
+                <span class="text-primary">{{ summary().delete }}</span
+                ><span class="text-muted-foreground">/{{ summary().total }}</span>
+              </dd>
             </div>
             <div
               class="border-border/60 mt-1 flex items-baseline justify-between border-t pt-2"
               data-testid="access-summary-full"
             >
               <dt class="text-muted-foreground">Acceso completo</dt>
-              <dd class="font-semibold text-emerald-600">{{ summary().full }} de {{ summary().total }}</dd>
+              <dd class="font-semibold">
+                <span class="text-emerald-600">{{ summary().full }}</span
+                ><span class="text-muted-foreground">/{{ summary().total }}</span>
+              </dd>
             </div>
           </dl>
           <!-- proporción de entidades: acceso completo (verde) / parcial (acento) / ninguno (gris).
