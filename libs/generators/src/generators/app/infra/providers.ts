@@ -39,6 +39,7 @@ export const azureInfra = defineInfra({
     instrumentBeforeEverythingElse(tree, context)
     addAzureLogTransport(tree, context)
     bindBlobStorage(tree, context)
+    nameTerraformProject(tree, context)
   }
 })
 
@@ -66,6 +67,7 @@ export const awsInfra = defineInfra({
     bindS3Storage(tree, context)
     addCloudWatchConfigSection(tree, context)
     addAwsLogTransport(tree, context)
+    nameTerraformProject(tree, context)
   }
 })
 
