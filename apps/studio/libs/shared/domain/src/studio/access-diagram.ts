@@ -1,23 +1,27 @@
 import type { AccessDefinition, StateMachine } from '@raptor/schema'
 import { resolveAccess } from '@raptor/schema'
+import { flowEdgeCurve } from './flow-diagram'
 
 /**
- * El diagrama de casos de uso (spec 46): proyección PURA del diseño (entidades +
- * máquinas + matriz de accesos), misma doctrina que model/state/flow-diagram — el
- * layout se calcula, nunca se almacena. Actores a la izquierda, una caja de sistema
- * por entidad con sus elipses de capacidad, aristas actor→capacidad según la matriz
- * EFECTIVA (defectos resueltos por resolveAccess; admin conecta con todo).
+ * El grafo de accesos (spec 49, maquetas 26B/26C): proyección PURA del diseño con el
+ * MISMO idioma que Flujos — un nodo de rol a la izquierda, una tarjeta por entidad a la
+ * derecha y curvas bezier entre ambos, trazadas con `flowEdgeCurve` para que las flechas
+ * de las dos pestañas sean la misma curva y no dos parecidas.
+ *
+ * Se dibuja UN rol cada vez: el activo. Admin puede todo y repetir sus aristas en cada
+ * entidad no cuenta nada; lo interesante es qué reparte la matriz entre Usuario y Consulta.
  */
 export const ACCESS_LAYOUT = {
-  actor: { width: 120, height: 48, gap: 48 },
-  ellipse: { width: 200, height: 40, gap: 16 },
-  box: { padding: 24, headerHeight: 36, gap: 48 },
-  columnGap: 160
+  role: { width: 260, height: 92 },
+  card: { width: 380, headerHeight: 44, chipHeight: 30, chipGap: 8, padding: 14 },
+  /** Hueco vertical entre tarjetas y separación horizontal rol → tarjetas */
+  gap: 36,
+  columnGap: 200
 } as const
 
 export type AccessActorRole = 'admin' | 'user' | 'viewer'
 
-/** Lo que el diagrama necesita de cada entidad; DraftResource lo satisface tal cual. */
+/** Lo que el grafo necesita de cada entidad; DraftResource lo satisface tal cual. */
 export interface AccessDiagramEntity {
   name: string
   labelPlural: string
@@ -25,135 +29,163 @@ export interface AccessDiagramEntity {
   access?: AccessDefinition
 }
 
-export interface AccessActor {
-  role: AccessActorRole
+export type AccessBadge = 'editar' | 'solo ver' | 'sin acceso'
+
+export interface AccessChip {
+  /** 'view', 'manage' o el verbo de la transición */
+  capability: string
   label: string
-  x: number
-  y: number
+  granted: boolean
+  tone: 'read' | 'write'
 }
 
-export interface AccessSystemBox {
-  entity: string
+export interface AccessRoleNode {
+  role: AccessActorRole
   label: string
+  /** «4 capacidades · hereda de ninguno» — hechos del diseño, nada inventado */
+  subtitle: string
+  /** El color con el que se pinta este rol y sus flechas */
+  accent: AccessActorRole
+  /** write si el rol toca algo en alguna entidad; read si solo mira */
+  tone: 'read' | 'write'
   x: number
   y: number
   width: number
   height: number
 }
 
-export interface AccessCapability {
-  /** `${entidad}:${capacidad}` — view, manage o el verbo de la transición */
-  key: string
+export interface AccessEntityCard {
   entity: string
-  capability: string
   label: string
-  cx: number
-  cy: number
-  rx: number
-  ry: number
+  badge: AccessBadge
+  chips: AccessChip[]
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
-export interface AccessEdge {
-  role: AccessActorRole
-  capability: string
+export interface AccessGraphEdge {
+  entity: string
+  /** read = solo mira; write = además toca */
+  tone: 'read' | 'write'
+  /** El rol activo, para que la flecha cambie de color al cambiar de rol */
+  accent: AccessActorRole
   x1: number
   y1: number
   x2: number
   y2: number
+  /** Trazo SVG listo para `path[d]`, misma curva que las flechas de Flujos */
+  d: string
 }
 
-export interface AccessDiagramLayout {
-  actors: AccessActor[]
-  boxes: AccessSystemBox[]
-  capabilities: AccessCapability[]
-  edges: AccessEdge[]
+export interface AccessGraphLayout {
+  role: AccessRoleNode
+  cards: AccessEntityCard[]
+  edges: AccessGraphEdge[]
   width: number
   height: number
 }
 
-const ACTOR_LABELS: Record<AccessActorRole, string> = {
+const ROLE_LABELS: Record<AccessActorRole, string> = {
   admin: 'Administrador',
   user: 'Usuario',
   viewer: 'Consulta'
 }
 
-export function accessDiagram(entities: AccessDiagramEntity[]): AccessDiagramLayout {
-  if (!entities.length) {
-    return { actors: [], boxes: [], capabilities: [], edges: [], width: 0, height: 0 }
+export function accessGraph(entities: AccessDiagramEntity[], role: AccessActorRole): AccessGraphLayout {
+  const { card, gap, columnGap } = ACCESS_LAYOUT
+  const cardX = ACCESS_LAYOUT.role.width + columnGap
+
+  const cards: AccessEntityCard[] = []
+  let y = 0
+  let granted = 0
+
+  for (const entity of entities) {
+    const chips = chipsOf(entity, role)
+    granted += chips.filter(chip => chip.granted).length
+    const height = card.headerHeight + card.padding * 2 + card.chipHeight
+    cards.push({
+      entity: entity.name,
+      label: entity.labelPlural,
+      badge: badgeOf(chips),
+      chips,
+      x: cardX,
+      y,
+      width: card.width,
+      height
+    })
+    y += height + gap
   }
 
-  const { actor, ellipse, box, columnGap } = ACCESS_LAYOUT
-  const boxWidth = ellipse.width + box.padding * 2
-  const boxX = actor.width + columnGap
+  const contentHeight = Math.max(0, y - gap)
+  const height = Math.max(contentHeight, ACCESS_LAYOUT.role.height)
 
-  const boxes: AccessSystemBox[] = []
-  const capabilities: AccessCapability[] = []
-  const grants: { role: AccessActorRole; capability: AccessCapability }[] = []
+  const roleNode: AccessRoleNode = {
+    role,
+    tone: cards.some(card => card.badge === 'editar') ? 'write' : 'read',
+    label: ROLE_LABELS[role],
+    subtitle: role === 'admin' ? 'puede todo · no se edita' : `${granted} capacidades · hereda de ninguno`,
+    accent: role,
+    x: 0,
+    y: height / 2 - ACCESS_LAYOUT.role.height / 2,
+    width: ACCESS_LAYOUT.role.width,
+    height: ACCESS_LAYOUT.role.height
+  }
 
-  let y = 0
-  for (const entity of entities) {
-    const resolved = resolveAccess(entity)
-    // capacidades en orden fijo: Ver/Crear/Editar/Borrar (spec 49) y una por transición de su máquina
-    const caps: { capability: string; label: string; roles: string[] }[] = [
-      { capability: 'view', label: `Ver ${entity.labelPlural}`, roles: resolved.view },
-      { capability: 'create', label: `Crear ${entity.labelPlural}`, roles: resolved.create },
-      { capability: 'edit', label: `Editar ${entity.labelPlural}`, roles: resolved.edit },
-      { capability: 'delete', label: `Borrar ${entity.labelPlural}`, roles: resolved.delete },
-      ...(entity.state?.transitions ?? []).map(transition => ({
-        capability: transition.name,
-        label: transition.label,
-        roles: resolved.transitions[transition.name] ?? []
-      }))
-    ]
-
-    const height = box.headerHeight + box.padding * 2 + caps.length * ellipse.height + (caps.length - 1) * ellipse.gap
-    boxes.push({ entity: entity.name, label: entity.labelPlural, x: boxX, y, width: boxWidth, height })
-
-    caps.forEach((cap, index) => {
-      const capability: AccessCapability = {
-        key: `${entity.name}:${cap.capability}`,
-        entity: entity.name,
-        capability: cap.capability,
-        label: cap.label,
-        cx: boxX + boxWidth / 2,
-        cy: y + box.headerHeight + box.padding + index * (ellipse.height + ellipse.gap) + ellipse.height / 2,
-        rx: ellipse.width / 2,
-        ry: ellipse.height / 2
-      }
-      capabilities.push(capability)
-      // admin es implícito y conecta con todo; user/viewer según la matriz efectiva
-      for (const role of ['admin', 'user', 'viewer'] as const) {
-        if (role === 'admin' || cap.roles.includes(role)) grants.push({ role, capability })
+  // la curva es la MISMA función que dibuja las flechas de Flujos: un solo trazo en el estudio
+  const edges: AccessGraphEdge[] = cards
+    .filter(target => target.badge !== 'sin acceso')
+    .map(target => {
+      const curve = flowEdgeCurve(roleNode, target, 'horizontal')
+      return {
+        entity: target.entity,
+        tone: target.badge === 'editar' ? ('write' as const) : ('read' as const),
+        accent: role,
+        x1: curve.x1,
+        y1: curve.y1,
+        x2: curve.x2,
+        y2: curve.y2,
+        d: curve.d
       }
     })
 
-    y += height + box.gap
+  if (!entities.length) {
+    return { role: { ...roleNode, y: 0 }, cards: [], edges: [], width: 0, height: 0 }
   }
 
-  const contentHeight = y - box.gap
-  const actorsHeight = 3 * actor.height + 2 * actor.gap
-  const height = Math.max(contentHeight, actorsHeight)
+  return { role: roleNode, cards, edges, width: cardX + card.width, height }
+}
 
-  // los tres actores fijos, repartidos sobre la altura del dibujo
-  const actors: AccessActor[] = (['admin', 'user', 'viewer'] as const).map((role, index) => ({
-    role,
-    label: ACTOR_LABELS[role],
-    x: 0,
-    y: (height * (index + 1)) / 4 - actor.height / 2
-  }))
-  const actorAt = new Map(actors.map(a => [a.role, a]))
+/** Ver · Gestionar (create/edit/delete juntos, como la maqueta) · un chip por transición. */
+function chipsOf(entity: AccessDiagramEntity, role: AccessActorRole): AccessChip[] {
+  const resolved = resolveAccess(entity)
+  const has = (roles: readonly string[]) => role === 'admin' || roles.includes(role)
 
-  const edges: AccessEdge[] = grants.map(({ role, capability }) => {
-    const from = actorAt.get(role) as AccessActor
-    return {
-      role,
-      capability: capability.key,
-      x1: from.x + actor.width,
-      y1: from.y + actor.height / 2,
-      x2: capability.cx - capability.rx,
-      y2: capability.cy
-    }
-  })
+  return [
+    {
+      capability: 'view',
+      label: `Ver ${entity.labelPlural}`,
+      granted: has(resolved.view),
+      tone: 'read' as const
+    },
+    {
+      capability: 'manage',
+      label: `Gestionar ${entity.labelPlural}`,
+      granted: has(resolved.create) || has(resolved.edit) || has(resolved.delete),
+      tone: 'write' as const
+    },
+    ...(entity.state?.transitions ?? []).map(transition => ({
+      capability: transition.name,
+      label: transition.label,
+      granted: has(resolved.transitions[transition.name] ?? []),
+      tone: 'write' as const
+    }))
+  ]
+}
 
-  return { actors, boxes, capabilities, edges, width: boxX + boxWidth, height }
+function badgeOf(chips: AccessChip[]): AccessBadge {
+  if (chips.some(chip => chip.granted && chip.tone === 'write')) return 'editar'
+  if (chips.some(chip => chip.granted)) return 'solo ver'
+  return 'sin acceso'
 }

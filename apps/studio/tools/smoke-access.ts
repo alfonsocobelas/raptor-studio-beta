@@ -63,7 +63,9 @@ async function main(): Promise<void> {
     .and(page.locator('[aria-pressed="false"]'))
     .waitFor()
   const visibles = (await page.getByTestId('access-summary-view').textContent()) ?? ''
-  if (!visibles.includes('0 de 1')) fail(`el resumen no refleja la retirada de Ver: «${visibles.trim()}»`)
+  if (!/Puede ver\s*0/.test(visibles)) fail(`el resumen no refleja la retirada de Ver: «${visibles.trim()}»`)
+  const completo = (await page.getByTestId('access-summary-full').textContent()) ?? ''
+  if (!completo.includes('0 de 1')) fail(`el acceso completo debería ser 0 de 1: «${completo.trim()}»`)
   await shot(page, 'smoke-access-2-viewer-sin-ver')
 
   const json = (await page.getByTestId('schema-json').textContent()) ?? '{}'
@@ -86,15 +88,28 @@ async function main(): Promise<void> {
   await shot(page, 'smoke-access-3-pivote-entidad')
   console.log('✓ pivote Entidad: filas de rol coherentes con la matriz')
 
-  // pivote Diagrama: la arista de Consulta cayó; la de admin permanece
+  // pivote Diagrama (maquetas 26B/26C): un rol cada vez, con el idioma de Flujos
   await page.getByTestId('access-pivot-diagram').click()
   await page.getByTestId('access-diagram').waitFor()
-  await page.getByTestId('access-edge-viewer-factura:view').waitFor({ state: 'detached' })
-  await page.getByTestId('access-edge-admin-factura:view').waitFor()
+  await page.getByTestId('access-role-node').waitFor()
+  // Consulta se quedó sin Ver en factura: su entidad pierde la flecha y queda «sin acceso»
+  await page.getByTestId('access-edge-factura').waitFor({ state: 'detached' })
+  const tarjeta = (await page.getByTestId('access-card-factura').getAttribute('data-badge')) ?? ''
+  if (tarjeta !== 'sin acceso') fail(`la tarjeta no refleja la retirada de permisos: «${tarjeta}»`)
+
+  // con Usuario el grafo se repinta: vuelve la flecha, y en el tono de la escritura
+  await page.getByTestId('access-role-user').click()
+  // 'attached': una curva horizontal tiene caja de altura 0 y Playwright la daría por oculta
+  const flecha = page.getByTestId('access-edge-factura')
+  await flecha.waitFor({ state: 'attached' })
+  const tono = await flecha.getAttribute('data-tone')
+  const acento = await flecha.getAttribute('data-accent')
+  if (tono !== 'write' || acento !== 'user') fail(`la flecha no toma el color del rol activo: ${acento}/${tono}`)
   await shot(page, 'smoke-access-4-diagrama')
-  console.log('✓ diagrama: sin arista de Consulta; admin siempre conectado')
+  console.log('✓ diagrama: un rol cada vez y las flechas cambian de color con el rol')
 
   // tema oscuro sobre la tabla por rol
+  await page.getByTestId('access-role-viewer').click()
   await page.getByTestId('access-pivot-role').click()
   await page.getByTestId('studio-theme').click()
   await page.getByTestId('access-cell-factura-view').waitFor()

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { ACCESS_LAYOUT, accessDiagram, type AccessDiagramEntity } from './access-diagram'
+import { ACCESS_LAYOUT, accessGraph, type AccessDiagramEntity } from './access-diagram'
 
 /**
- * Spec 46: el diagrama de casos de uso es una PROYECCIÓN pura del diseño (entidades +
- * máquinas + matriz de accesos) — misma doctrina que model/state/flow-diagram. Actores a
- * la izquierda, una caja de sistema por entidad con sus elipses de capacidad, aristas
- * actor→capacidad según la matriz EFECTIVA (defectos de resolveAccess; admin con todo).
+ * Spec 49 (maquetas 26B/26C): el grafo de accesos habla el idioma de Flujos — un nodo de
+ * ROL a la izquierda, una tarjeta por entidad a la derecha y curvas bezier entre ambos,
+ * con la MISMA geometría que las flechas de flujo. Solo se dibuja el rol activo: admin
+ * puede todo y repetir sus aristas no cuenta nada.
  */
-describe('accessDiagram', () => {
+describe('accessGraph', () => {
   const factura = (access?: AccessDiagramEntity['access']): AccessDiagramEntity => ({
     name: 'factura',
     labelPlural: 'Facturas',
@@ -21,99 +21,98 @@ describe('accessDiagram', () => {
 
   const cliente: AccessDiagramEntity = { name: 'cliente', labelPlural: 'Clientes' }
 
-  it('pinta los tres actores fijos a la izquierda de las cajas', () => {
-    const diagram = accessDiagram([factura()])
+  it('pinta el nodo del rol activo a la izquierda de las tarjetas', () => {
+    const graph = accessGraph([cliente], 'user')
 
-    expect(diagram.actors.map(a => a.role)).toEqual(['admin', 'user', 'viewer'])
-    expect(diagram.actors.map(a => a.label)).toEqual(['Administrador', 'Usuario', 'Consulta'])
-    const boxLeft = Math.min(...diagram.boxes.map(b => b.x))
-    expect(diagram.actors.every(a => a.x + ACCESS_LAYOUT.actor.width < boxLeft)).toBe(true)
+    expect(graph.role.label).toBe('Usuario')
+    expect(graph.role.x + graph.role.width).toBeLessThanOrEqual(graph.cards[0].x)
   })
 
-  it('una caja de sistema por entidad con las cuatro capacidades y una elipse por transición', () => {
-    const diagram = accessDiagram([factura(), cliente])
+  it('una tarjeta por entidad, con su chip de Ver y de Gestionar', () => {
+    const graph = accessGraph([cliente], 'user')
 
-    expect(diagram.boxes.map(b => b.entity)).toEqual(['factura', 'cliente'])
-    const deFactura = diagram.capabilities.filter(c => c.entity === 'factura')
-    expect(deFactura.map(c => c.label)).toEqual([
-      'Ver Facturas',
-      'Crear Facturas',
-      'Editar Facturas',
-      'Borrar Facturas',
-      'Aprobar'
-    ])
-    // sin máquina no hay elipses de transición
-    expect(diagram.capabilities.filter(c => c.entity === 'cliente').map(c => c.label)).toEqual([
-      'Ver Clientes',
-      'Crear Clientes',
-      'Editar Clientes',
-      'Borrar Clientes'
-    ])
-    // cada elipse queda dentro de la caja de su entidad
-    for (const capability of deFactura) {
-      const box = diagram.boxes.find(b => b.entity === 'factura')
-      expect(capability.cy).toBeGreaterThan(box?.y ?? Infinity)
-      expect(capability.cy).toBeLessThan((box?.y ?? 0) + (box?.height ?? 0))
-    }
+    expect(graph.cards.map(c => c.entity)).toEqual(['cliente'])
+    expect(graph.cards[0].chips.map(c => c.label)).toEqual(['Ver Clientes', 'Gestionar Clientes'])
+    expect(graph.cards[0].chips.map(c => c.granted)).toEqual([true, true])
   })
 
-  it('sin matriz aplica la política actual: viewer solo Ver, user todo, admin todo', () => {
-    const diagram = accessDiagram([factura()])
-    const edgesOf = (role: string) =>
-      diagram.edges.filter(e => e.role === role).map(e => e.capability)
+  it('la máquina de estados añade un chip por transición', () => {
+    const graph = accessGraph([factura()], 'user')
 
-    const todas = ['factura:view', 'factura:create', 'factura:edit', 'factura:delete', 'factura:aprobar']
-    expect(edgesOf('admin')).toEqual(todas)
-    expect(edgesOf('user')).toEqual(todas)
-    expect(edgesOf('viewer')).toEqual(['factura:view'])
+    expect(graph.cards[0].chips.map(c => c.label)).toEqual(['Ver Facturas', 'Gestionar Facturas', 'Aprobar'])
   })
 
-  it('la matriz granular gobierna las aristas; admin conecta con todo aunque quede solo', () => {
-    const diagram = accessDiagram([
-      factura({ view: ['user'], create: [], edit: ['user'], delete: [], transitions: { aprobar: [] } })
-    ])
-    const edgesOf = (role: string) =>
-      diagram.edges.filter(e => e.role === role).map(e => e.capability)
+  it('el badge resume la tarjeta: editar, solo ver o sin acceso', () => {
+    const editar = accessGraph([cliente], 'user').cards[0]
+    const soloVer = accessGraph([cliente], 'viewer').cards[0]
+    const sin = accessGraph([{ ...cliente, access: { view: [], create: [], edit: [], delete: [] } }], 'user').cards[0]
 
-    expect(edgesOf('admin')).toEqual([
-      'factura:view',
-      'factura:create',
-      'factura:edit',
-      'factura:delete',
-      'factura:aprobar'
-    ])
-    expect(edgesOf('user')).toEqual(['factura:view', 'factura:edit'])
-    expect(edgesOf('viewer')).toEqual([])
+    expect(editar.badge).toBe('editar')
+    expect(soloVer.badge).toBe('solo ver')
+    expect(sin.badge).toBe('sin acceso')
   })
 
-  it('el azúcar legado manage sigue gobernando las tres capacidades de escritura', () => {
-    const diagram = accessDiagram([factura({ manage: ['user', 'viewer'] })])
-    const edgesOf = (role: string) =>
-      diagram.edges.filter(e => e.role === role).map(e => e.capability)
-
-    expect(edgesOf('viewer')).toEqual(['factura:view', 'factura:create', 'factura:edit', 'factura:delete'])
+  it('la arista toma el tono de lo que el rol puede hacer', () => {
+    expect(accessGraph([cliente], 'user').edges[0].tone).toBe('write')
+    expect(accessGraph([cliente], 'viewer').edges[0].tone).toBe('read')
   })
 
-  it('las aristas van del borde derecho del actor al vértice izquierdo de la elipse', () => {
-    const diagram = accessDiagram([factura()])
-    const edge = diagram.edges.find(e => e.role === 'viewer')
-    const viewer = diagram.actors.find(a => a.role === 'viewer')
-    const view = diagram.capabilities.find(c => c.key === 'factura:view')
+  it('sin ninguna capacidad no hay arista y la tarjeta queda apagada', () => {
+    const graph = accessGraph([{ ...cliente, access: { view: [], create: [], edit: [], delete: [] } }], 'user')
 
-    expect(edge?.x1).toBe((viewer?.x ?? 0) + ACCESS_LAYOUT.actor.width)
-    expect(edge?.x2).toBe((view?.cx ?? 0) - (view?.rx ?? 0))
+    expect(graph.edges).toEqual([])
+    expect(graph.cards[0].badge).toBe('sin acceso')
   })
 
-  it('sin entidades devuelve un layout vacío', () => {
-    const diagram = accessDiagram([])
+  it('admin lo puede todo: cada tarjeta en modo editar', () => {
+    const graph = accessGraph([factura({ view: [], create: [], edit: [], delete: [] }), cliente], 'admin')
 
-    expect(diagram.boxes).toEqual([])
-    expect(diagram.edges).toEqual([])
-    expect(diagram.width).toBe(0)
-    expect(diagram.height).toBe(0)
+    expect(graph.cards.every(c => c.badge === 'editar')).toBe(true)
+    expect(graph.edges.every(e => e.tone === 'write')).toBe(true)
+  })
+
+  it('la curva sale del puerto del rol y entra por el borde izquierdo de la tarjeta', () => {
+    const graph = accessGraph([cliente], 'user')
+    const edge = graph.edges[0]
+
+    expect(edge.x1).toBe(graph.role.x + graph.role.width)
+    expect(edge.x2).toBe(graph.cards[0].x)
+    expect(edge.d.startsWith('M ')).toBe(true)
+    expect(edge.d).toContain(' C ')
+  })
+
+  it('la tarjeta crece con sus chips y las de abajo no se solapan', () => {
+    const graph = accessGraph([factura(), cliente], 'user')
+    const [arriba, abajo] = graph.cards
+
+    expect(arriba.height).toBeGreaterThanOrEqual(ACCESS_LAYOUT.card.headerHeight)
+    expect(abajo.y).toBeGreaterThanOrEqual(arriba.y + arriba.height)
+  })
+
+  it('cada rol tiñe sus flechas: el grafo se lee de un vistazo al cambiar de rol', () => {
+    expect(accessGraph([cliente], 'user').role.accent).toBe('user')
+    expect(accessGraph([cliente], 'viewer').role.accent).toBe('viewer')
+    expect(accessGraph([cliente], 'admin').role.accent).toBe('admin')
+    // la arista hereda el acento del rol activo, además de su tono de capacidad
+    expect(accessGraph([cliente], 'viewer').edges[0].accent).toBe('viewer')
+  })
+
+  it('el nodo del rol toma el tono de lo que ese rol hace en conjunto', () => {
+    expect(accessGraph([cliente], 'user').role.tone).toBe('write')
+    // consulta solo mira: su puerto no debe ir del color de escritura
+    expect(accessGraph([cliente], 'viewer').role.tone).toBe('read')
+  })
+
+  it('sin entidades devuelve un grafo vacío', () => {
+    const graph = accessGraph([], 'user')
+
+    expect(graph.cards).toEqual([])
+    expect(graph.edges).toEqual([])
+    expect(graph.width).toBe(0)
+    expect(graph.height).toBe(0)
   })
 
   it('es determinista: el mismo diseño produce el mismo dibujo', () => {
-    expect(accessDiagram([factura(), cliente])).toEqual(accessDiagram([factura(), cliente]))
+    expect(accessGraph([factura(), cliente], 'user')).toEqual(accessGraph([factura(), cliente], 'user'))
   })
 })
