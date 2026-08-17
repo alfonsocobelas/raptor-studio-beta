@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core'
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
 
@@ -14,7 +14,12 @@ export interface AppSelectOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppSelect), multi: true }],
   template: `
-    <hlm-select [value]="value()" (valueChange)="onSelect($event)" [itemToString]="toLabel">
+    <hlm-select
+      [value]="value()"
+      [disabled]="isDisabled()"
+      (valueChange)="onSelect($event)"
+      [itemToString]="toLabel"
+    >
       <hlm-select-trigger [buttonId]="controlId()">
         <hlm-select-value [placeholder]="placeholder()" />
       </hlm-select-trigger>
@@ -30,8 +35,13 @@ export class AppSelect implements ControlValueAccessor {
   readonly options = input<AppSelectOption[]>([])
   readonly placeholder = input('')
   readonly controlId = input('')
+  readonly disabled = input(false)
 
   protected readonly value = signal<string | null>(null)
+  // Deshabilitado por dos vías: el input directo y el que impone el formulario
+  // (setDisabledState llega por [disabled] junto a ngModel o por form.disable()).
+  private readonly disabledByForm = signal(false)
+  protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm())
   private _onChange: (value: string | null) => void = () => undefined
   private _onTouched: () => void = () => undefined
 
@@ -50,6 +60,10 @@ export class AppSelect implements ControlValueAccessor {
 
   registerOnTouched(fn: () => void): void {
     this._onTouched = fn
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabledByForm.set(isDisabled)
   }
 
   // hlm-select puede emitir undefined al limpiar: el contrato normaliza a null.
