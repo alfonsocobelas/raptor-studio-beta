@@ -1,18 +1,25 @@
 import { Global, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { loadRawConfig } from '../config/loaders/config-sources'
 import { MetricsPort } from '../../domain/metrics/metrics.port'
+import { MetricsController } from './metrics.controller'
+import { MetricsTokenGuard } from './metrics-token.guard'
 import { PrometheusMetrics } from './prometheus-metrics'
 
 /**
  * Global: cualquier módulo incrementa contadores inyectando MetricsPort sin re-declararlo.
  *
  * El adapter se construye siempre (medir es barato y no habla con nadie); lo que decide la
- * CONFIG es la EXPOSICIÓN: sin sección `metrics` no se registra el endpoint (ver
- * metrics.controller.ts), así que nada de lo medido sale de la app.
+ * CONFIG es la EXPOSICIÓN, y falla CERRADO: sin sección `metrics` el controller ni se
+ * registra — la ruta no existe, que no es lo mismo que existir sin protección. La sección
+ * cruda basta para decidirlo (la presencia no es secreta; el token sí, y ese lo lee el
+ * guard ya resuelto).
  */
 @Global()
 @Module({
+  controllers: loadRawConfig()['metrics'] ? [MetricsController] : [],
   providers: [
+    MetricsTokenGuard,
     {
       provide: MetricsPort,
       inject: [ConfigService],

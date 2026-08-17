@@ -1,0 +1,26 @@
+import { Controller, Get, Header, UseGuards, Version, VERSION_NEUTRAL } from '@nestjs/common'
+import { Public } from '../auth/public.decorator'
+import { MetricsPort } from '../../domain/metrics/metrics.port'
+import { MetricsTokenGuard } from './metrics-token.guard'
+
+/**
+ * Exposición de Prometheus. La protección REAL es el guard de token: la exposición enseña
+ * rutas, volúmenes y nombres internos, y sin token válido no hay respuesta.
+ *
+ * @Public() exime SOLO del guard de sesión (con auth activo): el raspador es una máquina y
+ * no puede iniciar sesión. No es una puerta abierta — el guard de token sigue delante — y
+ * en una app sin auth el decorador es inerte.
+ */
+@Public()
+@Controller('metrics')
+@UseGuards(MetricsTokenGuard)
+export class MetricsController {
+  constructor(private readonly metrics: MetricsPort) {}
+
+  @Get()
+  @Version(VERSION_NEUTRAL)
+  @Header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+  render(): Promise<string> {
+    return this.metrics.render()
+  }
+}

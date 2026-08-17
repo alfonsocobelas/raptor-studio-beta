@@ -30,8 +30,12 @@ que `email`: transversal, opcional, y quien no lo activa no carga `prom-client`.
   plantilla (`/contracts/:id`), nunca con la URL cruda.
 - IF la sección `metrics` de config no está presente THEN el endpoint **no se registra** y la
   app no expone nada (fallo cerrado).
-- IF la sección `metrics` está presente THEN el endpoint exige el token declarado en ella, y
-  **nunca** lleva `@Public()`.
+- IF la sección `metrics` está presente THEN el endpoint exige el token declarado en ella.
+  Corrección sobre lo escrito antes de implementar: el controller SÍ lleva `@Public()`,
+  porque ese decorador exime solo del guard de sesión — sin él, una app con `auth` tendría
+  un `/metrics` que el raspador (que no puede iniciar sesión) jamás alcanzaría. La
+  protección real es el guard de token, que va siempre delante; `@Public()` sin ese guard
+  sería el error.
 - WHEN se genera una app sin `--plugins=metrics` THEN no aparece `prom-client` ni ninguna
   clase de métricas en el emitido.
 - WHEN se despliega una app raptor con métricas THEN un contenedor de Grafana Alloy en el
@@ -90,8 +94,9 @@ que `email`: transversal, opcional, y quien no lo activa no carga `prom-client`.
 2. **El endpoint se protege con token, no con sesión.** Descubrimiento que fuerza el diseño:
    el raspador (Alloy) no puede iniciar sesión, así que el guard de sesión del plugin `auth`
    no le sirve — y además hay apps generadas *sin* `auth`, donde no hay ningún guard global.
-   Por eso el token de la sección de config es el mecanismo primario, y el endpoint nunca
-   lleva `@Public()`. Sin sección, no hay ruta: fallo cerrado.
+   Por eso el token de la sección de config es el mecanismo primario. Sin sección, no hay
+   ruta: fallo cerrado. (El matiz de `@Public()` se corrigió al implementar: ver la user
+   story de arriba — exime de la sesión, nunca del token.)
 3. **Etiqueta de ruta = plantilla, no URL.** `prom-client` fija las etiquetas de una métrica
    en su primera llamada, y una URL con identificadores genera series infinitas. Es la misma
    lección que las etiquetas de Loki en la spec 50, y va con test.
