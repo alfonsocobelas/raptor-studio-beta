@@ -11,11 +11,17 @@ export function selectValueLabel(fixture: ComponentFixture<unknown>, testId: str
   return trigger(fixture, testId).textContent?.trim() ?? ''
 }
 
-/** Las etiquetas que ofrece el desplegable, en orden. Lo deja abierto. */
+/**
+ * Las etiquetas que ofrece el desplegable, en orden. Lo deja abierto — y si ya lo estaba no
+ * lo vuelve a pulsar: el disparador conmuta, así que el segundo click lo cerraría.
+ */
 export async function openSelect(fixture: ComponentFixture<unknown>, testId: string): Promise<string[]> {
-  trigger(fixture, testId).click()
-  fixture.detectChanges()
-  await fixture.whenStable()
+  const button = trigger(fixture, testId)
+  if (button.getAttribute('aria-expanded') !== 'true') {
+    button.click()
+    fixture.detectChanges()
+    await fixture.whenStable()
+  }
   return items().map(item => item.textContent?.trim() ?? '')
 }
 

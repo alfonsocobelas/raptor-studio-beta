@@ -13,6 +13,7 @@ import {
 } from '@ng-icons/lucide'
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { CanvasFormDialogComponent } from './canvas-form-dialog.component'
 import { DesignStore } from './design-store'
@@ -51,7 +52,7 @@ const BADGE_CLASSES = [
 @Component({
   selector: 'studio-canvas-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CanvasFormDialogComponent, FormsModule, NgIcon],
+  imports: [AppSelect, CanvasFormDialogComponent, FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideDownload,
@@ -138,16 +139,14 @@ const BADGE_CLASSES = [
                         data-testid="col-editor-label"
                       />
                       <label class="text-muted-foreground mb-1 block text-xs">Tipo</label>
-                      <select
-                        class="border-input w-full rounded border px-2 py-1 text-sm"
+                      <app-select
+                        class="block w-full"
+                        [options]="typeOptions"
                         [ngModel]="field.type"
+                        [ngModelOptions]="{ standalone: true }"
                         (ngModelChange)="retype($index, $event)"
                         data-testid="col-editor-type"
-                      >
-                        @for (type of types; track type) {
-                          <option [value]="type">{{ labelOfType(type) }}</option>
-                        }
-                      </select>
+                      />
 
                       @if (field.type === 'enum') {
                         <label class="text-muted-foreground mb-1 mt-2 block text-xs">
@@ -169,17 +168,15 @@ const BADGE_CLASSES = [
                       }
                       @if (field.type === 'ref') {
                         <label class="text-muted-foreground mb-1 mt-2 block text-xs">Entidad referenciada</label>
-                        <select
-                          class="border-input w-full rounded border px-2 py-1 text-sm"
-                          [ngModel]="field.refTo ?? ''"
+                        <app-select
+                          class="block w-full"
+                          placeholder="Elegir entidad…"
+                          [options]="refOptions()"
+                          [ngModel]="field.refTo ?? null"
+                          [ngModelOptions]="{ standalone: true }"
                           (ngModelChange)="retarget($index, $event)"
                           data-testid="col-editor-refto"
-                        >
-                          <option value="">Elegir entidad…</option>
-                          @for (other of otherResources(); track other.name) {
-                            <option [value]="other.name">{{ other.labelSingular }}</option>
-                          }
-                        </select>
+                        />
                         @if (!field.refTo) {
                           <p class="text-destructive mt-1 text-xs">Una referencia sin destino no se genera.</p>
                         }
@@ -295,11 +292,20 @@ export class CanvasTableComponent {
 
   protected readonly store = inject(DesignStore)
   private readonly active = inject(ActiveViewService)
-  protected readonly types = DRAFT_FIELD_TYPES
   protected readonly labelOfType = labelOfType
+  protected readonly typeOptions: AppSelectOption[] = DRAFT_FIELD_TYPES.map(type => ({
+    value: type,
+    label: labelOfType(type)
+  }))
 
   /** Candidatas a ser referenciadas: cualquier entidad menos la propia. */
   protected readonly otherResources = computed(() => this.store.resources().filter(r => r.name !== this.resource()))
+
+  // Sin opción «ninguna»: una referencia sin destino no se genera, así que el hueco vacío es
+  // un error que el editor señala, no una elección que ofrecer.
+  protected readonly refOptions = computed<AppSelectOption[]>(() =>
+    this.otherResources().map(other => ({ value: other.name, label: other.labelSingular }))
+  )
   protected readonly pageSize = PAGE_SIZE
 
   /**
