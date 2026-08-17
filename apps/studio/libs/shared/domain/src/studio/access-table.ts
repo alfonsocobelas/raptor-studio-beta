@@ -93,8 +93,6 @@ export interface RoleSummary {
   delete: number
   /** Entidades donde el rol tiene TODAS las capacidades, transiciones incluidas */
   full: number
-  /** Entidades donde tiene alguna pero no todas; sin ninguna no cuenta en ningún lado */
-  partial: number
 }
 
 /** Métricas del panel derecho; admin puede todo por definición. */
@@ -114,8 +112,7 @@ export function roleSummary(resources: DraftResource[], role: AccessActorRole): 
     create: count(r => resolveAccess(r).create),
     edit: count(r => resolveAccess(r).edit),
     delete: count(r => resolveAccess(r).delete),
-    full: grades.filter(g => g.has === g.of).length,
-    partial: grades.filter(g => g.has > 0 && g.has < g.of).length
+    full: grades.filter(g => g.has === g.of).length
   }
 }
 

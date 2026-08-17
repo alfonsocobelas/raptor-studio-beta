@@ -91,40 +91,6 @@ describe('AccessSummaryComponent', () => {
     })
   })
 
-  it('la barra pinta en verde SOLO las entidades con todos los permisos', () => {
-    store.addResource('Cliente')
-    store.addResource('Factura')
-    // cliente: política actual = todas las capacidades → completo
-    // factura: solo ver → parcial, y NO debe contarse como verde
-    store.setResourceAccess('factura', { view: ['user'], create: [], edit: [], delete: [] })
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-bar-full')?.style.width).toBe('50%')
-    expect(testId(fixture, 'access-bar-partial')?.style.width).toBe('50%')
-    expect(testId(fixture, 'access-summary-full')?.textContent).toContain('1/2')
-  })
-
-  it('sin ningún permiso la barra no tiene tramo verde', () => {
-    store.addResource('Cliente')
-    store.setResourceAccess('cliente', { view: [], create: [], edit: [], delete: [] })
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-bar-full')?.style.width).toBe('0%')
-    expect(testId(fixture, 'access-bar-partial')?.style.width).toBe('0%')
-  })
-
-  it('con admin activo la barra está entera en verde', () => {
-    store.addResource('Cliente')
-    store.addResource('Factura')
-    ui.role.set('admin')
-
-    const fixture = mount()
-
-    expect(testId(fixture, 'access-bar-full')?.style.width).toBe('100%')
-  })
-
   it('con admin activo informa pero no ofrece acciones', () => {
     store.addResource('Cliente')
     ui.role.set('admin')

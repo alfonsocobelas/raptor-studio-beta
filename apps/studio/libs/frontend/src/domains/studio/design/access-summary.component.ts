@@ -59,12 +59,6 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
               </dd>
             </div>
           </dl>
-          <!-- proporción de entidades: acceso completo (verde) / parcial (acento) / ninguno (gris).
-               El verde es el premio: solo lo gana la entidad con TODAS sus capacidades. -->
-          <div class="bg-foreground/10 mt-4 flex h-1.5 overflow-hidden rounded-full" aria-hidden="true">
-            <div class="bg-emerald-500" [style.width.%]="fullShare()" data-testid="access-bar-full"></div>
-            <div class="bar-partial" [style.width.%]="partialShare()" data-testid="access-bar-partial"></div>
-          </div>
         </section>
 
         @if (ui.role() !== 'admin') {
@@ -87,12 +81,6 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
     }
   `,
   styles: `
-    /* El tramo parcial en el naranja de la casa: con --primary salía gris (tinta al 50%) y no se
-       distinguía del hueco vacío del carril, que es justo lo que significa «sin acceso». */
-    .bar-partial {
-      background-color: var(--brand);
-      opacity: 0.7;
-    }
     .chip {
       border: 1px solid hsl(var(--border));
       border-radius: 0.5rem;
@@ -111,14 +99,6 @@ export class AccessSummaryComponent {
 
   protected readonly roleLabel = computed(() => ROLE_LABELS[this.ui.role()])
   protected readonly summary = computed(() => roleSummary(this.store.resources(), this.ui.role()))
-
-  protected readonly fullShare = computed(() => this.share(this.summary().full))
-  protected readonly partialShare = computed(() => this.share(this.summary().partial))
-
-  private share(count: number): number {
-    const total = this.summary().total
-    return total === 0 ? 0 : (count / total) * 100
-  }
 
   /** El rol del que se copia: el OTRO editable (a admin no se le copia, se es admin o no) */
   protected readonly otherRole = computed<AccessRole>(() => (this.ui.role() === 'user' ? 'viewer' : 'user'))
