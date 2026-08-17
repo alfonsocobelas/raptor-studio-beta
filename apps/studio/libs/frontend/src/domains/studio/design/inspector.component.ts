@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { DesignStore } from './design-store'
+import { labelOfType } from './field-type-labels'
 
 /**
  * Inspector básico de la entidad seleccionada: columnas (nombre, etiqueta,
@@ -10,7 +12,7 @@ import { DesignStore } from './design-store'
 @Component({
   selector: 'studio-inspector',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, AppSelect],
   template: `
     @if (draft(); as resource) {
       <section class="border-t pt-3" data-testid="inspector">
@@ -29,16 +31,13 @@ import { DesignStore } from './design-store'
                 (ngModelChange)="rename($index, $event)"
                 [attr.data-testid]="'field-label-' + $index"
               />
-              <select
-                class="border-input rounded border px-1 py-1 text-xs"
+              <app-select
+                [options]="typeOptions"
                 [ngModel]="field.type"
+                [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="retype($index, $event)"
                 [attr.data-testid]="'field-type-' + $index"
-              >
-                @for (type of types; track type) {
-                  <option [value]="type">{{ type }}</option>
-                }
-              </select>
+              />
               <button
                 type="button"
                 class="text-destructive px-1 text-xs"
@@ -79,7 +78,11 @@ export class InspectorComponent {
   readonly close = output<void>()
 
   protected readonly store = inject(DesignStore)
-  protected readonly types = DRAFT_FIELD_TYPES
+  // El desplegable enseña el nombre legible del canon, no el identificador del tipo.
+  protected readonly typeOptions: AppSelectOption[] = DRAFT_FIELD_TYPES.map(type => ({
+    value: type,
+    label: labelOfType(type)
+  }))
 
   protected readonly draft = computed(() => this.store.resources().find(r => r.name === this.resource()) ?? null)
 
