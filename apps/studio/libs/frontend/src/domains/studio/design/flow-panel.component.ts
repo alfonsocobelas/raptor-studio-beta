@@ -1,8 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
 import type { FlowNodeKind } from '@raptor/schema'
+import { FormsModule } from '@angular/forms'
 import { FLOW_KIND_LABELS, flowToProse } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+
+/**
+ * Valor de la opción «— ninguna —». No vale la cadena vacía: el desplegable la trata como
+ * «nada elegido» y el disparador se queda en blanco en vez de decir que no hay entidad
+ * (probado: con '' el test del disparador lee '').
+ */
+const NONE = '__ninguna__'
+
+function chosen(value: string): string | undefined {
+  return value === NONE ? undefined : value
+}
 
 /**
  * Panel derecho del modo Flujos: el nodo elegido y el flujo contado en prosa.
@@ -11,6 +24,7 @@ import { DesignStore } from './design-store'
  */
 @Component({
   selector: 'studio-flow-panel',
+  imports: [FormsModule, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-0 flex-col gap-5 overflow-y-auto">
@@ -25,34 +39,28 @@ import { DesignStore } from './design-store'
 
           <div class="studio-row">
             <label for="flow-node-entity">Entidad</label>
-            <select
-              id="flow-node-entity"
-              [value]="current.entity ?? ''"
-              (change)="repoint($event)"
+            <app-select
+              controlId="flow-node-entity"
+              [options]="entityOptions()"
+              [ngModel]="current.entity ?? NONE"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="repoint($event)"
               data-testid="flow-node-entity"
-            >
-              <option value="">— ninguna —</option>
-              @for (resource of store.resources(); track resource.name) {
-                <option [value]="resource.name">{{ resource.labelSingular }}</option>
-              }
-            </select>
+            />
           </div>
 
           @if (machine(); as m) {
             <!-- convergencia (spec 44): el paso que ejecuta un verbo gana cuerpo real y endpoint -->
             <div class="studio-row">
               <label for="flow-node-transition">Transición</label>
-              <select
-                id="flow-node-transition"
-                [value]="current.transition ?? ''"
-                (change)="retransition($event)"
+              <app-select
+                controlId="flow-node-transition"
+                [options]="transitionOptions()"
+                [ngModel]="current.transition ?? NONE"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="retransition($event)"
                 data-testid="flow-node-transition"
-              >
-                <option value="">— ninguna —</option>
-                @for (transition of m.transitions; track transition.name) {
-                  <option [value]="transition.name">{{ transition.label }}</option>
-                }
-              </select>
+              />
             </div>
           }
 
@@ -111,6 +119,19 @@ export class FlowPanelComponent {
     return this.store.resources().find(resource => resource.name === node.entity)?.state ?? null
   })
 
+  /** «Sin entidad» es una elección, no la ausencia de una: tiene su propia opción en la lista. */
+  protected readonly NONE = NONE
+
+  protected readonly entityOptions = computed<AppSelectOption[]>(() => [
+    { value: NONE, label: '— ninguna —' },
+    ...this.store.resources().map(resource => ({ value: resource.name, label: resource.labelSingular }))
+  ])
+
+  protected readonly transitionOptions = computed<AppSelectOption[]>(() => [
+    { value: NONE, label: '— ninguna —' },
+    ...(this.machine()?.transitions ?? []).map(transition => ({ value: transition.name, label: transition.label }))
+  ])
+
   protected readonly prose = computed(() => {
     const flow = this.flow()
     return flow ? flowToProse(flow) : 'Todavía no hay ningún flujo dibujado.'
@@ -126,20 +147,18 @@ export class FlowPanelComponent {
     if (flow && node) this.store.updateFlowNode(flow.name, node.id, { text: (event.target as HTMLInputElement).value })
   }
 
-  protected repoint(event: Event): void {
+  protected repoint(entity: string): void {
     const flow = this.flow()
     const node = this.node()
-    const entity = (event.target as HTMLSelectElement).value
     // cambiar de entidad tira la transición: apuntaría a la máquina de OTRA entidad
     if (flow && node)
-      this.store.updateFlowNode(flow.name, node.id, { entity: entity || undefined, transition: undefined })
+      this.store.updateFlowNode(flow.name, node.id, { entity: chosen(entity), transition: undefined })
   }
 
-  protected retransition(event: Event): void {
+  protected retransition(transition: string): void {
     const flow = this.flow()
     const node = this.node()
-    const transition = (event.target as HTMLSelectElement).value
-    if (flow && node) this.store.updateFlowNode(flow.name, node.id, { transition: transition || undefined })
+    if (flow && node) this.store.updateFlowNode(flow.name, node.id, { transition: chosen(transition) })
   }
 
   protected remove(): void {
