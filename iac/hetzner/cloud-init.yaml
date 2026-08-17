@@ -1,0 +1,57 @@
+#cloud-config
+# Deja el servidor listo para `docker compose up`: Docker, el volumen enlazado como
+# /srv/data y Caddy delante como terminador de TLS. La app la sube el despliegue.
+package_update: true
+
+packages:
+  - ca-certificates
+  - curl
+  - ufw
+
+write_files:
+  - path: /srv/Caddyfile
+    content: |
+      # Con dominio, Caddy pide el certificado a Let's Encrypt él solo. Sin dominio
+      # (dev), sirve HTTP por IP: útil para probar, nunca para producción.
+      ${domain != "" ? domain : ":80"} {
+      ${admin_email != "" ? "  tls ${admin_email}" : ""}
+        handle /api/* {
+          reverse_proxy backend:3000
+        }
+        handle {
+          reverse_proxy frontend:80
+        }
+      }
+
+  # El volumen se adjunta DESPUÉS de este primer arranque, así que aquí no se puede montar.
+  # Este servicio espera a que Hetzner lo automonte y enlaza /srv/data a él: el compose
+  # referencia siempre /srv/data y nunca el id del volumen. Sin volumen (dev), /srv/data es
+  # un directorio normal y todo sigue funcionando.
+  - path: /usr/local/bin/link-data-volume
+    permissions: '0755'
+    content: |
+      #!/bin/sh
+      # Volumen de datos de ${volume_name}
+      set -e
+      for _ in $(seq 1 30); do
+        target=$(ls -d /mnt/HC_Volume_* 2>/dev/null | head -1) || true
+        if [ -n "$target" ]; then
+          rm -rf /srv/data
+          ln -sfn "$target" /srv/data
+          exit 0
+        fi
+        sleep 10
+      done
+      mkdir -p /srv/data
+
+runcmd:
+  # Docker desde el repositorio oficial: el de Ubuntu va varias versiones por detrás.
+  - curl -fsSL https://get.docker.com | sh
+  - mkdir -p /srv/data
+  - nohup /usr/local/bin/link-data-volume >/var/log/link-data-volume.log 2>&1 &
+  # El firewall de Hetzner ya filtra en el borde; ufw es el segundo cinturón por si algún
+  # contenedor publica un puerto sin querer.
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
