@@ -120,7 +120,13 @@ function renderDtoBindings(model: ResourceDefinition) {
     members: t.values.map(value => ({ key: value.toUpperCase().replace(/[^A-Z0-9]/g, '_'), value }))
   }))
 
-  const writable = all.filter(c => !c.field.syncManaged && !(c.field.optionalPrimitive && !c.field.updatable))
+  // spec 43: el campo de la máquina de estados no se pide al alta (la entidad nace en
+  // `initial`) ni se edita (solo cambia por transición), igual que ya hace el DTO de
+  // entrypoints del backend. Dejarlo aquí deja el formulario emitido sin compilar.
+  const stateField = model.state?.field
+  const writable = all.filter(
+    c => c.name !== stateField && !c.field.syncManaged && !(c.field.optionalPrimitive && !c.field.updatable)
+  )
 
   const comp = model.composition
   const childCtxs: Ctx[] = comp
@@ -129,14 +135,21 @@ function renderDtoBindings(model: ResourceDefinition) {
         .map(([name, f]) => ({ name, field: f, required: f.required ?? false, nullable: false }))
     : []
 
+  // `serverAssigned` (spec 19): opcional al ALTA — el backend lo pone si no viene, pero una
+  // importación puede traerlo (§2.bis) — y fuera del UPDATE, donde no se toca nunca.
+  const registerLines = ['id: string', ...writable.map(c => writableLine(c, c.field.serverAssigned === true))]
+  const updateLines = writable.filter(c => !c.field.serverAssigned).map(c => writableLine(c, true))
+
   return {
     unions,
     enums,
     dtoLines: ['id: string', ...all.map(c => `${c.name}: ${dtoType(c)}`)],
-    // `serverAssigned` (spec 19): opcional al ALTA — el backend lo pone si no viene, pero una
-    // importación puede traerlo (§2.bis) — y fuera del UPDATE, donde no se toca nunca.
-    registerLines: ['id: string', ...writable.map(c => writableLine(c, c.field.serverAssigned === true))],
-    updateLines: writable.filter(c => !c.field.serverAssigned).map(c => writableLine(c, true)),
+    registerLines,
+    updateLines,
+    registerUnions: namedTypesUsedIn(registerLines, unions),
+    registerEnums: namedTypesUsedIn(registerLines, enums),
+    updateUnions: namedTypesUsedIn(updateLines, unions),
+    updateEnums: namedTypesUsedIn(updateLines, enums),
     comp: comp
       ? {
           childClass: names(comp.name).className,
@@ -148,6 +161,15 @@ function renderDtoBindings(model: ResourceDefinition) {
         }
       : null
   }
+}
+
+/**
+ * Los tipos nombrados que USAN estas líneas. Register y update ya no llevan todos los
+ * campos (el estado sale, spec 43), y un import de un tipo que nadie usa es código
+ * muerto en la app emitida.
+ */
+function namedTypesUsedIn<T extends { name: string }>(lines: string[], types: T[]): T[] {
+  return types.filter(type => lines.some(line => line.endsWith(`: ${type.name}`) || line.endsWith(`: ${type.name} | null`)))
 }
 
 function dtoType(c: Ctx): string {

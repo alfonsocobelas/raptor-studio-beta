@@ -1,10 +1,10 @@
-<%_ if (enums.length) { _%>
-import { <%- enums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
+<%_ if (registerEnums.length) { _%>
+import { <%- registerEnums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
 <%_ } _%>
-<%_ if (unions.length) { _%>
-import { <%- unions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
+<%_ if (registerUnions.length) { _%>
+import { <%- registerUnions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
 <%_ } _%>
-<%_ if (enums.length || unions.length) { _%>
+<%_ if (registerEnums.length || registerUnions.length) { _%>
 
 <%_ } _%>
 export interface Register<%- className %>Dto {

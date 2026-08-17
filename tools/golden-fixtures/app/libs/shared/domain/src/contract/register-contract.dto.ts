@@ -1,10 +1,4 @@
-import {
-  ContractTypeEnum,
-  ContractStatusEnum,
-  ContractSourceEnum,
-  BillingFrequencyEnum,
-  RenewalTypeEnum
-} from './contract-enums'
+import { ContractTypeEnum, ContractSourceEnum, BillingFrequencyEnum, RenewalTypeEnum } from './contract-enums'
 
 export interface RegisterContractDto {
   id: string
@@ -17,7 +11,6 @@ export interface RegisterContractDto {
   subSolutionAreas?: string[]
   nbrOfContracts?: number
   isFavorite?: boolean
-  status?: ContractStatusEnum
   source?: ContractSourceEnum
   startDate: string | null
   endDate?: string | null

@@ -68,6 +68,22 @@ describe('shared-domain generator', () => {
     expect(dto).not.toContain('export interface LicenseDto')
   })
 
+  it('keeps the state machine field out of register/update DTOs (spec 43)', () => {
+    // la entidad nace en `initial` y su estado solo cambia por transición: el formulario
+    // emitido no lo manda, así que un DTO que lo siga pidiendo deja el frontend sin
+    // compilar (cazado en la demo taller: «Property 'estado' is missing»)
+    const register = tree.read('tmp/generated/shared-domain/contract/register-contract.dto.ts', 'utf-8') ?? ''
+    const update = tree.read('tmp/generated/shared-domain/contract/update-contract.dto.ts', 'utf-8') ?? ''
+    expect(register).not.toContain('status')
+    expect(register).not.toContain('ContractStatusEnum')
+    expect(update).not.toContain('status')
+    expect(update).not.toContain('ContractStatusEnum')
+
+    // en el listado sigue: la tabla pinta su badge y la ficha su cabecera
+    const dto = tree.read('tmp/generated/shared-domain/contract/contract.dto.ts', 'utf-8') ?? ''
+    expect(dto).toContain('status: ContractStatusEnum')
+  })
+
   it('keeps sync-managed fields out of register/update DTOs', () => {
     const register = tree.read('tmp/generated/shared-domain/customer/register-customer.dto.ts', 'utf-8') ?? ''
     expect(register).not.toContain('archivedAt')

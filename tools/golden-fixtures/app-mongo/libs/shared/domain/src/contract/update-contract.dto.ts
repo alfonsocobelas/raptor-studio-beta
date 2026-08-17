@@ -1,10 +1,4 @@
-import {
-  ContractTypeEnum,
-  ContractStatusEnum,
-  ContractSourceEnum,
-  BillingFrequencyEnum,
-  RenewalTypeEnum
-} from './contract-enums'
+import { ContractTypeEnum, ContractSourceEnum, BillingFrequencyEnum, RenewalTypeEnum } from './contract-enums'
 
 export interface UpdateContractDto {
   contractType?: ContractTypeEnum
@@ -16,7 +10,6 @@ export interface UpdateContractDto {
   subSolutionAreas?: string[]
   nbrOfContracts?: number
   isFavorite?: boolean
-  status?: ContractStatusEnum
   source?: ContractSourceEnum
   startDate?: string | null
   endDate?: string | null

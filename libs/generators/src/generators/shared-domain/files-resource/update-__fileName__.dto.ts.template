@@ -1,10 +1,10 @@
-<%_ if (enums.length) { _%>
-import { <%- enums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
+<%_ if (updateEnums.length) { _%>
+import { <%- updateEnums.map(e => e.name).join(', ') %> } from './<%- fileName %>-enums'
 <%_ } _%>
-<%_ if (unions.length) { _%>
-import { <%- unions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
+<%_ if (updateUnions.length) { _%>
+import { <%- updateUnions.map(u => u.name).join(', ') %> } from './<%- fileName %>.dto'
 <%_ } _%>
-<%_ if (enums.length || unions.length) { _%>
+<%_ if (updateEnums.length || updateUnions.length) { _%>
 
 <%_ } _%>
 export interface Update<%- className %>Dto {
