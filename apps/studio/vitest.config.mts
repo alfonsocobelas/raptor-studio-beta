@@ -1,8 +1,12 @@
 import { fileURLToPath } from 'node:url'
+import angular from '@analogjs/vite-plugin-angular'
 import { defineConfig } from 'vitest/config'
 
-// Runner de los specs de frontend (servicios sin template: esbuild basta, sin compilador Angular).
+// Runner de los specs de frontend. Compila con el plugin de Angular (AOT), no en JIT: los
+// signal inputs solo los descubre el compilador — en JIT, montar un componente del contrato
+// UI escupía «NG0303: Can't bind to 'options'» y el desplegable salía vacío.
 export default defineConfig({
+  plugins: [angular()],
   resolve: {
     alias: [
       // En tests, los paquetes @raptor/* se resuelven a los FUENTES del monorepo (Vite compila el
@@ -29,6 +33,13 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['libs/frontend/src/**/*.spec.ts', 'libs/shared/domain/src/**/*.spec.ts'],
-    setupFiles: ['libs/frontend/src/test-setup.ts']
+    setupFiles: ['libs/frontend/src/test-setup.ts'],
+    server: {
+      deps: {
+        // La librería de componentes (libs/ui) y el brain de Spartan se publican como fuente TS:
+        // hay que inlinearlos para que el plugin de Angular compile sus plantillas y decoradores.
+        inline: [/libs\/ui\//, /@spartan-ng/]
+      }
+    }
   }
 })
