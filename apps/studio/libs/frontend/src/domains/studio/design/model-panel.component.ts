@@ -1,9 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import { SELECTABLE_FIELD_TYPES, modelEdges, type DraftFieldType } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { InspectorComponent } from './inspector.component'
 import { TYPE_LABELS } from './field-type-labels'
+
+/** Valor de la opción «— ninguna —»: la cadena vacía la lee el desplegable como «nada elegido». */
+const NONE = '__ninguna__'
 
 type ModelTab = 'field' | 'entity' | 'relation'
 
@@ -21,7 +26,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
 @Component({
   selector: 'studio-model-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InspectorComponent],
+  imports: [FormsModule, AppSelect, InspectorComponent],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -56,31 +61,27 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               <div class="studio-row">
                 <label for="field-type">Tipo</label>
               <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
-                <select
-                  id="field-type"
-                  [value]="current.type"
+                <app-select
+                  controlId="field-type"
+                  [options]="typeOptions(current.type)"
                   [disabled]="current.type === 'ref'"
-                  (change)="retype($event)"
+                  [ngModel]="current.type"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="retype($event)"
                   data-testid="field-type"
-                >
-                  @if (current.type === 'ref') {
-                    <option value="ref">referencia (uuid)</option>
-                  } @else {
-                    @for (type of types; track type) {
-                      <option [value]="type">{{ label(type) }}</option>
-                    }
-                  }
-                </select>
+                />
               </div>
 
               <div class="studio-row">
                 <label for="field-ref">Referencia</label>
-                <select id="field-ref" [value]="current.refTo ?? ''" (change)="repoint($event)" data-testid="field-ref">
-                  <option value="">— ninguna —</option>
-                  @for (target of targets(); track target.name) {
-                    <option [value]="target.name">{{ target.labelSingular }}</option>
-                  }
-                </select>
+                <app-select
+                  controlId="field-ref"
+                  [options]="refOptions()"
+                  [ngModel]="current.refTo ?? NONE"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="repoint($event)"
+                  data-testid="field-ref"
+                />
               </div>
 
               <div class="mt-4 flex flex-wrap items-center gap-1.5">
@@ -201,7 +202,22 @@ export class ModelPanelComponent {
   protected readonly active = inject(ActiveViewService)
 
   protected readonly tabs = MODEL_TABS
-  protected readonly types = SELECTABLE_FIELD_TYPES
+  protected readonly NONE = NONE
+
+  /**
+   * Una referencia no elige tipo: la columna que se emite es un uuid con su lookup, así que
+   * el desplegable queda bloqueado enseñando eso mismo y sin más opciones que ofrecer.
+   */
+  protected typeOptions(current: DraftFieldType): AppSelectOption[] {
+    return current === 'ref'
+      ? [{ value: 'ref', label: 'referencia (uuid)' }]
+      : SELECTABLE_FIELD_TYPES.map(type => ({ value: type, label: TYPE_LABELS[type] }))
+  }
+
+  protected readonly refOptions = computed<AppSelectOption[]>(() => [
+    { value: NONE, label: '— ninguna —' },
+    ...this.targets().map(target => ({ value: target.name, label: target.labelSingular }))
+  ])
 
   /**
    * Elegir una columna en el diagrama trae el panel a su pestaña (igual que el de
@@ -264,14 +280,9 @@ export class ModelPanelComponent {
     }
   }
 
-  protected repoint(event: Event): void {
+  protected repoint(value: string): void {
     const current = this.field()
-    const value = (event.target as HTMLSelectElement).value
-    if (current) this.store.setFieldRef(current.resource, current.index, value || null)
-  }
-
-  protected label(type: DraftFieldType): string {
-    return TYPE_LABELS[type]
+    if (current) this.store.setFieldRef(current.resource, current.index, value === NONE ? null : value)
   }
 
   protected rename(event: Event): void {
@@ -280,10 +291,9 @@ export class ModelPanelComponent {
       this.store.updateField(current.resource, current.index, { label: (event.target as HTMLInputElement).value })
   }
 
-  protected retype(event: Event): void {
+  protected retype(type: string): void {
     const current = this.field()
-    const type = (event.target as HTMLSelectElement).value as DraftFieldType
-    if (current) this.store.updateField(current.resource, current.index, { type })
+    if (current) this.store.updateField(current.resource, current.index, { type: type as DraftFieldType })
   }
 
   protected duplicate(): void {

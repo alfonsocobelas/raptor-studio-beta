@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
+import { chooseInSelect, openSelect, selectValueLabel } from '../../../shared/components/ui/select.harness'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { ModelPanelComponent } from './model-panel.component'
@@ -72,72 +73,76 @@ describe('ModelPanelComponent', () => {
     expect(testId(fixture, 'model-tab-field')?.getAttribute('aria-selected')).toBe('true')
   })
 
-  it('cambiar el tipo de la columna lo escribe en el diseño', () => {
+  // El desplegable nativo lo pinta el sistema operativo, no el CSS del estudio (ADR-003).
+  it('tipo y referencia se eligen con el desplegable del estudio, no con el del navegador', () => {
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const select = testId(fixture, 'field-type') as HTMLSelectElement
-    select.value = 'date'
-    select.dispatchEvent(new Event('change'))
+
+    expect(fixture.nativeElement.querySelector('select')).toBeNull()
+  })
+
+  it('cambiar el tipo de la columna lo escribe en el diseño', async () => {
+    active.selectField('producto', 1)
+
+    const fixture = mount()
+    await chooseInSelect(fixture, 'field-type', 'fecha')
 
     expect(store.resources()[0].fields[1].type).toBe('date')
   })
 
-  it('el tipo no ofrece «referencia»: eso se elige en su propio control', () => {
+  it('el tipo no ofrece «referencia»: eso se elige en su propio control', async () => {
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const opciones = [...(testId(fixture, 'field-type') as HTMLSelectElement).options].map(o => o.value)
+    const opciones = await openSelect(fixture, 'field-type')
 
-    expect(opciones).not.toContain('ref')
+    expect(opciones).not.toContain('referencia a…')
     expect(opciones).toContain('uuid')
   })
 
-  it('apuntar el campo a otra entidad lo convierte en relación', () => {
+  it('apuntar el campo a otra entidad lo convierte en relación', async () => {
     store.addResource('Proveedor')
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const select = testId(fixture, 'field-ref') as HTMLSelectElement
-    select.value = 'proveedor'
-    select.dispatchEvent(new Event('change'))
+    await chooseInSelect(fixture, 'field-ref', 'Proveedor')
 
     expect(store.resources()[0].fields[1]).toMatchObject({ type: 'ref', refTo: 'proveedor' })
   })
 
-  it('la propia entidad no aparece entre los destinos posibles', () => {
+  it('la propia entidad no aparece entre los destinos posibles', async () => {
     store.addResource('Proveedor')
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const opciones = [...(testId(fixture, 'field-ref') as HTMLSelectElement).options].map(o => o.value)
+    const opciones = await openSelect(fixture, 'field-ref')
 
-    expect(opciones).not.toContain('producto')
-    expect(opciones).toContain('proveedor')
+    expect(opciones).not.toContain('Producto')
+    expect(opciones).toContain('Proveedor')
   })
 
-  it('con referencia elegida, el tipo no se queda en blanco: dice qué se emite', () => {
+  it('con referencia elegida, el tipo no se queda en blanco: dice qué se emite', async () => {
     store.addResource('Proveedor')
     store.setFieldRef('producto', 1, 'proveedor')
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const select = testId(fixture, 'field-type') as HTMLSelectElement
+    await fixture.whenStable()
+    fixture.detectChanges()
 
-    expect(select.disabled).toBe(true)
-    expect(select.value).toBe('ref')
-    expect(select.options[select.selectedIndex].textContent).toContain('uuid')
+    const trigger = fixture.nativeElement.querySelector('[data-testid="field-type"] button') as HTMLButtonElement
+    expect(trigger.disabled).toBe(true)
+    expect(selectValueLabel(fixture, 'field-type')).toContain('uuid')
   })
 
-  it('quitar el destino devuelve el campo a un tipo normal', () => {
+  it('quitar el destino devuelve el campo a un tipo normal', async () => {
     store.addResource('Proveedor')
     store.setFieldRef('producto', 1, 'proveedor')
     active.selectField('producto', 1)
 
     const fixture = mount()
-    const select = testId(fixture, 'field-ref') as HTMLSelectElement
-    select.value = ''
-    select.dispatchEvent(new Event('change'))
+    await chooseInSelect(fixture, 'field-ref', '— ninguna —')
 
     expect(store.resources()[0].fields[1].type).not.toBe('ref')
   })
