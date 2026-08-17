@@ -160,15 +160,6 @@ describe('AccessTableComponent', () => {
     expect(testId(fixture, 'access-count')?.textContent).toContain('1 de 2')
   })
 
-  it('la fila enseña el subtítulo derivado del diseño', () => {
-    store.addResource('Cliente')
-
-    const fixture = mount()
-    const row = fixture.nativeElement.querySelector('[data-testid="access-row-cliente"]')
-
-    expect(row?.textContent).toContain('campos')
-  })
-
   describe('pivote Entidad', () => {
     beforeEach(() => {
       ui.pivot.set('entity')

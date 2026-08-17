@@ -51,7 +51,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
           <div>
             <h1 class="text-2xl font-semibold">Quién puede con {{ selectedRow()?.label }}</h1>
             <p class="text-muted-foreground mt-1 text-sm">
-              Una fila por rol; pulsa una celda para cambiar el permiso. {{ selectedRow()?.subtitle }}.
+              Una fila por rol; pulsa una celda para cambiar el permiso.
             </p>
           </div>
           <app-select
@@ -204,7 +204,6 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                 <tr class="border-border/60 border-b last:border-b-0" [attr.data-testid]="'access-row-' + row.name">
                   <td class="px-4 py-3.5">
                     <span class="block font-medium">{{ row.label }}</span>
-                    <span class="studio-eyebrow mt-0.5 block">{{ row.subtitle }}</span>
                   </td>
                   @for (cell of crudCells(row); track cell.capability) {
                     <td class="px-2 py-3.5 text-center">

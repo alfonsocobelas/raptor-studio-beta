@@ -56,13 +56,6 @@ describe('accessRows', () => {
     expect(row.cells.find(c => c.capability === 'delete')?.roles).toEqual(['user'])
   })
 
-  it('derives the subtitle from real design facts', () => {
-    const rows = accessRows([cliente(), muestra()])
-
-    expect(rows[0].subtitle).toBe('2 campos')
-    expect(rows[1].subtitle).toBe('2 campos · rel. Clientes · máquina de estados')
-  })
-
   it('exposes the four CRUD column headers', () => {
     expect(ACCESS_CRUD_COLUMNS.map(c => c.capability)).toEqual(['view', 'create', 'edit', 'delete'])
     expect(ACCESS_CRUD_COLUMNS.map(c => c.label)).toEqual(['Ver', 'Crear', 'Editar', 'Borrar'])

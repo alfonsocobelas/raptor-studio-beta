@@ -39,8 +39,6 @@ export interface AccessCapabilityCell {
 export interface AccessTableRow {
   name: string
   label: string
-  /** Hechos reales del diseño: «2 campos · rel. Clientes · máquina de estados» */
-  subtitle: string
   cells: AccessCapabilityCell[]
 }
 
@@ -50,7 +48,6 @@ export function accessRows(resources: DraftResource[]): AccessTableRow[] {
     return {
       name: resource.name,
       label: resource.labelPlural,
-      subtitle: subtitleOf(resource, resources),
       cells: [
         ...ACCESS_CRUD_COLUMNS.map(column => ({
           capability: column.capability,
@@ -67,17 +64,6 @@ export function accessRows(resources: DraftResource[]): AccessTableRow[] {
       ]
     }
   })
-}
-
-function subtitleOf(resource: DraftResource, all: DraftResource[]): string {
-  const parts = [`${resource.fields.length} campos`]
-  const ref = resource.fields.find(field => field.type === 'ref' && field.refTo)
-  if (ref) {
-    const target = all.find(r => r.name === ref.refTo)
-    parts.push(`rel. ${target?.labelPlural ?? ref.refTo}`)
-  }
-  if (resource.state) parts.push('máquina de estados')
-  return parts.join(' · ')
 }
 
 /** La matriz explícita siguiente al conmutar entidad+capacidad+rol (un click de celda). */
