@@ -45,7 +45,49 @@ describe('plugin metrics', () => {
     const root = read('libs/backend/src/root.module.ts')
 
     expect(root).toContain("from './contexts/shared/infrastructure/metrics/metrics.module'")
-    expect(root).toContain('MetricsModule')
+    // DENTRO del array imports, no solo la línea de import: en una app pequeña prettier
+    // deja el array en una línea y un parche que asuma la forma multilínea lo deja fuera
+    // (bug real cazado por la verificación manual de TASK-06)
+    const importsArray = root.match(/imports: \[[^\]]*\]/s)?.[0] ?? ''
+    expect(importsArray).toContain('MetricsModule')
+  })
+
+  /**
+   * La forma que ve el plugin cuando corre por CLI: el root.module ya prettificado, con el
+   * array imports colapsado en UNA línea (con pocos modelos cabe en printWidth 120). El
+   * ancla del parche no puede asumir la forma cruda multilínea del árbol de test — este
+   * escenario es el que se rompió en la verificación manual de TASK-06.
+   */
+  it('registra el módulo también sobre un root.module ya prettificado (imports en una línea)', () => {
+    const formatted = createTreeWithEmptyWorkspace()
+    const rootPath = 'apps/demo/libs/backend/src/root.module.ts'
+    formatted.write(
+      rootPath,
+      `import { Module } from '@nestjs/common'
+import { CoreConfigModule } from './contexts/shared/infrastructure/config/config.module'
+import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.module'
+import { ContractsModule } from './contexts/sap-licensing/modules/contracts/contracts.module'
+
+@Module({
+  imports: [CoreConfigModule, LoggerModule, SharedPersistenceModule, HealthModule, ContractsModule],
+  providers: []
+})
+export class RootModule {}
+`
+    )
+
+    PLUGINS['metrics'].apply?.(formatted, {
+      root: 'apps/demo',
+      appName: 'demo',
+      backendSrc: 'apps/demo/libs/backend/src',
+      frontendSrc: 'apps/demo/libs/frontend/src',
+      models: [],
+      scope: '@app'
+    })
+
+    const patched = formatted.read(rootPath, 'utf-8') ?? ''
+    const importsArray = patched.match(/imports: \[[^\]]*\]/s)?.[0] ?? ''
+    expect(importsArray).toContain('MetricsModule')
   })
 
   it('declara prom-client con la misma versión que el canon del catálogo', () => {

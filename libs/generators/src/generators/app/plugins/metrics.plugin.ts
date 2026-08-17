@@ -106,6 +106,12 @@ function registerMetricsModule(tree: Tree, context: PluginContext): void {
         "from './contexts/shared/infrastructure/logger/logger.module'",
         "from './contexts/shared/infrastructure/logger/logger.module'\nimport { MetricsModule } from './contexts/shared/infrastructure/metrics/metrics.module'"
       )
-      .replace('    LoggerModule,', '    LoggerModule,\n    MetricsModule,')
+      // Ancla SIN indentación: cuando el plugin corre por CLI, el root.module ya pasó por
+      // prettier y el array imports puede estar colapsado en una línea (con pocos modelos
+      // cabe en los 120 chars). La primera coincidencia de 'LoggerModule,' está siempre
+      // dentro del array — la línea de import no lleva coma — y formatFiles re-normaliza
+      // después. Bug real: el árbol de test conserva la forma cruda multilínea y el ancla
+      // indentada pasaba los tests mientras la app generada por CLI quedaba sin registrar.
+      .replace('LoggerModule,', 'LoggerModule,\n    MetricsModule,')
   )
 }
