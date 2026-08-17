@@ -99,6 +99,7 @@ export const raptorInfra = defineInfra({
     addSentryConfigSection(tree, context)
     nameLokiStream(tree, context)
     addRaptorLogTransport(tree, context)
+    nameTerraformProject(tree, context)
   }
 })
 
@@ -563,6 +564,27 @@ function nameLokiStream(tree: Tree, context: PluginContext): void {
     return
   }
   tree.write(providerPath, source.replace("const APP_NAME = 'app'", `const APP_NAME = '${context.appName}'`))
+}
+
+/**
+ * El stack de Terraform viaja DENTRO de la app (spec 50): el cliente recibe el proyecto, no
+ * el repo del acelerador. Lo único que depende de la app es el prefijo de nombres, que en
+ * los stacks de aws y hetzner es el default de la variable `project`.
+ *
+ * El reemplazo apunta a ESE bloque, no a la primera "acelerador" del fichero: en el stack de
+ * azure —que nombra recurso a recurso y no tiene variable `project`— la única aparición es
+ * el nombre de la base de datos, y un reemplazo ciego la renombraría.
+ */
+function nameTerraformProject(tree: Tree, context: PluginContext): void {
+  const variablesPath = path.join(context.root, 'iac/variables.tf')
+  const source = tree.read(variablesPath, 'utf-8')
+  if (!source) {
+    return
+  }
+  tree.write(
+    variablesPath,
+    source.replace(/(variable "project" \{[^}]*default\s+= )"acelerador"/, `$1"${context.appName}"`)
+  )
 }
 
 /** Espejo de addAwsLogTransport: enchufa el transporte de Loki en la costura del logger. */

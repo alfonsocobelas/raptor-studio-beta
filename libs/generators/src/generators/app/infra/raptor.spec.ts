@@ -244,4 +244,31 @@ export class StorageModule {}
       expect(transport).toContain('captureException')
     })
   })
+
+  /**
+   * TASK-10: la app entregada al cliente se lleva su Terraform dentro. Hasta ahora el stack
+   * vivía solo en el repo del acelerador, que el cliente no recibe.
+   */
+  describe('iac', () => {
+    it('emite el stack de Hetzner dentro de la app', () => {
+      expect(tree.exists('apps/demo/iac/server.tf')).toBe(true)
+      expect(tree.exists('apps/demo/iac/firewall.tf')).toBe(true)
+      expect(tree.exists('apps/demo/iac/cloud-init.yaml')).toBe(true)
+      expect(tree.exists('apps/demo/iac/README.md')).toBe(true)
+    })
+
+    it('los ficheros emitidos son Terraform, no plantillas a medio cocer', () => {
+      const server = read('iac/server.tf')
+
+      expect(server).toContain('resource "hcloud_server" "app"')
+      expect(tree.exists('apps/demo/iac/server.tf.template')).toBe(false)
+    })
+
+    it('el proyecto de Terraform toma el nombre de la app', () => {
+      const variables = read('iac/variables.tf')
+
+      expect(variables).toContain('default     = "demo"')
+      expect(variables).not.toContain('default     = "acelerador"')
+    })
+  })
 })

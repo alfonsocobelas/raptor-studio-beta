@@ -89,6 +89,11 @@ describe('app generator — una app sin infra no lleva Azure dentro', () => {
     expect(Object.keys(all).filter(name => name.includes('infisical'))).toEqual([])
   })
 
+  /** Spec 50: sin infra elegida no hay nube que aprovisionar, así que tampoco IaC. */
+  it('no emite directorio iac/', () => {
+    expect(emitted().filter(file => file.path.startsWith('apps/demo/iac/'))).toEqual([])
+  })
+
   /**
    * La excepción documentada: el plugin `email` declara @aws-sdk/client-ses A PROPÓSITO
    * (el factory carga el SDK perezosamente al activar la sección `ses`). Es del plugin,
