@@ -198,6 +198,44 @@ describe('AccessTableComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('Quién puede con Facturas')
     })
 
+    /**
+     * El desplegable nativo lo pinta el sistema operativo, no el CSS del estudio: la lista
+     * desplegada se vería del navegador. El contrato app-select (ADR-003) lo pinta el estudio.
+     *
+     * Lo que este test NO comprueba, y por qué: abrir el desplegable y elegir una opción no es
+     * verificable en este runner. Vitest corre sin el plugin de Angular, así que compila JIT y
+     * los signal inputs no se registran — el propio montaje escupe «NG0303: Can't bind to
+     * 'options'» y «NG0303: buttonId» dentro de AppSelect, y el brain de Spartan además pide un
+     * ResizeObserver que el DOM de pruebas no tiene. Resultado: el disparador se renderiza vacío.
+     * Fingir esa cobertura sería peor que no tenerla; el gate real de la interacción es el smoke
+     * con navegador. Cuando el runner compile AOT (backlog: @analogjs/vite-plugin-angular), este
+     * test puede recuperar la parte de abrir y elegir.
+     */
+    it('la entidad se elige con el desplegable del estudio, no con el del navegador', () => {
+      store.addResource('Cliente')
+      store.addResource('Factura')
+      ui.entity.set('cliente')
+
+      const fixture = mount()
+
+      expect(fixture.nativeElement.querySelector('select')).toBeNull()
+      expect(fixture.nativeElement.querySelector('[data-testid="access-entity-select"]')).not.toBeNull()
+    })
+
+    it('la cabecera sigue a la entidad elegida', () => {
+      store.addResource('Cliente')
+      store.addResource('Factura')
+      ui.entity.set('cliente')
+
+      const fixture = mount()
+      expect(fixture.nativeElement.textContent).toContain('Quién puede con Clientes')
+
+      ui.entity.set('factura')
+      fixture.detectChanges()
+
+      expect(fixture.nativeElement.textContent).toContain('Quién puede con Facturas')
+    })
+
     it('un click en la celda persiste el permiso del rol de esa fila', () => {
       store.addResource('Cliente')
       ui.entity.set('cliente')

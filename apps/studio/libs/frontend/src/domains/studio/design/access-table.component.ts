@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { FormsModule } from '@angular/forms'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import {
   accessRows,
   toggleCapability,
@@ -21,6 +23,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
  */
 @Component({
   selector: 'studio-access-table',
+  imports: [FormsModule, AppSelect],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (!store.resources().length) {
@@ -51,17 +54,16 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
               Una fila por rol; pulsa una celda para cambiar el permiso. {{ selectedRow()?.subtitle }}.
             </p>
           </div>
-          <select
-            class="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
-            aria-label="Entidad"
-            [value]="selectedRow()?.name"
-            (change)="onEntity($event)"
+          <app-select
+            class="w-56"
+            controlId="access-entity"
+            placeholder="Entidad"
+            [options]="entityOptions()"
+            [ngModel]="selectedRow()?.name ?? ''"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="ui.entity.set($event)"
             data-testid="access-entity-select"
-          >
-            @for (resource of store.resources(); track resource.name) {
-              <option [value]="resource.name">{{ resource.labelPlural }}</option>
-            }
-          </select>
+          />
         </header>
 
         <div class="border-y">
@@ -319,6 +321,10 @@ export class AccessTableComponent {
     return rows.find(row => row.name === this.ui.entity()) ?? rows[0]
   })
 
+  protected readonly entityOptions = computed<AppSelectOption[]>(() =>
+    this.store.resources().map(resource => ({ value: resource.name, label: resource.labelPlural }))
+  )
+
   protected readonly selectedHasTransitions = computed(
     () => this.selectedRow()?.cells.some(c => c.kind === 'transition') ?? false
   )
@@ -360,7 +366,4 @@ export class AccessTableComponent {
     this.ui.search.set((event.target as HTMLInputElement).value)
   }
 
-  protected onEntity(event: Event): void {
-    this.ui.entity.set((event.target as HTMLSelectElement).value)
-  }
 }
