@@ -1,0 +1,61 @@
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common'
+import { Observable } from 'rxjs'
+import { tap } from 'rxjs/operators'
+import { MetricsPort } from '../../domain/metrics/metrics.port'
+
+interface RoutedRequest {
+  method: string
+  /** Express resuelve aquí la PLANTILLA de la ruta (/api/v1/contracts/:id) */
+  route?: { path?: string }
+}
+
+/**
+ * Instrumenta cada petición HTTP con las cuatro métricas del 90% de los casos. Hermano del
+ * LoggerInterceptor a propósito: uno registra, otro mide, y así el plugin no parchea ningún
+ * fichero del kernel (que está congelado en la fixture de oro).
+ *
+ * La etiqueta `route` usa la plantilla resuelta por el router, NUNCA la URL cruda:
+ * prom-client fija las etiquetas de una métrica en su primera llamada y Prometheus crea una
+ * serie por combinación — etiquetar /contracts/9f3e… crearía una serie por registro. Si el
+ * router no resolvió ruta (un 404 de un escáner, por ejemplo), se etiqueta 'unknown': justo
+ * ahí la URL cruda sería veneno.
+ *
+ * "En curso" son dos contadores (entradas y salidas) que se restan en la consulta: el
+ * puerto no tiene gauge, y abrirlo para un único caso violaría la regla de los dos.
+ */
+@Injectable()
+export class MetricsInterceptor implements NestInterceptor {
+  constructor(private readonly metrics: MetricsPort) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<RoutedRequest>()
+    const method = request.method
+    const route = request.route?.path ?? 'unknown'
+    const startTime = Date.now()
+
+    this.metrics.incrementCounter('http_requests_in_flight_started_total', { method, route })
+
+    const finish = (status: string): void => {
+      this.metrics.incrementCounter('http_requests_total', { method, route, status })
+      this.metrics.observeHistogram('http_request_duration_seconds', (Date.now() - startTime) / 1000, {
+        method,
+        route
+      })
+      this.metrics.incrementCounter('http_requests_in_flight_finished_total', { method, route })
+    }
+
+    return next.handle().pipe(
+      tap({
+        next: () => {
+          const status = String(context.switchToHttp().getResponse<{ statusCode: number }>().statusCode)
+          finish(status)
+        },
+        error: (error: { status?: number }) => {
+          const status = String(error.status ?? 500)
+          finish(status)
+          this.metrics.incrementCounter('http_request_errors_total', { method, route, status })
+        }
+      })
+    )
+  }
+}
