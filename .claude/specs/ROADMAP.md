@@ -206,7 +206,8 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
   RANURA      PROVEEDORES HOY                 PENDIENTE (spec que lo rellena)
   database    postgres ✅ | mongo ✅          spec 06: falta golden mongo + suite integración
   ui          spartan ✅ (único proveedor)      material retirada (spec 36, 2026-08-10)
-  infra       none ✅                          C1 azure · C2 lowcost · C3 aws · C4 gcp
+  infra       none ✅ | azure ✅ | aws ✅       C4 gcp
+              raptor ✅ (low cost)
   auth        none ✅ | single-tenant ✅       D multi-tenant (¡ojo: ya hay código, ver abajo)
 
   PLUGINS ADITIVOS: email, observability  → los absorbe el proveedor de infra en C1
@@ -215,9 +216,11 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 | Nº    | Spec                    | Objetivo                                                                                                                                                                                                                                  | Estado        |
 | ----- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | ✅ 23 | `ranuras-de-capacidad`  | Ranuras + proveedor de persistencia dueño de su emisión + `tools/slots.json` + wizard derivado                                                                                                                                            | ✅ 2026-08-04 |
-| C1    | `infra-azure`           | Empaquetar lo de la referencia como proveedor `infra=azure`: config+Key Vault, App Insights (absorbe `observability`), Blob, ACS (absorbe la pata azure de `email`), Terraform. Aquí se arregla la obs. 1 (adapter Azure siempre emitido) | Siguiente     |
-| C2    | `infra-lowcost`         | `infra=lowcost`: R2 (S3-compatible), Prometheus/Grafana o Sentry (**a estudiar**, Alfonso 2026-08-04), Bitwarden/Infisical para secretos                                                                                                  | Pendiente     |
-| C3/C4 | `infra-aws`/`infra-gcp` | S3+CloudWatch+Secrets Manager+SES / GCS+Cloud Monitoring+Secret Manager                                                                                                                                                                   | Pendiente     |
+| C1    | `infra-azure`           | Empaquetar lo de la referencia como proveedor `infra=azure`: config+Key Vault, App Insights (absorbe `observability`), Blob, ACS (absorbe la pata azure de `email`), Terraform. Aquí se arregla la obs. 1 (adapter Azure siempre emitido) | ✅ 2026-08-10 (spec 24) |
+| ✅ C2 | `infra-raptor-cloud`    | `infra=raptor` (spec 50, nombre definitivo **Raptor Cloud**): Infisical (secretos, REST sin SDK), Cloudflare R2 (reusa el adapter S3), Grafana Cloud Loki + Sentry (logs y errores), Brevo (email, ya estaba) y un VPS Hetzner. El estudio "a estudiar" de 2026-08-04 queda cerrado | ✅ 2026-08-17 |
+| ✅ C3 | `infra-aws`             | S3+CloudWatch+Secrets Manager+SES                                                                                                                                                                                                        | ✅ 2026-08-16 (spec 47) |
+| C4    | `infra-gcp`             | GCS+Cloud Monitoring+Secret Manager                                                                                                                                                                                                      | Pendiente     |
+| —     | (transversal, spec 50)  | **La IaC viaja dentro de la app generada**: elegir `--infra=<x>` emite `iac/` con el stack del proveedor (azure, aws o raptor), con el nombre del proyecto ya puesto. Antes vivía solo en el repo del acelerador, que el cliente no recibe. Un test de deriva impide que la copia y el catálogo `iac/<x>` se separen | ✅ 2026-08-17 |
 | D     | `auth-multi-tenant`     | `auth=multi-tenant`. **No parte de cero**: `libs/infra/auth` ya tiene tenant resolvers y `TenantScopedSessionStore` (commit c33ac61, 2026-07-30), **suite en verde** — los 2 rojos eran fechas absolutas caducadas en el fixture, no un hueco (arreglado `8ba9dc6`, 2026-08-09)     | Pendiente     |
 
 ## En pausa
