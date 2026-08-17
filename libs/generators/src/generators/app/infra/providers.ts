@@ -85,7 +85,10 @@ export const raptorInfra = defineInfra({
   dependencies: {
     // R2 habla el protocolo de S3; es el único SDK de nube que entra en este proveedor.
     '@aws-sdk/client-s3': '^3.700.0',
-    'winston-transport': '^4.7.0'
+    'winston-transport': '^4.7.0',
+    // Se carga perezosamente en el transporte: instalarlo no obliga a usarlo, pero tenerlo
+    // disponible evita un fallo en runtime al activar la sección `sentry`.
+    '@sentry/node': '^8.0.0'
   },
 
   apply(tree: Tree, context: PluginContext): void {
@@ -93,6 +96,7 @@ export const raptorInfra = defineInfra({
     reshapeStorageConfigForR2(tree, context)
     bindS3Storage(tree, context)
     addLokiConfigSection(tree, context)
+    addSentryConfigSection(tree, context)
     nameLokiStream(tree, context)
     addRaptorLogTransport(tree, context)
   }
@@ -428,6 +432,61 @@ function reshapeStorageConfigForR2(tree: Tree, context: PluginContext): void {
   secretAccessKey?: string
 }`
       )
+    )
+  }
+}
+
+/** Sección opcional `sentry`: presente → los errores y avisos se reportan además a Sentry. */
+function addSentryConfigSection(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('SentryConfig')) {
+    tree.write(
+      typesPath,
+      types
+        .replace(
+          'export interface StorageConfig {',
+          `export interface SentryConfig {
+  dsn: string
+  /** Default: the runtime env name */
+  environment?: string
+}
+
+export interface StorageConfig {`
+        )
+        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  sentry?: SentryConfig')
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('SentryValidator')) {
+    tree.write(
+      validationPath,
+      validation
+        .replace(
+          'class StorageValidator {',
+          `class SentryValidator {
+  @IsString()
+  dsn!: string
+
+  @IsOptional()
+  @IsString()
+  environment?: string
+}
+
+class StorageValidator {`
+        )
+        .replace(
+          '  storage?: StorageValidator\n}',
+          `  storage?: StorageValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SentryValidator)
+  sentry?: SentryValidator
+}`
+        )
     )
   }
 }

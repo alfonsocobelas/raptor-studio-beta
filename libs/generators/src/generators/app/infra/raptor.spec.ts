@@ -206,4 +206,42 @@ export class StorageModule {}
       expect(read('apps/backend-api/src/main.ts')).not.toContain('telemetry/instrument')
     })
   })
+
+  /**
+   * TASK-06: Sentry entra por la MISMA costura que Loki (la costura acepta varios
+   * transportes), así que no hace falta componer loggers ni tocar el logger base. El SDK se
+   * carga perezosamente: sin sección `sentry`, `@sentry/node` no se importa nunca.
+   */
+  describe('errores', () => {
+    it('emite el transporte de Sentry junto al de Loki', () => {
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/sentry-transport.ts')).toBe(
+        true
+      )
+    })
+
+    it('el transporte se activa por la sección sentry de config, no por build', () => {
+      const provider = read('libs/backend/src/contexts/shared/infrastructure/logger/raptor-log-transports.ts')
+      expect(provider).toContain("config.get<string>('sentry.dsn')")
+
+      const types = read('libs/backend/src/contexts/shared/infrastructure/config/config-types.ts')
+      expect(types).toContain('sentry?: SentryConfig')
+
+      const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
+      expect(validation).toContain('SentryValidator')
+    })
+
+    it('carga el SDK perezosamente: sin la sección, nada importa @sentry/node', () => {
+      const transport = read('libs/backend/src/contexts/shared/infrastructure/logger/sentry-transport.ts')
+
+      expect(transport).not.toContain("import * as Sentry from '@sentry/node'")
+      expect(transport).toContain("require('@sentry/node')")
+    })
+
+    it('solo manda a Sentry lo que es un problema: error y warn, no el ruido de info', () => {
+      const transport = read('libs/backend/src/contexts/shared/infrastructure/logger/sentry-transport.ts')
+
+      expect(transport).toContain("const REPORTED_LEVELS = ['error', 'warn']")
+      expect(transport).toContain('captureException')
+    })
+  })
 })

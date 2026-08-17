@@ -3,6 +3,7 @@ import type { Provider } from '@nestjs/common'
 import * as winston from 'winston'
 import { EXTRA_LOG_TRANSPORTS } from './app-logger.service'
 import { LokiTransport } from './loki-transport'
+import { SentryTransport } from './sentry-transport'
 
 /** El generador lo fija al nombre de la app; es una etiqueta de stream, no configuración. */
 const APP_NAME = 'app'
@@ -19,21 +20,26 @@ export const raptorLogTransportsProvider: Provider = {
   provide: EXTRA_LOG_TRANSPORTS,
   inject: [ConfigService],
   useFactory: (config: ConfigService): winston.transport[] => {
+    const transports: winston.transport[] = []
+    const env = config.get<string>('env') ?? 'local'
+
     const url = config.get<string>('loki.url')
-    if (!url) {
-      return []
+    if (url) {
+      transports.push(
+        new LokiTransport({
+          url,
+          user: config.get<string>('loki.user'),
+          apiKey: config.get<string>('loki.apiKey'),
+          labels: { app: APP_NAME, env }
+        })
+      )
     }
 
-    return [
-      new LokiTransport({
-        url,
-        user: config.get<string>('loki.user'),
-        apiKey: config.get<string>('loki.apiKey'),
-        labels: {
-          app: APP_NAME,
-          env: config.get<string>('env') ?? 'local'
-        }
-      })
-    ]
+    const dsn = config.get<string>('sentry.dsn')
+    if (dsn) {
+      transports.push(new SentryTransport({ dsn, environment: config.get<string>('sentry.environment') ?? env }))
+    }
+
+    return transports
   }
 }

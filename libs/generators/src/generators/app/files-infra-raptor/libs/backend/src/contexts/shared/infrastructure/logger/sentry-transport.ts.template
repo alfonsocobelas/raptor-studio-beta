@@ -1,0 +1,65 @@
+import Transport from 'winston-transport'
+
+/** Contrato estructural mínimo sobre el SDK, para poder probarlo sin `@sentry/node`. */
+export interface SentryLike {
+  captureException(error: unknown, context?: { extra?: Record<string, unknown> }): unknown
+  captureMessage(message: string, level?: 'warning' | 'error'): unknown
+}
+
+export interface SentryTransportOptions {
+  dsn: string
+  environment?: string
+  /** Nivel mínimo que llega a Sentry; por debajo se ignora (default: warn) */
+  level?: string
+}
+
+const REPORTED_LEVELS = ['error', 'warn']
+
+/**
+ * Transporte de winston que reporta a Sentry los errores y avisos del backend. Comparte
+ * costura con el transporte de Loki (EXTRA_LOG_TRANSPORTS acepta varios), así que Sentry no
+ * sustituye a los logs: los complementa con agregación y alertas de errores.
+ *
+ * A Sentry solo va lo que es un problema. Mandarle el `info` normal quemaría la cuota
+ * gratuita en días y ahogaría las alertas en ruido.
+ *
+ * El SDK se carga perezosamente en el constructor: sin la sección `sentry` de config, este
+ * fichero nunca se instancia y `@sentry/node` no se importa.
+ */
+export class SentryTransport extends Transport {
+  private readonly sentry: SentryLike
+
+  constructor(options: SentryTransportOptions, sentry?: SentryLike) {
+    super({ level: options.level ?? 'warn' })
+    if (sentry) {
+      this.sentry = sentry
+      return
+    }
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const sdk = require('@sentry/node') as SentryLike & { init(options: Record<string, unknown>): void }
+    sdk.init({ dsn: options.dsn, environment: options.environment })
+    this.sentry = sdk
+  }
+
+  override log(info: Record<string | symbol, unknown>, next: () => void): void {
+    const level = typeof info['level'] === 'string' ? info['level'] : 'info'
+    if (!REPORTED_LEVELS.includes(level)) {
+      next()
+      return
+    }
+
+    const message = typeof info['message'] === 'string' ? info['message'] : JSON.stringify(info['message'])
+    try {
+      if (level === 'error') {
+        const error = info['error'] instanceof Error ? info['error'] : new Error(message)
+        this.sentry.captureException(error, { extra: { ...info } })
+      } else {
+        this.sentry.captureMessage(message, 'warning')
+      }
+    } catch (error) {
+      // Reportar errores nunca puede tumbar la petición que los produjo.
+      console.error('SentryTransport: dropped one event', error)
+    }
+    next()
+  }
+}
