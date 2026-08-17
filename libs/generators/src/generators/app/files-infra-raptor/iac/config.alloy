@@ -4,7 +4,7 @@
 prometheus.scrape "app" {
   targets = [{
     __address__      = "backend:3000",
-    __metrics_path__ = "/metrics",
+    __metrics_path__ = "/api/metrics",
   }]
   scrape_interval = "30s"
 
