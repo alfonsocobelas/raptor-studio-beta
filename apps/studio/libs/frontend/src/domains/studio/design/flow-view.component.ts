@@ -34,6 +34,7 @@ import {
   type NodeBox,
   type NodePosition
 } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { CanvasControlsComponent } from './canvas-controls.component'
 import { CanvasViewportService } from './canvas-viewport.service'
@@ -57,6 +58,9 @@ interface FlowDiagramEdge {
 /** Nombre de partida de una acción recién creada: mientras lo conserve, es un borrador. */
 const NEW_ACTION_TEXT = 'Nueva acción'
 
+/** Valor de «— sin entidad —»: la cadena vacía la lee el desplegable como «nada elegido». */
+const NONE = '__sin_entidad__'
+
 /** Lienzo sin medida (jsdom, primer render): un tamaño nominal mantiene el aterrizaje. */
 export const FLOW_CANVAS_FALLBACK = { width: 1280, height: 720 } as const
 
@@ -75,7 +79,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 @Component({
   selector: 'studio-flow-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, CanvasControlsComponent],
+  imports: [FormsModule, AppSelect, CanvasControlsComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)', '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (!store.flows().length) {
@@ -358,18 +362,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                           (keydown.enter)="confirmEdit()"
                           data-testid="flow-node-text-input"
                         />
-                        <select
-                          class="border-input rounded border px-1 py-0.5 text-[10px]"
-                          name="stepEntity"
-                          [ngModel]="step.entity ?? ''"
+                        <app-select
+                          class="block"
+                          [options]="entityOptions()"
+                          [ngModel]="step.entity ?? NONE"
+                          [ngModelOptions]="{ standalone: true }"
                           (ngModelChange)="setEntity(step.id, $event)"
                           data-testid="flow-node-entity-select"
-                        >
-                          <option value="">— sin entidad —</option>
-                          @for (resource of store.resources(); track resource.name) {
-                            <option [value]="resource.name">{{ resource.labelSingular }}</option>
-                          }
-                        </select>
+                        />
                       </div>
                     } @else {
                       <!-- lo que se recorta se lee entero acercando el cursor: las acciones son
@@ -529,18 +529,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                     (keydown.enter)="confirmEdit()"
                     data-testid="flow-node-text-input"
                   />
-                  <select
-                    class="border-input rounded border px-1 py-0.5 text-[10px]"
-                    name="nodeEntity"
-                    [ngModel]="item.node.entity ?? ''"
+                  <app-select
+                    class="block"
+                    [options]="entityOptions()"
+                    [ngModel]="item.node.entity ?? NONE"
+                    [ngModelOptions]="{ standalone: true }"
                     (ngModelChange)="setEntity(item.node.id, $event)"
                     data-testid="flow-node-entity-select"
-                  >
-                    <option value="">— sin entidad —</option>
-                    @for (resource of store.resources(); track resource.name) {
-                      <option [value]="resource.name">{{ resource.labelSingular }}</option>
-                    }
-                  </select>
+                  />
                 </div>
               } @else {
                 <!-- como en la referencia: etiqueta de tipo arriba, el texto debajo, y el
@@ -738,6 +734,13 @@ export class FlowViewComponent {
 
   protected readonly selected = signal<FlowSelection | null>(null)
   protected readonly editing = signal<string | null>(null)
+
+  /** «Sin entidad» es una elección de la lista, no un hueco: necesita su propio valor. */
+  protected readonly NONE = NONE
+  protected readonly entityOptions = computed<AppSelectOption[]>(() => [
+    { value: NONE, label: '— sin entidad —' },
+    ...this.store.resources().map(resource => ({ value: resource.name, label: resource.labelSingular }))
+  ])
   /** Acción recién creada y aún sin nombre: se descarta si se pulsa fuera sin tocarla. */
   private readonly draft = signal<string | null>(null)
   protected readonly linking = signal<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
@@ -1172,8 +1175,8 @@ export class FlowViewComponent {
   protected setEntity(id: string, entity: string): void {
     const name = this.activeName()
     if (!name) return
-    // '' significa quitar la alusión: el patch debe DEJAR el campo fuera, no mandar cadena vacía
-    this.store.updateFlowNode(name, id, entity ? { entity } : { entity: undefined })
+    // «sin entidad» quita la alusión: el patch debe DEJAR el campo fuera, no mandar un valor
+    this.store.updateFlowNode(name, id, entity === NONE ? { entity: undefined } : { entity })
   }
 
   /** Arrastre de bloques: igual que las cajas del modelo, posiciones en memoria. */

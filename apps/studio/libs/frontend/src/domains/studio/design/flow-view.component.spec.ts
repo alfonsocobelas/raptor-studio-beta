@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { INITIAL_VIEWPORT, flowLoosePosition, flowNodeSize } from '@app/shared/domain'
+import { chooseInSelect, selectValueLabel } from '../../../shared/components/ui/select.harness'
 import { ActiveViewService } from './active-view.service'
 import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
@@ -283,6 +284,28 @@ describe('FlowViewComponent — tarjetas de acciones', () => {
     expect(active.flowNode()).toBeNull()
     // y sin nada elegido no hay botón de borrar flotando
     expect(testId(fixture, 'flow-delete-selected')).toBeNull()
+  })
+
+  // El desplegable nativo lo pinta el sistema operativo, no el CSS del estudio (ADR-003).
+  it('la entidad del paso se elige con el desplegable del estudio, no con el del navegador', async () => {
+    store.addResource('Pedido')
+    const fixture = mount()
+
+    testId(fixture, 'flow-step-marcar-la-fila')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    fixture.detectChanges()
+    await fixture.whenStable()
+    fixture.detectChanges()
+
+    expect(fixture.nativeElement.querySelector('select')).toBeNull()
+    expect(selectValueLabel(fixture, 'flow-node-entity-select')).toBe('— sin entidad —')
+
+    await chooseInSelect(fixture, 'flow-node-entity-select', 'Pedido')
+
+    expect(store.flows()[0].nodes.find(node => node.id === 'marcar-la-fila')?.entity).toBe('pedido')
+
+    await chooseInSelect(fixture, 'flow-node-entity-select', '— sin entidad —')
+
+    expect(store.flows()[0].nodes.find(node => node.id === 'marcar-la-fila')?.entity).toBeUndefined()
   })
 
   it('ya no hay «+» en las flechas: insertar es cosa de la tarjeta', () => {
