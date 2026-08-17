@@ -270,5 +270,24 @@ export class StorageModule {}
       expect(variables).toContain('default     = "demo"')
       expect(variables).not.toContain('default     = "acelerador"')
     })
+
+    /**
+     * TASK-05 (spec 51): el compose de producción del VPS, con Alloy raspando /metrics y
+     * empujando a Grafana Cloud — el flujo va de dentro hacia fuera porque Grafana Cloud no
+     * puede alcanzar un VPS tras el firewall (ni conviene abrirlo).
+     */
+    it('emite el compose de producción con Alloy raspando /metrics hacia Grafana Cloud', () => {
+      const compose = read('iac/docker-compose.prod.yml')
+      const alloy = read('iac/config.alloy')
+
+      expect(compose).toContain('grafana/alloy')
+      expect(compose).toContain('caddy')
+      expect(compose).toContain('/srv/data')
+      expect(alloy).toContain('prometheus.scrape')
+      expect(alloy).toContain('/metrics')
+      expect(alloy).toContain('type        = "Bearer"')
+      expect(alloy).toContain('METRICS_TOKEN')
+      expect(alloy).toContain('prometheus.remote_write')
+    })
   })
 })

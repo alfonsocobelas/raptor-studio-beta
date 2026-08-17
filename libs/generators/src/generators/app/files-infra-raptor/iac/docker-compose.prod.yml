@@ -1,0 +1,75 @@
+# Compose de producción del VPS de Raptor Cloud. Se copia a /srv del servidor (el
+# cloud-init deja Docker listo) y se levanta con:
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+#
+# El .env vive SOLO en el servidor (nunca en el repo) y trae: BACKEND_IMAGE,
+# FRONTEND_IMAGE, POSTGRES_PASSWORD, METRICS_TOKEN, GRAFANA_CLOUD_PROM_URL,
+# GRAFANA_CLOUD_PROM_USER, GRAFANA_CLOUD_PROM_TOKEN y las INFISICAL_* del backend.
+# El resto de secretos de la app (typeorm, R2, Loki…) NO van aquí: los resuelve el
+# backend contra Infisical al arrancar, por los marcadores vault.* de su config.
+name: app-prod
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # el Caddyfile lo escribe el cloud-init en /srv/Caddyfile
+      - /srv/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/data/caddy:/data
+    depends_on:
+      - backend
+      - frontend
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=prod
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_ENV=${INFISICAL_ENV:-prod}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=app
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app -d app']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      # el volumen de Hetzner, enlazado por el cloud-init: sobrevive al servidor
+      - /srv/data/postgres:/var/lib/postgresql/data
+
+  # Raspa /metrics del backend en la red interna del compose y lo empuja a Grafana Cloud
+  # (remote_write): el flujo va de dentro hacia fuera porque Grafana Cloud no puede
+  # alcanzar un VPS tras el firewall. Sin plugin `metrics` en la app, sobra: bórralo.
+  alloy:
+    image: grafana/alloy:latest
+    restart: unless-stopped
+    command: ['run', '/etc/alloy/config.alloy']
+    environment:
+      - METRICS_TOKEN=${METRICS_TOKEN}
+      - GRAFANA_CLOUD_PROM_URL=${GRAFANA_CLOUD_PROM_URL}
+      - GRAFANA_CLOUD_PROM_USER=${GRAFANA_CLOUD_PROM_USER}
+      - GRAFANA_CLOUD_PROM_TOKEN=${GRAFANA_CLOUD_PROM_TOKEN}
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+    depends_on:
+      - backend

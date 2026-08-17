@@ -58,6 +58,20 @@ Se hacen **una vez, a mano**. Aprovisionarlos con Terraform exigiría dos provee
 4. **Sentry** (errores, opcional) — crear proyecto Node y copiar el DSN.
 5. **Brevo** (email) — verificar el dominio remitente y crear la clave de API.
 
+## Métricas (plugin `metrics` + Grafana Alloy)
+
+Si la app se generó con `--plugins=metrics`, expone `/metrics` protegido por token (sección
+`metrics` de su config). Grafana Cloud **no puede raspar** un VPS tras el firewall — ni
+conviene abrirle un puerto—, así que el flujo va de dentro hacia fuera: el servicio `alloy`
+del compose (`docker-compose.prod.yml`) raspa `backend:3000/metrics` en la red interna con
+el bearer token y hace `remote_write` a Grafana Cloud (`config.alloy`).
+
+Del stack gratuito de Grafana Cloud se copian al `.env` del servidor: la URL de
+`remote_write` de Prometheus (`GRAFANA_CLOUD_PROM_URL`), el id de usuario
+(`GRAFANA_CLOUD_PROM_USER`) y un token de escritura (`GRAFANA_CLOUD_PROM_TOKEN`).
+`METRICS_TOKEN` es el mismo valor que el secreto `METRICS_TOKEN` de Infisical que resuelve
+`vault.metrics.token`. Sin el plugin, el servicio `alloy` del compose sobra: bórralo.
+
 ## Secretos de Infisical ↔ marcadores `vault.*`
 
 El loader del back traduce cada marcador a un secreto en SCREAMING_SNAKE: `vault.x.y` →
@@ -69,6 +83,7 @@ El loader del back traduce cada marcador a un secreto en SCREAMING_SNAKE: `vault
 | `vault.storage.accessKeyId`    | `STORAGE_ACCESSKEYID`     |
 | `vault.storage.secretAccessKey`| `STORAGE_SECRETACCESSKEY` |
 | `vault.loki.apiKey`            | `LOKI_APIKEY`             |
+| `vault.metrics.token`          | `METRICS_TOKEN`           |
 | `vault.sentry.dsn`             | `SENTRY_DSN`              |
 | `vault.brevo.apiKey`           | `BREVO_APIKEY`            |
 
