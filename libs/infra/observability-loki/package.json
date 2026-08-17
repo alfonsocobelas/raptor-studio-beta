@@ -7,7 +7,6 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
-    "winston": "3.19.0",
     "winston-transport": "^4.7.0"
   },
   "publishConfig": {
