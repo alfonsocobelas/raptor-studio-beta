@@ -89,6 +89,10 @@ export interface RoleSummary {
   create: number
   edit: number
   delete: number
+  /** Entidades donde el rol tiene TODAS las capacidades, transiciones incluidas */
+  full: number
+  /** Entidades donde tiene alguna pero no todas; sin ninguna no cuenta en ningún lado */
+  partial: number
 }
 
 /** Métricas del panel derecho; admin puede todo por definición. */
@@ -96,12 +100,20 @@ export function roleSummary(resources: DraftResource[], role: AccessActorRole): 
   const count = (pick: (r: DraftResource) => AccessRole[]) =>
     role === 'admin' ? resources.length : resources.filter(r => pick(r).includes(role)).length
 
+  // el grado de acceso se mide sobre las MISMAS celdas que pinta la tabla, transiciones incluidas
+  const grades = accessRows(resources).map(row => ({
+    has: row.cells.filter(cell => role === 'admin' || cell.roles.includes(role)).length,
+    of: row.cells.length
+  }))
+
   return {
     total: resources.length,
     view: count(r => resolveAccess(r).view),
     create: count(r => resolveAccess(r).create),
     edit: count(r => resolveAccess(r).edit),
-    delete: count(r => resolveAccess(r).delete)
+    delete: count(r => resolveAccess(r).delete),
+    full: grades.filter(g => g.has === g.of).length,
+    partial: grades.filter(g => g.has > 0 && g.has < g.of).length
   }
 }
 

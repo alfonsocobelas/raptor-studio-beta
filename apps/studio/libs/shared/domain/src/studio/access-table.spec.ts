@@ -110,19 +110,47 @@ describe('roleSummary', () => {
   it('counts visible entities and write capabilities for a role', () => {
     const summary = roleSummary([cliente(), muestra()], 'user')
 
-    expect(summary).toEqual({ total: 2, view: 2, create: 2, edit: 2, delete: 1 })
+    // cliente: política actual (todo menos nada) → completo. muestra: delete vacío → parcial
+    expect(summary).toEqual({ total: 2, view: 2, create: 2, edit: 2, delete: 1, full: 1, partial: 1 })
   })
 
   it('admin sees and can do everything', () => {
     const summary = roleSummary([cliente(), muestra()], 'admin')
 
-    expect(summary).toEqual({ total: 2, view: 2, create: 2, edit: 2, delete: 2 })
+    expect(summary).toEqual({ total: 2, view: 2, create: 2, edit: 2, delete: 2, full: 2, partial: 0 })
   })
 
   it('viewer with the default policy only views', () => {
     const summary = roleSummary([cliente()], 'viewer')
 
-    expect(summary).toEqual({ total: 1, view: 1, create: 0, edit: 0, delete: 0 })
+    expect(summary).toEqual({ total: 1, view: 1, create: 0, edit: 0, delete: 0, full: 0, partial: 1 })
+  })
+
+  it('full means EVERY capability, transitions included', () => {
+    // muestra tiene máquina: sin su transición no está completa aunque tenga las cuatro CRUD
+    const casi = {
+      ...muestra(),
+      access: {
+        view: ['user' as const],
+        create: ['user' as const],
+        edit: ['user' as const],
+        delete: ['user' as const],
+        transitions: { validate: [] }
+      }
+    }
+    expect(roleSummary([casi], 'user')).toMatchObject({ full: 0, partial: 1 })
+
+    const entera = { ...casi, access: { ...casi.access, transitions: { validate: ['user' as const] } } }
+    expect(roleSummary([entera], 'user')).toMatchObject({ full: 1, partial: 0 })
+  })
+
+  it('an entity with nothing granted counts as neither full nor partial', () => {
+    const nada = {
+      ...cliente(),
+      access: { view: [], create: [], edit: [], delete: [] }
+    }
+
+    expect(roleSummary([nada], 'user')).toMatchObject({ total: 1, full: 0, partial: 0 })
   })
 })
 

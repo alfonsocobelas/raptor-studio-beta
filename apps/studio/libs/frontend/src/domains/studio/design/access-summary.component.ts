@@ -21,8 +21,8 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
           <h2 class="studio-eyebrow mb-3">{{ roleLabel() }} · resumen</h2>
           <dl class="space-y-2 text-sm">
             <div class="flex items-baseline justify-between" data-testid="access-summary-view">
-              <dt class="text-muted-foreground">Entidades visibles</dt>
-              <dd class="font-semibold text-emerald-600">{{ summary().view }} de {{ summary().total }}</dd>
+              <dt class="text-muted-foreground">Puede ver</dt>
+              <dd class="text-primary font-semibold">{{ summary().view }}</dd>
             </div>
             <div class="flex items-baseline justify-between" data-testid="access-summary-create">
               <dt class="text-muted-foreground">Puede crear</dt>
@@ -36,11 +36,19 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
               <dt class="text-muted-foreground">Puede borrar</dt>
               <dd class="text-primary font-semibold">{{ summary().delete }}</dd>
             </div>
+            <div
+              class="border-border/60 mt-1 flex items-baseline justify-between border-t pt-2"
+              data-testid="access-summary-full"
+            >
+              <dt class="text-muted-foreground">Acceso completo</dt>
+              <dd class="font-semibold text-emerald-600">{{ summary().full }} de {{ summary().total }}</dd>
+            </div>
           </dl>
-          <!-- proporción de entidades: edita (acento) / solo ve (verde) / sin acceso (gris) -->
+          <!-- proporción de entidades: acceso completo (verde) / parcial (acento) / ninguno (gris).
+               El verde es el premio: solo lo gana la entidad con TODAS sus capacidades. -->
           <div class="bg-foreground/10 mt-4 flex h-1.5 overflow-hidden rounded-full" aria-hidden="true">
-            <div class="bg-primary" [style.width.%]="editShare()"></div>
-            <div class="bg-emerald-500" [style.width.%]="viewOnlyShare()"></div>
+            <div class="bg-emerald-500" [style.width.%]="fullShare()" data-testid="access-bar-full"></div>
+            <div class="bar-partial" [style.width.%]="partialShare()" data-testid="access-bar-partial"></div>
           </div>
         </section>
 
@@ -64,6 +72,12 @@ const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta
     }
   `,
   styles: `
+    /* El tramo parcial en el naranja de la casa: con --primary salía gris (tinta al 50%) y no se
+       distinguía del hueco vacío del carril, que es justo lo que significa «sin acceso». */
+    .bar-partial {
+      background-color: var(--brand);
+      opacity: 0.7;
+    }
     .chip {
       border: 1px solid hsl(var(--border));
       border-radius: 0.5rem;
@@ -83,10 +97,13 @@ export class AccessSummaryComponent {
   protected readonly roleLabel = computed(() => ROLE_LABELS[this.ui.role()])
   protected readonly summary = computed(() => roleSummary(this.store.resources(), this.ui.role()))
 
-  protected readonly editShare = computed(() => (this.summary().edit / this.summary().total) * 100)
-  protected readonly viewOnlyShare = computed(
-    () => (Math.max(0, this.summary().view - this.summary().edit) / this.summary().total) * 100
-  )
+  protected readonly fullShare = computed(() => this.share(this.summary().full))
+  protected readonly partialShare = computed(() => this.share(this.summary().partial))
+
+  private share(count: number): number {
+    const total = this.summary().total
+    return total === 0 ? 0 : (count / total) * 100
+  }
 
   /** El rol del que se copia: el OTRO editable (a admin no se le copia, se es admin o no) */
   protected readonly otherRole = computed<AccessRole>(() => (this.ui.role() === 'user' ? 'viewer' : 'user'))
