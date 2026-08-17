@@ -64,6 +64,26 @@ describe('proveedor infra=azure', () => {
       .map(change => change.path.replace('apps/demo/', ''))
 
     expect(azureOnly.sort()).toEqual([
+      // el stack de Terraform del proveedor viaja dentro de la app (spec 50)
+      'iac/README.md',
+      'iac/acr.tf',
+      'iac/application-insights.tf',
+      'iac/backend.tf',
+      'iac/communication.tf',
+      'iac/container-app-backend.tf',
+      'iac/container-app-frontend.tf',
+      'iac/container-app-jobs.tf',
+      'iac/container-apps-env.tf',
+      'iac/identity.tf',
+      'iac/key-vault.tf',
+      'iac/log-analytics.tf',
+      'iac/main.tf',
+      'iac/outputs.tf',
+      'iac/postgres.tf',
+      'iac/providers.tf',
+      'iac/storage.tf',
+      'iac/variables.tf',
+      'iac/versions.tf',
       'libs/backend/src/contexts/shared/infrastructure/config/loaders/azure/azure-config-loader.ts',
       'libs/backend/src/contexts/shared/infrastructure/config/loaders/azure/azure-secret-resolver.ts',
       'libs/backend/src/contexts/shared/infrastructure/logger/azure-log-transports.ts',
