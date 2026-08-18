@@ -32,7 +32,10 @@ import { labelOfType } from './field-type-labels'
                 (ngModelChange)="rename($index, $event)"
                 [attr.data-testid]="'field-label-' + $index"
               />
+              <!-- ancho fijo: es una COLUMNA, y con el ancho del contenido cada fila empezaría
+                   en un sitio (cabe «lista de valores», la etiqueta más larga del canon) -->
               <app-select
+                class="w-[124px] shrink-0"
                 size="sm"
                 [options]="typeOptions"
                 [ngModel]="field.type"

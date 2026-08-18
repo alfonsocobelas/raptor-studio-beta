@@ -11,6 +11,8 @@ export interface AppSelectOption {
 @Component({
   selector: 'app-select',
   imports: [HlmSelectImports],
+  // en bloque: si el anfitrión fuese en línea, el w-full del disparador mediría el texto
+  host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppSelect), multi: true }],
   template: `
@@ -42,10 +44,17 @@ export class AppSelect implements ControlValueAccessor {
    */
   readonly size = input<'default' | 'sm'>('default')
 
-  // El alto va por la MISMA variante que usa el disparador (data-[size=sm]:h-8); una clase
-  // `h-*` suelta no la sustituye y el desplegable se quedaba 6px más alto que su fila.
+  /**
+   * `w-full`: el disparador de helm viene `w-fit` y se encoge hasta su etiqueta, así que una
+   * columna de desplegables quedaba con el borde izquierdo distinto en cada fila y los
+   * contenedores de ancho fijo que los envuelven (los `w-48` del código emitido) no servían
+   * de nada. El ancho lo decide quien lo coloca, como con cualquier control de formulario.
+   *
+   * El alto va por la MISMA variante que usa el disparador (data-[size=sm]:h-8); una clase
+   * `h-*` suelta no la sustituye y el desplegable se quedaba 6px más alto que su fila.
+   */
   protected readonly triggerClass = computed(() =>
-    this.size() === 'sm' ? 'data-[size=sm]:h-[26px] gap-1 px-2 py-0 text-xs' : ''
+    this.size() === 'sm' ? 'w-full data-[size=sm]:h-[26px] gap-1 px-2 py-0 text-xs' : 'w-full'
   )
 
   protected readonly value = signal<string | null>(null)
