@@ -21,5 +21,12 @@
   },
   "files": ["src/main.ts"],
   "include": ["src/**/*.ts", "../../libs/frontend/**/*.ts", "../../libs/shared/**/*.ts", "../../libs/ui/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "../../libs/**/*.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "../../libs/**/*.spec.ts",
+    "../../libs/**/*.harness.ts",
+    "../../libs/frontend/src/test-setup.ts"
+  ]
 }

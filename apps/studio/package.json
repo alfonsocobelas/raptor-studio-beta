@@ -7,6 +7,7 @@
     "web": "ng serve --proxy-config apps/frontend-app/proxy.conf.json --port 4316",
     "web:build": "ng build",
     "typecheck": "tsc -p tsconfig.json",
+    "typecheck:front": "tsc -p apps/frontend-app/tsconfig.app.json --noEmit",
     "ui:add": "nx g @spartan-ng/cli:ui",
     "lint:ui-boundaries": "! grep -rn --include='*.ts' -E '@spartan-ng|@angular/material' libs/frontend/src/domains libs/frontend/src/core || (echo '✗ Las pantallas importan la librería de componentes: usa los contratos de shared/components/ui (ADR-003)' && exit 1)",
     "test": "NODE_ENV=test jest --selectProjects unit",
