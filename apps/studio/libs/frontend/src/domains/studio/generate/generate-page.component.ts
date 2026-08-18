@@ -9,6 +9,7 @@ import {
   signal
 } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
+import type { PortsDefinition } from '@raptor/schema'
 import { firstValueFrom } from 'rxjs'
 import { DesignStore } from '../design/design-store'
 import { PreviewSettings } from '../design/preview-settings'
@@ -205,6 +206,25 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
                   placeholder="Directorio destino"
                   data-testid="wizard-directory"
                 />
+
+                <!-- puertos: el generador no puede sondear la máquina, así que se declaran aquí -->
+                <p class="studio-eyebrow mt-4 mb-1">Puertos en local</p>
+                <p class="text-muted-foreground studio-ui mb-2">
+                  Vacío = el de siempre. Cámbialos si ya tienes otra aplicación corriendo.
+                </p>
+                @for (port of portFields; track port.key) {
+                  <label class="studio-ui flex items-center justify-between gap-3">
+                    <span class="text-muted-foreground">{{ port.label }}</span>
+                    <input
+                      type="number"
+                      class="border-input bg-card studio-ui w-24 rounded-md border px-2.5 py-1.5 text-right"
+                      [value]="portValue(port.key)"
+                      (input)="setPort(port.key, $any($event.target).value)"
+                      [placeholder]="port.fallback"
+                      [attr.data-testid]="'wizard-port-' + port.key"
+                    />
+                  </label>
+                }
               </div>
             </details>
 
@@ -456,6 +476,29 @@ export class GeneratePageComponent {
     this.plugins.update(list => (list.includes(plugin) ? list.filter(p => p !== plugin) : [...list, plugin]))
   }
 
+  /** Los cuatro puertos que la app emitida publica en local, con el defecto del generador. */
+  protected readonly portFields = [
+    { key: 'api' as const, label: 'API', fallback: '3000' },
+    { key: 'web' as const, label: 'Web', fallback: '4200' },
+    { key: 'postgres' as const, label: 'Postgres', fallback: '5433' },
+    { key: 'postgresTest' as const, label: 'Postgres de test', fallback: '5434' }
+  ]
+
+  protected portValue(key: keyof PortsDefinition): string {
+    return String(this.store.ports()?.[key] ?? '')
+  }
+
+  /**
+   * Un puerto vacío (o no numérico) no viaja: se borra la clave, y si no queda ninguna se
+   * quita `ports` del diseño entero para que el emitido vuelva a los defectos del generador.
+   */
+  protected setPort(key: keyof PortsDefinition, raw: string): void {
+    const parsed = Number.parseInt(raw.trim(), 10)
+    const { [key]: _previous, ...rest } = this.store.ports() ?? {}
+    const next: PortsDefinition = Number.isFinite(parsed) ? { ...rest, [key]: parsed } : rest
+    this.store.setPorts(Object.keys(next).length ? next : undefined)
+  }
+
   /** El botón del raíl arranca la obra y lleva a verla: son el mismo gesto. */
   protected generate(): void {
     this.step.set('generate')
@@ -471,7 +514,8 @@ export class GeneratePageComponent {
         pages: this.store.pages(),
         palette: this.preview.palette(),
         brief: this.store.brief(),
-        flows: this.store.flows()
+        flows: this.store.flows(),
+        ports: this.store.ports()
       }),
       skipInstall: !this.install(),
       ...(this.directory().trim() ? { directory: this.directory().trim() } : {})

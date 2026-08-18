@@ -154,6 +154,36 @@ describe('GeneratePageComponent', () => {
       expect(green('wizard-pip-generate')).toBe(false)
     })
 
+    it('los puertos locales se eligen aquí y quedan en el diseño', async () => {
+      // sin esto toda app nace en 3000/5433/4200 y choca con cualquier otra corriendo
+      // (demo taller, 2026-08-19): el generador no puede sondear puertos, así que se declaran
+      const fixture = await mount()
+
+      const api = at(fixture, 'wizard-port-api') as HTMLInputElement
+      api.value = '3010'
+      api.dispatchEvent(new Event('input'))
+      const pg = at(fixture, 'wizard-port-postgres') as HTMLInputElement
+      pg.value = '5443'
+      pg.dispatchEvent(new Event('input'))
+      fixture.detectChanges()
+
+      expect(TestBed.inject(DesignStore).ports()).toMatchObject({ api: 3010, postgres: 5443 })
+    })
+
+    it('un puerto vaciado desaparece del diseño (vuelve al defecto del generador)', async () => {
+      const fixture = await mount()
+      const store = TestBed.inject(DesignStore)
+      store.setPorts({ api: 3010 })
+      fixture.detectChanges()
+
+      const api = at(fixture, 'wizard-port-api') as HTMLInputElement
+      api.value = ''
+      api.dispatchEvent(new Event('input'))
+      fixture.detectChanges()
+
+      expect(store.ports()).toBeUndefined()
+    })
+
     it('volver al lienzo cierra la pantalla', async () => {
       const fixture = await mount()
       let closed = false
