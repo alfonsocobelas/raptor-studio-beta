@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core'
+import { FormsModule } from '@angular/forms'
 import type { DraftField, DraftResource } from '@app/shared/domain'
+import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { formControlFor } from './form-preview'
 
 /**
@@ -11,6 +13,7 @@ import { formControlFor } from './form-preview'
 @Component({
   selector: 'studio-canvas-form-fields',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, AppSelect],
   template: `
     <div class="grid gap-4 sm:grid-cols-2">
       @for (field of resource().fields; track field.name) {
@@ -40,12 +43,14 @@ import { formControlFor } from './form-preview'
             }
             @case ('select') {
               <label class="text-sm font-medium">{{ field.label }}</label>
-              <select class="form-control">
-                <option value="">{{ selectPlaceholder(field) }}</option>
-                @for (option of selectOptions(field); track option) {
-                  <option [selected]="option === prefill(field)">{{ option }}</option>
-                }
-              </select>
+              <app-select
+                class="block w-full"
+                [placeholder]="selectPlaceholder(field)"
+                [options]="optionsFor(field)"
+                [ngModel]="prefill(field) || null"
+                [ngModelOptions]="{ standalone: true }"
+                [attr.data-testid]="'form-select-' + field.name"
+              />
             }
             @default {
               <label class="text-sm font-medium">{{ field.label }}</label>
@@ -85,14 +90,32 @@ export class CanvasFormFieldsComponent {
     return value === true || value === 'Sí'
   }
 
-  /** enum → sus etiquetas; ref → la fila del mock como única opción (es preview). */
-  protected selectOptions(field: DraftField): string[] {
-    if (field.type === 'enum') return (field.values ?? []).map(v => v.label)
-    const current = this.prefill(field)
-    return current ? [current] : []
+  /**
+   * enum → sus etiquetas; ref → la fila del mock como única opción (es preview). Valor y
+   * etiqueta coinciden: aquí nada se guarda, solo se enseña cómo se verá.
+   *
+   * Se indexan una vez por diseño: devolver un array NUEVO en cada ciclo de detección deja
+   * al desplegable con un input siempre distinto y el ciclo no cierra nunca (el runner se
+   * quedó colgado hasta que esto se memoizó).
+   */
+  private readonly optionsIndex = computed<Record<string, AppSelectOption[]>>(() => {
+    const index: Record<string, AppSelectOption[]> = {}
+    for (const field of this.resource().fields) {
+      const labels = field.type === 'enum' ? (field.values ?? []).map(v => v.label) : withValue(this.prefill(field))
+      index[field.name] = labels.map(label => ({ value: label, label }))
+    }
+    return index
+  })
+
+  protected optionsFor(field: DraftField): AppSelectOption[] {
+    return this.optionsIndex()[field.name] ?? []
   }
 
   protected selectPlaceholder(field: DraftField): string {
     return field.type === 'ref' ? 'Elegir…' : 'Seleccionar…'
   }
+}
+
+function withValue(current: string): string[] {
+  return current ? [current] : []
 }
