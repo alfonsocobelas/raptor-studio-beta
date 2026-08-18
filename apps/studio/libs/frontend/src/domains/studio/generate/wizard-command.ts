@@ -1,4 +1,4 @@
-import type { AppDefinition, BusinessBrief, BusinessFlow } from '@raptor/schema'
+import type { AppDefinition, BusinessBrief, BusinessFlow, PortsDefinition } from '@raptor/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 /**
@@ -95,6 +95,7 @@ export interface DesignRequestInput {
   palette: string
   brief?: BusinessBrief
   flows?: readonly BusinessFlow[]
+  ports?: PortsDefinition
 }
 
 /**
@@ -113,6 +114,7 @@ export function buildDesignRequest(input: DesignRequestInput): {
   palette: string
   brief?: BusinessBrief
   flows?: readonly BusinessFlow[]
+  ports?: PortsDefinition
 } {
   return {
     appName: input.name,
@@ -120,7 +122,8 @@ export function buildDesignRequest(input: DesignRequestInput): {
     pages: input.pages,
     palette: input.palette,
     ...(input.brief ? { brief: input.brief } : {}),
-    ...(input.flows?.length ? { flows: input.flows } : {})
+    ...(input.flows?.length ? { flows: input.flows } : {}),
+    ...(input.ports ? { ports: input.ports } : {})
   }
 }
 

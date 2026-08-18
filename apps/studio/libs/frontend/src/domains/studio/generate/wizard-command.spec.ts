@@ -231,6 +231,19 @@ describe('buildDesignRequest', () => {
     })
   })
 
+  it('lleva los puertos elegidos para correr en local', () => {
+    // tercera vez que un campo del contrato se queda en el lienzo: primero el brief, luego
+    // los flujos, ahora los puertos. Sin ellos toda app generada nace en 3000/5433/4200 y
+    // choca con cualquier otra corriendo (demo taller, 2026-08-19)
+    const request = buildDesignRequest({ ...design, ports: { api: 3010, web: 4321, postgres: 5443, postgresTest: 5444 } })
+
+    expect(request.ports).toEqual({ api: 3010, web: 4321, postgres: 5443, postgresTest: 5444 })
+  })
+
+  it('un diseño sin puertos no declara la clave (el generador pone sus defectos)', () => {
+    expect('ports' in buildDesignRequest({ ...design, ports: undefined })).toBe(false)
+  })
+
   it('un diseño sin brief ni flujos no declara las claves (no las manda vacías)', () => {
     const request = buildDesignRequest({ ...design, brief: undefined, flows: [] })
 

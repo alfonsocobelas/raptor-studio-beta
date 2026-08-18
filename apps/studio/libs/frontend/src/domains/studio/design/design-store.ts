@@ -13,6 +13,7 @@ import {
   type FlowNode,
   type StateMachine,
   type FlowNodeKind,
+  type PortsDefinition,
   type ResourceDefinition
 } from '@raptor/schema'
 import {
@@ -143,6 +144,8 @@ export interface Design {
   flows?: BusinessFlow[]
   /** Contexto de negocio destilado del chat (spec 22); el usuario lo ve y lo corrige */
   brief?: BusinessBrief
+  /** Puertos con los que la app correrá en local; ausente = los defectos del generador */
+  ports?: PortsDefinition
 }
 
 /**
@@ -157,6 +160,7 @@ export class DesignStore {
   private readonly _pages = signal<DesignPage[]>([])
   private readonly _flows = signal<BusinessFlow[]>([])
   private readonly _brief = signal<BusinessBrief | undefined>(undefined)
+  private readonly _ports = signal<PortsDefinition | undefined>(undefined)
   private readonly _lastError = signal<string | null>(null)
 
   readonly appName = this._appName.asReadonly()
@@ -164,6 +168,7 @@ export class DesignStore {
   readonly pages = this._pages.asReadonly()
   readonly flows = this._flows.asReadonly()
   readonly brief = this._brief.asReadonly()
+  readonly ports = this._ports.asReadonly()
   readonly lastError = this._lastError.asReadonly()
 
   /** Resource-schemas canónicos derivados de las entidades del diseño. */
@@ -177,6 +182,14 @@ export class DesignStore {
 
   setAppName(name: string): void {
     if (name.trim()) this._appName.set(name.trim())
+  }
+
+  /**
+   * Puertos con los que se levantará la app emitida. Viven en el diseño porque el
+   * autosave lo reescribe entero: lo que el lienzo no modela, lo borra.
+   */
+  setPorts(ports: PortsDefinition | undefined): void {
+    this._ports.set(ports)
   }
 
   /** El brief de la app pasa por los MISMOS topes que el schema (spec 22). */
@@ -889,6 +902,7 @@ export class DesignStore {
     this._flows.set(flows)
     // sin brief en el diseño externo, se borra: el diseño aplicado es la verdad completa
     this._brief.set(clone.brief)
+    this._ports.set(clone.ports)
     return true
   }
 

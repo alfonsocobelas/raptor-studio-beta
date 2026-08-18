@@ -842,3 +842,32 @@ describe('las transiciones de la máquina (spec 43)', () => {
     expect(machineOf(store)?.initial).toBe(b)
   })
 })
+
+describe('DesignStore — puertos locales', () => {
+  it('conserva los puertos de un diseño aplicado desde fuera', () => {
+    const store = new DesignStore()
+
+    const ok = store.applyExternal({
+      appName: 'taller',
+      resources: [],
+      pages: [],
+      ports: { api: 3010, web: 4321, postgres: 5443, postgresTest: 5444 }
+    })
+
+    expect(ok).toBe(true)
+    expect(store.ports()).toEqual({ api: 3010, web: 4321, postgres: 5443, postgresTest: 5444 })
+  })
+
+  it('un diseño sin puertos los deja sin declarar, y setPorts los cambia', () => {
+    const store = new DesignStore()
+
+    store.applyExternal({ appName: 'taller', resources: [], pages: [] })
+    expect(store.ports()).toBeUndefined()
+
+    store.setPorts({ api: 3010 })
+    expect(store.ports()).toEqual({ api: 3010 })
+
+    store.setPorts(undefined)
+    expect(store.ports()).toBeUndefined()
+  })
+})

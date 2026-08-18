@@ -156,7 +156,8 @@ export class DesignHistoryService {
       resources: this.store.resources(),
       pages: this.store.pages(),
       ...(this.store.flows().length ? { flows: this.store.flows() } : {}),
-      ...(this.store.brief() ? { brief: this.store.brief() } : {})
+      ...(this.store.brief() ? { brief: this.store.brief() } : {}),
+      ...(this.store.ports() ? { ports: this.store.ports() } : {})
     }
   }
 

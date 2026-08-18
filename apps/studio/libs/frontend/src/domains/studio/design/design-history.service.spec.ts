@@ -54,6 +54,34 @@ describe('DesignHistoryService', () => {
     expect(service.saveState()).toBe('saved')
   })
 
+  it('el autosave no se come los puertos del diseño', async () => {
+    // el snapshot se arma desde el estado del lienzo: lo que el lienzo no modela, lo BORRA.
+    // Pasó con los puertos (demo taller, 2026-08-19): el diseño volvía a 3000/5433 y la app
+    // no arrancaba junto a otra
+    TestBed.inject(DesignHistoryService)
+    TestBed.tick()
+
+    store.applyExternal({
+      appName: 'taller',
+      resources: [],
+      pages: [],
+      ports: { api: 3010, web: 4321, postgres: 5443, postgresTest: 5444 }
+    })
+    TestBed.tick()
+    store.addResource('Orden')
+    settle()
+
+    const put = http.expectOne(req => req.method === 'PUT')
+    expect((put.request.body as { ports?: unknown }).ports).toEqual({
+      api: 3010,
+      web: 4321,
+      postgres: 5443,
+      postgresTest: 5444
+    })
+    put.flush({ slug: 'taller' })
+    await microtasks()
+  })
+
   it('el primer guardado deriva el slug del appName y lo fija como activo', async () => {
     TestBed.inject(DesignHistoryService)
     TestBed.tick()
