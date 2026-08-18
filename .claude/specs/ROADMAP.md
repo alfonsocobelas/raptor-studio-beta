@@ -348,3 +348,16 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
       registrada la reclamación al proveedor), y el cuerpo honesto acaba siendo solo guardas.
     Es la categoría 2 de reglas de negocio: una precondición declarada sobre campos y
     adjuntos, derivable a guarda en el agregado + 409 + botón deshabilitado en la ficha.
+
+25. **Una tabla en una vista con KPIs se emite en otra pantalla, y se come el título de la
+    siguiente.** `designPagesToAppPages` traduce el bloque `kpis` a la página `dashboard` (que solo
+    lleva widgets) y la tabla de la MISMA vista a una página de listado independiente; como el
+    título ya lo gastó el dashboard, ese listado sale sin etiqueta y hereda el plural del recurso.
+    Si otra vista repite la tabla de ese recurso, se descarta en silencio (`listed`) **con su
+    título**. Efecto medido en la demo taller: la vista «Panel» (kpis + tabla de órdenes) emitió
+    panel sin tabla, y la vista «Órdenes» desapareció — el menú dice «Órdenes de reparación».
+    `generableHere` no lo marca: para el lienzo esa tabla es emitible. Dos arreglos posibles, y el
+    primero no es opcional: (a) que el lienzo diga la verdad — bloque duplicado o tabla bajo KPIs
+    marcados como «se emitirá como pantalla aparte» / «ya emitido en otra vista»; (b) decidir si el
+    arquetipo dashboard debe poder llevar el listado debajo de los widgets, que es lo que el
+    diseñador dibuja y lo que un panel suele ser. Ver ROADMAP 23: el lienzo no puede mentir.
