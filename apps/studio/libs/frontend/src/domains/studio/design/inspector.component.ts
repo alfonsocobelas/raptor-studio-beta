@@ -25,8 +25,9 @@ import { labelOfType } from './field-type-labels'
         <div class="space-y-2">
           @for (field of resource.fields; track $index) {
             <div class="flex items-center gap-1">
+              <!-- el nombre se lee como texto: la caja solo aparece cuando se va a escribir en él -->
               <input
-                class="border-input w-24 min-w-0 flex-1 rounded border px-2 py-1 text-xs"
+                class="hover:border-input focus:border-input w-24 min-w-0 flex-1 rounded border border-transparent px-2 py-1 text-xs outline-none"
                 [ngModel]="field.label"
                 (ngModelChange)="rename($index, $event)"
                 [attr.data-testid]="'field-label-' + $index"
