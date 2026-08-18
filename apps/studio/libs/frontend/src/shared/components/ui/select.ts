@@ -20,7 +20,7 @@ export interface AppSelectOption {
       (valueChange)="onSelect($event)"
       [itemToString]="toLabel"
     >
-      <hlm-select-trigger [buttonId]="controlId()">
+      <hlm-select-trigger [buttonId]="controlId()" [size]="size()" [class]="triggerClass()">
         <hlm-select-value [placeholder]="placeholder()" />
       </hlm-select-trigger>
       <hlm-select-content *hlmSelectPortal>
@@ -36,6 +36,17 @@ export class AppSelect implements ControlValueAccessor {
   readonly placeholder = input('')
   readonly controlId = input('')
   readonly disabled = input(false)
+  /**
+   * `sm` para las filas densas de un panel, donde el tamaño normal deja el desplegable
+   * más alto y con más letra que el texto al que acompaña.
+   */
+  readonly size = input<'default' | 'sm'>('default')
+
+  // El alto va por la MISMA variante que usa el disparador (data-[size=sm]:h-8); una clase
+  // `h-*` suelta no la sustituye y el desplegable se quedaba 6px más alto que su fila.
+  protected readonly triggerClass = computed(() =>
+    this.size() === 'sm' ? 'data-[size=sm]:h-[26px] gap-1 px-2 py-0 text-xs' : ''
+  )
 
   protected readonly value = signal<string | null>(null)
   // Deshabilitado por dos vías: el input directo y el que impone el formulario

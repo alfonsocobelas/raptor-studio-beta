@@ -364,6 +364,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         />
                         <app-select
                           class="block"
+                          size="sm"
                           [options]="entityOptions()"
                           [ngModel]="step.entity ?? NONE"
                           [ngModelOptions]="{ standalone: true }"
@@ -531,6 +532,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                   />
                   <app-select
                     class="block"
+                    size="sm"
                     [options]="entityOptions()"
                     [ngModel]="item.node.entity ?? NONE"
                     [ngModelOptions]="{ standalone: true }"

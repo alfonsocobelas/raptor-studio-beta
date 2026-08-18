@@ -33,6 +33,7 @@ import { labelOfType } from './field-type-labels'
                 [attr.data-testid]="'field-label-' + $index"
               />
               <app-select
+                size="sm"
                 [options]="typeOptions"
                 [ngModel]="field.type"
                 [ngModelOptions]="{ standalone: true }"
