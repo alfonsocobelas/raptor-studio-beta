@@ -11,11 +11,7 @@ export const boutique = defineApp({
   pages: [
     {
       kind: 'dashboard',
-      widgets: [
-        { kind: 'kpi-total', resource: 'garment' },
-        { kind: 'kpi-total', resource: 'supplier' },
-        { kind: 'kpi-total', resource: 'movement' }
-      ]
+      blocks: [{ kind: 'metrics', resources: ['garment', 'supplier', 'movement'] }]
     },
     { kind: 'resource', resource: 'garment' },
     { kind: 'resource', resource: 'supplier' },

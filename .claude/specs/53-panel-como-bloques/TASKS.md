@@ -6,14 +6,18 @@
 
 ---
 
-- [ ] **TASK-01**: contrato — `BlockWidth`, `DashboardBlock`, `DashboardPage.blocks`; se retiran
+- [x] **TASK-01**: contrato — `BlockWidth`, `DashboardBlock`, `DashboardPage.blocks`; se retiran
       `PageWidget` y `tables`. `validateDashboard` recorre bloques conservando sus reglas (duplicado
       por `kind:recurso:campo`, campos obligatorios por kind, `width` acotado). Tests en
       `define-app.spec.ts`. El repo NO compila al terminar esta tarea (los app-schemas siguen en
       `widgets`): se cierra con la 02 antes de dar nada por verde.
 
-- [ ] **TASK-02**: los cuatro app-schemas del repo (`golden`, `boutique`, `demo`, `solaris`) pasan a
-      `blocks`, y `composeFlat` emite su bloque `metrics`. Con esto el repo vuelve a compilar.
+- [x] **TASK-02**: los cuatro app-schemas del repo (`golden`, `boutique`, `demo`, `solaris`) pasan a
+      `blocks`, y `composeFlat` emite su bloque `metrics`. En `solaris` las dos métricas estaban
+      intercaladas entre los analíticos: se agrupan, porque la plantilla siempre las emitió juntas y
+      primero — así el emitido no se mueve.
+      **Corrección del plan**: el repo NO vuelve a compilar aquí, sino tras la 03 — `composeApp`
+      también lee `widgets`/`tables` y su reescritura es la 03. El tramo sin compilar cubre 01→03.
 
 - [ ] **TASK-03**: composición — `ComposedDashboardBlock` y `dashboardBlocks` sustituyen a
       `kpiModels`/`analytics`/`dashboardTables`; el ancho se resuelve a `'full'`; las validaciones de
@@ -35,7 +39,7 @@
 
 ## Orden y por qué
 
-La 01 y la 02 son un par: la ruptura seca del contrato deja el repo roto entre medias, y es
-deliberado — así nadie puede olvidarse de migrar un app-schema. La 03 y la 04 van detrás porque
+La 01, la 02 y la 03 son un tramo: la ruptura seca del contrato deja el repo roto entre medias, y es
+deliberado — así nadie puede olvidarse de migrar un consumidor. La 03 y la 04 van detrás porque
 consumen el contrato ya migrado, y la frontera (05) va al final porque es el único consumidor que
 puede vivir con el modelo viejo mientras tanto.

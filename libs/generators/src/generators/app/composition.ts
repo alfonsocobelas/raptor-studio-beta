@@ -60,7 +60,7 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
     pages.unshift({
       kind: 'dashboard',
       label: 'Dashboard',
-      widgets: models.map(model => ({ kind: 'kpi-total', resource: model.name }))
+      blocks: [{ kind: 'metrics', resources: models.map(model => model.name) }]
     })
   }
   // la composición plana nunca metió listados en el panel: se conserva idéntica

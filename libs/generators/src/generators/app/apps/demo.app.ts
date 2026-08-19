@@ -12,12 +12,7 @@ export const demo = defineApp({
   pages: [
     {
       kind: 'dashboard',
-      widgets: [
-        { kind: 'kpi-total', resource: 'customer' },
-        { kind: 'kpi-total', resource: 'contract' },
-        { kind: 'kpi-total', resource: 'license' },
-        { kind: 'kpi-total', resource: 'project' }
-      ]
+      blocks: [{ kind: 'metrics', resources: ['customer', 'contract', 'license', 'project'] }]
     },
     { kind: 'resource', resource: 'customer' },
     { kind: 'resource', resource: 'contract' },

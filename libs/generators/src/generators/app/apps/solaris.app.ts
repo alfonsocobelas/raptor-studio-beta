@@ -65,10 +65,11 @@ export const solaris = defineApp({
     {
       kind: 'dashboard',
       label: 'Panel',
-      widgets: [
-        { kind: 'kpi-total', resource: 'installation' },
+      // las dos métricas iban intercaladas entre los analíticos, pero la plantilla siempre las
+      // emitió juntas y primero: agrupadas aquí, el emitido no se mueve (spec 53)
+      blocks: [
+        { kind: 'metrics', resources: ['installation', 'account'] },
         { kind: 'kpi-count', resource: 'installation', field: 'status', equals: 'in_progress', label: 'En obra ahora' },
-        { kind: 'kpi-total', resource: 'account' },
         { kind: 'count-by', resource: 'installation', field: 'status', label: 'Obras por estado' },
         { kind: 'series', resource: 'worklog', field: 'workedOn', label: 'Partes por mes' }
       ]
