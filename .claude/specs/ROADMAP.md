@@ -378,3 +378,19 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 >
 > Deuda de proceso anotada tres veces ya: la suite del estudio caduca a 5 s con la máquina cargada.
 > Toca subir `testTimeout` o quitarle a esas specs la dependencia del arranque de Angular.
+
+26. **Pestañas maestro + tabla relacionada: DESCARTADA** (2026-08-19, decisión de Alfonso al terminar
+    la spec 53). Motivo suyo, y es bueno: una fila de pestañas sobre registros **no escala con el
+    volumen** (una entidad tiene cientos), y la pregunta que responde —«qué le pasa a ESTA máquina»—
+    ya se contesta en la vista del recurso con su filtro. No se implementa.
+
+27. **Lo que un panel debería llevar es un RESUMEN, no un listado** (misma conversación, el hallazgo
+    que deja la 53 abierta por arriba). Alfonso: «las tablas serían un resumen de lo que hay a modo
+    informativo, igual que los KPIs». Eso hoy NO se puede emitir: un resumen de verdad (totales por
+    grupo, sumas, medias, «las 5 más urgentes» con criterio de negocio) exige **entidades de dominio
+    nuevas** — un modelo de lectura/proyección que el acelerador no tiene. Lo que hay es su versión
+    pobre: `count-by` y `kpi-count`, conteos filtrados sobre el endpoint de listado (sin sumas ni
+    medias, ver la nota de la spec 32). Consecuencia práctica: el bloque `table` del panel sigue
+    siendo legal —el modelo de la 53 no opina— pero **no es lo que hace útil a un panel**, y meterlo
+    en un diseño solo repite lo que la vista del recurso ya enseña. El candidato de verdad es la
+    proyección de lectura, y es una spec grande: dominio + endpoint + vocabulario del panel.
