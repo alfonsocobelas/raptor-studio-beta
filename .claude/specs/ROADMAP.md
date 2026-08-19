@@ -361,3 +361,9 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     marcados como «se emitirá como pantalla aparte» / «ya emitido en otra vista»; (b) decidir si el
     arquetipo dashboard debe poder llevar el listado debajo de los widgets, que es lo que el
     diseñador dibuja y lo que un panel suele ser. Ver ROADMAP 23: el lienzo no puede mentir.
+
+> **Punto 25 resuelto** por la spec 52 (2026-08-19): el panel emite los listados que el diseñador
+> dibuja en su vista, y la tabla repetida en su propia vista conserva pantalla y título. La app de
+> oro estrena la combinación, así que el gate ya la cubre. Queda anotada una trampa de proceso: el
+> `studio-api` corre con `ts-node` y no recarga — tras tocar la frontera o los generadores hay que
+> reiniciarlo antes de generar desde el estudio, o se emite con el código viejo.

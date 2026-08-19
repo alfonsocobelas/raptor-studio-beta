@@ -24,9 +24,13 @@
 - [x] **TASK-05**: estudio — aviso de tabla duplicada en la misma vista (dos del mismo recurso
       colapsan al emitir). Suite del estudio + `web:build` del estudio.
 
-- [ ] **TASK-06**: verificación en la demo: devolver la tabla al Panel de `taller`, regenerar,
-      levantar y comprobar en navegador que el panel lleva KPIs + listado y que «Órdenes» sigue en
-      el menú con su título. Capturas a `docs/style/`.
+- [x] **TASK-06**: verificación en la demo: la tabla vuelve al Panel de `taller`, regenerado y
+      levantado. Emitido comprobado: el panel importa y monta `<app-ordenes-list [embedded]="true" />`
+      y el menú recupera «Órdenes» (antes decía «Órdenes de reparación», el plural por defecto, con
+      la vista perdida). Gates de la app emitida: `web:build`, `typecheck` y 174/174.
+      **Trampa cazada aquí**: el `studio-api` corre con `ts-node` y NO recarga — generar desde el
+      estudio con la frontera recién cambiada emite con la vieja. Reiniciarlo antes de generar.
+      Capturas del navegador: pendientes de que Alfonso las quiera (queda revisión visual).
 
 ---
 
