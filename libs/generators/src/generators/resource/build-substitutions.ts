@@ -824,7 +824,8 @@ function renderServiceSharedImports(definition: ResourceDefinition, className: s
 }
 
 function renderAngularCoreImports(features: { edit: boolean; delete: boolean }): string {
-  const base = ['ChangeDetectionStrategy', 'Component', 'computed', 'inject', 'linkedSignal']
+  // `input` siempre: el listado declara `embedded` para poder vivir dentro del panel (spec 52)
+  const base = ['ChangeDetectionStrategy', 'Component', 'computed', 'inject', 'input', 'linkedSignal']
   if (features.edit || features.delete) base.push('signal')
   return base.join(', ')
 }

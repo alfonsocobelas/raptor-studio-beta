@@ -13,7 +13,7 @@
       misma tabla en su propia vista siga emitiendo su pantalla **con su título**. Tests en
       `design-to-app.spec.ts` incluido el caso de la demo taller (Panel + Órdenes).
 
-- [ ] **TASK-03**: modo embebido del listado emitido — `embedded = input(false)` y la cabecera de
+- [x] **TASK-03**: modo embebido del listado emitido — `embedded = input(false)` y la cabecera de
       pantalla bajo `@if (!embedded())`. Gate de oro (los cuatro recursos cambian una línea) +
       `web:build`.
 

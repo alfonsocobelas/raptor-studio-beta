@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core'
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil } from '@ng-icons/lucide'
@@ -27,10 +27,12 @@ import { ContractDialogComponent, ContractFormValue } from './contract-dialog.co
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Contratos</h1>
-        <p class="text-muted-foreground">Gestión de contratos SAP y acuerdos de licenciamiento</p>
-      </div>
+      @if (!embedded()) {
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Contratos</h1>
+          <p class="text-muted-foreground">Gestión de contratos SAP y acuerdos de licenciamiento</p>
+        </div>
+      }
 
       @if (isLoading() && !hasData()) {
         <p class="text-muted-foreground py-12 text-center text-sm">Cargando contratos…</p>
@@ -74,6 +76,9 @@ import { ContractDialogComponent, ContractFormValue } from './contract-dialog.co
   `
 })
 export class ContractsListComponent {
+  /** Dentro del panel: la pantalla ya tiene su título, así que el listado no pinta el suyo (spec 52). */
+  readonly embedded = input(false)
+
   private readonly _service = inject(ContractService)
   private readonly _router = inject(Router)
   protected readonly canWrite = inject(AuthService).canWrite

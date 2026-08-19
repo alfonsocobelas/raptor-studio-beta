@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye } from '@ng-icons/lucide'
@@ -21,10 +21,12 @@ import { downloadBlob } from '../../../../../../shared/utils/download-file'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Licencias</h1>
-        <p class="text-muted-foreground">Observabilidad del parque de licencias SAP</p>
-      </div>
+      @if (!embedded()) {
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Licencias</h1>
+          <p class="text-muted-foreground">Observabilidad del parque de licencias SAP</p>
+        </div>
+      }
 
       @if (isLoading() && !hasData()) {
         <p class="text-muted-foreground py-12 text-center text-sm">Cargando licencias…</p>
@@ -59,6 +61,9 @@ import { downloadBlob } from '../../../../../../shared/utils/download-file'
   `
 })
 export class LicensesListComponent {
+  /** Dentro del panel: la pantalla ya tiene su título, así que el listado no pinta el suyo (spec 52). */
+  readonly embedded = input(false)
+
   private readonly _service = inject(LicenseService)
   private readonly _router = inject(Router)
 

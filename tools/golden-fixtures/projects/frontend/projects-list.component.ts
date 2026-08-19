@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core'
 import { Router, RouterLink } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
@@ -28,27 +28,29 @@ import { ProjectsImportComponent } from './projects-import.component'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
-          <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
+      @if (!embedded()) {
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
+            <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+              data-testid="open-import"
+              (click)="importOpen.set(true)"
+            >
+              Importar
+            </button>
+            <a
+              routerLink="//sap-licensing/projects/papelera"
+              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+              >Papelera</a
+            >
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-            data-testid="open-import"
-            (click)="importOpen.set(true)"
-          >
-            Importar
-          </button>
-          <a
-            routerLink="//sap-licensing/projects/papelera"
-            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-            >Papelera</a
-          >
-        </div>
-      </div>
+      }
 
       @if (isLoading() && !hasData()) {
         <p class="text-muted-foreground py-12 text-center text-sm">Cargando proyectos…</p>
@@ -106,6 +108,9 @@ import { ProjectsImportComponent } from './projects-import.component'
   `
 })
 export class ProjectsListComponent {
+  /** Dentro del panel: la pantalla ya tiene su título, así que el listado no pinta el suyo (spec 52). */
+  readonly embedded = input(false)
+
   private readonly _service = inject(ProjectService)
   private readonly _router = inject(Router)
   protected readonly canWrite = inject(AuthService).canWrite
