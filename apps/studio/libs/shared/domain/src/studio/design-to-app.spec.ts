@@ -23,7 +23,9 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     ])
   })
 
-  it('una vista mixta (KPIs + tabla) emite AMBAS: dashboard y listado', () => {
+  // spec 52: un panel es métricas arriba y el listado debajo. Antes la tabla de la vista del
+  // panel salía como pantalla APARTE — el panel quedaba sin tabla y el lienzo mentía.
+  it('una vista mixta (KPIs + tabla) emite UN panel que lleva ese listado dentro', () => {
     const pages: DesignPage[] = [
       {
         title: 'Panel',
@@ -34,12 +36,58 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       }
     ]
 
-    // el título de la vista lo toma el dashboard; el listado cae a su propia
-    // etiqueta para que el menú no muestre dos entradas llamadas «Panel»
     expect(designPagesToAppPages(pages)).toEqual([
-      { kind: 'dashboard', label: 'Panel', widgets: [{ kind: 'kpi-total', resource: 'paciente' }] },
-      { kind: 'resource', resource: 'cita' }
+      {
+        kind: 'dashboard',
+        label: 'Panel',
+        widgets: [{ kind: 'kpi-total', resource: 'paciente' }],
+        tables: ['cita']
+      }
     ])
+  })
+
+  it('un panel sin tablas no declara la clave (el emitido no cambia)', () => {
+    const pages: DesignPage[] = [{ title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente'] }] }]
+
+    expect('tables' in designPagesToAppPages(pages)[0]).toBe(false)
+  })
+
+  it('la tabla del panel NO le roba la pantalla ni el título a su propia vista (demo taller)', () => {
+    const pages: DesignPage[] = [
+      {
+        title: 'Panel',
+        blocks: [
+          { kind: 'kpis', resources: ['orden'] },
+          { kind: 'table', resource: 'orden' }
+        ]
+      },
+      { title: 'Órdenes', blocks: [{ kind: 'table', resource: 'orden' }] }
+    ]
+
+    expect(designPagesToAppPages(pages)).toEqual([
+      {
+        kind: 'dashboard',
+        label: 'Panel',
+        widgets: [{ kind: 'kpi-total', resource: 'orden' }],
+        tables: ['orden']
+      },
+      { kind: 'resource', resource: 'orden', label: 'Órdenes' }
+    ])
+  })
+
+  it('dos tablas del mismo recurso en el MISMO panel colapsan en una', () => {
+    const pages: DesignPage[] = [
+      {
+        title: 'Panel',
+        blocks: [
+          { kind: 'kpis', resources: ['orden'] },
+          { kind: 'table', resource: 'orden' },
+          { kind: 'table', resource: 'orden' }
+        ]
+      }
+    ]
+
+    expect(designPagesToAppPages(pages)[0]).toMatchObject({ tables: ['orden'] })
   })
 
   it('una vista de galería se emite como página de tarjetas', () => {

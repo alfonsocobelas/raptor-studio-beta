@@ -8,7 +8,7 @@
 - [x] **TASK-01**: `DashboardPage.tables` en `@raptor/schema` + validación en `defineApp`
       (recurso inexistente y repetido dentro del panel), con tests. Sin consumidores todavía.
 
-- [ ] **TASK-02**: frontera `designPagesToAppPages`: la tabla de una vista con `kpis` viaja a
+- [x] **TASK-02**: frontera `designPagesToAppPages`: la tabla de una vista con `kpis` viaja a
       `tables` del panel; la clave del `listed` pasa a `dashboard:<r>` / `resource:<r>` para que la
       misma tabla en su propia vista siga emitiendo su pantalla **con su título**. Tests en
       `design-to-app.spec.ts` incluido el caso de la demo taller (Panel + Órdenes).
