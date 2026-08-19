@@ -19,6 +19,14 @@ describe('InspectorComponent', () => {
     store.addResource('Cliente')
   })
 
+  // El inspector edita columnas. La frase de negocio es de la entidad y vive en la pestaña
+  // Entidad del panel de Modelo; aquí solo repetía lo mismo para cada bloque.
+  it('no pide la frase de negocio: eso no es una propiedad del componente', () => {
+    const fixture = mount('cliente')
+
+    expect(fixture.nativeElement.querySelector('[data-testid="resource-brief"]')).toBeNull()
+  })
+
   /**
    * El desplegable nativo lo pinta el sistema operativo, no el CSS del estudio: la lista
    * desplegada se vería del navegador. El contrato app-select (ADR-003) lo pinta el estudio.

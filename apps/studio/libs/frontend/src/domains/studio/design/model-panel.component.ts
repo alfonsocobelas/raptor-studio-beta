@@ -158,6 +158,22 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
           @case ('entity') {
             @if (active.resource(); as resource) {
               <studio-inspector [resource]="resource" (close)="active.selectResource(null)" />
+
+              <!-- la frase es de la ENTIDAD: se escribe donde se edita la entidad, no en el
+                   panel del bloque que la pinta (allí salía igual para tabla, ficha o KPIs) -->
+              <label for="resource-brief" class="text-muted-foreground mt-4 block text-xs font-semibold">
+                Para qué existe
+              </label>
+              <textarea
+                id="resource-brief"
+                class="border-input mt-1 w-full rounded border px-2 py-1 text-xs"
+                rows="2"
+                placeholder="Una frase de negocio (viaja con el diseño y aterriza en el CLAUDE.md de la app)"
+                [ngModel]="brief()"
+                [ngModelOptions]="{ standalone: true }"
+                (change)="saveBrief(resource, $event)"
+                data-testid="resource-brief"
+              ></textarea>
             } @else {
               <p class="text-muted-foreground text-xs" data-testid="entity-empty">
                 Elige una entidad en el diagrama para ver todas sus columnas.
@@ -212,6 +228,14 @@ export class ModelPanelComponent {
     return current === 'ref'
       ? [{ value: 'ref', label: 'referencia (uuid)' }]
       : SELECTABLE_FIELD_TYPES.map(type => ({ value: type, label: TYPE_LABELS[type] }))
+  }
+
+  protected readonly brief = computed(
+    () => this.store.resources().find(r => r.name === this.active.resource())?.brief ?? ''
+  )
+
+  protected saveBrief(name: string, event: Event): void {
+    this.store.setResourceBrief(name, (event.target as HTMLTextAreaElement).value)
   }
 
   protected readonly refOptions = computed<AppSelectOption[]>(() => [

@@ -63,6 +63,27 @@ describe('ModelPanelComponent', () => {
     expect(testId(fixture, 'field-empty')).toBeNull()
   })
 
+  /**
+   * La frase de negocio es de la ENTIDAD, no del bloque que la pinta: vive donde se edita la
+   * entidad. En el panel de Componente aparecía igual para una tabla, un formulario o unos
+   * KPIs de la misma entidad, que es justo lo que la hacía leerse como ruido.
+   */
+  it('la frase de negocio de la entidad se escribe en la pestaña Entidad', () => {
+    active.selectResource('producto')
+
+    const fixture = mount()
+    testId(fixture, 'model-tab-entity')?.click()
+    fixture.detectChanges()
+
+    const brief = testId(fixture, 'resource-brief') as HTMLTextAreaElement
+    expect(brief).not.toBeNull()
+
+    brief.value = 'Lo que la frutería vende'
+    brief.dispatchEvent(new Event('change'))
+
+    expect(store.resources()[0].brief).toBe('Lo que la frutería vende')
+  })
+
   it('volver a la MISMA entidad no roba la pestaña que estabas usando', () => {
     active.selectField('producto', 1)
 
