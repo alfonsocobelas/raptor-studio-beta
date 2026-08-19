@@ -3,51 +3,31 @@
 // limited to what the app generator already emits (rule 7: never ahead of it).
 // Pure TypeScript on purpose — this lib knows nothing about frameworks or tooling.
 
-export interface KpiTotalWidget {
-  kind: 'kpi-total'
-  /** Recurso cuyo total muestra la tarjeta (su existencia la valida el generador) */
-  resource: string
-}
+/** Ancho de un bloque dentro de su vista; dos `half` seguidos forman dos columnas (spec 53). */
+export type BlockWidth = 'full' | 'half'
 
-/** Una barra por valor del enum, con su conteo (spec 32). Exige campo enum filterable. */
-export interface CountByWidget {
-  kind: 'count-by'
-  resource: string
-  field: string
-  /** Título del widget; por defecto, el label del campo */
-  label?: string
-}
-
-/** Tarjeta KPI con un conteo condicionado: cuántos cumplen field = equals (spec 32). */
-export interface KpiCountWidget {
-  kind: 'kpi-count'
-  resource: string
-  field: string
-  equals: string
-  label: string
-}
-
-/** Evolución mensual de altas (últimos 12 meses) sobre un campo fecha filterable (spec 32). */
-export interface SeriesWidget {
-  kind: 'series'
-  resource: string
-  field: string
-  label?: string
-}
-
-export type PageWidget = KpiTotalWidget | CountByWidget | KpiCountWidget | SeriesWidget
+/**
+ * Un bloque del panel. El panel es una SECUENCIA de bloques como cualquier otra vista (ADR-009,
+ * spec 53): el orden y el ancho salen del dibujo, y una capacidad nueva es un `kind` más — nunca
+ * un cajón más al lado de otro. Sustituye a los widgets y a la ranura `tables` de la spec 52.
+ */
+export type DashboardBlock =
+  /** Fila de tarjetas con el total de cada recurso (antes los widgets `kpi-total`) */
+  | { kind: 'metrics'; resources: string[]; width?: BlockWidth }
+  /** Una barra por valor del enum, con su conteo (spec 32). Exige campo enum filterable. */
+  | { kind: 'count-by'; resource: string; field: string; label?: string; width?: BlockWidth }
+  /** Tarjeta con un conteo condicionado: cuántos cumplen field = equals (spec 32) */
+  | { kind: 'kpi-count'; resource: string; field: string; equals: string; label: string; width?: BlockWidth }
+  /** Evolución mensual de altas (últimos 12 meses) sobre un campo fecha filterable (spec 32) */
+  | { kind: 'series'; resource: string; field: string; label?: string; width?: BlockWidth }
+  /** El listado del recurso, embebido: mismo componente, sin su cabecera de pantalla (spec 52) */
+  | { kind: 'table'; resource: string; width?: BlockWidth }
 
 export interface DashboardPage {
   kind: 'dashboard'
   /** Label del menú; por defecto 'Dashboard' */
   label?: string
-  widgets: PageWidget[]
-  /**
-   * Listados que el panel muestra DEBAJO de los widgets, en el orden dibujado (spec 52). Un panel
-   * de negocio es métricas arriba y lo que importa debajo; sin esto la tabla que el diseñador
-   * suelta en la vista del panel acababa como una pantalla aparte.
-   */
-  tables?: string[]
+  blocks: DashboardBlock[]
 }
 
 export interface ResourcePage {

@@ -9,10 +9,7 @@ const validDefinition = (): AppDefinition => ({
   pages: [
     {
       kind: 'dashboard',
-      widgets: [
-        { kind: 'kpi-total', resource: 'customer' },
-        { kind: 'kpi-total', resource: 'contract' }
-      ]
+      blocks: [{ kind: 'metrics', resources: ['customer', 'contract'] }]
     },
     { kind: 'resource', resource: 'customer' },
     { kind: 'resource', resource: 'contract', label: 'Contratos' }
@@ -29,17 +26,17 @@ const problemsOf = (definition: AppDefinition): string[] => {
   }
 }
 
-describe('widgets analíticos — conteos con forma (spec 32)', () => {
-  const withWidgets = (widgets: object[]): AppDefinition =>
+describe('bloques analíticos del panel — conteos con forma (spec 32, modelo de la 53)', () => {
+  const withBlocks = (blocks: object[]): AppDefinition =>
     ({
       ...validDefinition(),
-      pages: [{ kind: 'dashboard', widgets }, { kind: 'resource', resource: 'contract' }]
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
     }) as AppDefinition
 
   it('acepta count-by, kpi-count y series bien formados', () => {
     const app = defineApp(
-      withWidgets([
-        { kind: 'kpi-total', resource: 'contract' },
+      withBlocks([
+        { kind: 'metrics', resources: ['contract'] },
         { kind: 'count-by', resource: 'contract', field: 'contractType' },
         { kind: 'kpi-count', resource: 'contract', field: 'status', equals: 'active', label: 'Activos' },
         { kind: 'series', resource: 'contract', field: 'startDate' }
@@ -50,25 +47,25 @@ describe('widgets analíticos — conteos con forma (spec 32)', () => {
   })
 
   it('rechaza count-by/series sin field y kpi-count sin equals o sin label', () => {
-    expect(problemsOf(withWidgets([{ kind: 'count-by', resource: 'contract' }]))).toContainEqual(
+    expect(problemsOf(withBlocks([{ kind: 'count-by', resource: 'contract' }]))).toContainEqual(
       expect.stringContaining('field')
     )
-    expect(problemsOf(withWidgets([{ kind: 'series', resource: 'contract' }]))).toContainEqual(
+    expect(problemsOf(withBlocks([{ kind: 'series', resource: 'contract' }]))).toContainEqual(
       expect.stringContaining('field')
     )
     expect(
-      problemsOf(withWidgets([{ kind: 'kpi-count', resource: 'contract', field: 'status', label: 'X' }]))
+      problemsOf(withBlocks([{ kind: 'kpi-count', resource: 'contract', field: 'status', label: 'X' }]))
     ).toContainEqual(expect.stringContaining('equals'))
     expect(
-      problemsOf(withWidgets([{ kind: 'kpi-count', resource: 'contract', field: 'status', equals: 'active' }]))
+      problemsOf(withBlocks([{ kind: 'kpi-count', resource: 'contract', field: 'status', equals: 'active' }]))
     ).toContainEqual(expect.stringContaining('label'))
   })
 
-  it('el mismo recurso admite varios widgets; el duplicado exacto no', () => {
+  it('el mismo recurso admite varios bloques; el duplicado exacto no', () => {
     expect(
       problemsOf(
-        withWidgets([
-          { kind: 'kpi-total', resource: 'contract' },
+        withBlocks([
+          { kind: 'metrics', resources: ['contract'] },
           { kind: 'count-by', resource: 'contract', field: 'contractType' }
         ])
       )
@@ -76,7 +73,7 @@ describe('widgets analíticos — conteos con forma (spec 32)', () => {
 
     expect(
       problemsOf(
-        withWidgets([
+        withBlocks([
           { kind: 'count-by', resource: 'contract', field: 'contractType' },
           { kind: 'count-by', resource: 'contract', field: 'contractType' }
         ])
@@ -153,43 +150,67 @@ describe('defineApp', () => {
     it('rejects more than one dashboard page', () => {
       const definition = validDefinition()
       definition.pages = [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'customer' }] },
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }] }
+        { kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['customer'] }] },
+        { kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['contract'] }] }
       ]
 
       expect(problemsOf(definition)).toContain('pages: at most one dashboard page is allowed (found 2)')
     })
 
-    it('accepts a dashboard that carries lists under its widgets (spec 52)', () => {
+    it('acepta un panel que lleva su listado como bloque, en el orden dibujado (spec 52/53)', () => {
       const definition = validDefinition()
       definition.pages = [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }], tables: ['contract'] },
+        {
+          kind: 'dashboard',
+          blocks: [
+            { kind: 'metrics', resources: ['contract'] },
+            { kind: 'table', resource: 'contract', width: 'full' }
+          ]
+        },
         { kind: 'resource', resource: 'contract' }
       ]
 
       expect(problemsOf(definition)).toEqual([])
     })
 
-    it('rejects a non-kebab-case table in the dashboard', () => {
+    it('rechaza un recurso que no es kebab-case en un bloque de tabla', () => {
       const definition = validDefinition()
       definition.pages = [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }], tables: ['Contract'] }
+        { kind: 'dashboard', blocks: [{ kind: 'table', resource: 'Contract' }] }
       ]
 
-      expect(problemsOf(definition)).toContain('pages[0].tables[0]: resource must be non-empty kebab-case')
+      expect(problemsOf(definition)).toContain('pages[0].blocks[0]: resource must be non-empty kebab-case')
     })
 
-    it('rejects the same list twice in one dashboard', () => {
+    it('rechaza dos veces el mismo listado en un panel', () => {
       const definition = validDefinition()
       definition.pages = [
         {
           kind: 'dashboard',
-          widgets: [{ kind: 'kpi-total', resource: 'contract' }],
-          tables: ['contract', 'contract']
+          blocks: [
+            { kind: 'table', resource: 'contract' },
+            { kind: 'table', resource: 'contract' }
+          ]
         }
       ]
 
-      expect(problemsOf(definition)).toContain("pages[0]: duplicated table 'contract'")
+      expect(problemsOf(definition)).toContain("pages[0]: duplicated block 'table:contract:'")
+    })
+
+    it('rechaza un ancho que no es full ni half', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        { kind: 'dashboard', blocks: [{ kind: 'table', resource: 'contract', width: 'tercio' }] }
+      ] as never
+
+      expect(problemsOf(definition)).toContain("pages[0].blocks[0]: width must be 'full' or 'half'")
+    })
+
+    it('rechaza un bloque de métricas sin recursos', () => {
+      const definition = validDefinition()
+      definition.pages = [{ kind: 'dashboard', blocks: [{ kind: 'metrics', resources: [] }] }]
+
+      expect(problemsOf(definition)).toContain('pages[0].blocks[0]: metrics requires at least one resource')
     })
 
     it('rejects duplicated resource pages', () => {
@@ -210,37 +231,37 @@ describe('defineApp', () => {
     })
   })
 
-  describe('dashboard widgets', () => {
-    it('rejects a dashboard without widgets', () => {
+  describe('bloques del panel', () => {
+    it('rechaza un panel sin bloques', () => {
       const definition = validDefinition()
       definition.pages = [
-        { kind: 'dashboard', widgets: [] },
+        { kind: 'dashboard', blocks: [] },
         { kind: 'resource', resource: 'customer' }
       ]
 
-      expect(problemsOf(definition)).toContain('pages[0]: dashboard requires at least one widget')
+      expect(problemsOf(definition)).toContain('pages[0]: dashboard requires at least one block')
     })
 
-    it('rejects duplicated widget resources', () => {
+    it('rechaza el bloque duplicado exacto', () => {
       const definition = validDefinition()
       definition.pages = [
         {
           kind: 'dashboard',
-          widgets: [
-            { kind: 'kpi-total', resource: 'customer' },
-            { kind: 'kpi-total', resource: 'customer' }
+          blocks: [
+            { kind: 'metrics', resources: ['customer'] },
+            { kind: 'metrics', resources: ['customer'] }
           ]
         }
       ]
 
-      expect(problemsOf(definition)).toContain("pages[0]: duplicated widget 'kpi-total:customer:'")
+      expect(problemsOf(definition)).toContain("pages[0]: duplicated block 'metrics:customer:'")
     })
 
-    it('rejects a non-kebab-case widget resource', () => {
+    it('rechaza un recurso que no es kebab-case en un bloque de métricas', () => {
       const definition = validDefinition()
-      definition.pages = [{ kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'Customer' }] }]
+      definition.pages = [{ kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['Customer'] }] }]
 
-      expect(problemsOf(definition)).toContain('pages[0].widgets[0]: resource must be non-empty kebab-case')
+      expect(problemsOf(definition)).toContain('pages[0].blocks[0]: resource must be non-empty kebab-case')
     })
   })
 

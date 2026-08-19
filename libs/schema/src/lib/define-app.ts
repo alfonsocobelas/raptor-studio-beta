@@ -85,40 +85,44 @@ function validatePages(pages: PageDefinition[]): string[] {
 function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>, index: number): string[] {
   const problems: string[] = []
 
-  if (!page.widgets.length) problems.push(`pages[${index}]: dashboard requires at least one widget`)
+  if (!page.blocks.length) problems.push(`pages[${index}]: dashboard requires at least one block`)
 
   const seen = new Set<string>()
-  page.widgets.forEach((widget, widgetIndex) => {
-    const at = `pages[${index}].widgets[${widgetIndex}]`
-    if (!KEBAB_CASE.test(widget.resource)) {
+  page.blocks.forEach((block, blockIndex) => {
+    const at = `pages[${index}].blocks[${blockIndex}]`
+    // el panel es una vista como las demás: su ancho es dato, y solo hay dos (spec 53)
+    if (block.width !== undefined && block.width !== 'full' && block.width !== 'half') {
+      problems.push(`${at}: width must be 'full' or 'half'`)
+    }
+
+    // la fila de métricas habla de VARIOS recursos; el resto de bloques, de uno
+    const resources = block.kind === 'metrics' ? block.resources : [block.resource]
+    if (block.kind === 'metrics' && !resources.length) {
+      problems.push(`${at}: metrics requires at least one resource`)
+      return
+    }
+    if (resources.some(resource => !KEBAB_CASE.test(resource))) {
       problems.push(`${at}: resource must be non-empty kebab-case`)
       return
     }
     // los analíticos (spec 32) exigen campo; el kpi-count además condición y etiqueta
-    if (widget.kind !== 'kpi-total' && !nonEmpty(widget.field)) {
-      problems.push(`${at}: ${widget.kind} requires a field`)
-      return
+    if (block.kind === 'count-by' || block.kind === 'series' || block.kind === 'kpi-count') {
+      if (!nonEmpty(block.field)) {
+        problems.push(`${at}: ${block.kind} requires a field`)
+        return
+      }
     }
-    if (widget.kind === 'kpi-count') {
-      if (!nonEmpty(widget.equals)) problems.push(`${at}: kpi-count requires equals (the counted value)`)
-      if (!nonEmpty(widget.label)) problems.push(`${at}: kpi-count requires a label`)
+    if (block.kind === 'kpi-count') {
+      if (!nonEmpty(block.equals)) problems.push(`${at}: kpi-count requires equals (the counted value)`)
+      if (!nonEmpty(block.label)) problems.push(`${at}: kpi-count requires a label`)
     }
-    // un recurso admite varios widgets; el duplicado EXACTO (kind+recurso+campo) no
-    const key = `${widget.kind}:${widget.resource}:${'field' in widget ? widget.field : ''}`
-    if (seen.has(key)) problems.push(`pages[${index}]: duplicated widget '${key}'`)
-    seen.add(key)
-  })
 
-  // los listados del panel (spec 52): forma y unicidad. Que el recurso EXISTA lo valida la
-  // frontera, que es quien conoce el diseño — igual que con `widget.resource`.
-  const seenTables = new Set<string>()
-  page.tables?.forEach((resource, tableIndex) => {
-    if (!KEBAB_CASE.test(resource)) {
-      problems.push(`pages[${index}].tables[${tableIndex}]: resource must be non-empty kebab-case`)
-      return
+    // un recurso admite varios bloques; el duplicado EXACTO (kind+recurso+campo) no
+    for (const resource of resources) {
+      const key = `${block.kind}:${resource}:${'field' in block ? block.field : ''}`
+      if (seen.has(key)) problems.push(`pages[${index}]: duplicated block '${key}'`)
+      seen.add(key)
     }
-    if (seenTables.has(resource)) problems.push(`pages[${index}]: duplicated table '${resource}'`)
-    seenTables.add(resource)
   })
 
   return problems
