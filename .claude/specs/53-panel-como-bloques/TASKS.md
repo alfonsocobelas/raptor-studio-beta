@@ -31,9 +31,13 @@
 - [x] **TASK-05**: frontera del estudio — `designPagesToAppPages` emite bloques en orden con su
       ancho; se conservan las dos reglas de la spec 52. Suite del estudio + AOT.
 
-- [ ] **TASK-06**: verificación en la demo `taller`: regenerar (¡reiniciando antes el `studio-api`!),
-      comprobar que el panel sale igual que ahora y que un `half` dibujado ya se respeta. Actualizar
-      ROADMAP 25 y la memoria con el modelo cerrado.
+- [x] **TASK-06**: verificado en la demo `taller`: reiniciado el `studio-api` (la trampa de la 52) y
+      regenerado — el panel emite la rejilla de tres tarjetas y debajo `<app-ordenes-list
+      [embedded]="true" />`, con el menú intacto. Gates de la app emitida: `web:build`, `typecheck` y
+      174/174. ROADMAP y memoria actualizados.
+      Pendiente NO bloqueante: el `half` dibujado se respeta según los tests de la frontera y del
+      renderizador, pero no hay diseño real que lo use todavía; se verá en la primera pantalla que lo
+      pida (candidata: la de pestañas + tabla relacionada).
 
 ---
 

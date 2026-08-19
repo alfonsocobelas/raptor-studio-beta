@@ -367,3 +367,14 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 > oro estrena la combinación, así que el gate ya la cubre. Queda anotada una trampa de proceso: el
 > `studio-api` corre con `ts-node` y no recarga — tras tocar la frontera o los generadores hay que
 > reiniciarlo antes de generar desde el estudio, o se emite con el código viejo.
+
+> **Modelo del panel cerrado** por la spec 53 (2026-08-19): la página `dashboard` es una secuencia de
+> bloques como cualquier vista (ADR-009). `widgets` y la ranura `tables` de la spec 52 se retiraron sin
+> alias; el orden y el ancho salen del dibujo, y el ancho `half` —que el lienzo pintaba y el panel
+> ignoraba— ya se emite. Criterio cumplido: oro vacío en 1671 ficheros salvo una línea en blanco
+> declarada. Encima de este modelo van, como specs propias, las **pestañas maestro + tabla
+> relacionada** (el caso que Alfonso pidió: elegir una máquina y ver SUS órdenes) y la **lista con
+> propósito** (top N), que ya no tocarán el contrato.
+>
+> Deuda de proceso anotada tres veces ya: la suite del estudio caduca a 5 s con la máquina cargada.
+> Toca subir `testTimeout` o quitarle a esas specs la dependencia del arranque de Angular.
