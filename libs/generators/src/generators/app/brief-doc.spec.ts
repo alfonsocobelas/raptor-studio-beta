@@ -47,11 +47,21 @@ describe('renderClaudeMd — el markdown del brief', () => {
 })
 
 describe('app generator — CLAUDE.md en la raíz (spec 22)', () => {
-  it('sin brief no se emite: las fixtures actuales no cambian', async () => {
+  // Sin prosa de negocio Y sin frases de entidad no hay memoria que escribir: 'customer' es
+  // uno de los modelos del canon que no lleva brief. Con 'contract', que sí lo lleva, el
+  // fichero se emite — el brief del modelo ES algo que recordar.
+  it('sin nada que recordar no se emite', async () => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'customer', skipInstall: true })
+
+    expect(tree.exists('apps/demo/CLAUDE.md')).toBe(false)
+  })
+
+  it('un modelo del canon con frase propia ya basta para emitirlo', async () => {
     const tree: Tree = createTreeWithEmptyWorkspace()
     await appGenerator(tree, { name: 'demo', models: 'contract', skipInstall: true })
 
-    expect(tree.exists('apps/demo/CLAUDE.md')).toBe(false)
+    expect(tree.read('apps/demo/CLAUDE.md', 'utf-8') ?? '').toContain('## Entidades')
   })
 
   it('un appFile con brief lo aterriza en la raíz de la app', async () => {
@@ -77,6 +87,39 @@ describe('app generator — CLAUDE.md en la raíz (spec 22)', () => {
       expect(md).toContain('Clínica veterinaria de barrio.')
       expect(md).toContain('- Las citas duran 30 minutos')
       expect(md).toContain('Una prenda en stock.')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Quien describe sus entidades a mano en el estudio y nunca pasa por el chat no tiene brief
+   * de aplicación. Antes eso dejaba sus frases guardadas en el diseño y sin emitir: escritas
+   * para nada, y sin avisar. La memoria del negocio existe si HAY algo que recordar.
+   */
+  it('sin brief de aplicación pero con frases de entidad, el fichero se emite igual', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'acc-brief-'))
+    const appFile = path.join(dir, 'solo-entidades.app.json')
+    const garment = MODELS['garment']
+    fs.writeFileSync(
+      appFile,
+      JSON.stringify({
+        schemaVersion: 1,
+        name: 'solo-entidades',
+        pages: [{ kind: 'resource', resource: 'garment-brief' }],
+        resources: [{ ...garment, name: 'garment-brief', plural: 'garment-briefs', brief: 'Una prenda en stock.' }]
+      })
+    )
+
+    try {
+      const tree: Tree = createTreeWithEmptyWorkspace()
+      await appGenerator(tree, { name: 'demo', appFile, skipInstall: true })
+      const md = tree.read('apps/demo/CLAUDE.md', 'utf-8') ?? ''
+
+      expect(md).toContain('## Entidades')
+      expect(md).toContain('Una prenda en stock.')
+      // sin prosa de negocio no se inventa una sección vacía
+      expect(md).not.toContain('## Negocio')
     } finally {
       fs.rmSync(dir, { recursive: true, force: true })
     }

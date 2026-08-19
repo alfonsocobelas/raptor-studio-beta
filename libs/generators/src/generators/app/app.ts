@@ -301,8 +301,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   }
 
   // 4a-bis. la memoria del negocio aterriza en la raíz (spec 22): markdown construido aquí
-  //          (regla 8), plantilla tonta; sin brief no hay fichero y las fixtures no cambian
-  if (composition.brief) {
+  //          (regla 8), plantilla tonta. Se emite si hay ALGO que recordar: la prosa del
+  //          negocio o la frase de alguna entidad — quien describe sus entidades a mano y
+  //          nunca pasa por el chat no tiene brief de aplicación, y sus frases se perdían.
+  //          Sin nada de eso no hay fichero y las fixtures no cambian.
+  if (composition.brief || models.some(model => model.brief)) {
     generateFiles(tree, path.join(__dirname, 'files-brief'), root, {
       claudeMd: renderClaudeMd(options.name, composition.brief, models, composition.flows),
       tmpl: ''

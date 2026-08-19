@@ -8,7 +8,7 @@ import type { BusinessBrief, BusinessFlow, FlowEdge, FlowNode, ResourceDefinitio
  */
 export function renderClaudeMd(
   appName: string,
-  brief: BusinessBrief,
+  brief: BusinessBrief | undefined,
   models: ResourceDefinition[],
   flows?: BusinessFlow[]
 ): string {
@@ -16,18 +16,20 @@ export function renderClaudeMd(
     `# ${appName} — contexto del negocio`,
     '',
     '> Destilado de la conversación de diseño en el estudio. Corrige aquí lo que cambie:',
-    '> este fichero es la memoria del negocio que acompaña al código generado.',
-    '',
-    '## Negocio',
-    '',
-    brief.business
+    '> este fichero es la memoria del negocio que acompaña al código generado.'
   ]
 
-  if (brief.rules?.length) {
+  // Un diseño escrito a mano puede no tener prosa de negocio y sí frases de entidad: la
+  // sección se omite en vez de quedarse en blanco.
+  if (brief?.business) {
+    sections.push('', '## Negocio', '', brief.business)
+  }
+
+  if (brief?.rules?.length) {
     sections.push('', '## Reglas', '', ...brief.rules.map(rule => `- ${rule}`))
   }
 
-  if (brief.glossary?.length) {
+  if (brief?.glossary?.length) {
     sections.push('', '## Glosario', '', ...brief.glossary.map(entry => `- **${entry.term}**: ${entry.means}`))
   }
 
