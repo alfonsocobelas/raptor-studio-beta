@@ -89,6 +89,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
             }
           </div>
         </div>
+
         <app-contracts-list [embedded]="true" />
 
         <!-- @ai:begin dashboard-extra — secciones de dominio (gráficos, listados destacados) -->

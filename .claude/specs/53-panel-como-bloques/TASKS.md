@@ -19,7 +19,7 @@
       **Corrección del plan**: el repo NO vuelve a compilar aquí, sino tras la 03 — `composeApp`
       también lee `widgets`/`tables` y su reescritura es la 03. El tramo sin compilar cubre 01→03.
 
-- [ ] **TASK-03**: composición — `ComposedDashboardBlock` y `dashboardBlocks` sustituyen a
+- [x] **TASK-03+04 (fusionadas)**: composición — `ComposedDashboardBlock` y `dashboardBlocks` sustituyen a
       `kpiModels`/`analytics`/`dashboardTables`; el ancho se resuelve a `'full'`; las validaciones de
       la spec 32 se mueven sin cambiar de significado. Tests de composición.
 

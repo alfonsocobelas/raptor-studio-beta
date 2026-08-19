@@ -1,5 +1,13 @@
 import { DEFAULT_THEME_ID, resolveThemeId } from '@raptor/schema'
-import type { AppDefinition, BusinessBrief, BusinessFlow, PageDefinition, PortsDefinition, ResourceDefinition } from '@raptor/schema'
+import type {
+  AppDefinition,
+  BlockWidth,
+  BusinessBrief,
+  BusinessFlow,
+  PageDefinition,
+  PortsDefinition,
+  ResourceDefinition
+} from '@raptor/schema'
 
 /**
  * Composición normalizada de una app: el único vocabulario del que el generador
@@ -9,14 +17,21 @@ import type { AppDefinition, BusinessBrief, BusinessFlow, PageDefinition, PortsD
 /** Página normalizada: el label del menú siempre queda resuelto al componer. */
 export type ComposedPage = PageDefinition & { label: string }
 
-/** Widget analítico resuelto contra el modelo (spec 32): listo para interpolar, sin lógica en plantilla. */
-export interface ComposedAnalyticWidget {
-  kind: 'count-by' | 'kpi-count' | 'series'
-  /** Propiedad emitida en el DashboardService ('contractsByContractType') */
-  property: string
-  api: string
-  field: string
-  label: string
+/**
+ * Bloque del panel resuelto contra los modelos (spec 53): listo para interpolar, sin lógica en
+ * plantilla. El ORDEN de la lista es el orden emitido, y `width` gobierna el agrupado en filas.
+ */
+export interface ComposedDashboardBlock {
+  kind: 'metrics' | 'count-by' | 'kpi-count' | 'series' | 'table'
+  /** Resuelto al componer: 'full' si el diseño no lo declara */
+  width: BlockWidth
+  /** `metrics` lleva varios; el resto, exactamente uno */
+  models: ResourceDefinition[]
+  /** Propiedad emitida en el DashboardService ('contractsByContractType'); solo analíticos */
+  property?: string
+  api?: string
+  field?: string
+  label?: string
   /** count-by: valores del enum con su etiqueta legible (badgeMap → options → capitalizado) */
   values?: { value: string; label: string }[]
   /** kpi-count: el valor contado */
@@ -29,12 +44,8 @@ export interface AppComposition {
   /** Páginas con labels resueltos; su orden gobierna nav y rutas */
   pages: ComposedPage[]
   dashboard: boolean
-  /** Modelos con tarjeta KPI en el dashboard, en orden de widget */
-  kpiModels: ResourceDefinition[]
-  /** Modelos cuyo LISTADO va embebido en el panel, en orden dibujado (spec 52) */
-  dashboardTables: ResourceDefinition[]
-  /** Widgets analíticos del dashboard (spec 32), resueltos y validados contra los modelos */
-  analytics?: ComposedAnalyticWidget[]
+  /** Bloques del panel resueltos, EN EL ORDEN EMITIDO (spec 53) */
+  dashboardBlocks: ComposedDashboardBlock[]
   /** Tema declarado por el app-schema (spec 20); siempre resuelto, 'neutral' por defecto */
   themeId: string
   /** Color de marca (fase 4); presente, gana al themeId */
@@ -63,8 +74,14 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
       blocks: [{ kind: 'metrics', resources: models.map(model => model.name) }]
     })
   }
-  // la composición plana nunca metió listados en el panel: se conserva idéntica
-  return { models, pages, dashboard, kpiModels: dashboard ? models : [], dashboardTables: [], themeId: DEFAULT_THEME_ID }
+  return {
+    models,
+    pages,
+    dashboard,
+    // la composición plana es una fila de métricas y nada más: se conserva idéntica
+    dashboardBlocks: dashboard ? [{ kind: 'metrics', width: 'full', models }] : [],
+    themeId: DEFAULT_THEME_ID
+  }
 }
 
 /** Composición declarada por un app-schema; valida cada referencia contra el registro. */
@@ -85,22 +102,13 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     if (!models.includes(model)) models.push(model)
   }
 
-  const kpiModels: ResourceDefinition[] = []
-  const dashboardTables: ResourceDefinition[] = []
   const pages: ComposedPage[] = definition.pages.map(page => {
     if (page.kind === 'dashboard') {
-      for (const widget of page.widgets) {
-        const model = resolve(widget.resource)
-        include(model)
-        // solo los totales llevan tarjeta propia; los analíticos (spec 32) tienen su sección
-        if (widget.kind === 'kpi-total') kpiModels.push(model)
-      }
-      // los listados que el panel muestra debajo de los widgets (spec 52): `resolve` es
-      // quien rechaza un recurso que no viaja — el error llega al componer, no al compilar
-      for (const resource of page.tables ?? []) {
-        const model = resolve(resource)
-        include(model)
-        dashboardTables.push(model)
+      // todo recurso citado por un bloque del panel viaja en la app; `resolve` rechaza el que no
+      // existe, así que el error llega al componer y no al compilar (spec 53)
+      for (const block of page.blocks) {
+        const resources = block.kind === 'metrics' ? block.resources : [block.resource]
+        for (const resource of resources) include(resolve(resource))
       }
       return { ...page, label: page.label ?? 'Dashboard' }
     }
@@ -126,29 +134,42 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     }
   }
 
-  // los widgets analíticos (spec 32) se validan contra el modelo: campo real, filterable
-  // y del tipo que el widget necesita — el error llega al diseñar, no al compilar
-  const analytics: ComposedAnalyticWidget[] = []
+  // Los bloques del panel se resuelven EN ORDEN (spec 53). Los analíticos (spec 32) se validan
+  // contra el modelo —campo real, filterable y del tipo que el bloque necesita—: el error llega al
+  // diseñar, no al compilar.
+  const dashboardBlocks: ComposedDashboardBlock[] = []
   for (const page of definition.pages) {
     if (page.kind !== 'dashboard') continue
-    for (const widget of page.widgets) {
-      if (widget.kind === 'kpi-total') continue
-      const model = resolve(widget.resource)
-      const field = model.fields[widget.field]
-      const at = `App '${definition.name}': widget ${widget.kind} '${widget.resource}.${widget.field}'`
+    for (const block of page.blocks) {
+      // el defecto es POR KIND, y sale de lo que el emitido ya hacía: los analíticos siempre se
+      // pintaron a dos columnas (media pantalla), la fila de métricas y el listado a lo ancho
+      const width: BlockWidth = block.width ?? (block.kind === 'metrics' || block.kind === 'table' ? 'full' : 'half')
+      if (block.kind === 'metrics') {
+        dashboardBlocks.push({ kind: 'metrics', width, models: block.resources.map(resolve) })
+        continue
+      }
+      const model = resolve(block.resource)
+      if (block.kind === 'table') {
+        dashboardBlocks.push({ kind: 'table', width, models: [model] })
+        continue
+      }
+      const field = model.fields[block.field]
+      const at = `App '${definition.name}': widget ${block.kind} '${block.resource}.${block.field}'`
       if (!field) throw new Error(`${at} references an unknown field`)
       if (!field.query?.filterable) throw new Error(`${at} requires a filterable field (the count uses the list endpoint)`)
       const api = model.api ?? `/api/v1/${model.plural}`
-      const fieldLabel = field.table?.label ?? field.form?.label ?? widget.field
-      if (widget.kind === 'count-by') {
+      const fieldLabel = field.table?.label ?? field.form?.label ?? block.field
+      if (block.kind === 'count-by') {
         const values = (typeof field.vo === 'object' ? field.vo.values : undefined) ?? []
         if (!values.length) throw new Error(`${at} requires an enum field (vo.values)`)
-        analytics.push({
+        dashboardBlocks.push({
           kind: 'count-by',
-          property: propertyOf(`${model.plural}-by-${widget.field}`),
+          width,
+          models: [model],
+          property: propertyOf(`${model.plural}-by-${block.field}`),
           api,
-          field: widget.field,
-          label: widget.label ?? fieldLabel,
+          field: block.field,
+          label: block.label ?? fieldLabel,
           values: values.map(value => ({
             value,
             label:
@@ -157,25 +178,29 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
               value.charAt(0).toUpperCase() + value.slice(1)
           }))
         })
-      } else if (widget.kind === 'series') {
+      } else if (block.kind === 'series') {
         if (field.type !== 'date' && field.type !== 'timestamptz') {
           throw new Error(`${at} requires a date field`)
         }
-        analytics.push({
+        dashboardBlocks.push({
           kind: 'series',
-          property: propertyOf(`${model.plural}-series-${widget.field}`),
+          width,
+          models: [model],
+          property: propertyOf(`${model.plural}-series-${block.field}`),
           api,
-          field: widget.field,
-          label: widget.label ?? fieldLabel
+          field: block.field,
+          label: block.label ?? fieldLabel
         })
       } else {
-        analytics.push({
+        dashboardBlocks.push({
           kind: 'kpi-count',
-          property: propertyOf(`${model.plural}-where-${widget.field}-${widget.equals}`),
+          width,
+          models: [model],
+          property: propertyOf(`${model.plural}-where-${block.field}-${block.equals}`),
           api,
-          field: widget.field,
-          label: widget.label,
-          equals: widget.equals
+          field: block.field,
+          label: block.label,
+          equals: block.equals
         })
       }
     }
@@ -213,10 +238,9 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   return {
     models,
     pages,
-    dashboard: kpiModels.length > 0,
-    kpiModels,
-    dashboardTables,
-    ...(analytics.length ? { analytics } : {}),
+    // un panel con solo analíticos también es un panel: antes se miraba si había métricas
+    dashboard: dashboardBlocks.length > 0,
+    dashboardBlocks,
     ...(definition.brief ? { brief: definition.brief } : {}),
     ...(definition.flows?.length ? { flows: definition.flows } : {}),
     themeId: resolveThemeId(definition.theme),

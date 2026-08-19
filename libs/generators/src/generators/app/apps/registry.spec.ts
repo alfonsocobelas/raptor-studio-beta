@@ -31,6 +31,8 @@ describe('demo app', () => {
 
     expect(composition.dashboard).toBe(true)
     expect(composition.models.map(m => m.name)).toEqual(['customer', 'contract', 'license', 'project'])
-    expect(composition.kpiModels.map(m => m.name)).toEqual(['customer', 'contract', 'license', 'project'])
+    expect(composition.dashboardBlocks).toEqual([
+      { kind: 'metrics', width: 'full', models: composition.models }
+    ])
   })
 })

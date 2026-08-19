@@ -22,10 +22,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
         <p class="text-muted-foreground py-12 text-center text-sm">Cargando datos…</p>
       } @else if (service.loadError()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los datos</p>
-      } @else {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-<%- gridCols %>">
-<%- kpiCards %>
-        </div><%- analyticSections %><%- listSections %>
+      } @else {<%- panelSections %>
 
         <!-- @ai:begin dashboard-extra — secciones de dominio (gráficos, listados destacados) -->
         <!-- @ai:end -->

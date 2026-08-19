@@ -22,7 +22,7 @@ describe('composeFlat', () => {
 
     expect(composition.models).toEqual([customer, contract])
     expect(composition.dashboard).toBe(false)
-    expect(composition.kpiModels).toEqual([])
+    expect(composition.dashboardBlocks).toEqual([])
     expect(composition.pages).toEqual([
       { kind: 'resource', resource: 'customer', label: 'Clientes' },
       { kind: 'resource', resource: 'contract', label: 'contracts' }
@@ -33,14 +33,11 @@ describe('composeFlat', () => {
     const composition = composeFlat([customer, contract], true)
 
     expect(composition.dashboard).toBe(true)
-    expect(composition.kpiModels).toEqual([customer, contract])
+    expect(composition.dashboardBlocks).toEqual([{ kind: 'metrics', width: 'full', models: [customer, contract] }])
     expect(composition.pages[0]).toEqual({
       kind: 'dashboard',
       label: 'Dashboard',
-      widgets: [
-        { kind: 'kpi-total', resource: 'customer' },
-        { kind: 'kpi-total', resource: 'contract' }
-      ]
+      blocks: [{ kind: 'metrics', resources: ['customer', 'contract'] }]
     })
   })
 })
@@ -79,7 +76,7 @@ describe('composeApp', () => {
       schemaVersion: 1,
       name: 'demo',
       pages: [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }] },
+        { kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['contract'] }] },
         { kind: 'resource', resource: 'contract', label: 'Contratos' },
         { kind: 'resource', resource: 'customer' }
       ]
@@ -89,9 +86,9 @@ describe('composeApp', () => {
 
     expect(composition.models).toEqual([contract, customer])
     expect(composition.dashboard).toBe(true)
-    expect(composition.kpiModels).toEqual([contract])
+    expect(composition.dashboardBlocks).toEqual([{ kind: 'metrics', width: 'full', models: [contract] }])
     expect(composition.pages).toEqual([
-      { kind: 'dashboard', label: 'Dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }] },
+      { kind: 'dashboard', label: 'Dashboard', blocks: [{ kind: 'metrics', resources: ['contract'] }] },
       { kind: 'resource', resource: 'contract', label: 'Contratos' },
       { kind: 'resource', resource: 'customer', label: 'Clientes' }
     ])
@@ -102,7 +99,7 @@ describe('composeApp', () => {
       schemaVersion: 1,
       name: 'demo',
       pages: [
-        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }] },
+        { kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['contract'] }] },
         { kind: 'resource', resource: 'customer' }
       ]
     })
@@ -131,7 +128,7 @@ describe('composeApp', () => {
     const app = defineApp({
       schemaVersion: 1,
       name: 'demo',
-      pages: [{ kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'invoice' }] }]
+      pages: [{ kind: 'dashboard', blocks: [{ kind: 'metrics', resources: ['invoice'] }] }]
     })
 
     expect(() => composeApp(app, registry)).toThrow("App 'demo' references unknown resource model 'invoice'")

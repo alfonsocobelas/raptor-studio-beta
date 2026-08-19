@@ -79,9 +79,15 @@ La plantilla deja de recibir `kpiCards` / `analyticSections` / `listSections` y 
 cadena `panelSections`** ya montada, más `listImports` y `listSelectors`. Regla 8: el orden, la
 rejilla y el agrupado de anchos se calculan en `generator.ts`.
 
-Agrupado (`groupByWidth`): se recorre la lista y los `half` **consecutivos** se envuelven en
-`<div class="flex flex-wrap gap-4">`; un bloque `full` cierra el grupo abierto. Un grupo que queda
-con UN solo `half` —al final o entre dos `full`— se emite como `full`: nunca media pantalla vacía. Cada bloque, dentro o fuera de fila, emite exactamente el markup de
+Agrupado (`groupByWidth`): los `half` **consecutivos** se envuelven en
+`<div class="grid gap-4 lg:grid-cols-2">` — **la misma rejilla con la que hoy se emiten los
+analíticos**; un bloque `full` cierra el grupo abierto. Un grupo que queda con UN solo `half` —al
+final o entre dos `full`— se emite como `full`: nunca media pantalla vacía.
+
+**Corrección medida sobre el diseño inicial**: el ancho por defecto es **por kind**, no `'full'` para
+todos. Los tres analíticos ya se emitían a dos columnas, así que su defecto es `half`; `metrics` y
+`table` son `full`. Sin esto el refactor movería el panel de la app de oro y el gate no podría
+distinguir «refactor fiel» de «cambio de maquetación». Cada bloque, dentro o fuera de fila, emite exactamente el markup de
 hoy:
 
 - `metrics` → la rejilla `grid gap-4 sm:grid-cols-2 xl:grid-cols-N` con `N = min(max(n,2),4)`

@@ -17,7 +17,7 @@ import { ignoreNestedWorkspace } from './nxignore'
 import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { addFontDependency, themeSubstitutions } from './theme-css'
-import { composeApp, composeFlat, type AppComposition, type ComposedAnalyticWidget } from './composition'
+import { composeApp, composeFlat, type AppComposition, type ComposedDashboardBlock } from './composition'
 import { renderClaudeMd } from './brief-doc'
 import { emitFlowProcesses } from './flow-process'
 import {
@@ -367,7 +367,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       tree,
       path.join(__dirname, 'files-dashboard'),
       root,
-      dashboardSubstitutions(composition.kpiModels, composition.analytics ?? [], composition.dashboardTables)
+      dashboardSubstitutions(composition.dashboardBlocks)
     )
   }
 
@@ -469,30 +469,36 @@ function run(command: string, cwd: string): void {
  * total por recurso y su KPI card. Los totales del spec son distintos por recurso
  * (deterministas, derivados del orden) para que un cruce de endpoints falle.
  */
-export function dashboardSubstitutions(
-  models: ResourceDefinition[],
-  analytics: ComposedAnalyticWidget[] = [],
-  tables: ResourceDefinition[] = []
-): Record<string, string> {
-  const entries = models.map((model, index) => ({
+export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record<string, string> {
+  // un total por recurso con métrica, deduplicado y en orden de primera aparición
+  const metricModels: ResourceDefinition[] = []
+  for (const block of blocks) {
+    if (block.kind !== 'metrics') continue
+    for (const model of block.models) if (!metricModels.includes(model)) metricModels.push(model)
+  }
+  const entries = metricModels.map((model, index) => ({
     property: names(model.plural).propertyName,
     api: model.api ?? `/api/v1/${model.plural}`,
     label: model.labels?.plural ?? model.plural,
     subtitle: model.labels?.subtitle,
     total: (index + 1) * 7
   }))
-  const analyticEntries = analytics.map(widget => {
-    if (widget.kind === 'count-by') {
-      const values = (widget.values ?? []).map(v => `'${v.value}'`).join(', ')
-      return `  readonly ${widget.property} = this._counts('${widget.api}', '${widget.field}', [${values}])`
+  const analytics = blocks.filter(block => block.kind === 'count-by' || block.kind === 'kpi-count' || block.kind === 'series')
+  const tables = blocks.filter(block => block.kind === 'table').map(block => block.models[0])
+
+  const analyticEntries = analytics.map(block => {
+    if (block.kind === 'count-by') {
+      const values = (block.values ?? []).map(v => `'${v.value}'`).join(', ')
+      return `  readonly ${block.property} = this._counts('${block.api}', '${block.field}', [${values}])`
     }
-    if (widget.kind === 'series') {
-      return `  readonly ${widget.property} = this._series('${widget.api}', '${widget.field}')`
+    if (block.kind === 'series') {
+      return `  readonly ${block.property} = this._series('${block.api}', '${block.field}')`
     }
-    return `  readonly ${widget.property} = this._countWhere('${widget.api}', '${widget.field}', '${widget.equals}')
-  readonly ${widget.property}Total = computed(() => (this.${widget.property}.hasValue() ? this.${widget.property}.value() : 0))`
+    return `  readonly ${block.property} = this._countWhere('${block.api}', '${block.field}', '${block.equals}')
+  readonly ${block.property}Total = computed(() => (this.${block.property}.hasValue() ? this.${block.property}.value() : 0))`
   })
-  const allProperties = [...entries.map(e => e.property), ...analytics.map(w => w.property)]
+  const allProperties = [...entries.map(e => e.property), ...analytics.map(block => block.property ?? '')]
+
   return {
     resourceEntries: [
       entries
@@ -504,21 +510,11 @@ export function dashboardSubstitutions(
       ...analyticEntries
     ].join('\n\n'),
     analyticHelpers: renderAnalyticServiceHelpers(analytics),
-    analyticSections: renderAnalyticSections(analytics),
     analyticComponentHelpers: renderAnalyticComponentHelpers(analytics),
     loadingExpr: allProperties.map(p => `this.${p}.isLoading()`).join(' || '),
     errorExpr: allProperties.map(p => `this.${p}.error() !== undefined`).join(' || '),
-    gridCols: String(Math.min(Math.max(entries.length, 2), 4)),
-    kpiCards: entries
-      .map(e => {
-        const subtitle = e.subtitle ? `\n            subtitle="${e.subtitle}"` : ''
-        return `          <app-kpi-card
-            title="${e.label}"
-            [value]="service.${e.property}Total()"${subtitle}
-            testId="kpi-${e.property}"
-          />`
-      })
-      .join('\n'),
+    // el panel entero, ya montado y en orden (regla 8): la plantilla solo interpola
+    panelSections: renderPanelSections(blocks, entries),
     specTotals: entries.map(e => `  '${e.api}': ${e.total}`).join(',\n'),
     specCallAsserts: entries
       .map(e => `    expect(httpGet).toHaveBeenCalledWith('${e.api}', { params: { page: '1', pageSize: '1' } })`)
@@ -530,13 +526,79 @@ export function dashboardSubstitutions(
   }
 }
 
+/** El markup de UN bloque, con la sangría de su sitio. Mismo markup que emitía cada binding. */
+function renderBlock(block: ComposedDashboardBlock, metrics: MetricEntry[], pad: string): string {
+  if (block.kind === 'metrics') {
+    const cols = Math.min(Math.max(block.models.length, 2), 4)
+    const cards = block.models
+      .map(model => {
+        const entry = metrics.find(m => m.property === names(model.plural).propertyName)
+        const subtitle = entry?.subtitle ? `\n${pad}    subtitle="${entry.subtitle}"` : ''
+        return `${pad}  <app-kpi-card
+${pad}    title="${entry?.label ?? model.plural}"
+${pad}    [value]="service.${entry?.property}Total()"${subtitle}
+${pad}    testId="kpi-${entry?.property}"
+${pad}  />`
+      })
+      .join('\n')
+    return `${pad}<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-${cols}">\n${cards}\n${pad}</div>`
+  }
+
+  if (block.kind === 'table') {
+    return `${pad}<app-${block.models[0].plural}-list [embedded]="true" />`
+  }
+
+  return renderAnalyticCard(block, pad)
+}
+
+interface MetricEntry {
+  property: string
+  label: string
+  subtitle?: string
+}
+
+/**
+ * El panel es una secuencia de bloques (spec 53): se recorre EN ORDEN y los `half` consecutivos
+ * se envuelven en la rejilla de dos columnas —la misma con la que los analíticos ya se emitían—.
+ * Un grupo que queda con un solo `half` se emite a lo ancho: nunca media pantalla vacía.
+ */
+function renderPanelSections(blocks: ComposedDashboardBlock[], metrics: MetricEntry[]): string {
+  const out: string[] = []
+  let pending: ComposedDashboardBlock[] = []
+
+  const flush = (): void => {
+    if (!pending.length) return
+    const cards = pending.map(block => renderBlock(block, metrics, '          '))
+    // un solo bloque no justifica la rejilla: sale a lo ancho
+    out.push(
+      pending.length === 1
+        ? renderBlock(pending[0], metrics, '        ')
+        : `        <div class="grid gap-4 lg:grid-cols-2">\n${cards.join('\n')}\n        </div>`
+    )
+    pending = []
+  }
+
+  for (const block of blocks) {
+    if (block.width === 'half') {
+      pending.push(block)
+      continue
+    }
+    flush()
+    out.push(renderBlock(block, metrics, '        '))
+  }
+  flush()
+
+  // una línea en blanco entre bloques; ninguna justo tras `@else {`
+  return out.length ? `\n${out.join('\n\n')}` : ''
+}
+
 /**
  * Los listados que el panel muestra debajo de los widgets (spec 52). No se emite una tabla
  * nueva: se REUSA el componente de listado del recurso con su cabecera de pantalla apagada,
  * que es justo lo que el lienzo dibuja. Todo el cálculo aquí; la plantilla solo interpola.
  */
 function renderDashboardLists(tables: ResourceDefinition[]): Record<string, string> {
-  if (!tables.length) return { listImports: '', listSelectors: '', listSections: '' }
+  if (!tables.length) return { listImports: '', listSelectors: '' }
 
   const entries = tables.map(model => ({
     className: `${names(model.name).className}sListComponent`,
@@ -546,13 +608,12 @@ function renderDashboardLists(tables: ResourceDefinition[]): Record<string, stri
 
   return {
     listImports: entries.map(e => `import { ${e.className} } from '${e.path}'`).join('\n'),
-    listSelectors: entries.map(e => `, ${e.className}`).join(''),
-    listSections: entries.map(e => `\n        <${e.selector} [embedded]="true" />`).join('')
+    listSelectors: entries.map(e => `, ${e.className}`).join('')
   }
 }
 
 /** Helpers del servicio (spec 32): solo los de los kinds presentes, o tsc acusa métodos muertos. */
-function renderAnalyticServiceHelpers(analytics: ComposedAnalyticWidget[]): string {
+function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): string {
   if (!analytics.length) return ''
   const kinds = new Set(analytics.map(w => w.kind))
   const blocks: string[] = []
@@ -625,54 +686,49 @@ function renderAnalyticServiceHelpers(analytics: ComposedAnalyticWidget[]): stri
 }
 
 /** Secciones del dashboard (spec 32): barras horizontales, KPI condicionado y mini serie. */
-function renderAnalyticSections(analytics: ComposedAnalyticWidget[]): string {
-  if (!analytics.length) return ''
-  const cards = analytics.map(widget => {
-    if (widget.kind === 'kpi-count') {
-      return `          <app-kpi-card title="${widget.label}" [value]="service.${widget.property}Total()" testId="kpi-count-${widget.property}" />`
-    }
-    if (widget.kind === 'count-by') {
-      const labels = (widget.values ?? []).map(v => `'${v.label}'`).join(', ')
-      return `          <div class="bg-card rounded-lg border p-4" data-testid="count-by-${widget.property}">
-            <h2 class="mb-3 text-sm font-semibold">${widget.label}</h2>
-            @if (service.${widget.property}.hasValue()) {
-              <div class="space-y-2">
-                @for (bar of bars(service.${widget.property}.value(), [${labels}]); track bar.label) {
-                  <div class="flex items-center gap-2 text-sm">
-                    <span class="text-muted-foreground w-28 shrink-0 truncate">{{ bar.label }}</span>
-                    <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
-                      <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
-                    </div>
-                    <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>`
-    }
-    return `          <div class="bg-card rounded-lg border p-4" data-testid="series-${widget.property}">
-            <h2 class="mb-3 text-sm font-semibold">${widget.label}</h2>
-            @if (service.${widget.property}.hasValue()) {
-              <div class="flex items-end gap-1">
-                @for (point of points(service.${widget.property}.value()); track point.label) {
-                  <div class="flex flex-1 flex-col items-center gap-1">
-                    <!-- carril de altura fija: un % necesita un padre con altura definida -->
-                    <div class="flex h-24 w-full items-end">
-                      <div class="bg-primary w-full rounded-t-sm" [style.height.%]="point.height" [title]="point.count"></div>
-                    </div>
-                    <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>`
-  })
-
-  return `\n\n        <div class="grid gap-4 lg:grid-cols-2">\n${cards.join('\n')}\n        </div>`
+function renderAnalyticCard(block: ComposedDashboardBlock, pad: string): string {
+  if (block.kind === 'kpi-count') {
+    return `${pad}<app-kpi-card title="${block.label}" [value]="service.${block.property}Total()" testId="kpi-count-${block.property}" />`
+  }
+  if (block.kind === 'count-by') {
+    const labels = (block.values ?? []).map(v => `'${v.label}'`).join(', ')
+    return `${pad}<div class="bg-card rounded-lg border p-4" data-testid="count-by-${block.property}">
+${pad}  <h2 class="mb-3 text-sm font-semibold">${block.label}</h2>
+${pad}  @if (service.${block.property}.hasValue()) {
+${pad}    <div class="space-y-2">
+${pad}      @for (bar of bars(service.${block.property}.value(), [${labels}]); track bar.label) {
+${pad}        <div class="flex items-center gap-2 text-sm">
+${pad}          <span class="text-muted-foreground w-28 shrink-0 truncate">{{ bar.label }}</span>
+${pad}          <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
+${pad}            <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
+${pad}          </div>
+${pad}          <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+${pad}        </div>
+${pad}      }
+${pad}    </div>
+${pad}  }
+${pad}</div>`
+  }
+  return `${pad}<div class="bg-card rounded-lg border p-4" data-testid="series-${block.property}">
+${pad}  <h2 class="mb-3 text-sm font-semibold">${block.label}</h2>
+${pad}  @if (service.${block.property}.hasValue()) {
+${pad}    <div class="flex items-end gap-1">
+${pad}      @for (point of points(service.${block.property}.value()); track point.label) {
+${pad}        <div class="flex flex-1 flex-col items-center gap-1">
+${pad}          <!-- carril de altura fija: un % necesita un padre con altura definida -->
+${pad}          <div class="flex h-24 w-full items-end">
+${pad}            <div class="bg-primary w-full rounded-t-sm" [style.height.%]="point.height" [title]="point.count"></div>
+${pad}          </div>
+${pad}          <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
+${pad}        </div>
+${pad}      }
+${pad}    </div>
+${pad}  }
+${pad}</div>`
 }
 
 /** Escalado de barras en el componente: solo si hay widgets que lo usen. */
-function renderAnalyticComponentHelpers(analytics: ComposedAnalyticWidget[]): string {
+function renderAnalyticComponentHelpers(analytics: ComposedDashboardBlock[]): string {
   const kinds = new Set(analytics.map(w => w.kind))
   const blocks: string[] = []
   if (kinds.has('count-by')) {
