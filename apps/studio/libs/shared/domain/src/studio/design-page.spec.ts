@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generableHere } from './design-page'
+import { duplicateOfEarlierBlock, generableHere } from './design-page'
 import type { DesignPage } from './design-page'
 
 const listado: DesignPage = { title: 'Pacientes', blocks: [] }
@@ -27,5 +27,61 @@ describe('generableHere', () => {
   // spec 48: el bloque formulario nace generable, como la tabla
   it('un formulario se emite en cualquier vista', () => {
     expect(generableHere(listado, { kind: 'form', resource: 'paciente' })).toBe(true)
+  })
+})
+
+describe('duplicateOfEarlierBlock — el bloque que no aporta nada (spec 52)', () => {
+  it('marca la segunda tabla del mismo recurso en la misma vista', () => {
+    const page: DesignPage = {
+      title: 'Panel',
+      blocks: [
+        { kind: 'kpis', resources: ['orden'] },
+        { kind: 'table', resource: 'orden' },
+        { kind: 'table', resource: 'orden' }
+      ]
+    }
+
+    expect(duplicateOfEarlierBlock(page, 1)).toBe(false)
+    expect(duplicateOfEarlierBlock(page, 2)).toBe(true)
+  })
+
+  it('no marca la misma tabla en vistas distintas: eso son dos pantallas legítimas', () => {
+    const panel: DesignPage = {
+      title: 'Panel',
+      blocks: [
+        { kind: 'kpis', resources: ['orden'] },
+        { kind: 'table', resource: 'orden' }
+      ]
+    }
+    const listado: DesignPage = { title: 'Órdenes', blocks: [{ kind: 'table', resource: 'orden' }] }
+
+    expect(duplicateOfEarlierBlock(panel, 1)).toBe(false)
+    expect(duplicateOfEarlierBlock(listado, 0)).toBe(false)
+  })
+
+  it('tablas de recursos distintos, o bloques de tipo distinto, no se estorban', () => {
+    const page: DesignPage = {
+      title: 'Panel',
+      blocks: [
+        { kind: 'table', resource: 'orden' },
+        { kind: 'table', resource: 'cliente' },
+        { kind: 'cards', resource: 'orden' }
+      ]
+    }
+
+    expect(duplicateOfEarlierBlock(page, 1)).toBe(false)
+    expect(duplicateOfEarlierBlock(page, 2)).toBe(false)
+  })
+
+  it('un bloque sin recurso (texto, KPIs) nunca es duplicado', () => {
+    const page: DesignPage = {
+      title: 'Notas',
+      blocks: [
+        { kind: 'text', text: 'hola' },
+        { kind: 'text', text: 'hola' }
+      ]
+    }
+
+    expect(duplicateOfEarlierBlock(page, 1)).toBe(false)
   })
 })

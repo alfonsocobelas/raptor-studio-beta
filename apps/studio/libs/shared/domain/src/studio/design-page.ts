@@ -109,3 +109,18 @@ export function generableHere(page: DesignPage, block: DesignBlock): boolean {
   if (!GENERABLE_BLOCKS.includes(block.kind)) return false
   return !DETAIL_BLOCKS.includes(block.kind) || page.drillDown === true
 }
+
+/**
+ * ¿Este bloque repite uno anterior de la MISMA vista? La frontera colapsa dos bloques del
+ * mismo tipo y recurso en una sola pantalla (o en un solo listado del panel), así que el
+ * segundo no aporta nada y el lienzo lo dice ahí mismo (spec 52). Repetir la tabla en OTRA
+ * vista no es duplicado: son dos sitios legítimos — el panel y su pantalla.
+ */
+export function duplicateOfEarlierBlock(page: DesignPage, index: number): boolean {
+  const block = page.blocks[index]
+  if (!block?.resource) return false
+
+  return page.blocks
+    .slice(0, index)
+    .some(earlier => earlier.kind === block.kind && earlier.resource === block.resource)
+}

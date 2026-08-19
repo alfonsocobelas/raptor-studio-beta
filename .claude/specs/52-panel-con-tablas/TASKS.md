@@ -21,7 +21,7 @@
       (imports, selectores, orden), plantilla del dashboard, y la app de oro estrena panel con la
       tabla de `contract`. Re-baseline comparado línea a línea + `web:build`.
 
-- [ ] **TASK-05**: estudio — aviso de tabla duplicada en la misma vista (dos del mismo recurso
+- [x] **TASK-05**: estudio — aviso de tabla duplicada en la misma vista (dos del mismo recurso
       colapsan al emitir). Suite del estudio + `web:build` del estudio.
 
 - [ ] **TASK-06**: verificación en la demo: devolver la tabla al Panel de `taller`, regenerar,

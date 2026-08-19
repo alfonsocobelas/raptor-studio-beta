@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
-import { generableHere, type DesignBlock } from '@app/shared/domain'
+import { duplicateOfEarlierBlock, generableHere, type DesignBlock } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
@@ -76,6 +76,13 @@ import { mockTotal } from './mock-data'
                 class="absolute -top-2 left-3 z-10 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-800"
               >
                 diseño · aún no generable
+              </span>
+            } @else if (duplicated($index)) {
+              <span
+                class="absolute -top-2 left-3 z-10 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-800"
+                [attr.data-testid]="'block-duplicate-' + $index"
+              >
+                repetido · no se emite dos veces
               </span>
             }
 
@@ -233,6 +240,12 @@ export class CanvasPageComponent {
     const resource = dropResource(this.page(), this.view.resource(), this.store.resources())
     if (!resource) return
     placeBlock({ store: this.store, notice: this.notice, active: this.view }, this.pageIndex(), kind, resource, at)
+  }
+
+  /** Repetir el mismo bloque en la misma vista no emite dos pantallas: la frontera colapsa. */
+  protected duplicated(index: number): boolean {
+    const page = this.store.pages()[this.pageIndex()]
+    return page ? duplicateOfEarlierBlock(page, index) : false
   }
 
   /** El aviso «aún no generable» depende de la VISTA: ver generableHere. */
