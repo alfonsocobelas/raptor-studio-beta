@@ -15,10 +15,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       {
         kind: 'dashboard',
         label: 'Panel',
-        widgets: [
-          { kind: 'kpi-total', resource: 'paciente' },
-          { kind: 'kpi-total', resource: 'cita' }
-        ]
+        blocks: [{ kind: 'metrics', resources: ['paciente', 'cita'], width: 'full' }]
       }
     ])
   })
@@ -40,16 +37,52 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       {
         kind: 'dashboard',
         label: 'Panel',
-        widgets: [{ kind: 'kpi-total', resource: 'paciente' }],
-        tables: ['cita']
+        blocks: [
+          { kind: 'metrics', resources: ['paciente'], width: 'full' },
+          { kind: 'table', resource: 'cita', width: 'full' }
+        ]
       }
     ])
   })
 
-  it('un panel sin tablas no declara la clave (el emitido no cambia)', () => {
-    const pages: DesignPage[] = [{ title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente'] }] }]
+  it('el panel respeta el ancho dibujado de sus bloques (spec 53)', () => {
+    const pages: DesignPage[] = [
+      {
+        title: 'Panel',
+        blocks: [
+          { kind: 'kpis', resources: ['paciente'], width: 'half' },
+          { kind: 'table', resource: 'cita', width: 'half' }
+        ]
+      }
+    ]
 
-    expect('tables' in designPagesToAppPages(pages)[0]).toBe(false)
+    expect(designPagesToAppPages(pages)[0]).toEqual({
+      kind: 'dashboard',
+      label: 'Panel',
+      blocks: [
+        { kind: 'metrics', resources: ['paciente'], width: 'half' },
+        { kind: 'table', resource: 'cita', width: 'half' }
+      ]
+    })
+  })
+
+  it('la tabla dibujada ANTES de los KPIs sale antes en el panel: el orden es el del dibujo', () => {
+    const pages: DesignPage[] = [
+      {
+        title: 'Panel',
+        blocks: [
+          { kind: 'table', resource: 'cita' },
+          { kind: 'kpis', resources: ['paciente'] }
+        ]
+      }
+    ]
+
+    expect(designPagesToAppPages(pages)[0]).toMatchObject({
+      blocks: [
+        { kind: 'table', resource: 'cita' },
+        { kind: 'metrics', resources: ['paciente'] }
+      ]
+    })
   })
 
   it('la tabla del panel NO le roba la pantalla ni el título a su propia vista (demo taller)', () => {
@@ -68,8 +101,10 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       {
         kind: 'dashboard',
         label: 'Panel',
-        widgets: [{ kind: 'kpi-total', resource: 'orden' }],
-        tables: ['orden']
+        blocks: [
+          { kind: 'metrics', resources: ['orden'], width: 'full' },
+          { kind: 'table', resource: 'orden', width: 'full' }
+        ]
       },
       { kind: 'resource', resource: 'orden', label: 'Órdenes' }
     ])
@@ -87,7 +122,12 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       }
     ]
 
-    expect(designPagesToAppPages(pages)[0]).toMatchObject({ tables: ['orden'] })
+    expect(designPagesToAppPages(pages)[0]).toMatchObject({
+      blocks: [
+        { kind: 'metrics', resources: ['orden'], width: 'full' },
+        { kind: 'table', resource: 'orden', width: 'full' }
+      ]
+    })
   })
 
   it('una vista de galería se emite como página de tarjetas', () => {

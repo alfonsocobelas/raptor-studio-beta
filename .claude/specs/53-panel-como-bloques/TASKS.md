@@ -28,7 +28,7 @@
       conserva su forma. **Gate: oro vacío incluido el `dashboard.component.ts` de la app de oro** +
       `web:build` de una app emitida.
 
-- [ ] **TASK-05**: frontera del estudio — `designPagesToAppPages` emite bloques en orden con su
+- [x] **TASK-05**: frontera del estudio — `designPagesToAppPages` emite bloques en orden con su
       ancho; se conservan las dos reglas de la spec 52. Suite del estudio + AOT.
 
 - [ ] **TASK-06**: verificación en la demo `taller`: regenerar (¡reiniciando antes el `studio-api`!),
