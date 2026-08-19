@@ -47,8 +47,10 @@ export interface DashboardPage {
 }
 ```
 
-`defineApp` valida: cada nombre existe entre los recursos de la app (mismo error accionable que
-`widget.resource`), sin repetidos dentro del mismo panel. No se toca `GENERABLE_PAGE_KINDS`.
+`defineApp` valida **forma**: kebab-case y sin repetidos dentro del mismo panel — exactamente lo
+que ya hace con `widget.resource`. La **existencia** del recurso NO se valida aquí: es cosa de la
+frontera (`validateDesign` / `buildAppFile`), que es quien conoce los recursos del diseño. No se
+toca `GENERABLE_PAGE_KINDS`.
 
 ## 2. Frontera (`designPagesToAppPages`)
 

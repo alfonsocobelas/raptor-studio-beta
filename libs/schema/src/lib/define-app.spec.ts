@@ -160,6 +160,38 @@ describe('defineApp', () => {
       expect(problemsOf(definition)).toContain('pages: at most one dashboard page is allowed (found 2)')
     })
 
+    it('accepts a dashboard that carries lists under its widgets (spec 52)', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }], tables: ['contract'] },
+        { kind: 'resource', resource: 'contract' }
+      ]
+
+      expect(problemsOf(definition)).toEqual([])
+    })
+
+    it('rejects a non-kebab-case table in the dashboard', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        { kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }], tables: ['Contract'] }
+      ]
+
+      expect(problemsOf(definition)).toContain('pages[0].tables[0]: resource must be non-empty kebab-case')
+    })
+
+    it('rejects the same list twice in one dashboard', () => {
+      const definition = validDefinition()
+      definition.pages = [
+        {
+          kind: 'dashboard',
+          widgets: [{ kind: 'kpi-total', resource: 'contract' }],
+          tables: ['contract', 'contract']
+        }
+      ]
+
+      expect(problemsOf(definition)).toContain("pages[0]: duplicated table 'contract'")
+    })
+
     it('rejects duplicated resource pages', () => {
       const definition = validDefinition()
       definition.pages = [

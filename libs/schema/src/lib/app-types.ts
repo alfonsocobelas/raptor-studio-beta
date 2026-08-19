@@ -42,6 +42,12 @@ export interface DashboardPage {
   /** Label del menú; por defecto 'Dashboard' */
   label?: string
   widgets: PageWidget[]
+  /**
+   * Listados que el panel muestra DEBAJO de los widgets, en el orden dibujado (spec 52). Un panel
+   * de negocio es métricas arriba y lo que importa debajo; sin esto la tabla que el diseñador
+   * suelta en la vista del panel acababa como una pantalla aparte.
+   */
+  tables?: string[]
 }
 
 export interface ResourcePage {

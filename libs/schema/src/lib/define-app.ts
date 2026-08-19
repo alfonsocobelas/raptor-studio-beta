@@ -109,6 +109,18 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
     seen.add(key)
   })
 
+  // los listados del panel (spec 52): forma y unicidad. Que el recurso EXISTA lo valida la
+  // frontera, que es quien conoce el diseño — igual que con `widget.resource`.
+  const seenTables = new Set<string>()
+  page.tables?.forEach((resource, tableIndex) => {
+    if (!KEBAB_CASE.test(resource)) {
+      problems.push(`pages[${index}].tables[${tableIndex}]: resource must be non-empty kebab-case`)
+      return
+    }
+    if (seenTables.has(resource)) problems.push(`pages[${index}]: duplicated table '${resource}'`)
+    seenTables.add(resource)
+  })
+
   return problems
 }
 

@@ -5,7 +5,7 @@
 
 ---
 
-- [ ] **TASK-01**: `DashboardPage.tables` en `@raptor/schema` + validación en `defineApp`
+- [x] **TASK-01**: `DashboardPage.tables` en `@raptor/schema` + validación en `defineApp`
       (recurso inexistente y repetido dentro del panel), con tests. Sin consumidores todavía.
 
 - [ ] **TASK-02**: frontera `designPagesToAppPages`: la tabla de una vista con `kpis` viaja a
