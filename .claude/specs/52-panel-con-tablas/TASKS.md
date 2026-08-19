@@ -17,7 +17,7 @@
       pantalla bajo `@if (!embedded())`. Gate de oro (los cuatro recursos cambian una línea) +
       `web:build`.
 
-- [ ] **TASK-04**: el panel emitido renderiza los listados declarados: bindings en `generator.ts`
+- [x] **TASK-04**: el panel emitido renderiza los listados declarados: bindings en `generator.ts`
       (imports, selectores, orden), plantilla del dashboard, y la app de oro estrena panel con la
       tabla de `contract`. Re-baseline comparado línea a línea + `web:build`.
 

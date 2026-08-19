@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
 import { DashboardService } from '../../../core/services/dashboard.service'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+<%- listImports %>
 
 /**
  * Dashboard de la app: el total de cada recurso en una KPI card. Los KPIs de dominio
@@ -8,7 +9,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [KpiCardComponent],
+  imports: [KpiCardComponent<%- listSelectors %>],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -24,7 +25,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
       } @else {
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-<%- gridCols %>">
 <%- kpiCards %>
-        </div><%- analyticSections %>
+        </div><%- analyticSections %><%- listSections %>
 
         <!-- @ai:begin dashboard-extra — secciones de dominio (gráficos, listados destacados) -->
         <!-- @ai:end -->

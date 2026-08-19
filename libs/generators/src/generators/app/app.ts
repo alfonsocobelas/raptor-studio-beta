@@ -364,7 +364,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
       tree,
       path.join(__dirname, 'files-dashboard'),
       root,
-      dashboardSubstitutions(composition.kpiModels, composition.analytics ?? [])
+      dashboardSubstitutions(composition.kpiModels, composition.analytics ?? [], composition.dashboardTables)
     )
   }
 
@@ -468,7 +468,8 @@ function run(command: string, cwd: string): void {
  */
 export function dashboardSubstitutions(
   models: ResourceDefinition[],
-  analytics: ComposedAnalyticWidget[] = []
+  analytics: ComposedAnalyticWidget[] = [],
+  tables: ResourceDefinition[] = []
 ): Record<string, string> {
   const entries = models.map((model, index) => ({
     property: names(model.plural).propertyName,
@@ -520,8 +521,30 @@ export function dashboardSubstitutions(
       .map(e => `    expect(httpGet).toHaveBeenCalledWith('${e.api}', { params: { page: '1', pageSize: '1' } })`)
       .join('\n'),
     specZeroAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(0)`).join('\n'),
+    ...renderDashboardLists(tables),
     specTotalAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(${e.total})`).join('\n'),
     tmpl: ''
+  }
+}
+
+/**
+ * Los listados que el panel muestra debajo de los widgets (spec 52). No se emite una tabla
+ * nueva: se REUSA el componente de listado del recurso con su cabecera de pantalla apagada,
+ * que es justo lo que el lienzo dibuja. Todo el cálculo aquí; la plantilla solo interpola.
+ */
+function renderDashboardLists(tables: ResourceDefinition[]): Record<string, string> {
+  if (!tables.length) return { listImports: '', listSelectors: '', listSections: '' }
+
+  const entries = tables.map(model => ({
+    className: `${names(model.name).className}sListComponent`,
+    selector: `app-${model.plural}-list`,
+    path: `../bounded-contexts/${model.context}/features/${model.plural}/${model.plural}-list.component`
+  }))
+
+  return {
+    listImports: entries.map(e => `import { ${e.className} } from '${e.path}'`).join('\n'),
+    listSelectors: entries.map(e => `, ${e.className}`).join(''),
+    listSections: entries.map(e => `\n        <${e.selector} [embedded]="true" />`).join('')
   }
 }
 

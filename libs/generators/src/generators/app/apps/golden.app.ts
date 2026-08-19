@@ -64,7 +64,10 @@ export const golden = defineApp({
         { kind: 'count-by', resource: 'contract', field: 'contractType', label: 'Contratos por tipo' },
         { kind: 'kpi-count', resource: 'project', field: 'status', equals: 'planning', label: 'Proyectos en planificación' },
         { kind: 'series', resource: 'contract', field: 'startDate', label: 'Altas de contrato por mes' }
-      ]
+      ],
+      // spec 52: el panel lleva el listado debajo de los widgets — la combinación que la demo
+      // taller destapó y que el oro no cubría (por eso el defecto del DTO sobrevivió días)
+      tables: ['contract']
     },
     { kind: 'resource', resource: 'contract' },
     { kind: 'gantt', resource: 'contract' },

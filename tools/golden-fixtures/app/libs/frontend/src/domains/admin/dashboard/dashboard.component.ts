@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
 import { DashboardService } from '../../../core/services/dashboard.service'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { ContractsListComponent } from '../bounded-contexts/sap-licensing/features/contracts/contracts-list.component'
 
 /**
  * Dashboard de la app: el total de cada recurso en una KPI card. Los KPIs de dominio
@@ -8,7 +9,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [KpiCardComponent],
+  imports: [KpiCardComponent, ContractsListComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -88,6 +89,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
             }
           </div>
         </div>
+        <app-contracts-list [embedded]="true" />
 
         <!-- @ai:begin dashboard-extra — secciones de dominio (gráficos, listados destacados) -->
         <!-- @ai:end -->

@@ -31,6 +31,8 @@ export interface AppComposition {
   dashboard: boolean
   /** Modelos con tarjeta KPI en el dashboard, en orden de widget */
   kpiModels: ResourceDefinition[]
+  /** Modelos cuyo LISTADO va embebido en el panel, en orden dibujado (spec 52) */
+  dashboardTables: ResourceDefinition[]
   /** Widgets analíticos del dashboard (spec 32), resueltos y validados contra los modelos */
   analytics?: ComposedAnalyticWidget[]
   /** Tema declarado por el app-schema (spec 20); siempre resuelto, 'neutral' por defecto */
@@ -61,7 +63,8 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
       widgets: models.map(model => ({ kind: 'kpi-total', resource: model.name }))
     })
   }
-  return { models, pages, dashboard, kpiModels: dashboard ? models : [], themeId: DEFAULT_THEME_ID }
+  // la composición plana nunca metió listados en el panel: se conserva idéntica
+  return { models, pages, dashboard, kpiModels: dashboard ? models : [], dashboardTables: [], themeId: DEFAULT_THEME_ID }
 }
 
 /** Composición declarada por un app-schema; valida cada referencia contra el registro. */
@@ -83,6 +86,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   }
 
   const kpiModels: ResourceDefinition[] = []
+  const dashboardTables: ResourceDefinition[] = []
   const pages: ComposedPage[] = definition.pages.map(page => {
     if (page.kind === 'dashboard') {
       for (const widget of page.widgets) {
@@ -90,6 +94,13 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
         include(model)
         // solo los totales llevan tarjeta propia; los analíticos (spec 32) tienen su sección
         if (widget.kind === 'kpi-total') kpiModels.push(model)
+      }
+      // los listados que el panel muestra debajo de los widgets (spec 52): `resolve` es
+      // quien rechaza un recurso que no viaja — el error llega al componer, no al compilar
+      for (const resource of page.tables ?? []) {
+        const model = resolve(resource)
+        include(model)
+        dashboardTables.push(model)
       }
       return { ...page, label: page.label ?? 'Dashboard' }
     }
@@ -204,6 +215,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     pages,
     dashboard: kpiModels.length > 0,
     kpiModels,
+    dashboardTables,
     ...(analytics.length ? { analytics } : {}),
     ...(definition.brief ? { brief: definition.brief } : {}),
     ...(definition.flows?.length ? { flows: definition.flows } : {}),

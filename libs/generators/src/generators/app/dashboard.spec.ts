@@ -213,3 +213,59 @@ describe('composeApp — arreglos que destapó el typecheck del oro (spec 32)', 
     expect(composition.pages).toHaveLength(1)
   })
 })
+
+describe('el panel lleva listados dentro (spec 52)', () => {
+  const contract = model({
+    name: 'contract',
+    plural: 'contracts',
+    context: 'sap-licensing',
+    labels: { plural: 'Contratos' }
+  } as Partial<ResourceDefinition>)
+
+  it('composeApp resuelve las tablas del panel a modelos, en orden', () => {
+    const definition: AppDefinition = {
+      schemaVersion: 1,
+      name: 'golden',
+      pages: [
+        {
+          kind: 'dashboard',
+          widgets: [{ kind: 'kpi-total', resource: 'contract' }],
+          tables: ['contract']
+        },
+        { kind: 'resource', resource: 'contract' }
+      ]
+    }
+
+    const composition = composeApp(definition, { contract })
+
+    expect(composition.dashboardTables.map(m => m.name)).toEqual(['contract'])
+  })
+
+  it('una tabla del panel que no existe en el registro revienta al componer, no al compilar', () => {
+    const definition: AppDefinition = {
+      schemaVersion: 1,
+      name: 'golden',
+      pages: [{ kind: 'dashboard', widgets: [{ kind: 'kpi-total', resource: 'contract' }], tables: ['fantasma'] }]
+    }
+
+    expect(() => composeApp(definition, { contract })).toThrow(/fantasma/)
+  })
+
+  it('dashboardSubstitutions emite import, selector y marcado del listado embebido', () => {
+    const subs = dashboardSubstitutions([contract], [], [contract])
+
+    expect(subs['listImports']).toContain(
+      "import { ContractsListComponent } from '../bounded-contexts/sap-licensing/features/contracts/contracts-list.component'"
+    )
+    expect(subs['listSelectors']).toBe(', ContractsListComponent')
+    expect(subs['listSections']).toContain('<app-contracts-list [embedded]="true" />')
+  })
+
+  it('un panel sin listados no emite nada de esto (el dashboard de siempre)', () => {
+    const subs = dashboardSubstitutions([contract], [], [])
+
+    expect(subs['listImports']).toBe('')
+    expect(subs['listSelectors']).toBe('')
+    expect(subs['listSections']).toBe('')
+  })
+})
