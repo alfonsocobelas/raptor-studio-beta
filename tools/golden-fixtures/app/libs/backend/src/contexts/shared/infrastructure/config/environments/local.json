@@ -24,5 +24,9 @@
     "logging": false,
     "migrationsRun": false,
     "migrationsTransactionMode": "all"
+  },
+  "storage": {
+    "connectionString": "UseDevelopmentStorage=true",
+    "container": "attachments"
   }
 }

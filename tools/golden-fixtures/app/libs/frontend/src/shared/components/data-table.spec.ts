@@ -106,6 +106,34 @@ describe('DataTable', () => {
     })
   })
 
+  describe('long text cells with a width cap (spec 54)', () => {
+    const longText = 'Pierde aceite por el cárter y salta el testigo de presión del motor'
+    const cappedColumns: ColumnDef[] = [
+      { key: 'name', label: 'Nombre' },
+      { key: 'fault', label: 'Avería', maxWidth: 280 }
+    ]
+
+    it('renders the value in a single truncated line capped at maxWidth', async () => {
+      await render(DataTable, {
+        inputs: { columns: cappedColumns, data: [{ name: 'Acme', fault: longText }] },
+        providers: [provideZonelessChangeDetection()]
+      })
+
+      const cell = screen.getByText(longText)
+      expect(cell.className).toContain('truncate')
+      expect(cell.style.maxWidth).toBe('280px')
+    })
+
+    it('leaves a column without maxWidth untouched', async () => {
+      await render(DataTable, {
+        inputs: { columns, data: [{ name: longText, industry: 'Technology' }] },
+        providers: [provideZonelessChangeDetection()]
+      })
+
+      expect(screen.getByText(longText).style.maxWidth).toBe('')
+    })
+  })
+
   describe('date cells (spec 40)', () => {
     const dateColumns: ColumnDef[] = [
       { key: 'name', label: 'Nombre' },

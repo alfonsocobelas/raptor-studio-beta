@@ -17,5 +17,16 @@ services:
     volumes:
       - app-golden-postgres-local-data:/var/lib/postgresql/data
 
+  # Emulador de Blob: sin él no hay a qué subir en local y el adapter de Azure Storage no se ejercita.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: app-golden-azurite-local
+    command: 'azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck'
+    ports:
+      - '10000:10000'
+    volumes:
+      - app-golden-azurite-local-data:/data
+
 volumes:
   app-golden-postgres-local-data:
+  app-golden-azurite-local-data:
