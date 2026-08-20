@@ -59,15 +59,30 @@ const EVENT_ALIASES: Record<string, PhaseKey> = { configure: 'write' }
  */
 export const EXPECTED_FILES = 1400
 export const EXPECTED_INSTALL_MS = 120_000
+/** Escala de la curva del arranque; no es una duración esperada, es lo rápido que se frena. */
+export const PREPARE_SCALE_MS = 15_000
 
 /** La estimación no cierra una fase: eso solo lo hace el evento real. */
 const ESTIMATE_CAP = 0.95
 
-export function initialPhases(options: { skipInstall: boolean }): PhaseState[] {
+export function initialPhases(options: { skipInstall: boolean; startedAt?: number }): PhaseState[] {
+  const startedAt = options.startedAt ?? Date.now()
   return CATALOG.map(entry => ({
     ...entry,
-    status: entry.key === 'install' && options.skipInstall ? 'skipped' : 'pending'
+    status: statusAtStart(entry.key, options.skipInstall),
+    ...(entry.key === 'prepare' ? { startedAt } : {})
   }))
+}
+
+/**
+ * Preparar empieza con el botón, no con el primer evento. Entre pulsar y el primer `CREATE`
+ * pasan desde unos segundos hasta minutos —148 s medidos el 2026-08-20 en una máquina
+ * cargada— y en todo ese rato el backend no manda nada: la pantalla se quedaba apagada
+ * justo cuando más hace falta decir «te he oído».
+ */
+function statusAtStart(key: PhaseKey, skipInstall: boolean): PhaseStatus {
+  if (key === 'install' && skipInstall) return 'skipped'
+  return key === 'prepare' ? 'running' : 'pending'
 }
 
 export function applyEvent(phases: PhaseState[], event: PhaseEvent, atMs: number): PhaseState[] {
@@ -134,14 +149,27 @@ export function overallProgress(phases: PhaseState[], nowMs: number): number {
 }
 
 /**
- * Escribir tiene medida real (ficheros escritos); instalar no la tiene —npm solo canta el
- * `added N packages` cuando ya terminó—, así que se estima con el reloj contra lo que suele
- * tardar. Preparar dura un parpadeo y no merece estimación.
+ * Cada fase avanza con lo mejor que tiene. Escribir tiene medida real (ficheros escritos);
+ * instalar no la tiene —npm solo canta el `added N packages` cuando ya terminó— y se estima
+ * con el reloj contra lo que suele tardar; preparar no admite ni eso, porque depende de la
+ * carga de la máquina, así que usa una curva que se frena sola.
  */
 function runningFraction(phase: PhaseState, nowMs: number): number {
   if (phase.key === 'write') return Math.min((phase.files ?? 0) / EXPECTED_FILES, ESTIMATE_CAP)
   if (phase.key === 'install') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_INSTALL_MS, ESTIMATE_CAP)
+  if (phase.key === 'prepare') return decelerating(Math.max(elapsedOf(phase, nowMs) ?? 0, 0), PREPARE_SCALE_MS)
   return 0
+}
+
+/**
+ * Avance sin duración conocida: rápido al principio y cada vez más lento, sin alcanzar nunca
+ * el final de su fase. Preparar no admite estimación —depende de la carga de la máquina, y
+ * entre una libre y la del 2026-08-20 hay un factor de diez—, así que una recta con tope daría
+ * el escalón de clavarse de golpe; esto se frena solo. A `PREPARE_SCALE_MS` lleva el 63 % de
+ * su fase andado, al doble el 86 %, y de ahí en adelante repta.
+ */
+function decelerating(elapsedMs: number, scaleMs: number): number {
+  return ESTIMATE_CAP * (1 - Math.exp(-elapsedMs / scaleMs))
 }
 
 function close(phase: PhaseState, atMs: number, status: PhaseStatus): PhaseState {

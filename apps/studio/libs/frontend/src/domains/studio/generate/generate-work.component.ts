@@ -36,9 +36,7 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
               [style.width.%]="progress() * 100"
             ></div>
           </div>
-          <span class="studio-ui text-muted-foreground shrink-0">
-            {{ settled() }} de {{ phases().length }} fases
-          </span>
+          <span class="studio-ui text-muted-foreground shrink-0"> {{ settled() }} de {{ phases().length }} fases </span>
         </div>
 
         <div class="mb-6 space-y-2">
@@ -48,7 +46,13 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
               [attr.data-state]="phase.status"
               [attr.data-testid]="'phase-' + phase.key"
             >
-              <span class="phase-pip" aria-hidden="true">{{ pip(phase) }}</span>
+              <span class="phase-pip" aria-hidden="true">
+                @if (phase.status === 'running') {
+                  <span class="phase-spinner" data-testid="phase-spinner"></span>
+                } @else {
+                  {{ pip(phase) }}
+                }
+              </span>
               <span class="min-w-0 flex-1">
                 <span class="text-foreground block text-[13px] font-semibold">
                   {{ phase.label }}
@@ -79,7 +83,10 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
       </div>
     </main>
 
-    <aside class="studio-rail studio-rail-end w-80 shrink-0 overflow-auto border-l px-5 py-8" data-testid="work-meanwhile">
+    <aside
+      class="studio-rail studio-rail-end w-80 shrink-0 overflow-auto border-l px-5 py-8"
+      data-testid="work-meanwhile"
+    >
       <p class="studio-eyebrow mb-3">Mientras tanto</p>
       <p class="text-muted-foreground studio-ui mb-4">Esto es lo que se está escribiendo.</p>
 
@@ -131,6 +138,27 @@ import { elapsedOf, overallProgress, type PhaseState } from './generate-phases'
     .phase-row[data-state='running'] .phase-pip {
       border-color: #f15539;
       color: #f15539;
+    }
+    /* La fase en curso gira: un icono quieto durante los dos minutos que dura instalar
+       se lee como «colgado», y el color por sí solo no dice si algo se mueve. */
+    .phase-spinner {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1.5px solid color-mix(in srgb, #f15539 30%, transparent);
+      border-top-color: #f15539;
+      animation: phase-spin 0.7s linear infinite;
+    }
+    @keyframes phase-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    /* Quien haya pedido menos movimiento no ve girar nada: se queda el aro estático. */
+    @media (prefers-reduced-motion: reduce) {
+      .phase-spinner {
+        animation: none;
+      }
     }
     .written-pip {
       width: 12px;

@@ -238,7 +238,7 @@ export class GenerateRunner {
     this.step.set('Validando el diseño')
     this.outcome.set(null)
     this.viewRequested.set(false)
-    this.phases.set(initialPhases({ skipInstall: request.skipInstall }))
+    this.phases.set(initialPhases({ skipInstall: request.skipInstall, startedAt: Date.now() }))
     this.written.set(
       plannedItems({
         resources: request.design.resources,

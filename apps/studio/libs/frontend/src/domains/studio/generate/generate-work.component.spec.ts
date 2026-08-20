@@ -73,6 +73,29 @@ describe('GenerateWorkComponent', () => {
       expect(at(fixture, 'phase-install')?.getAttribute('data-state')).toBe('pending')
     })
 
+    /**
+     * Un icono quieto durante los dos minutos que dura instalar se lee como «colgado». El
+     * spinner es la única parte de la fila que dice, sin leer nada, que algo se mueve.
+     */
+    it('la que está en curso gira; las demás llevan su marca quieta', () => {
+      runner.phases.update(phases =>
+        phases.map(p => (p.key === 'write' ? { ...p, status: 'running' as const, startedAt: 0 } : p))
+      )
+      const fixture = mount()
+
+      expect(at(fixture, 'phase-write')?.querySelector('[data-testid="phase-spinner"]')).not.toBeNull()
+      expect(at(fixture, 'phase-install')?.querySelector('[data-testid="phase-spinner"]')).toBeNull()
+    })
+
+    /** Pulsar y no ver nada era el peor momento de la pantalla: ahora la primera ya trabaja. */
+    it('nada más arrancar, la primera fase ya está en curso y girando', () => {
+      runner.phases.set(initialPhases({ skipInstall: false, startedAt: Date.now() }))
+      const fixture = mount()
+
+      expect(at(fixture, 'phase-prepare')?.getAttribute('data-state')).toBe('running')
+      expect(at(fixture, 'phase-prepare')?.querySelector('[data-testid="phase-spinner"]')).not.toBeNull()
+    })
+
     it('la cumplida enseña lo que tardó', () => {
       runner.phases.update(phases =>
         phases.map(p => (p.key === 'prepare' ? { ...p, status: 'done' as const, elapsedMs: 4200 } : p))

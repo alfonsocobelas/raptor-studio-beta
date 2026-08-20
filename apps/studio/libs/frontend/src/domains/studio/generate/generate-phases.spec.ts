@@ -24,7 +24,24 @@ describe('initialPhases', () => {
     // «Ajustando la configuración» NO está: en la generación real (log de 1421 líneas del
     // 2026-08-13) no salió ni un UPDATE, así que era una fila que nunca se encendía.
     expect(initialPhases({ skipInstall: false }).map(p => p.key)).toEqual(['prepare', 'write', 'install'])
-    expect(initialPhases({ skipInstall: false }).every(p => p.status === 'pending')).toBe(true)
+    expect(
+      initialPhases({ skipInstall: false })
+        .filter(p => p.status === 'pending')
+        .map(p => p.key)
+    ).toEqual(['write', 'install'])
+  })
+
+  /**
+   * Pulsar y no ver nada es el peor momento de la pantalla: el arranque de Nx medido el
+   * 2026-08-20 en una máquina cargada fueron 148 s hasta el primer fichero, y hasta entonces
+   * el backend no manda un solo evento. La primera fase no espera a que se lo digan: si se
+   * está generando, se está preparando.
+   */
+  it('la primera fase nace en curso: pulsar el botón ya es trabajo empezado', () => {
+    const phases = initialPhases({ skipInstall: false, startedAt: 500 })
+
+    expect(status(phases, 'prepare')).toBe('running')
+    expect(phase(phases, 'prepare').startedAt).toBe(500)
   })
 
   it('si se pidió no instalar, esa fase nace omitida y no pendiente para siempre', () => {
@@ -38,7 +55,8 @@ describe('initialPhases', () => {
 })
 
 describe('applyEvent', () => {
-  const start = initialPhases({ skipInstall: false })
+  // con hora de arranque explícita: prepare nace en curso y su cronómetro tiene que ser medible
+  const start = initialPhases({ skipInstall: false, startedAt: 1000 })
 
   it('la fase que llega se pone en curso', () => {
     const phases = applyEvent(start, { phase: 'prepare' }, 1000)
@@ -176,7 +194,7 @@ describe('elapsedOf', () => {
 })
 
 describe('overallProgress', () => {
-  const start = initialPhases({ skipInstall: false })
+  const start = initialPhases({ skipInstall: false, startedAt: 0 })
 
   it('sin empezar, cero', () => {
     expect(overallProgress(start, 0)).toBe(0)
@@ -215,6 +233,36 @@ describe('overallProgress', () => {
     expect(late).toBeGreaterThan(overallProgress(phases, 1000 + EXPECTED_INSTALL_MS / 2))
   })
 
+  /**
+   * Preparar no tiene medida posible —depende de lo cargada que esté la máquina: 148 s en la
+   * medición del 2026-08-20 contra los pocos segundos de una máquina libre—, así que se estima
+   * con una curva que se frena sola: rápida al principio, cada vez más lenta, y nunca alcanza
+   * el final de su fase. Es el «congelar la barra» sin el escalón de clavarse de golpe.
+   */
+  it('mientras prepara, la barra avanza aunque el backend aún no haya dicho nada', () => {
+    const phases = initialPhases({ skipInstall: false, startedAt: 0 })
+
+    const pronto = overallProgress(phases, 5_000)
+    const luego = overallProgress(phases, 30_000)
+
+    expect(pronto).toBeGreaterThan(0)
+    expect(luego).toBeGreaterThan(pronto)
+  })
+
+  it('y por mucho que tarde el arranque, no termina su fase sola', () => {
+    const phases = initialPhases({ skipInstall: false, startedAt: 0 })
+
+    expect(overallProgress(phases, 10 * 60_000)).toBeLessThan(1 / 3)
+  })
+
+  it('la curva se frena: el segundo tramo de espera avanza menos que el primero', () => {
+    const phases = initialPhases({ skipInstall: false, startedAt: 0 })
+    const primero = overallProgress(phases, 15_000) - overallProgress(phases, 0)
+    const segundo = overallProgress(phases, 30_000) - overallProgress(phases, 15_000)
+
+    expect(segundo).toBeLessThan(primero)
+  })
+
   it('la fase omitida cuenta como cerrada: no deja la barra corta para siempre', () => {
     const phases = applyDone(applyEvent(initialPhases({ skipInstall: true }), { phase: 'write' }, 1000), 2000, true)
 
@@ -223,7 +271,7 @@ describe('overallProgress', () => {
 })
 
 describe('applyDone', () => {
-  const running = applyEvent(initialPhases({ skipInstall: false }), { phase: 'install' }, 1000)
+  const running = applyEvent(initialPhases({ skipInstall: false, startedAt: 0 }), { phase: 'install' }, 1000)
 
   it('al terminar bien, la fase en curso se cierra con su tiempo', () => {
     const phases = applyDone(running, 6000, true)
