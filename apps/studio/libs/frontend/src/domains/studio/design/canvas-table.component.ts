@@ -14,6 +14,7 @@ import {
 import { FormsModule } from '@angular/forms'
 import { DRAFT_FIELD_TYPES, type DraftField, type DraftResource } from '@app/shared/domain'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
+import { AppTooltip } from '../../../shared/components/ui/tooltip'
 import { ActiveViewService } from './active-view.service'
 import { CanvasFormDialogComponent } from './canvas-form-dialog.component'
 import { DesignStore } from './design-store'
@@ -24,6 +25,14 @@ import { buildSampleRows, mockTotal } from './mock-data'
 
 // 5 filas: en el lienzo la tabla convive con otros bloques y no debe comérselos
 const PAGE_SIZE = 5
+
+/**
+ * Techo de la columna de texto largo, EL MISMO que la app emitida (spec 54): el lienzo no
+ * puede prometer una tabla más limpia que la que se genera. El número vive dos veces porque
+ * el estudio no puede importar de `libs/generators` — ver `LONG_TEXT_MAX_WIDTH` en
+ * `build-substitutions.ts`, igual que ya pasa con `BADGE_CLASSES` (spec 22).
+ */
+const LONG_TEXT_COL_MAX_PX = 280
 
 /** Las cuatro variantes de badge del canon, en el mismo orden que el generador. */
 /** «En curso» → «en_curso»: el valor va a la base, la etiqueta a la pantalla. */
@@ -52,7 +61,7 @@ const BADGE_CLASSES = [
 @Component({
   selector: 'studio-canvas-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppSelect, CanvasFormDialogComponent, FormsModule, NgIcon],
+  imports: [AppSelect, AppTooltip, CanvasFormDialogComponent, FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideDownload,
@@ -107,7 +116,7 @@ const BADGE_CLASSES = [
                   (mouseleave)="hovered.set(null)"
                   (click)="toggleEditor($index)"
                 >
-                  <span class="flex items-center gap-1">
+                  <span class="flex items-center gap-1 whitespace-nowrap">
                     {{ field.label }}
                     <span class="ml-1 hidden gap-1 group-hover/col:inline-flex">
                       <span class="hover:text-foreground" title="Editar columna">
@@ -233,12 +242,22 @@ const BADGE_CLASSES = [
                 </td>
                 @for (field of resource.fields; track field.name) {
                   <td
-                    class="px-4 py-3"
+                    class="px-4 py-3 whitespace-nowrap"
+                    [attr.data-testid]="'cell-' + field.name"
                     [class.bg-accent]="hovered() === $index2(field)"
                     [class.text-right]="field.type === 'number' || field.type === 'integer'"
                   >
                     @if (field.type === 'enum') {
                       <span class="rounded-full px-2 py-0.5 text-xs" [class]="badgeClass(field, row)">
+                        {{ row[field.name] }}
+                      </span>
+                    } @else if (field.type === 'text') {
+                      <span
+                        class="block truncate"
+                        [style.max-width.px]="longTextMaxPx"
+                        [appTooltip]="asText(row[field.name])"
+                        [tooltipDisabled]="!asText(row[field.name])"
+                      >
                         {{ row[field.name] }}
                       </span>
                     } @else {
@@ -307,6 +326,12 @@ export class CanvasTableComponent {
     this.otherResources().map(other => ({ value: other.name, label: other.labelSingular }))
   )
   protected readonly pageSize = PAGE_SIZE
+  protected readonly longTextMaxPx = LONG_TEXT_COL_MAX_PX
+
+  /** El tooltip recibe texto: las filas de muestra guardan valores sin tipo. */
+  protected asText(value: unknown): string {
+    return value === null || value === undefined ? '' : String(value)
+  }
 
   /**
    * Mismo criterio que el generador (spec 22): la variante se asigna por
