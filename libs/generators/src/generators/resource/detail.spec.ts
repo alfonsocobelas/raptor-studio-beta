@@ -187,6 +187,45 @@ describe('resource generator — ficha', () => {
     expect(detail).toContain(`{ key: 'estado', label: 'Estado', labels: { abierto: 'Abierto', cerrado: 'Cerrado' } }`)
   })
 
+  /**
+   * Defecto cazado por la demo `peritajes` (2026-08-20): un valor de enum con guion
+   * —`responsabilidad-civil`, y con él `en-curso`, `alta-tension`…— salía como clave SIN
+   * comillas. Angular no puede parsear esa expresión, así que se caía la plantilla entera del
+   * componente y con ella toda referencia a sus propiedades: 819 errores de compilación desde
+   * una sola línea. El módulo de labels ya lo hacía bien (sanea a RESPONSABILIDAD_CIVIL); esto
+   * es lo mismo donde la clave se emite literal.
+   */
+  it('un valor con guion viaja entrecomillado: sin eso, la plantilla no parsea', async () => {
+    const conGuion = {
+      ...withDetail(),
+      fields: {
+        ...withDetail().fields,
+        causa: {
+          type: 'string',
+          table: {
+            show: true,
+            label: 'Causa',
+            type: 'badge',
+            badgeMap: {
+              agua: { label: 'Daños por agua', variant: 'default' },
+              'responsabilidad-civil': { label: 'Responsabilidad civil', variant: 'secondary' }
+            }
+          }
+        }
+      }
+    } as unknown as ResourceDefinition
+    const tree = await generate(conGuion)
+    const detail = tree.read('out/frontend/invoice-detail.component.ts', 'utf-8') ?? ''
+    const list = tree.read('out/frontend/invoices-list.component.ts', 'utf-8') ?? ''
+
+    expect(detail).toContain(`'responsabilidad-civil': 'Responsabilidad civil'`)
+    expect(detail).not.toMatch(/[^']responsabilidad-civil:/)
+    // el badgeMap del listado emite la misma clave, y también compila o no compila
+    expect(list).toContain(`'responsabilidad-civil':`)
+    // lo que ya era un identificador válido se queda como estaba: nada de ruido en el oro
+    expect(detail).toContain(`agua: 'Daños por agua'`)
+  })
+
   it('sin hijos que lo referencien, la ficha no monta tablas relacionadas', async () => {
     const tree = await generate(withDetail())
 
@@ -241,7 +280,10 @@ describe('resource generator — ficha', () => {
             show: true,
             label: 'Estado',
             type: 'badge',
-            badgeMap: { abierta: { label: 'Abierta', variant: 'default' }, en_curso: { label: 'En curso', variant: 'secondary' } }
+            badgeMap: {
+              abierta: { label: 'Abierta', variant: 'default' },
+              en_curso: { label: 'En curso', variant: 'secondary' }
+            }
           }
         }
       }

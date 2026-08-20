@@ -984,7 +984,7 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
       const badges = field?.table?.badgeMap
       const labels = badges
         ? `, labels: { ${Object.entries(badges)
-            .map(([value, badge]) => `${value}: '${badge.label}'`)
+            .map(([value, badge]) => `${objectKey(value)}: '${badge.label}'`)
             .join(', ')} }`
         : ''
       return `{ key: '${name}', label: '${label}'${type ? `, type: '${type}'` : ''}${labels} }`
@@ -1002,6 +1002,17 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
  * Las etiquetas salen del PROPIO modelo, por prioridad: badgeMap del listado (cubre los valores
  * que solo siembra el sync), options del formulario y el valor capitalizado como último recurso.
  */
+/**
+ * Un valor de conjunto cerrado usado como CLAVE de un objeto emitido. `agua` vale tal cual, pero
+ * `responsabilidad-civil` necesita comillas: sin ellas Angular no parsea la expresión y se cae la
+ * plantilla entera del componente —819 errores de compilación desde una sola línea, defecto
+ * cazado por la demo `peritajes` (2026-08-20)—. Se entrecomilla solo lo que lo necesita, así el
+ * resto del emitido, y el oro con él, no cambia ni una coma.
+ */
+function objectKey(value: string): string {
+  return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value) ? value : `'${value}'`
+}
+
 function renderLabelsModule(definition: ResourceDefinition): LabelsModuleSubstitution | null {
   if (!definition.labelsModule) return null
 
@@ -1118,7 +1129,7 @@ function renderRelated(definition: ResourceDefinition, others: ResourceDefinitio
           // (defecto cazado por la demo Solaris, 2026-08-10).
           if (field.table?.type === 'badge' && field.table.badgeMap) {
             const labels = Object.entries(field.table.badgeMap)
-              .map(([value, badge]) => `${value}: '${badge.label}'`)
+              .map(([value, badge]) => `${objectKey(value)}: '${badge.label}'`)
               .join(', ')
             return `{ key: '${name}', label: '${label}', labels: { ${labels} } }`
           }
@@ -1194,7 +1205,7 @@ function renderFrontendColumn(name: string, table: FieldTable): string {
   if (table.type === 'badge' && table.badgeMap) {
     parts.push(`type: 'badge'`)
     const entries = Object.entries(table.badgeMap)
-      .map(([key, badge]) => `      ${key}: { label: '${badge.label}', variant: '${badge.variant}' }`)
+      .map(([key, badge]) => `      ${objectKey(key)}: { label: '${badge.label}', variant: '${badge.variant}' }`)
       .join(',\n')
     parts.push(`badgeMap: {\n${entries}\n    }`)
     // objeto expandido: prettier preserva la multilinea, como en el módulo de oro
