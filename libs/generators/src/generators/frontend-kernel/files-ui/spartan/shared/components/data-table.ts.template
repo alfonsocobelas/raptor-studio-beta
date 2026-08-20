@@ -58,6 +58,9 @@ export interface ColumnDef {
   // Etiqueta de presentación por valor para celdas de texto (ej. 'yearly' → 'Anual'); fallback al valor crudo
   valueMap?: Record<string, string>
   minWidth?: number
+  // Techo de ancho: la celda corta con elipsis y da el texto completo en el tooltip (spec 54).
+  // Sin techo una columna de texto largo crece hasta empujar los demás datos fuera de la pantalla.
+  maxWidth?: number
 }
 
 export interface ColumnFilter {
@@ -542,6 +545,16 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
         } @else {
           —
         }
+      } @else if (col.maxWidth) {
+        @let text = getDisplayValue(row, col);
+        <span
+          class="block truncate"
+          [style.max-width.px]="col.maxWidth"
+          [hlmTooltip]="text"
+          [tooltipDisabled]="text === '—'"
+        >
+          {{ text }}
+        </span>
       } @else {
         {{ getDisplayValue(row, col) }}
       }
