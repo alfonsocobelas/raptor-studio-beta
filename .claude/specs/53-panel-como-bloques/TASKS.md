@@ -23,11 +23,6 @@
       `kpiModels`/`analytics`/`dashboardTables`; el ancho se resuelve a `'full'`; las validaciones de
       la spec 32 se mueven sin cambiar de significado. Tests de composición.
 
-- [ ] **TASK-04**: emisión — `panelSections` con `groupByWidth` (rejilla de métricas, pares de `half`,
-      grupo de un solo `half` a lo ancho esté donde esté) y la plantilla del panel recorriendo una sola cadena. El servicio
-      conserva su forma. **Gate: oro vacío incluido el `dashboard.component.ts` de la app de oro** +
-      `web:build` de una app emitida.
-
 - [x] **TASK-05**: frontera del estudio — `designPagesToAppPages` emite bloques en orden con su
       ancho; se conservan las dos reglas de la spec 52. Suite del estudio + AOT.
 

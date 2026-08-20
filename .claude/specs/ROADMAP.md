@@ -394,3 +394,37 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     siendo legal —el modelo de la 53 no opina— pero **no es lo que hace útil a un panel**, y meterlo
     en un diseño solo repite lo que la vista del recurso ya enseña. El candidato de verdad es la
     proyección de lectura, y es una spec grande: dominio + endpoint + vocabulario del panel.
+
+> **Tablas legibles: cerrado** por la spec 54 (2026-08-20). Una columna puede declarar su techo
+> (`FieldTable.maxWidth` → `ColumnDef.maxWidth`) y la política se lo pone sola a los campos que se
+> editan en `textarea`: 280px, una línea, elipsis y el texto completo en el tooltip. Medido en la
+> demo `taller`: el lienzo pasó de 789px de alto a 273 (cinco filas de una línea) y la app emitida
+> pinta filas de 49px con la avería cortada de verdad (`scrollWidth > clientWidth`) e Importe y
+> Horas otra vez en pantalla. El gate de oro quedó vacío salvo el `data-table.ts` del kernel.
+
+28. **El spec de servicio emitido va ROJO en cuanto el recurso tiene soft delete.** Descubierto al
+    regenerar `taller` para la spec 54: 12 fallos de 134 en su suite de frontend, los mismos 3 tests
+    en los 4 recursos (`adds an orders param`, `adds the search param`, `serializes column filters`).
+    Diagnóstico: el servicio emitido tiene DOS `resource()` —el listado y la papelera— y el spec
+    afirma con `toHaveBeenLastCalledWith('/api/v1/<plural>')`, pero la última llamada es
+    `/api/v1/<plural>/deleted`. No es de la spec 54 (el gate de oro salió idéntico en los 788
+    ficheros de la fixture, que incluyen esos specs): es un defecto de plantilla anterior, y significa
+    que **cualquier app entregada con soft delete nace con su suite en rojo**. Arreglo: que el spec
+    afirme sobre la llamada del listado (`toHaveBeenCalledWith`) o que espere a que la papelera
+    asiente. Barato y urgente — es lo primero que ve un cliente al correr los tests.
+
+29. **El `vitest.config.mts` emitido no declara `testTimeout`; el `jest.config.js` emitido sí (30 s).**
+    Esa asimetría es la causa de los timeouts de 5 s que llevan cuatro sesiones apareciendo (la
+    suite del estudio, 7 fallos con la máquina cargada; la del emitido, 1). No es «la máquina va
+    lenta»: es que el arranque de Angular por fichero no cabe en el defecto de vitest. Se arregla en
+    `files-skeleton/vitest.config.mts.template`, una línea, y deja de contaminar todos los gates.
+
+30. **`stickyLeftOffsets` asume que toda columna mide exactamente su `minWidth`.** Si una columna
+    fijada mide más, las siguientes quedan descolocadas. Es anterior a la spec 54 y el techo lo
+    *acota* (antes el desbordamiento no tenía límite), así que no urge; el arreglo natural es que el
+    cálculo use `min(maxWidth, ancho real)` o que una columna fijada declare un ancho fijo.
+
+31. **La copia propia del DataTable del estudio no estrena el techo.** `apps/studio` es una app
+    generada y su `shared/components/data-table.ts` se quedó en la versión anterior; sus pantallas de
+    demo (warehouse) no tienen texto largo, así que no se ve. Se arregla cuando el estudio se
+    regenere, no antes.
