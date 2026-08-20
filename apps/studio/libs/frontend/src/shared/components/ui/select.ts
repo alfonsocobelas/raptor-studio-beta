@@ -52,9 +52,14 @@ export class AppSelect implements ControlValueAccessor {
    *
    * El alto va por la MISMA variante que usa el disparador (data-[size=sm]:h-8); una clase
    * `h-*` suelta no la sustituye y el desplegable se quedaba 6px más alto que su fila.
+   *
+   * La flecha se achica aparte: helm la fija a 16px en el propio ng-icon y no mira el
+   * `size`, así que en la fila densa —26px de alto, letra de 12px— era el elemento más
+   * gordo, y más grande que los chevrones del raíl de Vistas. Va como variante
+   * descendente para ganar por especificidad a la clase que helm pone en el icono.
    */
   protected readonly triggerClass = computed(() =>
-    this.size() === 'sm' ? 'w-full data-[size=sm]:h-[26px] gap-1 px-2 py-0 text-xs' : 'w-full'
+    this.size() === 'sm' ? 'w-full data-[size=sm]:h-[26px] gap-1 px-2 py-0 text-xs [&_ng-icon]:text-[13px]' : 'w-full'
   )
 
   protected readonly value = signal<string | null>(null)
