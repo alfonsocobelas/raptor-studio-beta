@@ -23,4 +23,13 @@ describe('etiquetas cortas de tipo (las del diagrama)', () => {
     expect(labelOfType('ref')).toBe('referencia a…')
     expect(shortLabelOfType('ref')).toBe('ref')
   })
+
+  /**
+   * `boolean` era la única etiqueta en jerga inglesa de un desplegable escrito en
+   * español —«texto», «fecha», «lista de valores»—: en el inspector cantaba.
+   */
+  it('ninguna etiqueta se queda en inglés: boolean se lee «sí/no»', () => {
+    expect(labelOfType('boolean')).toBe('sí/no')
+    expect(shortLabelOfType('boolean')).toBe('sí/no')
+  })
 })
