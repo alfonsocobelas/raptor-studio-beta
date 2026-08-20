@@ -1148,6 +1148,12 @@ function detailValueType(field: FieldDefinition | undefined): string | null {
   return null
 }
 
+/**
+ * Techo de las columnas de texto largo (spec 54). El lienzo replica este número en
+ * `canvas-table.component.ts` del estudio, que no puede importar de aquí.
+ */
+const LONG_TEXT_MAX_WIDTH = 280
+
 /** Columnas del listado, ya ordenadas y renderizadas (regla 8). */
 export function renderFrontendColumns(definition: ResourceDefinition): string[] {
   const fields = Object.entries(definition.fields)
@@ -1161,6 +1167,9 @@ export function renderFrontendColumns(definition: ResourceDefinition): string[] 
       renderFrontendColumn(name, {
         // un booleano se lee Sí/No, igual que en la ficha (defecto 17)
         ...(field?.type === 'boolean' && !table.type ? { type: 'boolean' as const } : {}),
+        // un campo que se edita en textarea es de 2000 caracteres: su columna se corta (spec 54).
+        // `...table` va después, así que un techo declarado en el modelo gana a la política.
+        ...(field?.form?.control === 'textarea' ? { maxWidth: LONG_TEXT_MAX_WIDTH } : {}),
         ...table
       })
     )
@@ -1180,6 +1189,7 @@ function renderFrontendColumn(name: string, table: FieldTable): string {
     parts.push(`type: '${table.type}'`)
   }
   if (table.minWidth !== undefined) parts.push(`minWidth: ${table.minWidth}`)
+  if (table.maxWidth !== undefined) parts.push(`maxWidth: ${table.maxWidth}`)
   if (table.valueMapConst) parts.push(`valueMap: ${table.valueMapConst}`)
   if (table.type === 'badge' && table.badgeMap) {
     parts.push(`type: 'badge'`)

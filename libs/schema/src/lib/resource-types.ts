@@ -116,6 +116,11 @@ export interface FieldTable {
   order?: number
   label?: string
   minWidth?: number
+  /**
+   * Width ceiling: the cell keeps one line, cuts with an ellipsis and offers the whole text in the
+   * tooltip (spec 54). Derived from a 'textarea' control when absent; declared here it wins.
+   */
+  maxWidth?: number
   /** UI truth of the DataTable (independent of backend query flags, as in the golden modules) */
   filterable?: boolean
   sortable?: false
