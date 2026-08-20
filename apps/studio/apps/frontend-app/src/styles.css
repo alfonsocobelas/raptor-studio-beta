@@ -371,6 +371,26 @@
 .studio-row > select:disabled {
   opacity: 0.6;
 }
+/* La fila viste a CUALQUIER control que caiga en ella, no solo a los nativos: `app-select`
+   es un custom element, así que las dos reglas de arriba no le llegaban y entraba con su
+   tamaño de serie —36px de alto, letra de 14, flecha de 16— junto a inputs de 31px y letra
+   de 12,5. La columna salía escalonada y con dos tipografías (Modelo · Campo y Flujos ·
+   nodo, 2026-08-20). Poniéndolo aquí, cualquier fila futura sale bien sin acordarse de nada;
+   lo vigila tools/smoke-panel-rows.ts. Va por atributo para ganar en especificidad a las
+   utilidades que helm pone en el disparador. */
+.studio-row > app-select {
+  width: 150px;
+  flex-shrink: 0;
+}
+.studio-row > app-select button[data-size] {
+  width: 100%;
+  height: 31px;
+  padding: 0 8px;
+  font-size: 12.5px;
+}
+.studio-row > app-select button[data-size] ng-icon {
+  font-size: 13px;
+}
 
 /* Bloque del inspector, como en la referencia (12A/19A): las secciones del panel
    van en su propio recuadro sobre papel, no sueltas sobre el blanco. */
