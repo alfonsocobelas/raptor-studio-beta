@@ -370,7 +370,7 @@ export function buildSubstitutions(
     icons: renderIcons(resolveFeatures(definition)),
     rowActionsComment: renderRowActionsComment(resolveFeatures(definition)),
     rowWriteActions: renderRowWriteActions(resolveFeatures(definition), definition.access !== undefined),
-    deleteLabelField: definition.list?.deleteLabelField ?? 'name',
+    deleteLabelField: pickDeleteLabelField(definition),
     dtoName: definition.dtoName ?? `${n.className}Dto`,
     api: definition.api ?? `/api/v1/${definition.plural}`,
     labelPlural: definition.labels?.plural ?? definition.plural,
@@ -497,9 +497,7 @@ function renderTestBindings(definition: ResourceDefinition): TestBindings {
       ? `{ ${optionalText[0]}: ${sampleScalar(optionalText[0], optionalText[1], 0)} }`
       : `{}`
 
-  const enums = [
-    ...new Set(fields.map(([, f]) => f.form?.optionsType).filter((t): t is string => t !== undefined))
-  ]
+  const enums = [...new Set(fields.map(([, f]) => f.form?.optionsType).filter((t): t is string => t !== undefined))]
     // el mock solo importa lo que usa como valor: los enums reales (las unions van como literal)
     .filter(t => t.endsWith('Enum'))
     .sort()
@@ -1009,6 +1007,29 @@ function renderDetail(definition: ResourceDefinition): DetailSubstitution | null
  * cazado por la demo `peritajes` (2026-08-20)—. Se entrecomilla solo lo que lo necesita, así el
  * resto del emitido, y el oro con él, no cambia ni una coma.
  */
+/**
+ * El campo que el diálogo de borrado entrecomilla («Se archivará el informe "…"»). Era `name` a
+ * ciegas, y el emitido no compilaba en cuanto la entidad no tenía ese campo —defecto cazado por
+ * la demo `peritajes` (2026-08-20); los cuatro modelos de oro lo tapaban porque todos tienen
+ * `name` o lo declaran a mano—.
+ *
+ * El orden de preferencia es el mismo criterio con el que la ficha elige su título: por lo que
+ * el usuario reconoce la entidad. Y termina en `id`, que existe siempre: mejor enseñar un uuid
+ * que emitir código que no compila.
+ */
+function pickDeleteLabelField(definition: ResourceDefinition): string {
+  const declared = definition.list?.deleteLabelField
+  if (declared) return declared
+
+  const fields = Object.entries(definition.fields)
+  const has = (name: string): boolean => fields.some(([field]) => field === name)
+  if (has('name')) return 'name'
+
+  const searchableText = fields.find(([, f]) => f.type === 'string' && f.query?.searchable)?.[0]
+  const anyText = fields.find(([name, f]) => f.type === 'string' && name !== 'id')?.[0]
+  return searchableText ?? anyText ?? 'id'
+}
+
 function objectKey(value: string): string {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value) ? value : `'${value}'`
 }

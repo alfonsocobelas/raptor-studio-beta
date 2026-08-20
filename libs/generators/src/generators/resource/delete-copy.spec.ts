@@ -2,6 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import { registerModels, MODELS } from './models/registry'
 import { resourceGenerator } from './resource'
+import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Spec 38 · TASK-08: el copy del diálogo deja de mentir. Con borrado suave nada se
@@ -40,6 +41,30 @@ describe('resource generator — copy del borrado (spec 38 TASK-08)', () => {
 
     expect(list).toContain('Se eliminará permanentemente el material')
     expect(list).toContain('Esta acción no se puede deshacer.')
+  })
+
+  /**
+   * Defecto cazado por la demo `peritajes` (2026-08-20): el nombre que el diálogo entrecomilla
+   * salía siempre de un campo `name`, existiera o no. Un informe de peritación no tiene nombre
+   * —se reconoce por su siniestro y su fecha—, así que el emitido no compilaba:
+   * «Property 'name' does not exist on type 'InformeDto'». Los cuatro modelos de oro lo tapaban
+   * porque todos tienen `name` o lo declaran a mano.
+   */
+  it('una entidad sin campo name usa el primero por el que se la busca, no uno inventado', async () => {
+    // worklog no tiene `name`: se reconoce por el código de su instalación. Sin la declaración
+    // a mano, el generador emitía `?.name` igualmente y el emitido no compilaba.
+    const sinDeclarar = {
+      ...MODELS['worklog'],
+      list: { ...MODELS['worklog'].list, deleteLabelField: undefined }
+    } as ResourceDefinition
+
+    registerModels([MODELS['account'], MODELS['installation'], sinDeclarar, MODELS['material']])
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'worklog', directory: 'out' })
+    const list = read(tree, 'out/frontend/worklogs-list.component.ts')
+
+    expect(list).toContain('deletingWorklog()?.installationCode')
+    expect(list).not.toContain('deletingWorklog()?.name')
   })
 
   it('la ficha usa el mismo copy que el listado', async () => {
