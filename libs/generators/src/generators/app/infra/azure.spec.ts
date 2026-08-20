@@ -181,4 +181,46 @@ export class StorageModule {}
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)
     })
   })
+
+  /**
+   * El adapter de Blob solo se ejercita si hay a qué conectarse. La referencia levanta Azurite
+   * en su compose local y apunta la config del entorno al emulador; al extraer el adapter a
+   * `files-infra-azure` se trajo el código y se dejó atrás el emulador, así que en local el
+   * emitido caía en disco y subir/descargar no se podía probar sin desplegar en Azure.
+   */
+  describe('local con Azurite', () => {
+    let withAttachments: Tree
+
+    beforeAll(async () => {
+      withAttachments = createTreeWithEmptyWorkspace()
+      await appGenerator(withAttachments, { name: 'demo', models: 'project', skipInstall: true, infra: 'azure' })
+    })
+
+    const readEmulated = (file: string): string => withAttachments.read(`apps/demo/${file}`, 'utf-8') ?? ''
+
+    it('levanta el emulador en el compose local, con el nombre de la app y su volumen', () => {
+      const compose = readEmulated('docker/docker-compose.local.yml')
+
+      expect(compose).toContain('image: mcr.microsoft.com/azure-storage/azurite')
+      expect(compose).toContain('container_name: demo-azurite-local')
+      expect(compose).toContain("- '10000:10000'")
+      expect(compose).toContain('- demo-azurite-local-data:/data')
+      expect(compose.split('\nvolumes:\n')[1] ?? '').toContain('demo-azurite-local-data:')
+    })
+
+    it('apunta la config local al emulador, para que el StorageModule elija Blob y no disco', () => {
+      const local = JSON.parse(
+        readEmulated('libs/backend/src/contexts/shared/infrastructure/config/environments/local.json')
+      ) as { storage?: { connectionString: string; container: string } }
+
+      expect(local.storage).toEqual({ connectionString: 'UseDevelopmentStorage=true', container: 'attachments' })
+    })
+
+    it('sin adjuntos no hay nada que emular: el compose y la config quedan como estaban', () => {
+      expect(read('docker/docker-compose.local.yml')).not.toContain('azurite')
+      expect(read('libs/backend/src/contexts/shared/infrastructure/config/environments/local.json')).not.toContain(
+        '"storage"'
+      )
+    })
+  })
 })

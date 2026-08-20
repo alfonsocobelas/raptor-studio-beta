@@ -39,6 +39,7 @@ export const azureInfra = defineInfra({
     instrumentBeforeEverythingElse(tree, context)
     addAzureLogTransport(tree, context)
     bindBlobStorage(tree, context)
+    emulateBlobInLocal(tree, context)
     nameTerraformProject(tree, context)
   }
 })
@@ -188,6 +189,64 @@ import { LocalFileStorage } from './local-file-storage'
 export class StorageModule {}
 `
   )
+}
+
+/**
+ * Azurite en el compose local y la config que lo apunta. Sin esto el adapter de Blob se emite
+ * pero nunca corre: `local.json` no trae sección `storage`, el StorageModule cae en disco y
+ * subir/descargar solo se podría probar desplegando en Azure de verdad. La referencia ya
+ * levantaba el emulador (`docs/referencia/docker/docker-compose.local.yml`); al extraer el
+ * adapter se trajo el código y se dejó atrás el emulador.
+ *
+ * Solo cuando hay adjuntos: sin StorageModule no hay nada que emular. El puerto 10000 es el
+ * del emulador y va fijo — dos apps con Azurite a la vez chocan, igual que chocaban las bases
+ * antes de los puertos configurables.
+ */
+function emulateBlobInLocal(tree: Tree, context: PluginContext): void {
+  if (!tree.exists(path.join(context.backendSrc, 'contexts/shared/infrastructure/storage/storage.module.ts'))) {
+    return
+  }
+  addAzuriteToCompose(tree, context)
+  pointLocalStorageAtEmulator(tree, context)
+}
+
+function addAzuriteToCompose(tree: Tree, context: PluginContext): void {
+  const composePath = path.join(context.root, 'docker/docker-compose.local.yml')
+  const compose = tree.read(composePath, 'utf-8')
+  if (!compose || compose.includes('azurite')) {
+    return
+  }
+
+  const [services, rootVolumes] = compose.split('\nvolumes:\n')
+  const service = `  # Emulador de Blob: sin él no hay a qué subir en local y el adapter de Azure Storage no se ejercita.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: ${context.appName}-azurite-local
+    command: 'azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck'
+    ports:
+      - '10000:10000'
+    volumes:
+      - ${context.appName}-azurite-local-data:/data`
+  const volumes = `${(rootVolumes ?? '').trimEnd()}\n  ${context.appName}-azurite-local-data:\n`.replace(/^\n/, '')
+
+  tree.write(composePath, `${services.trimEnd()}\n\n${service}\n\nvolumes:\n${volumes}`)
+}
+
+function pointLocalStorageAtEmulator(tree: Tree, context: PluginContext): void {
+  const configPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/environments/local.json')
+  const raw = tree.read(configPath, 'utf-8')
+  if (!raw) {
+    return
+  }
+
+  const config = JSON.parse(raw) as Record<string, unknown>
+  if (config['storage']) {
+    return
+  }
+  // La connection string del emulador es pública y siempre la misma; no es un secreto que
+  // esconder en el vault, por eso viaja literal en el JSON de local.
+  config['storage'] = { connectionString: 'UseDevelopmentStorage=true', container: 'attachments' }
+  tree.write(configPath, `${JSON.stringify(config, null, 2)}\n`)
 }
 
 /**
