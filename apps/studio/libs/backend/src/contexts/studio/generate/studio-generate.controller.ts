@@ -12,7 +12,7 @@ import { describeGenerationFailure } from './generation-failure'
 import { describeProgress } from './progress'
 import { validateDesign } from '../chat/validate-proposal'
 import type { DesignPayload } from '../chat/chat.types'
-import { buildGeneratorArgs } from './generator-args'
+import { buildGeneratorArgs, generatorEnv } from './generator-args'
 import { loadSlotsManifest, type SlotsManifest } from './slots-manifest'
 
 class GenerateRequestDto {
@@ -89,7 +89,11 @@ export class StudioGenerateController {
     const existedBefore = existsSync(prepared.root)
     // `detached` le da grupo propio: `npx nx` lanza a su vez al generador y a npm, y matar
     // solo al padre dejaría el install corriendo huérfano el resto de la instalación
-    const child = spawn('npx', prepared.args, { cwd: this.acceleratorRoot, detached: true })
+    const child = spawn('npx', prepared.args, {
+      cwd: this.acceleratorRoot,
+      detached: true,
+      env: generatorEnv(process.env)
+    })
     let files = 0
     let output = `$ npx ${prepared.args.join(' ')}\n\n`
 

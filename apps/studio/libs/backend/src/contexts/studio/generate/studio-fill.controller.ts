@@ -6,6 +6,7 @@ import { existsSync } from 'fs'
 import * as path from 'path'
 import { killGroup } from './cancel-cleanup'
 import { describeFillLine } from './fill-progress'
+import { generatorEnv } from './generator-args'
 import { pendingFlowSlotIds } from './pending-slots'
 
 class FillSlotsRequestDto {
@@ -54,7 +55,7 @@ export class StudioFillController {
       '--no-interactive'
     ]
     // grupo propio, como generate: el gate de cada hueco lanza build+test como nietos
-    const child = spawn('npx', args, { cwd: this.acceleratorRoot, detached: true })
+    const child = spawn('npx', args, { cwd: this.acceleratorRoot, detached: true, env: generatorEnv(process.env) })
 
     const rejected: { id: string; reason: string }[] = []
     const filled: string[] = []

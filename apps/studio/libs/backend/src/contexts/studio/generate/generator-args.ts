@@ -46,3 +46,15 @@ export function buildGeneratorArgs(input: GenerateArgsInput): string[] {
     ...(input.directory ? [`--directory=${input.directory}`] : [])
   ]
 }
+
+/**
+ * El entorno con el que se lanza `npx nx`. Nx aísla cada plugin en un worker hijo y lo mata si
+ * no responde en 10 segundos; en una máquina cargada eso pasa ANTES de entrar en el generador,
+ * y el error habla de plugins de Nx, no del acelerador, así que parece un fallo de lo que se
+ * estaba generando. El propio Nx desactiva el aislamiento cuando detecta que corre dentro de un
+ * agente de IA: el estudio, que lanza generaciones largas desde un servidor, tiene el mismo
+ * motivo. Si quien arrancó el estudio lo pidió explícitamente, manda su decisión.
+ */
+export function generatorEnv(base: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return { ...base, NX_ISOLATE_PLUGINS: base['NX_ISOLATE_PLUGINS'] ?? 'false' }
+}
