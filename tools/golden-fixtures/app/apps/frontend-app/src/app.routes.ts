@@ -64,6 +64,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sap-licensing/projects/calendario',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-calendar.component').then(
+        m => m.ProjectsCalendarComponent
+      )
+  },
+  {
     path: 'sap-licensing/projects/formulario',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/project-form-page.component').then(

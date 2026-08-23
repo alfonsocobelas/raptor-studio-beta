@@ -24,6 +24,9 @@ export const project = defineResource({
   // spec 48: la página-formulario del gate de oro vive aquí — project ejercita
   // secciones, dateRange de grupo y fechas opcionales
   form: {},
+  // spec 59: el calendario del gate de oro vive aquí — project ejercita el campo
+  // fecha opcional y la leyenda coloreada por el enum de estado
+  calendar: { date: 'startDate', color: 'status' },
   attachments: true,
   period: { start: 'startDate', end: 'endDate' },
   formSections: [{ id: 'general', title: 'Datos generales' }],

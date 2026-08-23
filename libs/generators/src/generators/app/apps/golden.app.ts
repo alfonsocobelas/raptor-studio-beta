@@ -73,6 +73,8 @@ export const golden = defineApp({
     { kind: 'gantt', resource: 'contract' },
     { kind: 'resource', resource: 'project' },
     // spec 48: la página-formulario, con entrada de menú propia
-    { kind: 'form', resource: 'project', label: 'Nuevo proyecto' }
+    { kind: 'form', resource: 'project', label: 'Nuevo proyecto' },
+    // spec 59: el calendario, cada proyecto como tira en su fecha de inicio
+    { kind: 'calendar', resource: 'project', label: 'Calendario de proyectos' }
   ]
 })
