@@ -1,5 +1,5 @@
 import { Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
-import { UserRoleEnum } from '@sap-licenses/shared/domain'
+import { UserRoleEnum } from '@app/shared/domain'
 import { Roles } from '../../../shared/infrastructure/auth/roles.decorator'
 import { ParseUUIDv7Pipe } from '../../../shared/infrastructure/pipes/parse-uuid-v7.pipe'
 import { ContractId } from '../../../shared/domain/value-objects/contracts/contract-id.vo'
