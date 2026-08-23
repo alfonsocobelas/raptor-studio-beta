@@ -297,7 +297,19 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
               <studio-flow-view />
             } @else if (mode() === 'access') {
               <studio-access-view />
-            } @else if (!pages().length) {
+            } @else if (active.systemView() === 'login') {
+              <!-- el login es una página completa en la app real: sin shell, solo el marco temado -->
+              <div
+                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] max-w-6xl overflow-hidden rounded-xl border"
+                [style]="previewVars()"
+                [attr.data-palette]="preview.palette()"
+                [attr.data-preset]="preview.preset()"
+                [class.dark]="preview.theme() === 'dark'"
+                data-testid="preview-scope"
+              >
+                <studio-system-view class="block w-full" viewId="login" />
+              </div>
+            } @else if (!pages().length && !active.systemView()) {
               <div class="flex h-full flex-col items-center justify-center text-center" data-testid="empty-canvas">
                 <p class="text-muted-foreground mb-2 text-lg">Lienzo en blanco</p>
                 <p class="text-muted-foreground max-w-md text-sm">
@@ -445,6 +457,21 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
                       <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                     </button>
+                    <button
+                      type="button"
+                      class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[12px]"
+                      style="border-top: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                      data-testid="mock-session-footer-cabina"
+                      title="Mi cuenta"
+                      (click)="active.selectSystem('account')"
+                    >
+                      <span
+                        class="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold"
+                        style="background: var(--preview-shell-active)"
+                        >AL</span
+                      >
+                      <span>Admin Local</span>
+                    </button>
                   </aside>
                   <div class="flex min-w-0 flex-1 flex-col">
                     <!-- barra de estado de la maqueta: contexto / sección, en monospace -->
@@ -520,12 +547,29 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
                       <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                     </button>
-                    <div class="text-muted-foreground flex items-center gap-2 border-t px-1 pt-3 text-xs">
-                      <div class="bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold">AC</div>
-                      <div>
-                        <p class="text-foreground font-medium">Alfonso Cobelas</p>
-                        <p>admin</p>
-                      </div>
+                    <!-- pie de sesión de la maqueta (spec 57): como el emitido, Usuarios + Mi cuenta -->
+                    <div class="border-t px-1 pt-2">
+                      <button
+                        type="button"
+                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
+                        data-testid="mock-users-link"
+                        (click)="active.selectSystem('users')"
+                      >
+                        Usuarios
+                      </button>
+                      <button
+                        type="button"
+                        class="text-muted-foreground flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs"
+                        data-testid="mock-session-footer"
+                        title="Mi cuenta"
+                        (click)="active.selectSystem('account')"
+                      >
+                        <div class="bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold">AL</div>
+                        <div>
+                          <p class="text-foreground font-medium">Admin Local</p>
+                          <p>admin&#64;app.local</p>
+                        </div>
+                      </button>
                     </div>
                   </aside>
                   <section class="min-w-0 flex-1 p-6">
