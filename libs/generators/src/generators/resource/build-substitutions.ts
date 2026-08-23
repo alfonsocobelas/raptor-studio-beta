@@ -4,6 +4,7 @@ import { AggregateBindings, renderAggregate } from './build-aggregate'
 import { ApplicationBindings, renderApplication } from './build-application'
 import { EntrypointBindings, renderEntrypoints } from './build-entrypoints'
 import { DomainTestBindings, renderDomainTests } from './build-tests'
+import { buildDenormalizations } from './denormalization'
 import {
   buildDragPlan,
   buildDragTree,
@@ -407,10 +408,17 @@ export function buildSubstitutions(
       wantsSoftDelete(definition) && definition.list?.features?.delete === true
         ? buildDragPlan(definition, buildDragTree(definition, others), `${n.propertyName}Id.value`)
         : [],
-    dragModules:
+    // + los módulos de los orígenes de denormalización (spec 60): el use case de escritura
+    // inyecta su repositorio para copiar el canon, así que la DI también cruza módulos.
+    dragModules: mergeModules(
       wantsSoftDelete(definition) && definition.list?.features?.delete === true
         ? dragModules(buildDragTree(definition, others))
         : [],
+      buildDenormalizations(definition, others).map(d => ({
+        className: `${names(d.originPlural).className}Module`,
+        importLine: `import { ${names(d.originPlural).className}Module } from '../${d.originPlural}/${d.originPlural}.module'`
+      }))
+    ),
     dragged: draggedRelations(definition),
     softContract: softDeleteContract(definition),
     apiResource: (definition.api ?? `/api/v1/${definition.plural}`).replace(/^\/api\/v1\//, ''),
@@ -420,10 +428,16 @@ export function buildSubstitutions(
     test: renderTestBindings(definition),
     vos: renderVos(definition, n.className),
     aggregate,
-    app: renderApplication(definition, aggregate.emitAggregate),
+    app: renderApplication(definition, aggregate.emitAggregate, others),
     entry: renderEntrypoints(definition, aggregate.emitAggregate),
     domainTests: renderDomainTests(definition)
   }
+}
+
+/** Los módulos cruzados del arrastre y de la denormalización se importan una sola vez. */
+function mergeModules(base: DragModule[], extra: DragModule[]): DragModule[] {
+  const seen = new Set(base.map(m => m.className))
+  return [...base, ...extra.filter(m => !seen.has(m.className) && seen.add(m.className))]
 }
 
 function renderVos(definition: ResourceDefinition, className: string): VoSubstitution[] {

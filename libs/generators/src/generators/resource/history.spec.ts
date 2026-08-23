@@ -50,7 +50,8 @@ describe('resource generator — historial en los use cases (spec 31)', () => {
 
     const test = read(tree, 'out/backend-tests-application/register-project-usecase.test.ts')
     expect(test).toContain('auditTrail')
-    expect(test).toContain('new RegisterProjectUseCase(repositoryMock, auditTrail)')
+    // el tercer argumento es el repo del origen de la denormalización (spec 60)
+    expect(test).toContain('new RegisterProjectUseCase(repositoryMock, auditTrail, customerRepository)')
   })
 
   it('project expone GET /:id/history con su use case fino sobre el puerto', async () => {

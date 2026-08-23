@@ -1,5 +1,6 @@
 import { names } from '@nx/devkit'
 import { FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@raptor/schema'
+import { buildDenormalizations, DenormBinding } from './denormalization'
 
 /**
  * Application layer synthesis (use cases + handlers + input DTOs + uniqueness
@@ -57,11 +58,46 @@ export interface ApplicationBindings {
   code: { entity: string; prefix: string; padding: number } | null
   /** checks que corren siempre (uniques requeridos) */
   requiredUniqueCount: number
+  /**
+   * Campos desnormalizados (spec 60): el use case copia el canon del recurso origen.
+   * Todo pre-renderizado aquí — las plantillas solo iteran líneas (regla 8).
+   */
+  denorms: DenormBinding[]
+  /** parámetros extra del constructor: repos de los orígenes, deduplicados */
+  denormRepoParams: string[]
+  /** nombres para el import de errores del register (null → sin línea) */
+  registerErrorImports: string | null
+  registerDenormImports: string[]
+  registerDenormBlocks: string[]
+  /** props extra del X.register: ', customerName: customer.name.value' */
+  registerExtraProps: string
+  updateDenormImports: string[]
+  updateDenormBlocks: string[]
+  /** 'updates' con denorms (hay let previo), 'input.updates' sin ellas */
+  updatesExpr: string
+  /** claves del Omit del input de alta: "'code' | 'customerName'" (vacío → alias directo) */
+  registerOmitKeys: string
+  /** import CSV: resolución del canon por fila, con caché por FK */
+  importDenormImports: string[]
+  importDenormMapLines: string[]
+  importResolveLines: string[]
+  /** llamada del gate de fila: 'row' o '{ ...row, customerName }' */
+  importRegisterCall: string
+  /** dobles y casos de los tests emitidos */
+  testDenormImports: string[]
+  testDenormMockDecls: string[]
+  testDenormBeforeEachLines: string[]
+  testDenormCtorArgs: string
 }
 
-export function renderApplication(definition: ResourceDefinition, emitAggregate: boolean): ApplicationBindings {
+export function renderApplication(
+  definition: ResourceDefinition,
+  emitAggregate: boolean,
+  others: ResourceDefinition[] = []
+): ApplicationBindings {
   const n = names(definition.name)
   const className = n.className
+  const denorms = buildDenormalizations(definition, others)
 
   const uniques = Object.entries(definition.fields)
     .filter(([name, field]) => name !== 'id' && field.unique)
@@ -122,6 +158,92 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
     ].join('\n')
   })
 
+  // Denormalización (spec 60): el register copia el canon del origen; el update lo
+  // refresca cuando cambia el FK. Repos e imports deduplicados por origen.
+  const uniqueOriginRepos = [...new Map(denorms.map(d => [d.repoClass, d])).values()]
+  const denormRepoParams = uniqueOriginRepos.map(d => `private readonly ${d.repoProp}: ${d.repoClass}`)
+  const denormRepoImports = uniqueOriginRepos.map(
+    d => `import { ${d.repoClass} } from '../../../${d.originPlural}/domain/${d.originFile}-repository'`
+  )
+  const denormIdVoImports = [...new Map(denorms.map(d => [d.idVoClass, d])).values()].map(
+    d => `import { ${d.idVoClass} } from '../../../../../shared/domain/value-objects/${d.originPlural}/${d.idVoFile}.vo'`
+  )
+
+  const registerDenormBlocks = denorms.map((d, i) =>
+    [
+      ...(i === 0 ? ['    // El valor desnormalizado se copia del canon, nunca del DTO (spec 60).'] : []),
+      `    const ${d.varName} = await this.${d.repoProp}.get(${d.idVoClass}.create(input.${d.fkField}))`,
+      ``,
+      `    if (!${d.varName}) {`,
+      `      throw new EntityNotFoundError('${d.originClass}', input.${d.fkField})`,
+      `    }`
+    ].join('\n')
+  )
+
+  const updateDenormBlocks = denorms.length
+    ? [
+        `    let updates = input.updates`,
+        ...denorms.map(d =>
+          [
+            `    // La copia desnormalizada se refresca del canon cuando cambia el FK (spec 60).`,
+            `    if (updates.${d.fkField} !== undefined) {`,
+            `      const ${d.varName} = await this.${d.repoProp}.get(${d.idVoClass}.create(updates.${d.fkField}))`,
+            ``,
+            `      if (!${d.varName}) {`,
+            `        throw new EntityNotFoundError('${d.originClass}', updates.${d.fkField})`,
+            `      }`,
+            ``,
+            `      updates = { ...updates, ${d.targetField}: ${d.valueExpr} }`,
+            `    }`
+          ].join('\n')
+        )
+      ]
+    : []
+
+  const registerErrorNames = [
+    ...(uniqueSpecs.length > 0 ? ['AlreadyExistsError'] : []),
+    ...(denorms.length > 0 ? ['EntityNotFoundError'] : [])
+  ]
+
+  const omitKeys = [...(definition.code ? ['code'] : []), ...denorms.map(d => d.targetField)]
+
+  // Import CSV (spec 33 + 60): el gate por fila resuelve el canon con caché por FK; los
+  // fallos de lookup se acumulan como cualquier error de dominio de la fila.
+  const importDenormMapLines = denorms.map(d => {
+    const fkPascal = d.fkField.charAt(0).toUpperCase() + d.fkField.slice(1)
+    return `    const ${d.targetField}By${fkPascal} = new Map<string, string>()`
+  })
+  const importResolveLines = denorms.flatMap(d => {
+    const fkPascal = d.fkField.charAt(0).toUpperCase() + d.fkField.slice(1)
+    const map = `${d.targetField}By${fkPascal}`
+    return [
+      `        let ${d.targetField} = ${map}.get(row.${d.fkField})`,
+      `        if (${d.targetField} === undefined) {`,
+      `          const ${d.varName} = await this.${d.repoProp}.get(${d.idVoClass}.create(row.${d.fkField}))`,
+      `          if (!${d.varName}) {`,
+      `            throw new EntityNotFoundError('${d.originClass}', row.${d.fkField})`,
+      `          }`,
+      `          ${d.targetField} = ${d.valueExpr}`,
+      `          ${map}.set(row.${d.fkField}, ${d.targetField})`,
+      `        }`
+    ]
+  })
+  const importRegisterCall = denorms.length ? `{ ...row${denorms.map(d => `, ${d.targetField}`).join('')} }` : 'row'
+
+  // Dobles de los tests emitidos: el canon estubado sale de la mother (valor válido para el VO).
+  const testDenormImports = uniqueOriginRepos.map(
+    d =>
+      `import { ${d.repoClass} } from '../../../../../src/contexts/${definition.context}/modules/${d.originPlural}/domain/${d.originFile}-repository'`
+  )
+  const testDenormMockDecls = uniqueOriginRepos.map(
+    d => `  const ${d.repoProp} = { get: jest.fn() } as unknown as ${d.repoClass}`
+  )
+  const testDenormBeforeEachLines = denorms.flatMap(d => [
+    `    ;(${d.repoProp}.get as jest.Mock).mockReset()`,
+    `    ;(${d.repoProp}.get as jest.Mock).mockResolvedValue({ ${d.labelField}: { value: ${className}Mother.primitives().${d.targetField} } })`
+  ])
+  const testDenormCtorArgs = uniqueOriginRepos.map(d => `, ${d.repoProp}`).join('')
+
   return {
     emit: emitAggregate,
     writes: (definition.formSections?.length ?? 0) > 0,
@@ -147,7 +269,25 @@ export function renderApplication(definition: ResourceDefinition, emitAggregate:
           prefix: definition.code.prefix ?? definition.name.slice(0, 3).toUpperCase(),
           padding: definition.code.padding ?? 4
         }
-      : null
+      : null,
+    denorms,
+    denormRepoParams,
+    registerErrorImports: registerErrorNames.length ? registerErrorNames.join(', ') : null,
+    registerDenormImports: [...denormRepoImports, ...denormIdVoImports],
+    registerDenormBlocks,
+    registerExtraProps: denorms.map(d => `, ${d.targetField}: ${d.valueExpr}`).join(''),
+    updateDenormImports: [...denormRepoImports, ...denormIdVoImports],
+    updateDenormBlocks,
+    updatesExpr: denorms.length ? 'updates' : 'input.updates',
+    registerOmitKeys: omitKeys.map(k => `'${k}'`).join(' | '),
+    importDenormImports: [...denormRepoImports, ...denormIdVoImports],
+    importDenormMapLines,
+    importResolveLines,
+    importRegisterCall,
+    testDenormImports,
+    testDenormMockDecls,
+    testDenormBeforeEachLines,
+    testDenormCtorArgs
   }
 }
 

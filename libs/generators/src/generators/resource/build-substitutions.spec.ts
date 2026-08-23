@@ -7,7 +7,7 @@ describe('buildSubstitutions', () => {
   describe('name variants', () => {
     it('derives all capitalizations from the model name', () => {
       // WHEN
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       // THEN
       expect(subs.className).toBe('Contract')
@@ -19,7 +19,7 @@ describe('buildSubstitutions', () => {
 
     it('derives the api resource under the shared API_PREFIX', () => {
       // WHEN
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       // THEN — el servicio emitido compone `${API_PREFIX}/<apiResource>`
       expect(subs.api).toBe('/api/v1/contracts')
@@ -30,7 +30,7 @@ describe('buildSubstitutions', () => {
   describe('module-level flags', () => {
     it('detects Nullable usage, transformers, constraints and audit columns for contract', () => {
       // WHEN
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       // THEN
       expect(subs.needsNullable).toBe(true)
@@ -41,7 +41,7 @@ describe('buildSubstitutions', () => {
     })
 
     it('computes the typeorm import list sorted alphabetically', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       // DeleteDateColumn entra por el defecto suave de la spec 38: contract no declara nada
       expect(subs.typeormImports).toBe(
@@ -89,14 +89,14 @@ describe('buildSubstitutions', () => {
 
   describe('per-field rendering (pre-chewed for dumb templates)', () => {
     it('renders a primary column without options', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
       const id = subs.columns.find(c => c.name === 'id')
 
       expect(id).toEqual({ name: 'id', tsType: 'string', decorator: 'PrimaryColumn', argsSrc: "'uuid'", comment: [] })
     })
 
     it('renders literal length options', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
       const contractType = subs.columns.find(c => c.name === 'contractType')
 
       expect(contractType?.decorator).toBe('Column')
@@ -104,7 +104,7 @@ describe('buildSubstitutions', () => {
     })
 
     it('renders constraint-based lengths against the LIMITS alias', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
       const contractNumber = subs.columns.find(c => c.name === 'contractNumber')
 
       expect(contractNumber?.argsSrc).toBe("'varchar', { length: LIMITS.CONTRACT_NUMBER.MAX, nullable: true }")
@@ -113,7 +113,7 @@ describe('buildSubstitutions', () => {
     })
 
     it('renders string, number and boolean defaults with correct literals', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       expect(subs.columns.find(c => c.name === 'status')?.argsSrc).toBe("'varchar', { length: 20, default: 'active' }")
       expect(subs.columns.find(c => c.name === 'nbrOfContracts')?.argsSrc).toBe("'int', { default: 1 }")
@@ -121,14 +121,14 @@ describe('buildSubstitutions', () => {
     })
 
     it('renders raw defaults as arrow functions (array column)', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
       const areas = subs.columns.find(c => c.name === 'subSolutionAreas')
 
       expect(areas?.argsSrc).toBe("'text', { array: true, default: () => \"'{}'\" }")
     })
 
     it('renders numeric transformers by name', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       expect(subs.columns.find(c => c.name === 'totalValue')?.argsSrc).toBe(
         "'numeric', { precision: 15, scale: 2, default: 0, transformer: numericTransformer }"
@@ -139,13 +139,13 @@ describe('buildSubstitutions', () => {
     })
 
     it('renders plain nullable timestamptz columns', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       expect(subs.columns.find(c => c.name === 'archivedAt')?.argsSrc).toBe("'timestamptz', { nullable: true }")
     })
 
     it('keeps model field order (the diff against the golden reference depends on it)', () => {
-      const subs = buildSubstitutions(contract)
+      const subs = buildSubstitutions(contract, [customer])
 
       expect(subs.columns.map(c => c.name)).toEqual(Object.keys(contract.fields))
     })
@@ -153,7 +153,7 @@ describe('buildSubstitutions', () => {
 })
 
 describe('buildSubstitutions — spec 03 derivations', () => {
-  const subs = buildSubstitutions(contract)
+  const subs = buildSubstitutions(contract, [customer])
 
   describe('ordered query lists', () => {
     it('orders ALLOWED_FILTERS by the numeric flag, not by field order', () => {
@@ -350,7 +350,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('is null when the model declares no calendar', () => {
     // WHEN
-    const subs = buildSubstitutions(contract)
+    const subs = buildSubstitutions(contract, [customer])
 
     // THEN
     expect(subs.calendar).toBeNull()
@@ -358,7 +358,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('derives the label from the first searchable text field and defaults weekends to true', () => {
     // WHEN
-    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }))
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }), [customer])
 
     // THEN
     expect(subs.calendar).toEqual(
@@ -374,7 +374,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('honours explicit label and weekends', () => {
     // WHEN
-    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', label: 'supportModel', weekends: false }))
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', label: 'supportModel', weekends: false }), [customer])
 
     // THEN
     expect(subs.calendar?.labelField).toBe('supportModel')
@@ -384,7 +384,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('builds the legend from the enum values in declared order, labelled from the badgeMap', () => {
     // WHEN
-    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', color: 'contractType' }))
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', color: 'contractType' }), [customer])
 
     // THEN — el color es POR POSICIÓN del valor (determinista, independiente del idioma)
     expect(subs.calendar?.colorField).toBe('contractType')
@@ -398,7 +398,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('exposes the human label of the date field for the footer', () => {
     // WHEN
-    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }))
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }), [customer])
 
     // THEN — «PEDIDOS · CAMPO FECHA ENTREGA» (mock 22E)
     expect(subs.calendar?.dateLabel).toBe('Entrega')

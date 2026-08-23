@@ -1,6 +1,7 @@
 import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
 import { SHARED_VOS } from './models/shared-vos'
+import { denormTargets } from './denormalization'
 import { AccessRole, FieldDefinition, ResourceDefinition, resolveAccess, VoDefinition, wantsSoftDelete } from '@raptor/schema'
 
 /**
@@ -96,9 +97,18 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   const n = names(definition.name)
   const comp = definition.composition
 
+  // los destinos de denormalización (spec 60) no viajan en escritura: los copia el use case
+  const denormalized = denormTargets(definition)
   const dtoCtxs: Ctx[] = Object.entries(definition.fields)
     // el campo promovido a estado (spec 43) ni se pide en el alta ni se edita: solo transiciona
-    .filter(([name, f]) => name !== 'id' && name !== definition.state?.field && !f.syncManaged && !(f.optionalPrimitive && !f.updatable))
+    .filter(
+      ([name, f]) =>
+        name !== 'id' &&
+        name !== definition.state?.field &&
+        !f.syncManaged &&
+        !(f.optionalPrimitive && !f.updatable) &&
+        !denormalized.has(name)
+    )
     .map(([name, f]) => ({ name, field: f, required: f.required ?? false, nullable: f.nullable ?? false }))
 
   const registerDtoFields = [idDtoField('id'), ...dtoCtxs.map(c => dtoField(c, definition, false))]

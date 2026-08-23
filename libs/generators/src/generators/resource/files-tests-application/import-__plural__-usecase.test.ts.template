@@ -5,6 +5,9 @@ import { TransactionManager } from '../../../../../src/contexts/shared/domain/pe
 import { Import<%- pluralClassName %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/import-<%- plural %>-usecase.service'
 import { Register<%- className %>Input } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/dtos/register-<%- fileName %>-input.dto'
 import { Register<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/register-<%- fileName %>-usecase.service'
+<%_ app.testDenormImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
 
@@ -17,18 +20,20 @@ describe('Import<%- pluralClassName %>UseCase', () => {
   const txManager = {
     runInTransaction: jest.fn(async (work: () => Promise<unknown>) => work())
   } as unknown as TransactionManager
+<%_ app.testDenormMockDecls.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 
   const row = (): Register<%- className %>Input =>
     <%- className %>Mother.random().toPrimitives() as unknown as Register<%- className %>Input
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-<%_ if (app.history) { _%>
-    const register = new Register<%- className %>UseCase(repositoryMock, auditTrail)
-<%_ } else { _%>
-    const register = new Register<%- className %>UseCase(repositoryMock)
-<%_ } _%>
-    useCase = new Import<%- pluralClassName %>UseCase(register, txManager)
+<%_ app.testDenormBeforeEachLines.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+    const register = new Register<%- className %>UseCase(repositoryMock<% if (app.history) { %>, auditTrail<% } %><%- app.testDenormCtorArgs %>)
+    useCase = new Import<%- pluralClassName %>UseCase(register, txManager<%- app.testDenormCtorArgs %>)
   })
 
   it('una fila con error de dominio frena TODO el import y la señala', async () => {

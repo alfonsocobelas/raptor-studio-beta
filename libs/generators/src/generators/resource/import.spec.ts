@@ -20,8 +20,10 @@ describe('resource generator — import CSV validado (spec 33)', () => {
 
     const useCase = read(tree, 'out/backend/application/use-cases/import-projects-usecase.service.ts')
     expect(useCase).toContain('export class ImportProjectsUseCase')
-    // fase 1: el dominio revisa TODAS las filas y acumula errores por fila
-    expect(useCase).toContain('Project.register(row)')
+    // fase 1: el dominio revisa TODAS las filas y acumula errores por fila; el campo
+    // desnormalizado se resuelve del canon con caché por FK (spec 60)
+    expect(useCase).toContain('Project.register({ ...row, customerName })')
+    expect(useCase).toContain('customerNameByCustomerId')
     expect(useCase).toContain('BaseCustomError')
     // fase 2: todo o nada, delegando en el register (unicidad y auditoría incluidas)
     expect(useCase).toContain('this.txManager.runInTransaction')

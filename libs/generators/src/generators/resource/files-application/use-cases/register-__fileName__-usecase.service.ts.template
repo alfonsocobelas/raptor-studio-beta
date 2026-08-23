@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
-<%_ if (app.hasUniqueChecks) { _%>
-import { AlreadyExistsError } from '../../../../../shared/domain/errors'
+<%_ if (app.registerErrorImports) { _%>
+import { <%- app.registerErrorImports %> } from '../../../../../shared/domain/errors'
 <%_ } _%>
 <%_ if (app.history) { _%>
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
@@ -10,6 +10,9 @@ import { CodeSequencePort } from '../../../../../shared/domain/code/code-sequenc
 <%_ } _%>
 import { <%- className %> } from '../../domain/<%- fileName %>'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ app.registerDenormImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 <%_ app.registerSpecImports.forEach(line => { _%>
 <%- line %>
 <%_ }) _%>
@@ -20,16 +23,23 @@ export class Register<%- className %>UseCase {
   constructor(
     private readonly <%- propertyName %>Repository: <%- className %>Repository<% if (app.history) { %>,
     private readonly auditTrail: AuditTrailPort<% } %><% if (app.code) { %>,
-    private readonly codeSequence: CodeSequencePort<% } %>
+    private readonly codeSequence: CodeSequencePort<% } %><% app.denormRepoParams.forEach(param => { %>,
+    <%- param %><% }) %>
   ) {}
 
   async invoke(input: Register<%- className %>Input): Promise<void> {
+<%_ app.registerDenormBlocks.forEach(block => { _%>
+<%- block %>
+
+<%_ }) _%>
 <%_ if (app.code) { _%>
     // Asignar si falta, respetar si viene: un alta normal no trae código y lo pone la
     // secuencia; una importación SÍ lo trae, porque ese identificador ya vivía en el
     // sistema de origen y pisarlo rompería su trazabilidad (spec 19 §2.bis).
     const code = input.code ?? this.format(await this.codeSequence.next('<%- app.code.entity %>'))
-    const <%- propertyName %> = <%- className %>.register({ ...input, code })
+    const <%- propertyName %> = <%- className %>.register({ ...input, code<%- app.registerExtraProps %> })
+<%_ } else if (app.registerExtraProps) { _%>
+    const <%- propertyName %> = <%- className %>.register({ ...input<%- app.registerExtraProps %> })
 <%_ } else { _%>
     const <%- propertyName %> = <%- className %>.register(input)
 <%_ } _%>

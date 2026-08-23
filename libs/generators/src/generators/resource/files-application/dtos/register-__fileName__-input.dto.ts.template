@@ -1,12 +1,21 @@
-<%_ if (app.code) { _%>
+<%_ if (app.code || app.denorms.length) { _%>
 import type { Register<%- className %>Props } from '../../domain/<%- fileName %>-types'
 
+<%_ if (app.code) { _%>
 /**
  * El código es OBLIGATORIO en el dominio (el agregado siempre tiene uno) pero OPCIONAL en la
  * entrada: si el alta no lo trae, lo pone la secuencia; si viene de una importación, se
  * respeta (spec 19 §2.bis). Por eso la entrada no es un alias directo de las props.
  */
-export type Register<%- className %>Input = Omit<Register<%- className %>Props, 'code'> & { code?: string }
+<%_ } _%>
+<%_ if (app.denorms.length) { _%>
+/**
+ * <%- app.denorms.map(d => d.targetField).join(', ') %>: copia desnormalizada del canon (spec 60).
+ * No entra por el DTO — el use case la resuelve con un lookup por el FK y falla con 404
+ * si el origen no existe.
+ */
+<%_ } _%>
+export type Register<%- className %>Input = Omit<Register<%- className %>Props, <%- app.registerOmitKeys %>><% if (app.code) { %> & { code?: string }<% } %>
 <%_ } else { _%>
 export type { Register<%- className %>Props as Register<%- className %>Input } from '../../domain/<%- fileName %>-types'
 <%_ } _%>

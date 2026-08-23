@@ -5,9 +5,12 @@ import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/
 import { CodeSequencePort } from '../../../../../src/contexts/shared/domain/code/code-sequence.port'
 <%_ } _%>
 import { Register<%- className %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/register-<%- fileName %>-usecase.service'
-<%_ if (app.hasUniqueChecks) { _%>
-import { AlreadyExistsError } from '../../../../../src/contexts/shared/domain/errors'
+<%_ if (app.registerErrorImports) { _%>
+import { <%- app.registerErrorImports %> } from '../../../../../src/contexts/shared/domain/errors'
 <%_ } _%>
+<%_ app.testDenormImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
 import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
 
@@ -21,10 +24,16 @@ describe('Register<%- className %>UseCase', () => {
   // doble del contador: el alta no necesita una base para probar su regla
   const codeSequence = { next: jest.fn().mockResolvedValue(1) } as unknown as CodeSequencePort
 <%_ } _%>
+<%_ app.testDenormMockDecls.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 
   beforeEach(() => {
     repositoryMock = new <%- className %>RepositoryMock()
-    useCase = new Register<%- className %>UseCase(repositoryMock<% if (app.history) { %>, auditTrail<% } %><% if (app.code) { %>, codeSequence<% } %>)
+<%_ app.testDenormBeforeEachLines.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
+    useCase = new Register<%- className %>UseCase(repositoryMock<% if (app.history) { %>, auditTrail<% } %><% if (app.code) { %>, codeSequence<% } %><%- app.testDenormCtorArgs %>)
   })
 <%_ if (app.hasUniqueChecks) { _%>
 
@@ -79,4 +88,30 @@ describe('Register<%- className %>UseCase', () => {
     expect(registered.id).toBe(input.id)
   })
 <%_ } _%>
+<%_ app.denorms.forEach(d => { _%>
+
+  describe('denormalización de <%- d.targetField %> (spec 60)', () => {
+    it('copia el valor canónico del origen, no el del input', async () => {
+<%_ if (app.hasUniqueChecks) { _%>
+      repositoryMock.givenDoesNotExist()
+<%_ } _%>
+      repositoryMock.whenRegisterSuccess()
+      const canonical = <%- className %>Mother.primitives().<%- d.targetField %>
+      ;(<%- d.repoProp %>.get as jest.Mock).mockResolvedValue({ <%- d.labelField %>: { value: canonical } })
+
+      const input = <%- className %>Mother.primitives()
+      await useCase.invoke(input)
+
+      const registered = repositoryMock.registered<%- className %>().toPrimitives()
+      expect(registered.<%- d.targetField %>).toBe(canonical)
+    })
+
+    it('falla con EntityNotFoundError si el FK no apunta a ningún <%- d.originFile %>', async () => {
+      ;(<%- d.repoProp %>.get as jest.Mock).mockResolvedValue(null)
+
+      await expect(useCase.invoke(<%- className %>Mother.primitives())).rejects.toThrow(EntityNotFoundError)
+      repositoryMock.assertNotCalled('register')
+    })
+  })
+<%_ }) _%>
 })

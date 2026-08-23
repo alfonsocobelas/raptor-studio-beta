@@ -129,7 +129,7 @@ describe('renderAggregate — unset() sólo en campos nulables', () => {
  */
 describe('renderApplication — el check de unicidad respeta el Nullable', () => {
   it('contract: el check del contractNumber va dentro de `if (contract.contractNumber)`', () => {
-    const blocks = renderApplication(contract, true).registerCheckBlocks.join('\n')
+    const blocks = renderApplication(contract, true, [customer]).registerCheckBlocks.join('\n')
 
     expect(blocks).toContain('if (contract.contractNumber) {')
     expect(blocks).toContain(

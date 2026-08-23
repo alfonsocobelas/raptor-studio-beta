@@ -9,6 +9,9 @@ import { changesBetween } from '../../../../../shared/domain/audit/audit-changes
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 <%_ } _%>
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
+<%_ app.updateDenormImports.forEach(line => { _%>
+<%- line %>
+<%_ }) _%>
 <%_ app.registerSpecImports.forEach(line => { _%>
 <%- line %>
 <%_ }) _%>
@@ -17,10 +20,11 @@ import { Update<%- className %>Input } from '../dtos/update-<%- fileName %>-inpu
 
 @Injectable()
 export class Update<%- className %>UseCase {
-<%_ if (app.history) { _%>
+<%_ if (app.history || app.denormRepoParams.length) { _%>
   constructor(
-    private readonly <%- propertyName %>Repository: <%- className %>Repository,
-    private readonly auditTrail: AuditTrailPort
+    private readonly <%- propertyName %>Repository: <%- className %>Repository<% if (app.history) { %>,
+    private readonly auditTrail: AuditTrailPort<% } %><% app.denormRepoParams.forEach(param => { %>,
+    <%- param %><% }) %>
   ) {}
 <%_ } else { _%>
   constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
@@ -38,9 +42,13 @@ export class Update<%- className %>UseCase {
 <%- block %>
 
 <%_ }) _%>
+<%_ app.updateDenormBlocks.forEach(block => { _%>
+<%- block %>
+
+<%_ }) _%>
 <%_ if (app.history) { _%>
     const before = <%- propertyName %>.toPrimitives()
-    <%- propertyName %>.updateDetails(input.updates)
+    <%- propertyName %>.updateDetails(<%- app.updatesExpr %>)
     await this.<%- propertyName %>Repository.save(<%- propertyName %>)
     await this.auditTrail.record({
       entity: '<%- fileName %>',
@@ -50,7 +58,7 @@ export class Update<%- className %>UseCase {
       actor: null
     })
 <%_ } else { _%>
-    <%- propertyName %>.updateDetails(input.updates)
+    <%- propertyName %>.updateDetails(<%- app.updatesExpr %>)
     await this.<%- propertyName %>Repository.save(<%- propertyName %>)
 <%_ } _%>
   }
