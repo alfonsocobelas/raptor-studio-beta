@@ -18,6 +18,8 @@ export const demo = defineApp({
     { kind: 'resource', resource: 'contract' },
     { kind: 'gantt', resource: 'contract' },
     { kind: 'resource', resource: 'license' },
-    { kind: 'resource', resource: 'project' }
+    { kind: 'resource', resource: 'project' },
+    // spec 59: project declara calendar, y la equivalencia con las opciones planas lo exige aquí
+    { kind: 'calendar', resource: 'project' }
   ]
 })
