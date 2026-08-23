@@ -188,7 +188,7 @@ describe('ViewsSidebarComponent', () => {
     expect(store.pages()).toEqual([])
   })
 
-  it('ofrece los seis bloques que el generador emite, y ninguno más', () => {
+  it('ofrece los siete bloques que el generador emite, y ninguno más', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')
 
@@ -197,6 +197,7 @@ describe('ViewsSidebarComponent', () => {
       'block-tool-kpis',
       'block-tool-cards',
       'block-tool-form',
+      'block-tool-calendar',
       'block-tool-attachments',
       'block-tool-fields'
     ])

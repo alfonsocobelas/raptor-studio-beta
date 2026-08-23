@@ -12,6 +12,7 @@ import { CanvasTableComponent } from './canvas-table.component'
 import { CanvasDetailComponent } from './canvas-detail.component'
 import { CanvasCardsComponent } from './canvas-cards.component'
 import { CanvasFormComponent } from './canvas-form.component'
+import { CanvasCalendarComponent } from './canvas-calendar.component'
 import { mockTotal } from './mock-data'
 
 /**
@@ -21,7 +22,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, NgIcon],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, NgIcon],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -98,6 +99,9 @@ import { mockTotal } from './mock-data'
               }
               @case ('form') {
                 <studio-canvas-form [resource]="block.resource ?? ''" />
+              }
+              @case ('calendar') {
+                <studio-canvas-calendar [block]="block" />
               }
               @case ('kpis') {
                 <div
@@ -250,6 +254,8 @@ export class CanvasPageComponent {
 
   /** El aviso «aún no generable» depende de la VISTA: ver generableHere. */
   protected generable(block: DesignBlock): boolean {
+    // un calendario sin campo fecha en su entidad es diseño y nada más (spec 59)
+    if (block.kind === 'calendar' && !block.dateField) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }

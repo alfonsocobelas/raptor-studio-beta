@@ -63,3 +63,8 @@ describe('viewIcon', () => {
     }
   })
 })
+
+// spec 59
+it('una vista de calendario se ve como calendario', () => {
+  expect(viewIcon(page([{ kind: 'calendar', resource: 'pedido' }]))).toBe('lucideCalendar')
+})

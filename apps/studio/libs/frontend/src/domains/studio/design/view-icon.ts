@@ -7,7 +7,8 @@ const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
   kpis: 'lucideChartNoAxesColumn',
   fields: 'lucideIdCard',
   attachments: 'lucidePaperclip',
-  form: 'lucideClipboardList'
+  form: 'lucideClipboardList',
+  calendar: 'lucideCalendar'
 }
 
 /**

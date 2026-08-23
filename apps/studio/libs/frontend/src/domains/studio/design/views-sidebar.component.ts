@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from '@app/shared/domain'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
+  lucideCalendar,
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
@@ -25,6 +26,7 @@ import { viewIcon } from './view-icon'
 import { SYSTEM_VIEWS } from './system-preview/system-views'
 
 const SIDEBAR_ICONS = {
+  lucideCalendar,
   lucideChartNoAxesColumn,
   lucideLock,
   lucideChevronDown,
@@ -78,6 +80,7 @@ const BLOCK_TOOLS: BlockTool[] = [
   { kind: 'kpis', icon: 'lucideChartNoAxesColumn', label: 'KPIs' },
   { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería' },
   { kind: 'form', icon: 'lucideClipboardList', label: 'Formulario' },
+  { kind: 'calendar', icon: 'lucideCalendar', label: 'Calendario' },
   { kind: 'attachments', icon: 'lucidePaperclip', label: 'Adjuntos' },
   { kind: 'fields', icon: 'lucideIdCard', label: 'Datos · ficha' }
 ]

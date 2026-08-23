@@ -25,7 +25,7 @@
 - [x] **TASK-06**: Tests + `'calendar'` en `BlockKind`/`GENERABLE_BLOCKS` y campos de config en
       `DesignBlock` (`design-page.ts`); derivación en `design-store` addBlock/removeBlock con
       defaults (primer campo date, labelField, weekends true) + mutadores de config.
-- [ ] **TASK-07**: Paleta (`BLOCK_TOOLS` + `view-icon.ts`, `lucideCalendar`) + componente de
+- [x] **TASK-07**: Paleta (`BLOCK_TOOLS` + `view-icon.ts`, `lucideCalendar`) + componente de
       preview `canvas-calendar.component.ts` (mini-mes fiel al mock) + badge «aún no generable»
       cuando el recurso no tiene campo fecha.
 - [ ] **TASK-08**: Panel de configuración por bloque (componente propio): Fecha / Etiqueta /
