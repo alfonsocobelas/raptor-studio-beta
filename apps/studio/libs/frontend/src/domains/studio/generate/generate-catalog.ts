@@ -77,17 +77,11 @@ const GROUPS: Record<string, GroupCopy> = {
     heading: 'Base de datos',
     entries: [
       { value: 'postgres', title: 'PostgreSQL', hint: 'Tus tablas tienen relaciones: Postgres encaja mejor' },
-      { value: 'mongo', title: 'MongoDB', hint: 'Documentos sin esquema fijo' }
+      { value: 'mongo', title: 'MongoDB', hint: 'Documentos sin esquema fijo; sin autenticación hasta el port a Mongoose' }
     ]
   },
-  auth: {
-    heading: 'Autenticación',
-    entries: [
-      { value: 'none', title: 'Sin autenticación', hint: 'Aplicación abierta, sin login' },
-      { value: 'single-tenant', title: 'Single-tenant', hint: 'Sesión por cookie, invitaciones y roles' },
-      { value: 'multi-tenant', title: 'Multi-tenant', hint: 'Si vas a vender la aplicación a otros negocios' }
-    ]
-  },
+  // el grupo de autenticación se retiró con auth=none (spec 58): toda app lleva single-tenant
+  // y una ranura sin elección no se pregunta. El teaser multi-tenant volverá cuando sea real.
   sessionStore: {
     heading: 'Almacén de sesiones',
     subheading: 'Solo aplica con autenticación',

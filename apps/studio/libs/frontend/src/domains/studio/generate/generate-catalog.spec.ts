@@ -44,9 +44,9 @@ const manifest: SlotsManifest = {
     {
       name: 'auth',
       label: 'Autenticación',
-      default: 'none',
+      // spec 58: single-tenant de fábrica; el manifiesto ya no publica none (interno)
+      default: 'single-tenant',
       providers: [
-        { value: 'none', label: 'Ninguna' },
         {
           value: 'single-tenant',
           label: 'Single-tenant',
@@ -73,7 +73,8 @@ const manifest: SlotsManifest = {
   plugins: [{ name: 'email', description: 'Adaptadores de email: Azure ACS, SES y Brevo' }]
 }
 
-const defaults = { database: 'postgres', ui: 'spartan', design: 'actual', infra: 'none', auth: 'none' }
+// espejo de defaultSelection(manifest): auth es single-tenant de fábrica desde la spec 58
+const defaults = { database: 'postgres', ui: 'spartan', design: 'actual', infra: 'none', auth: 'single-tenant', sessionStore: 'postgres' }
 
 const group = (catalog: ReturnType<typeof mergeCatalog>, slot: string) => {
   const found = catalog.groups.find(g => g.slot === slot)
@@ -89,7 +90,8 @@ const card = (catalog: ReturnType<typeof mergeCatalog>, slot: string, value: str
 
 describe('mergeCatalog', () => {
   it('pinta un grupo por ranura elegible', () => {
-    expect(mergeCatalog(manifest, defaults).groups.map(g => g.slot)).toEqual(['infra', 'database', 'auth', 'sessionStore'])
+    // auth ya no se pregunta (spec 58): el manifiesto publica un solo proveedor y la ranura cae sola
+    expect(mergeCatalog(manifest, defaults).groups.map(g => g.slot)).toEqual(['infra', 'database', 'sessionStore'])
   })
 
   it('deja fuera la ranura del preset visual: lo manda el lienzo, no esta pantalla', () => {
@@ -124,7 +126,6 @@ describe('mergeCatalog', () => {
       disabled: true,
       reason: 'Próximamente'
     })
-    expect(card(mergeCatalog(manifest, defaults), 'auth', 'multi-tenant').available).toBe(false)
   })
 
   it('el catálogo manda el orden: primero sus tarjetas, en su orden', () => {
@@ -161,43 +162,36 @@ describe('mergeCatalog', () => {
   })
 
   it('un proveedor cuyo requires choca con lo elegido sale apagado, y dice qué le falta', () => {
-    expect(card(mergeCatalog(manifest, { ...defaults, database: 'mongo' }), 'auth', 'single-tenant')).toMatchObject({
+    // redis exige auth single-tenant; con mongo la selección llega degradada a none (spec 58)
+    expect(
+      card(mergeCatalog(manifest, { ...defaults, database: 'mongo', auth: 'none' }), 'sessionStore', 'redis')
+    ).toMatchObject({
       available: true,
       disabled: true,
-      reason: 'Requiere Base de datos: PostgreSQL (TypeORM)'
+      reason: 'Requiere Autenticación: Single-tenant'
     })
   })
 
   it('con la selección compatible, el mismo proveedor está disponible y sin razón', () => {
-    const chosen = card(mergeCatalog(manifest, defaults), 'auth', 'single-tenant')
+    const chosen = card(mergeCatalog(manifest, defaults), 'sessionStore', 'redis')
 
     expect(chosen.disabled).toBe(false)
     expect(chosen.reason).toBeUndefined()
   })
 
   describe('almacén de sesiones', () => {
-    it('la ranura sale con la redacción del catálogo, detrás de autenticación', () => {
+    it('la ranura sale con la redacción del catálogo, al final del formulario', () => {
       const groups = mergeCatalog(manifest, defaults).groups
-      const auth = groups.findIndex(g => g.slot === 'auth')
       const sessions = groups.findIndex(g => g.slot === 'sessionStore')
 
-      expect(sessions).toBeGreaterThan(auth)
+      expect(sessions).toBe(groups.length - 1)
       const cards = groups[sessions].cards
       expect(groups[sessions].heading).toBe('Almacén de sesiones')
       expect(cards.map(c => c.title)).toEqual(['PostgreSQL', 'Redis'])
     })
 
-    it('redis queda apagado mientras no haya autenticación, con el motivo', () => {
+    it('redis es elegible de serie: auth single-tenant es el default (spec 58)', () => {
       const redis = mergeCatalog(manifest, defaults).groups.find(g => g.slot === 'sessionStore')?.cards[1]
-
-      expect(redis?.disabled).toBe(true)
-      expect(redis?.reason).toBeTruthy()
-    })
-
-    it('con autenticación single-tenant redis es elegible', () => {
-      const redis = mergeCatalog(manifest, { ...defaults, auth: 'single-tenant' }).groups.find(
-        g => g.slot === 'sessionStore'
-      )?.cards[1]
 
       expect(redis?.disabled).toBe(false)
     })
