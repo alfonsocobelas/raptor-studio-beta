@@ -19,7 +19,9 @@ export const redisSessionPlugin = definePlugin({
   requires: { auth: 'single-tenant' },
   assets: 'assets-redis-infra',
   dependencies: {
-    ioredis: '5.11.1'
+    ioredis: '5.11.1',
+    // storage del throttler compartido entre réplicas; el fail-open lo envuelve
+    '@nest-lab/throttler-storage-redis': '1.2.0'
   },
 
   apply(tree: Tree, context: PluginContext): void {

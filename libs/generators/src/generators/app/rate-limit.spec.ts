@@ -117,6 +117,24 @@ describe('app generator — rate limiting con auth', () => {
     })
   })
 
+  it('con metrics activo, el raspado queda fuera del límite global (tráfico interno cada pocos segundos)', async () => {
+    const tree = await generate({ ...base, auth: 'single-tenant', plugins: 'metrics' })
+    const controller =
+      tree.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/metrics.controller.ts', 'utf-8') ??
+      ''
+
+    expect(controller).toContain('@SkipThrottle({ global: true })')
+  })
+
+  it('metrics sin auth no importa el throttler (la dependencia no existe en esa app)', async () => {
+    const tree = await generate({ ...base, plugins: 'metrics' })
+    const controller =
+      tree.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/metrics.controller.ts', 'utf-8') ??
+      ''
+
+    expect(controller).not.toContain('throttler')
+  })
+
   it('sin auth no se emite nada del throttler (no hay superficie pública que proteger)', async () => {
     const tree = await generate(base)
 

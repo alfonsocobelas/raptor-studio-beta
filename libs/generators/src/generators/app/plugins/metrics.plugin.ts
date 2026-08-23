@@ -23,8 +23,37 @@ export const metricsPlugin = definePlugin({
   apply(tree: Tree, context: PluginContext): void {
     addMetricsConfigSection(tree, context)
     registerMetricsModule(tree, context)
+    skipRateLimitOnScrape(tree, context)
   }
 })
+
+/**
+ * Con rate limiting activo (lo emite auth, spec 55), el raspado queda fuera del límite
+ * global: Alloy pega cada pocos segundos y computaría contra el límite por IP. El decorador
+ * no puede vivir en el asset — sin auth no existe @nestjs/throttler y el import rompería —
+ * así que se parchea aquí, solo si el módulo de rate limit está en el árbol (las ranuras se
+ * aplican antes que los aditivos: si auth lo emitió, ya está).
+ */
+function skipRateLimitOnScrape(tree: Tree, context: PluginContext): void {
+  const hasRateLimit = tree.exists(
+    path.join(context.backendSrc, 'contexts/shared/infrastructure/rate-limit/rate-limit.module.ts')
+  )
+  if (!hasRateLimit) {
+    return
+  }
+  const controllerPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/metrics/metrics.controller.ts')
+  const source = tree.read(controllerPath, 'utf-8')
+  if (!source || source.includes('SkipThrottle')) {
+    return
+  }
+  tree.write(
+    controllerPath,
+    source
+      .replace(/(\nimport [^\n]*\n)(?![\s\S]*\nimport )/, "$1import { SkipThrottle } from '@nestjs/throttler'\n")
+      // ancla con @Controller: el comentario del asset también dice "@Public()" y no debe ganar
+      .replace("@Public()\n@Controller('metrics')", "@Public()\n@SkipThrottle({ global: true })\n@Controller('metrics')")
+  )
+}
 
 /**
  * Sección opcional `metrics` en tipos y validación. El token es obligatorio DENTRO de la

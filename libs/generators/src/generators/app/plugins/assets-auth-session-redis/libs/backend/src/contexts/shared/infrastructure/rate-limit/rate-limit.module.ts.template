@@ -1,25 +1,33 @@
+import Redis from 'ioredis'
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
+import { AppLogger } from '../../domain/logger/logger'
 import { RateLimitConfig } from '../config/config-types'
+import { LoggerModule } from '../logger/logger.module'
+import { REDIS_CLIENT } from '../persistence/redis/redis.constants'
+import { RedisModule } from '../persistence/redis/redis.module'
 import { clientIp, RequestWithForwarding } from './client-ip'
+import { FailOpenThrottlerStorage } from './fail-open-throttler-storage'
 import { GLOBAL_THROTTLER } from './rate-limit.constants'
 
-// Rate limit global por IP. Cuenta en la memoria del proceso (el storage por defecto del
-// throttler): correcto con UNA réplica, que es el despliegue canónico de esta app. Con más
-// réplicas cada una contaría por separado — ese caso lo cubre el almacén redis (sessionStore).
+// Rate limit global por IP. Cuenta en Redis (compartido entre réplicas el día que haya más de
+// una) con fail-open: Redis caído degrada el límite, nunca tumba la API.
 // El límite/ventana globales vienen de config POR ENTORNO: en test van altísimos porque la
 // suite e2e dispara cientos de peticiones/min desde 127.0.0.1 y se auto-limitaría.
 @Module({
   imports: [
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
+      imports: [RedisModule, LoggerModule],
+      inject: [ConfigService, REDIS_CLIENT, AppLogger],
+      useFactory: (config: ConfigService, redis: Redis, logger: AppLogger) => {
         // El validador de config garantiza la sección; el ! es seguro.
         const rateLimit = config.get<RateLimitConfig>('rateLimit')!
         return {
           throttlers: [{ name: GLOBAL_THROTTLER, ttl: rateLimit.globalTtlMs, limit: rateLimit.globalLimit }],
+          storage: new FailOpenThrottlerStorage(new ThrottlerStorageRedisService(redis), logger),
           // La IP real del cliente, no la del último proxy — ver client-ip.ts.
           getTracker: (req: RequestWithForwarding) => clientIp(req, rateLimit.trustedProxyHops)
         }

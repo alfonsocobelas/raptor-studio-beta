@@ -64,8 +64,30 @@ describe('app generator — ranura sessionStore', () => {
       expect(persistence).toContain('TypeOrmAuthTokenEntity')
     })
 
-    it('el rate limiting sigue emitiéndose (la variante de storage la decide TASK-07)', () => {
-      expect(tree.exists(`${SHARED}/infrastructure/rate-limit/rate-limit.module.ts`)).toBe(true)
+    it('el throttler cuenta en redis con fail-open: un redis caído degrada el límite, no tumba la API', () => {
+      const module = tree.read(`${SHARED}/infrastructure/rate-limit/rate-limit.module.ts`, 'utf-8') ?? ''
+
+      expect(module).toContain('ThrottlerStorageRedisService')
+      expect(module).toContain('FailOpenThrottlerStorage')
+      expect(tree.exists(`${SHARED}/infrastructure/rate-limit/fail-open-throttler-storage.ts`)).toBe(true)
+      expect(
+        tree.exists('apps/demo/libs/backend/tests/shared/rate-limit/fail-open-throttler-storage.test.ts')
+      ).toBe(true)
+
+      const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
+        dependencies?: Record<string, string>
+      }
+      expect(pkg.dependencies?.['@nest-lab/throttler-storage-redis']).toBeDefined()
+    })
+
+    it('el storage por defecto (memoria) no lleva fail-open: la memoria no se cae sola', async () => {
+      const defaultTree = await generate(base)
+
+      expect(defaultTree.exists(`${SHARED}/infrastructure/rate-limit/fail-open-throttler-storage.ts`)).toBe(false)
+      const pkg = JSON.parse(defaultTree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
+        dependencies?: Record<string, string>
+      }
+      expect(pkg.dependencies?.['@nest-lab/throttler-storage-redis']).toBeUndefined()
     })
 
     it('el dominio de sesión es el mismo en ambos stores (agregado, puerto y VO comunes)', () => {

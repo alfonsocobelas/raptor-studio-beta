@@ -1,0 +1,50 @@
+import { ThrottlerStorage } from '@nestjs/throttler'
+import { AppLogger } from '../../../src/contexts/shared/domain/logger/logger'
+import { FailOpenThrottlerStorage } from '../../../src/contexts/shared/infrastructure/rate-limit/fail-open-throttler-storage'
+
+const makeLogger = (): AppLogger =>
+  ({ log: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }) as unknown as AppLogger
+
+describe('FailOpenThrottlerStorage', () => {
+  it('delegates to the inner storage when redis answers', async () => {
+    // GIVEN
+    const record = { totalHits: 7, timeToExpire: 42, isBlocked: false, timeToBlockExpire: 0 }
+    const inner: ThrottlerStorage = { increment: jest.fn().mockResolvedValue(record) }
+    const logger = makeLogger()
+    const storage = new FailOpenThrottlerStorage(inner, logger)
+
+    // WHEN
+    const result = await storage.increment('ip:80.29.32.16', 60_000, 200, 0, 'global')
+
+    // THEN — el resultado y los argumentos pasan intactos
+    expect(result).toBe(record)
+    expect(inner.increment).toHaveBeenCalledWith('ip:80.29.32.16', 60_000, 200, 0, 'global')
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
+
+  it('fails open when the inner storage throws: the request must pass, never a 500', async () => {
+    // GIVEN a dead redis
+    const inner: ThrottlerStorage = { increment: jest.fn().mockRejectedValue(new Error('connection refused')) }
+    const logger = makeLogger()
+    const storage = new FailOpenThrottlerStorage(inner, logger)
+
+    // WHEN
+    const result = await storage.increment('ip:80.29.32.16', 60_000, 200, 0, 'global')
+
+    // THEN — el guard ve "primera petición, sin bloqueo": deja pasar
+    expect(result).toEqual({ totalHits: 1, timeToExpire: 0, isBlocked: false, timeToBlockExpire: 0 })
+  })
+
+  it('logs a WARN with the cause when failing open (a silent fail-open hides the outage)', async () => {
+    // GIVEN
+    const inner: ThrottlerStorage = { increment: jest.fn().mockRejectedValue(new Error('connection refused')) }
+    const logger = makeLogger()
+    const storage = new FailOpenThrottlerStorage(inner, logger)
+
+    // WHEN
+    await storage.increment('ip:80.29.32.16', 60_000, 200, 0, 'global')
+
+    // THEN
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('connection refused'), 'FailOpenThrottlerStorage')
+  })
+})

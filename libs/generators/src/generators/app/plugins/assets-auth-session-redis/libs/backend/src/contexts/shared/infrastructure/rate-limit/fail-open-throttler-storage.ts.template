@@ -1,0 +1,34 @@
+import { ThrottlerStorage } from '@nestjs/throttler'
+import { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface'
+import { AppLogger } from '../../domain/logger/logger'
+
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
+
+// Decorator de fail-open sobre el storage del throttler: un Redis caído NUNCA puede tumbar la
+// API (fail-closed = DoS autoinfligido: tumbaríamos todo por proteger contra un abuso
+// hipotético). Ante error, el guard ve "primera petición, sin bloqueo" y deja pasar; el WARN
+// deja rastro para que la caída no pase inadvertida.
+export class FailOpenThrottlerStorage implements ThrottlerStorage {
+  constructor(
+    private readonly inner: ThrottlerStorage,
+    private readonly logger: AppLogger
+  ) {}
+
+  async increment(
+    key: string,
+    ttl: number,
+    limit: number,
+    blockDuration: number,
+    throttlerName: string
+  ): Promise<ThrottlerStorageRecord> {
+    try {
+      return await this.inner.increment(key, ttl, limit, blockDuration, throttlerName)
+    } catch (error) {
+      this.logger.warn(
+        `Rate limit storage unavailable, failing open: ${messageOf(error)}`,
+        FailOpenThrottlerStorage.name
+      )
+      return { totalHits: 1, timeToExpire: 0, isBlocked: false, timeToBlockExpire: 0 }
+    }
+  }
+}
