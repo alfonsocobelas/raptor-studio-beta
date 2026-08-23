@@ -70,8 +70,10 @@ describe('app generator — mi cuenta', () => {
     })
   })
 
-  it('sin auth no existe ni la pantalla ni la ruta', async () => {
-    const tree = await generate(base)
+  it('sin auth (mongo, downgrade spec 58) no existe ni la pantalla ni la ruta', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const tree = await generate({ ...base, database: 'mongo' })
+    warn.mockRestore()
 
     expect(tree.exists('apps/demo/libs/frontend/src/domains/iam/profile.component.ts')).toBe(false)
     expect(tree.read('apps/demo/apps/frontend-app/src/app.routes.ts', 'utf-8') ?? '').not.toContain("path: 'account'")

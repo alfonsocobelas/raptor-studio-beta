@@ -23,6 +23,10 @@ export interface SlotProvider {
   requires?: Record<string, string>
   /** Qué emite el proveedor; sin manifiesto no añade nada al árbol (p.ej. 'none') */
   plugin?: AppPlugin
+  /** Interno: existe para la maquinaria pero no se ofrece en ninguna superficie de usuario
+   * (schema.json, slots.json, wizard). Caso único hoy: auth none, que mongo necesita hasta
+   * el port a Mongoose (spec 58). */
+  internal?: boolean
 }
 
 export interface Slot {
@@ -108,9 +112,10 @@ export const SLOTS: Record<string, Slot> = {
   auth: {
     name: 'auth',
     label: 'Autenticación',
-    default: 'none',
+    // spec 58: todos los dashboards llevan auth; none es interno (solo mongo, con downgrade)
+    default: 'single-tenant',
     providers: [
-      { value: 'none', label: 'Ninguna (app abierta)' },
+      { value: 'none', label: 'Ninguna (interno: mongo hasta el port a Mongoose)', internal: true },
       {
         value: 'single-tenant',
         label: 'Single-tenant (sesión por cookie, invitaciones, roles)',

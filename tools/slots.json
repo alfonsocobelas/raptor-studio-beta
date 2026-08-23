@@ -74,12 +74,8 @@
     {
       "name": "auth",
       "label": "Autenticación",
-      "default": "none",
+      "default": "single-tenant",
       "providers": [
-        {
-          "value": "none",
-          "label": "Ninguna (app abierta)"
-        },
         {
           "value": "single-tenant",
           "label": "Single-tenant (sesión por cookie, invitaciones, roles)",

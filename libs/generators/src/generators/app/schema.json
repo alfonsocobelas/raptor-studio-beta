@@ -87,29 +87,6 @@
         ]
       }
     },
-    "auth": {
-      "type": "string",
-      "default": "none",
-      "description": "Authentication of the emitted app (exclusive slot)",
-      "enum": [
-        "none",
-        "single-tenant"
-      ],
-      "x-prompt": {
-        "message": "¿Qué autenticación?",
-        "type": "list",
-        "items": [
-          {
-            "value": "none",
-            "label": "Ninguna (app abierta)"
-          },
-          {
-            "value": "single-tenant",
-            "label": "Single-tenant (sesión por cookie, invitaciones, roles)"
-          }
-        ]
-      }
-    },
     "sessionStore": {
       "type": "string",
       "default": "postgres",

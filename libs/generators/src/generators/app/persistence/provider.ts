@@ -42,6 +42,12 @@ export interface PersistenceProvider {
    * en Mongo los índices se sincronizan desde los schemas, no hay nada que migrar).
    */
   excludesPlugins?: string[]
+  /**
+   * Ranuras que el motor aún no puede honrar: si el usuario no las pide explícitamente,
+   * el ensamblador aplica el fallback y avisa. Hueco honesto, no silencio (spec 58: mongo
+   * no puede llevar auth hasta su port).
+   */
+  slotFallbacks?: Record<string, { value: string; warning: string }>
   /** Subárbol de la persistencia POR RECURSO (entidad/schema, mapper, repositorio) */
   resourceFiles?: string
   /** Ídem para los hijos de un agregado con composición */

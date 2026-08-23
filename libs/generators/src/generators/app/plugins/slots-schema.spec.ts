@@ -22,7 +22,9 @@ describe('app/schema.json frente al registro de ranuras', () => {
     properties: Record<string, SchemaProperty>
   }
 
-  const choosableSlots = Object.values(SLOTS).filter(slot => slot.providers.length > 1)
+  // los proveedores internos (spec 58) no cuentan: existen para la maquinaria, no para el formulario
+  const visible = (slot: (typeof SLOTS)[string]) => slot.providers.filter(p => !p.internal)
+  const choosableSlots = Object.values(SLOTS).filter(slot => visible(slot).length > 1)
 
   it('expone un flag por ranura con más de un proveedor', () => {
     for (const slot of choosableSlots) {
@@ -30,9 +32,9 @@ describe('app/schema.json frente al registro de ranuras', () => {
     }
   })
 
-  it('no expone ranuras con un solo proveedor (no hay nada que elegir)', () => {
+  it('no expone ranuras con un solo proveedor visible (no hay nada que elegir)', () => {
     for (const slot of Object.values(SLOTS)) {
-      if (slot.providers.length === 1) {
+      if (visible(slot).length === 1) {
         expect(schema.properties[slot.name]).toBeUndefined()
       }
     }
@@ -44,9 +46,9 @@ describe('app/schema.json frente al registro de ranuras', () => {
       const prompt = property['x-prompt']
 
       expect(property.default).toBe(slot.default)
-      expect(property.enum).toEqual(slot.providers.map(p => p.value))
+      expect(property.enum).toEqual(visible(slot).map(p => p.value))
       expect(typeof prompt === 'string' ? undefined : prompt?.items).toEqual(
-        slot.providers.map(p => ({ value: p.value, label: p.label }))
+        visible(slot).map(p => ({ value: p.value, label: p.label }))
       )
     }
   })

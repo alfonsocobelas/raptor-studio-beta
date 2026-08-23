@@ -33,10 +33,28 @@ describe('app generator — ranura auth', () => {
     warn.mockRestore()
   })
 
-  it('sin pedir auth no se emite el módulo de autenticación', async () => {
-    const open = await snapshot(base)
+  it('sin decir nada, una app postgres sale con auth single-tenant (default, spec 58)', async () => {
+    const app = await snapshot(base)
 
-    expect([...open.keys()].some(f => f.includes('contexts/iam/modules/auth'))).toBe(false)
+    expect([...app.keys()].some(f => f.includes('contexts/iam/modules/auth'))).toBe(true)
+  })
+
+  it('--auth=none se retiró: error claro, nada emitido (spec 58)', async () => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    const preexisting = tree.listChanges().length
+
+    await expect(appGenerator(tree, { ...base, auth: 'none' })).rejects.toThrow(/auth=none.*retir/i)
+    expect(tree.listChanges()).toHaveLength(preexisting)
+  })
+
+  it('mongo genera SIN auth con aviso: el port a Mongoose está pendiente (spec 58)', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const app = await snapshot({ ...base, database: 'mongo' })
+
+    expect([...app.keys()].some(f => f.includes('contexts/iam/modules/auth'))).toBe(false)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Mongoose'))
+    warn.mockRestore()
   })
 
   it('auth=single-tenant con database=mongo falla antes de emitir nada', async () => {

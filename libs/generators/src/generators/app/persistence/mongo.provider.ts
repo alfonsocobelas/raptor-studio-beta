@@ -25,6 +25,14 @@ export const mongoPersistence = definePersistence({
   },
   // las migraciones son de TypeORM: aquí los índices se materializan con syncIndexes()
   excludesPlugins: ['migrations'],
+  // spec 58: toda app lleva auth por defecto, pero el plugin emite persistencia TypeORM.
+  // Hasta el port a Mongoose, este motor la degrada con aviso en vez de romper la generación.
+  slotFallbacks: {
+    auth: {
+      value: 'none',
+      warning: 'ℹ mongo aún no lleva autenticación: se genera sin auth hasta el port a Mongoose (spec 58).'
+    }
+  },
   resourceFiles: 'files-persistence-mongoose',
   integrationTestFiles: 'files-tests-integration-mongoose',
 

@@ -126,8 +126,10 @@ describe('app generator — rate limiting con auth', () => {
     expect(controller).toContain('@SkipThrottle({ global: true })')
   })
 
-  it('metrics sin auth no importa el throttler (la dependencia no existe en esa app)', async () => {
-    const tree = await generate({ ...base, plugins: 'metrics' })
+  it('metrics sin auth (mongo) no importa el throttler (la dependencia no existe en esa app)', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const tree = await generate({ ...base, database: 'mongo', plugins: 'metrics' })
+    warn.mockRestore()
     const controller =
       tree.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/metrics.controller.ts', 'utf-8') ??
       ''
@@ -135,8 +137,10 @@ describe('app generator — rate limiting con auth', () => {
     expect(controller).not.toContain('throttler')
   })
 
-  it('sin auth no se emite nada del throttler (no hay superficie pública que proteger)', async () => {
-    const tree = await generate(base)
+  it('sin auth (mongo, downgrade spec 58) no se emite nada del throttler', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const tree = await generate({ ...base, database: 'mongo' })
+    warn.mockRestore()
 
     expect(tree.exists(`${RATE_LIMIT}/rate-limit.module.ts`)).toBe(false)
     const root = tree.read(`${BACKEND}/src/root.module.ts`, 'utf-8') ?? ''

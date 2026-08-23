@@ -25,7 +25,10 @@ describe('app generator — UI de IAM (spec 34)', () => {
 
   beforeAll(async () => {
     withAuth = await snapshot({ ...base, auth: 'single-tenant' })
-    open = await snapshot(base)
+    // la única app sin auth que queda es mongo, por el downgrade interno (spec 58)
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    open = await snapshot({ ...base, database: 'mongo' })
+    warn.mockRestore()
   })
 
   describe('iam-labels (TASK-01)', () => {

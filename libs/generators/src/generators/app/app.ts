@@ -68,7 +68,7 @@ export interface AppGeneratorSchema {
   design?: string
   /** Persistence engine of the emitted app (default postgres) */
   database?: DatabaseEngine
-  /** Authentication slot of the emitted app (default none) */
+  /** Authentication slot of the emitted app (default single-tenant; none retired, spec 58) */
   auth?: string
   /** Session store slot of the emitted app (default postgres; redis requires auth) */
   sessionStore?: string
@@ -127,6 +127,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // valida antes de emitir: un preset desconocido no puede dejar media app en disco
   const design = selectDesign(options.design)
   const persistence = selectPersistence(options.database)
+  // spec 58: toda app lleva auth; none se retiró de la superficie de usuario
+  if (options.auth === 'none') {
+    throw new Error(
+      'auth=none se retiró (spec 58): toda app lleva autenticación single-tenant. ' +
+        'Las apps mongo la pierden automáticamente hasta el port a Mongoose.'
+    )
+  }
   // valida la combinación ranuras×plugins antes de emitir un solo fichero
   const legacy = normalizeLegacyPlugins(options.plugins, {
     database: options.database,
@@ -136,6 +143,14 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     infra: options.infra
   })
   const selection = legacy.selection
+  // ranuras que el motor no puede honrar: fallback declarado por el proveedor, con aviso.
+  // Una elección explícita del usuario no se degrada: si contradice al motor, valida y falla.
+  for (const [slotName, fallback] of Object.entries(persistence.slotFallbacks ?? {})) {
+    if (selection[slotName] === undefined) {
+      console.warn(fallback.warning)
+      selection[slotName] = fallback.value
+    }
+  }
   const infra = selectInfra(selection['infra'])
   const sessionStore = selectSessionStore(selection['sessionStore'])
   const chosenPlugins = selectPlugins(legacy.plugins)

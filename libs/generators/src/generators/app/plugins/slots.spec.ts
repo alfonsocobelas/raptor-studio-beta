@@ -30,12 +30,14 @@ describe('SLOTS', () => {
     expect(slot.providers.map(p => p.value)).toEqual(['spartan'])
   })
 
-  it('auth offers none (default) and single-tenant, which carries the auth plugin manifest', () => {
-    // TASK-03 (spec 23): auth deja de ser checkbox aditivo y pasa a ranura excluyente
+  it('auth por defecto es single-tenant y none queda como proveedor interno (spec 58)', () => {
+    // decisión 2026-08-23: todos los dashboards llevan auth; none sobrevive solo para que
+    // mongo genere hasta el port a Mongoose, sin aparecer en ninguna superficie de usuario
     const slot = SLOTS['auth']
 
-    expect(slot.default).toBe('none')
+    expect(slot.default).toBe('single-tenant')
     expect(slot.providers.map(p => p.value)).toEqual(['none', 'single-tenant'])
+    expect(slot.providers.find(p => p.value === 'none')?.internal).toBe(true)
     expect(slot.providers.find(p => p.value === 'none')?.plugin).toBeUndefined()
     expect(slot.providers.find(p => p.value === 'single-tenant')?.plugin?.name).toBe('auth')
   })
@@ -115,7 +117,8 @@ describe('slotPlugins', () => {
 
   it('returns nothing when every slot sits on a provider without manifest', () => {
     expect(slotPlugins({ auth: 'none', database: 'postgres', ui: 'spartan' })).toEqual([])
-    expect(slotPlugins({})).toEqual([])
+    // sin selección, el default de auth ya emite (spec 58: single-tenant de fábrica)
+    expect(slotPlugins({}).map(p => p.name)).toEqual(['auth'])
   })
 })
 
@@ -172,8 +175,9 @@ describe('normalizeLegacyPlugins', () => {
 
   it('traduce aunque Nx haya rellenado la ranura con su default', () => {
     // Nx rellena los defaults del schema.json, así que por CLI la opción llega siempre con valor:
-    // sin esto el nombre heredado se ignoraba en silencio y la app salía sin la capacidad
-    expect(silenced(() => normalizeLegacyPlugins('auth,email', { auth: 'none' }))).toEqual({
+    // sin esto el nombre heredado se ignoraba en silencio y la app salía sin la capacidad.
+    // Tras la spec 58 el default de auth ES single-tenant: la traducción es un no-op con aviso.
+    expect(silenced(() => normalizeLegacyPlugins('auth,email', { auth: 'single-tenant' }))).toEqual({
       plugins: 'email',
       selection: { auth: 'single-tenant' }
     })
@@ -191,7 +195,8 @@ describe('normalizeLegacyPlugins', () => {
  */
 describe('validateCombination', () => {
   it('accepts a valid selection with no plugins', () => {
-    expect(() => validateCombination({ database: 'mongo', ui: 'spartan' })).not.toThrow()
+    // mongo viaja con el downgrade interno de auth (spec 58): la selección llega con none
+    expect(() => validateCombination({ database: 'mongo', ui: 'spartan', auth: 'none' })).not.toThrow()
   })
 
   it('validates the selected values against the registry (unknown value throws)', () => {
@@ -205,14 +210,13 @@ describe('validateCombination', () => {
     )
   })
 
-  it('rechaza redis como almacén de sesiones cuando auth queda en none (spec 55)', () => {
-    // el default NO cuenta como elección: pedir redis sin pedir auth también falla
-    expect(() => validateCombination({ sessionStore: 'redis' })).toThrow(/redis.*requires auth=single-tenant.*none/)
+  it('rechaza redis como almacén de sesiones si auth es none — el downgrade de mongo (spec 55/58)', () => {
     expect(() => validateCombination({ sessionStore: 'redis', auth: 'none' })).toThrow(/auth=single-tenant/)
   })
 
-  it('acepta redis como almacén de sesiones con auth single-tenant', () => {
+  it('acepta redis como almacén de sesiones con auth single-tenant (ahora el default, spec 58)', () => {
     expect(() => validateCombination({ sessionStore: 'redis', auth: 'single-tenant' })).not.toThrow()
+    expect(() => validateCombination({ sessionStore: 'redis' })).not.toThrow()
   })
 
   it('rejects an additive plugin whose requires contradicts the selection', () => {
@@ -221,7 +225,7 @@ describe('validateCombination', () => {
   })
 
   it('allows requirement-free plugins with any engine', () => {
-    expect(() => validateCombination({ database: 'mongo' }, [emailPlugin])).not.toThrow()
+    expect(() => validateCombination({ database: 'mongo', auth: 'none' }, [emailPlugin])).not.toThrow()
   })
 
   it('resolves unstated slots to their default before checking requirements', () => {
