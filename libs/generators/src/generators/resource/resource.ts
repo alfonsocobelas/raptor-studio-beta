@@ -177,6 +177,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gallery'), outputDir, substitutions)
   }
 
+  // calendario (spec 59): otra lectura del listado, cada registro en su día
+  if (model.calendar) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-calendar'), outputDir, substitutions)
+  }
+
   // el cronograma exige period; su presencia en el modelo es lo que lo emite (spec 30)
   if (model.gantt) {
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gantt'), outputDir, substitutions)

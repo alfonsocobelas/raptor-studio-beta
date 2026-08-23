@@ -252,6 +252,8 @@ export interface CalendarSubstitution {
   /** Valores del enum de color en su orden declarado; el color va por posición */
   legend: { value: string; label: string; colorIndex: number }[]
   weekends: boolean
+  /** Cabeceras de la rejilla, ya recortadas si el fin de semana se oculta */
+  dayNames: string[]
 }
 
 export interface GallerySubstitution {
@@ -1128,13 +1130,17 @@ function renderCalendar(definition: ResourceDefinition): CalendarSubstitution | 
     definition.fields[calendar.color ?? '']?.form?.options?.find(o => o.value === value)?.label ??
     value.charAt(0).toUpperCase() + value.slice(1)
 
+  const weekends = calendar.weekends ?? true
+  const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].slice(0, weekends ? 7 : 5)
+
   return {
     dateField: calendar.date,
     labelField,
     dateLabel,
     colorField: calendar.color ?? null,
     legend: values.map((value, colorIndex) => ({ value, label: labelOf(value), colorIndex })),
-    weekends: calendar.weekends ?? true
+    weekends,
+    dayNames
   }
 }
 

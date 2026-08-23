@@ -379,6 +379,7 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
     // THEN
     expect(subs.calendar?.labelField).toBe('supportModel')
     expect(subs.calendar?.weekends).toBe(false)
+    expect(subs.calendar?.dayNames).toEqual(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'])
   })
 
   it('builds the legend from the enum values in declared order, labelled from the badgeMap', () => {
