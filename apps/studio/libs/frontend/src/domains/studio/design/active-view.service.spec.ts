@@ -160,4 +160,18 @@ describe('ActiveViewService — el flujo elegido', () => {
 
     expect(active.flowNode()).toBeNull()
   })
+
+  it('seleccionar una vista de sistema deja el lienzo en modo solo lectura (spec 57)', () => {
+    active.selectSystem('login')
+
+    expect(active.systemView()).toBe('login')
+  })
+
+  it('volver a una vista del diseño suelta la de sistema', () => {
+    active.selectSystem('users')
+
+    active.select(0)
+
+    expect(active.systemView()).toBeNull()
+  })
 })

@@ -45,6 +45,8 @@ import { CanvasNoticeService, type CanvasNotice } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
 import { CanvasPageComponent } from './canvas-page.component'
+import { SystemViewComponent } from './system-view.component'
+import { SYSTEM_VIEWS } from './system-preview/system-views'
 import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
@@ -76,6 +78,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     FormsModule,
     NgIcon,
     CanvasPageComponent,
+    SystemViewComponent,
     ChatPanelComponent,
     GeneratePageComponent,
     ModelViewComponent,
@@ -366,10 +369,14 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     style="background: var(--preview-grid-head, oklch(0.91 0.014 250))"
                     data-testid="mock-breadcrumb"
                   >
-                    Inicio › <span class="text-foreground font-semibold">{{ pages()[active.index()]?.title }}</span>
+                    Inicio › <span class="text-foreground font-semibold">{{ activeTitle() }}</span>
                   </div>
                   <section class="min-w-0 flex-1 p-4">
-                    <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                    @if (active.systemView(); as system) {
+                      <studio-system-view [viewId]="system" />
+                    } @else {
+                      <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                    }
                   </section>
                 } @else if (preview.preset() === 'cabina') {
                   <!-- Shell «cabina», réplica de files-design/cabina: barra a contraste, cabecera
@@ -453,7 +460,11 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       </span>
                     </div>
                     <section class="min-w-0 flex-1 p-5">
+                      @if (active.systemView(); as system) {
+                      <studio-system-view [viewId]="system" />
+                    } @else {
                       <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                    }
                     </section>
                   </div>
                 } @else {
@@ -518,7 +529,11 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     </div>
                   </aside>
                   <section class="min-w-0 flex-1 p-6">
-                    <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                    @if (active.systemView(); as system) {
+                      <studio-system-view [viewId]="system" />
+                    } @else {
+                      <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                    }
                   </section>
                 }
               </div>
@@ -720,6 +735,13 @@ export class StudioCanvasComponent {
   protected readonly notice = inject(CanvasNoticeService)
 
   protected readonly pages = computed(() => this.store.pages())
+
+  /** Título de la miga: la vista del diseño o, si hay una abierta, la de sistema (spec 57). */
+  protected readonly activeTitle = computed(() => {
+    const system = this.active.systemView()
+    if (system) return SYSTEM_VIEWS.find(view => view.id === system)?.title ?? system
+    return this.pages()[this.active.index()]?.title ?? ''
+  })
 
   /** «Antes de generar» (spec 41): una capa sobre el lienzo, no una ruta ni un diálogo. */
   protected readonly wizardOpen = signal(false)

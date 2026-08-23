@@ -310,4 +310,21 @@ describe('ViewsSidebarComponent', () => {
     expect(store.pages().map(page => page.title)).toEqual(['Productos', 'Proveedores'])
     expect(active.index()).toBe(1)
   })
+
+  it('el grupo Sistema lista las vistas que regala la autenticación (spec 57)', () => {
+    const fixture = mount()
+
+    expect(testId(fixture, 'system-view-login')?.textContent).toContain('Login')
+    expect(testId(fixture, 'system-view-users')?.textContent).toContain('Usuarios')
+    expect(testId(fixture, 'system-view-account')?.textContent).toContain('Mi cuenta')
+  })
+
+  it('pulsar una vista de sistema la activa en el lienzo', () => {
+    const fixture = mount()
+
+    testId(fixture, 'system-view-account')?.click()
+    fixture.detectChanges()
+
+    expect(TestBed.inject(ActiveViewService).systemView()).toBe('account')
+  })
 })

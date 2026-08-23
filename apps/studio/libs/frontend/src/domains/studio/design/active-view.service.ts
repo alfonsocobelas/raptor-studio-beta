@@ -14,9 +14,13 @@ export class ActiveViewService {
   private readonly _resource = signal<string | null>(null)
   private readonly _field = signal<number | null>(null)
   private readonly _flow = signal<string | null>(null)
+  private readonly _system = signal<string | null>(null)
   private readonly _flowNode = signal<string | null>(null)
 
   readonly index = computed(() => Math.min(this._index(), Math.max(this.store.pages().length - 1, 0)))
+
+  /** Vista de sistema abierta en el lienzo (login/users/account, spec 57); null = vista del diseño. */
+  readonly systemView = this._system.asReadonly()
 
   /** Entidad cuyo detalle enseña el inspector; null cuando no hay nada elegido. */
   readonly resource = this._resource.asReadonly()
@@ -32,6 +36,14 @@ export class ActiveViewService {
   select(index: number): void {
     this._index.set(index)
     // la entidad elegida era de la vista anterior: el inspector no debe sobrevivir al salto
+    this._resource.set(null)
+    this._field.set(null)
+    this._system.set(null)
+  }
+
+  /** Abre una vista de sistema: el lienzo pasa a solo lectura hasta volver a una del diseño. */
+  selectSystem(id: string): void {
+    this._system.set(id)
     this._resource.set(null)
     this._field.set(null)
   }
