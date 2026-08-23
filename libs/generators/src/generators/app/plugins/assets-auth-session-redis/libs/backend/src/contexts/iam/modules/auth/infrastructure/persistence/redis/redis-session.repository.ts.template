@@ -1,0 +1,111 @@
+import Redis from 'ioredis'
+import { Inject, Injectable } from '@nestjs/common'
+import { Nullable } from '../../../../../../shared/domain/types'
+import { UserId } from '../../../../../../shared/domain/value-objects/iam/user-id.vo'
+import { REDIS_CLIENT } from '../../../../../../shared/infrastructure/persistence/redis/redis.constants'
+import { SessionPrimitiveProps } from '../../../domain/auth-types'
+import { Session } from '../../../domain/session'
+import { SessionRepository } from '../../../domain/session-repository'
+import { SessionTokenHash } from '../../../domain/value-objects/session-token-hash.vo'
+import { SessionStoreUnavailableError } from './session-store-errors'
+
+// Absolute cap of the user index. It only needs to outlive the longest possible session
+// (AUTH_POLICY caps sessions at 7 absolute days), so the set can never leak forever.
+const USER_INDEX_TTL_SECONDS = 7 * 24 * 60 * 60
+
+// What actually travels through JSON: the aggregate's dates come back as ISO strings.
+type StoredSession = Omit<SessionPrimitiveProps, 'createdAt' | 'expiresAt' | 'lastSeenAt'> & {
+  createdAt: string
+  expiresAt: string
+  lastSeenAt: string
+}
+
+const sessionKey = (tokenHash: string): string => `sess:${tokenHash}`
+const userIndexKey = (userId: string): string => `user:${userId}:sess`
+
+@Injectable()
+export class RedisSessionRepository extends SessionRepository {
+  constructor(@Inject(REDIS_CLIENT) private readonly client: Redis) {
+    super()
+  }
+
+  // A dead store is neither an invalid session (401 would evict the user) nor an opaque 500:
+  // every method wraps ioredis failures as a 503 the GlobalExceptionFilter already knows how to map.
+
+  async findByTokenHash(tokenHash: SessionTokenHash): Promise<Nullable<Session>> {
+    try {
+      const raw = await this.client.get(sessionKey(tokenHash.value))
+      if (!raw) {
+        return null
+      }
+      const stored = JSON.parse(raw) as StoredSession
+      return Session.fromPrimitives({
+        ...stored,
+        createdAt: new Date(stored.createdAt),
+        expiresAt: new Date(stored.expiresAt),
+        lastSeenAt: new Date(stored.lastSeenAt)
+      })
+    } catch (error) {
+      throw new SessionStoreUnavailableError('findByTokenHash', error)
+    }
+  }
+
+  // register and save share the implementation: SET is an upsert, same as the TypeORM repo,
+  // where both methods called repo().save().
+  async register(session: Session): Promise<void> {
+    try {
+      await this.persist(session)
+    } catch (error) {
+      throw new SessionStoreUnavailableError('register', error)
+    }
+  }
+
+  async save(session: Session): Promise<void> {
+    try {
+      await this.persist(session)
+    } catch (error) {
+      throw new SessionStoreUnavailableError('save', error)
+    }
+  }
+
+  async deleteByTokenHash(tokenHash: SessionTokenHash): Promise<void> {
+    try {
+      const raw = await this.client.get(sessionKey(tokenHash.value))
+      if (!raw) {
+        return
+      }
+      const { userId } = JSON.parse(raw) as StoredSession
+      await this.client.multi().del(sessionKey(tokenHash.value)).srem(userIndexKey(userId), tokenHash.value).exec()
+    } catch (error) {
+      throw new SessionStoreUnavailableError('deleteByTokenHash', error)
+    }
+  }
+
+  async deleteAllByUserId(userId: UserId): Promise<void> {
+    try {
+      const indexKey = userIndexKey(userId.value)
+      // Members whose session key already expired are swept along with the rest: DEL is
+      // idempotent, so no pruning pass is needed.
+      const members = await this.client.smembers(indexKey)
+      await this.client.del(...members.map(sessionKey), indexKey)
+    } catch (error) {
+      throw new SessionStoreUnavailableError('deleteAllByUserId', error)
+    }
+  }
+
+  private async persist(session: Session): Promise<void> {
+    const primitives = session.toPrimitives()
+    // The expiry is the domain's decision (Session.slide already applies the absolute cap);
+    // Redis only materializes it as a TTL.
+    const ttlMs = primitives.expiresAt.getTime() - Date.now()
+    if (ttlMs <= 0) {
+      return
+    }
+    await this.client
+      .multi()
+      .set(sessionKey(primitives.tokenHash), JSON.stringify(primitives), 'PX', ttlMs)
+      .sadd(userIndexKey(primitives.userId), primitives.tokenHash)
+      .expire(userIndexKey(primitives.userId), USER_INDEX_TTL_SECONDS)
+      .exec()
+  }
+}

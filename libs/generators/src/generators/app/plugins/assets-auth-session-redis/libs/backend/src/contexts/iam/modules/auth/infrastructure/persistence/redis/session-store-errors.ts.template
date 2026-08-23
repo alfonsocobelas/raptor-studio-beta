@@ -1,0 +1,9 @@
+import http from 'http-status'
+
+import { BaseCustomError } from '../../../../../../shared/domain/errors'
+
+export class SessionStoreUnavailableError extends BaseCustomError {
+  constructor(operation: string, cause?: unknown) {
+    super(`Session store is unavailable (${operation}).`, http.SERVICE_UNAVAILABLE, cause)
+  }
+}

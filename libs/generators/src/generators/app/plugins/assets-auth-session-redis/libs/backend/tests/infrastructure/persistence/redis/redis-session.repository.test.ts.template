@@ -1,0 +1,112 @@
+import Redis from 'ioredis'
+import { v7 as uuidv7 } from 'uuid'
+import { Test, TestingModule } from '@nestjs/testing'
+import { SessionPrimitiveProps } from '../../../../src/contexts/iam/modules/auth/domain/auth-types'
+import { Session } from '../../../../src/contexts/iam/modules/auth/domain/session'
+import { SessionTokenHash } from '../../../../src/contexts/iam/modules/auth/domain/value-objects/session-token-hash.vo'
+import { RedisSessionRepository } from '../../../../src/contexts/iam/modules/auth/infrastructure/persistence/redis/redis-session.repository'
+import { CoreConfigModule } from '../../../../src/contexts/shared/infrastructure/config/config.module'
+import { REDIS_CLIENT } from '../../../../src/contexts/shared/infrastructure/persistence/redis/redis.constants'
+import { RedisModule } from '../../../../src/contexts/shared/infrastructure/persistence/redis/redis.module'
+import { UserId } from '../../../../src/contexts/shared/domain/value-objects/iam/user-id.vo'
+
+const ONE_HOUR_MS = 60 * 60_000
+
+const sessionKey = (session: Session): string => `sess:${session.tokenHash.value}`
+const userKey = (session: Session): string => `user:${session.userId.value}:sess`
+
+// El TTL de la clave es la decisión del dominio materializada: toda sesión de prueba
+// se ancla al reloj real para que caduque en el futuro.
+const activeSession = (overrides: Partial<SessionPrimitiveProps> = {}): Session => {
+  const now = new Date()
+  return Session.fromPrimitives({
+    id: uuidv7(),
+    userId: uuidv7(),
+    tokenHash: 'a'.repeat(63) + Math.floor(Math.random() * 10),
+    createdAt: now,
+    expiresAt: new Date(now.getTime() + ONE_HOUR_MS),
+    lastSeenAt: now,
+    ...overrides
+  })
+}
+
+describe('RedisSessionRepository (integración, contra el redis de test)', () => {
+  let moduleFixture: TestingModule
+  let client: Redis
+  let repository: RedisSessionRepository
+
+  beforeAll(async () => {
+    moduleFixture = await Test.createTestingModule({
+      imports: [CoreConfigModule, RedisModule]
+    }).compile()
+    await moduleFixture.init()
+
+    client = moduleFixture.get<Redis>(REDIS_CLIENT)
+    repository = new RedisSessionRepository(client)
+  })
+
+  afterAll(async () => {
+    if (moduleFixture) {
+      await moduleFixture.close()
+    }
+  })
+
+  it('persiste la sesión con TTL y la indexa por usuario', async () => {
+    const session = activeSession()
+
+    await repository.register(session)
+
+    const ttlMs = await client.pttl(sessionKey(session))
+    expect(ttlMs).toBeGreaterThan(0)
+    expect(ttlMs).toBeLessThanOrEqual(ONE_HOUR_MS)
+    expect(await client.sismember(userKey(session), session.tokenHash.value)).toBe(1)
+  })
+
+  it('recupera por hash exactamente lo que guardó (las fechas sobreviven al JSON)', async () => {
+    const session = activeSession()
+    await repository.register(session)
+
+    const found = await repository.findByTokenHash(session.tokenHash)
+
+    expect(found?.toPrimitives()).toEqual(session.toPrimitives())
+  })
+
+  it('devuelve null para un hash desconocido', async () => {
+    const found = await repository.findByTokenHash(SessionTokenHash.create('f'.repeat(64)))
+
+    expect(found).toBeNull()
+  })
+
+  it('una sesión ya caducada no se persiste (el TTL lo decide el dominio)', async () => {
+    const now = new Date()
+    const expired = activeSession({ expiresAt: new Date(now.getTime() - 1000) })
+
+    await repository.register(expired)
+
+    expect(await client.exists(sessionKey(expired))).toBe(0)
+  })
+
+  it('borra la sesión y su entrada del índice al cerrar sesión', async () => {
+    const session = activeSession()
+    await repository.register(session)
+
+    await repository.deleteByTokenHash(session.tokenHash)
+
+    expect(await client.exists(sessionKey(session))).toBe(0)
+    expect(await client.sismember(userKey(session), session.tokenHash.value)).toBe(0)
+  })
+
+  it('borra TODAS las sesiones del usuario (deshabilitar cuenta, reset de contraseña)', async () => {
+    const userId = uuidv7()
+    const first = activeSession({ userId })
+    const second = activeSession({ userId })
+    await repository.register(first)
+    await repository.register(second)
+
+    await repository.deleteAllByUserId(UserId.create(userId))
+
+    expect(await client.exists(sessionKey(first))).toBe(0)
+    expect(await client.exists(sessionKey(second))).toBe(0)
+    expect(await client.exists(`user:${userId}:sess`)).toBe(0)
+  })
+})

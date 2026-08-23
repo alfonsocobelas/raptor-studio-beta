@@ -60,13 +60,34 @@ export const authPlugin = definePlugin({
 })
 
 /**
- * La persistencia de sesión vive en su propia carpeta de assets, separada del resto
- * del plugin: es la pieza que cambia según el almacén elegido (hoy TypeORM; la ranura
- * `sessionStore` añadirá Redis como alternativa). El dominio de sesión no se mueve:
- * es común a todos los stores.
+ * La persistencia de sesión vive en su propia carpeta de assets por almacén
+ * (ranura `sessionStore`): typeorm emite la tabla iam.session; redis emite el
+ * repositorio con TTL nativo y errores 503. El dominio de sesión no se mueve:
+ * es común a todos los stores. El binding del módulo se parchea aquí — la
+ * plantilla trae el default (TypeORM) y no sabe de ranuras.
  */
 function emitSessionStore(tree: Tree, context: PluginContext): void {
-  copyVerbatim(tree, path.join(__dirname, 'assets-auth-session-typeorm'), context.root)
+  copyVerbatim(tree, path.join(__dirname, `assets-auth-session-${context.sessionStore === 'redis' ? 'redis' : 'typeorm'}`), context.root)
+  if (context.sessionStore !== 'redis') {
+    return
+  }
+
+  const modulePath = path.join(context.root, 'libs/backend/src/contexts/iam/modules/auth/auth.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (source && !source.includes('RedisSessionRepository')) {
+    tree.write(
+      modulePath,
+      source
+        .replace(
+          "import { TypeOrmSessionRepository } from './infrastructure/persistence/typeorm/typeorm-session.repository'",
+          "import { RedisSessionRepository } from './infrastructure/persistence/redis/redis-session.repository'"
+        )
+        .replace(
+          '{ provide: SessionRepository, useClass: TypeOrmSessionRepository }',
+          '{ provide: SessionRepository, useClass: RedisSessionRepository }'
+        )
+    )
+  }
 }
 
 /**
@@ -331,11 +352,13 @@ function registerEntities(tree: Tree, context: PluginContext): void {
     return
   }
 
-  const imports = IAM_ENTITIES.map(e => `import { ${e.className} } from '${ENTITY_DIR}/${e.file}'`).join('\n')
+  // Con el store redis la sesión no tiene entidad TypeORM: solo user y auth_token.
+  const entities = IAM_ENTITIES.filter(e => context.sessionStore !== 'redis' || e.className !== 'TypeOrmSessionEntity')
+  const imports = entities.map(e => `import { ${e.className} } from '${ENTITY_DIR}/${e.file}'`).join('\n')
   const withImports = source.replace(/(\nimport [^\n]*\n)(?![\s\S]*\nimport )/, `$1${imports}\n`)
   tree.write(
     modulePath,
-    withImports.replace(/(entities: \[)/, `$1\n          ${IAM_ENTITIES.map(e => e.className).join(',\n          ')},`)
+    withImports.replace(/(entities: \[)/, `$1\n          ${entities.map(e => e.className).join(',\n          ')},`)
   )
 }
 
@@ -347,11 +370,37 @@ function addSchemaMigration(tree: Tree, context: PluginContext): void {
   }
 
   const stamp = 1790000001000
+  // Con el store redis la sesión vive fuera de postgres: la tabla no se crea.
+  const withSessionTable = context.sessionStore !== 'redis'
+  const sessionTableUp = withSessionTable
+    ? `
+
+    await queryRunner.query(\`
+      CREATE TABLE ${AUTH_SCHEMA}.session (
+        id           UUID         NOT NULL,
+        user_id      UUID         NOT NULL,
+        token_hash   VARCHAR(64)  NOT NULL,
+        created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        expires_at   TIMESTAMPTZ  NOT NULL,
+        last_seen_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        CONSTRAINT pk_session PRIMARY KEY (id),
+        CONSTRAINT uq_session_token_hash UNIQUE (token_hash)
+      )
+    \`)
+    await queryRunner.query(\`CREATE INDEX idx_session_user_id ON ${AUTH_SCHEMA}.session (user_id)\`)`
+    : ''
+  const sessionTableDown = withSessionTable
+    ? `
+    await queryRunner.query(\`DROP TABLE IF EXISTS ${AUTH_SCHEMA}.session\`)`
+    : ''
+  const doc = withSessionTable
+    ? 'Usuarios, sesiones y tokens de un solo uso (invitación y reset).'
+    : 'Usuarios y tokens de un solo uso (invitación y reset); las sesiones viven en redis.'
   tree.write(
     path.join(migrationsDir, `${stamp}-CreateIamAuth.ts`),
     `import { MigrationInterface, QueryRunner } from 'typeorm'
 
-/** Usuarios, sesiones y tokens de un solo uso (invitación y reset). */
+/** ${doc} */
 export class CreateIamAuth${stamp} implements MigrationInterface {
   name = 'CreateIamAuth${stamp}'
 
@@ -375,21 +424,7 @@ export class CreateIamAuth${stamp} implements MigrationInterface {
         CONSTRAINT ck_user_role CHECK (role IN ('admin', 'user', 'viewer')),
         CONSTRAINT ck_user_status CHECK (status IN ('pending', 'active', 'disabled'))
       )
-    \`)
-
-    await queryRunner.query(\`
-      CREATE TABLE ${AUTH_SCHEMA}.session (
-        id           UUID         NOT NULL,
-        user_id      UUID         NOT NULL,
-        token_hash   VARCHAR(64)  NOT NULL,
-        created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
-        expires_at   TIMESTAMPTZ  NOT NULL,
-        last_seen_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
-        CONSTRAINT pk_session PRIMARY KEY (id),
-        CONSTRAINT uq_session_token_hash UNIQUE (token_hash)
-      )
-    \`)
-    await queryRunner.query(\`CREATE INDEX idx_session_user_id ON ${AUTH_SCHEMA}.session (user_id)\`)
+    \`)${sessionTableUp}
 
     await queryRunner.query(\`
       CREATE TABLE ${AUTH_SCHEMA}.auth_token (
@@ -408,8 +443,7 @@ export class CreateIamAuth${stamp} implements MigrationInterface {
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(\`DROP TABLE IF EXISTS ${AUTH_SCHEMA}.auth_token\`)
-    await queryRunner.query(\`DROP TABLE IF EXISTS ${AUTH_SCHEMA}.session\`)
+    await queryRunner.query(\`DROP TABLE IF EXISTS ${AUTH_SCHEMA}.auth_token\`)${sessionTableDown}
     await queryRunner.query(\`DROP TABLE IF EXISTS ${AUTH_SCHEMA}."user"\`)
   }
 }
