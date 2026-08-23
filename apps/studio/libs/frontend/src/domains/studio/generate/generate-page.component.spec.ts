@@ -461,6 +461,40 @@ describe('GeneratePageComponent', () => {
       expect(design.resources).toHaveLength(1)
     })
 
+    // spec 62: infra aprovisionada por el cliente → sin Terraform en el emitido
+    it('el checkbox de infra aprovisionada aparece con nube elegida y viaja en la petición', async () => {
+      const sent = stubGenerate()
+      const fixture = await mount()
+
+      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
+
+      at(fixture, 'slot-infra-azure')?.click()
+      fixture.detectChanges()
+      ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
+      fixture.detectChanges()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+
+      expect(sent.body()).toMatchObject({ provisionedInfra: true })
+    })
+
+    it('marcado y vuelto a infra=none, el flag no viaja', async () => {
+      const sent = stubGenerate()
+      const fixture = await mount()
+
+      at(fixture, 'slot-infra-azure')?.click()
+      fixture.detectChanges()
+      ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
+      fixture.detectChanges()
+      at(fixture, 'slot-infra-none')?.click()
+      fixture.detectChanges()
+      at(fixture, 'generate-primary')?.click()
+      await settle()
+
+      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
+      expect('provisionedInfra' in sent.body()).toBe(false)
+    })
+
     it('lo avanzado viaja: sin instalar y con directorio propio', async () => {
       const sent = stubGenerate()
       const fixture = await mount()

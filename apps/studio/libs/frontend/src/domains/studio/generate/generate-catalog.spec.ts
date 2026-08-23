@@ -181,13 +181,19 @@ describe('mergeCatalog', () => {
 
   // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox
   describe('infra aprovisionada', () => {
-    it('solo el grupo de infra lleva el toggle, con su redacción', () => {
-      const groups = mergeCatalog(manifest, defaults).groups
+    it('con un proveedor de nube elegido, solo el grupo de infra lleva el toggle', () => {
+      const groups = mergeCatalog(manifest, { ...defaults, infra: 'azure' }).groups
       const infra = groups.find(g => g.slot === 'infra')
 
       expect(infra?.toggle?.key).toBe('provisionedInfra')
       expect(infra?.toggle?.label.length).toBeGreaterThan(0)
       expect(groups.filter(g => g.slot !== 'infra').every(g => g.toggle === undefined)).toBe(true)
+    })
+
+    it('con infra=none no hay toggle: no hay Terraform que omitir', () => {
+      const infra = mergeCatalog(manifest, defaults).groups.find(g => g.slot === 'infra')
+
+      expect(infra?.toggle).toBeUndefined()
     })
   })
 

@@ -54,6 +54,22 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
           </button>
         }
       </div>
+
+      @if (group.toggle; as toggle) {
+        <label class="text-foreground mt-3 flex cursor-pointer items-start gap-2 text-[12.5px]">
+          <input
+            type="checkbox"
+            class="mt-0.5 accent-[var(--brand)]"
+            [checked]="toggled"
+            [attr.data-testid]="'toggle-' + toggle.key"
+            (change)="toggledChange.emit(!toggled)"
+          />
+          <span>
+            <span class="font-medium">{{ toggle.label }}</span>
+            <span class="text-muted-foreground block text-[11.5px] leading-snug">{{ toggle.hint }}</span>
+          </span>
+        </label>
+      }
     </section>
   `,
   styles: `
@@ -146,7 +162,10 @@ const EMPTY_GROUP: CatalogGroup = { slot: '', label: '', heading: '', cards: [] 
 export class ChoiceCardsComponent {
   @Input() group: CatalogGroup = EMPTY_GROUP
   @Input() chosen = ''
+  /** Estado del checkbox de `group.toggle` (spec 62); solo pinta si el grupo lo trae. */
+  @Input() toggled = false
   @Output() readonly choose = new EventEmitter<string>()
+  @Output() readonly toggledChange = new EventEmitter<boolean>()
 }
 
 @Component({

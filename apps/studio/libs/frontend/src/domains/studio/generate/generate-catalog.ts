@@ -150,8 +150,9 @@ function toGroup(slot: ManifestSlot, manifest: SlotsManifest, selection: Record<
     heading: copy?.heading ?? slot.label,
     ...(copy?.subheading ? { subheading: copy.subheading } : {}),
     cards: [...known, ...rest],
-    // spec 62: hay clientes que aprovisionan su propia infra; el checkbox omite el Terraform
-    ...(slot.name === 'infra'
+    // spec 62: hay clientes que aprovisionan su propia infra; el checkbox omite el Terraform.
+    // Con «Sin nube» no hay Terraform que omitir, así que no se enseña.
+    ...(slot.name === 'infra' && (selection[slot.name] ?? slot.default) !== 'none'
       ? {
           toggle: {
             key: 'provisionedInfra' as const,

@@ -35,6 +35,8 @@ export interface GenerateRequest {
   plugins: string[]
   design: ReturnType<typeof buildDesignRequest>
   skipInstall: boolean
+  /** La infra la aprovisiona el cliente: el emitido no lleva Terraform (spec 62) */
+  provisionedInfra?: boolean
   directory?: string
 }
 

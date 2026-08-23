@@ -79,6 +79,45 @@ describe('ChoiceCardsComponent', () => {
     expect(at(fixture, 'slot-infra-aws')?.hasAttribute('disabled')).toBe(true)
   })
 
+  // spec 62: el checkbox llega ya decidido en group.toggle; el componente solo pinta y avisa
+  describe('infra aprovisionada', () => {
+    const toggle = {
+      key: 'provisionedInfra' as const,
+      label: 'La infraestructura ya está aprovisionada por el cliente',
+      hint: 'No se generan los ficheros de Terraform'
+    }
+
+    const mountWithToggle = (toggled: boolean) => {
+      const fixture = TestBed.createComponent(ChoiceCardsComponent)
+      fixture.componentRef.setInput('group', { ...group, toggle })
+      fixture.componentRef.setInput('chosen', 'azure')
+      fixture.componentRef.setInput('toggled', toggled)
+      fixture.detectChanges()
+      return fixture
+    }
+
+    it('sin toggle en el grupo no hay checkbox', () => {
+      expect(at(mountChoices('azure'), 'toggle-provisionedInfra')).toBeNull()
+    })
+
+    it('con toggle pinta el checkbox con su redacción y su estado', () => {
+      const fixture = mountWithToggle(true)
+      const box = at(fixture, 'toggle-provisionedInfra') as HTMLInputElement
+
+      expect(box.checked).toBe(true)
+      expect(fixture.nativeElement.textContent).toContain('La infraestructura ya está aprovisionada')
+    })
+
+    it('marcarlo avisa al padre con el nuevo valor', () => {
+      const fixture = mountWithToggle(false)
+      let received: boolean | null = null
+      fixture.componentInstance.toggledChange.subscribe(value => (received = value))
+      ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
+
+      expect(received).toBe(true)
+    })
+  })
+
   it('y lleva su pastilla con la razón, para que se lea por qué', () => {
     const fixture = mountChoices('none')
 

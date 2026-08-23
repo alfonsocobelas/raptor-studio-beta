@@ -137,7 +137,9 @@ const KEBAB = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
                     <studio-choice-cards
                       [group]="group"
                       [chosen]="selection()[group.slot]"
+                      [toggled]="provisionedInfra()"
                       (choose)="choose(group.slot, $event)"
+                      (toggledChange)="provisionedInfra.set($event)"
                     />
                   }
                 </div>
@@ -373,6 +375,8 @@ export class GeneratePageComponent {
   protected readonly manifest = signal<SlotsManifest | null>(null)
   protected readonly manifestError = signal<string | null>(null)
   protected readonly selection = signal<Record<string, string>>({})
+  /** Checkbox de infra aprovisionada (spec 62); solo cuenta con una nube elegida. */
+  protected readonly provisionedInfra = signal(false)
   protected readonly plugins = signal<string[]>(this.resuming ? (this.runner.requested()?.plugins ?? []) : [])
   /** El diseño ya tiene nombre; al reanudar manda lo GENERADO, para que el comando no mienta. */
   protected readonly name = signal(
@@ -518,6 +522,8 @@ export class GeneratePageComponent {
         ports: this.store.ports()
       }),
       skipInstall: !this.install(),
+      // solo viaja con una nube elegida: marcado y vuelto a «Sin nube», no significa nada
+      ...(this.provisionedInfra() && this.selection()['infra'] !== 'none' ? { provisionedInfra: true } : {}),
       ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
     })
   }
