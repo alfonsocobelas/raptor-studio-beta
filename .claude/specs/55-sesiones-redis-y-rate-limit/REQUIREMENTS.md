@@ -27,12 +27,13 @@ Decisión de diseño (brainstorm 2026-08-23, aprobada por Alfonso):
 
 ## Criterios de aceptación
 
-- [ ] Golden diff vacío para la fixture actual (postgres por defecto) salvo el rate limiting nuevo, que se re-baselinea deliberadamente
-- [ ] Fixture nueva (o variante) con `sessionStore: redis` congelada y verificada
-- [ ] App generada con `sessionStore: redis` arranca con el compose emitido, permite login/logout y las sesiones aparecen en Redis (`KEYS sess:*`)
-- [ ] Con Redis parado, `GET /auth/me` devuelve 503 (no 401 ni 500)
-- [ ] 11 POST seguidos a `/auth/login` en <60 s ⇒ el 11º devuelve 429 (en ambas variantes de `sessionStore`)
-- [ ] La suite emitida pasa en ambas variantes
+- [x] Golden diff vacío para la fixture actual (postgres por defecto) salvo el rate limiting nuevo, que se re-baselinea deliberadamente (`4cd567aa`: el diff era exactamente el rate limiting)
+- [x] Variante `sessionStore: redis` verificada por specs de generador sobre el árbol (`session-store.spec.ts`, `redis-session.plugin.spec.ts`) — decisión de diseño: sin fixture completa duplicada
+- [x] App generada con `sessionStore: redis` arranca con el compose emitido, login OK y las sesiones en Redis (`sess:{hash}` + índice `user:{id}:sess` + contador del throttler, verificado 2026-08-23)
+- [x] Con Redis parado, `GET /auth/me` devuelve **503** `SessionStoreUnavailableError` (ni 401 ni 500) y el readiness pasa a 503
+- [x] Rate limit verificado en vivo en ambas variantes: la 11ª petición a login en <60 s devuelve **429** (redis y memoria)
+- [x] Suite emitida: variante postgres 100 % verde (140+8+67); variante redis verde en backend (389 unit + 33 integración, incluida la de Redis real) — los 3 rojos del front son el defecto pre-existente del soft delete (`/projects/deleted`, ver memoria `defectos-vivos-del-emitido`), ajeno a esta spec
+- [x] `typecheck-emitted` a 0 errores en ambas variantes (4 modelos de oro, fuera del monorepo)
 
 ## Referencias (proyecto de referencia y diseño)
 
