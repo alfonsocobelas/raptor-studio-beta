@@ -1,4 +1,5 @@
 import { authPlugin } from './auth.plugin'
+import { redisSessionPlugin } from './redis-session.plugin'
 import { INFRA_PROVIDERS } from '../infra/providers'
 import { DESIGN_PRESETS, DEFAULT_DESIGN } from '../design/presets'
 import type { AppPlugin } from './plugin'
@@ -43,15 +44,17 @@ export type SessionStore = 'postgres' | 'redis'
 /**
  * Proveedores del almacén de sesiones. El de postgres no lleva manifiesto: la
  * persistencia TypeORM la emite el propio plugin de auth (assets-auth-session-typeorm).
- * El de redis ganará el suyo cuando exista (TASK-05 de la spec 55).
+ * El de redis trae la infra compartida (cliente, config, health) en su manifiesto.
  */
 const SESSION_STORE_PROVIDERS: readonly (SlotProvider & { value: SessionStore })[] = [
   { value: 'postgres', label: 'PostgreSQL (tabla iam.session)' },
   {
     value: 'redis',
     label: 'Redis (multi-réplica, TTL nativo)',
+    description: redisSessionPlugin.description,
     // sin auth no hay sesiones que almacenar; validateCombination lo corta antes de emitir
-    requires: { auth: 'single-tenant' }
+    requires: { auth: 'single-tenant' },
+    plugin: redisSessionPlugin
   }
 ]
 

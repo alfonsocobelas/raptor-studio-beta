@@ -1,0 +1,3 @@
+// Token de inyección del cliente ioredis compartido. Una sola conexión para toda la app:
+// los consumidores (health, rate limit, sesiones) inyectan este token, no crean clientes.
+export const REDIS_CLIENT = Symbol('REDIS_CLIENT')

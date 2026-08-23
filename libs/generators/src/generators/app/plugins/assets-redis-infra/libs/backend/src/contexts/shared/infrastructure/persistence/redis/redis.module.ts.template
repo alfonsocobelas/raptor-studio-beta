@@ -1,0 +1,34 @@
+import Redis from 'ioredis'
+import { Inject, Module, OnApplicationShutdown } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { RedisConfig } from '../../config/config-types'
+import { redisClientOptions } from './redis-client-options'
+import { REDIS_CLIENT } from './redis.constants'
+
+// No @Global a propósito: cada consumidor (HealthModule, RateLimitModule, AuthModule)
+// importa este módulo explícitamente — mismo criterio que el resto de la infra compartida.
+@Module({
+  providers: [
+    {
+      provide: REDIS_CLIENT,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): Redis => {
+        // El validador de config garantiza que la sección existe; el ! es seguro.
+        const redisConfig = config.get<RedisConfig>('redis')!
+        return new Redis(redisClientOptions(redisConfig))
+      }
+    }
+  ],
+  exports: [REDIS_CLIENT]
+})
+export class RedisModule implements OnApplicationShutdown {
+  constructor(@Inject(REDIS_CLIENT) private readonly client: Redis) {}
+
+  // onApplicationShutdown (no onModuleDestroy): corre DESPUÉS de que el servidor HTTP deje de
+  // aceptar peticiones, así ninguna petición en vuelo encuentra el cliente ya cerrado durante
+  // un rolling update. Mismo hook que usa @nestjs/typeorm para destruir el DataSource.
+  async onApplicationShutdown(): Promise<void> {
+    // quit() drena los comandos pendientes antes de cerrar; disconnect() los cortaría.
+    await this.client.quit()
+  }
+}

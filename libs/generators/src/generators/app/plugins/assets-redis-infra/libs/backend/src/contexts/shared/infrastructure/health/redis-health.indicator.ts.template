@@ -1,0 +1,49 @@
+import { Inject, Injectable } from '@nestjs/common'
+import { HealthIndicatorResult, HealthIndicatorService } from '@nestjs/terminus'
+import Redis from 'ioredis'
+import { REDIS_CLIENT } from '../persistence/redis/redis.constants'
+
+// Mismo timeout que el check de db: un readiness que cuelga es peor que uno que falla.
+const REDIS_PING_TIMEOUT_MS = 3000
+
+export interface RedisPingCheckSettings {
+  timeout?: number
+}
+
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
+
+@Injectable()
+export class RedisHealthIndicator {
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly client: Redis,
+    private readonly healthIndicatorService: HealthIndicatorService
+  ) {}
+
+  // Nombre y firma calcados de los pingCheck de Terminus (TypeOrmHealthIndicator) para que la
+  // línea del controller sea intercambiable con sus vecinas. BLOQUEANTE a propósito: las
+  // sesiones viven en Redis, así que sin él no hay auth y el readiness debe decir la verdad —
+  // Terminus manda el 'down' a errors -> global en error -> 503 y la réplica sale de rotación.
+  async pingCheck(key: string, options: RedisPingCheckSettings = {}): Promise<HealthIndicatorResult> {
+    const indicator = this.healthIndicatorService.check(key)
+
+    try {
+      await this.pingWithTimeout(options.timeout ?? REDIS_PING_TIMEOUT_MS)
+      return indicator.up()
+    } catch (error) {
+      return indicator.down({ message: messageOf(error) })
+    }
+  }
+
+  private async pingWithTimeout(timeoutMs: number): Promise<void> {
+    let timer: NodeJS.Timeout | undefined
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Redis ping timed out after ${timeoutMs}ms`)), timeoutMs)
+    })
+
+    try {
+      await Promise.race([this.client.ping(), timeout])
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+}

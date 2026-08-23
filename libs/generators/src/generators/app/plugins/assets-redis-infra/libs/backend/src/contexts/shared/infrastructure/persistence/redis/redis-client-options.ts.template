@@ -1,0 +1,16 @@
+import { RedisOptions } from 'ioredis'
+import { RedisConfig } from '../../config/config-types'
+
+export function redisClientOptions(config: RedisConfig): RedisOptions {
+  return {
+    host: config.host,
+    port: config.port,
+    // undefined, no '': con '' ioredis mandaría un AUTH que el Redis local sin auth rechaza.
+    password: config.password || undefined,
+    // Un objeto vacío activa TLS con los defaults de Node (CAs públicas); AMR usa cert público.
+    tls: config.tls ? {} : undefined,
+    // Acota la espera con Redis caído: los consumidores (health, rate limit) prefieren
+    // fallar rápido y decidir ellos (degradar, fail-open) antes que colgarse reintentando.
+    maxRetriesPerRequest: 3
+  }
+}

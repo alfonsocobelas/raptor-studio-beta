@@ -102,6 +102,7 @@
         {
           "value": "redis",
           "label": "Redis (multi-réplica, TTL nativo)",
+          "description": "Sesiones en Redis: cliente compartido, config por entorno y health bloqueante",
           "requires": {
             "auth": "single-tenant"
           }
