@@ -66,6 +66,19 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
       expect(module).toContain('RedisModule')
     })
 
+    it('el compose local levanta redis 7 en 6379 y el de test en 6380 (convivencia local/test)', () => {
+      const local = tree.read('apps/demo/docker/docker-compose.local.yml', 'utf-8') ?? ''
+      const test = tree.read('apps/demo/docker/docker-compose.test.yml', 'utf-8') ?? ''
+
+      expect(local).toContain('redis-local:')
+      expect(local).toContain('image: redis:7-alpine')
+      expect(local).toContain("'6379:6379'")
+      // sin volumen a propósito: el estado es efímero (sesiones, rate limit)
+      expect(local).not.toMatch(/redis-local-data/)
+      expect(test).toContain('redis-test:')
+      expect(test).toContain("'6380:6379'")
+    })
+
     it('declara ioredis en el package.json emitido', () => {
       const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
         dependencies?: Record<string, string>
@@ -75,10 +88,30 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     })
   })
 
+  it('con infra=azure emite Azure Managed Redis con NoEviction y los secretos en Key Vault', async () => {
+    const tree = await generate({ ...base, sessionStore: 'redis', infra: 'azure' })
+
+    const managedRedis = tree.read('apps/demo/iac/managed-redis.tf', 'utf-8') ?? ''
+    expect(managedRedis).toContain('azurerm_managed_redis')
+    // fuente de verdad de sesiones: bajo presión de memoria, escrituras que fallan a gritos
+    expect(managedRedis).toContain('eviction_policy = "NoEviction"')
+    expect(managedRedis).toContain('"redis-host"')
+    expect(managedRedis).toContain('"redis-password"')
+    expect(tree.read('apps/demo/iac/variables.tf', 'utf-8') ?? '').toContain('managed_redis_name')
+  })
+
+  it('con infra=aws el hueco de IaC queda declarado en el README, no en silencio', async () => {
+    const tree = await generate({ ...base, sessionStore: 'redis', infra: 'aws' })
+
+    expect(tree.exists('apps/demo/iac/managed-redis.tf')).toBe(false)
+    expect(tree.read('apps/demo/iac/README.md', 'utf-8') ?? '').toContain('Redis pendiente de IaC')
+  })
+
   it('con el store por defecto no hay rastro de redis en infra, config ni health', async () => {
     const tree = await generate(base)
 
     expect(tree.exists(`${SHARED}/infrastructure/persistence/redis/redis.module.ts`)).toBe(false)
+    expect(tree.read('apps/demo/docker/docker-compose.local.yml', 'utf-8') ?? '').not.toContain('redis')
     expect(tree.read(`${CONFIG}/config-types.ts`, 'utf-8') ?? '').not.toContain('RedisConfig')
     expect(tree.read(`${SHARED}/infrastructure/health/health.controller.ts`, 'utf-8') ?? '').not.toContain('redis')
     const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
