@@ -1,59 +1,62 @@
-# Spec: Auth en el diseño + vistas de sistema en el estudio
+# Spec: Vistas de sistema en el estudio (login, usuarios, mi cuenta)
 
 ---
 
 ## Contexto de negocio
 
-Hoy el lema "lo que ves es lo que se genera" se rompe en el IAM: la autenticación se elige en
-una tarjeta efímera del wizard (no se persiste en el diseño ni en el historial) y las pantallas
-que regala — login, recuperación, usuarios, Mi cuenta — no aparecen en ninguna parte del
-estudio. El cliente las descubre en la app generada. La pestaña Accesos (spec 46/49) ya cubre la
-parte conceptual (roles × capacidades); falta la parte visual y la persistencia de la decisión.
+Hoy las pantallas que regala la autenticación — login, recuperación, usuarios, Mi cuenta — no
+aparecen en el estudio: el cliente las descubre en la app generada, rompiendo "lo que ves es lo
+que se genera". La pestaña Accesos (spec 46/49) cubre la parte conceptual (roles × capacidades);
+falta la visual.
 
-Decisión de diseño (conversación 2026-08-23): **término medio**. Las vistas de IAM NO se hacen
-editables ni se modelan como bloques del schema (sería inner-platform effect, regla 7): se
-muestran como **vistas de sistema en solo lectura**, la contrapartida inversa de la etiqueta
-"Diseño aún no generable" — aquí es "esto te lo regala la autenticación, no se edita".
+Decisiones (conversación 2026-08-23 con Alfonso):
+
+- **Toda app lleva auth** (spec 58: `auth=none` se retira, single-tenant por defecto). Por
+  tanto en el estudio NO hay interruptor: las vistas de sistema se muestran **siempre**. La
+  pregunta original "¿dónde vive el toggle?" quedó obsoleta con esta decisión.
+- Las vistas de sistema son **solo lectura** (contrapartida inversa de la etiqueta "Diseño aún
+  no generable": "esto te lo regala la autenticación, no se edita"). Nunca bloques del schema
+  (inner-platform, regla 7).
+- La previsualización renderiza los **componentes reales del emitido** (decisión de Alfonso:
+  "componente real"), no mocks dibujados: un mock sería una segunda fuente de verdad que
+  derivaría del generador con el tiempo. El runner ya compila componentes (spec 35).
 
 ## User stories (formato EARS)
 
-- **WHEN** el diseñador activa la autenticación en el estudio **THEN** la decisión se guarda en el diseño (autosave + historial), no solo en la sesión del wizard
-- **WHEN** la autenticación está activa **THEN** el raíl de vistas muestra un grupo "Sistema" con Login, Usuarios y Mi cuenta, distinguible de las vistas del diseño
-- **WHEN** el diseñador abre una vista de sistema **THEN** el lienzo la pinta en solo lectura (previsualización fija, sin drop de bloques, sin edición) con una nota "La trae la autenticación"
-- **IF** la autenticación se desactiva **THEN** el grupo Sistema desaparece del raíl (sin tocar las vistas del diseño ni los accesos ya definidos)
-- **WHEN** se abre el wizard de generar **THEN** la tarjeta de auth llega pre-sembrada con lo que dice el diseño (el wizard puede sobrescribirla puntualmente, el diseño manda como default)
-- **IF** un diseño antiguo no declara auth **THEN** se comporta como hasta ahora (auth none, sin grupo Sistema): compatibilidad total
+- **WHEN** el diseñador abre el modo Vistas **THEN** el raíl muestra, además de sus vistas, un grupo "Sistema" con Login, Usuarios y Mi cuenta, visualmente distinguible (no reordenable, no borrable)
+- **WHEN** el diseñador selecciona una vista de sistema **THEN** el lienzo renderiza el componente real que emite el generador, en solo lectura (sin drop de bloques, sin panel de edición) y con la nota "La trae la autenticación"
+- **WHILE** una vista de sistema está abierta **THEN** el preset visual del diseño (actual/cabina/suite) se aplica igual que en las demás vistas
+- **IF** el componente real cambia en el generador **THEN** el estudio lo refleja sin tocar nada (misma fuente: assets del plugin de auth)
+- **IF** el diseño es antiguo **THEN** carga igual: las vistas de sistema no viven en el diseño, son una proyección (como Modelo o Flujos)
 
 ## Criterios de aceptación
 
-- [ ] `auth` persistido en el diseño (`DesignPage`/estado del estudio), con autosave e historial (undo/redo)
-- [ ] Grupo "Sistema" en el raíl con las 3 vistas cuando auth activa; ausente cuando no
-- [ ] Vista de sistema en el lienzo: previsualización estática fiel a lo que emite el generador (login, users-list, mi cuenta), sin edición ni drop
-- [ ] El wizard siembra `auth` desde el diseño; `sessionStore` sigue siendo decisión del wizard (es infra, no diseño)
-- [ ] Diseños existentes en `.studio/designs/` cargan sin migración manual
-- [ ] Smoke del estudio actualizado
+- [ ] Grupo "Sistema" en el raíl de Vistas con las 3 entradas, siempre presente
+- [ ] El lienzo renderiza LoginComponent, UsersListComponent y ProfileComponent reales (AuthService/UserService mockeados con datos de muestra), sin edición
+- [ ] Cero cambios en `DesignPage`/autosave/historial (proyección, no estado)
+- [ ] Los tres presets visuales se aplican a las vistas de sistema
+- [ ] Suite front del estudio en verde + smoke actualizado
 
-## Preguntas abiertas (validar con Alfonso ANTES del diseño técnico)
+## Preguntas abiertas para el DESIGN
 
-1. ¿Dónde vive el interruptor de auth en la UI? (¿pestaña Accesos, que ya es el territorio IAM, o ajustes del diseño?)
-2. ¿La previsualización de las vistas de sistema se dibuja a mano (mock estático) o se renderizan los componentes reales del emitido en el runner? (El runner ya compila componentes — spec 35 — pero los del emitido no están en el estudio.)
-3. ¿"Mi cuenta" y "Usuarios" se listan siempre con auth, o "Usuarios" solo si el rol admin existe? (Hoy los 3 roles son fijos.)
+- Cómo llegan los componentes del emitido al estudio: ¿import directo de los assets del plugin
+  (son `.template` literales sin EJS, importables tras un paso de build) o copia sincronizada
+  con test de paridad? Se decide en DESIGN mirando cómo el runner resolvió esto en la spec 35.
 
 ## Referencias
 
-- Raíl y lienzo: `apps/studio/libs/frontend/src/domains/studio/design/views-sidebar.component.ts`, `canvas-page.component.ts`, `studio-modes.ts`
-- Estado y persistencia: `design/design-store.ts`, `design-history.service.ts`, `.studio/designs/`
-- Wizard: `generate/generate-page.component.ts` (`defaultSelection`), `generate/generate-catalog.ts`
-- Lo que emite el generador (la verdad a previsualizar): `libs/generators/src/generators/app/plugins/assets-auth/libs/frontend/src/domains/{auth,iam}/`
+- Raíl y lienzo: `apps/studio/libs/frontend/src/domains/studio/design/views-sidebar.component.ts`, `canvas-page.component.ts`
+- Runner que compila componentes (spec 35): `.claude/specs/35-tests-datatable/`
+- Componentes a renderizar: `libs/generators/src/generators/app/plugins/assets-auth/libs/frontend/src/domains/{auth,iam}/`
 - Precedente de etiqueta: memoria `etiqueta-diseno-aun-no-generable`
 
 ## Fuera de scope (deliberado)
 
-- Editar las vistas de IAM o modelarlas como bloques del schema (inner-platform, regla 7)
-- Exponer `sessionStore` en el diseño (es infra: se queda en el wizard, arreglado en `70cd6f33`)
-- El shell admin completo con nav-user (backlog de rescates)
+- Editar las vistas de IAM o modelarlas como bloques
+- El interruptor de auth (no existe: toda app lleva auth — spec 58)
+- Retirar `auth=none` del generador y el default single-tenant (spec 58)
+- Shell admin completo (backlog de rescates)
 
----
+## Dependencias
 
-> ⚠️ **STOP**: hay preguntas abiertas de experiencia de usuario. Validar con Alfonso antes de DESIGN.md
-> (esencia antes que fontanería: sin demos, decidir mirando el estudio).
+- **Spec 58 primero**: el wizard deja de preguntar auth y el estudio puede asumir "siempre hay IAM".
