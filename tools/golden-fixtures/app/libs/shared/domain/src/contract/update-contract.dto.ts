@@ -4,7 +4,6 @@ export interface UpdateContractDto {
   contractType?: ContractTypeEnum
   contractNumber?: string | null
   customerId?: string
-  customerName?: string
   cmsCaseId?: string
   businessModel?: string
   subSolutionAreas?: string[]

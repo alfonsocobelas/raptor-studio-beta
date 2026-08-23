@@ -185,7 +185,6 @@ export class ProjectFormPageComponent {
     const value = {
       ...raw,
       customerId: raw.customerId ?? '',
-      customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     }
     const id = this.editingId()

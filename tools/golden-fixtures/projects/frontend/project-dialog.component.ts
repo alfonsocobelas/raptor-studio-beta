@@ -28,7 +28,6 @@ export interface ProjectFormValue {
   endDate: string | null
   status: ProjectStatusEnum
   implementer: ProjectImplementerEnum
-  customerName: string
 }
 
 const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {
@@ -163,7 +162,6 @@ export class ProjectDialogComponent {
     this.saved.emit({
       ...raw,
       customerId: raw.customerId ?? '',
-      customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
     this.close.emit()

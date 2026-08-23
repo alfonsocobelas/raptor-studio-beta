@@ -55,7 +55,6 @@ export interface ContractFormValue {
   billingFrequency: BillingFrequencyEnum
   renewalType: RenewalTypeEnum
   notes: string
-  customerName: string
 }
 
 const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {
@@ -229,7 +228,6 @@ export class ContractDialogComponent {
     this.saved.emit({
       ...raw,
       customerId: raw.customerId ?? '',
-      customerName: this.customers().find(item => item.id === raw.customerId)?.name ?? '',
       endDate: raw.endDate || null
     })
     this.close.emit()
