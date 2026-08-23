@@ -46,6 +46,7 @@ function validateFields(definition: ResourceDefinition): string[] {
 
   for (const [name, field] of Object.entries(definition.fields)) {
     problems.push(...validateField(name, field))
+    problems.push(...validateLookup(name, field, definition.fields))
   }
 
   return problems
@@ -293,6 +294,35 @@ function validateField(name: string, field: FieldDefinition): string[] {
   }
   if (field.min !== undefined && field.max !== undefined && field.min > field.max) {
     problems.push(`${at}: min (${field.min}) must be <= max (${field.max})`)
+  }
+
+  return problems
+}
+
+/**
+ * El lookup denormaliza en OTRO campo del recurso (spec 60): el destino debe existir y no
+ * puede tener form propio — su valor lo copia el use case desde el recurso origen, nunca
+ * el usuario ni el navegador.
+ */
+function validateLookup(name: string, field: FieldDefinition, fields: ResourceDefinition['fields']): string[] {
+  const lookup = field.form?.lookup
+  if (!lookup) return []
+
+  const problems: string[] = []
+  const at = `fields.${name}`
+
+  if (!lookup.resource) problems.push(`${at}: form.lookup.resource must be non-empty`)
+  if (!lookup.labelField) problems.push(`${at}: form.lookup.labelField must be non-empty`)
+
+  if (lookup.denormalizes !== undefined) {
+    const target = fields[lookup.denormalizes]
+    if (!target) {
+      problems.push(`${at}: form.lookup.denormalizes '${lookup.denormalizes}' is not a field of the resource`)
+    } else if (target.form) {
+      problems.push(
+        `${at}: form.lookup.denormalizes target '${lookup.denormalizes}' must not declare form (spec 60: the use case fills it)`
+      )
+    }
   }
 
   return problems

@@ -163,6 +163,60 @@ describe('defineResource', () => {
     })
   })
 
+  describe('rule 9 — form.lookup (spec 60)', () => {
+    const withLookup = (denormalizes?: string): ResourceDefinition => {
+      const definition = validDefinition()
+      definition.fields['customerId'].form = {
+        control: 'select',
+        label: 'Cliente',
+        lookup: { resource: 'customer', labelField: 'name', ...(denormalizes ? { denormalizes } : {}) }
+      }
+      definition.fields['customerName'] = {
+        type: 'string',
+        vo: 'CustomerName',
+        table: { show: true, label: 'Cliente', minWidth: 200 },
+        query: { sortable: true, filterable: true, searchable: true },
+        column: { type: 'varchar', lengthConst: 'CUSTOMER_NAME.MAX' }
+      }
+      return definition
+    }
+
+    it('accepts a lookup that denormalizes into an existing field without form', () => {
+      expect(problemsOf(withLookup('customerName'))).toEqual([])
+    })
+
+    it('rejects an empty lookup.resource', () => {
+      const definition = withLookup('customerName')
+      definition.fields['customerId'].form!.lookup!.resource = ''
+
+      expect(problemsOf(definition)).toContain('fields.customerId: form.lookup.resource must be non-empty')
+    })
+
+    it('rejects an empty lookup.labelField', () => {
+      const definition = withLookup('customerName')
+      definition.fields['customerId'].form!.lookup!.labelField = ''
+
+      expect(problemsOf(definition)).toContain('fields.customerId: form.lookup.labelField must be non-empty')
+    })
+
+    it('rejects a denormalizes target that is not a field of the resource', () => {
+      const definition = withLookup('ghostField')
+
+      expect(problemsOf(definition)).toContain(
+        "fields.customerId: form.lookup.denormalizes 'ghostField' is not a field of the resource"
+      )
+    })
+
+    it('rejects a denormalizes target that declares its own form (the user never types it)', () => {
+      const definition = withLookup('customerName')
+      definition.fields['customerName'].form = { control: 'text', label: 'Cliente' }
+
+      expect(problemsOf(definition)).toContain(
+        "fields.customerId: form.lookup.denormalizes target 'customerName' must not declare form (spec 60: the use case fills it)"
+      )
+    })
+  })
+
   describe('accumulation', () => {
     it('reports every problem in a single error', () => {
       const definition = validDefinition()
