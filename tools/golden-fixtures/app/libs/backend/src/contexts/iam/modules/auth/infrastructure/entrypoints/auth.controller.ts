@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import type { Request, Response } from 'express'
 import { CurrentUserDto, UserRoleEnum } from '@app/shared/domain'
 import { AcceptInvitationHandler } from '../../application/handlers/accept-invitation.handler'
@@ -11,6 +12,10 @@ import { AuthenticatedUser } from '../../application/dtos/authenticated-user'
 import { SESSION_COOKIE_NAME } from '../auth.constants'
 import { CurrentUser } from '../../../../../shared/infrastructure/auth/current-user.decorator'
 import { Public } from '../../../../../shared/infrastructure/auth/public.decorator'
+import {
+  AUTH_RATE_LIMITS,
+  GLOBAL_THROTTLER
+} from '../../../../../shared/infrastructure/rate-limit/rate-limit.constants'
 import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator'
 import { AUTH_POLICY } from '../../domain/auth-constants'
 import {
@@ -41,6 +46,9 @@ export class AuthController {
     private readonly inviteUserHandler: InviteUserHandler
   ) {}
 
+  // Límites más duros que el global en los endpoints sensibles a abuso: sobreescriben el
+  // throttler 'global' SOLO para esta ruta; la razón de cada número vive en rate-limit.constants.
+  @Throttle({ [GLOBAL_THROTTLER]: { limit: AUTH_RATE_LIMITS.LOGIN.limit, ttl: AUTH_RATE_LIMITS.LOGIN.ttlMs } })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -65,6 +73,9 @@ export class AuthController {
     return this.toCurrentUser(user)
   }
 
+  @Throttle({
+    [GLOBAL_THROTTLER]: { limit: AUTH_RATE_LIMITS.TOKEN_REDEMPTION.limit, ttl: AUTH_RATE_LIMITS.TOKEN_REDEMPTION.ttlMs }
+  })
   @Public()
   @Post('accept-invitation')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -72,6 +83,9 @@ export class AuthController {
     return this.acceptInvitationHandler.handle(body)
   }
 
+  @Throttle({
+    [GLOBAL_THROTTLER]: { limit: AUTH_RATE_LIMITS.FORGOT_PASSWORD.limit, ttl: AUTH_RATE_LIMITS.FORGOT_PASSWORD.ttlMs }
+  })
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -79,6 +93,9 @@ export class AuthController {
     return this.forgotPasswordHandler.handle(body)
   }
 
+  @Throttle({
+    [GLOBAL_THROTTLER]: { limit: AUTH_RATE_LIMITS.TOKEN_REDEMPTION.limit, ttl: AUTH_RATE_LIMITS.TOKEN_REDEMPTION.ttlMs }
+  })
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.NO_CONTENT)

@@ -28,6 +28,15 @@ export interface SmtpConfig {
   from?: string
 }
 
+export interface RateLimitConfig {
+  /** Peticiones permitidas por IP en la ventana global */
+  globalLimit: number
+  /** Ventana del límite global, en milisegundos */
+  globalTtlMs: number
+  /** Proxies de confianza delante del backend (entradas fiables de X-Forwarded-For, contadas desde la derecha). 0 = sin proxy: vale la IP del socket. MEDIR en cada despliegue, no ajustar a ojo */
+  trustedProxyHops: number
+}
+
 export interface AcsEmailConfig {
   connectionString: string
   senderAddress: string
@@ -61,5 +70,6 @@ export interface AppConfig {
   ses?: SesConfig
   brevo?: BrevoConfig
   smtp?: SmtpConfig
+  rateLimit: RateLimitConfig
   storage?: StorageConfig
 }

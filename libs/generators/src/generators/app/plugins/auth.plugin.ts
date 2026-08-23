@@ -26,7 +26,9 @@ export const authPlugin = definePlugin({
   assets: 'assets-auth',
   dependencies: {
     argon2: '^0.41.1',
-    nodemailer: '^6.9.16'
+    nodemailer: '^6.9.16',
+    // rate limiting por IP (spec 55): toda app con auth lo emite, storage según sessionStore
+    '@nestjs/throttler': '6.5.0'
   },
   devDependencies: {
     '@types/nodemailer': '^6.4.17'
@@ -44,6 +46,8 @@ export const authPlugin = definePlugin({
   apply(tree: Tree, context: PluginContext): void {
     emitSessionStore(tree, context)
     registerModule(tree, context)
+    addRateLimitConfigSection(tree, context)
+    skipThrottleOnHealth(tree, context)
     registerEntities(tree, context)
     addSchemaMigration(tree, context)
     registerTestRepositories(tree, context)
@@ -201,13 +205,119 @@ function registerModule(tree: Tree, context: PluginContext): void {
   // Ojo con el ancla: prettier (printWidth 120) puede dejar el array `imports` en UNA línea
   // con pocos módulos; `HealthModule,` solo lleva coma dentro del array (el import lleva `}`),
   // así que el ancla vale para las dos formas. Sin esto la API arrancaba sin rutas de auth.
+  // RateLimitModule va ANTES de AuthModule: el throttler corta el flood antes de tocar la DB.
   const wired = source
     .replace(
       /(import \{ HealthModule \}[^\n]*\n)/,
-      "$1import { AuthModule } from './contexts/iam/modules/auth/auth.module'\n"
+      "$1import { RateLimitModule } from './contexts/shared/infrastructure/rate-limit/rate-limit.module'\n" +
+        "import { AuthModule } from './contexts/iam/modules/auth/auth.module'\n"
     )
-    .replace(/HealthModule,(\s*)/, (_, sep: string) => `HealthModule,${sep}AuthModule,${sep}`)
+    .replace(/HealthModule,(\s*)/, (_, sep: string) => `HealthModule,${sep}RateLimitModule,${sep}AuthModule,${sep}`)
   tree.write(rootPath, wired)
+}
+
+/**
+ * Sección `rateLimit` en tipos, validación y TODOS los entornos: el módulo hace
+ * `config.get('rateLimit')!` y sin sección la app arrancaría con el límite roto.
+ * En test los límites van altísimos: la suite e2e dispara cientos de peticiones/min
+ * desde 127.0.0.1 y se auto-limitaría.
+ */
+function addRateLimitConfigSection(tree: Tree, context: PluginContext): void {
+  const configDir = path.join(context.backendSrc, 'contexts/shared/infrastructure/config')
+
+  const typesPath = path.join(configDir, 'config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('RateLimitConfig')) {
+    tree.write(
+      typesPath,
+      types
+        .replace(
+          'export interface StorageConfig {',
+          `export interface RateLimitConfig {
+  /** Peticiones permitidas por IP en la ventana global */
+  globalLimit: number
+  /** Ventana del límite global, en milisegundos */
+  globalTtlMs: number
+  /** Proxies de confianza delante del backend (entradas fiables de X-Forwarded-For, contadas desde la derecha). 0 = sin proxy: vale la IP del socket. MEDIR en cada despliegue, no ajustar a ojo */
+  trustedProxyHops: number
+}
+
+export interface StorageConfig {`
+        )
+        // se inserta ANTES de storage para no romper el ancla `storage?: StorageConfig\n}` de otros plugins
+        .replace('  storage?: StorageConfig', '  rateLimit: RateLimitConfig\n  storage?: StorageConfig')
+    )
+  }
+
+  const validationPath = path.join(configDir, 'config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('RateLimitValidator')) {
+    tree.write(
+      validationPath,
+      validation
+        .replace(
+          'class StorageValidator {',
+          `class RateLimitValidator {
+  @IsNumber()
+  globalLimit!: number
+
+  @IsNumber()
+  globalTtlMs!: number
+
+  @IsNumber()
+  trustedProxyHops!: number
+}
+
+class StorageValidator {`
+        )
+        // ídem: delante del bloque de storage (comentario incluido) para no partir sus decoradores
+        .replace(
+          '  // Sección opcional: solo si el proyecto usa el puerto de storage',
+          `  @ValidateNested()
+  @Type(() => RateLimitValidator)
+  rateLimit!: RateLimitValidator
+
+  // Sección opcional: solo si el proyecto usa el puerto de storage`
+        )
+    )
+  }
+
+  // 0 saltos de proxy por defecto: el compose emitido no pone nada delante del backend.
+  // Cada despliegue con proxies debe MEDIR los suyos y ajustar el valor de su entorno.
+  const perEnvironment: Record<string, { globalLimit: number; globalTtlMs: number; trustedProxyHops: number }> = {
+    local: { globalLimit: 200, globalTtlMs: 60_000, trustedProxyHops: 0 },
+    dev: { globalLimit: 200, globalTtlMs: 60_000, trustedProxyHops: 0 },
+    qa: { globalLimit: 200, globalTtlMs: 60_000, trustedProxyHops: 0 },
+    prod: { globalLimit: 200, globalTtlMs: 60_000, trustedProxyHops: 0 },
+    test: { globalLimit: 1_000_000, globalTtlMs: 60_000, trustedProxyHops: 0 }
+  }
+  for (const [environment, rateLimit] of Object.entries(perEnvironment)) {
+    const environmentPath = path.join(configDir, 'environments', `${environment}.json`)
+    const raw = tree.read(environmentPath, 'utf-8')
+    if (!raw) {
+      continue
+    }
+    const config = JSON.parse(raw) as Record<string, unknown>
+    if (!config['rateLimit']) {
+      config['rateLimit'] = rateLimit
+      tree.write(environmentPath, JSON.stringify(config, null, 2) + '\n')
+    }
+  }
+}
+
+/** Las sondas de readiness no son abuso: health queda fuera del límite global. */
+function skipThrottleOnHealth(tree: Tree, context: PluginContext): void {
+  const healthPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/health/health.controller.ts')
+  const source = tree.read(healthPath, 'utf-8')
+  if (!source || source.includes('SkipThrottle')) {
+    return
+  }
+  tree.write(
+    healthPath,
+    source
+      .replace(/(\nimport [^\n]*\n)(?![\s\S]*\nimport )/, "$1import { SkipThrottle } from '@nestjs/throttler'\n")
+      .replace("@Controller('health')", "@SkipThrottle({ global: true })\n@Controller('health')")
+  )
 }
 
 /** Añade las tres entidades de IAM a la lista del módulo de persistencia. */

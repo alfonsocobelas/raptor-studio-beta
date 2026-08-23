@@ -3,6 +3,7 @@ import { resolve } from 'path'
 import { Controller, Get, Version, VERSION_NEUTRAL } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Public } from '../auth/public.decorator'
+import { SkipThrottle } from '@nestjs/throttler'
 import {
   HealthCheck,
   HealthCheckResult,
@@ -29,6 +30,7 @@ interface AppInfo {
 // info expone entorno/versión/uptime en público como excepción consciente para diagnosticar
 // despliegues — ver .claude/specs/29-health-check/REQUIREMENTS.md
 @Public()
+@SkipThrottle({ global: true })
 @Controller('health')
 export class HealthController {
   constructor(

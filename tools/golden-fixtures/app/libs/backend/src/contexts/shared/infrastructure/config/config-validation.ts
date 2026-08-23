@@ -103,6 +103,17 @@ class SmtpValidator {
   from?: string
 }
 
+class RateLimitValidator {
+  @IsNumber()
+  globalLimit!: number
+
+  @IsNumber()
+  globalTtlMs!: number
+
+  @IsNumber()
+  trustedProxyHops!: number
+}
+
 class StorageValidator {
   @IsString()
   connectionString!: string
@@ -147,6 +158,10 @@ export class RootValidator {
   @ValidateNested()
   @Type(() => SmtpValidator)
   smtp?: SmtpValidator
+
+  @ValidateNested()
+  @Type(() => RateLimitValidator)
+  rateLimit!: RateLimitValidator
 
   // Sección opcional: solo si el proyecto usa el puerto de storage (@raptor/infra-ports).
   @IsOptional()

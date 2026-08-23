@@ -24,5 +24,10 @@
     "logging": false,
     "migrationsRun": true,
     "migrationsTransactionMode": "all"
+  },
+  "rateLimit": {
+    "globalLimit": 200,
+    "globalTtlMs": 60000,
+    "trustedProxyHops": 0
   }
 }

@@ -6,6 +6,7 @@ import { LoggerModule } from './contexts/shared/infrastructure/logger/logger.mod
 import { LoggerInterceptor } from './contexts/shared/infrastructure/interceptors/logger.interceptor'
 import { GlobalExceptionFilter } from './contexts/shared/infrastructure/filters/global-exception.filter'
 import { HealthModule } from './contexts/shared/infrastructure/health/health.module'
+import { RateLimitModule } from './contexts/shared/infrastructure/rate-limit/rate-limit.module'
 import { AuthModule } from './contexts/iam/modules/auth/auth.module'
 import { ProcessesModule } from './contexts/sap-licensing/processes/processes.module'
 import { StorageModule } from './contexts/shared/infrastructure/storage/storage.module'
@@ -19,6 +20,7 @@ import { CustomersModule } from './contexts/sap-licensing/modules/customers/cust
     LoggerModule,
     SharedPersistenceModule,
     HealthModule,
+    RateLimitModule,
     AuthModule,
     ProcessesModule,
     StorageModule,
