@@ -313,6 +313,21 @@ export interface GanttDefinition {
   title?: string
 }
 
+/**
+ * Calendario (spec 59, mock 22E): cada registro es una tira en el día que marca
+ * su campo fecha. Como la galería y el gantt, su PRESENCIA es lo que lo emite.
+ */
+export interface CalendarDefinition {
+  /** Campo fecha que coloca cada registro en su día (date | timestamptz) */
+  date: string
+  /** Campo mostrado en la tira; por defecto, el primer texto buscable */
+  label?: string
+  /** Campo enum que colorea la tira; la leyenda lista sus valores */
+  color?: string
+  /** Mostrar SÁB/DOM (por defecto true) */
+  weekends?: boolean
+}
+
 export interface DetailDefinition {
   /** Campo cuyo valor titula la ficha; por defecto, el primer campo de texto buscable */
   title?: string
@@ -468,6 +483,8 @@ export interface ResourceDefinition {
   gallery?: GalleryDefinition
   /** Cronograma de barras sobre el mismo listado (spec 30); exige period */
   gantt?: GanttDefinition
+  /** Calendario mensual sobre el mismo listado (spec 59); exige un campo fecha */
+  calendar?: CalendarDefinition
   /** Página-formulario de alta y edición, convive con el diálogo del listado (spec 48) */
   form?: Record<string, never>
   /** Historial de cambios (spec 31): los use cases de escritura registran eventos

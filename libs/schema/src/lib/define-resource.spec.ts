@@ -258,6 +258,72 @@ describe('gantt — cronograma derivado del period (spec 30)', () => {
   })
 })
 
+describe('calendar — cada registro es una tira en su día (spec 59)', () => {
+  const withDates = (): ResourceDefinition => {
+    const base = validDefinition()
+    return {
+      ...base,
+      fields: {
+        ...base.fields,
+        deliveryDate: { type: 'date' },
+        createdAt: { type: 'timestamptz' },
+        status: {
+          type: 'string',
+          vo: { name: 'ContractStatus', fieldName: 'Status', values: ['pending', 'attention'] },
+          form: { control: 'select', label: 'Estado' },
+          column: { type: 'varchar', length: 40 }
+        }
+      }
+    }
+  }
+
+  it('acepta un calendario sobre un campo date', () => {
+    const model = defineResource({ ...withDates(), calendar: { date: 'deliveryDate' } })
+
+    expect(model.calendar).toEqual({ date: 'deliveryDate' })
+  })
+
+  it('acepta un calendario sobre un campo timestamptz', () => {
+    const model = defineResource({ ...withDates(), calendar: { date: 'createdAt' } })
+
+    expect(model.calendar).toEqual({ date: 'createdAt' })
+  })
+
+  it('rechaza un campo de fecha inexistente', () => {
+    expect(() => defineResource({ ...withDates(), calendar: { date: 'fantasma' } })).toThrow(/calendar.*fantasma/i)
+  })
+
+  it('rechaza un campo de fecha que no es date ni timestamptz', () => {
+    expect(() => defineResource({ ...withDates(), calendar: { date: 'contractNumber' } })).toThrow(
+      /calendar.*contractNumber.*date/i
+    )
+  })
+
+  it('rechaza una etiqueta que apunta a un campo inexistente', () => {
+    expect(() =>
+      defineResource({ ...withDates(), calendar: { date: 'deliveryDate', label: 'fantasma' } })
+    ).toThrow(/calendar.*fantasma/i)
+  })
+
+  it('acepta un color que apunta a un campo enum', () => {
+    const model = defineResource({ ...withDates(), calendar: { date: 'deliveryDate', color: 'status' } })
+
+    expect(model.calendar?.color).toBe('status')
+  })
+
+  it('rechaza un color que apunta a un campo inexistente', () => {
+    expect(() =>
+      defineResource({ ...withDates(), calendar: { date: 'deliveryDate', color: 'fantasma' } })
+    ).toThrow(/calendar.*fantasma/i)
+  })
+
+  it('rechaza un color que apunta a un campo sin valores de enum', () => {
+    expect(() =>
+      defineResource({ ...withDates(), calendar: { date: 'deliveryDate', color: 'contractNumber' } })
+    ).toThrow(/calendar.*contractNumber.*enum/i)
+  })
+})
+
 describe('history — historial de cambios (spec 31)', () => {
   it('acepta un recurso que declara historial; su presencia es lo que lo emite', () => {
     const model = defineResource({ ...validDefinition(), history: true })

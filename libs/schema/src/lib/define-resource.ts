@@ -13,6 +13,7 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateDetail(definition),
     ...validateGallery(definition),
     ...validateGantt(definition),
+    ...validateCalendar(definition),
     ...validateCode(definition),
     ...validateBrief(definition.brief),
     ...validateState(definition),
@@ -98,6 +99,36 @@ function validateGantt(definition: ResourceDefinition): string[] {
   if (gantt.title !== undefined && !definition.fields[gantt.title]) {
     problems.push(`gantt: unknown field '${gantt.title}'`)
   }
+  return problems
+}
+
+/** El calendario coloca cada registro en su día: sin campo fecha no hay día (spec 59). */
+function validateCalendar(definition: ResourceDefinition): string[] {
+  const { calendar } = definition
+  if (!calendar) return []
+
+  const problems: string[] = []
+
+  const dateField = definition.fields[calendar.date]
+  if (!dateField) {
+    problems.push(`calendar: unknown field '${calendar.date}'`)
+  } else if (dateField.type !== 'date' && dateField.type !== 'timestamptz') {
+    problems.push(`calendar: field '${calendar.date}' must be date or timestamptz (got '${dateField.type}')`)
+  }
+
+  if (calendar.label !== undefined && !definition.fields[calendar.label]) {
+    problems.push(`calendar: unknown field '${calendar.label}'`)
+  }
+
+  if (calendar.color !== undefined) {
+    const colorField = definition.fields[calendar.color]
+    if (!colorField) {
+      problems.push(`calendar: unknown field '${calendar.color}'`)
+    } else if (typeof colorField.vo !== 'object' || !colorField.vo.values?.length) {
+      problems.push(`calendar: field '${calendar.color}' must declare enum values (vo.values) to color the strips`)
+    }
+  }
+
   return problems
 }
 

@@ -5,7 +5,7 @@
 
 ## Schema y generador
 
-- [ ] **TASK-01**: Tests + `CalendarDefinition` en `resource-types.ts` + validación en
+- [x] **TASK-01**: Tests + `CalendarDefinition` en `resource-types.ts` + validación en
       `define-resource.ts` (date existe y es date/timestamptz; color existe y es enum).
 - [ ] **TASK-02**: Tests + `renderCalendar` en `build-substitutions.ts` (defaults de label,
       leyenda del enum con etiquetas y color por posición, weekends).
