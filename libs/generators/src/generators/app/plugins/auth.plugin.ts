@@ -52,6 +52,7 @@ export const authPlugin = definePlugin({
     addSchemaMigration(tree, context)
     registerTestRepositories(tree, context)
     brandEmailTemplates(tree, context)
+    brandLoginTitle(tree, context)
     wireFrontend(tree, context)
   },
 
@@ -178,6 +179,23 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
     )
     tree.delete(path.join(app, 'dev-auth.ts'))
   }
+}
+
+/**
+ * El login saluda con el nombre del producto, no con un "Dashboard" genérico
+ * (cazado en la revisión visual de la spec 57: la referencia enseña su marca).
+ */
+function brandLoginTitle(tree: Tree, context: PluginContext): void {
+  const loginPath = path.join(context.root, 'libs/frontend/src/domains/auth/login.component.ts')
+  const source = tree.read(loginPath, 'utf-8')
+  if (!source) {
+    return
+  }
+  const title = context.appName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+  tree.write(loginPath, source.replace('>Dashboard</h1>', `>${title}</h1>`))
 }
 
 /**

@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core'
 
 /**
- * Marca de la aplicación: placeholder neutro; sustituir por el logo del cliente.
+ * Marca de la aplicación: placeholder que sigue el color primario del tema elegido;
+ * sustituir por el logo del cliente.
  * El ancho del texto se fija con textLength para que no dependa de la fuente del sistema.
  */
 @Component({
@@ -10,7 +11,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core'
   host: { class: 'block' },
   template: `
     <svg class="size-full" viewBox="0 0 32 32" role="img" [attr.aria-label]="label()">
-      <rect width="32" height="32" rx="6" fill="#0a6ed1" />
+      <rect width="32" height="32" rx="6" fill="var(--primary)" />
       <text
         x="16"
         y="17"
@@ -21,7 +22,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core'
         font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
         font-size="13"
         font-weight="700"
-        fill="#ffffff"
+        fill="var(--primary-foreground)"
       >
         APP
       </text>

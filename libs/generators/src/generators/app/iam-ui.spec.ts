@@ -141,6 +141,20 @@ export class RootModule {}
     expect(importsArray).toContain('AuthModule')
   })
 
+  it('el login lleva el enlace de recuperación, como la referencia (cazado en la revisión visual)', () => {
+    const login = withAuth.get('apps/demo/libs/frontend/src/domains/auth/login.component.ts') ?? ''
+
+    expect(login).toContain('¿Has olvidado tu contraseña?')
+    expect(login).toContain('routerLink="/forgot-password"')
+  })
+
+  it('el login saluda con el nombre del producto, no con un Dashboard genérico', () => {
+    const login = withAuth.get('apps/demo/libs/frontend/src/domains/auth/login.component.ts') ?? ''
+
+    expect(login).toContain('>Demo</h1>')
+    expect(login).not.toContain('>Dashboard</h1>')
+  })
+
   it('sin auth no se emite nada de la UI de IAM', () => {
     expect([...open.keys()].some(f => f.includes('/domains/iam/'))).toBe(false)
   })

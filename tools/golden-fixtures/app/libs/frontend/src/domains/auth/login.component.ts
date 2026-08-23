@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { Router } from '@angular/router'
+import { Router, RouterLink } from '@angular/router'
 import { AppButton } from '../../shared/components/ui/button.directive'
 import { AppFormField } from '../../shared/components/ui/form-field'
 import { AppInput } from '../../shared/components/ui/input.directive'
@@ -9,14 +9,14 @@ import { AppLogo } from '../../shared/components/app-logo'
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, AppButton, AppFormField, AppInput, AppLogo],
+  imports: [ReactiveFormsModule, RouterLink, AppButton, AppFormField, AppInput, AppLogo],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="bg-muted/40 flex min-h-screen items-center justify-center p-4">
       <section class="bg-card w-full max-w-md rounded-lg border p-6 shadow-sm">
         <div class="mb-4 text-center">
           <app-logo class="mx-auto mb-2 size-12" />
-          <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <h1 class="text-2xl font-bold tracking-tight">App Golden</h1>
           <p class="text-sm opacity-70">Accede con tu cuenta</p>
         </div>
         <div>
@@ -26,6 +26,9 @@ import { AppLogo } from '../../shared/components/app-logo'
             </app-form-field>
             <app-form-field label="Contraseña" for="password">
               <input id="password" type="password" appInput formControlName="password" />
+              <a class="text-muted-foreground hover:text-foreground text-sm underline" routerLink="/forgot-password">
+                ¿Has olvidado tu contraseña?
+              </a>
             </app-form-field>
             @if (error()) {
               <p class="text-destructive text-sm">Credenciales incorrectas</p>
