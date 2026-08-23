@@ -18,7 +18,7 @@
 
 - [x] **TASK-05**: Tests + flag `kanban` en `draft-resource.ts` + cruce en `design-to-app.ts`
       (sin field no cruza) + `'kanban'` en `BlockKind`.
-- [ ] **TASK-06**: Tests + `GENERABLE_BLOCKS` + `columnsField` en `DesignBlock` + design-store
+- [x] **TASK-06**: Tests + `GENERABLE_BLOCKS` + `columnsField` en `DesignBlock` + design-store
       (default campo de estado > primer enum; flag; `setKanbanConfig`; removeBlock).
 - [ ] **TASK-07**: Paleta (`lucideSquareKanban`) + `canvas-kanban.component.ts` (columnas con
       tarjetas de muestra) + badge sin enum.

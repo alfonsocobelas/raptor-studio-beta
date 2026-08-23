@@ -27,10 +27,20 @@ import {
   type DesignPage,
   type DraftCalendar,
   type DraftEnumValue,
+  type DraftKanban,
   type DraftField,
   type DraftResource,
   designPagesToAppPages
 } from '@app/shared/domain'
+
+/** Sin campo enum no hay tablero que generar: la entidad no lleva config (spec 61). */
+function kanbanConfigOf(block: DesignBlock): DraftKanban | undefined {
+  if (!block.columnsField) return undefined
+  return {
+    field: block.columnsField,
+    ...(block.labelField ? { labelField: block.labelField } : {})
+  }
+}
 
 /** Sin campo fecha no hay calendario que generar: la entidad no lleva config (spec 59). */
 function calendarConfigOf(block: DesignBlock): DraftCalendar | undefined {
@@ -314,7 +324,10 @@ export class DesignStore {
               .find(r => r.name === block.resource)
               ?.fields.find(f => f.type === 'date')?.name
           }
-        : block
+        : // el kanban nace en el campo de la máquina de estados, o el primer enum (spec 61)
+          block.kind === 'kanban' && block.resource && !block.columnsField
+          ? { ...block, columnsField: this.defaultKanbanField(block.resource) }
+          : block
     const pages = this._pages().map((page, i) => {
       if (i !== pageIndex) return page
       const blocks = [...page.blocks]
@@ -338,7 +351,37 @@ export class DesignStore {
                 ? this._resources().map(r =>
                     r.name === block.resource ? { ...r, calendar: calendarConfigOf(added) } : r
                   )
-                : this._resources()
+                : block.kind === 'kanban' && block.resource
+                  ? this._resources().map(r =>
+                      r.name === block.resource ? { ...r, kanban: kanbanConfigOf(added) } : r
+                    )
+                  : this._resources()
+    return this.mutate(resources, pages)
+  }
+
+  /** Campo de columnas propuesto para un kanban recién soltado (spec 61). */
+  private defaultKanbanField(resource: string): string | undefined {
+    const draft = this._resources().find(r => r.name === resource)
+    if (!draft) return undefined
+    return draft.state?.field ?? draft.fields.find(f => f.type === 'enum')?.name
+  }
+
+  /** Config del panel del bloque kanban (spec 61): vive en el bloque y se replica en la entidad. */
+  setKanbanConfig(
+    pageIndex: number,
+    blockIndex: number,
+    patch: Partial<Pick<DesignBlock, 'columnsField' | 'labelField'>>
+  ): boolean {
+    const page = this._pages()[pageIndex]
+    const block = page?.blocks[blockIndex]
+    if (!block || block.kind !== 'kanban') return false
+    const updated = { ...block, ...patch }
+    const pages = this._pages().map((p, i) =>
+      i === pageIndex ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? updated : b)) } : p
+    )
+    const resources = this._resources().map(r =>
+      r.name === block.resource ? { ...r, kanban: kanbanConfigOf(updated) } : r
+    )
     return this.mutate(resources, pages)
   }
 
@@ -401,7 +444,9 @@ export class DesignStore {
               ? this._resources().map(r => (r.name === removed.resource ? { ...r, form: false } : r))
               : removed?.kind === 'calendar' && removed.resource
                 ? this._resources().map(r => (r.name === removed.resource ? { ...r, calendar: undefined } : r))
-                : this._resources()
+                : removed?.kind === 'kanban' && removed.resource
+                  ? this._resources().map(r => (r.name === removed.resource ? { ...r, kanban: undefined } : r))
+                  : this._resources()
     return this.mutate(resources, pages)
   }
 
