@@ -74,6 +74,8 @@ export interface AppGeneratorSchema {
   sessionStore?: string
   /** Infrastructure slot of the emitted app (default none) */
   infra?: string
+  /** The client provisions the infrastructure: emit the cloud adapters but no Terraform (iac/) */
+  provisionedInfra?: boolean
   /** Comma-separated additive plugins to assemble (email, observability) */
   plugins?: string
   /** Emit a KPI dashboard (one total per resource) as the home screen */
@@ -309,9 +311,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   if (models.some(model => model.attachments)) {
     copyVerbatim(tree, path.join(__dirname, 'files-attachments-tests'), root)
   }
-  // lo que añade el proveedor de infraestructura elegido (adapters de su nube, IaC…)
+  // lo que añade el proveedor de infraestructura elegido (adapters de su nube, IaC…).
+  // Con la infra ya aprovisionada por el cliente, los .tf serían ruido y un riesgo:
+  // se filtran en la copia, el resto del proveedor (adapters, deps, apply) queda intacto.
   if (infra.files) {
-    copyVerbatim(tree, path.join(__dirname, infra.files), root)
+    const omitIac = options.provisionedInfra ? (relativePath: string) => relativePath === 'iac' : undefined
+    copyVerbatim(tree, path.join(__dirname, infra.files), root, omitIac)
   }
   copyVerbatim(tree, path.join(__dirname, 'files-skeleton-ui', ui), root)
   // el preset de diseño va DESPUÉS de la piel: su shell gana al del esqueleto (spec 37)
