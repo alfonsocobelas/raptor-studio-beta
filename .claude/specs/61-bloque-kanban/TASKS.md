@@ -11,7 +11,7 @@
 - [x] **TASK-03**: Tests (`kanban.spec.ts`) + plantilla `files-kanban/` + condición en
       `resource.ts`. Drag nativo: transiciones si stateDriven, update si enum normal
       (verificar DTO parcial), columnas ilegales atenuadas, sin optimismo.
-- [ ] **TASK-04**: Tests + `KanbanPage`, sufijo `' · tablero'`, derivación composeFlat,
+- [x] **TASK-04**: Tests + `KanbanPage`, sufijo `' · tablero'`, derivación composeFlat,
       `kanbanPath`/`kanbanRoute` antes de `:id`.
 
 ## Frontera y estudio

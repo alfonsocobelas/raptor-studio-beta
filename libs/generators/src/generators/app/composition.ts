@@ -69,7 +69,9 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
     // ídem para el calendario (spec 59)
     ...(model.calendar
       ? [{ kind: 'calendar' as const, resource: model.name, label: `${labelOf(model)} · calendario` }]
-      : [])
+      : []),
+    // ídem para el kanban (spec 61)
+    ...(model.kanban ? [{ kind: 'kanban' as const, resource: model.name, label: `${labelOf(model)} · tablero` }] : [])
   ])
   if (dashboard) {
     pages.unshift({
@@ -128,7 +130,9 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
             ? ' · formulario'
             : page.kind === 'calendar'
               ? ' · calendario'
-              : ''
+              : page.kind === 'kanban'
+                ? ' · tablero'
+                : ''
     return { ...page, label: page.label ?? `${labelOf(model)}${suffix}` }
   })
 

@@ -72,7 +72,22 @@ export interface CalendarPage {
   label?: string
 }
 
-export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage | FormPage | CalendarPage
+/** Kanban: una columna por valor del enum y cada registro como tarjeta (spec 61). */
+export interface KanbanPage {
+  kind: 'kanban'
+  resource: string
+  label?: string
+}
+
+export type PageDefinition =
+  | DashboardPage
+  | ResourcePage
+  | DetailPage
+  | CardsPage
+  | GanttPage
+  | FormPage
+  | CalendarPage
+  | KanbanPage
 
 /** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
 export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource', 'form']

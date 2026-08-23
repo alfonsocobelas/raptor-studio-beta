@@ -816,6 +816,7 @@ export function shellSubstitutions(composition: AppComposition): {
   const ganttPath = (model: ResourceDefinition): string => `${routeOf(model)}/cronograma`
   const formPath = (model: ResourceDefinition): string => `${routeOf(model)}/formulario`
   const calendarPath = (model: ResourceDefinition): string => `${routeOf(model)}/calendario`
+  const kanbanPath = (model: ResourceDefinition): string => `${routeOf(model)}/tablero`
   // Una vista de tarjetas apunta a la galería; una de cronograma, al gantt; una de tabla, al listado.
   const pathOf = (page: AppComposition['pages'][number]): string => {
     if (page.kind === 'dashboard') return 'dashboard'
@@ -824,6 +825,7 @@ export function shellSubstitutions(composition: AppComposition): {
     if (page.kind === 'gantt') return ganttPath(model)
     if (page.kind === 'form') return formPath(model)
     if (page.kind === 'calendar') return calendarPath(model)
+    if (page.kind === 'kanban') return kanbanPath(model)
     return routeOf(model)
   }
 
@@ -858,6 +860,14 @@ export function shellSubstitutions(composition: AppComposition): {
       import(
         '${featureOf(model)}/${model.plural}-gantt.component'
       ).then(m => m.${names(model.plural).className}GanttComponent)
+  }`
+
+  const kanbanRoute = (model: ResourceDefinition): string => `  {
+    path: '${kanbanPath(model)}',
+    loadComponent: () =>
+      import(
+        '${featureOf(model)}/${model.plural}-kanban.component'
+      ).then(m => m.${names(model.plural).className}KanbanComponent)
   }`
 
   const calendarRoute = (model: ResourceDefinition): string => `  {
@@ -922,12 +932,14 @@ export function shellSubstitutions(composition: AppComposition): {
     const wantsGantt = Boolean(model.gantt)
     const wantsForm = Boolean(model.form)
     const wantsCalendar = Boolean(model.calendar)
+    const wantsKanban = Boolean(model.kanban)
     // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
     const wantsTrash = wantsSoftDelete(model) && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
     if (wantsGantt) routes.push(ganttRoute(model))
     if (wantsCalendar) routes.push(calendarRoute(model))
+    if (wantsKanban) routes.push(kanbanRoute(model))
     if (wantsForm) routes.push(formRoute(model))
     if (wantsTrash) routes.push(trashRoute(model))
     if (model.detail) routes.push(detailRoute(model))
