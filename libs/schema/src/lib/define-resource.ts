@@ -14,6 +14,7 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateGallery(definition),
     ...validateGantt(definition),
     ...validateCalendar(definition),
+    ...validateKanban(definition),
     ...validateCode(definition),
     ...validateBrief(definition.brief),
     ...validateState(definition),
@@ -128,6 +129,27 @@ function validateCalendar(definition: ResourceDefinition): string[] {
     } else if (typeof colorField.vo !== 'object' || !colorField.vo.values?.length) {
       problems.push(`calendar: field '${calendar.color}' must declare enum values (vo.values) to color the strips`)
     }
+  }
+
+  return problems
+}
+
+/** El kanban dibuja una columna por valor del enum: sin valores no hay columnas (spec 61). */
+function validateKanban(definition: ResourceDefinition): string[] {
+  const { kanban } = definition
+  if (!kanban) return []
+
+  const problems: string[] = []
+
+  const columnsField = definition.fields[kanban.field]
+  if (!columnsField) {
+    problems.push(`kanban: unknown field '${kanban.field}'`)
+  } else if (typeof columnsField.vo !== 'object' || !columnsField.vo.values?.length) {
+    problems.push(`kanban: field '${kanban.field}' must declare enum values (vo.values) to draw the columns`)
+  }
+
+  if (kanban.label !== undefined && !definition.fields[kanban.label]) {
+    problems.push(`kanban: unknown field '${kanban.label}'`)
   }
 
   return problems

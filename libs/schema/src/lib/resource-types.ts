@@ -328,6 +328,17 @@ export interface CalendarDefinition {
   weekends?: boolean
 }
 
+/**
+ * Kanban (spec 61): una columna por valor del enum y cada registro como tarjeta.
+ * Si el campo es el de la máquina de estados, mover tarjeta = disparar transición.
+ */
+export interface KanbanDefinition {
+  /** Campo enum cuyos valores son las columnas */
+  field: string
+  /** Campo mostrado en la tarjeta; por defecto, el primer texto buscable */
+  label?: string
+}
+
 export interface DetailDefinition {
   /** Campo cuyo valor titula la ficha; por defecto, el primer campo de texto buscable */
   title?: string
@@ -485,6 +496,8 @@ export interface ResourceDefinition {
   gantt?: GanttDefinition
   /** Calendario mensual sobre el mismo listado (spec 59); exige un campo fecha */
   calendar?: CalendarDefinition
+  /** Tablero kanban sobre el mismo listado (spec 61); exige un campo enum */
+  kanban?: KanbanDefinition
   /** Página-formulario de alta y edición, convive con el diálogo del listado (spec 48) */
   form?: Record<string, never>
   /** Historial de cambios (spec 31): los use cases de escritura registran eventos

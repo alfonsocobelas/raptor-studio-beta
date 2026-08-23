@@ -630,3 +630,43 @@ describe('access — la matriz de accesos (spec 46)', () => {
     expect(problems).toContain("access.transitions.sign: duplicated role 'user'")
   })
 })
+
+describe('kanban — una columna por valor del enum (spec 61)', () => {
+  const withEnum = (): ResourceDefinition => {
+    const base = validDefinition()
+    return {
+      ...base,
+      fields: {
+        ...base.fields,
+        status: {
+          type: 'string',
+          vo: { name: 'ContractStatus', fieldName: 'Status', values: ['pending', 'delivered'] },
+          form: { control: 'select', label: 'Estado' },
+          column: { type: 'varchar', length: 40 }
+        }
+      }
+    }
+  }
+
+  it('acepta un kanban sobre un campo enum', () => {
+    const model = defineResource({ ...withEnum(), kanban: { field: 'status' } })
+
+    expect(model.kanban).toEqual({ field: 'status' })
+  })
+
+  it('rechaza un campo de columnas inexistente', () => {
+    expect(() => defineResource({ ...withEnum(), kanban: { field: 'fantasma' } })).toThrow(/kanban.*fantasma/i)
+  })
+
+  it('rechaza un campo sin valores de enum: sin valores no hay columnas', () => {
+    expect(() => defineResource({ ...withEnum(), kanban: { field: 'contractNumber' } })).toThrow(
+      /kanban.*contractNumber.*enum/i
+    )
+  })
+
+  it('rechaza una etiqueta que apunta a un campo inexistente', () => {
+    expect(() => defineResource({ ...withEnum(), kanban: { field: 'status', label: 'fantasma' } })).toThrow(
+      /kanban.*fantasma/i
+    )
+  })
+})

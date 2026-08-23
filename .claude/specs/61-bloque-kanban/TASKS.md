@@ -4,7 +4,7 @@
 
 ## Schema y generador
 
-- [ ] **TASK-01**: Tests + `KanbanDefinition` en `resource-types.ts` + validación en
+- [x] **TASK-01**: Tests + `KanbanDefinition` en `resource-types.ts` + validación en
       `define-resource.ts` (field existe y es enum).
 - [ ] **TASK-02**: Tests + `renderKanban` en `build-substitutions.ts` (labelField default,
       columnas con etiquetas, stateDriven, moves desde las transiciones).
