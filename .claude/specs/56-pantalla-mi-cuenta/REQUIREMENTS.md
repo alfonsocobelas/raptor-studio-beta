@@ -23,10 +23,10 @@ rescate grande del backlog.
 
 ## Criterios de aceptación
 
-- [ ] `ChangePasswordDto` en `shared/domain` y `changePassword()` en el `AuthService` del kernel frontend (mismo patrón que `resetPassword`)
-- [ ] `ProfileComponent` en `assets-auth` con los contratos `App*` de `shared/components/ui` (ADR-003: sin imports de Spartan), su test portado, ruta `/account` tras `authGuard` y enlace en el session-footer
-- [ ] Golden re-baseline deliberado y acotado (app y app-mongo se mueven por el DTO+service del kernel; app además por el componente)
-- [ ] `typecheck-emitted` a 0 errores y cambio de contraseña verificado en vivo (login → cambio → re-login con la nueva)
+- [x] `ChangePasswordDto` en `shared/domain` y `changePassword()` en el `AuthService` del kernel frontend (mismo patrón que `resetPassword`)
+- [x] `ProfileComponent` en `assets-auth` con los contratos `App*` de `shared/components/ui` (ADR-003: sin imports de Spartan), su test portado, ruta `/account` tras `authGuard` y enlace en el session-footer
+- [x] Golden re-baseline (tres re-baselines acotados: dto+service, pantalla, endpoint backend) deliberado y acotado (app y app-mongo se mueven por el DTO+service del kernel; app además por el componente)
+- [x] `typecheck-emitted` a 0 errores y cambio de contraseña verificado en vivo (login → cambio → re-login con la nueva)
 
 ## Referencias
 
