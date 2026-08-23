@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http'
 import { Injectable, computed, inject, signal } from '@angular/core'
 import {
   AcceptInvitationDto,
+  ChangePasswordDto,
   CurrentUserDto,
   ForgotPasswordDto,
   LoginDto,
@@ -94,5 +95,9 @@ export class AuthService {
 
   resetPassword(dto: ResetPasswordDto): Promise<void> {
     return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/reset-password`, dto))
+  }
+
+  changePassword(dto: ChangePasswordDto): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_PREFIX}/auth/change-password`, dto))
   }
 }

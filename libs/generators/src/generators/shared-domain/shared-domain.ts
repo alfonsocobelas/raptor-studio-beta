@@ -76,7 +76,8 @@ export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGen
     'accept-invitation',
     'change-role',
     'forgot-password',
-    'reset-password'
+    'reset-password',
+    'change-password'
   ]) {
     exportLines.push(`export * from './auth/${dto}.dto'`)
   }
