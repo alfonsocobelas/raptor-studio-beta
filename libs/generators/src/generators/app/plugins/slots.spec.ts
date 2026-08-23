@@ -11,9 +11,9 @@ import { emailPlugin } from './email.plugin'
  * emitían apps indistinguibles, y la variedad visual la lleva ahora la ranura `design`.
  */
 describe('SLOTS', () => {
-  it('registers the five exclusive decisions of the emitted app', () => {
-    // design entra en la spec 37: la variedad visual no venía de la librería de componentes
-    expect(Object.keys(SLOTS)).toEqual(['database', 'ui', 'design', 'infra', 'auth'])
+  it('registers the six exclusive decisions of the emitted app', () => {
+    // design entra en la spec 37; sessionStore en la spec 55 (sesiones en redis opcionales)
+    expect(Object.keys(SLOTS)).toEqual(['database', 'ui', 'design', 'infra', 'auth', 'sessionStore'])
   })
 
   it('database offers postgres (default) and mongo', () => {
@@ -42,6 +42,21 @@ describe('SLOTS', () => {
 
   it('single-tenant auth declares its postgres requirement on the database slot', () => {
     expect(SLOTS['auth'].providers.find(p => p.value === 'single-tenant')?.requires).toEqual({ database: 'postgres' })
+  })
+
+  it('sessionStore ofrece postgres (default, sin manifiesto: lo emite auth) y redis', () => {
+    // spec 55: el almacén de sesiones es una decisión excluyente — ranura, no plugin aditivo
+    const slot = SLOTS['sessionStore']
+
+    expect(slot.default).toBe('postgres')
+    expect(slot.providers.map(p => p.value)).toEqual(['postgres', 'redis'])
+    expect(slot.providers.find(p => p.value === 'postgres')?.plugin).toBeUndefined()
+  })
+
+  it('redis como almacén de sesiones exige auth single-tenant (sin auth no hay sesiones)', () => {
+    expect(SLOTS['sessionStore'].providers.find(p => p.value === 'redis')?.requires).toEqual({
+      auth: 'single-tenant'
+    })
   })
 
   it('infra ofrece none (default), azure, aws y raptor; sus proveedores salen de los manifiestos', () => {
@@ -188,6 +203,16 @@ describe('validateCombination', () => {
     expect(() => validateCombination({ database: 'mongo', auth: 'single-tenant' })).toThrow(
       /single-tenant.*requires database=postgres.*mongo/
     )
+  })
+
+  it('rechaza redis como almacén de sesiones cuando auth queda en none (spec 55)', () => {
+    // el default NO cuenta como elección: pedir redis sin pedir auth también falla
+    expect(() => validateCombination({ sessionStore: 'redis' })).toThrow(/redis.*requires auth=single-tenant.*none/)
+    expect(() => validateCombination({ sessionStore: 'redis', auth: 'none' })).toThrow(/auth=single-tenant/)
+  })
+
+  it('acepta redis como almacén de sesiones con auth single-tenant', () => {
+    expect(() => validateCombination({ sessionStore: 'redis', auth: 'single-tenant' })).not.toThrow()
   })
 
   it('rejects an additive plugin whose requires contradicts the selection', () => {

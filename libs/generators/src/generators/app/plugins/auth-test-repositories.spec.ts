@@ -25,7 +25,8 @@ const context: PluginContext = {
   backendSrc: 'apps/demo/libs/backend/src',
   frontendSrc: 'apps/demo/libs/frontend/src',
   models: [],
-  scope: '@app'
+  scope: '@app',
+  sessionStore: 'postgres'
 }
 
 const MODULE_PATH = 'apps/demo/libs/backend/tests/infrastructure/test-repositories.module.ts'

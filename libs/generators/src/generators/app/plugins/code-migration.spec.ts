@@ -31,7 +31,8 @@ describe('migración — código de negocio', () => {
       backendSrc: 'backend',
       frontendSrc: 'frontend',
       models,
-      scope: '@app'
+      scope: '@app',
+      sessionStore: 'postgres'
     })
     return tree.read(MIGRATION, 'utf-8') ?? ''
   }

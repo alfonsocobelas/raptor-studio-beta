@@ -110,6 +110,29 @@
         ]
       }
     },
+    "sessionStore": {
+      "type": "string",
+      "default": "postgres",
+      "description": "Session store of the emitted app (exclusive slot; redis requires auth=single-tenant)",
+      "enum": [
+        "postgres",
+        "redis"
+      ],
+      "x-prompt": {
+        "message": "¿Dónde se almacenan las sesiones?",
+        "type": "list",
+        "items": [
+          {
+            "value": "postgres",
+            "label": "PostgreSQL (tabla iam.session)"
+          },
+          {
+            "value": "redis",
+            "label": "Redis (multi-réplica, TTL nativo)"
+          }
+        ]
+      }
+    },
     "infra": {
       "type": "string",
       "default": "none",

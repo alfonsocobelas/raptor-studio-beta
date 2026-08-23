@@ -89,6 +89,24 @@
           }
         }
       ]
+    },
+    {
+      "name": "sessionStore",
+      "label": "Almacén de sesiones",
+      "default": "postgres",
+      "providers": [
+        {
+          "value": "postgres",
+          "label": "PostgreSQL (tabla iam.session)"
+        },
+        {
+          "value": "redis",
+          "label": "Redis (multi-réplica, TTL nativo)",
+          "requires": {
+            "auth": "single-tenant"
+          }
+        }
+      ]
     }
   ],
   "plugins": [

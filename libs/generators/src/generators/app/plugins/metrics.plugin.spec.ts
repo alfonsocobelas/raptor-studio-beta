@@ -82,7 +82,8 @@ export class RootModule {}
       backendSrc: 'apps/demo/libs/backend/src',
       frontendSrc: 'apps/demo/libs/frontend/src',
       models: [],
-      scope: '@app'
+      scope: '@app',
+      sessionStore: 'postgres'
     })
 
     const patched = formatted.read(rootPath, 'utf-8') ?? ''

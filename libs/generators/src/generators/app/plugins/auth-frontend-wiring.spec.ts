@@ -23,7 +23,8 @@ const context: PluginContext = {
   backendSrc: 'apps/demo/libs/backend/src',
   frontendSrc: 'apps/demo/libs/frontend/src',
   models: [],
-  scope: '@app'
+  scope: '@app',
+  sessionStore: 'postgres'
 }
 
 describe('authPlugin — cableado del app.config frontend', () => {

@@ -18,7 +18,8 @@ function contextFor(tree: Tree): PluginContext {
     backendSrc: 'backend',
     frontendSrc: 'frontend',
     models: [vehicle],
-    scope: '@app'
+    scope: '@app',
+    sessionStore: 'postgres'
   }
 }
 

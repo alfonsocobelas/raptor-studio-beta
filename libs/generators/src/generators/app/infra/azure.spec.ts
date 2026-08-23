@@ -156,7 +156,8 @@ export class StorageModule {}
         backendSrc: 'apps/demo/libs/backend/src',
         frontendSrc: 'apps/demo/libs/frontend/src',
         models: [],
-        scope: '@app'
+        scope: '@app',
+        sessionStore: 'postgres'
       })
 
       const storageModule = withStorage.read(STORAGE_MODULE, 'utf-8') ?? ''
@@ -175,7 +176,8 @@ export class StorageModule {}
           backendSrc: 'apps/demo/libs/backend/src',
           frontendSrc: 'apps/demo/libs/frontend/src',
           models: [],
-          scope: '@app'
+          scope: '@app',
+          sessionStore: 'postgres'
         })
       ).not.toThrow()
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)

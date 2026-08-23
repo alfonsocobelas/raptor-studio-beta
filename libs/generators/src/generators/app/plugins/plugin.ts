@@ -1,5 +1,6 @@
 import type { Tree } from '@nx/devkit'
 import { ResourceDefinition } from '@raptor/schema'
+import type { SessionStore } from './slots'
 
 /** Lo que un plugin sabe de la app que se está generando. */
 export interface PluginContext {
@@ -14,6 +15,8 @@ export interface PluginContext {
   models: ResourceDefinition[]
   /** Alias de importación del proyecto emitido (fijo: @app) */
   scope: string
+  /** Almacén de sesiones elegido (spec 55); solo lo mira el plugin de auth */
+  sessionStore: SessionStore
 }
 
 /**

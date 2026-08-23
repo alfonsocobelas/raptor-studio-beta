@@ -37,6 +37,24 @@ export interface Slot {
 /** Librería de componentes del frontend emitido (la consume el kernel frontend). */
 export type UiLibrary = 'spartan'
 
+/** Almacén de sesiones del emitido (spec 55). Solo tiene efecto con auth single-tenant. */
+export type SessionStore = 'postgres' | 'redis'
+
+/**
+ * Proveedores del almacén de sesiones. El de postgres no lleva manifiesto: la
+ * persistencia TypeORM la emite el propio plugin de auth (assets-auth-session-typeorm).
+ * El de redis ganará el suyo cuando exista (TASK-05 de la spec 55).
+ */
+const SESSION_STORE_PROVIDERS: readonly (SlotProvider & { value: SessionStore })[] = [
+  { value: 'postgres', label: 'PostgreSQL (tabla iam.session)' },
+  {
+    value: 'redis',
+    label: 'Redis (multi-réplica, TTL nativo)',
+    // sin auth no hay sesiones que almacenar; validateCombination lo corta antes de emitir
+    requires: { auth: 'single-tenant' }
+  }
+]
+
 /** Proveedores de persistencia, tipados con el motor: de aquí sale `selectEngine` sin casts. */
 const DATABASE_PROVIDERS: readonly (SlotProvider & { value: DatabaseEngine })[] = [
   { value: 'postgres', label: 'PostgreSQL (TypeORM)' },
@@ -98,6 +116,12 @@ export const SLOTS: Record<string, Slot> = {
         plugin: authPlugin
       }
     ]
+  },
+  sessionStore: {
+    name: 'sessionStore',
+    label: 'Almacén de sesiones',
+    default: 'postgres',
+    providers: [...SESSION_STORE_PROVIDERS]
   }
 }
 
@@ -158,6 +182,11 @@ export function selectEngine(value: string | undefined): DatabaseEngine {
 /** La piel elegida, tipada. Antes era un `?? 'spartan'` sin validación. */
 export function selectUi(value: string | undefined): UiLibrary {
   return resolve(SLOTS['ui'], UI_PROVIDERS, value).value
+}
+
+/** El almacén de sesiones elegido, tipado (spec 55). */
+export function selectSessionStore(value: string | undefined): SessionStore {
+  return resolve(SLOTS['sessionStore'], SESSION_STORE_PROVIDERS, value).value
 }
 
 /** Los manifiestos de emisión de los proveedores elegidos, en el orden del registro. */

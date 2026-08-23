@@ -37,7 +37,14 @@ import frontendKernelGenerator from '../frontend-kernel/frontend-kernel'
 import resourceGenerator from '../resource/resource'
 import { migrationsPlugin } from './plugins/migrations.plugin'
 import { selectPlugins } from './plugins/registry'
-import { normalizeLegacyPlugins, selectUi, slotPlugins, validateCombination, type UiLibrary } from './plugins/slots'
+import {
+  normalizeLegacyPlugins,
+  selectSessionStore,
+  selectUi,
+  slotPlugins,
+  validateCombination,
+  type UiLibrary
+} from './plugins/slots'
 import { PERSISTENCE, selectPersistence } from './persistence/registry'
 import type { PersistenceProvider } from './persistence/provider'
 import { selectInfra } from './infra/registry'
@@ -63,6 +70,8 @@ export interface AppGeneratorSchema {
   database?: DatabaseEngine
   /** Authentication slot of the emitted app (default none) */
   auth?: string
+  /** Session store slot of the emitted app (default postgres; redis requires auth) */
+  sessionStore?: string
   /** Infrastructure slot of the emitted app (default none) */
   infra?: string
   /** Comma-separated additive plugins to assemble (email, observability) */
@@ -123,10 +132,12 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     database: options.database,
     ui: options.ui,
     auth: options.auth,
+    sessionStore: options.sessionStore,
     infra: options.infra
   })
   const selection = legacy.selection
   const infra = selectInfra(selection['infra'])
+  const sessionStore = selectSessionStore(selection['sessionStore'])
   const chosenPlugins = selectPlugins(legacy.plugins)
   validateCombination(selection, chosenPlugins)
   ensureAttachmentsFitTheEngine(models, persistence)
@@ -374,7 +385,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
   //    Decisión 2026-07-31: un esquema versionado no es opcional en ningún proyecto.
-  const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE }
+  const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE, sessionStore }
   for (const plugin of plugins) {
     if (plugin.assets) {
       copyVerbatim(tree, path.join(__dirname, 'plugins', plugin.assets), root)
