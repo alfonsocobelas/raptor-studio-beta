@@ -22,17 +22,17 @@ fixture de oro siga viva.
 - **WHEN** el usuario mira el wizard del estudio o el formulario CLI **THEN** la autenticación NO se pregunta (no hay elección: siempre single-tenant en postgres)
 - **WHEN** se genera con `database=mongo` **THEN** la app sale sin auth con un aviso explícito ("auth pendiente del port a Mongoose"), no con un error ni en silencio
 - **IF** un comando guardado trae `--auth=single-tenant` **THEN** sigue funcionando (es el nuevo default)
-- **IF** un comando guardado trae `--auth=none` con postgres **THEN** aviso de deprecación y se respeta temporalmente (compat, mismo trato que `--plugins=auth`) — o falla con mensaje claro; decidir en DESIGN
+- **IF** un comando guardado trae `--auth=none` **THEN** **error claro** (decidido por Alfonso 2026-08-23): el comportamiento antiguo —una app abierta— es justo lo que no debe existir; tolerarlo en silencio dejaría apps sin login por un flag fósil
 - **WHEN** el wizard ofrece la base de datos **THEN** la tarjeta de MongoDB indica la limitación ("sin autenticación hasta el port a Mongoose")
 
 ## Criterios de aceptación
 
-- [ ] Ranura `auth` con default `single-tenant`; `none` fuera de `schema.json`, del wizard y de `tools/slots.json` como opción visible
-- [ ] App mongo genera con aviso y sin auth; fixture `app-mongo` de oro sigue en verde
-- [ ] La fixture `app` de oro no cambia (ya se genera con auth) salvo que el flag desaparezca del comando del gate
-- [ ] El grupo "Autenticación" desaparece del wizard (una ranura con una sola opción elegible no se pregunta — regla existente)
-- [ ] `sessionStore` sigue funcionando: su `requires auth=single-tenant` se cumple por defecto en postgres y bloquea en mongo con motivo claro
-- [ ] typecheck-emitted y demos existentes (`taller`, etc.) regeneran sin `--auth`
+- [x] Ranura `auth` con default `single-tenant`; `none` fuera de `schema.json`, del wizard y de `tools/slots.json` como opción visible
+- [x] App mongo genera con aviso y sin auth; fixture `app-mongo` de oro sigue en verde
+- [x] La fixture `app` de oro no cambia (ya se genera con auth) salvo que el flag desaparezca del comando del gate
+- [x] El grupo "Autenticación" desaparece del wizard (una ranura con una sola opción elegible no se pregunta — regla existente)
+- [x] `sessionStore` sigue funcionando: su `requires auth=single-tenant` se cumple por defecto en postgres y bloquea en mongo con motivo claro
+- [x] typecheck-emitted y demos existentes (`taller`, etc.) regeneran sin `--auth`
 
 ## Referencias
 
