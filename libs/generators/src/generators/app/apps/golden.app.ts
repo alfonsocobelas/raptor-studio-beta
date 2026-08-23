@@ -75,6 +75,8 @@ export const golden = defineApp({
     // spec 48: la página-formulario, con entrada de menú propia
     { kind: 'form', resource: 'project', label: 'Nuevo proyecto' },
     // spec 59: el calendario, cada proyecto como tira en su fecha de inicio
-    { kind: 'calendar', resource: 'project', label: 'Calendario de proyectos' }
+    { kind: 'calendar', resource: 'project', label: 'Calendario de proyectos' },
+    // spec 61: el tablero de contratos, columnas por estado y drag por transición
+    { kind: 'kanban', resource: 'contract', label: 'Tablero de contratos' }
   ]
 })

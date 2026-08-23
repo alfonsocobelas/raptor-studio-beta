@@ -50,6 +50,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'sap-licensing/contracts/tablero',
+    loadComponent: () =>
+      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/contracts/contracts-kanban.component').then(
+        m => m.ContractsKanbanComponent
+      )
+  },
+  {
     path: 'sap-licensing/contracts/:id',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/contracts/contract-detail.component').then(

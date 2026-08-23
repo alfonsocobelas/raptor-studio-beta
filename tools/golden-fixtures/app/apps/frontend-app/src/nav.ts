@@ -10,5 +10,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Contratos · cronograma', route: '/sap-licensing/contracts/cronograma' },
   { label: 'Proyectos', route: '/sap-licensing/projects' },
   { label: 'Nuevo proyecto', route: '/sap-licensing/projects/formulario' },
-  { label: 'Calendario de proyectos', route: '/sap-licensing/projects/calendario' }
+  { label: 'Calendario de proyectos', route: '/sap-licensing/projects/calendario' },
+  { label: 'Tablero de contratos', route: '/sap-licensing/contracts/tablero' }
 ]

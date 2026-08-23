@@ -17,6 +17,8 @@ export const demo = defineApp({
     { kind: 'resource', resource: 'customer' },
     { kind: 'resource', resource: 'contract' },
     { kind: 'gantt', resource: 'contract' },
+    // spec 61: contract declara kanban, y la equivalencia con las opciones planas lo exige aquí
+    { kind: 'kanban', resource: 'contract' },
     { kind: 'resource', resource: 'license' },
     { kind: 'resource', resource: 'project' },
     // spec 59: project declara calendar, y la equivalencia con las opciones planas lo exige aquí

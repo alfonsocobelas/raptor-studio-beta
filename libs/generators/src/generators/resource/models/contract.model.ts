@@ -41,6 +41,9 @@ export const contract = defineResource({
       { name: 'expire', label: 'Expirar', from: ['expiring'], to: 'expired' }
     ]
   },
+  // spec 61: el kanban del gate de oro vive aquí — status es el campo de la máquina,
+  // así que el tablero ejercita los movimientos por transición
+  kanban: { field: 'status' },
   constraintsConst: 'CONTRACT_CONSTRAINTS',
   audit: true,
   auditComment: true,

@@ -27,7 +27,7 @@
 
 ## Golden y verificación
 
-- [ ] **TASK-09**: `kanban: { field: 'status' }` en `contract` + páginas en `golden.app.ts` y
+- [x] **TASK-09**: `kanban: { field: 'status' }` en `contract` + páginas en `golden.app.ts` y
       `demo.app.ts`; regenerar, revisar diff a mano, congelar. `/golden-diff` 6/6 vacíos.
 - [ ] **TASK-10**: Suites (generators/schema/estudio) + typecheck-emitted 0 errores + smoke
       visual del estudio (paleta, badge, panel, tablero en canvas).
