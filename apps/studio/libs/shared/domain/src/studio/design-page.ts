@@ -106,7 +106,7 @@ export const VIEW_PRESETS: BlockPreset[] = [
 /** Bloques que solo tienen sentido en la ficha de un registro. */
 export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
 
-export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments', 'form', 'calendar']
+export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments', 'form', 'calendar', 'kanban']
 
 /**
  * ¿El generador emite ESTE bloque en ESTA vista? La generabilidad no es solo del

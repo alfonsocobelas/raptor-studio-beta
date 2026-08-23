@@ -49,6 +49,10 @@ interface PreviewColumn {
           {{ v.labelPlural }} · columnas por {{ v.fieldLabel }}
         </div>
       </div>
+    } @else {
+      <div class="bg-card text-muted-foreground rounded-lg border px-4 py-8 text-center text-sm" data-testid="kanban-empty">
+        El tablero necesita un campo «lista de valores»: sus valores serán las columnas.
+      </div>
     }
   `
 })

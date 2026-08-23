@@ -407,8 +407,8 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
 describe('buildSubstitutions — kanban (spec 61)', () => {
   it('is null when the model declares no kanban', () => {
-    // WHEN
-    const subs = buildSubstitutions(contract, [customer])
+    // WHEN — contract ya declara kanban desde el oro de la spec 61: se apaga a propósito
+    const subs = buildSubstitutions({ ...contract, kanban: undefined }, [customer])
 
     // THEN
     expect(subs.kanban).toBeNull()

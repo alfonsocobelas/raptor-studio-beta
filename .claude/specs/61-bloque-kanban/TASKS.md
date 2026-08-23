@@ -29,7 +29,7 @@
 
 - [x] **TASK-09**: `kanban: { field: 'status' }` en `contract` + páginas en `golden.app.ts` y
       `demo.app.ts`; regenerar, revisar diff a mano, congelar. `/golden-diff` 6/6 vacíos.
-- [ ] **TASK-10**: Suites (generators/schema/estudio) + typecheck-emitted 0 errores + smoke
+- [x] **TASK-10**: Suites (generators/schema/estudio) + typecheck-emitted 0 errores + smoke
       visual del estudio (paleta, badge, panel, tablero en canvas).
 
 ---
@@ -37,3 +37,18 @@
 ## Regla del juego
 
 Implementar UNA tarea, commit, seguir. Si una tarea crece (>~150 líneas), partirla.
+
+---
+
+## Notas de cierre (2026-08-24)
+
+- Suites: generators 977 ✅ · schema 193 ✅ · estudio 904 ✅. `/golden-diff` 6/6 vacíos.
+  `typecheck-emitted --app=golden`: 0 errores (kanban de contract incluido).
+- Smoke visual 5/5 (`tools/smoke-kanban.ts` + `e2e-61-kanban.png`). El smoke cazó dos
+  defectos reales: `kanban` faltaba en GENERABLE_BLOCKS (badge eterno) y el bloque sin
+  enum pintaba vacío (sin altura ⇒ ni badge visible) — ahora tiene estado vacío con pista.
+- El drag del EMITIDO (transición real contra backend) queda verificado estructuralmente
+  (specs del generador + typecheck); el gesto end-to-end con BD pide el e2e con Docker,
+  pendiente como siempre ([[entorno-node-y-servidores]]).
+- Trampa de smokes: el autosave del estudio acumula estado entre corridas — borrar
+  `.studio/designs/mi-app.json` antes de cada corrida o los índices del inspector mienten.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { duplicateOfEarlierBlock, generableHere } from './design-page'
+import { GENERABLE_BLOCKS, duplicateOfEarlierBlock, generableHere } from './design-page'
 import type { DesignPage } from './design-page'
 
 const listado: DesignPage = { title: 'Pacientes', blocks: [] }
@@ -84,4 +84,9 @@ describe('duplicateOfEarlierBlock — el bloque que no aporta nada (spec 52)', (
 
     expect(duplicateOfEarlierBlock(page, 1)).toBe(false)
   })
+})
+
+// spec 61: el kanban es generable (con campo enum; sin él lo frena el canvas)
+it('el kanban está entre los bloques generables', () => {
+  expect(GENERABLE_BLOCKS).toContain('kanban')
 })
