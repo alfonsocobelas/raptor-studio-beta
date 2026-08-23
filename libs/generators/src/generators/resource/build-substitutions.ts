@@ -101,6 +101,8 @@ export interface ResourceSubstitutions {
   /** Galería de tarjetas (spec 17): null cuando el modelo no la declara */
   gallery: GallerySubstitution | null
   gantt: GanttSubstitution | null
+  /** Calendario mensual (spec 59): null cuando el modelo no lo declara */
+  calendar: CalendarSubstitution | null
   labelsModule: LabelsModuleSubstitution | null
   importCsv: ImportSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
@@ -238,6 +240,18 @@ export interface GanttSubstitution {
   titleField: string
   startField: string
   endField: string
+}
+
+/** Calendario (spec 59): campos resueltos y leyenda pre-masticada para la plantilla tonta. */
+export interface CalendarSubstitution {
+  dateField: string
+  labelField: string
+  /** Etiqueta humana del campo fecha, para el pie del calendario */
+  dateLabel: string
+  colorField: string | null
+  /** Valores del enum de color en su orden declarado; el color va por posición */
+  legend: { value: string; label: string; colorIndex: number }[]
+  weekends: boolean
 }
 
 export interface GallerySubstitution {
@@ -380,6 +394,7 @@ export function buildSubstitutions(
     formPage: Boolean(definition.form),
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
+    calendar: renderCalendar(definition),
     labelsModule: renderLabelsModule(definition),
     importCsv: renderImportCsv(definition),
     related: renderRelated(definition, others),
@@ -1093,6 +1108,34 @@ function renderGantt(definition: ResourceDefinition): GanttSubstitution | null {
   const titleField = gantt.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
 
   return { titleField, startField: period.start, endField: period.end }
+}
+
+function renderCalendar(definition: ResourceDefinition): CalendarSubstitution | null {
+  const { calendar } = definition
+  if (!calendar) return null
+
+  const fields = Object.entries(definition.fields).filter(([, f]) => !f.pk)
+  const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
+  const labelField = calendar.label ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
+
+  const dateField = definition.fields[calendar.date]
+  const dateLabel = dateField?.table?.label ?? dateField?.form?.label ?? calendar.date
+
+  const colorVo = calendar.color ? definition.fields[calendar.color]?.vo : undefined
+  const values = typeof colorVo === 'object' ? (colorVo.values ?? []) : []
+  const labelOf = (value: string): string =>
+    definition.fields[calendar.color ?? '']?.table?.badgeMap?.[value]?.label ??
+    definition.fields[calendar.color ?? '']?.form?.options?.find(o => o.value === value)?.label ??
+    value.charAt(0).toUpperCase() + value.slice(1)
+
+  return {
+    dateField: calendar.date,
+    labelField,
+    dateLabel,
+    colorField: calendar.color ?? null,
+    legend: values.map((value, colorIndex) => ({ value, label: labelOf(value), colorIndex })),
+    weekends: calendar.weekends ?? true
+  }
 }
 
 function renderGallery(definition: ResourceDefinition): GallerySubstitution | null {

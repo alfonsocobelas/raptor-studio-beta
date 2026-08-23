@@ -332,3 +332,74 @@ describe('buildSubstitutions — frontend bindings', () => {
     expect(subs.sharedDomainAlias).toBe('@sap-licenses/shared/domain')
   })
 })
+
+describe('buildSubstitutions — calendar (spec 59)', () => {
+  const withCalendar = (calendar: ResourceDefinition['calendar']): ResourceDefinition =>
+    ({
+      ...contract,
+      fields: {
+        ...contract.fields,
+        deliveryDate: {
+          type: 'date',
+          table: { show: true, label: 'Entrega' },
+          form: { control: 'date', label: 'Fecha de entrega' }
+        }
+      },
+      calendar
+    }) as ResourceDefinition
+
+  it('is null when the model declares no calendar', () => {
+    // WHEN
+    const subs = buildSubstitutions(contract)
+
+    // THEN
+    expect(subs.calendar).toBeNull()
+  })
+
+  it('derives the label from the first searchable text field and defaults weekends to true', () => {
+    // WHEN
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }))
+
+    // THEN
+    expect(subs.calendar).toEqual(
+      expect.objectContaining({
+        dateField: 'deliveryDate',
+        labelField: 'contractNumber',
+        colorField: null,
+        legend: [],
+        weekends: true
+      })
+    )
+  })
+
+  it('honours explicit label and weekends', () => {
+    // WHEN
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', label: 'supportModel', weekends: false }))
+
+    // THEN
+    expect(subs.calendar?.labelField).toBe('supportModel')
+    expect(subs.calendar?.weekends).toBe(false)
+  })
+
+  it('builds the legend from the enum values in declared order, labelled from the badgeMap', () => {
+    // WHEN
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', color: 'contractType' }))
+
+    // THEN — el color es POR POSICIÓN del valor (determinista, independiente del idioma)
+    expect(subs.calendar?.colorField).toBe('contractType')
+    expect(subs.calendar?.legend).toEqual([
+      { value: 'cloud', label: 'Cloud', colorIndex: 0 },
+      { value: 'onprem', label: 'On-premise', colorIndex: 1 },
+      { value: 'mixed', label: 'Mixto', colorIndex: 2 },
+      { value: 'maintenance', label: 'Mantenimiento', colorIndex: 3 }
+    ])
+  })
+
+  it('exposes the human label of the date field for the footer', () => {
+    // WHEN
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate' }))
+
+    // THEN — «PEDIDOS · CAMPO FECHA ENTREGA» (mock 22E)
+    expect(subs.calendar?.dateLabel).toBe('Entrega')
+  })
+})
