@@ -87,13 +87,21 @@ const GROUPS: Record<string, GroupCopy> = {
       { value: 'single-tenant', title: 'Single-tenant', hint: 'Sesión por cookie, invitaciones y roles' },
       { value: 'multi-tenant', title: 'Multi-tenant', hint: 'Si vas a vender la aplicación a otros negocios' }
     ]
+  },
+  sessionStore: {
+    heading: 'Almacén de sesiones',
+    subheading: 'Solo aplica con autenticación',
+    entries: [
+      { value: 'postgres', title: 'PostgreSQL', hint: 'La sesión vive en una tabla; sin piezas extra' },
+      { value: 'redis', title: 'Redis', hint: 'Multi-réplica y despliegues sin cerrar sesiones' }
+    ]
   }
 }
 
 /** Alta disponibilidad se retiró a propósito (Alfonso, 2026-08-13): no se ofrece ni apagada. */
 const ADDONS: CatalogEntry[] = [
   { value: 'email', title: 'Correo saliente', hint: 'Avisos y recuperación de contraseña' },
-  { value: 'redis', title: 'Redis para sesiones', hint: 'Sesiones y caché fuera del proceso' },
+  // redis dejó de ser addon en la spec 55: es la ranura sessionStore, con tarjetas propias
   { value: 'observability', title: 'Observabilidad', hint: 'Logs, métricas y trazas' },
   { value: 'object-storage', title: 'Almacenamiento de objetos', hint: 'Ficheros y adjuntos fuera de la base' },
   { value: 'custom-domain', title: 'Dominio propio', hint: 'Con su certificado' }

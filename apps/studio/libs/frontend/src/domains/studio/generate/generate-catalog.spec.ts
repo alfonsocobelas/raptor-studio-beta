@@ -55,6 +55,20 @@ const manifest: SlotsManifest = {
         }
       ]
     }
+    ,{
+      name: 'sessionStore',
+      label: 'Almacén de sesiones',
+      default: 'postgres',
+      providers: [
+        { value: 'postgres', label: 'PostgreSQL (tabla iam.session)' },
+        {
+          value: 'redis',
+          label: 'Redis (multi-réplica, TTL nativo)',
+          description: 'Sesiones en Redis: cliente compartido, config por entorno y health bloqueante',
+          requires: { auth: 'single-tenant' }
+        }
+      ]
+    }
   ],
   plugins: [{ name: 'email', description: 'Adaptadores de email: Azure ACS, SES y Brevo' }]
 }
@@ -75,7 +89,7 @@ const card = (catalog: ReturnType<typeof mergeCatalog>, slot: string, value: str
 
 describe('mergeCatalog', () => {
   it('pinta un grupo por ranura elegible', () => {
-    expect(mergeCatalog(manifest, defaults).groups.map(g => g.slot)).toEqual(['infra', 'database', 'auth'])
+    expect(mergeCatalog(manifest, defaults).groups.map(g => g.slot)).toEqual(['infra', 'database', 'auth', 'sessionStore'])
   })
 
   it('deja fuera la ranura del preset visual: lo manda el lienzo, no esta pantalla', () => {
@@ -161,6 +175,34 @@ describe('mergeCatalog', () => {
     expect(chosen.reason).toBeUndefined()
   })
 
+  describe('almacén de sesiones', () => {
+    it('la ranura sale con la redacción del catálogo, detrás de autenticación', () => {
+      const groups = mergeCatalog(manifest, defaults).groups
+      const auth = groups.findIndex(g => g.slot === 'auth')
+      const sessions = groups.findIndex(g => g.slot === 'sessionStore')
+
+      expect(sessions).toBeGreaterThan(auth)
+      const cards = groups[sessions].cards
+      expect(groups[sessions].heading).toBe('Almacén de sesiones')
+      expect(cards.map(c => c.title)).toEqual(['PostgreSQL', 'Redis'])
+    })
+
+    it('redis queda apagado mientras no haya autenticación, con el motivo', () => {
+      const redis = mergeCatalog(manifest, defaults).groups.find(g => g.slot === 'sessionStore')?.cards[1]
+
+      expect(redis?.disabled).toBe(true)
+      expect(redis?.reason).toBeTruthy()
+    })
+
+    it('con autenticación single-tenant redis es elegible', () => {
+      const redis = mergeCatalog(manifest, { ...defaults, auth: 'single-tenant' }).groups.find(
+        g => g.slot === 'sessionStore'
+      )?.cards[1]
+
+      expect(redis?.disabled).toBe(false)
+    })
+  })
+
   describe('complementos', () => {
     it('el plugin del manifiesto sale disponible con la redacción del catálogo', () => {
       const email = mergeCatalog(manifest, defaults).addons.find(c => c.value === 'email')
@@ -168,10 +210,14 @@ describe('mergeCatalog', () => {
       expect(email).toMatchObject({ title: 'Correo saliente', available: true, disabled: false })
     })
 
-    it('los cuatro que aún no existen salen apagados, en el orden del catálogo', () => {
+    it('redis ya no es un addon: es la ranura sessionStore (spec 55); ofrecerlo dos veces confunde', () => {
+      expect(mergeCatalog(manifest, defaults).addons.some(c => c.value === 'redis')).toBe(false)
+    })
+
+    it('los que aún no existen salen apagados, en el orden del catálogo', () => {
       const addons = mergeCatalog(manifest, defaults).addons
 
-      expect(addons.map(c => c.value)).toEqual(['email', 'redis', 'observability', 'object-storage', 'custom-domain'])
+      expect(addons.map(c => c.value)).toEqual(['email', 'observability', 'object-storage', 'custom-domain'])
       expect(addons.filter(c => !c.available).every(c => c.reason === 'Próximamente')).toBe(true)
     })
 

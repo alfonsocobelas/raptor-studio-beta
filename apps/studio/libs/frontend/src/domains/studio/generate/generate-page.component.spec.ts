@@ -275,8 +275,10 @@ describe('GeneratePageComponent', () => {
     it('los que aún no existen salen apagados', async () => {
       const fixture = await mount()
 
-      expect(at(fixture, 'plugin-redis')?.hasAttribute('disabled')).toBe(true)
-      expect(at(fixture, 'soon-redis')).not.toBeNull()
+      expect(at(fixture, 'plugin-observability')?.hasAttribute('disabled')).toBe(true)
+      expect(at(fixture, 'soon-observability')).not.toBeNull()
+      // redis dejó de ser addon: es la ranura sessionStore (spec 55)
+      expect(at(fixture, 'plugin-redis')).toBeNull()
     })
 
     it('sin manifiesto no hay formulario, sino el motivo y cómo arreglarlo', async () => {
