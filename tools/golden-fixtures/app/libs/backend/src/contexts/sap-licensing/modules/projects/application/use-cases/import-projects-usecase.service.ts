@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common'
-import { BaseCustomError } from '../../../../../shared/domain/errors'
+import { BaseCustomError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'
 import { Project } from '../../domain/project'
+import { CustomerRepository } from '../../../customers/domain/customer-repository'
+import { CustomerId } from '../../../../../shared/domain/value-objects/customers/customer-id.vo'
 import { ImportProjectsInput, ImportProjectsOutput, ImportFailure } from '../dtos/import-projects-input.dto'
 import { RegisterProjectUseCase } from './register-project-usecase.service'
 
@@ -19,7 +21,8 @@ const MAX_IMPORT_ROWS = 500
 export class ImportProjectsUseCase {
   constructor(
     private readonly registerProject: RegisterProjectUseCase,
-    private readonly txManager: TransactionManager
+    private readonly txManager: TransactionManager,
+    private readonly customerRepository: CustomerRepository
   ) {}
 
   async invoke(input: ImportProjectsInput): Promise<ImportProjectsOutput> {
@@ -31,14 +34,26 @@ export class ImportProjectsUseCase {
     }
 
     const failures: ImportFailure[] = []
-    input.rows.forEach((row, index) => {
+    // Los campos desnormalizados se copian del canon; el CSV trae solo el FK (spec 60).
+    // La caché evita repetir el lookup cuando muchas filas apuntan al mismo origen.
+    const customerNameByCustomerId = new Map<string, string>()
+    for (const [index, row] of input.rows.entries()) {
       try {
-        Project.register(row)
+        let customerName = customerNameByCustomerId.get(row.customerId)
+        if (customerName === undefined) {
+          const customer = await this.customerRepository.get(CustomerId.create(row.customerId))
+          if (!customer) {
+            throw new EntityNotFoundError('Customer', row.customerId)
+          }
+          customerName = customer.name.value
+          customerNameByCustomerId.set(row.customerId, customerName)
+        }
+        Project.register({ ...row, customerName })
       } catch (error) {
         if (!(error instanceof BaseCustomError)) throw error
         failures.push({ row: index + 1, message: error.message })
       }
-    })
+    }
     if (failures.length) {
       return { imported: 0, failures }
     }

@@ -3,6 +3,7 @@ import { TransactionManager } from '../../../../../src/contexts/shared/domain/pe
 import { ImportProjectsUseCase } from '../../../../../src/contexts/sap-licensing/modules/projects/application/use-cases/import-projects-usecase.service'
 import { RegisterProjectInput } from '../../../../../src/contexts/sap-licensing/modules/projects/application/dtos/register-project-input.dto'
 import { RegisterProjectUseCase } from '../../../../../src/contexts/sap-licensing/modules/projects/application/use-cases/register-project-usecase.service'
+import { CustomerRepository } from '../../../../../src/contexts/sap-licensing/modules/customers/domain/customer-repository'
 import { ProjectMother } from '../../domain/mothers/project.mother'
 import { ProjectRepositoryMock } from '../../mocks/project.repository.mock'
 
@@ -13,13 +14,18 @@ describe('ImportProjectsUseCase', () => {
   const txManager = {
     runInTransaction: jest.fn(async (work: () => Promise<unknown>) => work())
   } as unknown as TransactionManager
+  const customerRepository = { get: jest.fn() } as unknown as CustomerRepository
 
   const row = (): RegisterProjectInput => ProjectMother.random().toPrimitives() as unknown as RegisterProjectInput
 
   beforeEach(() => {
     repositoryMock = new ProjectRepositoryMock()
-    const register = new RegisterProjectUseCase(repositoryMock, auditTrail)
-    useCase = new ImportProjectsUseCase(register, txManager)
+    ;(customerRepository.get as jest.Mock).mockReset()
+    ;(customerRepository.get as jest.Mock).mockResolvedValue({
+      name: { value: ProjectMother.primitives().customerName }
+    })
+    const register = new RegisterProjectUseCase(repositoryMock, auditTrail, customerRepository)
+    useCase = new ImportProjectsUseCase(register, txManager, customerRepository)
   })
 
   it('una fila con error de dominio frena TODO el import y la señala', async () => {

@@ -16,8 +16,12 @@ import { ExpireContractUseCase } from './application/use-cases/expire-contract-u
 import { ContractRepository } from './domain/contract-repository'
 import { ContractsController } from './infrastructure/entrypoints/contracts.controller'
 import { MongooseContractRepository } from './infrastructure/persistence/mongoose/mongoose-contract.repository'
+import { CustomersModule } from '../customers/customers.module'
 
 @Module({
+  // Los módulos del árbol de arrastre (spec 38): el borrado del padre marca a sus hijos
+  // por sus PORTS, así que la DI cruza módulos — cada hijo ya exporta su repositorio.
+  imports: [CustomersModule],
   controllers: [ContractsController],
   providers: [
     RegisterContractHandler,

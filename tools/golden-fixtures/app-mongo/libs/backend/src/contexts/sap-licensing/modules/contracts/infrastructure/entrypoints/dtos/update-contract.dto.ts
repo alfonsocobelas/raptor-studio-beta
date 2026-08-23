@@ -35,11 +35,6 @@ export class UpdateContractDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(LIMITS.CUSTOMER_NAME.MAX)
-  customerName?: string
-
-  @IsOptional()
-  @IsString()
   @MaxLength(LIMITS.CMS_CASE_ID.MAX)
   cmsCaseId?: string
 

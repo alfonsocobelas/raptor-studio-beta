@@ -23,6 +23,7 @@ import { ProjectRepository } from './domain/project-repository'
 import { ProjectsController } from './infrastructure/entrypoints/projects.controller'
 import { TypeOrmProjectRepository } from './infrastructure/persistence/typeorm/typeorm-project.repository'
 import { AuditModule } from '../../../shared/infrastructure/audit/audit.module'
+import { CustomersModule } from '../customers/customers.module'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { StorageModule } from '../../../shared/infrastructure/storage/storage.module'
 import { TypeOrmProjectAttachmentEntity } from './infrastructure/attachments/project-attachment.entity'
@@ -32,7 +33,7 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
 @Module({
   // StorageModule y AuditModule explícitos (no se confía en @Global): así el módulo
   // funciona en cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrmProjectAttachmentEntity]), StorageModule, AuditModule],
+  imports: [TypeOrmModule.forFeature([TypeOrmProjectAttachmentEntity]), StorageModule, AuditModule, CustomersModule],
   // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro
   // y 'projects/attachments' colisionaría con 'projects/:id' del recurso
   controllers: [ProjectAttachmentsController, ProjectsController],

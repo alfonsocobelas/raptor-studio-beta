@@ -11,10 +11,6 @@ export class UpdateProjectDto {
 
   @IsOptional()
   @IsString()
-  customerName?: string
-
-  @IsOptional()
-  @IsString()
   @MinLength(LIMITS.NAME.MIN)
   @MaxLength(LIMITS.NAME.MAX)
   name?: string

@@ -3,6 +3,8 @@ import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/d
 import { changesBetween } from '../../../../../shared/domain/audit/audit-changes'
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 import { ProjectRepository } from '../../domain/project-repository'
+import { CustomerRepository } from '../../../customers/domain/customer-repository'
+import { CustomerId } from '../../../../../shared/domain/value-objects/customers/customer-id.vo'
 import { withName } from '../../domain/specifications/project-with-name.specification'
 import { ProjectId } from '../../../../../shared/domain/value-objects/projects/project-id.vo'
 import { UpdateProjectInput } from '../dtos/update-project-input.dto'
@@ -11,7 +13,8 @@ import { UpdateProjectInput } from '../dtos/update-project-input.dto'
 export class UpdateProjectUseCase {
   constructor(
     private readonly projectRepository: ProjectRepository,
-    private readonly auditTrail: AuditTrailPort
+    private readonly auditTrail: AuditTrailPort,
+    private readonly customerRepository: CustomerRepository
   ) {}
 
   async invoke(input: UpdateProjectInput): Promise<void> {
@@ -32,8 +35,21 @@ export class UpdateProjectUseCase {
       }
     }
 
+    let updates = input.updates
+
+    // La copia desnormalizada se refresca del canon cuando cambia el FK (spec 60).
+    if (updates.customerId !== undefined) {
+      const customer = await this.customerRepository.get(CustomerId.create(updates.customerId))
+
+      if (!customer) {
+        throw new EntityNotFoundError('Customer', updates.customerId)
+      }
+
+      updates = { ...updates, customerName: customer.name.value }
+    }
+
     const before = project.toPrimitives()
-    project.updateDetails(input.updates)
+    project.updateDetails(updates)
     await this.projectRepository.save(project)
     await this.auditTrail.record({
       entity: 'project',

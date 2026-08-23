@@ -38,11 +38,6 @@ export class RegisterContractDto {
   @IsUUID('7')
   customerId!: string
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(LIMITS.CUSTOMER_NAME.MAX)
-  customerName!: string
-
   @IsOptional()
   @IsString()
   @MaxLength(LIMITS.CMS_CASE_ID.MAX)

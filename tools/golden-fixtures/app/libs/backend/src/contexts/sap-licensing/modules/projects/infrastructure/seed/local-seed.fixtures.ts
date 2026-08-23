@@ -6,7 +6,6 @@ const DERIVED: RegisterProjectInput[] = [
   {
     id: '019eb800-fc2c-7000-8000-000000000001',
     customerId: '019eb800-9a64-7000-8000-000000000001',
-    customerName: 'CustomerName seed 1',
     name: 'Name seed 1',
     startDate: '2026-01-01',
     endDate: '2026-07-28',
@@ -16,7 +15,6 @@ const DERIVED: RegisterProjectInput[] = [
   {
     id: '019eb800-fc2c-7000-8000-000000000002',
     customerId: '019eb800-9a64-7000-8000-000000000002',
-    customerName: 'CustomerName seed 2',
     name: 'Name seed 2',
     startDate: '2026-02-01',
     endDate: '2026-08-28',
