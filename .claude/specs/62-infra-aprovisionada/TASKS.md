@@ -8,7 +8,7 @@
 - [x] TASK-01: Test + opción `provisionedInfra` en `schema.json` y `AppGeneratorSchema`;
       filtrado de `iac/**` en la copia del subárbol del proveedor (`app.ts`). Test rojo
       primero: con `infra=azure --provisionedInfra` no existe `iac/`, sí los adapters.
-- [ ] TASK-02: Test por proveedor (azure/aws/raptor) con el flag activo: la generación
+- [x] TASK-02: Test por proveedor (azure/aws/raptor) con el flag activo: la generación
       completa no revienta y `nameTerraformProject` tolera la ausencia de `iac/`
       (protegerlo si hace falta).
 - [ ] TASK-03: Gate de oro `/golden-diff` con el flag inactivo (diff vacío; sin re-baseline).

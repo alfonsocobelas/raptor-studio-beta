@@ -53,6 +53,36 @@ describe('opción provisionedInfra', () => {
     expect(tree.exists('apps/demo/iac/main.tf')).toBe(true)
   })
 
+  /**
+   * TASK-02: el `apply()` de cada proveedor toca ficheros de iac/ (nameTerraformProject);
+   * estos tests fijan que la generación completa tolera su ausencia en los tres.
+   */
+  describe.each([
+    { infra: 'aws', adapter: 'libs/backend/src/contexts/shared/infrastructure/storage/s3-file-storage.ts' },
+    { infra: 'raptor', adapter: 'libs/backend/src/contexts/shared/infrastructure/logger/loki-transport.ts' }
+  ])('con infra=$infra y provisionedInfra', ({ infra, adapter }) => {
+    let tree: Tree
+
+    beforeAll(async () => {
+      tree = createTreeWithEmptyWorkspace()
+      await appGenerator(tree, {
+        name: 'demo',
+        models: 'contract',
+        skipInstall: true,
+        infra,
+        provisionedInfra: true
+      })
+    })
+
+    it('genera sin reventar y sin ningún fichero bajo iac/', () => {
+      expect(tree.exists('apps/demo/iac')).toBe(false)
+    })
+
+    it('conserva los adapters del proveedor', () => {
+      expect(tree.exists(`apps/demo/${adapter}`)).toBe(true)
+    })
+  })
+
   it('con infra=none el flag es un no-op silencioso', async () => {
     const tree = createTreeWithEmptyWorkspace()
     await appGenerator(tree, {
