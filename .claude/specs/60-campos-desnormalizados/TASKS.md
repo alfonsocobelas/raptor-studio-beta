@@ -20,5 +20,5 @@
 ## Cierre (2026-08-23)
 
 - Suite emitida de la app golden: **342/342 en verde** (incluye los tests nuevos: copia del canon, 404 por FK inexistente, refresco al cambiar FK, lookup con caché en import).
-- Typecheck de la app emitida: 1 solo error, **preexistente y ajeno a la spec** — `processes/del-contrato-al-proyecto-implantado.controller.ts` importa `@sap-licenses/shared/domain` (alias inexistente); ya estaba congelado en la fixture. Pendiente de arreglar en el generador de procesos (spec aparte).
+- Typecheck de la app emitida: 1 solo error, **preexistente y ajeno a la spec** — `processes/del-contrato-al-proyecto-implantado.controller.ts` importa `@sap-licenses/shared/domain` (alias inexistente); ya estaba congelado en la fixture. Arreglado en la misma sesión (cd7ae949): emitFlowProcesses recibe el alias de la app.
 - Smoke HTTP en vivo no ejecutado (requiere Postgres): la protección "colar el campo por HTTP" la da `forbidNonWhitelisted: true` (400) + el use case que nunca lee el campo del input; cubierto por tests emitidos y de generador.
