@@ -625,10 +625,10 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
   // (y su constante de etiquetas) debe existir tanto si el campo declara optionsType como si no.
   const enumSelects = selects.filter(f => f.optionsType || f.options.length)
   const lookups = formFields.filter(f => f.lookup)
-  const denorms = lookups.map(f => f.lookup?.denormalizes).filter((d): d is string => d !== undefined)
 
-  // FormValue: campos declarados (enum-typed o string) + denormalizados por lookup (string)
-  const formValueLines = [...formFields.map(f => `${f.name}: ${valueType(f)}`), ...denorms.map(d => `${d}: string`)]
+  // FormValue: solo campos declarados — el desnormalizado ya no viaja: lo copia el use case
+  // desde el canon (spec 60); el pipe forbidNonWhitelisted rechazaría cualquier extra.
+  const formValueLines = formFields.map(f => `${f.name}: ${valueType(f)}`)
 
   // Shared imports: DTO + enums de los selects tipados (labels van por su propio import)
   const sharedTypes = [...new Set([dtoName, ...enumSelects.map(f => f.optionsType as string)])].sort()
@@ -745,16 +745,11 @@ function formValueExtras(formFields: FormFieldSubstitution[], lookups: FormField
           `${f.name}: raw.${f.name} ?? undefined`
     )
   const lookupFixes = lookups.map(f => `${f.name}: raw.${f.name} ?? ''`)
-  const denormLines = lookups
-    .filter(f => f.lookup?.denormalizes)
-    .map(
-      f =>
-        `${f.lookup?.denormalizes}: this.${pluralOfResource(f.lookup?.resource)}().find(item => item.id === raw.${f.name})?.${f.lookup?.labelField} ?? ''`
-    )
+  // el campo desnormalizado ya no se resuelve aquí: lo copia el use case del canon (spec 60)
   const dateNulls = formFields
     .filter(f => f.control === 'date' && !f.required)
     .map(f => `${f.name}: raw.${f.name} || null`)
-  return [...casts, ...selectCasts, ...numberCasts, ...lookupFixes, ...denormLines, ...dateNulls]
+  return [...casts, ...selectCasts, ...numberCasts, ...lookupFixes, ...dateNulls]
 }
 
 function renderSavedEmit(formFields: FormFieldSubstitution[], lookups: FormFieldSubstitution[]): string[] {

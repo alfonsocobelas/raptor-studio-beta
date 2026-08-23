@@ -1,6 +1,7 @@
 import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { selectModels } from '../resource/models/registry'
+import { denormTargets } from '../resource/denormalization'
 import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
 
 export interface SharedDomainGeneratorSchema {
@@ -125,8 +126,15 @@ function renderDtoBindings(model: ResourceDefinition) {
   // `initial`) ni se edita (solo cambia por transición), igual que ya hace el DTO de
   // entrypoints del backend. Dejarlo aquí deja el formulario emitido sin compilar.
   const stateField = model.state?.field
+  // spec 60: los destinos de denormalización tampoco viajan en escritura — los copia el
+  // use case desde el canon; siguen en el DTO de lectura (dtoLines) para listar y filtrar.
+  const denormalized = denormTargets(model)
   const writable = all.filter(
-    c => c.name !== stateField && !c.field.syncManaged && !(c.field.optionalPrimitive && !c.field.updatable)
+    c =>
+      c.name !== stateField &&
+      !c.field.syncManaged &&
+      !(c.field.optionalPrimitive && !c.field.updatable) &&
+      !denormalized.has(c.name)
   )
 
   const comp = model.composition

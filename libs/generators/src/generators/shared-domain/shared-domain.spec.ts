@@ -26,6 +26,16 @@ describe('shared-domain generator', () => {
     expect(tree.exists('tmp/generated/shared-domain/license/register-license.dto.ts')).toBe(false)
   })
 
+  it('los destinos de denormalización quedan fuera de register/update pero siguen en el read model (spec 60)', () => {
+    const register = tree.read('tmp/generated/shared-domain/contract/register-contract.dto.ts', 'utf-8') ?? ''
+    const update = tree.read('tmp/generated/shared-domain/contract/update-contract.dto.ts', 'utf-8') ?? ''
+    const read = tree.read('tmp/generated/shared-domain/contract/contract.dto.ts', 'utf-8') ?? ''
+
+    expect(register).not.toContain('customerName')
+    expect(update).not.toContain('customerName')
+    expect(read).toContain('customerName: string')
+  })
+
   it('types enum fields with their optionsType union and sync fields as nullable strings', () => {
     const dto = tree.read('tmp/generated/shared-domain/customer/customer.dto.ts', 'utf-8') ?? ''
     expect(dto).toContain("export type CustomerClassification = 'cloud' | 'onprem' | 'hybrid'")

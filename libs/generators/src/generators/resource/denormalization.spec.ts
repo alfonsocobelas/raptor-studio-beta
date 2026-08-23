@@ -106,6 +106,20 @@ describe('campos desnormalizados (spec 60)', () => {
     })
   })
 
+  describe('frontend — el diálogo ya no resuelve la copia (TASK-03)', () => {
+    it('el save no añade el campo desnormalizado al payload', async () => {
+      const source = read(await emit('contract'), 'frontend/contract-dialog.component.ts')
+
+      expect(source).not.toContain("customerName: this.customers().find(item => item.id === raw.customerId)")
+    })
+
+    it('el FormValue del diálogo no declara el campo', async () => {
+      const source = read(await emit('contract'), 'frontend/contract-dialog.component.ts')
+
+      expect(source).not.toMatch(/^\s*customerName: string$/m)
+    })
+  })
+
   describe('recurso sin lookup', () => {
     it('no cambia nada: el register de customer sigue con un solo repositorio', async () => {
       const source = read(await emit('customer'), 'backend/application/use-cases/register-customer-usecase.service.ts')
