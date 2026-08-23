@@ -31,7 +31,7 @@ describe('el paso de flujo convergido con la máquina de estados', () => {
   beforeAll(() => {
     tree = createTreeWithEmptyWorkspace()
     tree.write('backend/root.module.ts', 'import { HealthModule } from "x"\nimports: [HealthModule,]\n')
-    emitFlowProcesses(tree, 'backend', [flow], Object.values(MODELS))
+    emitFlowProcesses(tree, 'backend', [flow], Object.values(MODELS), '@app/shared/domain')
     source =
       tree.read('backend/contexts/sap-licensing/processes/del-alta-a-la-baja/del-alta-a-la-baja.process.ts', 'utf-8') ??
       ''
@@ -68,7 +68,7 @@ describe('el paso de flujo convergido con la máquina de estados', () => {
         return rest
       })
     }
-    emitFlowProcesses(clean, 'backend', [plain], Object.values(MODELS))
+    emitFlowProcesses(clean, 'backend', [plain], Object.values(MODELS), '@app/shared/domain')
     const plainSource =
       clean.read('backend/contexts/sap-licensing/processes/del-alta-a-la-baja/del-alta-a-la-baja.process.ts', 'utf-8') ?? ''
 
@@ -100,7 +100,7 @@ describe('el controller de procesos', () => {
   const emit = (theFlow: BusinessFlow): Tree => {
     const tree = createTreeWithEmptyWorkspace()
     tree.write('backend/root.module.ts', 'import { HealthModule } from "x"\nimports: [HealthModule,]\n')
-    emitFlowProcesses(tree, 'backend', [theFlow], Object.values(MODELS))
+    emitFlowProcesses(tree, 'backend', [theFlow], Object.values(MODELS), '@app/shared/domain')
     return tree
   }
 

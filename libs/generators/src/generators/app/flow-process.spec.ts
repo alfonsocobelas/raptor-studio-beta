@@ -232,6 +232,31 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
     expect(emitted).toContain("import { GarmentId } from '../../../shared/domain/value-objects/garments/garment-id.vo'")
   })
 
+  it('el controller importa los roles del alias de la APP, no del alias del modelo (defecto cazado en spec 60)', async () => {
+    // contract declara sharedDomainAlias '@sap-licenses/…' (workspace de referencia); en la
+    // app emitida el alias real es '@app/…' y usar el del modelo deja el emitido sin compilar
+    const contratoFlow: BusinessFlow = {
+      name: 'Alta de contrato',
+      nodes: [
+        { id: 'llega', kind: 'start', text: 'Llega un contrato' },
+        { id: 'revisar', kind: 'step', text: 'Se termina', entity: 'contract', transition: 'terminate' },
+        { id: 'fin', kind: 'end', text: 'Contrato en curso' }
+      ],
+      edges: [
+        { from: 'llega', to: 'revisar' },
+        { from: 'revisar', to: 'fin' }
+      ]
+    }
+    const tree = await generate([contratoFlow], ['customer', 'contract'])
+    const controller = tree.read(
+      'apps/demo/libs/backend/src/contexts/sap-licensing/processes/alta-de-contrato/alta-de-contrato.controller.ts',
+      'utf-8'
+    ) ?? ''
+
+    expect(controller).toContain("from '@app/shared/domain'")
+    expect(controller).not.toContain('@sap-licenses')
+  })
+
   it('cada step es un método con su hueco flow-* vacío; start/end/decision no emiten método', async () => {
     const tree = await generate([pedidoFlow])
     const emitted = tree.read(PROCESS_PATH, 'utf-8') ?? ''

@@ -92,7 +92,13 @@ export function flowClassDoc(flow: BusinessFlow): string[] {
  * processes.module.ts. El contexto de un flujo es el de la primera entidad que cita
  * (fallback: el del primer modelo). Solo se llama con flujos: sin ellos, ni carpeta.
  */
-export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: BusinessFlow[], models: ResourceDefinition[]): void {
+export function emitFlowProcesses(
+  tree: Tree,
+  backendSrc: string,
+  flows: BusinessFlow[],
+  models: ResourceDefinition[],
+  sharedDomainAlias: string
+): void {
   const pluralOf = new Map(models.map(model => [model.name, model.plural]))
   const contextOf = new Map(models.map(model => [model.name, model.context]))
   // los roles del endpoint convergido son los del VERBO que ejecuta (spec 46): misma matriz
@@ -166,7 +172,9 @@ export function emitFlowProcesses(tree: Tree, backendSrc: string, flows: Busines
         ctorParams: deps.map(dep => `private readonly ${dep.propertyName}: ${dep.className}`).join(', '),
         methodsBlock: methods.map(renderMethod).join('\n\n'),
         controllerClassName,
-        sharedDomainAlias: models[0]?.sharedDomainAlias ?? '@app/shared/domain',
+        // el alias es el de la APP emitida, nunca el del modelo: los modelos de referencia
+        // apuntan a su workspace de origen y dejarían el controller sin compilar (TS2307)
+        sharedDomainAlias,
         controllerIdImports: [...new Set(converged.map(m => m.node.entity as string))]
           .map(entity => {
             const n = names(entity)

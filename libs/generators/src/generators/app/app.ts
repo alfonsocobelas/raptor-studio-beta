@@ -342,7 +342,7 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   // 4a-ter. los flujos emiten proceso (spec 39): una clase por flujo, huecos flow-* vacíos.
   //         Coreografía documentada — el grafo NO se ejecuta (regla 7); sin flujos, ni carpeta.
   if (composition.flows?.length) {
-    emitFlowProcesses(tree, backendSrc, composition.flows, models)
+    emitFlowProcesses(tree, backendSrc, composition.flows, models, SHARED_DOMAIN_ALIAS)
   }
 
   // 4b. la hoja de estilos SÍ es plantilla: sus tokens los escribe el tema (spec 20)
