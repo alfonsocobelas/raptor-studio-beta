@@ -25,11 +25,23 @@ import {
   reorderFlowStep,
   type DesignBlock,
   type DesignPage,
+  type DraftCalendar,
   type DraftEnumValue,
   type DraftField,
   type DraftResource,
   designPagesToAppPages
 } from '@app/shared/domain'
+
+/** Sin campo fecha no hay calendario que generar: la entidad no lleva config (spec 59). */
+function calendarConfigOf(block: DesignBlock): DraftCalendar | undefined {
+  if (!block.dateField) return undefined
+  return {
+    dateField: block.dateField,
+    ...(block.labelField ? { labelField: block.labelField } : {}),
+    ...(block.colorField ? { colorField: block.colorField } : {}),
+    ...(block.weekends === false ? { weekends: false } : {})
+  }
+}
 
 /** «orden-compra» → «ordenCompra»: los nombres de entidad son kebab y los de campo camel. */
 function camel(kebab: string): string {
@@ -293,10 +305,20 @@ export class DesignStore {
     if (block.kind === 'kpis' && this._pages()[pageIndex]?.blocks.some(b => b.kind === 'kpis')) {
       return this.addKpiResource(pageIndex, block.resources ?? [])
     }
+    // el calendario nace apuntando al primer campo fecha de la entidad (spec 59)
+    const added =
+      block.kind === 'calendar' && block.resource && !block.dateField
+        ? {
+            ...block,
+            dateField: this._resources()
+              .find(r => r.name === block.resource)
+              ?.fields.find(f => f.type === 'date')?.name
+          }
+        : block
     const pages = this._pages().map((page, i) => {
       if (i !== pageIndex) return page
       const blocks = [...page.blocks]
-      blocks.splice(at ?? blocks.length, 0, { width: 'full' as const, ...block })
+      blocks.splice(at ?? blocks.length, 0, { width: 'full' as const, ...added })
       return { ...page, blocks }
     })
     if (block.kind === 'text') return this.mutate(this.withIntros(pages), pages)
@@ -312,7 +334,30 @@ export class DesignStore {
             ? this._resources().map(r => (r.name === block.resource ? { ...r, gallery: true } : r))
             : block.kind === 'form' && block.resource
               ? this._resources().map(r => (r.name === block.resource ? { ...r, form: true } : r))
-              : this._resources()
+              : block.kind === 'calendar' && block.resource
+                ? this._resources().map(r =>
+                    r.name === block.resource ? { ...r, calendar: calendarConfigOf(added) } : r
+                  )
+                : this._resources()
+    return this.mutate(resources, pages)
+  }
+
+  /** Config del panel del bloque calendario (spec 59): vive en el bloque y se replica en la entidad. */
+  setCalendarConfig(
+    pageIndex: number,
+    blockIndex: number,
+    patch: Partial<Pick<DesignBlock, 'dateField' | 'labelField' | 'colorField' | 'weekends'>>
+  ): boolean {
+    const page = this._pages()[pageIndex]
+    const block = page?.blocks[blockIndex]
+    if (!block || block.kind !== 'calendar') return false
+    const updated = { ...block, ...patch }
+    const pages = this._pages().map((p, i) =>
+      i === pageIndex ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? updated : b)) } : p
+    )
+    const resources = this._resources().map(r =>
+      r.name === block.resource ? { ...r, calendar: calendarConfigOf(updated) } : r
+    )
     return this.mutate(resources, pages)
   }
 
@@ -354,7 +399,9 @@ export class DesignStore {
             ? this._resources().map(r => (r.name === removed.resource ? { ...r, gallery: false } : r))
             : removed?.kind === 'form' && removed.resource
               ? this._resources().map(r => (r.name === removed.resource ? { ...r, form: false } : r))
-              : this._resources()
+              : removed?.kind === 'calendar' && removed.resource
+                ? this._resources().map(r => (r.name === removed.resource ? { ...r, calendar: undefined } : r))
+                : this._resources()
     return this.mutate(resources, pages)
   }
 

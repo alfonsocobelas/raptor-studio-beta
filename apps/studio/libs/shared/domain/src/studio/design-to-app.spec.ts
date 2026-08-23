@@ -199,17 +199,24 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
 // spec 59: el bloque calendario cruza como página calendar
 describe('designPagesToAppPages — calendario (spec 59)', () => {
   it('una vista con calendario se emite como página calendar', () => {
-    const pages: DesignPage[] = [{ title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido' }] }]
+    const pages: DesignPage[] = [{ title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido', dateField: 'entrega' }] }]
 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'calendar', resource: 'pedido', label: 'Entregas' }])
   })
 
   it('no repite la página calendar de una entidad aunque el bloque aparezca dos veces', () => {
     const pages: DesignPage[] = [
-      { title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido' }] },
-      { title: 'Otra', blocks: [{ kind: 'calendar', resource: 'pedido' }] }
+      { title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido', dateField: 'entrega' }] },
+      { title: 'Otra', blocks: [{ kind: 'calendar', resource: 'pedido', dateField: 'entrega' }] }
     ]
 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'calendar', resource: 'pedido', label: 'Entregas' }])
   })
+})
+
+// spec 59: un calendario sin campo fecha es diseño y nada más
+it('un calendario sin campo fecha no cruza al app-schema', () => {
+  const pages: DesignPage[] = [{ title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido' }] }]
+
+  expect(designPagesToAppPages(pages)).toEqual([])
 })

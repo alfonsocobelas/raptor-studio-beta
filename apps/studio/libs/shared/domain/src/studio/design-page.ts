@@ -16,6 +16,14 @@ export interface DesignBlock {
   text?: string
   /** Ancho: completo o media fila (dos `half` seguidos forman dos columnas) */
   width?: 'full' | 'half'
+  /** Calendario (spec 59): campo fecha que coloca cada registro en su día */
+  dateField?: string
+  /** Calendario: campo mostrado en la tira */
+  labelField?: string
+  /** Calendario: campo enum que colorea la tira */
+  colorField?: string
+  /** Calendario: mostrar SÁB/DOM (por defecto true) */
+  weekends?: boolean
 }
 
 export interface DesignPage {
@@ -96,7 +104,7 @@ export const VIEW_PRESETS: BlockPreset[] = [
 /** Bloques que solo tienen sentido en la ficha de un registro. */
 export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
 
-export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments', 'form']
+export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments', 'form', 'calendar']
 
 /**
  * ¿El generador emite ESTE bloque en ESTA vista? La generabilidad no es solo del

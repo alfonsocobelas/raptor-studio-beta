@@ -22,7 +22,7 @@
 
 ## Estudio
 
-- [ ] **TASK-06**: Tests + `'calendar'` en `BlockKind`/`GENERABLE_BLOCKS` y campos de config en
+- [x] **TASK-06**: Tests + `'calendar'` en `BlockKind`/`GENERABLE_BLOCKS` y campos de config en
       `DesignBlock` (`design-page.ts`); derivación en `design-store` addBlock/removeBlock con
       defaults (primer campo date, labelField, weekends true) + mutadores de config.
 - [ ] **TASK-07**: Paleta (`BLOCK_TOOLS` + `view-icon.ts`, `lucideCalendar`) + componente de
