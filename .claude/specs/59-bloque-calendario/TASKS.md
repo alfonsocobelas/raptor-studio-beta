@@ -12,7 +12,7 @@
 - [x] **TASK-03**: Tests (`calendar.spec.ts`, patrón gallery.spec) + plantilla
       `files-calendar/frontend/__plural__-calendar.component.ts.template` + condición
       `if (model.calendar)` en `resource.ts`. Vistas Mes/Semana/Día, hoy realzado, tiras.
-- [ ] **TASK-04**: Tests + `CalendarPage` en `app-types.ts`, sufijo `' · calendario'` y
+- [x] **TASK-04**: Tests + `CalendarPage` en `app-types.ts`, sufijo `' · calendario'` y
       derivación en `composition.ts`, `calendarPath`/`calendarRoute` en `app.ts` (antes de `:id`).
 
 ## Frontera

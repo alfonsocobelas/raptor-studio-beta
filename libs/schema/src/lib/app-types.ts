@@ -65,7 +65,14 @@ export interface FormPage {
   label?: string
 }
 
-export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage | FormPage
+/** Calendario: una tira por registro en el día de su campo fecha (spec 59). */
+export interface CalendarPage {
+  kind: 'calendar'
+  resource: string
+  label?: string
+}
+
+export type PageDefinition = DashboardPage | ResourcePage | DetailPage | CardsPage | GanttPage | FormPage | CalendarPage
 
 /** Arquetipos que el GENERADOR sabe emitir hoy; el resto solo se puede diseñar. */
 export const GENERABLE_PAGE_KINDS: PageDefinition['kind'][] = ['dashboard', 'resource', 'form']

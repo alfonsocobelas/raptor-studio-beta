@@ -65,7 +65,11 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
     // una galería declarada sin vista que la muestre sería inalcanzable
     ...(model.gallery ? [{ kind: 'cards' as const, resource: model.name, label: `${labelOf(model)} · galería` }] : []),
     // ídem para el cronograma (spec 30)
-    ...(model.gantt ? [{ kind: 'gantt' as const, resource: model.name, label: `${labelOf(model)} · cronograma` }] : [])
+    ...(model.gantt ? [{ kind: 'gantt' as const, resource: model.name, label: `${labelOf(model)} · cronograma` }] : []),
+    // ídem para el calendario (spec 59)
+    ...(model.calendar
+      ? [{ kind: 'calendar' as const, resource: model.name, label: `${labelOf(model)} · calendario` }]
+      : [])
   ])
   if (dashboard) {
     pages.unshift({
@@ -122,7 +126,9 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
           ? ' · cronograma'
           : page.kind === 'form'
             ? ' · formulario'
-            : ''
+            : page.kind === 'calendar'
+              ? ' · calendario'
+              : ''
     return { ...page, label: page.label ?? `${labelOf(model)}${suffix}` }
   })
 
