@@ -33,10 +33,10 @@
 
 ## Golden y verificación
 
-- [ ] **TASK-09**: `calendar` en el modelo `project` de oro + bloque en `golden.app.ts`;
+- [x] **TASK-09**: `calendar` en el modelo `project` de oro + bloque en `golden.app.ts`;
       regenerar, revisar el diff a mano y congelar fixtures (`projects/` y `app/`). `/golden-diff`
       limpio en los 4 módulos y las 2 apps.
-- [ ] **TASK-10**: Verificación final: suites del estudio y del plugin en verde + typecheck del
+- [x] **TASK-10**: Verificación final: suites del estudio y del plugin en verde + typecheck del
       emitido a 0 errores + smoke visual del estudio (canvas y panel).
 
 ---
@@ -44,3 +44,15 @@
 ## Regla del juego
 
 Implementar UNA tarea, commit, seguir. Si una tarea crece (>~150 líneas), partirla.
+
+---
+
+## Notas de cierre (2026-08-23)
+
+- Re-baseline hecho en worktree `spec-59-golden` (el árbol principal tenía la spec 60 a medias);
+  commits cherry-picked a develop. Gate re-verificado sobre develop tras aterrizar la 60: 6/6 vacíos.
+- `typecheck-emitted --app=golden`: 1 error PREEXISTENTE ajeno a la spec (TS2307 en
+  `processes/del-contrato-al-proyecto-implantado.controller.ts`: alias `@sap-licenses/shared/domain`
+  en vez de `@app/...`, congelado así en la fixture). Apuntado como defecto vivo.
+- Smoke visual del estudio no conducido (sin navegador en esta sesión); la cobertura queda en los
+  885 tests del estudio (incl. canvas-calendar, calendar-config y store).
