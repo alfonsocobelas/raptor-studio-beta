@@ -13,6 +13,7 @@ import { CanvasDetailComponent } from './canvas-detail.component'
 import { CanvasCardsComponent } from './canvas-cards.component'
 import { CanvasFormComponent } from './canvas-form.component'
 import { CanvasCalendarComponent } from './canvas-calendar.component'
+import { CanvasKanbanComponent } from './canvas-kanban.component'
 import { mockTotal } from './mock-data'
 
 /**
@@ -22,7 +23,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, NgIcon],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, NgIcon],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -102,6 +103,9 @@ import { mockTotal } from './mock-data'
               }
               @case ('calendar') {
                 <studio-canvas-calendar [block]="block" />
+              }
+              @case ('kanban') {
+                <studio-canvas-kanban [block]="block" />
               }
               @case ('kpis') {
                 <div
@@ -256,6 +260,8 @@ export class CanvasPageComponent {
   protected generable(block: DesignBlock): boolean {
     // un calendario sin campo fecha en su entidad es diseño y nada más (spec 59)
     if (block.kind === 'calendar' && !block.dateField) return false
+    // ídem: un kanban sin campo enum (spec 61)
+    if (block.kind === 'kanban' && !block.columnsField) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }

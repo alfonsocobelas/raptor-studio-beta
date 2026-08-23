@@ -20,7 +20,7 @@
       (sin field no cruza) + `'kanban'` en `BlockKind`.
 - [x] **TASK-06**: Tests + `GENERABLE_BLOCKS` + `columnsField` en `DesignBlock` + design-store
       (default campo de estado > primer enum; flag; `setKanbanConfig`; removeBlock).
-- [ ] **TASK-07**: Paleta (`lucideSquareKanban`) + `canvas-kanban.component.ts` (columnas con
+- [x] **TASK-07**: Paleta (`lucideSquareKanban`) + `canvas-kanban.component.ts` (columnas con
       tarjetas de muestra) + badge sin enum.
 - [ ] **TASK-08**: Panel del bloque `kanban-config.component.ts` (Columnas / Etiqueta) en la
       pestaña Componente.

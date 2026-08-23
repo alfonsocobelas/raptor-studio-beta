@@ -8,7 +8,8 @@ const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
   fields: 'lucideIdCard',
   attachments: 'lucidePaperclip',
   form: 'lucideClipboardList',
-  calendar: 'lucideCalendar'
+  calendar: 'lucideCalendar',
+  kanban: 'lucideSquareKanban'
 }
 
 /**

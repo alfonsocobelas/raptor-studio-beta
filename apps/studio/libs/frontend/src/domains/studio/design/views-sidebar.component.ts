@@ -3,6 +3,7 @@ import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from 
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideCalendar,
+  lucideSquareKanban,
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
@@ -27,6 +28,7 @@ import { SYSTEM_VIEWS } from './system-preview/system-views'
 
 const SIDEBAR_ICONS = {
   lucideCalendar,
+  lucideSquareKanban,
   lucideChartNoAxesColumn,
   lucideLock,
   lucideChevronDown,
@@ -81,6 +83,7 @@ const BLOCK_TOOLS: BlockTool[] = [
   { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería' },
   { kind: 'form', icon: 'lucideClipboardList', label: 'Formulario' },
   { kind: 'calendar', icon: 'lucideCalendar', label: 'Calendario' },
+  { kind: 'kanban', icon: 'lucideSquareKanban', label: 'Kanban' },
   { kind: 'attachments', icon: 'lucidePaperclip', label: 'Adjuntos' },
   { kind: 'fields', icon: 'lucideIdCard', label: 'Datos · ficha' }
 ]

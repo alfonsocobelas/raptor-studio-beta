@@ -68,3 +68,8 @@ describe('viewIcon', () => {
 it('una vista de calendario se ve como calendario', () => {
   expect(viewIcon(page([{ kind: 'calendar', resource: 'pedido' }]))).toBe('lucideCalendar')
 })
+
+// spec 61
+it('una vista de kanban se ve como tablero', () => {
+  expect(viewIcon(page([{ kind: 'kanban', resource: 'pedido' }]))).toBe('lucideSquareKanban')
+})
