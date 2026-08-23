@@ -394,3 +394,48 @@ describe('draftToResource — matriz de accesos (spec 46)', () => {
     expect('access' in draftToResource(base, 'mi-app')).toBe(false)
   })
 })
+
+describe('draftToResource — calendario (spec 59)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Pedidos'),
+    fields: [
+      { name: 'nombre', label: 'Nombre', type: 'string' },
+      { name: 'entrega', label: 'Entrega', type: 'date' },
+      {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum',
+        values: [
+          { value: 'prevista', label: 'Entrega prevista' },
+          { value: 'atencion', label: 'Requiere atención' }
+        ]
+      }
+    ],
+    ...extra
+  })
+
+  it('sin calendario declarado no emite calendar', () => {
+    expect(draftToResource(draft(), 'taller').calendar).toBeUndefined()
+  })
+
+  it('con calendario emite calendar con el campo fecha elegido', () => {
+    const resource = draftToResource(draft({ calendar: { dateField: 'entrega' } }), 'taller')
+
+    expect(resource.calendar).toEqual({ date: 'entrega' })
+  })
+
+  it('la configuración completa cruza entera; weekends solo viaja cuando se apaga', () => {
+    const resource = draftToResource(
+      draft({ calendar: { dateField: 'entrega', labelField: 'nombre', colorField: 'estado', weekends: false } }),
+      'taller'
+    )
+
+    expect(resource.calendar).toEqual({ date: 'entrega', label: 'nombre', color: 'estado', weekends: false })
+  })
+
+  it('el resource con calendario sigue pasando defineResource', () => {
+    expect(() =>
+      defineResource(draftToResource(draft({ calendar: { dateField: 'entrega', colorField: 'estado' } }), 'taller'))
+    ).not.toThrow()
+  })
+})

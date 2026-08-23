@@ -35,6 +35,18 @@ export interface DraftEnumValue {
   label: string
 }
 
+/** Configuración del calendario elegida en el panel del bloque (mock 22E). */
+export interface DraftCalendar {
+  /** Campo fecha que coloca cada registro en su día */
+  dateField: string
+  /** Campo mostrado en la tira; sin él, el generador deriva el primero buscable */
+  labelField?: string
+  /** Campo enum que colorea la tira (opcional) */
+  colorField?: string
+  /** Mostrar SÁB/DOM (por defecto true) */
+  weekends?: boolean
+}
+
 export interface DraftResource {
   name: string
   plural: string
@@ -50,6 +62,8 @@ export interface DraftResource {
   gallery?: boolean
   /** La entidad tiene página-formulario de alta y edición (spec 48) */
   form?: boolean
+  /** La entidad se muestra como calendario: cada registro es una tira en su día (spec 59) */
+  calendar?: DraftCalendar
   /** Entradilla de la pantalla: el texto que la vista puso junto a la tabla (spec 18) */
   subtitle?: string
   /** Frase de negocio de la entidad, destilada del chat (spec 22) */
@@ -295,6 +309,17 @@ export function draftToResource(
     ...(hasDetail ? { detail: {} } : {}),
     ...(draft.gallery ? { gallery: {} } : {}),
     ...(draft.form ? { form: {} } : {}),
+    ...(draft.calendar
+      ? {
+          calendar: {
+            date: draft.calendar.dateField,
+            ...(draft.calendar.labelField ? { label: draft.calendar.labelField } : {}),
+            ...(draft.calendar.colorField ? { color: draft.calendar.colorField } : {}),
+            // true es el default del schema: solo viaja el apagado deliberado
+            ...(draft.calendar.weekends === false ? { weekends: false } : {})
+          }
+        }
+      : {}),
     schemaVersion: 1,
     name: draft.name,
     plural: draft.plural,

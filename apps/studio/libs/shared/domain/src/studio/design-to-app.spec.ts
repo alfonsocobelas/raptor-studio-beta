@@ -195,3 +195,21 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'resource', resource: 'cita', label: 'Citas de hoy' }])
   })
 })
+
+// spec 59: el bloque calendario cruza como página calendar
+describe('designPagesToAppPages — calendario (spec 59)', () => {
+  it('una vista con calendario se emite como página calendar', () => {
+    const pages: DesignPage[] = [{ title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido' }] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'calendar', resource: 'pedido', label: 'Entregas' }])
+  })
+
+  it('no repite la página calendar de una entidad aunque el bloque aparezca dos veces', () => {
+    const pages: DesignPage[] = [
+      { title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido' }] },
+      { title: 'Otra', blocks: [{ kind: 'calendar', resource: 'pedido' }] }
+    ]
+
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'calendar', resource: 'pedido', label: 'Entregas' }])
+  })
+})

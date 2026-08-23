@@ -4,7 +4,7 @@
  * coordenadas. Los «arquetipos» son presets de bloques, no tipos rígidos de
  * página: la tabla es un bloque más, tan opcional como los ficheros.
  */
-export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form'
+export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form' | 'calendar'
 
 export interface DesignBlock {
   kind: BlockKind

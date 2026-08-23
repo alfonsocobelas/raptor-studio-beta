@@ -17,7 +17,7 @@
 
 ## Frontera
 
-- [ ] **TASK-05**: Tests + flag `calendar` en `draft-resource.ts` (draft → `CalendarDefinition`)
+- [x] **TASK-05**: Tests + flag `calendar` en `draft-resource.ts` (draft → `CalendarDefinition`)
       y cruce `'calendar'` en `design-to-app.ts`.
 
 ## Estudio

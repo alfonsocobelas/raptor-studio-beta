@@ -62,7 +62,16 @@ export function designPagesToAppPages(pages: DesignPage[]): AppDefinition['pages
     // ya produjo el dashboard, los listados usan su propia etiqueta por defecto
     let titleTaken = kpis
     for (const block of page.blocks) {
-      const kind = block.kind === 'table' ? 'resource' : block.kind === 'cards' ? 'cards' : block.kind === 'form' ? 'form' : null
+      const kind =
+        block.kind === 'table'
+          ? 'resource'
+          : block.kind === 'cards'
+            ? 'cards'
+            : block.kind === 'form'
+              ? 'form'
+              : block.kind === 'calendar'
+                ? 'calendar'
+                : null
       if (kind === null || !block.resource) continue
       // la tabla que ya viaja DENTRO de este panel no produce además su pantalla: la misma
       // tabla en su PROPIA vista sí la produce, con su título — son dos sitios, no un duplicado
