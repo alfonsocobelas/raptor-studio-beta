@@ -6,7 +6,7 @@
 
 - [x] **TASK-01**: Tests + `KanbanDefinition` en `resource-types.ts` + validación en
       `define-resource.ts` (field existe y es enum).
-- [ ] **TASK-02**: Tests + `renderKanban` en `build-substitutions.ts` (labelField default,
+- [x] **TASK-02**: Tests + `renderKanban` en `build-substitutions.ts` (labelField default,
       columnas con etiquetas, stateDriven, moves desde las transiciones).
 - [ ] **TASK-03**: Tests (`kanban.spec.ts`) + plantilla `files-kanban/` + condición en
       `resource.ts`. Drag nativo: transiciones si stateDriven, update si enum normal

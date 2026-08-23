@@ -404,3 +404,54 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
     expect(subs.calendar?.dateLabel).toBe('Entrega')
   })
 })
+
+describe('buildSubstitutions — kanban (spec 61)', () => {
+  it('is null when the model declares no kanban', () => {
+    // WHEN
+    const subs = buildSubstitutions(contract, [customer])
+
+    // THEN
+    expect(subs.kanban).toBeNull()
+  })
+
+  it('draws one column per enum value in declared order, labelled from the badgeMap', () => {
+    // WHEN
+    const subs = buildSubstitutions({ ...contract, kanban: { field: 'status' } }, [customer])
+
+    // THEN
+    expect(subs.kanban?.field).toBe('status')
+    expect(subs.kanban?.labelField).toBe('contractNumber')
+    expect(subs.kanban?.columns.map(c => c.value)).toEqual(['active', 'expiring', 'expired', 'terminated'])
+    expect(subs.kanban?.columns[0].label).toBeTruthy()
+  })
+
+  it('over the state field the board is state-driven and expands the legal moves', () => {
+    // WHEN
+    const subs = buildSubstitutions({ ...contract, kanban: { field: 'status' } }, [customer])
+
+    // THEN — terminate cubre dos orígenes; expire uno. method = propertyName del verbo.
+    expect(subs.kanban?.stateDriven).toBe(true)
+    expect(subs.kanban?.moves).toEqual([
+      { from: 'active', to: 'terminated', verb: 'terminate', method: 'terminate' },
+      { from: 'expiring', to: 'terminated', verb: 'terminate', method: 'terminate' },
+      { from: 'expiring', to: 'expired', verb: 'expire', method: 'expire' }
+    ])
+  })
+
+  it('over a plain enum the board is not state-driven and has no moves', () => {
+    // WHEN — source es un enum normal de contract (no promovido a estado)
+    const subs = buildSubstitutions({ ...contract, kanban: { field: 'source' } }, [customer])
+
+    // THEN
+    expect(subs.kanban?.stateDriven).toBe(false)
+    expect(subs.kanban?.moves).toEqual([])
+  })
+
+  it('honours the explicit card label', () => {
+    // WHEN
+    const subs = buildSubstitutions({ ...contract, kanban: { field: 'status', label: 'customerName' } }, [customer])
+
+    // THEN
+    expect(subs.kanban?.labelField).toBe('customerName')
+  })
+})

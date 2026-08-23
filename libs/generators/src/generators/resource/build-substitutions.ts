@@ -104,6 +104,8 @@ export interface ResourceSubstitutions {
   gantt: GanttSubstitution | null
   /** Calendario mensual (spec 59): null cuando el modelo no lo declara */
   calendar: CalendarSubstitution | null
+  /** Tablero kanban (spec 61): null cuando el modelo no lo declara */
+  kanban: KanbanSubstitution | null
   labelsModule: LabelsModuleSubstitution | null
   importCsv: ImportSubstitution | null
   /** Entidades que REFERENCIAN a esta: sus tablas cuelgan de la ficha (spec 15) */
@@ -257,6 +259,19 @@ export interface CalendarSubstitution {
   dayNames: string[]
 }
 
+/** Kanban (spec 61): columnas y movimientos legales pre-masticados para la plantilla tonta. */
+export interface KanbanSubstitution {
+  field: string
+  labelField: string
+  /** Etiqueta humana del campo de columnas, para el pie del tablero */
+  fieldLabel: string
+  columns: { value: string; label: string }[]
+  /** El campo es el de la máquina de estados: mover tarjeta = disparar transición */
+  stateDriven: boolean
+  /** Solo stateDriven: un movimiento por (from → to); primera transición declarada */
+  moves: { from: string; to: string; verb: string; method: string }[]
+}
+
 export interface GallerySubstitution {
   titleField: string
   subtitleField: string | null
@@ -398,6 +413,7 @@ export function buildSubstitutions(
     gallery: renderGallery(definition),
     gantt: renderGantt(definition),
     calendar: renderCalendar(definition),
+    kanban: renderKanban(definition),
     labelsModule: renderLabelsModule(definition),
     importCsv: renderImportCsv(definition),
     related: renderRelated(definition, others),
@@ -1119,6 +1135,45 @@ function renderGantt(definition: ResourceDefinition): GanttSubstitution | null {
   const titleField = gantt.title ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
 
   return { titleField, startField: period.start, endField: period.end }
+}
+
+function renderKanban(definition: ResourceDefinition): KanbanSubstitution | null {
+  const { kanban } = definition
+  if (!kanban) return null
+
+  const fields = Object.entries(definition.fields).filter(([, f]) => !f.pk)
+  const texts = fields.filter(([, f]) => f.type === 'string' || f.type === 'text')
+  const labelField = kanban.label ?? texts.find(([, f]) => f.query?.searchable)?.[0] ?? texts[0]?.[0] ?? fields[0][0]
+
+  const columnsField = definition.fields[kanban.field]
+  const fieldLabel = columnsField?.table?.label ?? columnsField?.form?.label ?? kanban.field
+  const vo = columnsField?.vo
+  const values = typeof vo === 'object' ? (vo.values ?? []) : []
+  const labelOf = (value: string): string =>
+    columnsField?.table?.badgeMap?.[value]?.label ??
+    columnsField?.form?.options?.find(o => o.value === value)?.label ??
+    value.charAt(0).toUpperCase() + value.slice(1)
+
+  const stateDriven = definition.state?.field === kanban.field
+  // un movimiento por (from → to); si dos transiciones cubren el mismo par, manda la primera declarada
+  const moves: KanbanSubstitution['moves'] = []
+  if (stateDriven) {
+    for (const transition of definition.state?.transitions ?? []) {
+      for (const from of transition.from) {
+        if (moves.some(move => move.from === from && move.to === transition.to)) continue
+        moves.push({ from, to: transition.to, verb: transition.name, method: names(transition.name).propertyName })
+      }
+    }
+  }
+
+  return {
+    field: kanban.field,
+    labelField,
+    fieldLabel,
+    columns: values.map(value => ({ value, label: labelOf(value) })),
+    stateDriven,
+    moves
+  }
 }
 
 function renderCalendar(definition: ResourceDefinition): CalendarSubstitution | null {
