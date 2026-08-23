@@ -100,6 +100,13 @@ describe('buildGeneratorArgs — argv del generador, validado en el borde', () =
     expect(args).toContain('--directory=tmp/x')
   })
 
+  // spec 62: la infra aprovisionada por el cliente viaja como boolean, no como ranura
+  it('emite --provisionedInfra solo cuando es true', () => {
+    expect(buildGeneratorArgs({ ...base, provisionedInfra: true })).toContain('--provisionedInfra')
+    expect(buildGeneratorArgs({ ...base, provisionedInfra: false })).not.toContain('--provisionedInfra')
+    expect(buildGeneratorArgs(base)).not.toContain('--provisionedInfra')
+  })
+
   it('rechaza nombres que no sean kebab-case', () => {
     expect(() => buildGeneratorArgs({ ...base, name: 'Tienda Sur' })).toThrow(/kebab-case/)
     expect(() => buildGeneratorArgs({ ...base, name: 'x; rm -rf /' })).toThrow(/kebab-case/)

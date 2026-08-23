@@ -17,6 +17,8 @@ export interface GenerateArgsInput {
   slots: Record<string, string>
   plugins: string[]
   appFile: string
+  /** La infra la aprovisiona el cliente: el emitido no lleva Terraform (spec 62) */
+  provisionedInfra?: boolean
   skipInstall?: boolean
   directory?: string
 }
@@ -42,6 +44,7 @@ export function buildGeneratorArgs(input: GenerateArgsInput): string[] {
     ...slotFlags,
     `--plugins=${input.plugins.length ? input.plugins.join(',') : 'none'}`,
     '--no-interactive',
+    ...(input.provisionedInfra ? ['--provisionedInfra'] : []),
     ...(input.skipInstall ? ['--skipInstall'] : []),
     ...(input.directory ? [`--directory=${input.directory}`] : [])
   ]

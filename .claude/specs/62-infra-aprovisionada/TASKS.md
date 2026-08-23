@@ -16,7 +16,7 @@
 
 ## Studio-api
 
-- [ ] TASK-04: Test + `provisionedInfra` en `GenerateArgsInput`/`buildGeneratorArgs`
+- [x] TASK-04: Test + `provisionedInfra` en `GenerateArgsInput`/`buildGeneratorArgs`
       (emite `--provisionedInfra` solo cuando true) y en el DTO del controller de generación.
 
 ## Estudio (frontend)

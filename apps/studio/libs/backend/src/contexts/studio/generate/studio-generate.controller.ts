@@ -34,6 +34,11 @@ class GenerateRequestDto {
   @IsBoolean()
   skipInstall?: boolean
 
+  /** La infra la aprovisiona el cliente: sin ficheros de Terraform (spec 62) */
+  @IsOptional()
+  @IsBoolean()
+  provisionedInfra?: boolean
+
   @IsOptional()
   @IsString()
   directory?: string
