@@ -8,7 +8,7 @@
       `define-resource.ts` (field existe y es enum).
 - [x] **TASK-02**: Tests + `renderKanban` en `build-substitutions.ts` (labelField default,
       columnas con etiquetas, stateDriven, moves desde las transiciones).
-- [ ] **TASK-03**: Tests (`kanban.spec.ts`) + plantilla `files-kanban/` + condición en
+- [x] **TASK-03**: Tests (`kanban.spec.ts`) + plantilla `files-kanban/` + condición en
       `resource.ts`. Drag nativo: transiciones si stateDriven, update si enum normal
       (verificar DTO parcial), columnas ilegales atenuadas, sin optimismo.
 - [ ] **TASK-04**: Tests + `KanbanPage`, sufijo `' · tablero'`, derivación composeFlat,

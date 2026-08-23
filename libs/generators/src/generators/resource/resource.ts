@@ -177,6 +177,11 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-gallery'), outputDir, substitutions)
   }
 
+  // kanban (spec 61): otra lectura del listado, una columna por valor del enum
+  if (model.kanban) {
+    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-kanban'), outputDir, substitutions)
+  }
+
   // calendario (spec 59): otra lectura del listado, cada registro en su día
   if (model.calendar) {
     generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-calendar'), outputDir, substitutions)

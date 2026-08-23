@@ -1,0 +1,199 @@
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+<%_ if (detail) { _%>
+import { Router } from '@angular/router'
+<%_ } _%>
+import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
+import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
+import { formatValue } from '../../../../../../shared/utils/format-value'
+
+/**
+ * Tablero de <%- ui.title %>: la MISMA lectura del listado, con una columna por
+ * valor de «<%- kanban.fieldLabel %>» y cada registro como tarjeta. Comparte servicio
+ * y estado — no hay endpoint propio.
+<%_ if (kanban.stateDriven) { _%>
+ * El campo es el de la máquina de estados: soltar una tarjeta dispara la transición
+ * legal; las columnas sin transición desde el estado actual no aceptan el drop
+ * (y el backend responde 409 si algo se cuela).
+<%_ } else { _%>
+ * Soltar una tarjeta actualiza el campo con el update parcial del recurso.
+<%_ } _%>
+ */
+@Component({
+  selector: 'app-<%- plural %>-kanban',
+  imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="min-w-0 space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight"><%- ui.title %></h1>
+        <p class="text-muted-foreground"><%- ui.subtitle %></p>
+      </div>
+
+      @if (isLoading() && !hasData()) {
+        <p class="text-muted-foreground py-12 text-center text-sm"><%- ui.loading %></p>
+      } @else if (error()) {
+        <p class="text-destructive py-12 text-center text-sm"><%- ui.error %></p>
+      } @else {
+        @if (moveError(); as message) {
+          <p class="text-destructive text-sm" role="alert">{{ message }}</p>
+        }
+        <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + columns.length + ', minmax(0, 1fr))'">
+          @for (column of columns; track column.value) {
+            <section
+              class="bg-card flex min-h-40 flex-col rounded-lg border transition-opacity"
+              [class.opacity-40]="draggingFrom() !== null && !acceptsDrop(column.value)"
+              [attr.data-column]="column.value"
+              (dragover)="onDragOver($event, column.value)"
+              (drop)="onDrop($event, column.value)"
+            >
+              <header class="flex items-center justify-between border-b px-3 py-2">
+                <h2 class="text-xs font-semibold uppercase tracking-widest">{{ column.label }}</h2>
+                <span class="text-muted-foreground text-xs">{{ cardsOf(column.value).length }}</span>
+              </header>
+              <div class="flex-1 space-y-2 p-2">
+                @for (item of cardsOf(column.value); track item.id) {
+                  <article
+                    class="bg-background rounded-md border p-2 text-sm shadow-sm"
+                    draggable="true"
+                    (dragstart)="onDragStart($event, item)"
+                    (dragend)="draggingFrom.set(null)"
+<%_ if (detail) { _%>
+                    role="button"
+                    tabindex="0"
+                    (click)="open(item)"
+                    (keydown.enter)="open(item)"
+<%_ } _%>
+                  >
+                    <p class="truncate font-medium">{{ text(item, cardLabel) }}</p>
+                  </article>
+                }
+              </div>
+            </section>
+          }
+        </div>
+        <p class="text-muted-foreground text-[10px] uppercase tracking-widest">
+          <%- labelPlural %> · columnas por <%- kanban.fieldLabel %> · {{ total() }} en total
+        </p>
+      }
+    </div>
+  `
+})
+export class <%- pluralClassName %>KanbanComponent {
+  private readonly _service = inject(<%- className %>Service)
+<%_ if (detail) { _%>
+  private readonly _router = inject(Router)
+<%_ } _%>
+
+  /** Campos y columnas: los decide el generador desde el modelo. */
+  readonly boardField = '<%- kanban.field %>'
+  readonly cardLabel = '<%- kanban.labelField %>'
+  readonly columns: { value: string; label: string }[] = [
+<%_ kanban.columns.forEach(column => { _%>
+    { value: '<%- column.value %>', label: '<%- column.label %>' },
+<%_ }) _%>
+  ]
+<%_ if (kanban.stateDriven) { _%>
+  /** Movimientos legales de la máquina de estados; el resto de columnas no acepta el drop. */
+  readonly legalMoves: { from: string; to: string; method: string }[] = [
+<%_ kanban.moves.forEach(move => { _%>
+    { from: '<%- move.from %>', to: '<%- move.to %>', method: '<%- move.method %>' },
+<%_ }) _%>
+  ]
+  private readonly _transitions: Record<string, (id: string) => Promise<void>> = {
+<%_ [...new Set(kanban.moves.map(move => move.method))].forEach(method => { _%>
+    <%- method %>: id => this._service.<%- method %>(id),
+<%_ }) _%>
+  }
+<%_ } _%>
+
+  readonly draggingFrom = signal<string | null>(null)
+  readonly moveError = signal<string | null>(null)
+
+  readonly isLoading = this._service.<%- plural %>.isLoading
+  readonly error = this._service.<%- plural %>.error
+
+  // Igual que el listado: al recargar, resource() vacía value(); conservar la última
+  // página evita que el tablero parpadee en cada movimiento.
+  private readonly _loaded = linkedSignal<
+    OffsetPaginatedOutput<<%- dtoName %>> | undefined,
+    OffsetPaginatedOutput<<%- dtoName %>> | undefined
+  >({
+    source: () => this._service.<%- plural %>.value(),
+    computation: (value, previous) => value ?? previous?.value
+  })
+
+  readonly items = computed(() => this._loaded()?.items ?? [])
+  readonly total = computed(() => this._loaded()?.total ?? 0)
+  readonly hasData = computed(() => this._loaded() !== undefined)
+
+  private readonly _byColumn = computed(() => {
+    const map = new Map<string, <%- dtoName %>[]>()
+    for (const item of this.items()) {
+      const value = String((item as unknown as Record<string, unknown>)[this.boardField] ?? '')
+      map.set(value, [...(map.get(value) ?? []), item])
+    }
+    return map
+  })
+
+  cardsOf(value: string): <%- dtoName %>[] {
+    return this._byColumn().get(value) ?? []
+  }
+
+  text(item: <%- dtoName %>, key: string): string {
+    return formatValue((item as unknown as Record<string, unknown>)[key])
+  }
+
+  acceptsDrop(value: string): boolean {
+    const from = this.draggingFrom()
+    if (from === null || from === value) return false
+<%_ if (kanban.stateDriven) { _%>
+    return this.legalMoves.some(move => move.from === from && move.to === value)
+<%_ } else { _%>
+    return true
+<%_ } _%>
+  }
+
+  onDragStart(event: DragEvent, item: <%- dtoName %>): void {
+    event.dataTransfer?.setData('text/plain', item.id)
+    this.draggingFrom.set(String((item as unknown as Record<string, unknown>)[this.boardField] ?? ''))
+  }
+
+  onDragOver(event: DragEvent, value: string): void {
+    if (this.acceptsDrop(value)) event.preventDefault()
+  }
+
+  onDrop(event: DragEvent, value: string): void {
+    event.preventDefault()
+    const id = event.dataTransfer?.getData('text/plain')
+    const from = this.draggingFrom()
+    const legal = this.acceptsDrop(value)
+    this.draggingFrom.set(null)
+    if (!id || from === null || !legal) return
+    void this._move(id, from, value)
+  }
+
+  /** Sin optimismo: la tarjeta cambia de columna cuando el reload trae el nuevo valor. */
+  private async _move(id: string, from: string, value: string): Promise<void> {
+    this.moveError.set(null)
+    try {
+<%_ if (kanban.stateDriven) { _%>
+      const move = this.legalMoves.find(m => m.from === from && m.to === value)
+      if (!move) return
+      await this._transitions[move.method](id)
+<%_ } else { _%>
+      await this._service.update(id, { <%- kanban.field %>: value })
+<%_ } _%>
+    } catch {
+      this.moveError.set('No se pudo mover la tarjeta; vuelve a intentarlo')
+    }
+  }
+<%_ if (detail) { _%>
+
+  open(item: <%- dtoName %>): void {
+    void this._router.navigate(['<%- route %>', item.id])
+  }
+<%_ } _%>
+
+  // @ai:begin kanban-extra — filtros o adornos propios de este tablero
+  // @ai:end
+}
