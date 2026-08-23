@@ -50,3 +50,14 @@ export class InviteUserHttpDto {
   @IsIn([...UserRole.VALUES])
   role!: string
 }
+
+export class ChangePasswordHttpDto {
+  @IsString()
+  @MinLength(1)
+  currentPassword!: string
+
+  @IsString()
+  @MinLength(AUTH_CONSTRAINTS.PASSWORD.MIN)
+  @MaxLength(AUTH_CONSTRAINTS.PASSWORD.MAX)
+  newPassword!: string
+}

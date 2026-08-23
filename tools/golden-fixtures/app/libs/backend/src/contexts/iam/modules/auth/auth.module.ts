@@ -6,12 +6,14 @@ import { ForgotPasswordHandler } from './application/handlers/forgot-password.ha
 import { InviteUserHandler } from './application/handlers/invite-user.handler'
 import { LoginHandler } from './application/handlers/login.handler'
 import { LogoutHandler } from './application/handlers/logout.handler'
+import { ChangePasswordHandler } from './application/handlers/change-password.handler'
 import { ResetPasswordHandler } from './application/handlers/reset-password.handler'
 import { AcceptInvitationUseCase } from './application/use-cases/accept-invitation-usecase.service'
 import { InviteUserUseCase } from './application/use-cases/invite-user-usecase.service'
 import { LoginUseCase } from './application/use-cases/login-usecase.service'
 import { LogoutUseCase } from './application/use-cases/logout-usecase.service'
 import { RequestPasswordResetUseCase } from './application/use-cases/request-password-reset-usecase.service'
+import { ChangePasswordUseCase } from './application/use-cases/change-password-usecase.service'
 import { ResetPasswordUseCase } from './application/use-cases/reset-password-usecase.service'
 import { ResolveSessionUseCase } from './application/use-cases/resolve-session-usecase.service'
 import { SearchUsersUseCase } from './application/use-cases/search-users-usecase.service'
@@ -55,6 +57,7 @@ import { AcsEmailConfig, BrevoConfig, SesConfig, SmtpConfig } from '../../../sha
     AcceptInvitationUseCase,
     RequestPasswordResetUseCase,
     ResetPasswordUseCase,
+    ChangePasswordUseCase,
     SearchUsersUseCase,
     ChangeUserRoleUseCase,
     DisableUserUseCase,
@@ -65,6 +68,7 @@ import { AcsEmailConfig, BrevoConfig, SesConfig, SmtpConfig } from '../../../sha
     AcceptInvitationHandler,
     ForgotPasswordHandler,
     ResetPasswordHandler,
+    ChangePasswordHandler,
     SearchUsersHandler,
     ChangeUserRoleHandler,
     DisableUserHandler,

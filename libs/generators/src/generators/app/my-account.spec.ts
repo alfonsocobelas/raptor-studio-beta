@@ -46,6 +46,16 @@ describe('app generator — mi cuenta', () => {
       expect(tree.exists('apps/demo/libs/frontend/src/domains/iam/profile.component.spec.ts')).toBe(true)
     })
 
+    it('el backend expone POST /auth/change-password (cazado en vivo: la referencia lo tenía, el plugin no)', () => {
+      const controller =
+        tree.read('apps/demo/libs/backend/src/contexts/iam/modules/auth/infrastructure/entrypoints/auth.controller.ts', 'utf-8') ?? ''
+      const module = tree.read('apps/demo/libs/backend/src/contexts/iam/modules/auth/auth.module.ts', 'utf-8') ?? ''
+
+      expect(controller).toContain("@Post('change-password')")
+      expect(module).toContain('ChangePasswordUseCase')
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/iam/modules/auth/application/use-cases/change-password-usecase.service.ts')).toBe(true)
+    })
+
     it('cablea la ruta /account en el frontend', () => {
       const routes = tree.read('apps/demo/apps/frontend-app/src/app.routes.ts', 'utf-8') ?? ''
 

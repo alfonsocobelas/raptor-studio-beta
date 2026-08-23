@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler'
 import type { Request, Response } from 'express'
 import { CurrentUserDto, UserRoleEnum } from '@app/shared/domain'
 import { AcceptInvitationHandler } from '../../application/handlers/accept-invitation.handler'
+import { ChangePasswordHandler } from '../../application/handlers/change-password.handler'
 import { ForgotPasswordHandler } from '../../application/handlers/forgot-password.handler'
 import { InviteUserHandler } from '../../application/handlers/invite-user.handler'
 import { LoginHandler } from '../../application/handlers/login.handler'
@@ -20,6 +21,7 @@ import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator
 import { AUTH_POLICY } from '../../domain/auth-constants'
 import {
   AcceptInvitationHttpDto,
+  ChangePasswordHttpDto,
   ForgotPasswordHttpDto,
   InviteUserHttpDto,
   LoginHttpDto,
@@ -43,6 +45,7 @@ export class AuthController {
     private readonly acceptInvitationHandler: AcceptInvitationHandler,
     private readonly forgotPasswordHandler: ForgotPasswordHandler,
     private readonly resetPasswordHandler: ResetPasswordHandler,
+    private readonly changePasswordHandler: ChangePasswordHandler,
     private readonly inviteUserHandler: InviteUserHandler
   ) {}
 
@@ -101,6 +104,19 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(@Body() body: ResetPasswordHttpDto): Promise<void> {
     return this.resetPasswordHandler.handle(body)
+  }
+
+  // Endpoint de sesión, sin rol (como logout y /me): cualquier usuario autenticado es dueño
+  // de su contraseña. Cambia la cookie: el resto de sesiones del usuario se invalidan.
+  @Post('change-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: ChangePasswordHttpDto,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<void> {
+    const result = await this.changePasswordHandler.handle({ userId: user.id, ...body })
+    res.cookie(SESSION_COOKIE_NAME, result.sessionToken, { ...cookieOptions(), maxAge: SESSION_MAX_AGE_MS })
   }
 
   @Roles(UserRoleEnum.ADMIN)
