@@ -11,7 +11,8 @@
 - [x] TASK-02: Test por proveedor (azure/aws/raptor) con el flag activo: la generación
       completa no revienta y `nameTerraformProject` tolera la ausencia de `iac/`
       (protegerlo si hace falta).
-- [ ] TASK-03: Gate de oro `/golden-diff` con el flag inactivo (diff vacío; sin re-baseline).
+- [x] TASK-03: Gate de oro `/golden-diff` con el flag inactivo (diff vacío; sin re-baseline).
+      Vacío en las 6 fixtures (2026-08-24).
 
 ## Studio-api
 
