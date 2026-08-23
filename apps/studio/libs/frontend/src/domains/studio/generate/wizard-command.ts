@@ -32,6 +32,8 @@ export interface WizardOptions {
   /** Ranura → proveedor elegido */
   slots: Record<string, string>
   plugins: string[]
+  /** La infra la aprovisiona el cliente: el emitido no lleva Terraform (spec 62) */
+  provisionedInfra?: boolean
 }
 
 /** El artefacto que consume `--appFile`: el schema vivo con el nombre elegido. */
@@ -133,6 +135,7 @@ export function buildCommand(manifest: SlotsManifest, options: WizardOptions): s
     `npx nx g @raptor/generators:app ${options.name}`,
     `--appFile=${options.name}.app.json`,
     ...choosableSlots(manifest).map(slot => `--${slot.name}=${options.slots[slot.name] ?? slot.default}`),
-    `--plugins=${plugins}`
+    `--plugins=${plugins}`,
+    ...(options.provisionedInfra ? ['--provisionedInfra'] : [])
   ].join(' ')
 }

@@ -179,6 +179,18 @@ describe('mergeCatalog', () => {
     expect(chosen.reason).toBeUndefined()
   })
 
+  // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox
+  describe('infra aprovisionada', () => {
+    it('solo el grupo de infra lleva el toggle, con su redacción', () => {
+      const groups = mergeCatalog(manifest, defaults).groups
+      const infra = groups.find(g => g.slot === 'infra')
+
+      expect(infra?.toggle?.key).toBe('provisionedInfra')
+      expect(infra?.toggle?.label.length).toBeGreaterThan(0)
+      expect(groups.filter(g => g.slot !== 'infra').every(g => g.toggle === undefined)).toBe(true)
+    })
+  })
+
   describe('almacén de sesiones', () => {
     it('la ranura sale con la redacción del catálogo, al final del formulario', () => {
       const groups = mergeCatalog(manifest, defaults).groups

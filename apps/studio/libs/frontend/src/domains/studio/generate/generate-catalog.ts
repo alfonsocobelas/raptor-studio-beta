@@ -28,6 +28,13 @@ export interface CatalogCard {
   reason?: string
 }
 
+/** Modificador booleano de una ranura (spec 62): no es una tarjeta ni un proveedor. */
+export interface CatalogToggle {
+  key: 'provisionedInfra'
+  label: string
+  hint: string
+}
+
 export interface CatalogGroup {
   slot: string
   /** Etiqueta corta del manifiesto: la que cabe en el raíl. */
@@ -35,6 +42,8 @@ export interface CatalogGroup {
   heading: string
   subheading?: string
   cards: CatalogCard[]
+  /** Presente solo en el grupo de infra: checkbox «la infra ya está aprovisionada». */
+  toggle?: CatalogToggle
 }
 
 export interface Catalog {
@@ -140,7 +149,17 @@ function toGroup(slot: ManifestSlot, manifest: SlotsManifest, selection: Record<
     label: slot.label,
     heading: copy?.heading ?? slot.label,
     ...(copy?.subheading ? { subheading: copy.subheading } : {}),
-    cards: [...known, ...rest]
+    cards: [...known, ...rest],
+    // spec 62: hay clientes que aprovisionan su propia infra; el checkbox omite el Terraform
+    ...(slot.name === 'infra'
+      ? {
+          toggle: {
+            key: 'provisionedInfra' as const,
+            label: 'La infraestructura ya está aprovisionada por el cliente',
+            hint: 'No se generan los ficheros de Terraform; los adapters de la nube sí'
+          }
+        }
+      : {})
   }
 }
 

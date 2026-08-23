@@ -107,6 +107,13 @@ describe('buildCommand', () => {
     expect(buildCommand(manifest, options)).not.toContain('--infra=')
   })
 
+  // spec 62: el comando enseñado es el ejecutado — el flag sale solo cuando es true
+  it('añade --provisionedInfra solo cuando la infra ya está aprovisionada', () => {
+    expect(buildCommand(manifest, { ...options, provisionedInfra: true })).toContain('--provisionedInfra')
+    expect(buildCommand(manifest, { ...options, provisionedInfra: false })).not.toContain('--provisionedInfra')
+    expect(buildCommand(manifest, options)).not.toContain('--provisionedInfra')
+  })
+
   it('sin plugins emite plugins=none', () => {
     expect(buildCommand(manifest, { ...options, plugins: [] })).toContain('--plugins=none')
   })

@@ -21,7 +21,7 @@
 
 ## Estudio (frontend)
 
-- [ ] TASK-05: Test + `toggle` del grupo infra en `generate-catalog.ts` y
+- [x] TASK-05: Test + `toggle` del grupo infra en `generate-catalog.ts` y
       `provisionedInfra` en `WizardOptions`/`buildCommand`.
 - [ ] TASK-06: Test + checkbox en `generate-cards.component.ts` (visible solo con
       proveedor ≠ `none`) y viaje en `generate-runner.ts` hasta el POST.
