@@ -22,7 +22,7 @@
       (default campo de estado > primer enum; flag; `setKanbanConfig`; removeBlock).
 - [x] **TASK-07**: Paleta (`lucideSquareKanban`) + `canvas-kanban.component.ts` (columnas con
       tarjetas de muestra) + badge sin enum.
-- [ ] **TASK-08**: Panel del bloque `kanban-config.component.ts` (Columnas / Etiqueta) en la
+- [x] **TASK-08**: Panel del bloque `kanban-config.component.ts` (Columnas / Etiqueta) en la
       pestaña Componente.
 
 ## Golden y verificación
