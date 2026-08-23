@@ -25,6 +25,10 @@ export const routes: Routes = [
     path: 'users',
     loadComponent: () => import('@app/frontend/domains/iam/users-list.component').then(m => m.UsersListComponent)
   },
+  {
+    path: 'account',
+    loadComponent: () => import('@app/frontend/domains/iam/profile.component').then(m => m.ProfileComponent)
+  },
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
     path: 'dashboard',

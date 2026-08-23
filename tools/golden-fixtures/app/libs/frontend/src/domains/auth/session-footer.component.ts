@@ -24,10 +24,15 @@ import { USER_ROLE_LABELS } from '../iam/iam-labels'
         </a>
       }
       @if (auth.currentUser(); as user) {
-        <div class="px-3 py-2">
+        <a
+          routerLink="/account"
+          routerLinkActive="bg-accent text-accent-foreground"
+          class="hover:bg-accent/60 block rounded-md px-3 py-2"
+          data-testid="my-account"
+        >
           <p class="truncate text-sm font-medium">{{ user.name }}</p>
           <p class="text-muted-foreground truncate text-xs">{{ user.email }} · {{ roleLabel() }}</p>
-        </div>
+        </a>
         <button
           type="button"
           class="hover:bg-accent/60 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm"

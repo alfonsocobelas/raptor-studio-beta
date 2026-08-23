@@ -132,6 +132,10 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
   {
     path: 'users',
     loadComponent: () => import('${context.scope}/frontend/domains/iam/users-list.component').then(m => m.UsersListComponent)
+  },
+  {
+    path: 'account',
+    loadComponent: () => import('${context.scope}/frontend/domains/iam/profile.component').then(m => m.ProfileComponent)
   },`
       )
     tree.write(routesPath, guarded)

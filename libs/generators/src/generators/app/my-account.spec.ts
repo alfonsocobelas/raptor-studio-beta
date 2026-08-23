@@ -29,4 +29,41 @@ describe('app generator — mi cuenta', () => {
     expect(service).toContain('changePassword(dto: ChangePasswordDto)')
     expect(service).toContain('auth/change-password')
   })
+
+  describe('con auth single-tenant', () => {
+    let tree: Tree
+
+    beforeAll(async () => {
+      tree = await generate({ ...base, auth: 'single-tenant' })
+    })
+
+    it('emite la pantalla Mi cuenta con su test, sin imports de la librería de componentes (ADR-003)', () => {
+      const component = tree.read('apps/demo/libs/frontend/src/domains/iam/profile.component.ts', 'utf-8') ?? ''
+
+      expect(component).toContain('Mi cuenta')
+      expect(component).toContain('changePassword')
+      expect(component).not.toContain('@spartan-ng')
+      expect(tree.exists('apps/demo/libs/frontend/src/domains/iam/profile.component.spec.ts')).toBe(true)
+    })
+
+    it('cablea la ruta /account en el frontend', () => {
+      const routes = tree.read('apps/demo/apps/frontend-app/src/app.routes.ts', 'utf-8') ?? ''
+
+      expect(routes).toContain("path: 'account'")
+      expect(routes).toContain('ProfileComponent')
+    })
+
+    it('el pie de sesión enlaza a /account desde el bloque del usuario', () => {
+      const footer = tree.read('apps/demo/libs/frontend/src/domains/auth/session-footer.component.ts', 'utf-8') ?? ''
+
+      expect(footer).toContain('/account')
+    })
+  })
+
+  it('sin auth no existe ni la pantalla ni la ruta', async () => {
+    const tree = await generate(base)
+
+    expect(tree.exists('apps/demo/libs/frontend/src/domains/iam/profile.component.ts')).toBe(false)
+    expect(tree.read('apps/demo/apps/frontend-app/src/app.routes.ts', 'utf-8') ?? '').not.toContain("path: 'account'")
+  })
 })
