@@ -35,6 +35,14 @@ export interface DraftEnumValue {
   label: string
 }
 
+/** Configuración del kanban elegida en el panel del bloque (spec 61). */
+export interface DraftKanban {
+  /** Campo enum cuyos valores son las columnas */
+  field: string
+  /** Campo mostrado en la tarjeta */
+  labelField?: string
+}
+
 /** Configuración del calendario elegida en el panel del bloque (mock 22E). */
 export interface DraftCalendar {
   /** Campo fecha que coloca cada registro en su día */
@@ -64,6 +72,8 @@ export interface DraftResource {
   form?: boolean
   /** La entidad se muestra como calendario: cada registro es una tira en su día (spec 59) */
   calendar?: DraftCalendar
+  /** La entidad se muestra como tablero kanban: una columna por valor del enum (spec 61) */
+  kanban?: DraftKanban
   /** Entradilla de la pantalla: el texto que la vista puso junto a la tabla (spec 18) */
   subtitle?: string
   /** Frase de negocio de la entidad, destilada del chat (spec 22) */
@@ -309,6 +319,14 @@ export function draftToResource(
     ...(hasDetail ? { detail: {} } : {}),
     ...(draft.gallery ? { gallery: {} } : {}),
     ...(draft.form ? { form: {} } : {}),
+    ...(draft.kanban
+      ? {
+          kanban: {
+            field: draft.kanban.field,
+            ...(draft.kanban.labelField ? { label: draft.kanban.labelField } : {})
+          }
+        }
+      : {}),
     ...(draft.calendar
       ? {
           calendar: {

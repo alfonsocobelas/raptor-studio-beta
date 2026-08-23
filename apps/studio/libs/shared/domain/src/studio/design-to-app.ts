@@ -71,11 +71,15 @@ export function designPagesToAppPages(pages: DesignPage[]): AppDefinition['pages
               ? 'form'
               : block.kind === 'calendar'
                 ? 'calendar'
-                : null
+                : block.kind === 'kanban'
+                  ? 'kanban'
+                  : null
       if (kind === null || !block.resource) continue
       // un calendario sin campo fecha es diseño y nada más: emitirlo dejaría
       // una entrada de menú apuntando a una ruta que el generador no crea
       if (block.kind === 'calendar' && !block.dateField) continue
+      // ídem: un kanban sin campo de columnas es diseño y nada más (spec 61)
+      if (block.kind === 'kanban' && !block.columnsField) continue
       // la tabla que ya viaja DENTRO de este panel no produce además su pantalla: la misma
       // tabla en su PROPIA vista sí la produce, con su título — son dos sitios, no un duplicado
       if (carried.includes(block.resource)) continue

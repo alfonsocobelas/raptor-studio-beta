@@ -4,7 +4,7 @@
  * coordenadas. Los «arquetipos» son presets de bloques, no tipos rígidos de
  * página: la tabla es un bloque más, tan opcional como los ficheros.
  */
-export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form' | 'calendar'
+export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form' | 'calendar' | 'kanban'
 
 export interface DesignBlock {
   kind: BlockKind
@@ -24,6 +24,8 @@ export interface DesignBlock {
   colorField?: string
   /** Calendario: mostrar SÁB/DOM (por defecto true) */
   weekends?: boolean
+  /** Kanban (spec 61): campo enum cuyos valores son las columnas */
+  columnsField?: string
 }
 
 export interface DesignPage {

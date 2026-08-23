@@ -439,3 +439,36 @@ describe('draftToResource — calendario (spec 59)', () => {
     ).not.toThrow()
   })
 })
+
+describe('draftToResource — kanban (spec 61)', () => {
+  const draft = (extra: Partial<DraftResource> = {}): DraftResource => ({
+    ...newDraftResource('Pedidos'),
+    fields: [
+      { name: 'nombre', label: 'Nombre', type: 'string' },
+      {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum',
+        values: [
+          { value: 'pendiente', label: 'Pendiente' },
+          { value: 'entregado', label: 'Entregado' }
+        ]
+      }
+    ],
+    ...extra
+  })
+
+  it('sin kanban declarado no emite kanban', () => {
+    expect(draftToResource(draft(), 'taller').kanban).toBeUndefined()
+  })
+
+  it('con kanban emite la config con el campo de columnas y la etiqueta', () => {
+    const resource = draftToResource(draft({ kanban: { field: 'estado', labelField: 'nombre' } }), 'taller')
+
+    expect(resource.kanban).toEqual({ field: 'estado', label: 'nombre' })
+  })
+
+  it('el resource con kanban sigue pasando defineResource', () => {
+    expect(() => defineResource(draftToResource(draft({ kanban: { field: 'estado' } }), 'taller'))).not.toThrow()
+  })
+})

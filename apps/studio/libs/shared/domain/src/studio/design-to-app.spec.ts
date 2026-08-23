@@ -220,3 +220,18 @@ it('un calendario sin campo fecha no cruza al app-schema', () => {
 
   expect(designPagesToAppPages(pages)).toEqual([])
 })
+
+// spec 61: el bloque kanban cruza como página kanban
+describe('designPagesToAppPages — kanban (spec 61)', () => {
+  it('una vista con kanban se emite como página kanban', () => {
+    const pages: DesignPage[] = [{ title: 'Tablero', blocks: [{ kind: 'kanban', resource: 'pedido', columnsField: 'estado' }] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([{ kind: 'kanban', resource: 'pedido', label: 'Tablero' }])
+  })
+
+  it('un kanban sin campo de columnas no cruza al app-schema', () => {
+    const pages: DesignPage[] = [{ title: 'Tablero', blocks: [{ kind: 'kanban', resource: 'pedido' }] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([])
+  })
+})

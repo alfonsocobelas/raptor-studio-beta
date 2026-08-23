@@ -16,7 +16,7 @@
 
 ## Frontera y estudio
 
-- [ ] **TASK-05**: Tests + flag `kanban` en `draft-resource.ts` + cruce en `design-to-app.ts`
+- [x] **TASK-05**: Tests + flag `kanban` en `draft-resource.ts` + cruce en `design-to-app.ts`
       (sin field no cruza) + `'kanban'` en `BlockKind`.
 - [ ] **TASK-06**: Tests + `GENERABLE_BLOCKS` + `columnsField` en `DesignBlock` + design-store
       (default campo de estado > primer enum; flag; `setKanbanConfig`; removeBlock).
