@@ -1,5 +1,6 @@
 import { names, type Tree } from '@nx/devkit'
 import * as path from 'path'
+import { copyVerbatim } from '../assets'
 import { definePlugin, type PluginContext } from './plugin'
 
 const IAM_ENTITIES = [
@@ -41,6 +42,7 @@ export const authPlugin = definePlugin({
   localSetupSteps: ['seed-auth'],
 
   apply(tree: Tree, context: PluginContext): void {
+    emitSessionStore(tree, context)
     registerModule(tree, context)
     registerEntities(tree, context)
     addSchemaMigration(tree, context)
@@ -52,6 +54,16 @@ export const authPlugin = definePlugin({
   /** Los schemas que el plugin añade, para que el docker/local los cree. */
   schemas: [AUTH_SCHEMA]
 })
+
+/**
+ * La persistencia de sesión vive en su propia carpeta de assets, separada del resto
+ * del plugin: es la pieza que cambia según el almacén elegido (hoy TypeORM; la ranura
+ * `sessionStore` añadirá Redis como alternativa). El dominio de sesión no se mueve:
+ * es común a todos los stores.
+ */
+function emitSessionStore(tree: Tree, context: PluginContext): void {
+  copyVerbatim(tree, path.join(__dirname, 'assets-auth-session-typeorm'), context.root)
+}
 
 /**
  * Con auth real, el shell queda tras authGuard, /login existe, el interceptor

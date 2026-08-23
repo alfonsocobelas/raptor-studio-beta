@@ -14,6 +14,7 @@ import * as path from 'path'
 import { MODELS, registerModels, selectModels } from '../resource/models/registry'
 import { emitsSeeder } from '../resource/emits'
 import { ignoreNestedWorkspace } from './nxignore'
+import { copyVerbatim } from './assets'
 import { byDependency } from './dependency-order'
 import { applyPorts } from './ports'
 import { addFontDependency, themeSubstitutions } from './theme-css'
@@ -943,21 +944,6 @@ export function applyNavAccess(tree: Tree, root: string, scope: string): void {
     .replace('@for (item of navItems; track item.route) {', '@for (item of navItems(); track item.route) {')
     .replace('protected readonly navItems = NAV_ITEMS', filtered)
   tree.write(shellPath, patched)
-}
-
-/**
- * Copia un árbol de assets sin pasarlo por EJS (el esqueleto es literal) quitando
- * el sufijo `.template`, que solo existe para que el build del plugin no lo compile.
- */
-function copyVerbatim(tree: Tree, from: string, to: string): void {
-  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
-    const source = path.join(from, entry.name)
-    if (entry.isDirectory()) {
-      copyVerbatim(tree, source, path.join(to, entry.name))
-      continue
-    }
-    tree.write(path.join(to, entry.name.replace(/\.template$/, '')), fs.readFileSync(source))
-  }
 }
 
 /** Mueve un fichero del Tree (devkit no tiene rename: leer, escribir, borrar). */
