@@ -27,21 +27,27 @@ const SAMPLE_USERS: UserDto[] = [
     email: 'admin@app.local',
     name: 'Admin Local',
     role: UserRoleEnum.ADMIN,
-    status: UserStatusEnum.ACTIVE
+    status: UserStatusEnum.ACTIVE,
+    createdAt: '2026-01-15T09:00:00.000Z',
+    updatedAt: '2026-01-15T09:00:00.000Z'
   },
   {
     id: '01900000-0000-7000-8000-000000000002',
     email: 'user@app.local',
     name: 'Usuario Local',
     role: UserRoleEnum.USER,
-    status: UserStatusEnum.ACTIVE
+    status: UserStatusEnum.ACTIVE,
+    createdAt: '2026-01-16T10:30:00.000Z',
+    updatedAt: '2026-01-16T10:30:00.000Z'
   },
   {
     id: '01900000-0000-7000-8000-000000000003',
     email: 'viewer@app.local',
     name: 'Auditor Local',
     role: UserRoleEnum.VIEWER,
-    status: UserStatusEnum.ACTIVE
+    status: UserStatusEnum.ACTIVE,
+    createdAt: '2026-01-17T08:15:00.000Z',
+    updatedAt: '2026-01-17T08:15:00.000Z'
   }
 ]
 
