@@ -28,7 +28,7 @@
 - [x] **TASK-07**: Paleta (`BLOCK_TOOLS` + `view-icon.ts`, `lucideCalendar`) + componente de
       preview `canvas-calendar.component.ts` (mini-mes fiel al mock) + badge «aún no generable»
       cuando el recurso no tiene campo fecha.
-- [ ] **TASK-08**: Panel de configuración por bloque (componente propio): Fecha / Etiqueta /
+- [x] **TASK-08**: Panel de configuración por bloque (componente propio): Fecha / Etiqueta /
       Color de la tira / Fin de semana, cableado al store y visible en la pestaña Componente.
 
 ## Golden y verificación
