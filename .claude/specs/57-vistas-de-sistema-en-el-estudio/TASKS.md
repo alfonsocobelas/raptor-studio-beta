@@ -10,7 +10,7 @@
       `SYSTEM_VIEWS`, sin drag/borrar), selección `design|system` en el estado de sesión del
       modo Vistas, `system-view.component` con la banda "La trae la autenticación", el
       componente real vía `ngComponentOutlet` + providers del preview y `pointer-events: none`.
-- [ ] **TASK-03**: Verificación visual CON Alfonso (esencia antes que fontanería): estudio
+- [x] **TASK-03** (OK de Alfonso 2026-08-24, tras 3 rondas): Verificación visual CON Alfonso: estudio
       levantado, las 3 vistas en los 3 presets; smoke actualizado. Cierre.
 
 ---
@@ -18,3 +18,10 @@
 ## Regla del juego
 
 Implementar UNA, commit, seguir. La TASK-03 requiere a Alfonso delante: no se cierra sola.
+
+> La verificación visual (contra capturas de la referencia en docs/style) tiró del hilo mucho
+> más allá del estudio — defectos ARREGLADOS EN EL GENERADOR: login sin enlace de recuperación,
+> título "Dashboard" fijo, logo azul hardcodeado, sin sección Administración en el nav, footer
+> sin Mi cuenta explícito, acciones de tabla como iconos, sin reenviar invitación, y la fila más
+> ancha estirando la tabla (max-content). En el estudio: login a página completa, panel derecho
+> plegado con vista de sistema, vistas interactivas con dobles inertes y "Volver al diseño".
