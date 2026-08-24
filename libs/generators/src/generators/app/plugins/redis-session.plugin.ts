@@ -45,7 +45,7 @@ function addRedisToCompose(tree: Tree, context: PluginContext): void {
     tree.write(
       localPath,
       local.replace(
-        /(  postgres-local:[\s\S]*?\n)(\n)/,
+        /( {2}postgres-local:[\s\S]*?\n)(\n)/,
         `$1
   # Sin volumen a propósito: solo guarda estado efímero (rate limit, sesiones);
   # perderlo en un restart es aceptable y mantiene el contenedor desechable.
@@ -235,14 +235,14 @@ function addRaptorRedis(tree: Tree, iacDir: string): void {
         .replace('POSTGRES_PASSWORD, METRICS_TOKEN,', 'POSTGRES_PASSWORD, REDIS_PASSWORD, METRICS_TOKEN,')
         // sin sesiones no hay backend sano: que espere también a redis
         .replace(
-          /(depends_on:\n      postgres:\n        condition: service_healthy\n)/,
+          /(depends_on:\n {6}postgres:\n {8}condition: service_healthy\n)/,
           `$1      redis:
         condition: service_started
 `
         )
         // el servicio, a continuación de postgres (sin volumen: el estado es efímero)
         .replace(
-          /(      - \/srv\/data\/postgres:\/var\/lib\/postgresql\/data\n)/,
+          /( {6}- \/srv\/data\/postgres:\/var\/lib\/postgresql\/data\n)/,
           `$1
   # Sin volumen a propósito: solo estado efímero (rate limit, sesiones); perderlo en un
   # restart es aceptable. noeviction: las sesiones son fuente de verdad, mejor un 503

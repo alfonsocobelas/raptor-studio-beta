@@ -14,5 +14,5 @@
 - [x] TASK-04: raptor — servicio redis en `docker-compose.prod.yml` (requirepass,
       noeviction, depends_on, cabecera del .env) + sección en `iac/README.md`; desaparece
       la nota de pendiente en raptor.
-- [ ] TASK-05: test de degradación con `--provisionedInfra` (sin `iac/`, el plugin no
+- [x] TASK-05: test de degradación con `--provisionedInfra` (sin `iac/`, el plugin no
       escribe nada ni falla) + suite del generador completa + `/golden-diff` limpio.
