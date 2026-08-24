@@ -234,6 +234,31 @@ const atraviesa = (points: readonly { x: number; y: number }[], box: NodeBox): b
 const esOrtogonal = (points: readonly { x: number; y: number }[]): boolean =>
   points.slice(1).every((p, i) => p.x === points[i].x || p.y === points[i].y)
 
+/** ¿Dos polilíneas comparten algún tramo casi-colineal (a menos de 8px) con solape? */
+const seFunden = (a: readonly { x: number; y: number }[], b: readonly { x: number; y: number }[]): boolean =>
+  a.slice(1).some((p, i) =>
+    b.slice(1).some((q, j) => {
+      const [pa, qa] = [a[i], b[j]]
+      const vertA = p.x === pa.x && p.y !== pa.y
+      const vertB = q.x === qa.x && q.y !== qa.y
+      if (vertA && vertB) {
+        return (
+          Math.abs(p.x - q.x) < 8 &&
+          Math.min(p.y, pa.y) < Math.max(q.y, qa.y) &&
+          Math.max(p.y, pa.y) > Math.min(q.y, qa.y)
+        )
+      }
+      if (!vertA && !vertB && p.y === pa.y && q.y === qa.y) {
+        return (
+          Math.abs(p.y - q.y) < 8 &&
+          Math.min(p.x, pa.x) < Math.max(q.x, qa.x) &&
+          Math.max(p.x, pa.x) > Math.min(q.x, qa.x)
+        )
+      }
+      return false
+    })
+  )
+
 /** ¿La etiqueta cae sobre alguno de los tramos? */
 const sobreElTrazo = (curva: {
   points: readonly { x: number; y: number }[]
@@ -448,6 +473,19 @@ describe('edgeCurves — abanico de entradas: dos flechas al mismo lado no se pi
     const [curva] = edgeCurves([edge('cita', 'paciente')], boxes)
 
     expect(atraviesa(curva.line.points, boxes['enMedio'])).toBe(false)
+  })
+
+  it('dos rutas que comparten pasillo no se funden: cada una toma su carril', () => {
+    const boxes: Record<string, NodeBox> = {
+      origen: { x: 600, y: 100, width: 240, height: 160 },
+      uno: { x: 0, y: 300, width: 240, height: 112 },
+      dos: { x: 0, y: 440, width: 240, height: 112 }
+    }
+
+    // ambas salen por la izquierda de `origen` y su canal preferido es el mismo punto medio
+    const curvas = edgeCurves([edge('origen', 'uno', 1), edge('origen', 'dos', 2)], boxes)
+
+    expect(seFunden(curvas[0].line.points, curvas[1].line.points)).toBe(false)
   })
 
   it('ignora las aristas cuyas cajas no existen', () => {

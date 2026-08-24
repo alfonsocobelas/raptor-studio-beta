@@ -204,6 +204,37 @@ function chocaV(x: number, ya: number, yb: number, obstacles: NodeBox[]): boolea
   return obstacles.some(o => o.y < b && o.y + o.height > a && o.x < x && o.x + o.width > x)
 }
 
+/** Distancia por debajo de la cual dos tramos paralelos se ven como uno solo. */
+const CARRIL = 8
+
+/**
+ * ¿Algún tramo de la ruta candidata queda casi-colineal (a menos de un carril)
+ * y solapado con un tramo de una ruta ya trazada? Las rutas se calculan en
+ * orden y cada una respeta los carriles de las anteriores, igual que respeta
+ * las cajas: por eso dos flechas que comparten pasillo no se funden en una.
+ */
+function pisaOtraRuta(points: NodePosition[], previas: NodePosition[][]): boolean {
+  return previas.some(otra =>
+    points.slice(1).some((p, i) =>
+      otra.slice(1).some((q, j) => {
+        const a = points[i]
+        const b = otra[j]
+        const verticalP = p.x === a.x && p.y !== a.y
+        const verticalQ = q.x === b.x && q.y !== b.y
+        if (verticalP && verticalQ) {
+          const solapan = Math.min(p.y, a.y) < Math.max(q.y, b.y) && Math.max(p.y, a.y) > Math.min(q.y, b.y)
+          return Math.abs(p.x - q.x) < CARRIL && solapan
+        }
+        if (!verticalP && !verticalQ) {
+          const solapan = Math.min(p.x, a.x) < Math.max(q.x, b.x) && Math.max(p.x, a.x) > Math.min(q.x, b.x)
+          return Math.abs(p.y - q.y) < CARRIL && solapan
+        }
+        return false
+      })
+    )
+  )
+}
+
 /** Quita puntos repetidos y codos colineales: una Z plana se queda en línea recta. */
 function depura(points: NodePosition[]): NodePosition[] {
   const limpios: NodePosition[] = []
@@ -232,56 +263,64 @@ function rutaLateral(
   x2: number,
   y2: number,
   e: number,
-  obstacles: NodeBox[]
+  obstacles: NodeBox[],
+  previas: NodePosition[][]
 ): NodePosition[] {
   const candidatosZ = [
     (x1 + x2) / 2,
     x1 + s1 * STUB,
     x2 + e * STUB,
-    ...obstacles.flatMap(o => [o.x - CLEARANCE, o.x + o.width + CLEARANCE])
+    ...obstacles.flatMap(o => [o.x - CLEARANCE, o.x + o.width + CLEARANCE]),
+    // carriles extra alrededor del punto medio, por si las rutas anteriores lo ocupan
+    ...[1, 2, 3].flatMap(n => [(x1 + x2) / 2 - n * CARRIL * 2, (x1 + x2) / 2 + n * CARRIL * 2])
   ]
     .filter(xm => (xm - x1) * s1 >= STUB && (xm - x2) * e >= STUB)
     .sort((a, b) => Math.abs(a - (x1 + x2) / 2) - Math.abs(b - (x1 + x2) / 2))
 
+  const enZ = (xm: number): NodePosition[] => [
+    { x: x1, y: y1 },
+    { x: xm, y: y1 },
+    { x: xm, y: y2 },
+    { x: x2, y: y2 }
+  ]
+  let zSinCarril: NodePosition[] | null = null
   for (const xm of candidatosZ) {
     if (!chocaH(y1, x1, xm, obstacles) && !chocaV(xm, y1, y2, obstacles) && !chocaH(y2, xm, x2, obstacles)) {
-      return [
-        { x: x1, y: y1 },
-        { x: xm, y: y1 },
-        { x: xm, y: y2 },
-        { x: x2, y: y2 }
-      ]
+      if (!pisaOtraRuta(enZ(xm), previas)) return enZ(xm)
+      zSinCarril = zSinCarril ?? enZ(xm)
     }
   }
 
-  const xv1 = x1 + s1 * STUB
-  const xv2 = x2 + e * STUB
   const centroBanda = (y1 + y2) / 2
   const canales = obstacles
     .flatMap(o => [o.y - CLEARANCE, o.y + o.height + CLEARANCE])
     .concat(Math.min(y1, y2) - 2 * CLEARANCE, Math.max(y1, y2) + 2 * CLEARANCE)
     .sort((a, b) => Math.abs(a - centroBanda) - Math.abs(b - centroBanda))
-  const enU = (yc: number): NodePosition[] => [
+  const enU = (yc: number, saliente: number): NodePosition[] => [
     { x: x1, y: y1 },
-    { x: xv1, y: y1 },
-    { x: xv1, y: yc },
-    { x: xv2, y: yc },
-    { x: xv2, y: y2 },
+    { x: x1 + s1 * saliente, y: y1 },
+    { x: x1 + s1 * saliente, y: yc },
+    { x: x2 + e * saliente, y: yc },
+    { x: x2 + e * saliente, y: y2 },
     { x: x2, y: y2 }
   ]
+  const libre = (ruta: NodePosition[]): boolean =>
+    ruta.slice(1).every((p, i) => {
+      const a = ruta[i]
+      return p.y === a.y ? !chocaH(p.y, a.x, p.x, obstacles) : !chocaV(p.x, a.y, p.y, obstacles)
+    })
 
+  let uSinCarril: NodePosition[] | null = null
   for (const yc of canales) {
-    if (
-      !chocaH(y1, x1, xv1, obstacles) &&
-      !chocaV(xv1, y1, yc, obstacles) &&
-      !chocaH(yc, xv1, xv2, obstacles) &&
-      !chocaV(xv2, yc, y2, obstacles) &&
-      !chocaH(y2, xv2, x2, obstacles)
-    ) {
-      return enU(yc)
+    for (const saliente of [STUB, STUB + CARRIL * 2, STUB + CARRIL * 4]) {
+      const ruta = enU(yc, saliente)
+      if (!libre(ruta)) continue
+      if (!pisaOtraRuta(ruta, previas)) return ruta
+      uSinCarril = uSinCarril ?? ruta
     }
   }
-  return enU(canales[0])
+  // mejor una ruta limpia de cajas aunque comparta carril; y si ni eso, la menos mala
+  return zSinCarril ?? uSinCarril ?? enU(canales[0], STUB)
 }
 
 /**
@@ -297,26 +336,34 @@ function rutaVertical(
   x2: number,
   y2: number,
   ev: number,
-  obstacles: NodeBox[]
+  obstacles: NodeBox[],
+  previas: NodePosition[][]
 ): NodePosition[] {
-  const directa = (x2 - x1) * s1 >= STUB
-  if (directa && !chocaH(y1, x1, x2, obstacles) && !chocaV(x2, y1, y2, obstacles)) {
-    return [
-      { x: x1, y: y1 },
-      { x: x2, y: y1 },
-      { x: x2, y: y2 }
-    ]
-  }
-
-  const xv = x1 + s1 * STUB
-  const ym = y2 + ev * CLEARANCE
-  return [
+  const directa: NodePosition[] = [
     { x: x1, y: y1 },
-    { x: xv, y: y1 },
-    { x: xv, y: ym },
-    { x: x2, y: ym },
+    { x: x2, y: y1 },
     { x: x2, y: y2 }
   ]
+  if (
+    (x2 - x1) * s1 >= STUB &&
+    !chocaH(y1, x1, x2, obstacles) &&
+    !chocaV(x2, y1, y2, obstacles) &&
+    !pisaOtraRuta(directa, previas)
+  ) {
+    return directa
+  }
+
+  const enCodo = (saliente: number): NodePosition[] => [
+    { x: x1, y: y1 },
+    { x: x1 + s1 * saliente, y: y1 },
+    { x: x1 + s1 * saliente, y: y2 + ev * (CLEARANCE + (saliente - STUB)) },
+    { x: x2, y: y2 + ev * (CLEARANCE + (saliente - STUB)) },
+    { x: x2, y: y2 }
+  ]
+  for (const saliente of [STUB, STUB + CARRIL * 2, STUB + CARRIL * 4]) {
+    if (!pisaOtraRuta(enCodo(saliente), previas)) return enCodo(saliente)
+  }
+  return enCodo(STUB)
 }
 
 /** Recorta el final de la ruta TIP_GAP px: el hueco donde vive el chevron. */
@@ -374,7 +421,13 @@ function puntoDeEtiqueta(points: NodePosition[]): NodePosition {
  * entrada. Los anclajes lógicos (x1,y1,x2,y2) quedan en los bordes; el trazo se
  * recorta unos px antes de la punta para que el chevron no se funda con la línea.
  */
-function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacles: NodeBox[]): EdgeCurve {
+function curveInto(
+  from: NodeBox,
+  fieldIndex: number,
+  entry: EntryPoint,
+  obstacles: NodeBox[],
+  previas: NodePosition[][] = []
+): EdgeCurve {
   const y1 = from.y + MODEL_NODE.headerHeight + (fieldIndex + 1.5) * MODEL_NODE.rowHeight
   const { x: x2, y: y2 } = entry
 
@@ -386,7 +439,9 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacl
   // el lado LIBRE de la entrada: por dónde tiene que llegar el último tramo
   const e = entry.side === 'left' || entry.side === 'top' ? -1 : 1
   const points = depura(
-    lateral ? rutaLateral(x1, y1, s1, x2, y2, e, obstacles) : rutaVertical(x1, y1, s1, x2, y2, e, obstacles)
+    lateral
+      ? rutaLateral(x1, y1, s1, x2, y2, e, obstacles, previas)
+      : rutaVertical(x1, y1, s1, x2, y2, e, obstacles, previas)
   )
   const etiqueta = puntoDeEtiqueta(points)
 
@@ -427,10 +482,17 @@ export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): 
   }
 
   const lineas = new Map<ModelEdge, EdgeCurve>()
+  // cada ruta trazada ocupa carril: las siguientes lo esquivan igual que a las cajas
+  const previas: NodePosition[][] = []
+  const traza = (arista: (typeof vivas)[number], entry: EntryPoint): void => {
+    const linea = curveInto(arista.from, arista.edge.fieldIndex, entry, estorbos(arista), previas)
+    previas.push(linea.points)
+    lineas.set(arista.edge, linea)
+  }
   for (const grupo of grupos.values()) {
     if (grupo.length === 1) {
-      const { edge, from, to, side } = grupo[0]
-      lineas.set(edge, curveInto(from, edge.fieldIndex, defaultEntry(to, side), estorbos(grupo[0])))
+      const { to, side } = grupo[0]
+      traza(grupo[0], defaultEntry(to, side))
       continue
     }
     // reparto uniforme por el borde, en el orden de las salidas para no cruzarse
@@ -440,12 +502,12 @@ export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): 
         ? from.y + MODEL_NODE.headerHeight + (edge.fieldIndex + 1.5) * MODEL_NODE.rowHeight
         : from.x + from.width / 2
     for (const [i, arista] of [...grupo].sort((a, b) => salida(a) - salida(b)).entries()) {
-      const { edge, from, to, side } = arista
+      const { to, side } = arista
       const paso = (i + 1) / (grupo.length + 1)
       const entry: EntryPoint = lateral
         ? { side, x: side === 'left' ? to.x : to.x + to.width, y: to.y + to.height * paso }
         : { side, x: to.x + to.width * paso, y: side === 'top' ? to.y : to.y + to.height }
-      lineas.set(edge, curveInto(from, edge.fieldIndex, entry, estorbos(arista)))
+      traza(arista, entry)
     }
   }
 
