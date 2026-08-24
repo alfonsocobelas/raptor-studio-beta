@@ -139,26 +139,6 @@ const BLOCK_TOOLS: BlockTool[] = [
           <p class="text-muted-foreground px-1 py-1 text-xs">Todavía no hay vistas</p>
         }
 
-        <!-- Vistas de sistema (spec 57): las regala la autenticación, no se editan ni reordenan -->
-        <p class="text-muted-foreground mt-3 px-1 text-[10px] font-semibold tracking-wide uppercase">Sistema</p>
-        @for (view of systemViews; track view.id) {
-          <button
-            type="button"
-            class="hover:ring-foreground/25 mb-0.5 flex w-full items-center gap-2 studio-ui rounded-[7px] py-2 pr-2 pl-2 text-left transition-shadow hover:ring-1"
-            [class.bg-background]="view.id === active.systemView()"
-            [class.font-semibold]="view.id === active.systemView()"
-            [class.shadow-sm]="view.id === active.systemView()"
-            [class.ring-1]="view.id === active.systemView()"
-            [attr.aria-current]="view.id === active.systemView() ? 'true' : null"
-            [attr.data-testid]="'system-view-' + view.id"
-            title="La trae la autenticación · no se edita"
-            (click)="active.selectSystem(view.id)"
-          >
-            <ng-icon name="lucideLock" size="14" />
-            <span class="min-w-0 flex-1 truncate">{{ view.title }}</span>
-          </button>
-        }
-
         @if (creating()) {
           <form class="mt-1 flex items-center gap-1" (submit)="onSubmit($event)">
             <input
@@ -205,6 +185,26 @@ const BLOCK_TOOLS: BlockTool[] = [
               </div>
             }
           </div>
+        }
+
+        <!-- Vistas de sistema (spec 57): las regala la autenticación, no se editan ni reordenan -->
+        <h2 class="studio-eyebrow mt-4 mb-2 px-1">Sistema</h2>
+        @for (view of systemViews; track view.id) {
+          <button
+            type="button"
+            class="hover:ring-foreground/25 mb-0.5 flex w-full items-center gap-2 studio-ui rounded-[7px] py-2 pr-2 pl-2 text-left transition-shadow hover:ring-1"
+            [class.bg-background]="view.id === active.systemView()"
+            [class.font-semibold]="view.id === active.systemView()"
+            [class.shadow-sm]="view.id === active.systemView()"
+            [class.ring-1]="view.id === active.systemView()"
+            [attr.aria-current]="view.id === active.systemView() ? 'true' : null"
+            [attr.data-testid]="'system-view-' + view.id"
+            title="La trae la autenticación · no se edita"
+            (click)="active.selectSystem(view.id)"
+          >
+            <ng-icon name="lucideLock" size="14" />
+            <span class="min-w-0 flex-1 truncate">{{ view.title }}</span>
+          </button>
         }
       </section>
 
