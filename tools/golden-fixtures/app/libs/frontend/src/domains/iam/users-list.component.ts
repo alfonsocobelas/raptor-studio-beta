@@ -189,13 +189,13 @@ export class UsersListComponent {
   protected readonly roleOptions = ROLE_OPTIONS
 
   readonly columns: ColumnDef[] = [
-    { key: 'email', label: 'Email', sortable: false, minWidth: 220 },
-    { key: 'name', label: 'Nombre', sortable: false, minWidth: 180 },
+    { key: 'email', label: 'Email', sortable: false, minWidth: 170 },
+    { key: 'name', label: 'Nombre', sortable: false, minWidth: 120 },
     {
       key: 'role',
       label: 'Rol',
       sortable: false,
-      minWidth: 130,
+      minWidth: 100,
       type: 'badge',
       badgeMap: {
         admin: { label: USER_ROLE_LABELS[UserRoleEnum.ADMIN], variant: USER_ROLE_VARIANTS['admin'] },
@@ -207,7 +207,7 @@ export class UsersListComponent {
       key: 'status',
       label: 'Estado',
       sortable: false,
-      minWidth: 130,
+      minWidth: 100,
       type: 'badge',
       badgeMap: {
         active: { label: USER_STATUS_LABELS[UserStatusEnum.ACTIVE], variant: USER_STATUS_VARIANTS['active'] },
