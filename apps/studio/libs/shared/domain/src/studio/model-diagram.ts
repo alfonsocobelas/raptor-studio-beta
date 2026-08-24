@@ -185,28 +185,45 @@ const CLEARANCE = MODEL_NODE.rowHeight
 const ENTRY_TILT = 16
 
 /**
- * Hasta dónde tiene que bajar una curva lateral para no atravesar ninguna caja:
- * si algún obstáculo pisa la banda entre los dos anclajes, el fondo baja por
- * debajo de él — y se vuelve a mirar, porque al bajar puede toparse con otra
- * fila: solo se cuela por un hueco si cabe con colchón por los dos lados.
- * Devuelve null cuando el camino está despejado y la curva puede ir plana.
+ * El punto de control vertical con el que una curva lateral esquiva las cajas
+ * que bloquean la banda entre sus dos anclajes, o null si el camino está
+ * despejado y la curva puede ir plana. Se prueba a rodear por abajo y por
+ * arriba —en cada dirección se sigue esquivando lo que aparezca, y solo se
+ * cuela por un hueco si cabe con colchón por los dos lados— y gana el desvío
+ * más corto: así la flecha no persigue a un obstáculo que se arrastra hacia
+ * abajo, le pasa por encima.
  */
-function fondoDelCorredor(x1: number, y1: number, x2: number, y2: number, obstacles: NodeBox[]): number | null {
+function controlDeEsquiva(x1: number, y1: number, x2: number, y2: number, obstacles: NodeBox[]): number | null {
   const izquierda = Math.min(x1, x2)
   const derecha = Math.max(x1, x2)
   const enElCorredor = obstacles.filter(o => o.x <= derecha && o.x + o.width >= izquierda)
 
-  const techo = Math.min(y1, y2)
+  const bandaSup = Math.min(y1, y2)
+  const bandaInf = Math.max(y1, y2)
+
   let fondo: number | null = null
   for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
     // anotados a mano: el narrowing de `fondo` dentro del closure crea un ciclo de
     // inferencia (TS7022) que vitest no ve (transpila sin typecheck) y el build sí
-    const limite: number = fondo === null ? Math.max(y1, y2) : fondo + 2 * CLEARANCE
-    const choque: NodeBox | undefined = enElCorredor.find(o => o.y + o.height > (fondo ?? techo) && o.y < limite)
+    const limite: number = fondo === null ? bandaInf : fondo + 2 * CLEARANCE
+    const choque: NodeBox | undefined = enElCorredor.find(o => o.y + o.height > (fondo ?? bandaSup) && o.y < limite)
     if (!choque) break
     fondo = choque.y + choque.height
   }
-  return fondo
+  if (fondo === null) return null
+
+  let techo: number | null = null
+  for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
+    const limite: number = techo === null ? bandaSup : techo - 2 * CLEARANCE
+    const choque: NodeBox | undefined = enElCorredor.find(o => o.y < (techo ?? bandaInf) && o.y + o.height > limite)
+    if (!choque) break
+    techo = choque.y
+  }
+
+  // gana el desvío más corto; a igualdad, por abajo (la estética de siempre)
+  const porAbajo = techo === null || fondo - bandaInf <= bandaSup - techo
+  const objetivo = porAbajo ? fondo + CLEARANCE : (techo as number) - CLEARANCE
+  return (8 * objetivo - y1 - y2) / 6
 }
 
 /**
@@ -246,15 +263,14 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacl
   const cx2 = entry.side === 'left' ? x2 - tirador : x2 + tirador
 
   /**
-   * Si una caja bloquea el corredor entre los dos anclajes, el arco bucea por
-   * debajo de ella (y de lo que encuentre al bajar): con los tiradores planos la
-   * curva atravesaba la caja de en medio, que es justo lo que hace ilegible un
-   * diagrama. Con el camino despejado la curva va plana, por lejos que quede el
-   * destino. Los tiradores se calculan para que el PUNTO MEDIO real de la Bézier
-   * (y(0.5) = (y1 + 6·c + y2) / 8) pase por debajo del fondo, no solo el mando.
+   * Si una caja bloquea el corredor entre los dos anclajes, el arco la rodea por
+   * el lado más corto: con los tiradores planos la curva atravesaba la caja de
+   * en medio, que es justo lo que hace ilegible un diagrama. Con el camino
+   * despejado la curva va plana, por lejos que quede el destino. El control se
+   * calcula para que el PUNTO MEDIO real de la Bézier (y(0.5) = (y1 + 6·c + y2) / 8)
+   * libre el obstáculo, no solo el mando.
    */
-  const fondo = fondoDelCorredor(x1, y1, x2, y2, obstacles)
-  const control = fondo === null ? null : (8 * (fondo + CLEARANCE) - y1 - y2) / 6
+  const control = controlDeEsquiva(x1, y1, x2, y2, obstacles)
   const cy1 = control ?? y1
   // en plano la punta llega con una pizca de ángulo (buceando el arco ya la trae inclinada)
   const cy2 = control ?? y2 + ENTRY_TILT * (y1 >= y2 ? 1 : -1)

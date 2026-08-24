@@ -226,15 +226,26 @@ const alturaEnMedio = (curva: { d: string; y1: number; y2: number }): number => 
   return (curva.y1 + 3 * cy1 + 3 * cy2 + curva.y2) / 8
 }
 
-describe('edgeCurve — la curva esquiva las cajas que bloquean el camino', () => {
+describe('edgeCurve — la curva esquiva las cajas que bloquean el camino, por el lado más corto', () => {
+  // los anclajes de esta pareja dejan la banda del corredor en y 152..176
   const from: NodeBox = { x: 700, y: 100, width: 240, height: 160 }
   const lejosIzquierda: NodeBox = { x: 0, y: 100, width: 240, height: 160 }
   const enMedio: NodeBox = { x: 350, y: 100, width: 240, height: 160 }
 
-  it('con una caja en medio del corredor, el arco pasa por DEBAJO de su borde inferior', () => {
-    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
+  it('un obstáculo que asoma sobre todo por ARRIBA se esquiva buceando por debajo', () => {
+    const alto: NodeBox = { x: 350, y: 0, width: 240, height: 200 }
 
-    expect(alturaEnMedio(curva)).toBeGreaterThan(enMedio.y + enMedio.height)
+    const curva = edgeCurve(from, 0, lejosIzquierda, [alto])
+
+    expect(alturaEnMedio(curva)).toBeGreaterThan(alto.y + alto.height)
+  })
+
+  it('un obstáculo que asoma sobre todo por DEBAJO se esquiva por encima: la flecha no lo persigue al arrastrarlo hacia abajo', () => {
+    const mascota: NodeBox = { x: 350, y: 160, width: 240, height: 160 }
+
+    const curva = edgeCurve(from, 0, lejosIzquierda, [mascota])
+
+    expect(alturaEnMedio(curva)).toBeLessThan(mascota.y)
   })
 
   it('sin obstáculos la curva se queda plana, por lejos que esté el destino', () => {
@@ -244,7 +255,7 @@ describe('edgeCurve — la curva esquiva las cajas que bloquean el camino', () =
     expect(cy1).toBe(curva.y1)
   })
 
-  it('una caja fuera del corredor no obliga a bucear', () => {
+  it('una caja fuera del corredor no obliga a desviarse', () => {
     const abajoDelTodo: NodeBox = { x: 350, y: 900, width: 240, height: 160 }
 
     const curva = edgeCurve(from, 0, lejosIzquierda, [abajoDelTodo])
@@ -254,14 +265,24 @@ describe('edgeCurve — la curva esquiva las cajas que bloquean el camino', () =
   })
 
   it('al bucear esquiva TAMBIÉN lo que encuentra al bajar, no solo el primer obstáculo', () => {
-    const debajoDelObstaculo: NodeBox = { x: 350, y: 300, width: 240, height: 160 }
+    const alto: NodeBox = { x: 350, y: -400, width: 240, height: 600 }
+    const debajoDelAlto: NodeBox = { x: 350, y: 220, width: 240, height: 160 }
 
-    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio, debajoDelObstaculo])
+    const curva = edgeCurve(from, 0, lejosIzquierda, [alto, debajoDelAlto])
 
-    expect(alturaEnMedio(curva)).toBeGreaterThan(debajoDelObstaculo.y + debajoDelObstaculo.height)
+    expect(alturaEnMedio(curva)).toBeGreaterThan(debajoDelAlto.y + debajoDelAlto.height)
   })
 
-  it('la etiqueta acompaña al arco: se pinta sobre el punto más hondo, no sobre la línea recta', () => {
+  it('al subir esquiva TAMBIÉN lo que encuentra arriba: no se cuela por un hueco justo', () => {
+    const mascota: NodeBox = { x: 350, y: 160, width: 240, height: 160 }
+    const encimaDeMascota: NodeBox = { x: 350, y: 60, width: 240, height: 70 }
+
+    const curva = edgeCurve(from, 0, lejosIzquierda, [mascota, encimaDeMascota])
+
+    expect(alturaEnMedio(curva)).toBeLessThan(encimaDeMascota.y)
+  })
+
+  it('la etiqueta acompaña al arco: se pinta sobre su punto medio real, no sobre la línea recta', () => {
     const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
 
     expect(curva.labelY).toBeCloseTo(alturaEnMedio(curva), 5)
@@ -391,7 +412,8 @@ describe('edgeCurves — abanico de entradas: dos flechas al mismo lado no se pi
 
     const [curva] = edgeCurves([edge('cita', 'paciente')], boxes)
 
-    expect(alturaEnMedio(curva.line)).toBeGreaterThan(boxes['enMedio'].y + boxes['enMedio'].height)
+    // esquiva por el lado más corto: aquí el arco pasa por encima del estorbo
+    expect(alturaEnMedio(curva.line)).toBeLessThan(boxes['enMedio'].y)
   })
 
   it('ignora las aristas cuyas cajas no existen', () => {
