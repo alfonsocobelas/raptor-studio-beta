@@ -1,4 +1,8 @@
+<%_ if (dragModules.length) { _%>
+import { forwardRef, Module } from '@nestjs/common'
+<%_ } else { _%>
 import { Module } from '@nestjs/common'
+<%_ } _%>
 <%_ entry.moduleHandlerImports.forEach(line => { _%>
 <%- line %>
 <%_ }) _%>
@@ -29,18 +33,20 @@ import { <%- className %>AttachmentsService } from './infrastructure/attachments
 <%_ if (attachments && app.history) { _%>
   // StorageModule y AuditModule explícitos (no se confía en @Global): así el módulo
   // funciona en cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule, AuditModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule, AuditModule<%- dragModules.map(m => ', ' + m.ref).join('') %>],
 <%_ } else if (attachments) { _%>
   // StorageModule explícito (no se confía en @Global): así el módulo funciona en
   // cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
+  imports: [TypeOrmModule.forFeature([TypeOrm<%- className %>AttachmentEntity]), StorageModule<%- dragModules.map(m => ', ' + m.ref).join('') %>],
 <%_ } else if (app.history) { _%>
   // AuditModule explícito (no se confía en @Global): el historial funciona también en seed y tests.
-  imports: [AuditModule<%- dragModules.map(m => ', ' + m.className).join('') %>],
+  imports: [AuditModule<%- dragModules.map(m => ', ' + m.ref).join('') %>],
 <%_ } else if (dragModules.length) { _%>
-  // Los módulos del árbol de arrastre (spec 38): el borrado del padre marca a sus hijos
-  // por sus PORTS, así que la DI cruza módulos — cada hijo ya exporta su repositorio.
-  imports: [<%- dragModules.map(m => m.className).join(', ') %>],
+  // Los módulos del árbol de arrastre (spec 38) y de los orígenes de denormalización
+  // (spec 60): la DI cruza módulos — cada uno exporta su repositorio. Van con forwardRef
+  // porque las dos specs importan en direcciones opuestas y el ciclo de imports ES
+  // dejaría la clase undefined al arrancar Nest.
+  imports: [<%- dragModules.map(m => m.ref).join(', ') %>],
 <%_ } _%>
 <%_ if (attachments) { _%>
   // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro

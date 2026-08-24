@@ -94,6 +94,13 @@ export interface DragPlanLevel {
 export interface DragModule {
   className: string
   importLine: string
+  /**
+   * Expresión con la que el módulo entra en el array `imports`. Siempre diferida con
+   * forwardRef: el arrastre (spec 38) y la denormalización (spec 60) importan en
+   * direcciones opuestas, así que cualquier ref entre entidades con borrado suave crea
+   * un ciclo de imports ES que deja la clase `undefined` al arrancar Nest.
+   */
+  ref: string
 }
 
 /** Nombres al estilo de @nx/devkit names(), sin arrastrar la dependencia hasta aquí. */
@@ -135,7 +142,11 @@ export function dragModules(tree: DragLevel[]): DragModule[] {
     if (seen.has(level.plural)) continue
     seen.add(level.plural)
     const className = `${pascal(level.plural)}Module`
-    modules.push({ className, importLine: `import { ${className} } from '../${level.plural}/${level.plural}.module'` })
+    modules.push({
+      className,
+      importLine: `import { ${className} } from '../${level.plural}/${level.plural}.module'`,
+      ref: `forwardRef(() => ${className})`
+    })
   }
   return modules
 }

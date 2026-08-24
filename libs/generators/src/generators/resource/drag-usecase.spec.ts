@@ -54,7 +54,7 @@ describe('resource generator — borrado transaccional del árbol (spec 38 TASK-
 
     expect(module).toContain("import { InstallationsModule } from '../installations/installations.module'")
     expect(module).toContain("import { WorklogsModule } from '../worklogs/worklogs.module'")
-    expect(module).toMatch(/imports: \[[^\]]*InstallationsModule, WorklogsModule/)
+    expect(module).toMatch(/imports: \[[^\]]*forwardRef\(\(\) => InstallationsModule\), forwardRef\(\(\) => WorklogsModule\)/)
   })
 
   it('el test unitario emitido del padre construye el use case con sus colaboradores', async () => {

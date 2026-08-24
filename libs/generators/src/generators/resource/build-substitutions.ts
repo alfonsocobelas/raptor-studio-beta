@@ -432,7 +432,8 @@ export function buildSubstitutions(
         : [],
       buildDenormalizations(definition, others).map(d => ({
         className: `${names(d.originPlural).className}Module`,
-        importLine: `import { ${names(d.originPlural).className}Module } from '../${d.originPlural}/${d.originPlural}.module'`
+        importLine: `import { ${names(d.originPlural).className}Module } from '../${d.originPlural}/${d.originPlural}.module'`,
+        ref: `forwardRef(() => ${names(d.originPlural).className}Module)`
       }))
     ),
     dragged: draggedRelations(definition),
