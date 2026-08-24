@@ -80,9 +80,10 @@ $2`
 }
 
 /**
- * IaC del store: solo azure tiene pieza escrita (Azure Managed Redis, calcada de la
- * referencia). Con aws/raptor el hueco se declara en el README de iac/ — mejor un
- * pendiente honesto que un Terraform sin probar (fuera de scope de la spec 55).
+ * IaC del store por proveedor de infra (spec 63): azure (Azure Managed Redis, calcado
+ * de la referencia) y aws (ElastiCache, espejo del patrón de rds.tf). Un proveedor sin
+ * pieza escrita declara el hueco en el README de iac/ — mejor un pendiente honesto que
+ * un Terraform sin probar.
  */
 function addCloudRedis(tree: Tree, context: PluginContext): void {
   const iacDir = path.join(context.root, 'iac')
@@ -93,39 +94,72 @@ function addCloudRedis(tree: Tree, context: PluginContext): void {
     return
   }
 
-  if (context.infra !== 'azure') {
-    const readme = tree.read(readmePath, 'utf-8')
-    if (readme && !readme.includes('Redis pendiente de IaC')) {
-      tree.write(
-        readmePath,
-        readme +
-          `
+  if (context.infra === 'azure') {
+    addAzureRedis(tree, iacDir)
+    return
+  }
+  if (context.infra === 'aws') {
+    addAwsRedis(tree, iacDir)
+    return
+  }
+
+  const readme = tree.read(readmePath, 'utf-8')
+  if (readme && !readme.includes('Redis pendiente de IaC')) {
+    tree.write(
+      readmePath,
+      readme +
+        `
 ## Redis pendiente de IaC en este proveedor
 
 La app usa Redis para sesiones y rate limit (\`sessionStore: redis\`), pero este proveedor
 aún no tiene la pieza de Terraform. Apunta \`redis.host\`/\`redis.password\` de los entornos
 cloud a una instancia gestionada (ElastiCache, contenedor propio…) hasta que exista.
 `
-      )
-    }
+    )
+  }
+}
+
+function addAzureRedis(tree: Tree, iacDir: string): void {
+  if (tree.exists(path.join(iacDir, 'managed-redis.tf'))) {
     return
   }
-
-  if (!tree.exists(path.join(iacDir, 'managed-redis.tf'))) {
-    tree.write(path.join(iacDir, 'managed-redis.tf'), MANAGED_REDIS_TF)
-    const variables = tree.read(path.join(iacDir, 'variables.tf'), 'utf-8')
-    if (variables && !variables.includes('managed_redis_name')) {
-      tree.write(
-        path.join(iacDir, 'variables.tf'),
-        variables +
-          `
+  tree.write(path.join(iacDir, 'managed-redis.tf'), MANAGED_REDIS_TF)
+  const variables = tree.read(path.join(iacDir, 'variables.tf'), 'utf-8')
+  if (variables && !variables.includes('managed_redis_name')) {
+    tree.write(
+      path.join(iacDir, 'variables.tf'),
+      variables +
+        `
 variable "managed_redis_name" {
   description = "Name of the Azure Managed Redis instance."
   type        = string
 }
 `
+    )
+  }
+}
+
+/**
+ * ElastiCache + secretos redis-host/redis-password en Secrets Manager. La policy IAM
+ * del backend enumera los ARNs uno a uno (iam.tf), así que se amplía aquí: sin eso el
+ * GetSecretValue de los secretos nuevos falla en el arranque.
+ */
+function addAwsRedis(tree: Tree, iacDir: string): void {
+  if (tree.exists(path.join(iacDir, 'elasticache.tf'))) {
+    return
+  }
+  tree.write(path.join(iacDir, 'elasticache.tf'), ELASTICACHE_TF)
+
+  const iamPath = path.join(iacDir, 'iam.tf')
+  const iam = tree.read(iamPath, 'utf-8')
+  if (iam && !iam.includes('redis_host')) {
+    tree.write(
+      iamPath,
+      iam.replace(
+        '"${aws_secretsmanager_secret.db_name.arn}"]',
+        '"${aws_secretsmanager_secret.db_name.arn}", "${aws_secretsmanager_secret.redis_host.arn}", "${aws_secretsmanager_secret.redis_password.arn}"]'
       )
-    }
+    )
   }
 }
 
@@ -177,6 +211,97 @@ resource "azurerm_key_vault_secret" "redis_password" {
   key_vault_id = azurerm_key_vault.this.id
 
   depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+`
+
+// Espejo de managed-redis.tf en AWS, con el estilo de rds.tf. Pendiente de un
+// `terraform plan` real (sin cuenta aws desde la spec 47).
+const ELASTICACHE_TF = `# ElastiCache Redis — estado efímero de la app: rate limit y sesiones.
+# Nodo único sin failover: con el backend en réplica única, pagar HA en Redis es
+# proteger el eslabón equivocado (mismo razonamiento que high_availability en Azure).
+resource "random_password" "redis" {
+  length = 32
+  # el auth token de ElastiCache no admite caracteres especiales arbitrarios
+  special = false
+}
+
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "\${local.name}-redis"
+  subnet_ids = data.aws_subnets.default.ids
+}
+
+resource "aws_security_group" "redis" {
+  name   = "\${local.name}-redis"
+  vpc_id = data.aws_vpc.default.id
+
+  ingress {
+    description     = "Redis desde los servicios App Runner (via VPC connector)"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.apprunner.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_elasticache_parameter_group" "redis" {
+  name   = "\${local.name}-redis7"
+  family = "redis7"
+
+  # noeviction, no el default volatile-lru: este Redis guarda sesiones como fuente de
+  # verdad; bajo presión de memoria queremos escrituras que fallan a gritos (503), no
+  # sesiones desalojadas en silencio.
+  parameter {
+    name  = "maxmemory-policy"
+    value = "noeviction"
+  }
+}
+
+resource "aws_elasticache_replication_group" "redis" {
+  replication_group_id = "\${local.name}-redis"
+  description          = "Sesiones y rate limit (estado efimero)"
+
+  engine         = "redis"
+  engine_version = "7.1"
+  node_type      = "cache.t4g.micro"
+
+  num_cache_clusters         = 1
+  automatic_failover_enabled = false
+
+  port                 = 6379
+  parameter_group_name = aws_elasticache_parameter_group.redis.name
+  subnet_group_name    = aws_elasticache_subnet_group.redis.name
+  security_group_ids   = [aws_security_group.redis.id]
+
+  # el auth token obliga cifrado in-transit (la app conecta con TLS, ver prod.json)
+  transit_encryption_enabled = true
+  auth_token                 = random_password.redis.result
+}
+
+# La app resuelve \`vault.redis.host\` y \`vault.redis.password\` (el config-loader aplana los
+# puntos en guiones y antepone AWS_SECRETS_PREFIX). El puerto (6379) y tls van en claro en el JSON.
+resource "aws_secretsmanager_secret" "redis_host" {
+  name = "\${local.name}/redis-host"
+}
+
+resource "aws_secretsmanager_secret_version" "redis_host" {
+  secret_id     = aws_secretsmanager_secret.redis_host.id
+  secret_string = aws_elasticache_replication_group.redis.primary_endpoint_address
+}
+
+resource "aws_secretsmanager_secret" "redis_password" {
+  name = "\${local.name}/redis-password"
+}
+
+resource "aws_secretsmanager_secret_version" "redis_password" {
+  secret_id     = aws_secretsmanager_secret.redis_password.id
+  secret_string = random_password.redis.result
 }
 `
 

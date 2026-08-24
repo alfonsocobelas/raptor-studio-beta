@@ -142,11 +142,25 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     expect(tree.exists('apps/demo/iac/README.md')).toBe(false)
   })
 
-  it('con infra=aws el hueco de IaC queda declarado en el README, no en silencio', async () => {
+  it('con infra=aws emite ElastiCache con noeviction, secretos en Secrets Manager y la policy ampliada', async () => {
     const tree = await generate({ ...base, sessionStore: 'redis', infra: 'aws' })
 
+    const elasticache = tree.read('apps/demo/iac/elasticache.tf', 'utf-8') ?? ''
+    expect(elasticache).toContain('aws_elasticache_replication_group')
+    // fuente de verdad de sesiones: bajo presión de memoria, escrituras que fallan a gritos
+    expect(elasticache).toContain('"noeviction"')
+    // el auth token de ElastiCache obliga cifrado in-transit
+    expect(elasticache).toContain('transit_encryption_enabled = true')
+    expect(elasticache).toContain('redis-host')
+    expect(elasticache).toContain('redis-password')
+
+    // la policy IAM enumera los ARNs uno a uno: sin ampliarla, GetSecretValue falla al arrancar
+    const iam = tree.read('apps/demo/iac/iam.tf', 'utf-8') ?? ''
+    expect(iam).toContain('aws_secretsmanager_secret.redis_host.arn')
+    expect(iam).toContain('aws_secretsmanager_secret.redis_password.arn')
+
     expect(tree.exists('apps/demo/iac/managed-redis.tf')).toBe(false)
-    expect(tree.read('apps/demo/iac/README.md', 'utf-8') ?? '').toContain('Redis pendiente de IaC')
+    expect(tree.read('apps/demo/iac/README.md', 'utf-8') ?? '').not.toContain('Redis pendiente de IaC')
   })
 
   it('con el store por defecto no hay rastro de redis en infra, config ni health', async () => {

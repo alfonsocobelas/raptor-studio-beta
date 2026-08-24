@@ -9,7 +9,7 @@
       los tests existentes.
 - [x] TASK-02: entornos dev/qa/prod por proveedor (azure 10000/tls, aws 6379/tls,
       raptor 6379/sin tls).
-- [ ] TASK-03: aws — `iac/elasticache.tf` inline + secretos redis-host/redis-password +
+- [x] TASK-03: aws — `iac/elasticache.tf` inline + secretos redis-host/redis-password +
       patch del statement ReadSecrets en `iam.tf`; desaparece la nota de pendiente en aws.
 - [ ] TASK-04: raptor — servicio redis en `docker-compose.prod.yml` (requirepass,
       noeviction, depends_on, cabecera del .env) + sección en `iac/README.md`; desaparece
