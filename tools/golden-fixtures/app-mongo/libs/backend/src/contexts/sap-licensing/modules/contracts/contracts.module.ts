@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { RegisterContractHandler } from './application/handlers/register-contract.handler'
 import { SearchContractsHandler } from './application/handlers/search-contracts.handler'
 import { GetContractHandler } from './application/handlers/get-contract.handler'
@@ -19,9 +19,11 @@ import { MongooseContractRepository } from './infrastructure/persistence/mongoos
 import { CustomersModule } from '../customers/customers.module'
 
 @Module({
-  // Los módulos del árbol de arrastre (spec 38): el borrado del padre marca a sus hijos
-  // por sus PORTS, así que la DI cruza módulos — cada hijo ya exporta su repositorio.
-  imports: [CustomersModule],
+  // Los módulos del árbol de arrastre (spec 38) y de los orígenes de denormalización
+  // (spec 60): la DI cruza módulos — cada uno exporta su repositorio. Van con forwardRef
+  // porque las dos specs importan en direcciones opuestas y el ciclo de imports ES
+  // dejaría la clase undefined al arrancar Nest.
+  imports: [forwardRef(() => CustomersModule)],
   controllers: [ContractsController],
   providers: [
     RegisterContractHandler,

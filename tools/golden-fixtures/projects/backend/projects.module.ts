@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { RegisterProjectHandler } from './application/handlers/register-project.handler'
 import { SearchProjectsHandler } from './application/handlers/search-projects.handler'
 import { GetProjectHandler } from './application/handlers/get-project.handler'
@@ -33,7 +33,12 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
 @Module({
   // StorageModule y AuditModule explícitos (no se confía en @Global): así el módulo
   // funciona en cualquier contexto Nest — API, seed o tests — sin depender del root.
-  imports: [TypeOrmModule.forFeature([TypeOrmProjectAttachmentEntity]), StorageModule, AuditModule, CustomersModule],
+  imports: [
+    TypeOrmModule.forFeature([TypeOrmProjectAttachmentEntity]),
+    StorageModule,
+    AuditModule,
+    forwardRef(() => CustomersModule)
+  ],
   // el controller de adjuntos va PRIMERO: Nest resuelve rutas por orden de registro
   // y 'projects/attachments' colisionaría con 'projects/:id' del recurso
   controllers: [ProjectAttachmentsController, ProjectsController],
