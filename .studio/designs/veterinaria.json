@@ -1,0 +1,651 @@
+{
+  "appName": "veterinaria",
+  "resources": [
+    {
+      "name": "dueno",
+      "plural": "duenos",
+      "labelSingular": "Dueño",
+      "labelPlural": "Dueños",
+      "gender": "m",
+      "detail": true,
+      "brief": "La persona de contacto: sus datos son los que hay que tener a mano al gestionar citas y tratamientos de sus mascotas.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Carmen Ortega Ruiz",
+            "José Luis Andrade",
+            "Marta Pelayo Sanz",
+            "Ricardo Fuentes Mola",
+            "Ana Belén Cuesta",
+            "Fernando Ochoa Prat",
+            "Lucía Garrido Vela",
+            "Pablo Andrés Regidor",
+            "Silvia Mena Castro",
+            "Jorge Talavera Gil"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "612 344 210",
+            "655 902 118",
+            "699 415 733",
+            "622 087 540",
+            "688 231 906",
+            "610 774 385",
+            "633 560 129",
+            "677 908 442",
+            "645 316 870",
+            "691 203 557"
+          ]
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "string",
+          "samples": [
+            "carmen.ortega@gmail.com",
+            "jlandrade@hotmail.com",
+            "marta.pelayo@gmail.com",
+            "rfuentes@yahoo.es",
+            "anabelen.cuesta@gmail.com",
+            "fochoa@outlook.com",
+            "lucia.garrido@gmail.com",
+            "pregidor@gmail.com",
+            "silvia.mena@hotmail.com",
+            "jtalavera@gmail.com"
+          ]
+        },
+        {
+          "name": "direccion",
+          "label": "Dirección",
+          "type": "string",
+          "samples": [
+            "C/ Panaderos 12, 2ºA",
+            "Av. de Segovia 44",
+            "C/ Tudela 3, bajo",
+            "Pza. Circular 8, 4ºB",
+            "C/ Estación 27",
+            "Camino Viejo de Simancas 5",
+            "C/ Gamazo 15, 1ºC",
+            "Av. de Palencia 102",
+            "C/ Nicolás Salmerón 9",
+            "Paseo de Zorrilla 188, 6ºA"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mascota",
+      "plural": "mascotas",
+      "labelSingular": "Mascota",
+      "labelPlural": "Mascotas",
+      "gender": "f",
+      "detail": true,
+      "brief": "El paciente de la clínica: pertenece a un dueño y acumula citas y tratamientos a lo largo de su vida.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Luna",
+            "Rocky",
+            "Misha",
+            "Toby",
+            "Nala",
+            "Simba",
+            "Bicho",
+            "Kira",
+            "Golfo",
+            "Perla"
+          ]
+        },
+        {
+          "name": "especie",
+          "label": "Especie",
+          "type": "enum",
+          "values": [
+            {
+              "value": "perro",
+              "label": "Perro"
+            },
+            {
+              "value": "gato",
+              "label": "Gato"
+            },
+            {
+              "value": "conejo",
+              "label": "Conejo"
+            },
+            {
+              "value": "ave",
+              "label": "Ave"
+            }
+          ],
+          "samples": [
+            "perro",
+            "perro",
+            "gato",
+            "perro",
+            "gato",
+            "gato",
+            "conejo",
+            "perro",
+            "perro",
+            "ave"
+          ]
+        },
+        {
+          "name": "raza",
+          "label": "Raza",
+          "type": "string",
+          "samples": [
+            "Labrador",
+            "Mestizo",
+            "Europeo común",
+            "Beagle",
+            "Siamés",
+            "Persa",
+            "Belier",
+            "Pastor alemán",
+            "Podenco",
+            "Ninfa"
+          ]
+        },
+        {
+          "name": "fechaNacimiento",
+          "label": "Fecha de nacimiento",
+          "type": "date",
+          "samples": [
+            "2019-04-12",
+            "2021-09-03",
+            "2020-01-25",
+            "2016-07-30",
+            "2022-11-14",
+            "2018-03-08",
+            "2023-05-19",
+            "2017-12-02",
+            "2015-08-21",
+            "2024-02-10"
+          ]
+        },
+        {
+          "name": "peso",
+          "label": "Peso (kg)",
+          "type": "number",
+          "samples": [
+            28.4,
+            12.7,
+            4.2,
+            11.9,
+            3.8,
+            5.1,
+            1.9,
+            31.6,
+            17.3,
+            0.09
+          ]
+        },
+        {
+          "name": "dueno",
+          "label": "Dueño",
+          "type": "ref",
+          "refTo": "dueno",
+          "samples": [
+            "Carmen Ortega Ruiz",
+            "José Luis Andrade",
+            "Marta Pelayo Sanz",
+            "Ricardo Fuentes Mola",
+            "Ana Belén Cuesta",
+            "Fernando Ochoa Prat",
+            "Lucía Garrido Vela",
+            "Pablo Andrés Regidor",
+            "Silvia Mena Castro",
+            "Jorge Talavera Gil"
+          ]
+        }
+      ],
+      "state": {
+        "field": "especie",
+        "initial": "perro",
+        "transitions": [
+          {
+            "name": "a-gato",
+            "label": "A gato",
+            "from": [
+              "perro"
+            ],
+            "to": "gato"
+          },
+          {
+            "name": "a-conejo",
+            "label": "A conejo",
+            "from": [
+              "perro"
+            ],
+            "to": "conejo"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cita",
+      "plural": "citas",
+      "labelSingular": "Cita",
+      "labelPlural": "Citas",
+      "gender": "f",
+      "calendar": {
+        "dateField": "fecha",
+        "labelField": "motivo",
+        "colorField": "veterinario"
+      },
+      "brief": "El día a día de las tres consultas: fecha y hora, motivo y veterinario, con la mascota y el dueño visibles de un vistazo.",
+      "fields": [
+        {
+          "name": "motivo",
+          "label": "Motivo",
+          "type": "string",
+          "samples": [
+            "Vacunación anual",
+            "Revisión posoperatoria",
+            "Cojera pata trasera",
+            "Limpieza dental",
+            "Vómitos desde ayer",
+            "Corte de uñas y revisión",
+            "Control de peso",
+            "Herida en la oreja",
+            "Desparasitación",
+            "Chequeo geriátrico"
+          ]
+        },
+        {
+          "name": "fecha",
+          "label": "Fecha",
+          "type": "date",
+          "samples": [
+            "2026-08-24",
+            "2026-08-24",
+            "2026-08-25",
+            "2026-08-26",
+            "2026-08-26",
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02"
+          ]
+        },
+        {
+          "name": "hora",
+          "label": "Hora",
+          "type": "string",
+          "samples": [
+            "09:30",
+            "10:15",
+            "11:00",
+            "12:30",
+            "16:00",
+            "16:45",
+            "17:30",
+            "09:00",
+            "10:45",
+            "18:15"
+          ]
+        },
+        {
+          "name": "veterinario",
+          "label": "Veterinario",
+          "type": "enum",
+          "values": [
+            {
+              "value": "laura_montes",
+              "label": "Laura Montes"
+            },
+            {
+              "value": "carlos_gil",
+              "label": "Carlos Gil"
+            },
+            {
+              "value": "ines_riera",
+              "label": "Inés Riera"
+            }
+          ],
+          "samples": [
+            "laura_montes",
+            "carlos_gil",
+            "ines_riera",
+            "laura_montes",
+            "carlos_gil",
+            "ines_riera",
+            "laura_montes",
+            "carlos_gil",
+            "ines_riera",
+            "laura_montes"
+          ]
+        },
+        {
+          "name": "mascota",
+          "label": "Mascota",
+          "type": "ref",
+          "refTo": "mascota",
+          "samples": [
+            "Luna",
+            "Rocky",
+            "Misha",
+            "Toby",
+            "Nala",
+            "Simba",
+            "Bicho",
+            "Kira",
+            "Golfo",
+            "Perla"
+          ]
+        },
+        {
+          "name": "dueno",
+          "label": "Dueño",
+          "type": "ref",
+          "refTo": "dueno",
+          "samples": [
+            "Carmen Ortega Ruiz",
+            "José Luis Andrade",
+            "Marta Pelayo Sanz",
+            "Ricardo Fuentes Mola",
+            "Ana Belén Cuesta",
+            "Fernando Ochoa Prat",
+            "Lucía Garrido Vela",
+            "Pablo Andrés Regidor",
+            "Silvia Mena Castro",
+            "Jorge Talavera Gil"
+          ]
+        }
+      ],
+      "state": {
+        "field": "veterinario",
+        "initial": "laura_montes",
+        "transitions": []
+      },
+      "detail": true
+    },
+    {
+      "name": "tratamiento",
+      "plural": "tratamientos",
+      "labelSingular": "Tratamiento",
+      "labelPlural": "Tratamientos",
+      "gender": "m",
+      "kanban": {
+        "field": "estado",
+        "labelField": "descripcion"
+      },
+      "brief": "Lo que sale de una visita: una pauta con coste estimado que avanza por fases hasta completarse, arrastrándola en el tablero.",
+      "fields": [
+        {
+          "name": "descripcion",
+          "label": "Descripción",
+          "type": "string",
+          "samples": [
+            "Antibiótico oral 10 días",
+            "Rehabilitación de cadera",
+            "Dieta hipocalórica",
+            "Cura diaria de herida",
+            "Tratamiento antiparasitario",
+            "Fisioterapia de rodilla",
+            "Limpieza dental con sedación",
+            "Pauta para dermatitis",
+            "Suplemento articular",
+            "Collar isabelino y revisión"
+          ]
+        },
+        {
+          "name": "costeEstimado",
+          "label": "Coste estimado",
+          "type": "number",
+          "samples": [
+            45.5,
+            320,
+            60,
+            85.75,
+            38,
+            210,
+            145,
+            72.4,
+            55,
+            25
+          ]
+        },
+        {
+          "name": "mascota",
+          "label": "Mascota",
+          "type": "ref",
+          "refTo": "mascota",
+          "samples": [
+            "Luna",
+            "Rocky",
+            "Misha",
+            "Toby",
+            "Nala",
+            "Simba",
+            "Bicho",
+            "Kira",
+            "Golfo",
+            "Perla"
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "pendiente",
+              "label": "Pendiente"
+            },
+            {
+              "value": "en_curso",
+              "label": "En curso"
+            },
+            {
+              "value": "en_observacion",
+              "label": "En observación"
+            },
+            {
+              "value": "completado",
+              "label": "Completado"
+            }
+          ],
+          "samples": [
+            "pendiente",
+            "en_curso",
+            "en_curso",
+            "en_observacion",
+            "pendiente",
+            "completado",
+            "en_curso",
+            "pendiente",
+            "completado",
+            "en_observacion"
+          ]
+        }
+      ],
+      "state": {
+        "field": "estado",
+        "initial": "pendiente",
+        "transitions": [
+          {
+            "name": "iniciar",
+            "label": "Iniciar tratamiento",
+            "from": [
+              "pendiente"
+            ],
+            "to": "en_curso"
+          },
+          {
+            "name": "observar",
+            "label": "Pasar a observación",
+            "from": [
+              "en_curso"
+            ],
+            "to": "en_observacion"
+          },
+          {
+            "name": "reanudar",
+            "label": "Reanudar",
+            "from": [
+              "en_observacion"
+            ],
+            "to": "en_curso"
+          },
+          {
+            "name": "completar",
+            "label": "Completar",
+            "from": [
+              "en_curso",
+              "en_observacion"
+            ],
+            "to": "completado"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "title": "Inicio",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "resources": [
+            "cita",
+            "tratamiento",
+            "mascota"
+          ],
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Agenda",
+      "blocks": [
+        {
+          "kind": "calendar",
+          "resource": "cita",
+          "width": "full",
+          "dateField": "fecha",
+          "labelField": "motivo",
+          "colorField": "veterinario"
+        }
+      ]
+    },
+    {
+      "title": "Citas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "cita",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Tablero de tratamientos",
+      "blocks": [
+        {
+          "kind": "kanban",
+          "resource": "tratamiento",
+          "width": "full",
+          "columnsField": "estado",
+          "labelField": "descripcion"
+        }
+      ]
+    },
+    {
+      "title": "Tratamientos",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "tratamiento",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Mascotas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "mascota",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha de la mascota",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "mascota",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Dueños",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "dueno",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del dueño",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "dueno",
+          "width": "full"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Clínica veterinaria con tres consultas y bastante movimiento. Se registran los dueños con sus datos de contacto y las mascotas de cada uno (especie, raza, fecha de nacimiento y peso). El día a día son las citas: fecha y hora, motivo y veterinario asignado, y se trabajan sobre un calendario además del listado; al gestionar una cita hay que ver de un vistazo la mascota y el dueño sin abrir fichas. Una visita puede acabar en un tratamiento con su coste estimado, que pasa por fases —pendiente, en curso, en observación y completado— y se maneja arrastrando tarjetas en un tablero. Unas quince personas usan la aplicación a la vez desde las tres consultas: las sesiones deben sobrevivir a un reinicio del servidor y los intentos de acceso abusivos se frenan. Se despliega en servidores propios con contenedores, sin nube grande.",
+    "rules": [
+      "Toda mascota pertenece a un dueño registrado.",
+      "Una cita es siempre de una mascota concreta y lleva veterinario asignado.",
+      "Un tratamiento no puede completarse sin haberse iniciado.",
+      "Al gestionar una cita debe verse la mascota y el dueño sin abrir cada ficha.",
+      "Las sesiones de las tres consultas sobreviven a un reinicio del servidor.",
+      "Los intentos de acceso repetidos se frenan automáticamente."
+    ],
+    "glossary": [
+      {
+        "term": "consulta",
+        "means": "Cada una de las tres salas de atención de la clínica, con su veterinario"
+      },
+      {
+        "term": "en observación",
+        "means": "El tratamiento sigue activo pero a la espera de evolución antes de darlo por completado"
+      },
+      {
+        "term": "tablero",
+        "means": "La vista de tarjetas donde cada columna es una fase del tratamiento"
+      }
+    ]
+  },
+  "ports": {
+    "api": 3020,
+    "web": 4330,
+    "postgres": 5460,
+    "postgresTest": 5461
+  }
+}
