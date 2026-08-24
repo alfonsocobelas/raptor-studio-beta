@@ -48,6 +48,16 @@ const SAMPLE_USERS: UserDto[] = [
     status: UserStatusEnum.ACTIVE,
     createdAt: '2026-01-17T08:15:00.000Z',
     updatedAt: '2026-01-17T08:15:00.000Z'
+  },
+  // una invitación pendiente, para que la vista enseñe también «Reenviar invitación»
+  {
+    id: '01900000-0000-7000-8000-000000000004',
+    email: 'invitado@app.local',
+    name: 'Invitado Pendiente',
+    role: UserRoleEnum.USER,
+    status: UserStatusEnum.PENDING,
+    createdAt: '2026-01-18T12:00:00.000Z',
+    updatedAt: '2026-01-18T12:00:00.000Z'
   }
 ]
 
