@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing'
 import { chooseInSelect, openSelect, selectValueLabel } from '../../../shared/components/ui/select.harness'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { LifecycleUiService } from './lifecycle-ui.service'
 import { ModelPanelComponent } from './model-panel.component'
 
 function mount() {
@@ -342,6 +343,68 @@ describe('ModelPanelComponent — editor de valores del enum', () => {
 
     expect(store.resources()[0].fields[0].values?.map(v => v.label)).toEqual(['Pendiente', 'En curso', 'Cerrado'])
     expect(labelInput(fixture, 1).value).toBe('En curso')
+  })
+})
+
+/**
+ * La card del ciclo de vida vive en la pestaña Entidad: el ciclo es una propiedad de la
+ * entidad y el panel derecho es donde se editan las propiedades de la selección. Desde
+ * aquí se abre la sub-vista del lienzo (vía LifecycleUiService).
+ */
+describe('ModelPanelComponent — la card del ciclo de vida (pestaña Entidad)', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+  let lifecycle: LifecycleUiService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    lifecycle = TestBed.inject(LifecycleUiService)
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    active.selectResource('solicitud')
+  })
+
+  function openEntityTab(fixture: ReturnType<typeof mount>): void {
+    testId(fixture, 'model-tab-entity')?.click()
+    fixture.detectChanges()
+  }
+
+  it('con máquina, la card resume estados y transiciones y «Editar» abre la sub-vista', () => {
+    store.promoteState('solicitud', 'nombre')
+
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    const summary = testId(fixture, 'lifecycle-summary')
+    expect(summary).not.toBeNull()
+    expect(summary?.textContent).toContain('3 estados')
+    expect(summary?.textContent).toContain('0 transiciones')
+
+    testId(fixture, 'lifecycle-edit')?.click()
+    expect(lifecycle.open()).toBe(true)
+  })
+
+  it('sin máquina pero con un enum, la card ofrece definir el ciclo y lo abre', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+    expect(testId(fixture, 'lifecycle-summary')).toBeNull()
+
+    testId(fixture, 'lifecycle-define')?.click()
+
+    expect(store.resources()[0].state?.field).toBe('nombre')
+    expect(lifecycle.open()).toBe(true)
+  })
+
+  it('sin ningún enum no hay card', () => {
+    store.updateField('solicitud', 0, { type: 'string' })
+
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    expect(testId(fixture, 'lifecycle-summary')).toBeNull()
+    expect(testId(fixture, 'lifecycle-define')).toBeNull()
   })
 })
 

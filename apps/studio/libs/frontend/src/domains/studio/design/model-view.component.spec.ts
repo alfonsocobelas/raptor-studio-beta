@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { EntityDraftService } from './entity-draft.service'
+import { LifecycleUiService } from './lifecycle-ui.service'
 import { ModelViewComponent } from './model-view.component'
 
 function mount() {
@@ -166,12 +167,14 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
 
 /**
  * El ciclo de vida deja la capa fija (desbordaba el lienzo con máquinas grandes y tapaba
- * las cajas): en el lienzo del modelo queda una barra de resumen y el diagrama entero se
- * edita en una sub-vista a lienzo completo con pan/zoom, como Flujos.
+ * las cajas): el diagrama entero se edita en una sub-vista a lienzo completo con pan/zoom,
+ * como Flujos. La card que la abre vive en el panel derecho (pestaña Entidad), así que el
+ * lienzo solo conoce el estado abierto/cerrado a través del servicio.
  */
-describe('ModelViewComponent — ciclo de vida: barra de resumen + sub-vista', () => {
+describe('ModelViewComponent — la sub-vista del ciclo de vida', () => {
   let store: DesignStore
   let active: ActiveViewService
+  let lifecycle: LifecycleUiService
 
   function query(fixture: ReturnType<typeof mount>, id: string): HTMLElement | null {
     return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
@@ -181,27 +184,24 @@ describe('ModelViewComponent — ciclo de vida: barra de resumen + sub-vista', (
     TestBed.configureTestingModule({})
     store = TestBed.inject(DesignStore)
     active = TestBed.inject(ActiveViewService)
+    lifecycle = TestBed.inject(LifecycleUiService)
     store.addResource('Solicitud')
     store.updateField('solicitud', 0, { type: 'enum' })
     store.promoteState('solicitud', 'nombre')
+    active.selectResource('solicitud')
   })
 
-  it('con máquina, la barra resume estados y transiciones y ya no incrusta el diagrama', () => {
-    active.selectResource('solicitud')
-
+  it('el lienzo del modelo ya no incrusta ni el diagrama ni ninguna card flotante', () => {
     const fixture = mount()
 
-    const summary = query(fixture, 'lifecycle-summary')
-    expect(summary).not.toBeNull()
-    expect(summary?.textContent).toContain('3 estados')
     expect(query(fixture, 'state-diagram')).toBeNull()
+    expect(query(fixture, 'lifecycle-summary')).toBeNull()
+    expect(query(fixture, 'model-node-solicitud')).not.toBeNull()
   })
 
-  it('«Editar» abre la sub-vista con el diagrama a lienzo completo', () => {
-    active.selectResource('solicitud')
-
+  it('con la sub-vista abierta, el diagrama editable ocupa el lienzo entero', () => {
     const fixture = mount()
-    query(fixture, 'lifecycle-edit')?.click()
+    lifecycle.open.set(true)
     fixture.detectChanges()
 
     expect(query(fixture, 'lifecycle-view')).not.toBeNull()
@@ -214,10 +214,8 @@ describe('ModelViewComponent — ciclo de vida: barra de resumen + sub-vista', (
   })
 
   it('«Volver al modelo» cierra la sub-vista y devuelve las cajas', () => {
-    active.selectResource('solicitud')
-
     const fixture = mount()
-    query(fixture, 'lifecycle-edit')?.click()
+    lifecycle.open.set(true)
     fixture.detectChanges()
     query(fixture, 'lifecycle-back')?.click()
     fixture.detectChanges()
@@ -226,41 +224,13 @@ describe('ModelViewComponent — ciclo de vida: barra de resumen + sub-vista', (
     expect(query(fixture, 'model-node-solicitud')).not.toBeNull()
   })
 
-  it('sin máquina pero con un enum, la barra ofrece definir el ciclo de vida', () => {
-    store.addResource('Pedido')
-    store.updateField('pedido', 0, { type: 'enum' })
-    active.selectResource('pedido')
-
-    const fixture = mount()
-    expect(query(fixture, 'lifecycle-summary')).toBeNull()
-
-    query(fixture, 'lifecycle-define')?.click()
-    fixture.detectChanges()
-
-    expect(store.resources().find(r => r.name === 'pedido')?.state?.field).toBe('nombre')
-    expect(query(fixture, 'lifecycle-view')).not.toBeNull()
-  })
-
-  it('sin entidad elegida, o sin ningún enum, no hay barra', () => {
-    const fixture = mount()
-    expect(query(fixture, 'lifecycle-summary')).toBeNull()
-    expect(query(fixture, 'lifecycle-define')).toBeNull()
-
-    store.addResource('Cliente')
-    active.selectResource('cliente')
-    fixture.detectChanges()
-    expect(query(fixture, 'lifecycle-summary')).toBeNull()
-    expect(query(fixture, 'lifecycle-define')).toBeNull()
-  })
-
   it('elegir otra entidad cierra la sub-vista: el ciclo abierto era de la anterior', () => {
     store.addResource('Pedido')
     store.updateField('pedido', 0, { type: 'enum' })
     store.promoteState('pedido', 'nombre')
-    active.selectResource('solicitud')
 
     const fixture = mount()
-    query(fixture, 'lifecycle-edit')?.click()
+    lifecycle.open.set(true)
     fixture.detectChanges()
     active.selectResource('pedido')
     fixture.detectChanges()

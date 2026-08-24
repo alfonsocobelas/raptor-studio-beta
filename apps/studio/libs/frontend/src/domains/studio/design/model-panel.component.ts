@@ -6,6 +6,7 @@ import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { slug } from './enum-slug'
 import { InspectorComponent } from './inspector.component'
+import { LifecycleUiService } from './lifecycle-ui.service'
 import { TYPE_LABELS } from './field-type-labels'
 
 /** Valor de la opción «— ninguna —»: la cadena vacía la lee el desplegable como «nada elegido». */
@@ -229,6 +230,41 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
                 (change)="saveBrief(resource, $event)"
                 data-testid="resource-brief"
               ></textarea>
+
+              <!-- el ciclo de vida es una propiedad de la entidad: su card vive aquí y
+                   abre la sub-vista del lienzo, donde el diagrama tiene sitio para crecer -->
+              @if (lifecycleSummary(); as machine) {
+                <div class="mt-4 rounded-lg border p-3" data-testid="lifecycle-summary">
+                  <p class="studio-eyebrow">Ciclo de vida · {{ machine.fieldLabel }}</p>
+                  <p class="text-muted-foreground mt-0.5 text-xs">
+                    {{ machine.states }} estados · {{ machine.transitions }} transiciones
+                  </p>
+                  <button
+                    type="button"
+                    class="studio-cta border-input mt-2 border"
+                    data-testid="lifecycle-edit"
+                    (click)="lifecycle.open.set(true)"
+                  >
+                    Editar
+                  </button>
+                </div>
+              } @else if (enumAnchor(); as anchor) {
+                <div class="mt-4 rounded-lg border p-3" data-testid="lifecycle-offer">
+                  <p class="studio-eyebrow">Ciclo de vida</p>
+                  <p class="text-muted-foreground mt-0.5 text-xs">
+                    «{{ anchor.label }}» puede ser el estado de la entidad: sus valores pasan a ser el ciclo de
+                    vida y cada registro nace en el inicial.
+                  </p>
+                  <button
+                    type="button"
+                    class="studio-cta border-input mt-2 border"
+                    data-testid="lifecycle-define"
+                    (click)="defineLifecycle()"
+                  >
+                    Definir ciclo de vida
+                  </button>
+                </div>
+              }
             } @else {
               <p class="text-muted-foreground text-xs" data-testid="entity-empty">
                 Elige una entidad en el diagrama para ver todas sus columnas.
@@ -334,6 +370,34 @@ export class ModelPanelComponent {
   protected readonly targets = computed(() =>
     this.store.resources().filter(resource => resource.name !== this.active.resource())
   )
+
+  /** La sub-vista del ciclo de vida se abre desde aquí y la pinta el lienzo. */
+  protected readonly lifecycle = inject(LifecycleUiService)
+
+  /** El resumen de la máquina de la entidad elegida, si su ancla sigue siendo un enum con valores. */
+  protected readonly lifecycleSummary = computed(() => {
+    const resource = this.store.resources().find(r => r.name === this.active.resource())
+    const machine = resource?.state
+    const field = resource?.fields.find(f => f.name === machine?.field)
+    if (!machine || !field?.values?.length) return null
+    return { fieldLabel: field.label, states: field.values.length, transitions: machine.transitions.length }
+  })
+
+  /** Sin máquina: el enum candidato a ancla (el que se llama estado, o el primero). */
+  protected readonly enumAnchor = computed(() => {
+    const resource = this.store.resources().find(r => r.name === this.active.resource())
+    if (!resource || resource.state) return null
+    const enums = resource.fields.filter(f => f.type === 'enum' && f.values?.length)
+    return enums.find(f => f.name.toLowerCase().includes('estado')) ?? enums[0] ?? null
+  })
+
+  /** El mismo gesto que el checkbox de la pestaña Campo, ofrecido a nivel de entidad. */
+  protected defineLifecycle(): void {
+    const resource = this.active.resource()
+    const anchor = this.enumAnchor()
+    if (!resource || !anchor) return
+    if (this.store.promoteState(resource, anchor.name)) this.lifecycle.open.set(true)
+  }
 
   /** ¿La columna elegida es el ancla de la máquina de su entidad? */
   protected readonly isStateAnchor = computed(() => {
