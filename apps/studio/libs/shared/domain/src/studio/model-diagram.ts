@@ -178,13 +178,42 @@ function defaultEntry(to: NodeBox, side: EntrySide): EntryPoint {
   }
 }
 
+/** Colchón vertical con el que la curva rodea un obstáculo. */
+const CLEARANCE = MODEL_NODE.rowHeight
+
+/** Desvío del último tirador: una llegada perfectamente plana funde la línea con el chevron. */
+const ENTRY_TILT = 16
+
+/**
+ * Hasta dónde tiene que bajar una curva lateral para no atravesar ninguna caja:
+ * si algún obstáculo pisa la banda entre los dos anclajes, el fondo baja por
+ * debajo de él — y se vuelve a mirar, porque al bajar puede toparse con otra
+ * fila: solo se cuela por un hueco si cabe con colchón por los dos lados.
+ * Devuelve null cuando el camino está despejado y la curva puede ir plana.
+ */
+function fondoDelCorredor(x1: number, y1: number, x2: number, y2: number, obstacles: NodeBox[]): number | null {
+  const izquierda = Math.min(x1, x2)
+  const derecha = Math.max(x1, x2)
+  const enElCorredor = obstacles.filter(o => o.x <= derecha && o.x + o.width >= izquierda)
+
+  const techo = Math.min(y1, y2)
+  let fondo: number | null = null
+  for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
+    const limite = fondo === null ? Math.max(y1, y2) : fondo + 2 * CLEARANCE
+    const choque = enElCorredor.find(o => o.y + o.height > (fondo ?? techo) && o.y < limite)
+    if (!choque) break
+    fondo = choque.y + choque.height
+  }
+  return fondo
+}
+
 /**
  * La curva desde el campo `ref` del origen hasta un punto de entrada dado. La
  * salida sigue anclada a la fila del campo —por el lateral que mira a la
  * entrada— y los tiradores son perpendiculares a cada borde: la flecha sale
  * plana y entra plana (laterales) o vertical (arriba/abajo).
  */
-function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCurve {
+function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacles: NodeBox[]): EdgeCurve {
   const y1 = from.y + MODEL_NODE.headerHeight + (fieldIndex + 1.5) * MODEL_NODE.rowHeight
   const { x: x2, y: y2 } = entry
 
@@ -199,12 +228,14 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCu
 
   if (entry.side === 'top' || entry.side === 'bottom') {
     const cy2 = entry.side === 'bottom' ? y2 + tirador : y2 - tirador
+    // la punta llega casi vertical, ladeada hacia donde viene la curva
+    const cx2 = x2 + ENTRY_TILT * (x1 >= x2 ? 1 : -1)
     return {
       x1,
       y1,
       x2,
       y2,
-      d: `M ${x1} ${y1} C ${cx1} ${y1}, ${x2} ${cy2}, ${x2} ${y2}`,
+      d: `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${cy2}, ${x2} ${y2}`,
       labelX: (x1 + x2) / 2,
       labelY: (y1 + y2) / 2
     }
@@ -213,14 +244,18 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCu
   const cx2 = entry.side === 'left' ? x2 - tirador : x2 + tirador
 
   /**
-   * Si entre las dos cajas cabe otra, el arco baja por debajo de ambas: con los
-   * tiradores planos la curva atravesaba la caja de en medio, que es justo lo que
-   * hace ilegible un diagrama. Basta con que quepa una caja en el trayecto.
+   * Si una caja bloquea el corredor entre los dos anclajes, el arco bucea por
+   * debajo de ella (y de lo que encuentre al bajar): con los tiradores planos la
+   * curva atravesaba la caja de en medio, que es justo lo que hace ilegible un
+   * diagrama. Con el camino despejado la curva va plana, por lejos que quede el
+   * destino. Los tiradores se calculan para que el PUNTO MEDIO real de la Bézier
+   * (y(0.5) = (y1 + 6·c + y2) / 8) pase por debajo del fondo, no solo el mando.
    */
-  const salto = Math.abs(x2 - x1) > MODEL_NODE.width
-  const suelo = Math.max(from.y + from.height, y2) + MODEL_NODE.rowHeight * 1.5
-  const cy1 = salto ? suelo : y1
-  const cy2 = salto ? suelo : y2
+  const fondo = fondoDelCorredor(x1, y1, x2, y2, obstacles)
+  const control = fondo === null ? null : (8 * (fondo + CLEARANCE) - y1 - y2) / 6
+  const cy1 = control ?? y1
+  // en plano la punta llega con una pizca de ángulo (buceando el arco ya la trae inclinada)
+  const cy2 = control ?? y2 + ENTRY_TILT * (y1 >= y2 ? 1 : -1)
 
   return {
     x1,
@@ -229,7 +264,8 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCu
     y2,
     d: `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`,
     labelX: (x1 + x2) / 2,
-    labelY: salto ? (suelo + Math.max(y1, y2)) / 2 : (y1 + y2) / 2
+    // la etiqueta viaja con el trazo: en un arco se pinta sobre su punto medio real
+    labelY: (y1 + 3 * cy1 + 3 * cy2 + y2) / 8
   }
 }
 
@@ -239,8 +275,8 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCu
  * referencia de diseño. `fieldIndex` cuenta los campos del draft; el diagrama
  * pinta antes la fila del `id`, y por eso la fila real es la siguiente.
  */
-export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeCurve {
-  return curveInto(from, fieldIndex, defaultEntry(to, entrySide(from, to)))
+export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox, obstacles: NodeBox[] = []): EdgeCurve {
+  return curveInto(from, fieldIndex, defaultEntry(to, entrySide(from, to)), obstacles)
 }
 
 /**
@@ -256,6 +292,10 @@ export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): 
     return from && to ? [{ edge, from, to, side: entrySide(from, to) }] : []
   })
 
+  // los obstáculos de cada arista son TODAS las demás cajas: origen y destino no estorban
+  const estorbos = ({ edge }: (typeof vivas)[number]) =>
+    Object.entries(boxes).flatMap(([name, box]) => (name === edge.from || name === edge.to ? [] : [box]))
+
   const grupos = new Map<string, typeof vivas>()
   for (const arista of vivas) {
     const clave = `${arista.edge.to}|${arista.side}`
@@ -266,7 +306,7 @@ export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): 
   for (const grupo of grupos.values()) {
     if (grupo.length === 1) {
       const { edge, from, to, side } = grupo[0]
-      lineas.set(edge, curveInto(from, edge.fieldIndex, defaultEntry(to, side)))
+      lineas.set(edge, curveInto(from, edge.fieldIndex, defaultEntry(to, side), estorbos(grupo[0])))
       continue
     }
     // reparto uniforme por el borde, en el orden de las salidas para no cruzarse
@@ -281,7 +321,7 @@ export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): 
       const entry: EntryPoint = lateral
         ? { side, x: side === 'left' ? to.x : to.x + to.width, y: to.y + to.height * paso }
         : { side, x: to.x + to.width * paso, y: side === 'top' ? to.y : to.y + to.height }
-      lineas.set(edge, curveInto(from, edge.fieldIndex, entry))
+      lineas.set(edge, curveInto(from, edge.fieldIndex, entry, estorbos(arista)))
     }
   }
 

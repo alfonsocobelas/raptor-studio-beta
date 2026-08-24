@@ -220,27 +220,51 @@ describe('edgeCurve — la flecha sale del campo, no del centro de la caja', () 
   })
 })
 
-describe('edgeCurve — saltos largos', () => {
+/** Altura real de la curva en su punto medio (t = 0.5 de la Bézier cúbica). */
+const alturaEnMedio = (curva: { d: string; y1: number; y2: number }): number => {
+  const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+  return (curva.y1 + 3 * cy1 + 3 * cy2 + curva.y2) / 8
+}
+
+describe('edgeCurve — la curva esquiva las cajas que bloquean el camino', () => {
   const from: NodeBox = { x: 700, y: 100, width: 240, height: 160 }
   const lejosIzquierda: NodeBox = { x: 0, y: 100, width: 240, height: 160 }
+  const enMedio: NodeBox = { x: 350, y: 100, width: 240, height: 160 }
 
-  it('cuando hay sitio para otra caja en medio, el arco baja por debajo de ambas', () => {
-    const curva = edgeCurve(from, 0, lejosIzquierda)
-    // C cx1 cy1, cx2 cy2, x2 y2
-    const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
+  it('con una caja en medio del corredor, el arco pasa por DEBAJO de su borde inferior', () => {
+    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
 
-    const suelo = Math.max(from.y + from.height, lejosIzquierda.y + lejosIzquierda.height)
-    expect(cy1).toBeGreaterThan(suelo)
-    expect(cy2).toBeGreaterThan(suelo)
+    expect(alturaEnMedio(curva)).toBeGreaterThan(enMedio.y + enMedio.height)
   })
 
-  it('un salto corto no baja: la curva se queda plana entre las dos filas', () => {
-    const alLado: NodeBox = { x: 1000, y: 100, width: 240, height: 160 }
-
-    const curva = edgeCurve(from, 0, alLado)
+  it('sin obstáculos la curva se queda plana, por lejos que esté el destino', () => {
+    const curva = edgeCurve(from, 0, lejosIzquierda)
     const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
 
     expect(cy1).toBe(curva.y1)
+  })
+
+  it('una caja fuera del corredor no obliga a bucear', () => {
+    const abajoDelTodo: NodeBox = { x: 350, y: 900, width: 240, height: 160 }
+
+    const curva = edgeCurve(from, 0, lejosIzquierda, [abajoDelTodo])
+    const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
+
+    expect(cy1).toBe(curva.y1)
+  })
+
+  it('al bucear esquiva TAMBIÉN lo que encuentra al bajar, no solo el primer obstáculo', () => {
+    const debajoDelObstaculo: NodeBox = { x: 350, y: 300, width: 240, height: 160 }
+
+    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio, debajoDelObstaculo])
+
+    expect(alturaEnMedio(curva)).toBeGreaterThan(debajoDelObstaculo.y + debajoDelObstaculo.height)
+  })
+
+  it('la etiqueta acompaña al arco: se pinta sobre el punto más hondo, no sobre la línea recta', () => {
+    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
+
+    expect(curva.labelY).toBeCloseTo(alturaEnMedio(curva), 5)
   })
 })
 
@@ -274,14 +298,28 @@ describe('edgeCurve — destino en la misma columna: la flecha entra en vertical
     expect([from.x, from.x + from.width]).toContain(curva.x1)
   })
 
-  it('el segundo tirador es perpendicular al borde de entrada: la curva llega en vertical', () => {
+  it('la curva llega casi en vertical, con una pizca de ángulo para que la punta no se funda con el trazo', () => {
     const encima: NodeBox = { x: 100, y: 100, width: 240, height: 112 }
 
     const curva = edgeCurve(from, 0, encima)
     const [cx2, cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).slice(2, 4).map(Number)
 
-    expect(cx2).toBe(curva.x2)
+    expect(cx2).not.toBe(curva.x2)
+    expect(Math.abs(cx2 - curva.x2)).toBeLessThanOrEqual(24)
     expect(cy2).toBeGreaterThan(curva.y2)
+  })
+})
+
+describe('edgeCurve — la punta entra con ángulo: una llegada plana funde la línea con el chevron', () => {
+  it('en una entrada lateral el último tirador va un poco desviado de la fila de la clave', () => {
+    const from: NodeBox = { x: 100, y: 100, width: 240, height: 160 }
+    const to: NodeBox = { x: 500, y: 100, width: 240, height: 160 }
+
+    const curva = edgeCurve(from, 0, to)
+    const cy2 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[3])
+
+    expect(cy2).not.toBe(curva.y2)
+    expect(Math.abs(cy2 - curva.y2)).toBeLessThanOrEqual(24)
   })
 })
 
@@ -342,6 +380,18 @@ describe('edgeCurves — abanico de entradas: dos flechas al mismo lado no se pi
     const clave = boxes['paciente'].y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight
     expect(curvas[0].line.y2).toBe(clave)
     expect(curvas[1].line.y2).toBe(clave)
+  })
+
+  it('deriva los obstáculos del propio mapa de cajas: la arista que cruza una fila bucea sola', () => {
+    const boxes: Record<string, NodeBox> = {
+      cita: { x: 700, y: 100, width: 240, height: 160 },
+      enMedio: { x: 350, y: 100, width: 240, height: 160 },
+      paciente: { x: 0, y: 100, width: 240, height: 160 }
+    }
+
+    const [curva] = edgeCurves([edge('cita', 'paciente')], boxes)
+
+    expect(alturaEnMedio(curva.line)).toBeGreaterThan(boxes['enMedio'].y + boxes['enMedio'].height)
   })
 
   it('ignora las aristas cuyas cajas no existen', () => {
