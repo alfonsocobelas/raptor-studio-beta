@@ -16,10 +16,13 @@ import { AppLogo } from '../../../../shared/components/app-logo'
   template: `
     <div class="bg-muted/40 flex min-h-screen items-center justify-center p-4">
       <section class="bg-card w-full max-w-md rounded-lg border p-6 shadow-sm">
-        <div class="mb-4 text-center">
-          <app-logo class="mx-auto mb-2 size-12" />
-          <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p class="text-sm opacity-70">Accede con tu cuenta</p>
+        <!-- lockup horizontal como la referencia: logo junto al nombre del producto -->
+        <div class="mb-6 flex items-center justify-center gap-3">
+          <app-logo class="size-12 shrink-0" />
+          <div class="text-left">
+            <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+            <p class="text-muted-foreground text-sm">Accede con tu cuenta</p>
+          </div>
         </div>
         <div>
           <form class="space-y-4" [formGroup]="form" (ngSubmit)="login()">
