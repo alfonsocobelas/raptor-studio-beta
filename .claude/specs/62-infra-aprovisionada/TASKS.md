@@ -28,5 +28,5 @@
 
 ## Validación
 
-- [ ] TASK-07: Smoke del estudio (marcar checkbox → comando y request llevan el flag) y
+- [x] TASK-07: Smoke del estudio (marcar checkbox → comando y request llevan el flag) y
       suite completa verde.
