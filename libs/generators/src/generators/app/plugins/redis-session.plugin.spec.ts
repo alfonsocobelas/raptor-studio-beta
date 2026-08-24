@@ -163,6 +163,25 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     expect(tree.read('apps/demo/iac/README.md', 'utf-8') ?? '').not.toContain('Redis pendiente de IaC')
   })
 
+  it('con infra=raptor el compose de prod levanta redis con requirepass y el README documenta las altas', async () => {
+    const tree = await generate({ ...base, sessionStore: 'redis', infra: 'raptor' })
+
+    const compose = tree.read('apps/demo/iac/docker-compose.prod.yml', 'utf-8') ?? ''
+    expect(compose).toContain('image: redis:7-alpine')
+    expect(compose).toContain('--requirepass')
+    // fuente de verdad de sesiones: mejor un 503 que desalojos en silencio
+    expect(compose).toContain('noeviction')
+    // la password viaja por el .env del servidor, como POSTGRES_PASSWORD
+    expect(compose).toContain('${REDIS_PASSWORD}')
+    // el backend no arranca sano sin su almacén de sesiones
+    expect(compose).toMatch(/depends_on:\s*\n\s*postgres:\s*\n\s*condition: service_healthy\s*\n\s*redis:/)
+
+    const readme = tree.read('apps/demo/iac/README.md', 'utf-8') ?? ''
+    expect(readme).toContain('REDIS_HOST')
+    expect(readme).toContain('REDIS_PASSWORD')
+    expect(readme).not.toContain('Redis pendiente de IaC')
+  })
+
   it('con el store por defecto no hay rastro de redis en infra, config ni health', async () => {
     const tree = await generate(base)
 

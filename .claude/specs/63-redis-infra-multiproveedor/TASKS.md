@@ -11,7 +11,7 @@
       raptor 6379/sin tls).
 - [x] TASK-03: aws — `iac/elasticache.tf` inline + secretos redis-host/redis-password +
       patch del statement ReadSecrets en `iam.tf`; desaparece la nota de pendiente en aws.
-- [ ] TASK-04: raptor — servicio redis en `docker-compose.prod.yml` (requirepass,
+- [x] TASK-04: raptor — servicio redis en `docker-compose.prod.yml` (requirepass,
       noeviction, depends_on, cabecera del .env) + sección en `iac/README.md`; desaparece
       la nota de pendiente en raptor.
 - [ ] TASK-05: test de degradación con `--provisionedInfra` (sin `iac/`, el plugin no

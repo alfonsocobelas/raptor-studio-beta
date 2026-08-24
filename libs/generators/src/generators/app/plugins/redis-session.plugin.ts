@@ -102,6 +102,10 @@ function addCloudRedis(tree: Tree, context: PluginContext): void {
     addAwsRedis(tree, iacDir)
     return
   }
+  if (context.infra === 'raptor') {
+    addRaptorRedis(tree, iacDir)
+    return
+  }
 
   const readme = tree.read(readmePath, 'utf-8')
   if (readme && !readme.includes('Redis pendiente de IaC')) {
@@ -213,6 +217,65 @@ resource "azurerm_key_vault_secret" "redis_password" {
   depends_on = [azurerm_key_vault_access_policy.terraform]
 }
 `
+
+/**
+ * En raptor no hay Terraform de Redis: el store es un servicio más del compose de prod
+ * del VPS, como Postgres. La password sigue el mismo doble viaje que POSTGRES_PASSWORD
+ * (.env del servidor para el contenedor + secreto en Infisical para el backend), y el
+ * README documenta las dos altas a mano.
+ */
+function addRaptorRedis(tree: Tree, iacDir: string): void {
+  const composePath = path.join(iacDir, 'docker-compose.prod.yml')
+  const compose = tree.read(composePath, 'utf-8')
+  if (compose && !compose.includes('redis:7-alpine')) {
+    tree.write(
+      composePath,
+      compose
+        // la lista de variables del .env de la cabecera, para que el operador no la descubra a golpes
+        .replace('POSTGRES_PASSWORD, METRICS_TOKEN,', 'POSTGRES_PASSWORD, REDIS_PASSWORD, METRICS_TOKEN,')
+        // sin sesiones no hay backend sano: que espere también a redis
+        .replace(
+          /(depends_on:\n      postgres:\n        condition: service_healthy\n)/,
+          `$1      redis:
+        condition: service_started
+`
+        )
+        // el servicio, a continuación de postgres (sin volumen: el estado es efímero)
+        .replace(
+          /(      - \/srv\/data\/postgres:\/var\/lib\/postgresql\/data\n)/,
+          `$1
+  # Sin volumen a propósito: solo estado efímero (rate limit, sesiones); perderlo en un
+  # restart es aceptable. noeviction: las sesiones son fuente de verdad, mejor un 503
+  # que desalojos en silencio. La password viaja por el .env, como POSTGRES_PASSWORD.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--requirepass', '\${REDIS_PASSWORD}', '--maxmemory-policy', 'noeviction']
+`
+        )
+    )
+  }
+
+  const readmePath = path.join(iacDir, 'README.md')
+  const readme = tree.read(readmePath, 'utf-8')
+  if (readme && !readme.includes('## Redis de sesiones y rate limit')) {
+    tree.write(
+      readmePath,
+      readme +
+        `
+## Redis de sesiones y rate limit (\`sessionStore: redis\`)
+
+El compose de prod levanta un \`redis:7-alpine\` con \`requirepass\` y \`noeviction\`. Dos
+altas a mano, el mismo doble viaje que la contraseña de Postgres:
+
+- \`REDIS_PASSWORD\` en el \`.env\` del servidor (lo usa el contenedor).
+- En Infisical: \`REDIS_HOST\` = \`redis\` (el nombre del servicio en el compose) y
+  \`REDIS_PASSWORD\` = el mismo valor del \`.env\` — el backend los resuelve por
+  \`vault.redis.host\` / \`vault.redis.password\`.
+`
+    )
+  }
+}
 
 // Espejo de managed-redis.tf en AWS, con el estilo de rds.tf. Pendiente de un
 // `terraform plan` real (sin cuenta aws desde la spec 47).
