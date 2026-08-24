@@ -15,6 +15,10 @@ describe('<%- className %>Service — listado', () => {
   let service: <%- className %>Service
   let httpGet: ReturnType<typeof vi.fn>
 
+  // la papelera pide `<%- api %>/deleted` en el mismo tick, así que la última llamada
+  // global no siempre es la del listado: se mira la última hecha a SU url
+  const lastListCall = () => httpGet.mock.calls.filter(([url]) => url === '<%- api %>').at(-1)
+
   beforeEach(() => {
     httpGet = vi.fn().mockReturnValue(of(<%- test.mockConst %>))
     TestBed.configureTestingModule({
@@ -51,9 +55,10 @@ describe('<%- className %>Service — listado', () => {
     service.request.set({ page: 1, pageSize: 10, orders })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('<%- api %>', {
-      params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) }
-    })
+    expect(lastListCall()).toEqual([
+      '<%- api %>',
+      { params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) } }
+    ])
   })
 
   it('exposes paginated response after load', async () => {
@@ -67,16 +72,12 @@ describe('<%- className %>Service — listado', () => {
     service.request.set({ page: 1, pageSize: 10, search: 'acme' })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('<%- api %>', {
-      params: { page: '1', pageSize: '10', search: 'acme' }
-    })
+    expect(lastListCall()).toEqual(['<%- api %>', { params: { page: '1', pageSize: '10', search: 'acme' } }])
 
     service.request.set({ page: 1, pageSize: 10, search: undefined })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('<%- api %>', {
-      params: { page: '1', pageSize: '10' }
-    })
+    expect(lastListCall()).toEqual(['<%- api %>', { params: { page: '1', pageSize: '10' } }])
   })
 
   it('serializes column filters to the filters param, dropping the columnLabel', () => {
@@ -88,17 +89,20 @@ describe('<%- className %>Service — listado', () => {
     service.request.set({ page: 1, pageSize: 10, filters })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('<%- api %>', {
-      params: {
-        page: '1',
-        pageSize: '10',
-        filters: JSON.stringify([
+    expect(lastListCall()).toEqual([
+      '<%- api %>',
+      {
+        params: {
+          page: '1',
+          pageSize: '10',
+          filters: JSON.stringify([
 <%_ test.filterSamples.forEach((f, i) => { _%>
-          { field: '<%- f.field %>', operator: '<%- f.operator %>', value: <%- f.value %> }<%- i < test.filterSamples.length - 1 ? ',' : '' %>
+            { field: '<%- f.field %>', operator: '<%- f.operator %>', value: <%- f.value %> }<%- i < test.filterSamples.length - 1 ? ',' : '' %>
 <%_ }) _%>
-        ])
+          ])
+        }
       }
-    })
+    ])
   })
 })
 <%_ if (features.edit || features.delete) { _%>
