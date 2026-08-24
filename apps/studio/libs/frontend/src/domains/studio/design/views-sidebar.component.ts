@@ -188,7 +188,7 @@ const BLOCK_TOOLS: BlockTool[] = [
         }
 
         <!-- Vistas de sistema (spec 57): las regala la autenticación, no se editan ni reordenan -->
-        <h2 class="studio-eyebrow mt-4 mb-2 px-1">Sistema</h2>
+        <h2 class="studio-eyebrow mt-4 mb-2 px-1">Vistas del sistema</h2>
         @for (view of systemViews; track view.id) {
           <button
             type="button"
