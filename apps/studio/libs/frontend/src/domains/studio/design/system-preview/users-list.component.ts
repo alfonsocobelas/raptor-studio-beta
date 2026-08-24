@@ -215,18 +215,30 @@ export class UsersListComponent {
 
   // Desactivar solo aplica a cuentas no desactivadas y reactivar solo a las desactivadas;
   // nadie se desactiva a sí mismo (el backend también lo rechaza).
+  // Botones con texto, como la referencia; reenviar solo aplica a invitaciones pendientes
+  // (el use case de invitar re-emite el token si el usuario existe y sigue pendiente).
   readonly actions: TableAction[] = [
-    { icon: 'lucidePencil', label: 'Cambiar rol', action: 'role' },
+    { icon: 'lucidePencil', label: 'Cambiar rol', action: 'role', showLabel: true },
+    {
+      icon: 'lucideSend',
+      label: 'Reenviar invitación',
+      action: 'resend',
+      showLabel: true,
+      hidden: row => row['status'] !== UserStatusEnum.PENDING
+    },
     {
       icon: 'lucideUserX',
       label: 'Desactivar',
       action: 'disable',
+      variant: 'destructive',
+      showLabel: true,
       hidden: row => row['status'] === UserStatusEnum.DISABLED || row['email'] === this.currentEmail()
     },
     {
       icon: 'lucideUserCheck',
       label: 'Reactivar',
       action: 'reactivate',
+      showLabel: true,
       hidden: row => row['status'] !== UserStatusEnum.DISABLED
     }
   ]
@@ -262,6 +274,17 @@ export class UsersListComponent {
       this.roleDialogUser.set(user)
     } else if (event.action === 'disable' || event.action === 'reactivate') {
       this.pending.set({ type: event.action, user })
+    } else if (event.action === 'resend') {
+      void this.resendInvitation(user)
+    }
+  }
+
+  private async resendInvitation(user: UserDto): Promise<void> {
+    try {
+      await this._service.invite({ email: user.email, name: user.name, role: user.role })
+      this._notify.success('Invitación reenviada a ' + user.email)
+    } catch {
+      this._notify.error('No se pudo reenviar la invitación')
     }
   }
 

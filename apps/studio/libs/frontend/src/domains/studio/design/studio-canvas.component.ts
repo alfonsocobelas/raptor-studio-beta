@@ -472,6 +472,15 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       >
                       <span>Admin Local</span>
                     </button>
+                    <button
+                      type="button"
+                      class="w-full px-4 py-1.5 text-left text-[11px] opacity-80"
+                      style="color: var(--preview-shell-fg)"
+                      data-testid="mock-logout-cabina"
+                      (click)="active.selectSystem('login')"
+                    >
+                      Cerrar sesión
+                    </button>
                   </aside>
                   <div class="flex min-w-0 flex-1 flex-col">
                     <!-- barra de estado de la maqueta: contexto / sección, en monospace -->
@@ -536,6 +545,22 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                         }
                       }
                     </nav>
+                    <!-- espejo del emitido: sección Administración (solo admin) → vista Usuarios -->
+                    <p class="text-muted-foreground mt-4 px-3 text-[10px] font-semibold tracking-wide uppercase">
+                      Administración
+                    </p>
+                    <nav class="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
+                        [class.bg-accent]="active.systemView() === 'users'"
+                        [class.font-semibold]="active.systemView() === 'users'"
+                        data-testid="mock-nav-users"
+                        (click)="active.selectSystem('users')"
+                      >
+                        Usuarios
+                      </button>
+                    </nav>
                     <span class="flex-1"></span>
                     <!-- el botón de tema que llevará la app generada: aquí es funcional -->
                     <button
@@ -547,16 +572,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
                       <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                     </button>
-                    <!-- pie de sesión de la maqueta (spec 57): como el emitido, Usuarios + Mi cuenta -->
+                    <!-- pie de sesión de la maqueta (spec 57): como el emitido — chip, Mi cuenta y salir -->
                     <div class="border-t px-1 pt-2">
-                      <button
-                        type="button"
-                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
-                        data-testid="mock-users-link"
-                        (click)="active.selectSystem('users')"
-                      >
-                        Usuarios
-                      </button>
                       <button
                         type="button"
                         class="text-muted-foreground flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs"
@@ -569,6 +586,22 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                           <p class="text-foreground font-medium">Admin Local</p>
                           <p>admin&#64;app.local</p>
                         </div>
+                      </button>
+                      <button
+                        type="button"
+                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
+                        data-testid="mock-my-account"
+                        (click)="active.selectSystem('account')"
+                      >
+                        Mi cuenta
+                      </button>
+                      <button
+                        type="button"
+                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
+                        data-testid="mock-logout"
+                        (click)="active.selectSystem('login')"
+                      >
+                        Cerrar sesión
                       </button>
                     </div>
                   </aside>
