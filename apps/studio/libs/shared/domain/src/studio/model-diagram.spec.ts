@@ -205,11 +205,11 @@ describe('edgeCurve — la flecha sale del campo, no del centro de la caja', () 
     expect(curva.x2).toBe(izquierda.x + izquierda.width)
   })
 
-  it('el trazo es una curva suave, con los tiradores en horizontal', () => {
+  it('el trazo es ortogonal: solo tramos horizontales y verticales', () => {
     const curva = edgeCurve(from, 0, to)
 
-    expect(curva.d).toMatch(/^M [\d.-]+ [\d.-]+ C/)
-    expect(curva.d.split('C')[1].trim().split(/[ ,]+/)).toHaveLength(6)
+    expect(esOrtogonal(curva.points)).toBe(true)
+    expect(curva.points.length).toBeGreaterThanOrEqual(2)
   })
 
   it('la etiqueta va sobre el trazo, entre las dos cajas', () => {
@@ -217,75 +217,102 @@ describe('edgeCurve — la flecha sale del campo, no del centro de la caja', () 
 
     expect(curva.labelX).toBeGreaterThan(Math.min(curva.x1, curva.x2))
     expect(curva.labelX).toBeLessThan(Math.max(curva.x1, curva.x2))
+    expect(sobreElTrazo(curva)).toBe(true)
   })
 })
 
-/** Altura real de la curva en su punto medio (t = 0.5 de la Bézier cúbica). */
-const alturaEnMedio = (curva: { d: string; y1: number; y2: number }): number => {
-  const [, cy1, , cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).map(Number)
-  return (curva.y1 + 3 * cy1 + 3 * cy2 + curva.y2) / 8
-}
+/** ¿Algún tramo de la polilínea invade el INTERIOR de la caja? (rozar el borde no cuenta). */
+const atraviesa = (points: readonly { x: number; y: number }[], box: NodeBox): boolean =>
+  points.slice(1).some((p, i) => {
+    const q = points[i]
+    const [xa, xb] = [Math.min(p.x, q.x), Math.max(p.x, q.x)]
+    const [ya, yb] = [Math.min(p.y, q.y), Math.max(p.y, q.y)]
+    return xa < box.x + box.width && xb > box.x && ya < box.y + box.height && yb > box.y
+  })
 
-describe('edgeCurve — la curva esquiva las cajas que bloquean el camino, por el lado más corto', () => {
+/** ¿Cada tramo es horizontal o vertical? */
+const esOrtogonal = (points: readonly { x: number; y: number }[]): boolean =>
+  points.slice(1).every((p, i) => p.x === points[i].x || p.y === points[i].y)
+
+/** ¿La etiqueta cae sobre alguno de los tramos? */
+const sobreElTrazo = (curva: {
+  points: readonly { x: number; y: number }[]
+  labelX: number
+  labelY: number
+}): boolean =>
+  curva.points.slice(1).some((p, i) => {
+    const q = curva.points[i]
+    const [xa, xb] = [Math.min(p.x, q.x), Math.max(p.x, q.x)]
+    const [ya, yb] = [Math.min(p.y, q.y), Math.max(p.y, q.y)]
+    return curva.labelX >= xa && curva.labelX <= xb && curva.labelY >= ya && curva.labelY <= yb
+  })
+
+describe('edgeCurve — la ruta rodea las cajas: ningún tramo pisa un obstáculo', () => {
   // los anclajes de esta pareja dejan la banda del corredor en y 152..176
   const from: NodeBox = { x: 700, y: 100, width: 240, height: 160 }
   const lejosIzquierda: NodeBox = { x: 0, y: 100, width: 240, height: 160 }
   const enMedio: NodeBox = { x: 350, y: 100, width: 240, height: 160 }
 
-  it('un obstáculo que asoma sobre todo por ARRIBA se esquiva buceando por debajo', () => {
-    const alto: NodeBox = { x: 350, y: 0, width: 240, height: 200 }
+  it('con una caja en medio del corredor, la ruta no la atraviesa (y sigue siendo ortogonal)', () => {
+    const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
 
-    const curva = edgeCurve(from, 0, lejosIzquierda, [alto])
-
-    expect(alturaEnMedio(curva)).toBeGreaterThan(alto.y + alto.height)
+    expect(atraviesa(curva.points, enMedio)).toBe(false)
+    expect(esOrtogonal(curva.points)).toBe(true)
   })
 
-  it('un obstáculo que asoma sobre todo por DEBAJO se esquiva por encima: la flecha no lo persigue al arrastrarlo hacia abajo', () => {
+  it('el obstáculo arrastrado hacia abajo no arrastra la flecha: la ruta tampoco lo pisa ahí', () => {
     const mascota: NodeBox = { x: 350, y: 160, width: 240, height: 160 }
 
     const curva = edgeCurve(from, 0, lejosIzquierda, [mascota])
 
-    expect(alturaEnMedio(curva)).toBeLessThan(mascota.y)
+    expect(atraviesa(curva.points, mascota)).toBe(false)
   })
 
-  it('sin obstáculos la curva se queda plana, por lejos que esté el destino', () => {
+  it('sin obstáculos la ruta es la mínima: saliente, canal y entrada, sin excursiones', () => {
     const curva = edgeCurve(from, 0, lejosIzquierda)
-    const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
 
-    expect(cy1).toBe(curva.y1)
+    expect(curva.points.length).toBeLessThanOrEqual(4)
+    for (const p of curva.points) {
+      expect(p.y).toBeGreaterThanOrEqual(Math.min(curva.y1, curva.y2))
+      expect(p.y).toBeLessThanOrEqual(Math.max(curva.y1, curva.y2))
+    }
   })
 
   it('una caja fuera del corredor no obliga a desviarse', () => {
     const abajoDelTodo: NodeBox = { x: 350, y: 900, width: 240, height: 160 }
 
     const curva = edgeCurve(from, 0, lejosIzquierda, [abajoDelTodo])
-    const cy1 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[1])
 
-    expect(cy1).toBe(curva.y1)
+    expect(curva.points.length).toBeLessThanOrEqual(4)
   })
 
-  it('al bucear esquiva TAMBIÉN lo que encuentra al bajar, no solo el primer obstáculo', () => {
-    const alto: NodeBox = { x: 350, y: -400, width: 240, height: 600 }
-    const debajoDelAlto: NodeBox = { x: 350, y: 220, width: 240, height: 160 }
+  it('con varias cajas bloqueando, la ruta no pisa NINGUNA', () => {
+    const obstaculos: NodeBox[] = [
+      { x: 350, y: -400, width: 240, height: 600 },
+      { x: 350, y: 220, width: 240, height: 160 }
+    ]
 
-    const curva = edgeCurve(from, 0, lejosIzquierda, [alto, debajoDelAlto])
+    const curva = edgeCurve(from, 0, lejosIzquierda, obstaculos)
 
-    expect(alturaEnMedio(curva)).toBeGreaterThan(debajoDelAlto.y + debajoDelAlto.height)
+    for (const caja of obstaculos) expect(atraviesa(curva.points, caja)).toBe(false)
+    expect(esOrtogonal(curva.points)).toBe(true)
   })
 
-  it('al subir esquiva TAMBIÉN lo que encuentra arriba: no se cuela por un hueco justo', () => {
-    const mascota: NodeBox = { x: 350, y: 160, width: 240, height: 160 }
-    const encimaDeMascota: NodeBox = { x: 350, y: 60, width: 240, height: 70 }
+  it('tampoco pisa el hueco justo: si no cabe entre dos cajas, las rodea a las dos', () => {
+    const obstaculos: NodeBox[] = [
+      { x: 350, y: 160, width: 240, height: 160 },
+      { x: 350, y: 60, width: 240, height: 70 }
+    ]
 
-    const curva = edgeCurve(from, 0, lejosIzquierda, [mascota, encimaDeMascota])
+    const curva = edgeCurve(from, 0, lejosIzquierda, obstaculos)
 
-    expect(alturaEnMedio(curva)).toBeLessThan(encimaDeMascota.y)
+    for (const caja of obstaculos) expect(atraviesa(curva.points, caja)).toBe(false)
   })
 
-  it('la etiqueta acompaña al arco: se pinta sobre su punto medio real, no sobre la línea recta', () => {
+  it('la etiqueta acompaña a la ruta: cae sobre uno de sus tramos', () => {
     const curva = edgeCurve(from, 0, lejosIzquierda, [enMedio])
 
-    expect(curva.labelY).toBeCloseTo(alturaEnMedio(curva), 5)
+    expect(sobreElTrazo(curva)).toBe(true)
   })
 })
 
@@ -319,28 +346,36 @@ describe('edgeCurve — destino en la misma columna: la flecha entra en vertical
     expect([from.x, from.x + from.width]).toContain(curva.x1)
   })
 
-  it('la curva llega casi en vertical, con una pizca de ángulo para que la punta no se funda con el trazo', () => {
+  it('el último tramo es vertical: la flecha aterriza perpendicular al borde', () => {
     const encima: NodeBox = { x: 100, y: 100, width: 240, height: 112 }
 
     const curva = edgeCurve(from, 0, encima)
-    const [cx2, cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).slice(2, 4).map(Number)
+    const [penultimo, ultimo] = curva.points.slice(-2)
 
-    expect(cx2).not.toBe(curva.x2)
-    expect(Math.abs(cx2 - curva.x2)).toBeLessThanOrEqual(24)
-    expect(cy2).toBeGreaterThan(curva.y2)
+    expect(esOrtogonal(curva.points)).toBe(true)
+    expect(ultimo.x).toBe(penultimo.x)
+    expect(ultimo.x).toBe(curva.x2)
   })
 })
 
-describe('edgeCurve — la punta entra con ángulo: una llegada plana funde la línea con el chevron', () => {
-  it('en una entrada lateral el último tirador va un poco desviado de la fila de la clave', () => {
+describe('edgeCurve — el trazo se detiene antes del ancla: hueco para que el chevron no se funda con la línea', () => {
+  it('el path acaba unos px antes del borde del destino; los anclajes lógicos no cambian', () => {
     const from: NodeBox = { x: 100, y: 100, width: 240, height: 160 }
     const to: NodeBox = { x: 500, y: 100, width: 240, height: 160 }
 
     const curva = edgeCurve(from, 0, to)
-    const cy2 = Number(curva.d.split('C')[1].trim().split(/[ ,]+/)[3])
+    const numeros = curva.d
+      .trim()
+      .split(/[ ,]+/)
+      .filter(n => /^[\d.-]+$/.test(n))
+      .map(Number)
+    const [finX, finY] = numeros.slice(-2)
 
-    expect(cy2).not.toBe(curva.y2)
-    expect(Math.abs(cy2 - curva.y2)).toBeLessThanOrEqual(24)
+    const hueco = Math.hypot(curva.x2 - finX, curva.y2 - finY)
+    expect(hueco).toBeGreaterThan(0)
+    expect(hueco).toBeLessThanOrEqual(12)
+    // el ancla lógica sigue en el borde: de ella cuelgan la selección y el botón de borrar
+    expect(curva.x2).toBe(to.x)
   })
 })
 
@@ -412,8 +447,7 @@ describe('edgeCurves — abanico de entradas: dos flechas al mismo lado no se pi
 
     const [curva] = edgeCurves([edge('cita', 'paciente')], boxes)
 
-    // esquiva por el lado más corto: aquí el arco pasa por encima del estorbo
-    expect(alturaEnMedio(curva.line)).toBeLessThan(boxes['enMedio'].y)
+    expect(atraviesa(curva.line.points, boxes['enMedio'])).toBe(false)
   })
 
   it('ignora las aristas cuyas cajas no existen', () => {

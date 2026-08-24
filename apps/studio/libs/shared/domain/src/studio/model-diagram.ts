@@ -139,6 +139,8 @@ export interface EdgeCurve extends EdgeSegment {
   d: string
   labelX: number
   labelY: number
+  /** Esquinas de la polilínea ortogonal (anclajes incluidos): la verdad geométrica de la ruta */
+  points: NodePosition[]
 }
 
 /** Lado del destino por el que entra una flecha. */
@@ -178,59 +180,199 @@ function defaultEntry(to: NodeBox, side: EntrySide): EntryPoint {
   }
 }
 
-/** Colchón vertical con el que la curva rodea un obstáculo. */
+/** Colchón con el que las rutas rodean las cajas. */
 const CLEARANCE = MODEL_NODE.rowHeight
 
-/** Desvío del último tirador: una llegada perfectamente plana funde la línea con el chevron. */
-const ENTRY_TILT = 16
+/** Saliente mínimo antes del primer giro: la flecha despega del borde antes de doblar. */
+const STUB = 16
 
-/**
- * El punto de control vertical con el que una curva lateral esquiva las cajas
- * que bloquean la banda entre sus dos anclajes, o null si el camino está
- * despejado y la curva puede ir plana. Se prueba a rodear por abajo y por
- * arriba —en cada dirección se sigue esquivando lo que aparezca, y solo se
- * cuela por un hueco si cabe con colchón por los dos lados— y gana el desvío
- * más corto: así la flecha no persigue a un obstáculo que se arrastra hacia
- * abajo, le pasa por encima.
- */
-function controlDeEsquiva(x1: number, y1: number, x2: number, y2: number, obstacles: NodeBox[]): number | null {
-  const izquierda = Math.min(x1, x2)
-  const derecha = Math.max(x1, x2)
-  const enElCorredor = obstacles.filter(o => o.x <= derecha && o.x + o.width >= izquierda)
+/** Radio de las esquinas redondeadas del trazo. */
+const CORNER = 8
 
-  const bandaSup = Math.min(y1, y2)
-  const bandaInf = Math.max(y1, y2)
+/** El trazo se detiene este hueco antes del ancla: así el chevron no se funde con la línea. */
+const TIP_GAP = 8
 
-  let fondo: number | null = null
-  for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
-    // anotados a mano: el narrowing de `fondo` dentro del closure crea un ciclo de
-    // inferencia (TS7022) que vitest no ve (transpila sin typecheck) y el build sí
-    const limite: number = fondo === null ? bandaInf : fondo + 2 * CLEARANCE
-    const choque: NodeBox | undefined = enElCorredor.find(o => o.y + o.height > (fondo ?? bandaSup) && o.y < limite)
-    if (!choque) break
-    fondo = choque.y + choque.height
+/** ¿Un tramo horizontal en `y` entre `xa..xb` invade el interior de alguna caja? (rozar el borde no cuenta). */
+function chocaH(y: number, xa: number, xb: number, obstacles: NodeBox[]): boolean {
+  const [a, b] = xa <= xb ? [xa, xb] : [xb, xa]
+  return obstacles.some(o => o.x < b && o.x + o.width > a && o.y < y && o.y + o.height > y)
+}
+
+/** ¿Un tramo vertical en `x` entre `ya..yb` invade el interior de alguna caja? */
+function chocaV(x: number, ya: number, yb: number, obstacles: NodeBox[]): boolean {
+  const [a, b] = ya <= yb ? [ya, yb] : [yb, ya]
+  return obstacles.some(o => o.y < b && o.y + o.height > a && o.x < x && o.x + o.width > x)
+}
+
+/** Quita puntos repetidos y codos colineales: una Z plana se queda en línea recta. */
+function depura(points: NodePosition[]): NodePosition[] {
+  const limpios: NodePosition[] = []
+  for (const p of points) {
+    const a = limpios[limpios.length - 2]
+    const b = limpios[limpios.length - 1]
+    if (b && b.x === p.x && b.y === p.y) continue
+    if (a && b && ((a.x === b.x && b.x === p.x) || (a.y === b.y && b.y === p.y))) limpios.pop()
+    limpios.push(p)
   }
-  if (fondo === null) return null
-
-  let techo: number | null = null
-  for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
-    const limite: number = techo === null ? bandaSup : techo - 2 * CLEARANCE
-    const choque: NodeBox | undefined = enElCorredor.find(o => o.y < (techo ?? bandaInf) && o.y + o.height > limite)
-    if (!choque) break
-    techo = choque.y
-  }
-
-  // gana el desvío más corto; a igualdad, por abajo (la estética de siempre)
-  const porAbajo = techo === null || fondo - bandaInf <= bandaSup - techo
-  const objetivo = porAbajo ? fondo + CLEARANCE : (techo as number) - CLEARANCE
-  return (8 * objetivo - y1 - y2) / 6
+  return limpios
 }
 
 /**
- * La curva desde el campo `ref` del origen hasta un punto de entrada dado. La
- * salida sigue anclada a la fila del campo —por el lateral que mira a la
- * entrada— y los tiradores son perpendiculares a cada borde: la flecha sale
- * plana y entra plana (laterales) o vertical (arriba/abajo).
+ * Ruta ortogonal hacia una entrada LATERAL. Primero se intenta la Z clásica
+ * (saliente, canal vertical, entrada) probando canales libres —el del medio y
+ * los pegados a cada obstáculo—; si ninguno pasa, se rodea en U por un canal
+ * horizontal libre. Cada tramo se comprueba contra TODAS las cajas, así que la
+ * ruta elegida no pisa ninguna; solo si las cajas se solapan entre sí (arrastre
+ * extremo) se acepta la menos mala.
+ */
+function rutaLateral(
+  x1: number,
+  y1: number,
+  s1: number,
+  x2: number,
+  y2: number,
+  e: number,
+  obstacles: NodeBox[]
+): NodePosition[] {
+  const candidatosZ = [
+    (x1 + x2) / 2,
+    x1 + s1 * STUB,
+    x2 + e * STUB,
+    ...obstacles.flatMap(o => [o.x - CLEARANCE, o.x + o.width + CLEARANCE])
+  ]
+    .filter(xm => (xm - x1) * s1 >= STUB && (xm - x2) * e >= STUB)
+    .sort((a, b) => Math.abs(a - (x1 + x2) / 2) - Math.abs(b - (x1 + x2) / 2))
+
+  for (const xm of candidatosZ) {
+    if (!chocaH(y1, x1, xm, obstacles) && !chocaV(xm, y1, y2, obstacles) && !chocaH(y2, xm, x2, obstacles)) {
+      return [
+        { x: x1, y: y1 },
+        { x: xm, y: y1 },
+        { x: xm, y: y2 },
+        { x: x2, y: y2 }
+      ]
+    }
+  }
+
+  const xv1 = x1 + s1 * STUB
+  const xv2 = x2 + e * STUB
+  const centroBanda = (y1 + y2) / 2
+  const canales = obstacles
+    .flatMap(o => [o.y - CLEARANCE, o.y + o.height + CLEARANCE])
+    .concat(Math.min(y1, y2) - 2 * CLEARANCE, Math.max(y1, y2) + 2 * CLEARANCE)
+    .sort((a, b) => Math.abs(a - centroBanda) - Math.abs(b - centroBanda))
+  const enU = (yc: number): NodePosition[] => [
+    { x: x1, y: y1 },
+    { x: xv1, y: y1 },
+    { x: xv1, y: yc },
+    { x: xv2, y: yc },
+    { x: xv2, y: y2 },
+    { x: x2, y: y2 }
+  ]
+
+  for (const yc of canales) {
+    if (
+      !chocaH(y1, x1, xv1, obstacles) &&
+      !chocaV(xv1, y1, yc, obstacles) &&
+      !chocaH(yc, xv1, xv2, obstacles) &&
+      !chocaV(xv2, yc, y2, obstacles) &&
+      !chocaH(y2, xv2, x2, obstacles)
+    ) {
+      return enU(yc)
+    }
+  }
+  return enU(canales[0])
+}
+
+/**
+ * Ruta ortogonal hacia una entrada VERTICAL (mismas columnas): en directo es una
+ * L —por la fila del campo hasta la x de entrada y de ahí al borde—; si la L
+ * retrocede sobre la propia caja o choca, sale por el lateral, viaja por el
+ * canal pegado a la entrada y aterriza en vertical.
+ */
+function rutaVertical(
+  x1: number,
+  y1: number,
+  s1: number,
+  x2: number,
+  y2: number,
+  ev: number,
+  obstacles: NodeBox[]
+): NodePosition[] {
+  const directa = (x2 - x1) * s1 >= STUB
+  if (directa && !chocaH(y1, x1, x2, obstacles) && !chocaV(x2, y1, y2, obstacles)) {
+    return [
+      { x: x1, y: y1 },
+      { x: x2, y: y1 },
+      { x: x2, y: y2 }
+    ]
+  }
+
+  const xv = x1 + s1 * STUB
+  const ym = y2 + ev * CLEARANCE
+  return [
+    { x: x1, y: y1 },
+    { x: xv, y: y1 },
+    { x: xv, y: ym },
+    { x: x2, y: ym },
+    { x: x2, y: y2 }
+  ]
+}
+
+/** Recorta el final de la ruta TIP_GAP px: el hueco donde vive el chevron. */
+function recortaParaLaPunta(points: NodePosition[]): NodePosition[] {
+  const fin = points[points.length - 1]
+  const previo = points[points.length - 2]
+  const largo = Math.hypot(fin.x - previo.x, fin.y - previo.y)
+  const recorte = Math.min(TIP_GAP, largo / 2)
+  const corto = {
+    x: fin.x + (largo === 0 ? 0 : ((previo.x - fin.x) / largo) * recorte),
+    y: fin.y + (largo === 0 ? 0 : ((previo.y - fin.y) / largo) * recorte)
+  }
+  return [...points.slice(0, -1), corto]
+}
+
+/** El path SVG de la polilínea, con las esquinas redondeadas y el hueco de la punta. */
+function trazo(points: NodePosition[]): string {
+  const pts = recortaParaLaPunta(points)
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1]
+    const b = pts[i]
+    const c = pts[i + 1]
+    const radio = Math.min(CORNER, Math.hypot(b.x - a.x, b.y - a.y) / 2, Math.hypot(c.x - b.x, c.y - b.y) / 2)
+    const hacia = (desde: NodePosition, meta: NodePosition): NodePosition => {
+      const largo = Math.hypot(meta.x - desde.x, meta.y - desde.y)
+      return largo === 0
+        ? desde
+        : { x: desde.x + ((meta.x - desde.x) / largo) * radio, y: desde.y + ((meta.y - desde.y) / largo) * radio }
+    }
+    const entrada = hacia(b, a)
+    const salida = hacia(b, c)
+    d += ` L ${entrada.x} ${entrada.y} Q ${b.x} ${b.y} ${salida.x} ${salida.y}`
+  }
+  const fin = pts[pts.length - 1]
+  return `${d} L ${fin.x} ${fin.y}`
+}
+
+/** La etiqueta va al punto medio del tramo más largo: ahí hay sitio de sobra. */
+function puntoDeEtiqueta(points: NodePosition[]): NodePosition {
+  let mejor = { largo: -1, x: 0, y: 0 }
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]
+    const b = points[i]
+    const largo = Math.hypot(b.x - a.x, b.y - a.y)
+    if (largo > mejor.largo) mejor = { largo, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  }
+  return { x: mejor.x, y: mejor.y }
+}
+
+/**
+ * La ruta desde el campo `ref` del origen hasta un punto de entrada dado: sale
+ * anclada a la fila del campo por el lateral que mira a la entrada, viaja en
+ * tramos ortogonales que RODEAN las cajas y aterriza perpendicular al borde de
+ * entrada. Los anclajes lógicos (x1,y1,x2,y2) quedan en los bordes; el trazo se
+ * recorta unos px antes de la punta para que el chevron no se funda con la línea.
  */
 function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacles: NodeBox[]): EdgeCurve {
   const y1 = from.y + MODEL_NODE.headerHeight + (fieldIndex + 1.5) * MODEL_NODE.rowHeight
@@ -238,53 +380,17 @@ function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint, obstacl
 
   const salidaDerecha = x2 >= from.x + from.width / 2
   const x1 = salidaDerecha ? from.x + from.width : from.x
+  const s1 = salidaDerecha ? 1 : -1
 
-  const tirador = Math.max(
-    30,
-    (entry.side === 'top' || entry.side === 'bottom' ? Math.abs(y2 - y1) : Math.abs(x2 - x1)) / 2
+  const lateral = entry.side === 'left' || entry.side === 'right'
+  // el lado LIBRE de la entrada: por dónde tiene que llegar el último tramo
+  const e = entry.side === 'left' || entry.side === 'top' ? -1 : 1
+  const points = depura(
+    lateral ? rutaLateral(x1, y1, s1, x2, y2, e, obstacles) : rutaVertical(x1, y1, s1, x2, y2, e, obstacles)
   )
-  const cx1 = salidaDerecha ? x1 + tirador : x1 - tirador
+  const etiqueta = puntoDeEtiqueta(points)
 
-  if (entry.side === 'top' || entry.side === 'bottom') {
-    const cy2 = entry.side === 'bottom' ? y2 + tirador : y2 - tirador
-    // la punta llega casi vertical, ladeada hacia donde viene la curva
-    const cx2 = x2 + ENTRY_TILT * (x1 >= x2 ? 1 : -1)
-    return {
-      x1,
-      y1,
-      x2,
-      y2,
-      d: `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${cy2}, ${x2} ${y2}`,
-      labelX: (x1 + x2) / 2,
-      labelY: (y1 + y2) / 2
-    }
-  }
-
-  const cx2 = entry.side === 'left' ? x2 - tirador : x2 + tirador
-
-  /**
-   * Si una caja bloquea el corredor entre los dos anclajes, el arco la rodea por
-   * el lado más corto: con los tiradores planos la curva atravesaba la caja de
-   * en medio, que es justo lo que hace ilegible un diagrama. Con el camino
-   * despejado la curva va plana, por lejos que quede el destino. El control se
-   * calcula para que el PUNTO MEDIO real de la Bézier (y(0.5) = (y1 + 6·c + y2) / 8)
-   * libre el obstáculo, no solo el mando.
-   */
-  const control = controlDeEsquiva(x1, y1, x2, y2, obstacles)
-  const cy1 = control ?? y1
-  // en plano la punta llega con una pizca de ángulo (buceando el arco ya la trae inclinada)
-  const cy2 = control ?? y2 + ENTRY_TILT * (y1 >= y2 ? 1 : -1)
-
-  return {
-    x1,
-    y1,
-    x2,
-    y2,
-    d: `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`,
-    labelX: (x1 + x2) / 2,
-    // la etiqueta viaja con el trazo: en un arco se pinta sobre su punto medio real
-    labelY: (y1 + 3 * cy1 + 3 * cy2 + y2) / 8
-  }
+  return { x1, y1, x2, y2, d: trazo(points), labelX: etiqueta.x, labelY: etiqueta.y, points }
 }
 
 /**
