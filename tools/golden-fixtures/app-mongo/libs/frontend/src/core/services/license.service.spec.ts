@@ -12,6 +12,10 @@ describe('LicenseService — listado', () => {
   let service: LicenseService
   let httpGet: ReturnType<typeof vi.fn>
 
+  // la papelera pide `/api/v1/licenses/deleted` en el mismo tick, así que la última llamada
+  // global no siempre es la del listado: se mira la última hecha a SU url
+  const lastListCall = () => httpGet.mock.calls.filter(([url]) => url === '/api/v1/licenses').at(-1)
+
   beforeEach(() => {
     httpGet = vi.fn().mockReturnValue(of(MOCK_LICENSES_PAGINATED))
     TestBed.configureTestingModule({
@@ -48,9 +52,10 @@ describe('LicenseService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, orders })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/licenses', {
-      params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) }
-    })
+    expect(lastListCall()).toEqual([
+      '/api/v1/licenses',
+      { params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) } }
+    ])
   })
 
   it('exposes paginated response after load', async () => {
@@ -64,16 +69,12 @@ describe('LicenseService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, search: 'acme' })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/licenses', {
-      params: { page: '1', pageSize: '10', search: 'acme' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/licenses', { params: { page: '1', pageSize: '10', search: 'acme' } }])
 
     service.request.set({ page: 1, pageSize: 10, search: undefined })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/licenses', {
-      params: { page: '1', pageSize: '10' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/licenses', { params: { page: '1', pageSize: '10' } }])
   })
 
   it('serializes column filters to the filters param, dropping the columnLabel', () => {
@@ -94,16 +95,19 @@ describe('LicenseService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, filters })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/licenses', {
-      params: {
-        page: '1',
-        pageSize: '10',
-        filters: JSON.stringify([
-          { field: 'contractId', operator: 'starts_with', value: '019eb713-19bb-7000-8000-000000000002' },
-          { field: 'customerId', operator: 'starts_with', value: '019eb713-19bb-7000-8000-000000000002' }
-        ])
+    expect(lastListCall()).toEqual([
+      '/api/v1/licenses',
+      {
+        params: {
+          page: '1',
+          pageSize: '10',
+          filters: JSON.stringify([
+            { field: 'contractId', operator: 'starts_with', value: '019eb713-19bb-7000-8000-000000000002' },
+            { field: 'customerId', operator: 'starts_with', value: '019eb713-19bb-7000-8000-000000000002' }
+          ])
+        }
       }
-    })
+    ])
   })
 })
 

@@ -13,6 +13,10 @@ describe('ProjectService — listado', () => {
   let service: ProjectService
   let httpGet: ReturnType<typeof vi.fn>
 
+  // la papelera pide `/api/v1/projects/deleted` en el mismo tick, así que la última llamada
+  // global no siempre es la del listado: se mira la última hecha a SU url
+  const lastListCall = () => httpGet.mock.calls.filter(([url]) => url === '/api/v1/projects').at(-1)
+
   beforeEach(() => {
     httpGet = vi.fn().mockReturnValue(of(MOCK_PROJECTS_PAGINATED))
     TestBed.configureTestingModule({
@@ -49,9 +53,10 @@ describe('ProjectService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, orders })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/projects', {
-      params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) }
-    })
+    expect(lastListCall()).toEqual([
+      '/api/v1/projects',
+      { params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) } }
+    ])
   })
 
   it('exposes paginated response after load', async () => {
@@ -65,16 +70,12 @@ describe('ProjectService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, search: 'acme' })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/projects', {
-      params: { page: '1', pageSize: '10', search: 'acme' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/projects', { params: { page: '1', pageSize: '10', search: 'acme' } }])
 
     service.request.set({ page: 1, pageSize: 10, search: undefined })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/projects', {
-      params: { page: '1', pageSize: '10' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/projects', { params: { page: '1', pageSize: '10' } }])
   })
 
   it('serializes column filters to the filters param, dropping the columnLabel', () => {
@@ -85,16 +86,19 @@ describe('ProjectService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, filters })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/projects', {
-      params: {
-        page: '1',
-        pageSize: '10',
-        filters: JSON.stringify([
-          { field: 'status', operator: 'eq', value: ProjectStatusEnum.PLANNING },
-          { field: 'implementer', operator: 'eq', value: ProjectImplementerEnum.AVVALE }
-        ])
+    expect(lastListCall()).toEqual([
+      '/api/v1/projects',
+      {
+        params: {
+          page: '1',
+          pageSize: '10',
+          filters: JSON.stringify([
+            { field: 'status', operator: 'eq', value: ProjectStatusEnum.PLANNING },
+            { field: 'implementer', operator: 'eq', value: ProjectImplementerEnum.AVVALE }
+          ])
+        }
       }
-    })
+    ])
   })
 })
 

@@ -19,6 +19,10 @@ describe('ContractService — listado', () => {
   let service: ContractService
   let httpGet: ReturnType<typeof vi.fn>
 
+  // la papelera pide `/api/v1/contracts/deleted` en el mismo tick, así que la última llamada
+  // global no siempre es la del listado: se mira la última hecha a SU url
+  const lastListCall = () => httpGet.mock.calls.filter(([url]) => url === '/api/v1/contracts').at(-1)
+
   beforeEach(() => {
     httpGet = vi.fn().mockReturnValue(of(MOCK_CONTRACTS_PAGINATED))
     TestBed.configureTestingModule({
@@ -55,9 +59,10 @@ describe('ContractService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, orders })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/contracts', {
-      params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) }
-    })
+    expect(lastListCall()).toEqual([
+      '/api/v1/contracts',
+      { params: { page: '1', pageSize: '10', orders: JSON.stringify(orders) } }
+    ])
   })
 
   it('exposes paginated response after load', async () => {
@@ -71,16 +76,12 @@ describe('ContractService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, search: 'acme' })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/contracts', {
-      params: { page: '1', pageSize: '10', search: 'acme' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/contracts', { params: { page: '1', pageSize: '10', search: 'acme' } }])
 
     service.request.set({ page: 1, pageSize: 10, search: undefined })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/contracts', {
-      params: { page: '1', pageSize: '10' }
-    })
+    expect(lastListCall()).toEqual(['/api/v1/contracts', { params: { page: '1', pageSize: '10' } }])
   })
 
   it('serializes column filters to the filters param, dropping the columnLabel', () => {
@@ -91,16 +92,19 @@ describe('ContractService — listado', () => {
     service.request.set({ page: 1, pageSize: 10, filters })
     tick()
 
-    expect(httpGet).toHaveBeenLastCalledWith('/api/v1/contracts', {
-      params: {
-        page: '1',
-        pageSize: '10',
-        filters: JSON.stringify([
-          { field: 'contractType', operator: 'eq', value: ContractTypeEnum.CLOUD },
-          { field: 'status', operator: 'eq', value: ContractStatusEnum.ACTIVE }
-        ])
+    expect(lastListCall()).toEqual([
+      '/api/v1/contracts',
+      {
+        params: {
+          page: '1',
+          pageSize: '10',
+          filters: JSON.stringify([
+            { field: 'contractType', operator: 'eq', value: ContractTypeEnum.CLOUD },
+            { field: 'status', operator: 'eq', value: ContractStatusEnum.ACTIVE }
+          ])
+        }
       }
-    })
+    ])
   })
 })
 
