@@ -86,10 +86,14 @@ $2`
  */
 function addCloudRedis(tree: Tree, context: PluginContext): void {
   const iacDir = path.join(context.root, 'iac')
-  const isAzure = tree.exists(path.join(iacDir, 'key-vault.tf'))
   const readmePath = path.join(iacDir, 'README.md')
 
-  if (!isAzure) {
+  // infra=none o --provisionedInfra (el cliente aprovisiona): no hay iac/ donde cablear
+  if (!tree.exists(readmePath)) {
+    return
+  }
+
+  if (context.infra !== 'azure') {
     const readme = tree.read(readmePath, 'utf-8')
     if (readme && !readme.includes('Redis pendiente de IaC')) {
       tree.write(
@@ -303,7 +307,10 @@ import { RedisHealthIndicator } from './redis-health.indicator'
 import { RedisModule } from '../persistence/redis/redis.module'`
         )
         .replace('imports: [TerminusModule, HttpModule],', 'imports: [TerminusModule, HttpModule, RedisModule],')
-        .replace('controllers: [HealthController]', 'controllers: [HealthController],\n  providers: [RedisHealthIndicator]')
+        .replace(
+          'controllers: [HealthController]',
+          'controllers: [HealthController],\n  providers: [RedisHealthIndicator]'
+        )
     )
   }
 }

@@ -3,7 +3,7 @@
 > Cada tarea = un commit. TDD: test rojo primero en `redis-session.plugin.spec.ts` /
 > `session-store.spec.ts`. Gate de oro antes de cada commit (toca el plugin).
 
-- [ ] TASK-01: `PluginContext.infra` + threading desde `app.ts`; `addCloudRedis` decide por
+- [x] TASK-01: `PluginContext.infra` + threading desde `app.ts`; `addCloudRedis` decide por
       `context.infra` (azure conserva su comportamiento; test de que sin `key-vault.tf`
       pero `infra=azure` sigue emitiendo — muerte del sniffing). Actualizar contextos de
       los tests existentes.

@@ -14,7 +14,8 @@ const context: PluginContext = {
   frontendSrc: 'apps/demo/libs/frontend/src',
   models: [],
   scope: '@app',
-  sessionStore: 'postgres'
+  sessionStore: 'postgres',
+  infra: 'none'
 }
 
 describe('emails transaccionales — nombre de producto', () => {

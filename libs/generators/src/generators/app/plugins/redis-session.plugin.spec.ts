@@ -46,7 +46,12 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
 
       expect(env('local').redis).toEqual({ host: 'localhost', port: 6379, password: '', tls: false })
       expect(env('test').redis).toEqual({ host: 'localhost', port: 6380, password: '', tls: false })
-      expect(env('prod').redis).toEqual({ host: 'vault.redis.host', port: 10000, password: 'vault.redis.password', tls: true })
+      expect(env('prod').redis).toEqual({
+        host: 'vault.redis.host',
+        port: 10000,
+        password: 'vault.redis.password',
+        tls: true
+      })
     })
 
     it('el readiness hace PING a redis y es bloqueante (down ⇒ 503, la réplica sale de rotación)', () => {
@@ -98,6 +103,13 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     expect(managedRedis).toContain('"redis-host"')
     expect(managedRedis).toContain('"redis-password"')
     expect(tree.read('apps/demo/iac/variables.tf', 'utf-8') ?? '').toContain('managed_redis_name')
+  })
+
+  it('con --provisionedInfra no emite IaC de redis (sin iac/ no hay dónde) y no falla', async () => {
+    const tree = await generate({ ...base, sessionStore: 'redis', infra: 'azure', provisionedInfra: true })
+
+    expect(tree.exists('apps/demo/iac/managed-redis.tf')).toBe(false)
+    expect(tree.exists('apps/demo/iac/README.md')).toBe(false)
   })
 
   it('con infra=aws el hueco de IaC queda declarado en el README, no en silencio', async () => {

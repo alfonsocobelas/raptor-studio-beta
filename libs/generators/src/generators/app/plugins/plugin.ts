@@ -17,6 +17,8 @@ export interface PluginContext {
   scope: string
   /** Almacén de sesiones elegido (spec 55); solo lo mira el plugin de auth */
   sessionStore: SessionStore
+  /** Proveedor de infraestructura elegido (`none`, `azure`, `aws`, `raptor`), spec 63 */
+  infra: string
 }
 
 /**

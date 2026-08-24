@@ -405,7 +405,16 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
   //    Decisión 2026-07-31: un esquema versionado no es opcional en ningún proyecto.
-  const pluginContext: PluginContext = { root, appName, backendSrc, frontendSrc, models, scope: SCOPE, sessionStore }
+  const pluginContext: PluginContext = {
+    root,
+    appName,
+    backendSrc,
+    frontendSrc,
+    models,
+    scope: SCOPE,
+    sessionStore,
+    infra: infra.value
+  }
   for (const plugin of plugins) {
     if (plugin.assets) {
       copyVerbatim(tree, path.join(__dirname, 'plugins', plugin.assets), root)
@@ -515,7 +524,9 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
     subtitle: model.labels?.subtitle,
     total: (index + 1) * 7
   }))
-  const analytics = blocks.filter(block => block.kind === 'count-by' || block.kind === 'kpi-count' || block.kind === 'series')
+  const analytics = blocks.filter(
+    block => block.kind === 'count-by' || block.kind === 'kpi-count' || block.kind === 'series'
+  )
   const tables = blocks.filter(block => block.kind === 'table').map(block => block.models[0])
 
   const analyticEntries = analytics.map(block => {

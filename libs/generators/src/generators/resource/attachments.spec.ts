@@ -154,7 +154,8 @@ describe('adjuntos — persistencia y migración', () => {
       frontendSrc: 'r/libs/frontend/src',
       models: [invoice()],
       scope: '@app',
-      sessionStore: 'postgres'
+      sessionStore: 'postgres',
+      infra: 'none'
     })
 
     const file = tree

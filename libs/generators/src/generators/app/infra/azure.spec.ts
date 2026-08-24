@@ -157,7 +157,8 @@ export class StorageModule {}
         frontendSrc: 'apps/demo/libs/frontend/src',
         models: [],
         scope: '@app',
-        sessionStore: 'postgres'
+        sessionStore: 'postgres',
+        infra: 'azure'
       })
 
       const storageModule = withStorage.read(STORAGE_MODULE, 'utf-8') ?? ''
@@ -177,7 +178,8 @@ export class StorageModule {}
           frontendSrc: 'apps/demo/libs/frontend/src',
           models: [],
           scope: '@app',
-          sessionStore: 'postgres'
+          sessionStore: 'postgres',
+          infra: 'azure'
         })
       ).not.toThrow()
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)

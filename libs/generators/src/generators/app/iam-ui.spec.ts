@@ -132,7 +132,8 @@ export class RootModule {}
       frontendSrc: 'apps/demo/libs/frontend/src',
       models: [],
       scope: '@app',
-      sessionStore: 'postgres'
+      sessionStore: 'postgres',
+      infra: 'none'
     })
 
     const rootModule = tree.read('apps/demo/libs/backend/src/root.module.ts', 'utf-8') ?? ''

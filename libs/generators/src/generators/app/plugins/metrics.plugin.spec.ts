@@ -24,9 +24,9 @@ describe('plugin metrics', () => {
 
   it('emite el puerto de métricas y el adapter de Prometheus (mismo canon que el catálogo)', () => {
     expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/domain/metrics/metrics.port.ts')).toBe(true)
-    expect(
-      tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/prometheus-metrics.ts')
-    ).toBe(true)
+    expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/prometheus-metrics.ts')).toBe(
+      true
+    )
 
     const adapter = read('libs/backend/src/contexts/shared/infrastructure/metrics/prometheus-metrics.ts')
     expect(adapter).toContain('class PrometheusMetrics extends MetricsPort')
@@ -83,7 +83,8 @@ export class RootModule {}
       frontendSrc: 'apps/demo/libs/frontend/src',
       models: [],
       scope: '@app',
-      sessionStore: 'postgres'
+      sessionStore: 'postgres',
+      infra: 'none'
     })
 
     const patched = formatted.read(rootPath, 'utf-8') ?? ''
@@ -94,7 +95,10 @@ export class RootModule {}
   it('declara prom-client con la misma versión que el canon del catálogo', () => {
     const pkg = JSON.parse(read('package.json')) as { dependencies: Record<string, string> }
     const catalog = JSON.parse(
-      require('fs').readFileSync(require('path').join(__dirname, '../../../../../../libs/infra/metrics-prometheus/package.json'), 'utf-8')
+      require('fs').readFileSync(
+        require('path').join(__dirname, '../../../../../../libs/infra/metrics-prometheus/package.json'),
+        'utf-8'
+      )
     ) as { dependencies: Record<string, string> }
 
     expect(pkg.dependencies['prom-client']).toBe(catalog.dependencies['prom-client'])

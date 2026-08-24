@@ -68,7 +68,8 @@ describe('proveedor infra=aws', () => {
       frontendSrc: 'apps/demo/libs/frontend/src',
       models: [],
       scope: '@app',
-      sessionStore: 'postgres' as const
+      sessionStore: 'postgres' as const,
+      infra: 'aws'
     }
 
     it('emite el adapter S3 y declara su SDK', () => {

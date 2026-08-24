@@ -88,7 +88,8 @@ describe('proveedor infra=raptor', () => {
       frontendSrc: 'apps/demo/libs/frontend/src',
       models: [],
       scope: '@app',
-      sessionStore: 'postgres' as const
+      sessionStore: 'postgres' as const,
+      infra: 'raptor'
     }
 
     it('emite el adapter S3 y declara su SDK (el único cliente de nube de este proveedor)', () => {
