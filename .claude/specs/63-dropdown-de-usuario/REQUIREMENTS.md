@@ -15,10 +15,10 @@ chip y dos filas planas; la referencia abre un menú desde el chip (avatar + nom
 
 ## Criterios
 
-- [ ] session-footer emitido con dropdown propio (sin imports de Spartan — ADR-003; menú con signal + cierre por click fuera, patrón del estudio)
-- [ ] Iniciales derivadas del nombre; iconos lucide como la referencia
-- [ ] Golden re-baseline acotado a session-footer; typecheck 0
-- [ ] Maqueta del estudio con el mismo comportamiento; smoke en verde
+- [x] session-footer emitido con dropdown propio (sin imports de Spartan — ADR-003; menú con signal + cierre por click fuera, patrón del estudio)
+- [x] Iniciales derivadas del nombre; iconos lucide como la referencia
+- [x] Golden re-baseline acotado a session-footer; typecheck 0
+- [x] Maqueta del estudio con el mismo comportamiento; smoke en verde
 
 ## Referencias
 
