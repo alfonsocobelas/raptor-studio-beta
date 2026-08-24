@@ -46,9 +46,10 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
 
       expect(env('local').redis).toEqual({ host: 'localhost', port: 6379, password: '', tls: false })
       expect(env('test').redis).toEqual({ host: 'localhost', port: 6380, password: '', tls: false })
+      // sin proveedor de infra: valores neutros (puerto estándar, TLS por defecto)
       expect(env('prod').redis).toEqual({
         host: 'vault.redis.host',
-        port: 10000,
+        port: 6379,
         password: 'vault.redis.password',
         tls: true
       })
@@ -103,6 +104,35 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     expect(managedRedis).toContain('"redis-host"')
     expect(managedRedis).toContain('"redis-password"')
     expect(tree.read('apps/demo/iac/variables.tf', 'utf-8') ?? '').toContain('managed_redis_name')
+  })
+
+  it('los entornos cloud llevan el puerto y el TLS del proveedor de infra (aws 6379/tls, raptor 6379/sin tls)', async () => {
+    const prodRedis = async (infra: string): Promise<unknown> => {
+      const tree = await generate({ ...base, sessionStore: 'redis', infra })
+      return (JSON.parse(tree.read(`${CONFIG}/environments/prod.json`, 'utf-8') ?? '{}') as { redis?: unknown }).redis
+    }
+
+    // azure: AMR expone un puerto fijo (10000) y solo acepta TLS
+    expect(await prodRedis('azure')).toEqual({
+      host: 'vault.redis.host',
+      port: 10000,
+      password: 'vault.redis.password',
+      tls: true
+    })
+    // aws: ElastiCache con auth token obliga TLS in-transit, puerto estándar
+    expect(await prodRedis('aws')).toEqual({
+      host: 'vault.redis.host',
+      port: 6379,
+      password: 'vault.redis.password',
+      tls: true
+    })
+    // raptor: el redis vive en la red interna del compose, sin TLS
+    expect(await prodRedis('raptor')).toEqual({
+      host: 'vault.redis.host',
+      port: 6379,
+      password: 'vault.redis.password',
+      tls: false
+    })
   })
 
   it('con --provisionedInfra no emite IaC de redis (sin iac/ no hay dónde) y no falla', async () => {

@@ -7,7 +7,7 @@
       `context.infra` (azure conserva su comportamiento; test de que sin `key-vault.tf`
       pero `infra=azure` sigue emitiendo — muerte del sniffing). Actualizar contextos de
       los tests existentes.
-- [ ] TASK-02: entornos dev/qa/prod por proveedor (azure 10000/tls, aws 6379/tls,
+- [x] TASK-02: entornos dev/qa/prod por proveedor (azure 10000/tls, aws 6379/tls,
       raptor 6379/sin tls).
 - [ ] TASK-03: aws — `iac/elasticache.tf` inline + secretos redis-host/redis-password +
       patch del statement ReadSecrets en `iam.tf`; desaparece la nota de pendiente en aws.

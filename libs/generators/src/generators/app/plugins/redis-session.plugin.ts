@@ -247,12 +247,22 @@ class RateLimitValidator {`
     )
   }
 
+  // El puerto y el TLS de los entornos cloud son del proveedor de infra: AMR expone un
+  // puerto fijo (10000) y solo acepta TLS; ElastiCache con auth token obliga TLS in-transit
+  // en el 6379; en raptor el redis vive en la red interna del compose, sin TLS.
+  const cloudByInfra: Record<string, { port: number; tls: boolean }> = {
+    azure: { port: 10000, tls: true },
+    aws: { port: 6379, tls: true },
+    raptor: { port: 6379, tls: false }
+  }
+  const cloudShape = cloudByInfra[context.infra] ?? { port: 6379, tls: true }
+  const cloud = { host: 'vault.redis.host', password: 'vault.redis.password', ...cloudShape }
   const perEnvironment: Record<string, { host: string; port: number; password: string; tls: boolean }> = {
     local: { host: 'localhost', port: 6379, password: '', tls: false },
     test: { host: 'localhost', port: 6380, password: '', tls: false },
-    dev: { host: 'vault.redis.host', port: 10000, password: 'vault.redis.password', tls: true },
-    qa: { host: 'vault.redis.host', port: 10000, password: 'vault.redis.password', tls: true },
-    prod: { host: 'vault.redis.host', port: 10000, password: 'vault.redis.password', tls: true }
+    dev: cloud,
+    qa: cloud,
+    prod: cloud
   }
   for (const [environment, redis] of Object.entries(perEnvironment)) {
     const environmentPath = path.join(configDir, 'environments', `${environment}.json`)
