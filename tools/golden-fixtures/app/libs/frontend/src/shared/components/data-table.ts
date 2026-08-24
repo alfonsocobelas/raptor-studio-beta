@@ -75,6 +75,8 @@ export interface TableAction {
   label: string
   action: string
   variant?: string
+  /** Botón con el texto visible (estilo de la referencia) en vez de icono con tooltip. */
+  showLabel?: boolean
   // Oculta la acción para las filas que cumplan el predicado (spec 46: borrar no aplica a ME_SAP).
   hidden?: (row: Record<string, unknown>) => boolean
 }
@@ -474,16 +476,27 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
                   <div class="flex items-center gap-1.5">
                     @for (action of actions(); track action.action) {
                       @if (!action.hidden || !action.hidden(row)) {
-                        <button
-                          [variant]="$any(action.variant ?? 'ghost')"
-                          [hlmTooltip]="action.label"
-                          [attr.aria-label]="action.label"
-                          hlmBtn
-                          size="icon-sm"
-                          (click)="actionClick.emit({ action: action.action, row })"
-                        >
-                          <ng-icon [name]="action.icon" />
-                        </button>
+                        @if (action.showLabel) {
+                          <button
+                            [variant]="$any(action.variant ?? 'outline')"
+                            hlmBtn
+                            size="sm"
+                            (click)="actionClick.emit({ action: action.action, row })"
+                          >
+                            {{ action.label }}
+                          </button>
+                        } @else {
+                          <button
+                            [variant]="$any(action.variant ?? 'ghost')"
+                            [hlmTooltip]="action.label"
+                            [attr.aria-label]="action.label"
+                            hlmBtn
+                            size="icon-sm"
+                            (click)="actionClick.emit({ action: action.action, row })"
+                          >
+                            <ng-icon [name]="action.icon" />
+                          </button>
+                        }
                       }
                     }
                   </div>

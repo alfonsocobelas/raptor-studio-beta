@@ -14,15 +14,6 @@ import { USER_ROLE_LABELS } from '../iam/iam-labels'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mt-4 border-t pt-3">
-      @if (auth.isAdmin()) {
-        <a
-          routerLink="/users"
-          routerLinkActive="bg-accent text-accent-foreground font-semibold"
-          class="hover:bg-accent/60 block rounded-md px-3 py-2 text-sm"
-        >
-          Usuarios
-        </a>
-      }
       @if (auth.currentUser(); as user) {
         <a
           routerLink="/account"
@@ -32,6 +23,14 @@ import { USER_ROLE_LABELS } from '../iam/iam-labels'
         >
           <p class="truncate text-sm font-medium">{{ user.name }}</p>
           <p class="text-muted-foreground truncate text-xs">{{ user.email }} · {{ roleLabel() }}</p>
+        </a>
+        <a
+          routerLink="/account"
+          routerLinkActive="bg-accent text-accent-foreground font-semibold"
+          class="hover:bg-accent/60 block rounded-md px-3 py-2 text-sm"
+          data-testid="my-account-link"
+        >
+          Mi cuenta
         </a>
         <button
           type="button"

@@ -94,14 +94,14 @@ describe('app generator — UI de IAM (spec 34)', () => {
       expect(routes).toContain('users-list.component')
     })
 
-    it('con auth el shell monta el pie de sesión (usuarios admin + logout)', () => {
+    it('con auth el shell monta el pie de sesión (Mi cuenta + logout; Usuarios vive en el menú)', () => {
       const shell = withAuth.get('apps/demo/apps/frontend-app/src/app.component.ts')
       const footer = withAuth.get('apps/demo/libs/frontend/src/domains/auth/session-footer.component.ts')
 
       expect(shell).toContain('SessionFooterComponent')
       expect(shell).toContain('<app-session-footer />')
       expect(footer).toContain('Cerrar sesión')
-      expect(footer).toContain('isAdmin')
+      expect(footer).toContain('Mi cuenta')
     })
   })
 
@@ -153,6 +153,29 @@ export class RootModule {}
 
     expect(login).toContain('>Demo</h1>')
     expect(login).not.toContain('>Dashboard</h1>')
+  })
+
+  it('el menú gana la sección Administración → Usuarios solo para admin (revisión visual 57)', () => {
+    const shell = withAuth.get('apps/demo/apps/frontend-app/src/app.component.ts') ?? ''
+
+    expect(shell).toContain('Administración')
+    expect(shell).toContain('session.isAdmin()')
+    expect(shell).toContain('routerLink="/users"')
+  })
+
+  it('el pie de sesión ofrece Mi cuenta y Cerrar sesión (y Usuarios se muda al menú)', () => {
+    const footer = withAuth.get('apps/demo/libs/frontend/src/domains/auth/session-footer.component.ts') ?? ''
+
+    expect(footer).toContain('Mi cuenta')
+    expect(footer).toContain('Cerrar sesión')
+    expect(footer).not.toContain('Usuarios')
+  })
+
+  it('las acciones de la lista de usuarios van con texto visible e incluyen reenviar invitación', () => {
+    const users = withAuth.get('apps/demo/libs/frontend/src/domains/iam/users-list.component.ts') ?? ''
+
+    expect(users).toContain('Reenviar invitación')
+    expect(users).toContain('showLabel: true')
   })
 
   it('sin auth no se emite nada de la UI de IAM', () => {
