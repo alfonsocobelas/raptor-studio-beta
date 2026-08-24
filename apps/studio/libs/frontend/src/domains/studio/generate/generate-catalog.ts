@@ -153,8 +153,8 @@ function toGroup(slot: ManifestSlot, manifest: SlotsManifest, selection: Record<
     ...(copy?.subheading ? { subheading: copy.subheading } : {}),
     cards: [...known, ...rest],
     // spec 62: hay clientes que aprovisionan su propia infra; el checkbox omite el Terraform.
-    // Desde que toda app sale con nube (2026-08-24) se enseña siempre.
-    ...(slot.name === 'infra'
+    // Con raptor no se enseña: esa nube la aprovisionamos nosotros, no hay cliente que la traiga.
+    ...(slot.name === 'infra' && (selection[slot.name] ?? slot.default) !== 'raptor'
       ? {
           toggle: {
             key: 'provisionedInfra' as const,

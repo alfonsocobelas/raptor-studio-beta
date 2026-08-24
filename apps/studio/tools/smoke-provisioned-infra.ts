@@ -1,9 +1,10 @@
 /**
  * Smoke del checkbox «infra aprovisionada» (spec 62). Verifica el circuito completo en el
  * navegador real: toda app sale con nube (Raptor Cloud por defecto desde 2026-08-24, «Sin
- * nube» ya no se ofrece), el checkbox está desde el principio, y al generar el flag viaja
- * en el body del POST. La generación se intercepta SIEMPRE: este smoke comprueba la
- * petición, no la obra — generar de verdad tardaría minutos y ensuciaría el workspace.
+ * nube» ya no se ofrece), con raptor NO hay checkbox (esa nube la aprovisionamos nosotros),
+ * aparece al elegir una nube del cliente, y al generar el flag viaja en el body del POST.
+ * La generación se intercepta SIEMPRE: este smoke comprueba la petición, no la obra —
+ * generar de verdad tardaría minutos y ensuciaría el workspace.
  *
  *   npx tsx tools/smoke-provisioned-infra.ts   (con `npm run web` corriendo; studio-api opcional)
  */
@@ -49,7 +50,12 @@ async function main(): Promise<void> {
     (await page.locator('[data-testid="slot-infra-raptor"]').getAttribute('aria-checked')) === 'true'
   )
 
-  await check('el checkbox está desde el principio: toda app sale con nube', async () => {
+  await check('con raptor no hay checkbox: esa nube la aprovisionamos nosotros', async () =>
+    (await page.locator('[data-testid="toggle-provisionedInfra"]').count()) === 0
+  )
+
+  await page.click('[data-testid="slot-infra-azure"]')
+  await check('al elegir una nube del cliente aparece el checkbox', async () => {
     await page.waitForSelector('[data-testid="toggle-provisionedInfra"]', { timeout: 5000 })
     return true
   })
@@ -60,9 +66,9 @@ async function main(): Promise<void> {
   await page.waitForSelector('[data-testid="generate-step-generate"]')
 
   await check('el flag viaja en la petición de generar', async () => body?.['provisionedInfra'] === true)
-  await check('la infra que viaja es raptor', async () => {
+  await check('la infra que viaja es la elegida (azure)', async () => {
     const slots = body?.['slots'] as Record<string, string> | undefined
-    return slots?.['infra'] === 'raptor'
+    return slots?.['infra'] === 'azure'
   })
   await check('sin errores de consola', async () => errors.length === 0)
   if (errors.length) console.error(errors.join('\n'))

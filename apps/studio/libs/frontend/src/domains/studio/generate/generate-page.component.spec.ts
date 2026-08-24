@@ -463,11 +463,15 @@ describe('GeneratePageComponent', () => {
     })
 
     // spec 62: infra aprovisionada por el cliente → sin Terraform en el emitido.
-    // Desde 2026-08-24 toda app sale con nube, así que el checkbox está siempre.
-    it('el checkbox de infra aprovisionada está desde el principio y viaja al marcarlo', async () => {
+    // Con raptor (la default) no aplica: esa nube la aprovisionamos nosotros.
+    it('el checkbox de infra aprovisionada aparece con una nube del cliente y viaja en la petición', async () => {
       const sent = stubGenerate()
       const fixture = await mount()
 
+      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
+
+      at(fixture, 'slot-infra-azure')?.click()
+      fixture.detectChanges()
       ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
       fixture.detectChanges()
       at(fixture, 'generate-primary')?.click()
@@ -476,13 +480,20 @@ describe('GeneratePageComponent', () => {
       expect(sent.body()).toMatchObject({ provisionedInfra: true })
     })
 
-    it('sin marcar el checkbox, el flag no viaja', async () => {
+    it('marcado y vuelto a raptor, el flag no viaja', async () => {
       const sent = stubGenerate()
       const fixture = await mount()
 
+      at(fixture, 'slot-infra-azure')?.click()
+      fixture.detectChanges()
+      ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
+      fixture.detectChanges()
+      at(fixture, 'slot-infra-raptor')?.click()
+      fixture.detectChanges()
       at(fixture, 'generate-primary')?.click()
       await settle()
 
+      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
       expect('provisionedInfra' in sent.body()).toBe(false)
     })
 

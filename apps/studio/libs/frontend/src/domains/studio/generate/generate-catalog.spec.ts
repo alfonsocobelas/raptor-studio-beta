@@ -180,16 +180,21 @@ describe('mergeCatalog', () => {
     expect(chosen.reason).toBeUndefined()
   })
 
-  // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox.
-  // Desde 2026-08-24 toda app sale con nube, así que el toggle se enseña siempre.
+  // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox
   describe('infra aprovisionada', () => {
-    it('solo el grupo de infra lleva el toggle, ya con la selección por defecto', () => {
-      const groups = mergeCatalog(manifest, defaults).groups
+    it('con una nube del cliente elegida, solo el grupo de infra lleva el toggle', () => {
+      const groups = mergeCatalog(manifest, { ...defaults, infra: 'azure' }).groups
       const infra = groups.find(g => g.slot === 'infra')
 
       expect(infra?.toggle?.key).toBe('provisionedInfra')
       expect(infra?.toggle?.label.length).toBeGreaterThan(0)
       expect(groups.filter(g => g.slot !== 'infra').every(g => g.toggle === undefined)).toBe(true)
+    })
+
+    it('con raptor (la default) no hay toggle: esa nube la aprovisionamos nosotros, no el cliente', () => {
+      const infra = mergeCatalog(manifest, defaults).groups.find(g => g.slot === 'infra')
+
+      expect(infra?.toggle).toBeUndefined()
     })
   })
 

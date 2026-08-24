@@ -522,7 +522,8 @@ export class GeneratePageComponent {
         ports: this.store.ports()
       }),
       skipInstall: !this.install(),
-      ...(this.provisionedInfra() ? { provisionedInfra: true } : {}),
+      // solo viaja con una nube del cliente: marcado y vuelto a raptor, no significa nada
+      ...(this.provisionedInfra() && this.selection()['infra'] !== 'raptor' ? { provisionedInfra: true } : {}),
       ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
     })
   }
