@@ -358,9 +358,9 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                           <button
                             type="button"
                             class="text-muted-foreground border-b-[3px] border-transparent px-4 py-2 text-[12.5px]"
-                            [class.border-b-primary]="$index === active.index()"
-                            [class.text-foreground]="$index === active.index()"
-                            [class.font-semibold]="$index === active.index()"
+                            [class.border-b-primary]="$index === active.designIndex()"
+                            [class.text-foreground]="$index === active.designIndex()"
+                            [class.font-semibold]="$index === active.designIndex()"
                             [attr.data-testid]="'nav-page-' + $index"
                             (click)="active.select($index)"
                           >
@@ -422,11 +422,13 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                               type="button"
                               class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-left text-[12.5px]"
                               [style.color]="
-                                $index === active.index() ? 'var(--preview-shell-fg-strong)' : 'var(--preview-shell-fg)'
+                                $index === active.designIndex()
+                                  ? 'var(--preview-shell-fg-strong)'
+                                  : 'var(--preview-shell-fg)'
                               "
-                              [style.background]="$index === active.index() ? 'var(--preview-shell-active)' : ''"
-                              [style.box-shadow]="$index === active.index() ? 'inset 2px 0 0 var(--primary)' : ''"
-                              [class.font-semibold]="$index === active.index()"
+                              [style.background]="$index === active.designIndex() ? 'var(--preview-shell-active)' : ''"
+                              [style.box-shadow]="$index === active.designIndex() ? 'inset 2px 0 0 var(--primary)' : ''"
+                              [class.font-semibold]="$index === active.designIndex()"
                               [attr.data-testid]="'nav-page-' + $index"
                               (click)="active.select($index)"
                             >
@@ -494,7 +496,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       <span class="lowercase">{{ store.appName() }}</span>
                       <span class="mx-1.5 opacity-60">/</span>
                       <span class="lowercase" style="color: var(--preview-shell-fg-strong)">
-                        {{ pages()[active.index()]?.title }}
+                        {{ activeTitle() }}
                       </span>
                     </div>
                     <section class="min-w-0 flex-1 p-5">
@@ -528,8 +530,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                             <button
                               type="button"
                               class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
-                              [class.bg-accent]="$index === active.index()"
-                              [class.font-semibold]="$index === active.index()"
+                              [class.bg-accent]="$index === active.designIndex()"
+                              [class.font-semibold]="$index === active.designIndex()"
                               [attr.data-testid]="'nav-page-' + $index"
                               (click)="active.select($index)"
                             >
