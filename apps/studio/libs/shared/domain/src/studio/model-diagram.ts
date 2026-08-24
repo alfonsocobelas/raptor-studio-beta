@@ -199,8 +199,10 @@ function fondoDelCorredor(x1: number, y1: number, x2: number, y2: number, obstac
   const techo = Math.min(y1, y2)
   let fondo: number | null = null
   for (let quedan = enElCorredor.length; quedan > 0; quedan--) {
-    const limite = fondo === null ? Math.max(y1, y2) : fondo + 2 * CLEARANCE
-    const choque = enElCorredor.find(o => o.y + o.height > (fondo ?? techo) && o.y < limite)
+    // anotados a mano: el narrowing de `fondo` dentro del closure crea un ciclo de
+    // inferencia (TS7022) que vitest no ve (transpila sin typecheck) y el build sí
+    const limite: number = fondo === null ? Math.max(y1, y2) : fondo + 2 * CLEARANCE
+    const choque: NodeBox | undefined = enElCorredor.find(o => o.y + o.height > (fondo ?? techo) && o.y < limite)
     if (!choque) break
     fondo = choque.y + choque.height
   }
