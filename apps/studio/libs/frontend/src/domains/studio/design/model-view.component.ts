@@ -427,12 +427,13 @@ export class ModelViewComponent {
    * nace ya en su sitio de la retícula y no salta al confirmarse.
    */
   protected readonly draftBox = computed(() => {
+    // la card fantasma pinta cabecera + fila del id: cero campos todavía
     const at = this.draft.at()
-    if (at) return nodeBox(at, 1)
+    if (at) return nodeBox(at, 0)
     const names = this.store.resources().map(r => r.name)
     return nodeBox(
-      autoLayout([...names, DRAFT_SLOT], [...this.alturas(), nodeBox({ x: 0, y: 0 }, 1).height])[DRAFT_SLOT],
-      1
+      autoLayout([...names, DRAFT_SLOT], [...this.alturas(), nodeBox({ x: 0, y: 0 }, 0).height])[DRAFT_SLOT],
+      0
     )
   })
 

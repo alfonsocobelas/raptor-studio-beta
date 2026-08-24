@@ -83,7 +83,10 @@ export function nodeBox(position: NodePosition, fieldCount: number): NodeBox {
     x: position.x,
     y: position.y,
     width: MODEL_NODE.width,
-    height: MODEL_NODE.headerHeight + fieldCount * MODEL_NODE.rowHeight
+    // +1: la fila del id, que el diagrama pinta SIEMPRE antes de los campos. Si el alto
+    // se queda una fila corto, el router traza rutas "legales" que en pantalla pasan por
+    // dentro de la card y quedan ocultas detrás (defecto cazado en veterinaria).
+    height: MODEL_NODE.headerHeight + (fieldCount + 1) * MODEL_NODE.rowHeight
   }
 }
 

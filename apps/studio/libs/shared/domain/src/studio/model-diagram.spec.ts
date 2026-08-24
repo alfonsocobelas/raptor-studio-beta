@@ -119,21 +119,22 @@ describe('overlayLayout — lo arrastrado gana al auto-layout', () => {
 })
 
 describe('nodeBox', () => {
-  it('el alto crece con los campos: cabecera + una fila por campo', () => {
+  it('el alto cuenta la fila del id (que el diagrama pinta siempre) más una fila por campo', () => {
+    // si el alto se queda corto, las rutas pasan "legales" por dentro de la card real y se ocultan
     const box = nodeBox({ x: 40, y: 40 }, 3)
 
     expect(box).toEqual({
       x: 40,
       y: 40,
       width: MODEL_NODE.width,
-      height: MODEL_NODE.headerHeight + 3 * MODEL_NODE.rowHeight
+      height: MODEL_NODE.headerHeight + 4 * MODEL_NODE.rowHeight
     })
   })
 
-  it('una entidad sin campos conserva al menos la cabecera', () => {
+  it('una entidad sin campos mide cabecera más la fila del id', () => {
     const box = nodeBox({ x: 0, y: 0 }, 0)
 
-    expect(box.height).toBe(MODEL_NODE.headerHeight)
+    expect(box.height).toBe(MODEL_NODE.headerHeight + MODEL_NODE.rowHeight)
   })
 })
 
