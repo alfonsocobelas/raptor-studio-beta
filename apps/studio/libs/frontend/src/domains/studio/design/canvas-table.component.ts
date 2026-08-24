@@ -19,6 +19,7 @@ import { ActiveViewService } from './active-view.service'
 import { CanvasFormDialogComponent } from './canvas-form-dialog.component'
 import { DesignStore } from './design-store'
 import { detailPageIndex } from './detail-page'
+import { slug } from './enum-slug'
 import { labelOfType } from './field-type-labels'
 import { formDialogTitle, type FormDialogMode } from './form-preview'
 import { buildSampleRows, mockTotal } from './mock-data'
@@ -35,16 +36,6 @@ const PAGE_SIZE = 5
 const LONG_TEXT_COL_MAX_PX = 280
 
 /** Las cuatro variantes de badge del canon, en el mismo orden que el generador. */
-/** «En curso» → «en_curso»: el valor va a la base, la etiqueta a la pantalla. */
-function slug(label: string): string {
-  return label
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_|_$/g, '')
-}
-
 const BADGE_CLASSES = [
   'bg-primary text-primary-foreground',
   'bg-secondary text-secondary-foreground',

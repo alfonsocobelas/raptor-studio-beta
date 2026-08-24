@@ -224,6 +224,128 @@ describe('ModelPanelComponent', () => {
 })
 
 /**
+ * Los valores del enum se editan donde se edita el campo: hasta ahora solo existían en el
+ * popover de columna de Vistas y convertir un campo a enum desde Modelo dejaba los tres
+ * placeholders sin forma de cambiarlos. Misma regla que Vistas: el label manda y el value
+ * se deriva como slug.
+ */
+describe('ModelPanelComponent — editor de valores del enum', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Solicitud')
+    store.updateField('solicitud', 0, { type: 'enum' })
+    active.selectField('solicitud', 0)
+  })
+
+  function labelInput(fixture: ReturnType<typeof mount>, index: number): HTMLInputElement {
+    return testId(fixture, `enum-value-label-${index}`) as HTMLInputElement
+  }
+
+  function commit(input: HTMLInputElement, text: string): void {
+    input.value = text
+    input.dispatchEvent(new Event('change'))
+  }
+
+  it('una columna enum lista sus valores; una de texto no', () => {
+    const fixture = mount()
+    expect(labelInput(fixture, 0).value).toBe('Pendiente')
+    expect(labelInput(fixture, 2).value).toBe('Cerrado')
+
+    store.addField('solicitud')
+    active.selectField('solicitud', 1)
+    fixture.detectChanges()
+    expect(testId(fixture, 'enum-value-label-0')).toBeNull()
+  })
+
+  it('renombrar un valor escribe la etiqueta y deriva el value como slug', () => {
+    const fixture = mount()
+
+    commit(labelInput(fixture, 1), 'En taller')
+
+    expect(store.resources()[0].fields[0].values?.[1]).toEqual({ value: 'en_taller', label: 'En taller' })
+  })
+
+  it('añadir agrega un valor nuevo al final', () => {
+    const fixture = mount()
+
+    testId(fixture, 'enum-value-add')?.click()
+    fixture.detectChanges()
+
+    const values = store.resources()[0].fields[0].values ?? []
+    expect(values).toHaveLength(4)
+    expect(labelInput(fixture, 3).value).toBe(values[3].label)
+  })
+
+  it('añadir dos veces no fabrica dos valores con el mismo slug', () => {
+    const fixture = mount()
+
+    testId(fixture, 'enum-value-add')?.click()
+    fixture.detectChanges()
+    testId(fixture, 'enum-value-add')?.click()
+
+    const values = store.resources()[0].fields[0].values ?? []
+    expect(new Set(values.map(v => v.value)).size).toBe(values.length)
+  })
+
+  it('borrar un valor lo quita de la lista', () => {
+    const fixture = mount()
+
+    testId(fixture, 'enum-value-delete-1')?.click()
+
+    expect(store.resources()[0].fields[0].values?.map(v => v.label)).toEqual(['Pendiente', 'Cerrado'])
+  })
+
+  it('el último valor no se puede borrar: un enum sin valores rompe el ciclo de vida', () => {
+    const fixture = mount()
+    testId(fixture, 'enum-value-delete-0')?.click()
+    fixture.detectChanges()
+    testId(fixture, 'enum-value-delete-0')?.click()
+    fixture.detectChanges()
+
+    expect(store.resources()[0].fields[0].values).toHaveLength(1)
+    expect((testId(fixture, 'enum-value-delete-0') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('subir un valor cambia el orden (y con él, el del diagrama de estados)', () => {
+    const fixture = mount()
+
+    testId(fixture, 'enum-value-up-1')?.click()
+
+    expect(store.resources()[0].fields[0].values?.map(v => v.label)).toEqual(['En curso', 'Pendiente', 'Cerrado'])
+  })
+
+  it('el primero no sube y el último no baja', () => {
+    const fixture = mount()
+
+    expect((testId(fixture, 'enum-value-up-0') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(fixture, 'enum-value-down-2') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('un label que produce el mismo slug que otro valor no se aplica', () => {
+    const fixture = mount()
+
+    commit(labelInput(fixture, 1), 'Cerrado')
+
+    expect(store.resources()[0].fields[0].values?.map(v => v.value)).toEqual(['pendiente', 'en_curso', 'cerrado'])
+    expect(labelInput(fixture, 1).value).toBe('En curso')
+  })
+
+  it('un label vacío no se aplica', () => {
+    const fixture = mount()
+
+    commit(labelInput(fixture, 1), '   ')
+
+    expect(store.resources()[0].fields[0].values?.map(v => v.label)).toEqual(['Pendiente', 'En curso', 'Cerrado'])
+    expect(labelInput(fixture, 1).value).toBe('En curso')
+  })
+})
+
+/**
  * Spec 43: el conmutador «Es el estado de la entidad» vive en la columna enum. Promover
  * crea la máquina vacía; quitar pide confirmación porque tira las transiciones dibujadas.
  */

@@ -4,6 +4,7 @@ import { SELECTABLE_FIELD_TYPES, modelEdges, type DraftFieldType } from '@app/sh
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { slug } from './enum-slug'
 import { InspectorComponent } from './inspector.component'
 import { TYPE_LABELS } from './field-type-labels'
 
@@ -124,6 +125,60 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
               </div>
 
               @if (current.type === 'enum') {
+                <!-- los valores viven donde se edita el campo, no solo en el popover de Vistas;
+                     la etiqueta manda y el value se deriva como slug (misma regla que Vistas) -->
+                <div class="mt-4">
+                  <p class="text-muted-foreground text-xs font-semibold">Valores posibles</p>
+                  @for (value of current.values ?? []; track $index) {
+                    <div class="mt-1.5 flex items-center gap-1">
+                      <input
+                        class="border-input min-w-0 flex-1 rounded border px-2 py-1 text-xs"
+                        [value]="value.label"
+                        (change)="revalue($index, $event)"
+                        [attr.data-testid]="'enum-value-label-' + $index"
+                      />
+                      <button
+                        type="button"
+                        class="hover:border-foreground/40 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:opacity-40"
+                        [disabled]="$index === 0"
+                        title="Subir el valor"
+                        [attr.data-testid]="'enum-value-up-' + $index"
+                        (click)="moveValue($index, -1)"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        class="hover:border-foreground/40 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:opacity-40"
+                        [disabled]="$index === (current.values?.length ?? 0) - 1"
+                        title="Bajar el valor"
+                        [attr.data-testid]="'enum-value-down-' + $index"
+                        (click)="moveValue($index, 1)"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        class="text-destructive hover:border-destructive/50 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:opacity-40"
+                        [disabled]="(current.values?.length ?? 0) <= 1"
+                        title="Borrar el valor"
+                        [attr.data-testid]="'enum-value-delete-' + $index"
+                        (click)="removeValue($index)"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  }
+                  <button
+                    type="button"
+                    class="hover:border-foreground/40 mt-2 rounded-md border px-2.5 py-1.5 text-xs transition-colors"
+                    data-testid="enum-value-add"
+                    (click)="addValue()"
+                  >
+                    + Añadir valor
+                  </button>
+                </div>
+
                 <!-- promover el enum a estado (spec 43): el ciclo de vida se dibuja sobre sus valores -->
                 <label class="mt-4 flex items-start gap-2 text-sm">
                   <input
@@ -302,6 +357,53 @@ export class ModelPanelComponent {
     } else {
       ;(event.target as HTMLInputElement).checked = true
     }
+  }
+
+  /** Renombrar deriva el value; un label vacío o que choca con otro slug se descarta y el input vuelve. */
+  protected revalue(valueIndex: number, event: Event): void {
+    const input = event.target as HTMLInputElement
+    const current = this.field()
+    if (!current) return
+    const values = current.values ?? []
+    const label = input.value.trim()
+    const value = slug(label)
+    const collides = values.some((v, i) => i !== valueIndex && v.value === value)
+    if (!value || collides) {
+      input.value = values[valueIndex]?.label ?? ''
+      return
+    }
+    const next = values.map((v, i) => (i === valueIndex ? { value, label } : v))
+    this.store.updateField(current.resource, current.index, { values: next })
+  }
+
+  protected addValue(): void {
+    const current = this.field()
+    if (!current) return
+    const values = current.values ?? []
+    let n = values.length + 1
+    let label = `Valor ${n}`
+    while (values.some(v => v.value === slug(label))) label = `Valor ${++n}`
+    this.store.updateField(current.resource, current.index, { values: [...values, { value: slug(label), label }] })
+  }
+
+  /** El último no se borra: un enum sin valores rompe el ciclo de vida y el badge. */
+  protected removeValue(valueIndex: number): void {
+    const current = this.field()
+    if (!current) return
+    const values = current.values ?? []
+    if (values.length <= 1) return
+    this.store.updateField(current.resource, current.index, { values: values.filter((_, i) => i !== valueIndex) })
+  }
+
+  /** El orden importa: es el de las columnas del kanban y el del diagrama de estados. */
+  protected moveValue(valueIndex: number, delta: number): void {
+    const current = this.field()
+    if (!current) return
+    const values = [...(current.values ?? [])]
+    const target = valueIndex + delta
+    if (target < 0 || target >= values.length) return
+    ;[values[valueIndex], values[target]] = [values[target], values[valueIndex]]
+    this.store.updateField(current.resource, current.index, { values })
   }
 
   protected repoint(value: string): void {
