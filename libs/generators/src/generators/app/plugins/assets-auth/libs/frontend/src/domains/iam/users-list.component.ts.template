@@ -54,7 +54,7 @@ const ROLE_OPTIONS: AppSelectOption[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER, 
       <div class="flex items-start justify-between gap-4">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">Usuarios</h1>
-          <p class="text-muted-foreground">Invitaciones, roles y acceso a la aplicación</p>
+          <p class="text-muted-foreground">Gestiona las cuentas de acceso a la herramienta</p>
         </div>
         <button type="button" appBtn (click)="inviteOpen.set(true)">Invitar usuario</button>
       </div>
@@ -79,6 +79,7 @@ const ROLE_OPTIONS: AppSelectOption[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER, 
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los usuarios</p>
       } @else {
         <app-data-table
+          [actionsEnd]="true"
           [columns]="columns"
           [data]="rows()"
           [serverSide]="true"

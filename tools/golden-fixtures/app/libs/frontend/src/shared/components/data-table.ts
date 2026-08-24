@@ -404,8 +404,8 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
       <table class="w-full caption-bottom text-sm" style="min-width: max-content;">
         <thead class="[&_tr]:border-b">
           <tr class="hover:bg-muted/50 border-b transition-colors">
-            <!-- Actions column (always sticky left) -->
-            @if (showActions()) {
+            <!-- Actions column (sticky left by default; at the end with actionsEnd) -->
+            @if (showActions() && !actionsEnd()) {
               <th
                 class="text-foreground bg-background sticky left-0 z-20 h-10 px-2 text-left align-middle font-medium whitespace-nowrap"
                 [style.width.px]="actionColWidth"
@@ -459,13 +459,16 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
                 </div>
               </th>
             }
+            @if (showActions() && actionsEnd()) {
+              <th class="text-foreground h-10 px-2 text-right align-middle font-medium whitespace-nowrap">Acciones</th>
+            }
           </tr>
         </thead>
         <tbody class="[&_tr:last-child]:border-0">
           @for (row of paginatedData(); track trackByFn()(row)) {
             <tr class="hover:bg-muted/50 border-b transition-colors">
-              <!-- Actions (sticky) -->
-              @if (showActions()) {
+              <!-- Actions (sticky left by default) -->
+              @if (showActions() && !actionsEnd()) {
                 <td
                   class="bg-background sticky left-0 z-20 p-2 align-middle whitespace-nowrap"
                   [style.width.px]="actionColWidth"
@@ -474,31 +477,7 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
                   [class.border-border/50]="!stickyVisibleColumns().length"
                 >
                   <div class="flex items-center gap-1.5">
-                    @for (action of actions(); track action.action) {
-                      @if (!action.hidden || !action.hidden(row)) {
-                        @if (action.showLabel) {
-                          <button
-                            [variant]="$any(action.variant ?? 'outline')"
-                            hlmBtn
-                            size="sm"
-                            (click)="actionClick.emit({ action: action.action, row })"
-                          >
-                            {{ action.label }}
-                          </button>
-                        } @else {
-                          <button
-                            [variant]="$any(action.variant ?? 'ghost')"
-                            [hlmTooltip]="action.label"
-                            [attr.aria-label]="action.label"
-                            hlmBtn
-                            size="icon-sm"
-                            (click)="actionClick.emit({ action: action.action, row })"
-                          >
-                            <ng-icon [name]="action.icon" />
-                          </button>
-                        }
-                      }
-                    }
+                    <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: row }" />
                   </div>
                 </td>
               }
@@ -520,6 +499,13 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
                   <ng-container *ngTemplateOutlet="cellTpl; context: { $implicit: row, col }" />
                 </td>
               }
+              @if (showActions() && actionsEnd()) {
+                <td class="p-2 align-middle whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: row }" />
+                  </div>
+                </td>
+              }
             </tr>
           } @empty {
             <tr class="border-b">
@@ -531,6 +517,35 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
         </tbody>
       </table>
     </div>
+
+    <!-- Actions template (compartido por la columna inicial y la final) -->
+    <ng-template #actionsTpl let-row>
+      @for (action of actions(); track action.action) {
+        @if (!action.hidden || !action.hidden(row)) {
+          @if (action.showLabel) {
+            <button
+              [variant]="$any(action.variant ?? 'outline')"
+              hlmBtn
+              size="sm"
+              (click)="actionClick.emit({ action: action.action, row })"
+            >
+              {{ action.label }}
+            </button>
+          } @else {
+            <button
+              [variant]="$any(action.variant ?? 'ghost')"
+              [hlmTooltip]="action.label"
+              [attr.aria-label]="action.label"
+              hlmBtn
+              size="icon-sm"
+              (click)="actionClick.emit({ action: action.action, row })"
+            >
+              <ng-icon [name]="action.icon" />
+            </button>
+          }
+        }
+      }
+    </ng-template>
 
     <!-- Cell template -->
     <ng-template #cellTpl let-row let-col="col">
@@ -641,6 +656,8 @@ export class DataTable implements OnDestroy {
   readonly showCreate = input(false)
   readonly createLabel = input('Crear')
   readonly showActions = input(true)
+  /** Columna de acciones al FINAL de la fila (estilo de la referencia) en vez de fija a la izquierda. */
+  readonly actionsEnd = input(false)
   readonly actions = input<TableAction[]>([
     { icon: 'lucidePencil', label: 'Editar', action: 'edit' },
     { icon: 'lucideTrash2', label: 'Eliminar', action: 'delete', variant: 'ghost' }

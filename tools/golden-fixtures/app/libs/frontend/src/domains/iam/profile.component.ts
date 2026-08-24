@@ -2,11 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http'
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
 import { UserRoleEnum } from '@app/shared/domain'
+import { AppBadge } from '../../shared/components/ui/badge.directive'
 import { AppButton } from '../../shared/components/ui/button.directive'
 import { AppFormField } from '../../shared/components/ui/form-field'
 import { AppInput } from '../../shared/components/ui/input.directive'
 import { AuthService } from '../../core/services/auth.service'
-import { USER_ROLE_LABELS } from './iam-labels'
+import { BadgeVariant, USER_ROLE_LABELS, USER_ROLE_VARIANTS } from './iam-labels'
 
 const PASSWORD_MIN = 8
 const PASSWORD_MAX = 128
@@ -16,7 +17,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, AppButton, AppFormField, AppInput],
+  imports: [ReactiveFormsModule, AppBadge, AppButton, AppFormField, AppInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mx-auto max-w-2xl space-y-6 p-6">
@@ -36,7 +37,9 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
             </div>
             <div class="flex items-center justify-between gap-4">
               <dt class="text-muted-foreground">Rol</dt>
-              <dd>{{ roleLabel(u.role) }}</dd>
+              <dd>
+                <span appBadge [variant]="roleVariant(u.role)">{{ roleLabel(u.role) }}</span>
+              </dd>
             </div>
           </dl>
         }
@@ -101,6 +104,10 @@ export class ProfileComponent {
 
   roleLabel(role: UserRoleEnum): string {
     return USER_ROLE_LABELS[role] ?? role
+  }
+
+  roleVariant(role: UserRoleEnum): BadgeVariant {
+    return USER_ROLE_VARIANTS[role] ?? 'secondary'
   }
 
   async submit(): Promise<void> {
