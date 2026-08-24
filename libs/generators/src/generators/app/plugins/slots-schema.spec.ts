@@ -46,7 +46,9 @@ describe('app/schema.json frente al registro de ranuras', () => {
       const prompt = property['x-prompt']
 
       expect(property.default).toBe(slot.default)
-      expect(property.enum).toEqual(visible(slot).map(p => p.value))
+      // el enum VALIDA todos los proveedores (los internos siguen siendo entrada legal por
+      // CLI: tests del kernel, gate mongo); el x-prompt solo OFRECE los visibles
+      expect(property.enum).toEqual(slot.providers.map(p => p.value))
       expect(typeof prompt === 'string' ? undefined : prompt?.items).toEqual(
         visible(slot).map(p => ({ value: p.value, label: p.label }))
       )

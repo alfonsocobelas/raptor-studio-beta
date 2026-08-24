@@ -5,12 +5,14 @@ import type { PluginContext } from '../plugins/plugin'
 
 /**
  * Sin infraestructura: la app se lleva su config en los JSON por entorno, registra en stdout y
- * guarda ficheros en disco. Es el default a propósito — una app entregada sin elegir nube no
- * debe arrastrar el SDK de ninguna.
+ * guarda ficheros en disco. Dejó de ofrecerse (2026-08-24): toda app sale con una nube — la
+ * default es Raptor Cloud, que aprovisionamos nosotros y no el cliente. Se conserva interno
+ * porque los tests del kernel lo usan para mirar la base sin el ruido de ningún adapter.
  */
 export const noneInfra = defineInfra({
   value: 'none',
-  label: 'Ninguna (sin adapters de nube ni IaC)'
+  label: 'Ninguna (sin adapters de nube ni IaC)',
+  internal: true
 })
 
 /**

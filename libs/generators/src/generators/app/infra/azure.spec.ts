@@ -56,7 +56,8 @@ describe('proveedor infra=azure', () => {
 
   it('deja el resto del árbol igual que sin infra (el proveedor añade, no reescribe)', async () => {
     const plain: Tree = createTreeWithEmptyWorkspace()
-    await appGenerator(plain, { name: 'demo', models: 'contract', skipInstall: true })
+    // infra=none (interno) explícito: la línea base es la app SIN nube, no la default raptor
+    await appGenerator(plain, { name: 'demo', models: 'contract', skipInstall: true, infra: 'none' })
 
     const azureOnly = tree
       .listChanges()

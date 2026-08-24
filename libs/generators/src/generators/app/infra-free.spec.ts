@@ -13,9 +13,11 @@ import { appGenerator } from './app'
 describe('app generator — una app sin infra no lleva Azure dentro', () => {
   let tree: Tree
 
+  // infra=none es interno desde 2026-08-24 (el default pasó a raptor): se pide explícito
+  // porque este spec vigila el KERNEL, y el kernel se mira sin el ruido de ningún adapter
   beforeAll(async () => {
     tree = createTreeWithEmptyWorkspace()
-    await appGenerator(tree, { name: 'demo', models: 'contract', skipInstall: true })
+    await appGenerator(tree, { name: 'demo', models: 'contract', skipInstall: true, infra: 'none' })
   })
 
   const emitted = (): { path: string; content: string }[] =>
@@ -101,7 +103,13 @@ describe('app generator — una app sin infra no lleva Azure dentro', () => {
    */
   it('auth,email sin infra lleva exactamente el SDK de SES (del plugin, no de la ranura)', async () => {
     const withEmail: Tree = createTreeWithEmptyWorkspace()
-    await appGenerator(withEmail, { name: 'demo', models: 'contract', skipInstall: true, plugins: 'auth,email' })
+    await appGenerator(withEmail, {
+      name: 'demo',
+      models: 'contract',
+      skipInstall: true,
+      infra: 'none',
+      plugins: 'auth,email'
+    })
 
     const pkg = JSON.parse(withEmail.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
       dependencies?: Record<string, string>

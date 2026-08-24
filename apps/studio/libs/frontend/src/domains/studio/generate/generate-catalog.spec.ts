@@ -35,9 +35,10 @@ const manifest: SlotsManifest = {
     {
       name: 'infra',
       label: 'Infraestructura',
-      default: 'none',
+      // 2026-08-24: «sin nube» es interno y no viaja; raptor es la default (la aprovisionamos nosotros)
+      default: 'raptor',
       providers: [
-        { value: 'none', label: 'Ninguna' },
+        { value: 'raptor', label: 'Raptor Cloud (Infisical, R2, Loki, Brevo)' },
         { value: 'azure', label: 'Azure (Key Vault, Blob Storage)' }
       ]
     },
@@ -74,7 +75,7 @@ const manifest: SlotsManifest = {
 }
 
 // espejo de defaultSelection(manifest): auth es single-tenant de fábrica desde la spec 58
-const defaults = { database: 'postgres', ui: 'spartan', design: 'actual', infra: 'none', auth: 'single-tenant', sessionStore: 'postgres' }
+const defaults = { database: 'postgres', ui: 'spartan', design: 'actual', infra: 'raptor', auth: 'single-tenant', sessionStore: 'postgres' }
 
 const group = (catalog: ReturnType<typeof mergeCatalog>, slot: string) => {
   const found = catalog.groups.find(g => g.slot === slot)
@@ -130,7 +131,7 @@ describe('mergeCatalog', () => {
 
   it('el catálogo manda el orden: primero sus tarjetas, en su orden', () => {
     expect(group(mergeCatalog(manifest, defaults), 'infra').cards.map(c => c.value)).toEqual([
-      'none',
+      'raptor',
       'azure',
       'aws',
       'gcp'
@@ -179,21 +180,16 @@ describe('mergeCatalog', () => {
     expect(chosen.reason).toBeUndefined()
   })
 
-  // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox
+  // spec 62: hay clientes que aprovisionan su propia infra; el grupo lleva el checkbox.
+  // Desde 2026-08-24 toda app sale con nube, así que el toggle se enseña siempre.
   describe('infra aprovisionada', () => {
-    it('con un proveedor de nube elegido, solo el grupo de infra lleva el toggle', () => {
-      const groups = mergeCatalog(manifest, { ...defaults, infra: 'azure' }).groups
+    it('solo el grupo de infra lleva el toggle, ya con la selección por defecto', () => {
+      const groups = mergeCatalog(manifest, defaults).groups
       const infra = groups.find(g => g.slot === 'infra')
 
       expect(infra?.toggle?.key).toBe('provisionedInfra')
       expect(infra?.toggle?.label.length).toBeGreaterThan(0)
       expect(groups.filter(g => g.slot !== 'infra').every(g => g.toggle === undefined)).toBe(true)
-    })
-
-    it('con infra=none no hay toggle: no hay Terraform que omitir', () => {
-      const infra = mergeCatalog(manifest, defaults).groups.find(g => g.slot === 'infra')
-
-      expect(infra?.toggle).toBeUndefined()
     })
   })
 

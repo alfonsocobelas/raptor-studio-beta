@@ -31,7 +31,8 @@ describe('INFRA', () => {
 describe('selectInfra', () => {
   it('resuelve por valor y cae al default de la ranura sin valor', () => {
     expect(selectInfra('none').value).toBe('none')
-    expect(selectInfra(undefined).value).toBe('none')
+    // raptor es la default desde 2026-08-24: toda app sale con nube
+    expect(selectInfra(undefined).value).toBe('raptor')
   })
 
   it('rechaza un proveedor desconocido listando los disponibles', () => {

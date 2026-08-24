@@ -75,8 +75,10 @@ const GROUPS: Record<string, GroupCopy> = {
   infra: {
     heading: '¿Dónde quieres alojarla?',
     subheading: 'Puedes cambiar de proveedor más adelante sin rehacer la aplicación.',
+    // «Sin nube» se retiró (2026-08-24): toda app sale con nube, y la default es Raptor
+    // Cloud porque esa la aprovisionamos nosotros — el cliente no tiene que montar nada
     entries: [
-      { value: 'none', title: 'Sin nube', hint: 'Solo el código; el despliegue lo montas tú' },
+      { value: 'raptor', title: 'Raptor Cloud', hint: 'Infisical, R2, Loki y Brevo; la aprovisionamos nosotros' },
       { value: 'azure', title: 'Azure', hint: 'Key Vault, Blob Storage y App Insights' },
       { value: 'aws', title: 'AWS', hint: 'Secrets Manager, S3 y CloudWatch' },
       { value: 'gcp', title: 'Google Cloud', hint: 'Secret Manager, Cloud Storage y Logging' }
@@ -151,8 +153,8 @@ function toGroup(slot: ManifestSlot, manifest: SlotsManifest, selection: Record<
     ...(copy?.subheading ? { subheading: copy.subheading } : {}),
     cards: [...known, ...rest],
     // spec 62: hay clientes que aprovisionan su propia infra; el checkbox omite el Terraform.
-    // Con «Sin nube» no hay Terraform que omitir, así que no se enseña.
-    ...(slot.name === 'infra' && (selection[slot.name] ?? slot.default) !== 'none'
+    // Desde que toda app sale con nube (2026-08-24) se enseña siempre.
+    ...(slot.name === 'infra'
       ? {
           toggle: {
             key: 'provisionedInfra' as const,

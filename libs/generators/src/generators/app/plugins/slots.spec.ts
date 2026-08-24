@@ -61,10 +61,13 @@ describe('SLOTS', () => {
     })
   })
 
-  it('infra ofrece none (default), azure, aws y raptor; sus proveedores salen de los manifiestos', () => {
+  it('infra ofrece azure, aws y raptor (default); none queda interno para los tests del kernel', () => {
     // spec 24: los proveedores reales entran por app/infra/providers.ts, no aquí
-    expect(SLOTS['infra'].default).toBe('none')
+    expect(SLOTS['infra'].default).toBe('raptor')
     expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws', 'raptor'])
+    // 2026-08-24: toda app sale con nube (raptor la aprovisionamos nosotros); «sin nube»
+    // no se ofrece en ninguna superficie, igual que auth none desde la spec 58
+    expect(SLOTS['infra'].providers.find(p => p.value === 'none')?.internal).toBe(true)
   })
 
   it('every slot declares label, a default that exists and labelled providers (what the form shows)', () => {
@@ -181,7 +184,7 @@ describe('normalizeLegacyPlugins', () => {
       plugins: 'email',
       selection: { auth: 'single-tenant' }
     })
-    expect(silenced(() => normalizeLegacyPlugins('observability', { infra: 'none' }))).toEqual({
+    expect(silenced(() => normalizeLegacyPlugins('observability', { infra: 'raptor' }))).toEqual({
       plugins: '',
       selection: { infra: 'azure' }
     })

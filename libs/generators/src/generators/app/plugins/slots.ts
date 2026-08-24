@@ -105,9 +105,16 @@ export const SLOTS: Record<string, Slot> = {
   infra: {
     name: 'infra',
     label: 'Infraestructura',
-    default: 'none',
+    // raptor es la default (2026-08-24): toda app sale con nube, y esta la aprovisionamos
+    // nosotros. `none` sigue existiendo pero interno (tests del kernel), como auth none.
+    default: 'raptor',
     // los proveedores salen de sus manifiestos (app/infra/providers.ts): añadir uno allí basta
-    providers: INFRA_PROVIDERS.map(({ value, label, description }) => ({ value, label, description }))
+    providers: INFRA_PROVIDERS.map(({ value, label, description, internal }) => ({
+      value,
+      label,
+      description,
+      ...(internal ? { internal } : {})
+    }))
   },
   auth: {
     name: 'auth',

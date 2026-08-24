@@ -108,7 +108,9 @@ gate_app "app" "app-golden" "app" --app=golden --ui=spartan --plugins=email --in
 # softDelete. Sin plugins: auth exige postgres y email depende de auth.
 # mongo: license sustituye a project (spec 25) — project lleva adjuntos y los adjuntos emiten
 # persistencia TypeORM, que en una app mongo no pinta nada; license conserva el softDelete
-gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,license --database=mongo --dashboard
+# infra=none (interno) fijado a propósito: este gate vigila mongo, no la infra — con el
+# default raptor (2026-08-24) la fixture se llenaría de adapters que ya gata la app postgres
+gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,license --database=mongo --dashboard --infra=none
 
 echo
 echo "🏅 Golden diff —$summary"

@@ -112,8 +112,8 @@
     },
     "infra": {
       "type": "string",
-      "default": "none",
-      "description": "Infrastructure provider of the emitted app (exclusive slot)",
+      "default": "raptor",
+      "description": "Infrastructure provider of the emitted app (exclusive slot; 'none' is internal — kernel tests and the mongo golden gate)",
       "enum": [
         "none",
         "azure",
@@ -124,10 +124,6 @@
         "message": "¿Qué infraestructura?",
         "type": "list",
         "items": [
-          {
-            "value": "none",
-            "label": "Ninguna (sin adapters de nube ni IaC)"
-          },
           {
             "value": "azure",
             "label": "Azure (Key Vault, Blob Storage, App Insights)"

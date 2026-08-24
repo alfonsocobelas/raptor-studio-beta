@@ -21,6 +21,9 @@ export interface InfraProvider {
   dependencies?: Record<string, string>
   /** Cableado libre sobre el árbol: primer import de main.ts, binding del StorageModule… */
   apply?(tree: Tree, context: PluginContext): void
+  /** Interno: existe para la maquinaria (tests del kernel sin ruido de nube) pero no se
+   * ofrece en ninguna superficie de usuario (schema.json, slots.json, wizard). */
+  internal?: boolean
 }
 
 export function defineInfra(provider: InfraProvider): InfraProvider {

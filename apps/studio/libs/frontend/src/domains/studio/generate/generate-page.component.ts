@@ -522,8 +522,7 @@ export class GeneratePageComponent {
         ports: this.store.ports()
       }),
       skipInstall: !this.install(),
-      // solo viaja con una nube elegida: marcado y vuelto a «Sin nube», no significa nada
-      ...(this.provisionedInfra() && this.selection()['infra'] !== 'none' ? { provisionedInfra: true } : {}),
+      ...(this.provisionedInfra() ? { provisionedInfra: true } : {}),
       ...(this.directory().trim() ? { directory: this.directory().trim() } : {})
     })
   }

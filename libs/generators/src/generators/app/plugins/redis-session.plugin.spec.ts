@@ -15,7 +15,9 @@ describe('redisSession.plugin — infraestructura compartida de redis', () => {
     return tree
   }
 
-  const base = { name: 'demo', models: 'contract', skipInstall: true, auth: 'single-tenant' } as const
+  // infra=none (interno) explícito: este spec mira los valores NEUTROS de la sección redis,
+  // sin que un proveedor de infra (raptor es la default desde 2026-08-24) los especialice
+  const base = { name: 'demo', models: 'contract', skipInstall: true, auth: 'single-tenant', infra: 'none' } as const
   const SHARED = 'apps/demo/libs/backend/src/contexts/shared'
   const CONFIG = `${SHARED}/infrastructure/config`
 

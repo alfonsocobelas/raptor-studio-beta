@@ -31,9 +31,10 @@ const manifest: SlotsManifest = {
     {
       name: 'infra',
       label: 'Infraestructura',
-      default: 'none',
+      // 2026-08-24: «sin nube» ya no viaja en el manifiesto; raptor es la default
+      default: 'raptor',
       providers: [
-        { value: 'none', label: 'Ninguna' },
+        { value: 'raptor', label: 'Raptor Cloud' },
         { value: 'azure', label: 'Azure' }
       ]
     },
@@ -233,7 +234,7 @@ describe('GeneratePageComponent', () => {
     it('arranca con lo que el manifiesto trae por defecto', async () => {
       const fixture = await mount()
 
-      expect(at(fixture, 'slot-infra-none')?.getAttribute('aria-checked')).toBe('true')
+      expect(at(fixture, 'slot-infra-raptor')?.getAttribute('aria-checked')).toBe('true')
       expect(at(fixture, 'slot-database-postgres')?.getAttribute('aria-checked')).toBe('true')
     })
 
@@ -244,7 +245,7 @@ describe('GeneratePageComponent', () => {
       fixture.detectChanges()
 
       expect(at(fixture, 'slot-infra-azure')?.getAttribute('aria-checked')).toBe('true')
-      expect(at(fixture, 'slot-infra-none')?.getAttribute('aria-checked')).toBe('false')
+      expect(at(fixture, 'slot-infra-raptor')?.getAttribute('aria-checked')).toBe('false')
     })
 
     /** Mongo deja fuera a single-tenant: la ranura incompatible vuelve a su defecto. */
@@ -461,15 +462,12 @@ describe('GeneratePageComponent', () => {
       expect(design.resources).toHaveLength(1)
     })
 
-    // spec 62: infra aprovisionada por el cliente → sin Terraform en el emitido
-    it('el checkbox de infra aprovisionada aparece con nube elegida y viaja en la petición', async () => {
+    // spec 62: infra aprovisionada por el cliente → sin Terraform en el emitido.
+    // Desde 2026-08-24 toda app sale con nube, así que el checkbox está siempre.
+    it('el checkbox de infra aprovisionada está desde el principio y viaja al marcarlo', async () => {
       const sent = stubGenerate()
       const fixture = await mount()
 
-      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
-
-      at(fixture, 'slot-infra-azure')?.click()
-      fixture.detectChanges()
       ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
       fixture.detectChanges()
       at(fixture, 'generate-primary')?.click()
@@ -478,20 +476,13 @@ describe('GeneratePageComponent', () => {
       expect(sent.body()).toMatchObject({ provisionedInfra: true })
     })
 
-    it('marcado y vuelto a infra=none, el flag no viaja', async () => {
+    it('sin marcar el checkbox, el flag no viaja', async () => {
       const sent = stubGenerate()
       const fixture = await mount()
 
-      at(fixture, 'slot-infra-azure')?.click()
-      fixture.detectChanges()
-      ;(at(fixture, 'toggle-provisionedInfra') as HTMLInputElement).click()
-      fixture.detectChanges()
-      at(fixture, 'slot-infra-none')?.click()
-      fixture.detectChanges()
       at(fixture, 'generate-primary')?.click()
       await settle()
 
-      expect(at(fixture, 'toggle-provisionedInfra')).toBeNull()
       expect('provisionedInfra' in sent.body()).toBe(false)
     })
 
