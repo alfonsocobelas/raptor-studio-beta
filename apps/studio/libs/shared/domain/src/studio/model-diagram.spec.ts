@@ -76,6 +76,19 @@ describe('autoLayout', () => {
     const keys = Object.values(positions).map(p => `${p.x},${p.y}`)
     expect(new Set(keys).size).toBe(4)
   })
+
+  it('una caja alta empuja la fila siguiente: siempre queda pasillo entre filas', () => {
+    // 'a' tiene muchos campos: su alto supera de largo la fila fija de siempre
+    const alturas = [MODEL_NODE.headerHeight + 14 * MODEL_NODE.rowHeight, 100, 100, 100]
+
+    const positions = autoLayout(['a', 'b', 'c', 'd'], alturas)
+
+    expect(positions['d'].y).toBeGreaterThanOrEqual(MODEL_GRID.margin + alturas[0] + MODEL_GRID.vGap)
+  })
+
+  it('el pasillo horizontal entre columnas da sitio a los carriles de las flechas', () => {
+    expect(MODEL_GRID.colWidth - MODEL_NODE.width).toBeGreaterThanOrEqual(80)
+  })
 })
 
 describe('overlayLayout — lo arrastrado gana al auto-layout', () => {

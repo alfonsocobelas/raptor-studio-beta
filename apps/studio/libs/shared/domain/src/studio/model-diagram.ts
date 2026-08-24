@@ -35,9 +35,13 @@ export interface EdgeSegment {
 /** Rejilla del auto-layout: mismas entidades → mismas posiciones (determinismo). */
 export const MODEL_GRID = {
   columns: 3,
-  colWidth: 300,
+  /* 100px de pasillo entre columnas (cajas de 240): sitio para los carriles de las flechas */
+  colWidth: 340,
+  /** Paso de fila cuando no se conocen las alturas (compatibilidad) */
   rowHeight: 260,
-  margin: 40
+  margin: 40,
+  /** Pasillo vertical mínimo entre la caja más alta de una fila y la siguiente */
+  vGap: 60
 } as const
 
 /**
@@ -93,16 +97,24 @@ export function modelEdges(resources: DraftResource[]): ModelEdge[] {
   )
 }
 
-export function autoLayout(names: string[]): Record<string, NodePosition> {
-  return Object.fromEntries(
-    names.map((name, i) => [
-      name,
-      {
-        x: MODEL_GRID.margin + (i % MODEL_GRID.columns) * MODEL_GRID.colWidth,
-        y: MODEL_GRID.margin + Math.floor(i / MODEL_GRID.columns) * MODEL_GRID.rowHeight
-      }
-    ])
-  )
+/**
+ * Rejilla de 3 columnas con filas de alto VARIABLE: cada fila empieza por debajo
+ * de la caja más alta de la anterior más el pasillo, así una entidad con muchos
+ * campos no invade (ni estrangula) a la de abajo. Sin alturas se asume el paso
+ * fijo de siempre.
+ */
+export function autoLayout(names: string[], alturas: number[] = []): Record<string, NodePosition> {
+  const posiciones: Record<string, NodePosition> = {}
+  let y = MODEL_GRID.margin
+  for (let inicio = 0; inicio < names.length; inicio += MODEL_GRID.columns) {
+    const fila = names.slice(inicio, inicio + MODEL_GRID.columns)
+    fila.forEach((name, columna) => {
+      posiciones[name] = { x: MODEL_GRID.margin + columna * MODEL_GRID.colWidth, y }
+    })
+    const masAlta = Math.max(...fila.map((_, i) => alturas[inicio + i] ?? MODEL_GRID.rowHeight - MODEL_GRID.vGap))
+    y += masAlta + MODEL_GRID.vGap
+  }
+  return posiciones
 }
 
 /**

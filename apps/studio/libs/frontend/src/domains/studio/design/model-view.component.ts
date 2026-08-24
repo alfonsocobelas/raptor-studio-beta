@@ -430,8 +430,16 @@ export class ModelViewComponent {
     const at = this.draft.at()
     if (at) return nodeBox(at, 1)
     const names = this.store.resources().map(r => r.name)
-    return nodeBox(autoLayout([...names, DRAFT_SLOT])[DRAFT_SLOT], 1)
+    return nodeBox(
+      autoLayout([...names, DRAFT_SLOT], [...this.alturas(), nodeBox({ x: 0, y: 0 }, 1).height])[DRAFT_SLOT],
+      1
+    )
   })
+
+  /** Altos reales de las cajas, en el orden de los recursos: el auto-layout separa las filas con ellos. */
+  private readonly alturas = computed(() =>
+    this.store.resources().map(r => nodeBox({ x: 0, y: 0 }, r.fields.length).height)
+  )
 
   /**
    * Doble clic en el papel: la caja nace bajo la mano, centrada en el puntero. Sobre
@@ -487,7 +495,13 @@ export class ModelViewComponent {
   private readonly manual = signal<Record<string, NodePosition>>({})
 
   private readonly positions = computed(() =>
-    overlayLayout(autoLayout(this.store.resources().map(r => r.name)), this.manual())
+    overlayLayout(
+      autoLayout(
+        this.store.resources().map(r => r.name),
+        this.alturas()
+      ),
+      this.manual()
+    )
   )
 
   protected readonly nodes = computed<DiagramNode[]>(() =>
