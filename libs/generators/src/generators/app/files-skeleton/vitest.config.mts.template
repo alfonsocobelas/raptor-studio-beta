@@ -38,6 +38,9 @@ export default defineConfig({
     // una vez por contexto); se fija explícitamente en vez de confiar en los defaults.
     pool: 'forks',
     isolate: true,
+    // mismo margen que el jest emitido (30 s): con la máquina cargada, los 5 s por defecto
+    // convierten tests correctos en timeouts
+    testTimeout: 30000,
     server: {
       deps: {
         // los helm viajan como fuente TS: inline para que el plugin compile sus plantillas
