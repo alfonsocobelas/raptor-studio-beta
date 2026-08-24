@@ -397,6 +397,33 @@ describe('edgeCurve — destino en la misma columna: la flecha entra en vertical
   })
 })
 
+describe('edgeCurve — cardinalidad por extremos: la N vive junto al origen y el 1 junto a la punta', () => {
+  const from: NodeBox = { x: 100, y: 100, width: 240, height: 160 }
+  const to: NodeBox = { x: 500, y: 100, width: 240, height: 160 }
+
+  it('cada letra queda pegada a su extremo, sin confundirse con el otro', () => {
+    const curva = edgeCurve(from, 0, to)
+
+    const distanciaN = Math.hypot(curva.cardinality.n.x - curva.x1, curva.cardinality.n.y - curva.y1)
+    const distanciaUno = Math.hypot(curva.cardinality.one.x - curva.x2, curva.cardinality.one.y - curva.y2)
+    expect(distanciaN).toBeLessThanOrEqual(45)
+    expect(distanciaUno).toBeLessThanOrEqual(45)
+    // la N está más cerca del origen que del destino, y el 1 al revés
+    expect(distanciaN).toBeLessThan(Math.hypot(curva.cardinality.n.x - curva.x2, curva.cardinality.n.y - curva.y2))
+    expect(distanciaUno).toBeLessThan(
+      Math.hypot(curva.cardinality.one.x - curva.x1, curva.cardinality.one.y - curva.y1)
+    )
+  })
+
+  it('las letras se separan del trazo: no se pintan encima de la línea', () => {
+    const curva = edgeCurve(from, 0, to)
+
+    // el primer y último tramo son horizontales: la letra se despega en vertical
+    expect(curva.cardinality.n.y).not.toBe(curva.y1)
+    expect(curva.cardinality.one.y).not.toBe(curva.y2)
+  })
+})
+
 describe('edgeCurve — el trazo se detiene antes del ancla: hueco para que el chevron no se funda con la línea', () => {
   it('el path acaba unos px antes del borde del destino; los anclajes lógicos no cambian', () => {
     const from: NodeBox = { x: 100, y: 100, width: 240, height: 160 }

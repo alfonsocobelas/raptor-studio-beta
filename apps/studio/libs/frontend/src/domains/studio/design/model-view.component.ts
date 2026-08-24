@@ -154,25 +154,27 @@ interface DiagramEdge {
                   [attr.marker-end]="isSelected(item.edge) ? 'url(#model-arrow-sel)' : 'url(#model-arrow)'"
                 />
                 <title>{{ item.edge.label }} · {{ item.edge.from }} → {{ item.edge.to }}</title>
-                <!-- la cardinalidad va en pastilla, para que se lea sobre la rejilla -->
-                <rect
-                  [attr.x]="item.line.labelX - 24"
-                  [attr.y]="item.line.labelY - 10"
-                  width="48"
-                  height="20"
-                  rx="6"
-                  class="fill-card stroke-border"
-                  stroke-width="1"
-                />
+                <!-- cardinalidad por extremos: la N en el lado "muchos" (el campo ref) y el 1 en el
+                     destino — una pastilla central no decía qué extremo era cada cosa -->
                 <text
-                  [attr.x]="item.line.labelX"
-                  [attr.y]="item.line.labelY + 4"
+                  [attr.x]="item.line.cardinality.n.x"
+                  [attr.y]="item.line.cardinality.n.y + 3"
                   text-anchor="middle"
                   [class]="
                     'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
                   "
                 >
-                  N : 1
+                  N
+                </text>
+                <text
+                  [attr.x]="item.line.cardinality.one.x"
+                  [attr.y]="item.line.cardinality.one.y + 3"
+                  text-anchor="middle"
+                  [class]="
+                    'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
+                  "
+                >
+                  1
                 </text>
               </g>
             }

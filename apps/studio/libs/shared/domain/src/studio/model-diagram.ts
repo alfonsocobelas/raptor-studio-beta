@@ -156,6 +156,8 @@ export interface EdgeCurve extends EdgeSegment {
   labelY: number
   /** Esquinas de la polilínea ortogonal (anclajes incluidos): la verdad geométrica de la ruta */
   points: NodePosition[]
+  /** Anclas de las letras de cardinalidad: la N junto al origen (lado "muchos"), el 1 junto a la punta */
+  cardinality: { n: NodePosition; one: NodePosition }
 }
 
 /** Lado del destino por el que entra una flecha. */
@@ -417,6 +419,19 @@ function trazo(points: NodePosition[]): string {
   return `${d} L ${fin.x} ${fin.y}`
 }
 
+/**
+ * Un punto a `distancia` del arranque de un tramo, despegado del trazo: por
+ * encima en los tramos horizontales y a la derecha en los verticales. Es donde
+ * se rotulan las letras de cardinalidad.
+ */
+function juntoAlTramo(a: NodePosition, b: NodePosition, distancia: number): NodePosition {
+  const largo = Math.hypot(b.x - a.x, b.y - a.y)
+  const t = largo === 0 ? 0 : Math.min(distancia, largo / 2) / largo
+  const x = a.x + (b.x - a.x) * t
+  const y = a.y + (b.y - a.y) * t
+  return a.y === b.y ? { x, y: y - 9 } : { x: x + 11, y }
+}
+
 /** La etiqueta va al punto medio del tramo más largo: ahí hay sitio de sobra. */
 function puntoDeEtiqueta(points: NodePosition[]): NodePosition {
   let mejor = { largo: -1, x: 0, y: 0 }
@@ -459,8 +474,12 @@ function curveInto(
       : rutaVertical(x1, y1, s1, x2, y2, e, obstacles, previas)
   )
   const etiqueta = puntoDeEtiqueta(points)
+  const cardinality = {
+    n: juntoAlTramo(points[0], points[1] ?? points[0], 24),
+    one: juntoAlTramo(points[points.length - 1], points[points.length - 2] ?? points[points.length - 1], 30)
+  }
 
-  return { x1, y1, x2, y2, d: trazo(points), labelX: etiqueta.x, labelY: etiqueta.y, points }
+  return { x1, y1, x2, y2, d: trazo(points), labelX: etiqueta.x, labelY: etiqueta.y, points, cardinality }
 }
 
 /**
