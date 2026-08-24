@@ -4,6 +4,7 @@ import {
   autoLayout,
   canvasExtent,
   edgeCurve,
+  edgeCurves,
   edgeLine,
   modelEdges,
   nodeAt,
@@ -11,6 +12,7 @@ import {
   overlayLayout,
   MODEL_GRID,
   MODEL_NODE,
+  type ModelEdge,
   type NodeBox
 } from './model-diagram'
 
@@ -170,8 +172,7 @@ describe('edgeLine', () => {
       line.x1 === from.x || line.x1 === from.x + from.width || line.y1 === from.y || line.y1 === from.y + from.height
     expect(onBorder).toBe(true)
     // y muere en el perímetro del destino
-    const onTarget =
-      line.x2 === to.x || line.x2 === to.x + to.width || line.y2 === to.y || line.y2 === to.y + to.height
+    const onTarget = line.x2 === to.x || line.x2 === to.x + to.width || line.y2 === to.y || line.y2 === to.y + to.height
     expect(onTarget).toBe(true)
   })
 })
@@ -196,7 +197,7 @@ describe('edgeCurve — la flecha sale del campo, no del centro de la caja', () 
   })
 
   it('entra por la derecha cuando el destino está a la izquierda: nunca cruza la caja', () => {
-    const izquierda: NodeBox = { x: 0, y: 300, width: 240, height: 112 }
+    const izquierda: NodeBox = { x: -300, y: 300, width: 240, height: 112 }
 
     const curva = edgeCurve(from, 0, izquierda)
 
@@ -243,6 +244,113 @@ describe('edgeCurve — saltos largos', () => {
   })
 })
 
+describe('edgeCurve — destino en la misma columna: la flecha entra en vertical, sin bucles', () => {
+  const from: NodeBox = { x: 100, y: 400, width: 240, height: 160 }
+
+  it('con el destino encima entra por su borde INFERIOR, no da la vuelta hasta el izquierdo', () => {
+    const encima: NodeBox = { x: 100, y: 100, width: 240, height: 112 }
+
+    const curva = edgeCurve(from, 0, encima)
+
+    expect(curva.y2).toBe(encima.y + encima.height)
+    expect(curva.x2).toBe(encima.x + encima.width / 2)
+  })
+
+  it('con el destino debajo entra por su borde SUPERIOR', () => {
+    const debajo: NodeBox = { x: 100, y: 700, width: 240, height: 112 }
+
+    const curva = edgeCurve(from, 0, debajo)
+
+    expect(curva.y2).toBe(debajo.y)
+    expect(curva.x2).toBe(debajo.x + debajo.width / 2)
+  })
+
+  it('la salida sigue anclada a la fila del campo ref, en un borde lateral del origen', () => {
+    const encima: NodeBox = { x: 100, y: 100, width: 240, height: 112 }
+
+    const curva = edgeCurve(from, 1, encima)
+
+    expect(curva.y1).toBe(from.y + MODEL_NODE.headerHeight + 2.5 * MODEL_NODE.rowHeight)
+    expect([from.x, from.x + from.width]).toContain(curva.x1)
+  })
+
+  it('el segundo tirador es perpendicular al borde de entrada: la curva llega en vertical', () => {
+    const encima: NodeBox = { x: 100, y: 100, width: 240, height: 112 }
+
+    const curva = edgeCurve(from, 0, encima)
+    const [cx2, cy2] = curva.d.split('C')[1].trim().split(/[ ,]+/).slice(2, 4).map(Number)
+
+    expect(cx2).toBe(curva.x2)
+    expect(cy2).toBeGreaterThan(curva.y2)
+  })
+})
+
+describe('edgeCurves — abanico de entradas: dos flechas al mismo lado no se pisan', () => {
+  const edge = (from: string, to: string, fieldIndex = 1): ModelEdge => ({ from, to, fieldIndex, label: from })
+
+  it('una sola arista es exactamente la de edgeCurve', () => {
+    const boxes: Record<string, NodeBox> = {
+      cita: { x: 100, y: 100, width: 240, height: 160 },
+      paciente: { x: 500, y: 100, width: 240, height: 112 }
+    }
+
+    const [resultado] = edgeCurves([edge('cita', 'paciente')], boxes)
+
+    expect(resultado.line).toEqual(edgeCurve(boxes['cita'], 1, boxes['paciente']))
+  })
+
+  it('dos aristas que entran por el mismo lado se reparten a lo largo del borde', () => {
+    const boxes: Record<string, NodeBox> = {
+      cita: { x: 100, y: 100, width: 240, height: 160 },
+      factura: { x: 100, y: 320, width: 240, height: 160 },
+      paciente: { x: 500, y: 200, width: 240, height: 112 }
+    }
+
+    const curvas = edgeCurves([edge('cita', 'paciente'), edge('factura', 'paciente')], boxes)
+
+    const entradas = curvas.map(c => c.line.y2)
+    expect(new Set(entradas).size).toBe(2)
+    for (const y of entradas) {
+      expect(y).toBeGreaterThanOrEqual(boxes['paciente'].y)
+      expect(y).toBeLessThanOrEqual(boxes['paciente'].y + boxes['paciente'].height)
+    }
+  })
+
+  it('las entradas respetan el orden de las salidas: la flecha que sale más arriba entra más arriba', () => {
+    const boxes: Record<string, NodeBox> = {
+      cita: { x: 100, y: 100, width: 240, height: 160 },
+      factura: { x: 100, y: 320, width: 240, height: 160 },
+      paciente: { x: 500, y: 200, width: 240, height: 112 }
+    }
+
+    const curvas = edgeCurves([edge('factura', 'paciente'), edge('cita', 'paciente')], boxes)
+    const porOrigen = new Map(curvas.map(c => [c.edge.from, c.line.y2]))
+
+    expect(porOrigen.get('cita')).toBeLessThan(porOrigen.get('factura') ?? Infinity)
+  })
+
+  it('las aristas hacia cajas de otro lado no cuentan en el reparto', () => {
+    const boxes: Record<string, NodeBox> = {
+      izquierda: { x: 100, y: 100, width: 240, height: 160 },
+      derecha: { x: 900, y: 100, width: 240, height: 160 },
+      paciente: { x: 500, y: 100, width: 240, height: 112 }
+    }
+
+    // una entra por la izquierda y otra por la derecha: cada una conserva la fila de la clave
+    const curvas = edgeCurves([edge('izquierda', 'paciente'), edge('derecha', 'paciente')], boxes)
+
+    const clave = boxes['paciente'].y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight
+    expect(curvas[0].line.y2).toBe(clave)
+    expect(curvas[1].line.y2).toBe(clave)
+  })
+
+  it('ignora las aristas cuyas cajas no existen', () => {
+    const boxes: Record<string, NodeBox> = { cita: { x: 0, y: 0, width: 240, height: 160 } }
+
+    expect(edgeCurves([edge('cita', 'borrada')], boxes)).toEqual([])
+  })
+})
+
 describe('canvasExtent — el lienzo tiene sitio de sobra para seguir dibujando', () => {
   const caja = (x: number, y: number): NodeBox => ({ x, y, width: 240, height: 120 })
 
@@ -268,4 +376,3 @@ describe('canvasExtent — el lienzo tiene sitio de sobra para seguir dibujando'
     expect(lejos.height).toBeGreaterThan(cerca.height)
   })
 })
-

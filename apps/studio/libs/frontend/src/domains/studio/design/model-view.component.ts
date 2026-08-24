@@ -13,7 +13,7 @@ import {
   MODEL_NODE,
   autoLayout,
   canvasExtent,
-  edgeCurve,
+  edgeCurves,
   modelEdges,
   nodeAt,
   nodeBox,
@@ -289,10 +289,7 @@ interface DiagramEdge {
               (click)="$event.stopPropagation()"
               (submit)="confirmDraft($event)"
             >
-              <div
-                class="studio-ui flex items-center px-2 font-semibold"
-                [style.height.px]="headerHeight"
-              >
+              <div class="studio-ui flex items-center px-2 font-semibold" [style.height.px]="headerHeight">
                 <input
                   #draftInput
                   class="w-full bg-transparent outline-none placeholder:font-normal"
@@ -326,11 +323,7 @@ interface DiagramEdge {
        el mismo que el lienzo de Vistas (decisión de Alfonso, 2026-08-11): los tres
        lienzos son el mismo papel, así que se dibujan igual. */
     .model-grid {
-      background-image: radial-gradient(
-        circle,
-        color-mix(in oklab, #d75f3d 35%, transparent) 1.4px,
-        transparent 1.4px
-      );
+      background-image: radial-gradient(circle, color-mix(in oklab, #d75f3d 35%, transparent) 1.4px, transparent 1.4px);
       background-size: 24px 24px;
       background-position: -12px -12px;
     }
@@ -511,12 +504,8 @@ export class ModelViewComponent {
   )
 
   protected readonly edges = computed<DiagramEdge[]>(() => {
-    const boxes = new Map(this.nodes().map(n => [n.name, n.box]))
-    return modelEdges(this.store.resources()).flatMap(edge => {
-      const from = boxes.get(edge.from)
-      const to = boxes.get(edge.to)
-      return from && to ? [{ edge, line: edgeCurve(from, edge.fieldIndex, to) }] : []
-    })
+    const boxes = Object.fromEntries(this.nodes().map(n => [n.name, n.box]))
+    return edgeCurves(modelEdges(this.store.resources()), boxes)
   })
 
   /** Enlace en curso: origen + segmento de la flecha fantasma (coords del lienzo). */
@@ -692,6 +681,10 @@ export class ModelViewComponent {
   protected fitToView(): void {
     const caja = this.viewportRef()?.nativeElement.getBoundingClientRect()
     if (!caja) return
-    this.viewport.fit('model', this.nodes().map(n => n.box), { width: caja.width, height: caja.height })
+    this.viewport.fit(
+      'model',
+      this.nodes().map(n => n.box),
+      { width: caja.width, height: caja.height }
+    )
   }
 }

@@ -141,37 +141,84 @@ export interface EdgeCurve extends EdgeSegment {
   labelY: number
 }
 
+/** Lado del destino por el que entra una flecha. */
+type EntrySide = 'left' | 'right' | 'top' | 'bottom'
+
+interface EntryPoint {
+  side: EntrySide
+  x: number
+  y: number
+}
+
 /**
- * La flecha de una relación sale del PUNTO DEL CAMPO `ref` —no del centro de la
- * caja— y entra por el lado de la clave del destino, como en la referencia de
- * diseño. Elige el lado por posición relativa, así que nunca cruza su propia
- * caja, y los tiradores van en horizontal para que la curva salga y entre plana.
- *
- * `fieldIndex` cuenta los campos del draft; el diagrama pinta antes la fila del
- * `id`, y por eso la fila real es la siguiente.
+ * Lado de entrada según la posición relativa: si hay hueco horizontal entre las
+ * cajas, la flecha entra por el lateral que mira al origen (el look clásico de
+ * un ER, con la entrada en la fila de la clave). Si comparten columna, entra en
+ * vertical: por abajo si el destino está encima, por arriba si está debajo —
+ * antes salía por la derecha para volver al lado izquierdo, un bucle en S.
  */
-export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeCurve {
+function entrySide(from: NodeBox, to: NodeBox): EntrySide {
+  if (to.x >= from.x + from.width) return 'left'
+  if (to.x + to.width <= from.x) return 'right'
+  return to.y + to.height / 2 <= from.y + from.height / 2 ? 'bottom' : 'top'
+}
+
+/** Punto de entrada por defecto de un lado: fila de la clave en los laterales, centro en los verticales. */
+function defaultEntry(to: NodeBox, side: EntrySide): EntryPoint {
+  const keyRow = to.y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight
+  switch (side) {
+    case 'left':
+      return { side, x: to.x, y: keyRow }
+    case 'right':
+      return { side, x: to.x + to.width, y: keyRow }
+    case 'top':
+      return { side, x: to.x + to.width / 2, y: to.y }
+    case 'bottom':
+      return { side, x: to.x + to.width / 2, y: to.y + to.height }
+  }
+}
+
+/**
+ * La curva desde el campo `ref` del origen hasta un punto de entrada dado. La
+ * salida sigue anclada a la fila del campo —por el lateral que mira a la
+ * entrada— y los tiradores son perpendiculares a cada borde: la flecha sale
+ * plana y entra plana (laterales) o vertical (arriba/abajo).
+ */
+function curveInto(from: NodeBox, fieldIndex: number, entry: EntryPoint): EdgeCurve {
   const y1 = from.y + MODEL_NODE.headerHeight + (fieldIndex + 1.5) * MODEL_NODE.rowHeight
-  const y2 = to.y + MODEL_NODE.headerHeight + 0.5 * MODEL_NODE.rowHeight
+  const { x: x2, y: y2 } = entry
 
-  // el destino manda el lado: si queda a la izquierda, se sale por la izquierda
-  const haciaLaDerecha = to.x + to.width / 2 >= from.x + from.width / 2
-  const x1 = haciaLaDerecha ? from.x + from.width : from.x
-  const x2 = haciaLaDerecha ? to.x : to.x + to.width
+  const salidaDerecha = x2 >= from.x + from.width / 2
+  const x1 = salidaDerecha ? from.x + from.width : from.x
 
-  const tirador = Math.max(30, Math.abs(x2 - x1) / 2)
-  const cx1 = haciaLaDerecha ? x1 + tirador : x1 - tirador
-  const cx2 = haciaLaDerecha ? x2 - tirador : x2 + tirador
+  const tirador = Math.max(
+    30,
+    (entry.side === 'top' || entry.side === 'bottom' ? Math.abs(y2 - y1) : Math.abs(x2 - x1)) / 2
+  )
+  const cx1 = salidaDerecha ? x1 + tirador : x1 - tirador
+
+  if (entry.side === 'top' || entry.side === 'bottom') {
+    const cy2 = entry.side === 'bottom' ? y2 + tirador : y2 - tirador
+    return {
+      x1,
+      y1,
+      x2,
+      y2,
+      d: `M ${x1} ${y1} C ${cx1} ${y1}, ${x2} ${cy2}, ${x2} ${y2}`,
+      labelX: (x1 + x2) / 2,
+      labelY: (y1 + y2) / 2
+    }
+  }
+
+  const cx2 = entry.side === 'left' ? x2 - tirador : x2 + tirador
 
   /**
    * Si entre las dos cajas cabe otra, el arco baja por debajo de ambas: con los
    * tiradores planos la curva atravesaba la caja de en medio, que es justo lo que
-   * hace ilegible un diagrama.
+   * hace ilegible un diagrama. Basta con que quepa una caja en el trayecto.
    */
-  // basta con que quepa una caja en el trayecto; con el layout en fila el salto
-  // de dos columnas mide exactamente el ancho de una caja más los dos huecos
   const salto = Math.abs(x2 - x1) > MODEL_NODE.width
-  const suelo = Math.max(from.y + from.height, to.y + to.height) + MODEL_NODE.rowHeight * 1.5
+  const suelo = Math.max(from.y + from.height, y2) + MODEL_NODE.rowHeight * 1.5
   const cy1 = salto ? suelo : y1
   const cy2 = salto ? suelo : y2
 
@@ -184,6 +231,61 @@ export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeC
     labelX: (x1 + x2) / 2,
     labelY: salto ? (suelo + Math.max(y1, y2)) / 2 : (y1 + y2) / 2
   }
+}
+
+/**
+ * La flecha de una relación sale del PUNTO DEL CAMPO `ref` —no del centro de la
+ * caja— y entra por el lado del destino que mira al origen, como en la
+ * referencia de diseño. `fieldIndex` cuenta los campos del draft; el diagrama
+ * pinta antes la fila del `id`, y por eso la fila real es la siguiente.
+ */
+export function edgeCurve(from: NodeBox, fieldIndex: number, to: NodeBox): EdgeCurve {
+  return curveInto(from, fieldIndex, defaultEntry(to, entrySide(from, to)))
+}
+
+/**
+ * Las curvas de TODAS las aristas a la vez: cuando varias entran por el mismo
+ * lado de la misma caja, los puntos de entrada se reparten a lo largo del borde
+ * —ordenados por dónde salen, para que no se crucen— en vez de apilarse todos
+ * sobre la fila de la clave. Las aristas sin caja (entidad borrada) se omiten.
+ */
+export function edgeCurves(edges: ModelEdge[], boxes: Record<string, NodeBox>): { edge: ModelEdge; line: EdgeCurve }[] {
+  const vivas = edges.flatMap(edge => {
+    const from = boxes[edge.from]
+    const to = boxes[edge.to]
+    return from && to ? [{ edge, from, to, side: entrySide(from, to) }] : []
+  })
+
+  const grupos = new Map<string, typeof vivas>()
+  for (const arista of vivas) {
+    const clave = `${arista.edge.to}|${arista.side}`
+    grupos.set(clave, [...(grupos.get(clave) ?? []), arista])
+  }
+
+  const lineas = new Map<ModelEdge, EdgeCurve>()
+  for (const grupo of grupos.values()) {
+    if (grupo.length === 1) {
+      const { edge, from, to, side } = grupo[0]
+      lineas.set(edge, curveInto(from, edge.fieldIndex, defaultEntry(to, side)))
+      continue
+    }
+    // reparto uniforme por el borde, en el orden de las salidas para no cruzarse
+    const lateral = grupo[0].side === 'left' || grupo[0].side === 'right'
+    const salida = ({ edge, from }: (typeof grupo)[number]) =>
+      lateral
+        ? from.y + MODEL_NODE.headerHeight + (edge.fieldIndex + 1.5) * MODEL_NODE.rowHeight
+        : from.x + from.width / 2
+    for (const [i, arista] of [...grupo].sort((a, b) => salida(a) - salida(b)).entries()) {
+      const { edge, from, to, side } = arista
+      const paso = (i + 1) / (grupo.length + 1)
+      const entry: EntryPoint = lateral
+        ? { side, x: side === 'left' ? to.x : to.x + to.width, y: to.y + to.height * paso }
+        : { side, x: to.x + to.width * paso, y: side === 'top' ? to.y : to.y + to.height }
+      lineas.set(edge, curveInto(from, edge.fieldIndex, entry))
+    }
+  }
+
+  return vivas.map(({ edge }) => ({ edge, line: lineas.get(edge) as EdgeCurve }))
 }
 
 /** Mínimos del lienzo: hay sitio para arrastrar aunque no haya nada dibujado. */
@@ -205,4 +307,3 @@ export function canvasExtent(boxes: NodeBox[]): { width: number; height: number 
     height: Math.max(CANVAS_MIN.height, abajo + CANVAS_PADDING)
   }
 }
-
