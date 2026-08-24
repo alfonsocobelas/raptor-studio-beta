@@ -574,36 +574,48 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
                       <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                     </button>
-                    <!-- pie de sesión de la maqueta (spec 57): como el emitido — chip, Mi cuenta y salir -->
-                    <div class="border-t px-1 pt-2">
-                      <button
-                        type="button"
-                        class="text-muted-foreground flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs"
-                        data-testid="mock-session-footer"
-                        title="Mi cuenta"
-                        (click)="active.selectSystem('account')"
-                      >
-                        <div class="bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold">AL</div>
-                        <div>
-                          <p class="text-foreground font-medium">Admin Local</p>
-                          <p>admin&#64;app.local</p>
+                    <!-- pie de sesión de la maqueta (spec 63): el chip abre el menú, como el emitido -->
+                    <div class="relative border-t px-1 pt-2">
+                      @if (mockMenu()) {
+                        <div
+                          class="bg-background absolute bottom-full left-1 z-30 mb-2 w-52 rounded-lg border p-1 shadow-md"
+                          data-testid="mock-session-menu"
+                        >
+                          <button
+                            type="button"
+                            class="hover:bg-accent block w-full rounded-md px-2 py-1.5 text-left text-xs"
+                            data-testid="mock-my-account"
+                            (click)="mockMenu.set(false); active.selectSystem('account')"
+                          >
+                            Cuenta
+                          </button>
+                          <button
+                            type="button"
+                            class="hover:bg-accent block w-full rounded-md px-2 py-1.5 text-left text-xs"
+                            data-testid="mock-logout"
+                            (click)="mockMenu.set(false); active.selectSystem('login')"
+                          >
+                            Cerrar sesión
+                          </button>
                         </div>
-                      </button>
+                      }
                       <button
                         type="button"
-                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
-                        data-testid="mock-my-account"
-                        (click)="active.selectSystem('account')"
+                        class="text-muted-foreground hover:bg-accent/60 flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs"
+                        data-testid="mock-session-footer"
+                        [attr.aria-expanded]="mockMenu()"
+                        (click)="mockMenu.set(!mockMenu())"
                       >
-                        Mi cuenta
-                      </button>
-                      <button
-                        type="button"
-                        class="text-muted-foreground hover:text-foreground block w-full rounded px-1 py-1 text-left text-xs"
-                        data-testid="mock-logout"
-                        (click)="active.selectSystem('login')"
-                      >
-                        Cerrar sesión
+                        <div
+                          class="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-lg font-semibold"
+                        >
+                          AL
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <p class="text-foreground truncate font-medium">Admin Local</p>
+                          <p class="truncate">admin&#64;app.local</p>
+                        </div>
+                        <ng-icon name="lucideChevronUp" size="12" />
                       </button>
                     </div>
                   </aside>
@@ -810,6 +822,8 @@ export class StudioCanvasComponent {
   protected readonly accessUi = inject(AccessUiService)
   protected readonly mode = this.studioMode.mode
   protected readonly designMenu = signal(false)
+  // menú del chip de usuario de la maqueta (spec 63)
+  protected readonly mockMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
   protected readonly active = inject(ActiveViewService)

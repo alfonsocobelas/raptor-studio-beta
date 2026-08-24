@@ -1,44 +1,80 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import { Router, RouterLink, RouterLinkActive } from '@angular/router'
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core'
+import { Router, RouterLink } from '@angular/router'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideBadgeCheck, lucideChevronsUpDown, lucideLogOut } from '@ng-icons/lucide'
 import { UserRoleEnum } from '@app/shared/domain'
 import { AuthService } from '../../core/services/auth.service'
 import { USER_ROLE_LABELS } from '../iam/iam-labels'
 
 /**
- * Pie de sesión de la barra lateral: quién soy, gestión de usuarios (solo admin)
- * y cerrar sesión. Solo se monta cuando la app se genera con el plugin de auth.
+ * Pie de sesión de la barra lateral, como el nav-user de la referencia: el chip del
+ * usuario (avatar con iniciales + nombre + email) abre un menú con Cuenta y Cerrar
+ * sesión. Menú propio con señal y cierre por click fuera o Escape — sin traer la
+ * librería de componentes a las pantallas (ADR-003). Solo se monta con el plugin de auth.
  */
 @Component({
   selector: 'app-session-footer',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [NgIcon, RouterLink],
+  providers: [provideIcons({ lucideBadgeCheck, lucideChevronsUpDown, lucideLogOut })],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'menuOpen.set(false)'
+  },
   template: `
-    <div class="mt-4 border-t pt-3">
+    <div class="relative mt-4 border-t pt-3">
       @if (auth.currentUser(); as user) {
-        <a
-          routerLink="/account"
-          routerLinkActive="bg-accent text-accent-foreground"
-          class="hover:bg-accent/60 block rounded-md px-3 py-2"
-          data-testid="my-account"
-        >
-          <p class="truncate text-sm font-medium">{{ user.name }}</p>
-          <p class="text-muted-foreground truncate text-xs">{{ user.email }} · {{ roleLabel() }}</p>
-        </a>
-        <a
-          routerLink="/account"
-          routerLinkActive="bg-accent text-accent-foreground font-semibold"
-          class="hover:bg-accent/60 block rounded-md px-3 py-2 text-sm"
-          data-testid="my-account-link"
-        >
-          Mi cuenta
-        </a>
+        @if (menuOpen()) {
+          <div class="bg-background absolute bottom-full left-0 z-30 mb-2 w-56 rounded-lg border p-1 shadow-md" data-testid="session-menu">
+            <div class="flex items-center gap-2 px-2 py-1.5">
+              <span
+                class="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-medium"
+              >
+                {{ initials() }}
+              </span>
+              <div class="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-medium">{{ user.name }}</span>
+                <span class="text-muted-foreground truncate text-xs">{{ user.email }} · {{ roleLabel() }}</span>
+              </div>
+            </div>
+            <div class="my-1 border-t"></div>
+            <a
+              routerLink="/account"
+              class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              data-testid="menu-account"
+              (click)="menuOpen.set(false)"
+            >
+              <ng-icon name="lucideBadgeCheck" size="16" />
+              Cuenta
+            </a>
+            <button
+              type="button"
+              class="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm"
+              data-testid="logout"
+              (click)="logout()"
+            >
+              <ng-icon name="lucideLogOut" size="16" />
+              Cerrar sesión
+            </button>
+          </div>
+        }
         <button
           type="button"
-          class="hover:bg-accent/60 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
-          (click)="logout()"
-          data-testid="logout"
+          class="hover:bg-accent/60 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left"
+          data-testid="session-chip"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="menuOpen.set(!menuOpen())"
         >
-          Cerrar sesión
+          <span
+            class="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-medium"
+          >
+            {{ initials() }}
+          </span>
+          <span class="grid min-w-0 flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium">{{ user.name }}</span>
+            <span class="text-muted-foreground truncate text-xs">{{ user.email }}</span>
+          </span>
+          <ng-icon name="lucideChevronsUpDown" class="text-muted-foreground ml-auto shrink-0" size="14" />
         </button>
       }
     </div>
@@ -46,12 +82,31 @@ import { USER_ROLE_LABELS } from '../iam/iam-labels'
 })
 export class SessionFooterComponent {
   private readonly _router = inject(Router)
+  private readonly _host = inject(ElementRef<HTMLElement>)
 
   protected readonly auth = inject(AuthService)
+  protected readonly menuOpen = signal(false)
+
   protected readonly roleLabel = computed(() => {
     const role = this.auth.currentUser()?.role
     return role ? USER_ROLE_LABELS[role as UserRoleEnum] : ''
   })
+
+  protected readonly initials = computed(() => {
+    const name = this.auth.currentUser()?.name ?? ''
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(word => word[0]?.toUpperCase() ?? '')
+      .join('')
+  })
+
+  protected onDocumentClick(event: Event): void {
+    if (this.menuOpen() && !this._host.nativeElement.contains(event.target as Node)) {
+      this.menuOpen.set(false)
+    }
+  }
 
   async logout(): Promise<void> {
     await this.auth.logout()

@@ -45,6 +45,27 @@ describe('ActiveViewService', () => {
     expect(active.resource()).toBeNull()
   })
 
+  it('con una vista de sistema abierta no hay vista del diseño marcada', () => {
+    store.addPage('list', 'Panel')
+    active.select(0)
+
+    active.selectSystem('users')
+
+    expect(active.designIndex()).toBeNull()
+    // el índice sigue vivo: es adonde vuelve el lienzo al salir de Sistema
+    expect(active.index()).toBe(0)
+  })
+
+  it('volver a una vista del diseño recupera su marca y apaga la de sistema', () => {
+    store.addPage('list', 'Panel')
+    active.selectSystem('users')
+
+    active.select(0)
+
+    expect(active.designIndex()).toBe(0)
+    expect(active.systemView()).toBeNull()
+  })
+
   it('nunca apunta fuera del diseño: al borrar la última vista el índice retrocede', () => {
     store.addPage('list', 'Productos')
     store.addPage('list', 'Proveedores')

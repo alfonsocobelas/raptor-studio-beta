@@ -22,6 +22,13 @@ export class ActiveViewService {
   /** Vista de sistema abierta en el lienzo (login/users/account, spec 57); null = vista del diseño. */
   readonly systemView = this._system.asReadonly()
 
+  /**
+   * Índice a marcar en los menús de vistas del diseño. Con una vista de sistema abierta
+   * no hay ninguno: `index` sigue recordando la última —el lienzo vuelve ahí al salir de
+   * Sistema— pero marcar las dos a la vez sería mentir (visto 2026-08-24: Panel y Usuarios).
+   */
+  readonly designIndex = computed(() => (this._system() === null ? this.index() : null))
+
   /** Entidad cuyo detalle enseña el inspector; null cuando no hay nada elegido. */
   readonly resource = this._resource.asReadonly()
 

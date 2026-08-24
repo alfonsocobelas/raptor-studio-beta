@@ -101,7 +101,6 @@ describe('app generator — UI de IAM (spec 34)', () => {
       expect(shell).toContain('SessionFooterComponent')
       expect(shell).toContain('<app-session-footer />')
       expect(footer).toContain('Cerrar sesión')
-      expect(footer).toContain('Mi cuenta')
     })
   })
 
@@ -163,12 +162,15 @@ export class RootModule {}
     expect(shell).toContain('routerLink="/users"')
   })
 
-  it('el pie de sesión ofrece Mi cuenta y Cerrar sesión (y Usuarios se muda al menú)', () => {
+  it('el pie de sesión es el dropdown del chip, como el nav-user de la referencia (spec 63)', () => {
     const footer = withAuth.get('apps/demo/libs/frontend/src/domains/auth/session-footer.component.ts') ?? ''
 
-    expect(footer).toContain('Mi cuenta')
+    expect(footer).toContain('session-chip')
+    expect(footer).toContain('session-menu')
+    expect(footer).toContain('Cuenta')
     expect(footer).toContain('Cerrar sesión')
-    expect(footer).not.toContain('Usuarios')
+    expect(footer).toContain('initials')
+    expect(footer).not.toContain('@spartan-ng')
   })
 
   it('las acciones de la lista de usuarios van con texto visible e incluyen reenviar invitación', () => {

@@ -321,6 +321,31 @@ describe('ViewsSidebarComponent', () => {
     expect(testId(fixture, 'system-view-account')?.textContent).toContain('Mi cuenta')
   })
 
+  it('abrir una vista de sistema apaga la marca de la vista del diseño: solo hay una activa', () => {
+    store.addPage('list', 'Panel')
+    active.select(0)
+
+    const fixture = mount()
+    testId(fixture, 'system-view-users')?.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'system-view-users')?.getAttribute('aria-current')).toBe('true')
+    expect(testId(fixture, 'view-item-0')?.getAttribute('aria-current')).toBeNull()
+  })
+
+  it('volver a una vista del diseño apaga la de sistema', () => {
+    store.addPage('list', 'Panel')
+
+    const fixture = mount()
+    testId(fixture, 'system-view-users')?.click()
+    fixture.detectChanges()
+    testId(fixture, 'view-item-0')?.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'view-item-0')?.getAttribute('aria-current')).toBe('true')
+    expect(testId(fixture, 'system-view-users')?.getAttribute('aria-current')).toBeNull()
+  })
+
   it('pulsar una vista de sistema la activa en el lienzo', () => {
     const fixture = mount()
 
