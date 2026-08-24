@@ -165,12 +165,17 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
 })
 
 /**
- * Spec 43: la máquina de estados se pinta en la vista del modelo cuando la entidad
- * elegida la declara — solo lectura en esta fase; los gestos llegan aparte.
+ * El ciclo de vida deja la capa fija (desbordaba el lienzo con máquinas grandes y tapaba
+ * las cajas): en el lienzo del modelo queda una barra de resumen y el diagrama entero se
+ * edita en una sub-vista a lienzo completo con pan/zoom, como Flujos.
  */
-describe('ModelViewComponent — el diagrama de estados (spec 43)', () => {
+describe('ModelViewComponent — ciclo de vida: barra de resumen + sub-vista', () => {
   let store: DesignStore
   let active: ActiveViewService
+
+  function query(fixture: ReturnType<typeof mount>, id: string): HTMLElement | null {
+    return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
+  }
 
   beforeEach(() => {
     TestBed.configureTestingModule({})
@@ -181,31 +186,86 @@ describe('ModelViewComponent — el diagrama de estados (spec 43)', () => {
     store.promoteState('solicitud', 'nombre')
   })
 
-  it('con la entidad de la máquina elegida, el ciclo de vida aparece', () => {
+  it('con máquina, la barra resume estados y transiciones y ya no incrusta el diagrama', () => {
     active.selectResource('solicitud')
 
     const fixture = mount()
 
-    expect(fixture.nativeElement.querySelector('[data-testid="state-diagram"]')).not.toBeNull()
+    const summary = query(fixture, 'lifecycle-summary')
+    expect(summary).not.toBeNull()
+    expect(summary?.textContent).toContain('3 estados')
+    expect(query(fixture, 'state-diagram')).toBeNull()
   })
 
-  it('sin entidad elegida (o sin máquina) no hay diagrama de estados', () => {
+  it('«Editar» abre la sub-vista con el diagrama a lienzo completo', () => {
+    active.selectResource('solicitud')
+
     const fixture = mount()
-    expect(fixture.nativeElement.querySelector('[data-testid="state-diagram"]')).toBeNull()
+    query(fixture, 'lifecycle-edit')?.click()
+    fixture.detectChanges()
+
+    expect(query(fixture, 'lifecycle-view')).not.toBeNull()
+    expect(query(fixture, 'state-diagram')).not.toBeNull()
+    const nodes = fixture.nativeElement.querySelectorAll('[data-testid^="state-node-"]')
+    expect(nodes.length).toBe(store.resources()[0].fields[0].values?.length)
+    expect(query(fixture, 'state-initial')).not.toBeNull()
+    // el lienzo de entidades descansa mientras se edita el ciclo
+    expect(query(fixture, 'model-node-solicitud')).toBeNull()
+  })
+
+  it('«Volver al modelo» cierra la sub-vista y devuelve las cajas', () => {
+    active.selectResource('solicitud')
+
+    const fixture = mount()
+    query(fixture, 'lifecycle-edit')?.click()
+    fixture.detectChanges()
+    query(fixture, 'lifecycle-back')?.click()
+    fixture.detectChanges()
+
+    expect(query(fixture, 'lifecycle-view')).toBeNull()
+    expect(query(fixture, 'model-node-solicitud')).not.toBeNull()
+  })
+
+  it('sin máquina pero con un enum, la barra ofrece definir el ciclo de vida', () => {
+    store.addResource('Pedido')
+    store.updateField('pedido', 0, { type: 'enum' })
+    active.selectResource('pedido')
+
+    const fixture = mount()
+    expect(query(fixture, 'lifecycle-summary')).toBeNull()
+
+    query(fixture, 'lifecycle-define')?.click()
+    fixture.detectChanges()
+
+    expect(store.resources().find(r => r.name === 'pedido')?.state?.field).toBe('nombre')
+    expect(query(fixture, 'lifecycle-view')).not.toBeNull()
+  })
+
+  it('sin entidad elegida, o sin ningún enum, no hay barra', () => {
+    const fixture = mount()
+    expect(query(fixture, 'lifecycle-summary')).toBeNull()
+    expect(query(fixture, 'lifecycle-define')).toBeNull()
 
     store.addResource('Cliente')
     active.selectResource('cliente')
     fixture.detectChanges()
-    expect(fixture.nativeElement.querySelector('[data-testid="state-diagram"]')).toBeNull()
+    expect(query(fixture, 'lifecycle-summary')).toBeNull()
+    expect(query(fixture, 'lifecycle-define')).toBeNull()
   })
 
-  it('pinta un nodo por valor, el inicial distinguido y las etiquetas humanas', () => {
+  it('elegir otra entidad cierra la sub-vista: el ciclo abierto era de la anterior', () => {
+    store.addResource('Pedido')
+    store.updateField('pedido', 0, { type: 'enum' })
+    store.promoteState('pedido', 'nombre')
     active.selectResource('solicitud')
 
     const fixture = mount()
-    const nodes = fixture.nativeElement.querySelectorAll('[data-testid^="state-node-"]')
+    query(fixture, 'lifecycle-edit')?.click()
+    fixture.detectChanges()
+    active.selectResource('pedido')
+    fixture.detectChanges()
 
-    expect(nodes.length).toBe(store.resources()[0].fields[0].values?.length)
-    expect(fixture.nativeElement.querySelector('[data-testid="state-initial"]')).not.toBeNull()
+    expect(query(fixture, 'lifecycle-view')).toBeNull()
+    expect(query(fixture, 'model-node-pedido')).not.toBeNull()
   })
 })

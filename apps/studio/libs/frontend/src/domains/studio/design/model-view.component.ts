@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
   output,
   signal,
   viewChild
@@ -26,11 +27,11 @@ import {
 } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { CanvasControlsComponent } from './canvas-controls.component'
-import { StateDiagramComponent } from './state-diagram.component'
 import { CanvasViewportService } from './canvas-viewport.service'
 import { DesignStore } from './design-store'
 import { EntityDraftService } from './entity-draft.service'
 import { shortLabelOfType } from './field-type-labels'
+import { LifecycleViewComponent } from './lifecycle-view.component'
 
 /** Nombre reservado del hueco que ocupa la caja fantasma mientras se la nombra. */
 const DRAFT_SLOT = '__draft__'
@@ -63,10 +64,12 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CanvasControlsComponent, StateDiagramComponent],
+  imports: [CanvasControlsComponent, LifecycleViewComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
-    @if (!nodes().length && !draft.pending()) {
+    @if (lifecycleOpen()) {
+      <studio-lifecycle-view (back)="lifecycleOpen.set(false)" />
+    } @else if (!nodes().length && !draft.pending()) {
       <div
         class="flex h-full flex-col items-center justify-center text-center"
         data-testid="empty-model"
@@ -95,10 +98,44 @@ interface DiagramEdge {
         <div class="absolute right-4 top-4 z-30">
           <studio-canvas-controls (fit)="fitToView()" />
         </div>
-        <!-- el ciclo de vida de la entidad elegida (spec 43): capa fija, fuera del pan/zoom -->
-        <div class="absolute bottom-4 left-4 z-30 max-w-full overflow-x-auto">
-          <studio-state-diagram />
-        </div>
+        <!-- el ciclo de vida de la entidad elegida (spec 43): aquí solo el resumen; el
+             diagrama entero se edita en su sub-vista, que sí tiene sitio para crecer -->
+        @if (lifecycleSummary(); as machine) {
+          <div
+            class="bg-card absolute bottom-4 left-4 z-30 flex items-center gap-4 rounded-lg border px-4 py-2.5 shadow-sm"
+            data-testid="lifecycle-summary"
+          >
+            <div>
+              <p class="studio-eyebrow">Ciclo de vida · {{ machine.fieldLabel }}</p>
+              <p class="text-muted-foreground text-xs">
+                {{ machine.states }} estados · {{ machine.transitions }} transiciones
+              </p>
+            </div>
+            <button
+              type="button"
+              class="studio-cta border-input border"
+              data-testid="lifecycle-edit"
+              (click)="lifecycleOpen.set(true)"
+            >
+              Editar
+            </button>
+          </div>
+        } @else if (enumAnchor(); as anchor) {
+          <div
+            class="bg-card absolute bottom-4 left-4 z-30 flex items-center gap-4 rounded-lg border px-4 py-2.5 shadow-sm"
+            data-testid="lifecycle-offer"
+          >
+            <p class="text-muted-foreground text-xs">«{{ anchor.label }}» puede ser el estado de la entidad.</p>
+            <button
+              type="button"
+              class="studio-cta border-input border"
+              data-testid="lifecycle-define"
+              (click)="defineLifecycle()"
+            >
+              Definir ciclo de vida
+            </button>
+          </div>
+        }
         <div
           #surfaceEl
           class="absolute left-0 top-0 origin-top-left"
@@ -409,6 +446,37 @@ export class ModelViewComponent {
 
   /** La entidad elegida (la que edita el inspector): se pinta en tinta. */
   protected readonly chosen = computed(() => this.active.resource())
+
+  /** La sub-vista abierta es de la entidad elegida: cambiar de entidad la cierra. */
+  protected readonly lifecycleOpen = linkedSignal<string | null, boolean>({
+    source: () => this.active.resource(),
+    computation: () => false
+  })
+
+  /** El resumen de la máquina de la entidad elegida, si su ancla sigue siendo un enum con valores. */
+  protected readonly lifecycleSummary = computed(() => {
+    const resource = this.store.resources().find(r => r.name === this.active.resource())
+    const machine = resource?.state
+    const field = resource?.fields.find(f => f.name === machine?.field)
+    if (!machine || !field?.values?.length) return null
+    return { fieldLabel: field.label, states: field.values.length, transitions: machine.transitions.length }
+  })
+
+  /** Sin máquina: el enum candidato a ancla (el que se llama estado, o el primero). */
+  protected readonly enumAnchor = computed(() => {
+    const resource = this.store.resources().find(r => r.name === this.active.resource())
+    if (!resource || resource.state) return null
+    const enums = resource.fields.filter(f => f.type === 'enum' && f.values?.length)
+    return enums.find(f => f.name.toLowerCase().includes('estado')) ?? enums[0] ?? null
+  })
+
+  /** El mismo gesto que el checkbox del panel, ofrecido donde se mira el modelo. */
+  protected defineLifecycle(): void {
+    const resource = this.active.resource()
+    const anchor = this.enumAnchor()
+    if (!resource || !anchor) return
+    if (this.store.promoteState(resource, anchor.name)) this.lifecycleOpen.set(true)
+  }
 
   /** ¿Es esta la columna elegida? La barra naranja de la izquierda lo señala. */
   protected isChosenField(resource: string, index: number): boolean {

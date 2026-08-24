@@ -8,8 +8,10 @@ type StateSelection = { kind: 'edge'; name: string; from: string } | { kind: 'no
 
 /**
  * El ciclo de vida de la entidad elegida (spec 43): los valores del enum promovido como
- * cajas y cada transición como flecha con su verbo. Solo lectura en esta fase — es cómo
- * el diseñador VALIDA lo que el chat propuso: la flecha ausente también es una regla.
+ * cajas y cada transición como flecha con su verbo. Editable entero: arrastrar un asa
+ * crea transiciones, el editor inline renombra verbo y botón, Supr borra la flecha y un
+ * estado elegido puede hacerse inicial. Vive dentro de la sub-vista de ciclo de vida
+ * (lienzo con pan/zoom), por eso los gestos des-escalan contra el tamaño real del SVG.
  *
  * Deriva todo del store (sin inputs): así se monta en el runner JIT y sobrevive a
  * cualquier reordenación de la vista del modelo.
@@ -229,8 +231,12 @@ export class StateDiagramComponent {
     this.ghost.set({ x1: originX, y1: originY, x2: originX, y2: originY })
 
     const toWorld = (e: PointerEvent): { x: number; y: number } => {
-      const rect = svg?.getBoundingClientRect() ?? { left: 0, top: 0 }
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+      const rect = svg?.getBoundingClientRect()
+      if (!rect) return { x: 0, y: 0 }
+      // bajo el zoom de la sub-vista el rect viene escalado: se divide por la escala real
+      const declared = (this.view()?.width ?? 0) + 16
+      const scale = rect.width > 0 && declared > 0 ? rect.width / declared : 1
+      return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale }
     }
     const onMove = (move: PointerEvent): void => {
       const point = toWorld(move)

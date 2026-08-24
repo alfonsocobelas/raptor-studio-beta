@@ -1,8 +1,8 @@
 import { Injectable, computed, signal, type Signal } from '@angular/core'
 import { INITIAL_VIEWPORT, fitToContent, zoomAt, type NodeBox, type NodePosition, type Viewport } from '@app/shared/domain'
 
-/** Lienzos con cámara propia: modelo, flujos y accesos se miran por separado. */
-export type CanvasId = 'model' | 'flows' | 'access'
+/** Lienzos con cámara propia: modelo, ciclo de vida, flujos y accesos se miran por separado. */
+export type CanvasId = 'model' | 'lifecycle' | 'flows' | 'access'
 
 /**
  * La cámara de cada lienzo (desplazamiento y escala). Vive aquí, en memoria de la
@@ -13,6 +13,7 @@ export type CanvasId = 'model' | 'flows' | 'access'
 export class CanvasViewportService {
   private readonly viewports = signal<Record<CanvasId, Viewport>>({
     model: INITIAL_VIEWPORT,
+    lifecycle: INITIAL_VIEWPORT,
     flows: INITIAL_VIEWPORT,
     access: INITIAL_VIEWPORT
   })
