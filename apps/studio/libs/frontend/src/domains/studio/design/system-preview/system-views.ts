@@ -12,10 +12,14 @@ export interface SystemView {
   id: string
   title: string
   component: Type<unknown>
+  /** Se puede usar en el lienzo: los dobles son inertes, así que probar es seguro.
+   * El login queda en solo lectura: su submit navega con el Router y sacaría al
+   * usuario del estudio. */
+  interactive: boolean
 }
 
 export const SYSTEM_VIEWS: SystemView[] = [
-  { id: 'login', title: 'Login', component: LoginComponent },
-  { id: 'users', title: 'Usuarios', component: UsersListComponent },
-  { id: 'account', title: 'Mi cuenta', component: ProfileComponent }
+  { id: 'login', title: 'Login', component: LoginComponent, interactive: false },
+  { id: 'users', title: 'Usuarios', component: UsersListComponent, interactive: true },
+  { id: 'account', title: 'Mi cuenta', component: ProfileComponent, interactive: true }
 ]

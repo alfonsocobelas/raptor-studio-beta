@@ -47,6 +47,8 @@ async function main(): Promise<void> {
       await shot(page, `smoke-system-${view}-${preset}`)
       console.log(`✓ ${view} × ${preset}`)
     }
+    // volver al diseño: con una vista de sistema abierta el panel derecho está plegado
+    await page.getByTestId('system-view-close').click()
   }
 
   if (errors.length) fail(`errores de página: ${errors.join(' | ')}`)

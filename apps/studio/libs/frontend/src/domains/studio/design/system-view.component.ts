@@ -1,5 +1,6 @@
 import { NgComponentOutlet } from '@angular/common'
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
+import { ActiveViewService } from './active-view.service'
 import { SYSTEM_VIEWS } from './system-preview/system-views'
 
 /**
@@ -13,21 +14,46 @@ import { SYSTEM_VIEWS } from './system-preview/system-views'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex h-full min-h-0 flex-col" data-testid="system-view">
-      <p
-        class="text-muted-foreground mb-3 shrink-0 rounded-md border border-dashed px-3 py-1.5 text-xs"
+      <div
+        class="text-muted-foreground mb-3 flex shrink-0 items-center gap-2 rounded-md border border-dashed px-3 py-1.5 text-xs"
         data-testid="system-view-note"
       >
-        La trae la autenticación — no se edita
-      </p>
-      <!-- pointer-events none: se mira, no se usa (el login del lienzo no inicia sesión) -->
-      <div class="pointer-events-none min-w-0 flex-1 select-none overflow-auto">
+        <span class="min-w-0 flex-1">
+          La trae la autenticación — no se edita.
+          @if (view()?.interactive) {
+            Puedes probarla: los datos son de muestra.
+          }
+        </span>
+        <button
+          type="button"
+          class="hover:text-foreground shrink-0 underline"
+          data-testid="system-view-close"
+          (click)="close()"
+        >
+          Volver al diseño
+        </button>
+      </div>
+      <!-- las interactivas se usan de verdad (dobles inertes); el login solo se mira -->
+      <div
+        class="min-w-0 flex-1 overflow-auto"
+        [class.pointer-events-none]="!view()?.interactive"
+        [class.select-none]="!view()?.interactive"
+      >
         <ng-container *ngComponentOutlet="component()" />
       </div>
     </div>
   `
 })
 export class SystemViewComponent {
+  private readonly _active = inject(ActiveViewService)
+
   readonly viewId = input.required<string>()
 
-  protected readonly component = computed(() => SYSTEM_VIEWS.find(view => view.id === this.viewId())?.component ?? null)
+  protected readonly view = computed(() => SYSTEM_VIEWS.find(view => view.id === this.viewId()) ?? null)
+  protected readonly component = computed(() => this.view()?.component ?? null)
+
+  close(): void {
+    // volver a la vista del diseño que estaba activa (o al lienzo vacío)
+    this._active.select(this._active.index())
+  }
 }

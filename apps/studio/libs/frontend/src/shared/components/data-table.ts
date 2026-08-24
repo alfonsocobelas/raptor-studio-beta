@@ -497,8 +497,9 @@ const FILTER_OPERATOR_LABELS: Record<string, string> = {
                 </td>
               }
               @if (showActions() && actionsEnd()) {
-                <td class="p-2 align-middle whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-1.5">
+                <!-- ancho acotado: los botones envuelven en vez de estirar la tabla (min-width: max-content) -->
+                <td class="p-2 align-middle">
+                  <div class="ml-auto flex max-w-[240px] flex-wrap items-center justify-end gap-1.5">
                     <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: row }" />
                   </div>
                 </td>

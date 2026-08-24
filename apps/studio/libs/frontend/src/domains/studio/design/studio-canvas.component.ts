@@ -300,7 +300,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
             } @else if (active.systemView() === 'login') {
               <!-- el login es una página completa en la app real: sin shell, solo el marco temado -->
               <div
-                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] max-w-6xl overflow-hidden rounded-xl border"
+                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border"
+                [class.max-w-6xl]="!active.systemView()"
                 [style]="previewVars()"
                 [attr.data-palette]="preview.palette()"
                 [attr.data-preset]="preview.preset()"
@@ -319,7 +320,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
               </div>
             } @else {
               <div
-                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] max-w-6xl overflow-hidden rounded-xl border"
+                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border"
+                [class.max-w-6xl]="!active.systemView()"
                 [class.flex]="preview.preset() !== 'suite'"
                 [class.flex-col]="preview.preset() === 'suite'"
                 [style]="previewVars()"
@@ -675,7 +677,9 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
 
 <!-- Accesos trae su propio panel derecho (el resumen del rol) y solo en el pivote Rol:
              el de Vistas no pinta nada ahí, y una cuarta columna sobra. -->
-        @if (mode() !== 'access') {
+        @if (mode() === 'views' && active.systemView()) {
+          <!-- una vista de sistema no se edita: el panel se pliega y el lienzo gana su ancho -->
+        } @else if (mode() !== 'access') {
           <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
             @if (mode() === 'model') {
               <studio-model-panel />
