@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { filter, map } from 'rxjs'
 import { HlmToasterImports } from '@spartan-ng/helm/sonner'
 import { NAV_ITEMS } from './nav'
-import { AuthService } from '@app/frontend/core/services/auth.service'
+import { AdminNavGroupComponent } from '@app/frontend/domains/iam/admin-nav-group.component'
 import { SessionFooterComponent } from '@app/frontend/domains/auth/session-footer.component'
 import { ThemeService } from '@app/frontend/core/services/theme.service'
 
@@ -18,7 +18,14 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
  */
 @Component({
   selector: 'app-root',
-  imports: [SessionFooterComponent, RouterOutlet, RouterLink, RouterLinkActive, HlmToasterImports],
+  imports: [
+    AdminNavGroupComponent,
+    SessionFooterComponent,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    HlmToasterImports
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (bare()) {
@@ -41,20 +48,7 @@ const BARE_ROUTES = ['/login', '/forgot-password', '/reset-password', '/accept-i
               </a>
             }
           </nav>
-          @if (session.isAdmin()) {
-            <p class="text-muted-foreground mt-4 px-3 text-[10px] font-semibold tracking-wide uppercase">
-              Administración
-            </p>
-            <nav class="flex flex-col gap-1">
-              <a
-                routerLink="/users"
-                routerLinkActive="bg-accent text-accent-foreground font-semibold"
-                class="hover:bg-accent/60 rounded-md px-3 py-2 text-sm"
-              >
-                Usuarios
-              </a>
-            </nav>
-          }
+          <app-admin-nav-group />
           <span class="flex-1"></span>
           <button
             type="button"
@@ -81,7 +75,6 @@ export class AppComponent {
 
   protected readonly theme = inject(ThemeService)
   protected readonly appTitle = 'Dashboard'
-  protected readonly session = inject(AuthService)
   protected readonly navItems = NAV_ITEMS
 
   private readonly _url = toSignal(
