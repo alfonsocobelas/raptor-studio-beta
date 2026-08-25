@@ -15,5 +15,5 @@
 - [x] **TASK-05b (añadida)**: El calendario ensancha la petición compartida (page 1,
       pageSize amplio) y la restaura al salir — defecto de la spec 59 destapado por la demo:
       con paginación real solo pintaba los 10 primeros registros y el alta «no aparecía».
-- [ ] **TASK-05**: Regenerar la demo veterinaria y verificar: typecheck verde + alta de
+- [x] **TASK-05**: Regenerar la demo veterinaria y verificar: typecheck verde + alta de
       cita desde el calendario + apertura de tira (humo con navegador si el entorno lo da).
