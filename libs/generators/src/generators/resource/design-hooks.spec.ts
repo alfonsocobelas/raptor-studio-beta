@@ -23,6 +23,24 @@ describe('resource generator — hooks de piel', () => {
 
   afterEach(() => registerModels([MODELS['contract']]))
 
+  describe('kanban', () => {
+    const kanban = (): Promise<string> => emit({ kanban: { field: 'status' } }, 'contracts-kanban.component.ts')
+
+    it('cada columna es una superficie con su cabecera', async () => {
+      const html = await kanban()
+
+      expect(html).toContain('class="app-panel bg-card flex min-h-40 flex-col rounded-lg border transition-opacity"')
+      expect(html).toContain('app-panel-head')
+    })
+
+    it('la tarjeta arrastrable es una pastilla y el pie una tira de controles', async () => {
+      const html = await kanban()
+
+      expect(html).toContain('class="app-chip bg-background rounded-md border p-2 text-sm shadow-sm"')
+      expect(html).toContain('app-toolbar')
+    })
+  })
+
   describe('calendario', () => {
     const calendar = (extra: Partial<ResourceDefinition> = {}): Promise<string> =>
       emit({ calendar: { date: 'startDate' }, ...extra }, 'contracts-calendar.component.ts')
