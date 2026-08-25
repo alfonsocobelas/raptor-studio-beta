@@ -112,6 +112,8 @@ export class ProjectDialogComponent {
   private readonly _customerService = inject(CustomerService)
 
   readonly project = input<ProjectDto | null>(null)
+  /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
+  readonly initialValue = input<Partial<ProjectFormValue> | null>(null)
   readonly saved = output<ProjectFormValue>()
   readonly close = output<void>()
 
@@ -150,6 +152,11 @@ export class ProjectDialogComponent {
           status: project.status,
           implementer: project.implementer
         })
+        return
+      }
+      const initial = this.initialValue()
+      if (initial) {
+        this.form.patchValue(initial)
       }
     })
   }

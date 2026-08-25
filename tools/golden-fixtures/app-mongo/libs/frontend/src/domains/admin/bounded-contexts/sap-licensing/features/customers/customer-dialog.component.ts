@@ -96,6 +96,8 @@ export class CustomerDialogComponent {
   private readonly _fb = inject(FormBuilder)
 
   readonly customer = input<CustomerDto | null>(null)
+  /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
+  readonly initialValue = input<Partial<CustomerFormValue> | null>(null)
   readonly saved = output<CustomerFormValue>()
   readonly close = output<void>()
 
@@ -127,6 +129,11 @@ export class CustomerDialogComponent {
           notes: customer.notes ?? '',
           customerType: customer.customerType ?? null
         })
+        return
+      }
+      const initial = this.initialValue()
+      if (initial) {
+        this.form.patchValue(initial)
       }
     })
   }

@@ -168,6 +168,8 @@ export class ContractDialogComponent {
   private readonly _customerService = inject(CustomerService)
 
   readonly contract = input<ContractDto | null>(null)
+  /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
+  readonly initialValue = input<Partial<ContractFormValue> | null>(null)
   readonly saved = output<ContractFormValue>()
   readonly close = output<void>()
 
@@ -216,6 +218,11 @@ export class ContractDialogComponent {
           renewalType: contract.renewalType,
           notes: contract.notes ?? ''
         })
+        return
+      }
+      const initial = this.initialValue()
+      if (initial) {
+        this.form.patchValue(initial)
       }
     })
   }
