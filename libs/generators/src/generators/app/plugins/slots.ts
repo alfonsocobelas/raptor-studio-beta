@@ -1,7 +1,7 @@
 import { authPlugin } from './auth.plugin'
 import { redisSessionPlugin } from './redis-session.plugin'
 import { INFRA_PROVIDERS } from '../infra/providers'
-import { DESIGN_PRESETS, DEFAULT_DESIGN } from '../design/presets'
+import { DESIGN_PRESETS, DEFAULT_DESIGN } from '@raptor/schema'
 import type { AppPlugin } from './plugin'
 import type { DatabaseEngine } from '../database'
 
@@ -99,7 +99,7 @@ export const SLOTS: Record<string, Slot> = {
     // cosas distintas con el mismo nombre en la misma pantalla se confunden (Alfonso, 2026-08-10)
     label: 'Preset visual',
     default: DEFAULT_DESIGN,
-    // los presets salen de su registro (app/design/presets.ts): añadir uno allí basta
+    // los presets salen de su registro (libs/schema/design-presets.ts): añadir uno allí basta
     providers: DESIGN_PRESETS.map(({ id, label, description }) => ({ value: id, label, description }))
   },
   infra: {

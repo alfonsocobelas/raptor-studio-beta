@@ -1,7 +1,7 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import { appGenerator } from './app'
-import { DESIGN_HOOKS } from './design/hooks'
+import { DESIGN_HOOKS } from '@raptor/schema'
 
 /**
  * Spec 37: la ranura `design`. Medido en la sesión del 2026-08-09, cambiar de librería de

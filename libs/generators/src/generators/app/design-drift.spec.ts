@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { DESIGN_HOOKS } from './design/hooks'
-import { DESIGN_PRESETS } from './design/presets'
+import { DESIGN_HOOKS, DESIGN_PRESETS } from '@raptor/schema'
 
 /**
  * Guard de anti-desfase (spec 67). Los presets se congelaron el 2026-08-10 y después llegaron

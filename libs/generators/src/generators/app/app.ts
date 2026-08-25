@@ -3,6 +3,7 @@ import {
   defineApp,
   defineResource,
   resolveAccess,
+  selectDesign,
   wantsSoftDelete,
   type AppDefinition,
   type ResourceDefinition
@@ -48,7 +49,6 @@ import {
 import { PERSISTENCE, selectPersistence } from './persistence/registry'
 import type { PersistenceProvider } from './persistence/provider'
 import { selectInfra } from './infra/registry'
-import { selectDesign } from './design/presets'
 import type { DatabaseEngine } from './database'
 import type { AppPlugin, PluginContext } from './plugins/plugin'
 
