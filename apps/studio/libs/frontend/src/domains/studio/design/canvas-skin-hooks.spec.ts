@@ -27,6 +27,25 @@ describe('hooks de piel en los bloques del lienzo', () => {
     })
   })
 
+  describe('formulario y su diálogo', () => {
+    it('el formulario nombra cabecera y botonera, y su marco NO es superficie', () => {
+      const form = source('canvas-form.component.ts')
+
+      expect(form).toContain('app-panel-head')
+      expect(form).toContain('app-toolbar')
+      // lección de la spec 67: el marco del formulario no tiene padding lateral propio
+      expect(form).not.toContain('class="app-panel bg-background')
+    })
+
+    it('el diálogo SÍ es superficie: es una tarjeta flotante con su botonera', () => {
+      const dialog = source('canvas-form-dialog.component.ts')
+
+      expect(dialog).toContain('app-panel')
+      expect(dialog).toContain('app-panel-head')
+      expect(dialog).toContain('app-toolbar')
+    })
+  })
+
   describe('ficha de detalle', () => {
     const detail = (): string => source('canvas-detail.component.ts')
 

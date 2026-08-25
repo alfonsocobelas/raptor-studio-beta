@@ -19,17 +19,17 @@ import { formDialogDescription, formDialogTitle, type FormDialogMode } from './f
       (click)="onOverlay($event)"
     >
       <div
-        class="bg-background max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border p-6 shadow-lg"
+        class="app-panel bg-background max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border p-6 shadow-lg"
         (click)="$event.stopPropagation()"
       >
-        <h2 class="text-lg font-semibold" data-testid="form-dialog-title">{{ title() }}</h2>
+        <h2 class="app-panel-head text-lg font-semibold" data-testid="form-dialog-title">{{ title() }}</h2>
         <p class="text-muted-foreground mt-1 text-sm" data-testid="form-dialog-description">{{ description() }}</p>
 
         <div class="mt-6">
           <studio-canvas-form-fields [resource]="resource()" [row]="row()" />
         </div>
 
-        <div class="mt-6 flex justify-end gap-2">
+        <div class="app-toolbar mt-6 flex justify-end gap-2">
           <button
             type="button"
             class="border-input hover:bg-accent rounded-md border px-4 py-2 text-sm font-medium"

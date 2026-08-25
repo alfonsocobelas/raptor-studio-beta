@@ -17,14 +17,14 @@ import { formDialogDescription, formDialogTitle } from './form-preview'
   template: `
     @if (draft(); as resource) {
       <section class="bg-background rounded-lg border p-6">
-        <h2 class="text-lg font-semibold" data-testid="canvas-form-title">{{ title() }}</h2>
+        <h2 class="app-panel-head text-lg font-semibold" data-testid="canvas-form-title">{{ title() }}</h2>
         <p class="text-muted-foreground mt-1 text-sm">{{ description() }}</p>
 
         <div class="mt-6">
           <studio-canvas-form-fields [resource]="resource" />
         </div>
 
-        <div class="mt-6 flex justify-end gap-2">
+        <div class="app-toolbar mt-6 flex justify-end gap-2">
           <span class="chrome-btn">Cancelar</span>
           <span class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium">Guardar</span>
         </div>
