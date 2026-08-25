@@ -58,7 +58,8 @@ describe('formControlFor', () => {
     ['boolean', 'checkbox'],
     ['date', 'date'],
     ['enum', 'select'],
-    ['ref', 'select']
+    ['time', 'time'],
+    ['ref', 'lookup']
   ] as const)('%s → %s', (type, control) => {
     expect(formControlFor(field(type))).toBe(control)
   })

@@ -41,6 +41,17 @@ import { formControlFor } from './form-preview'
               <label class="text-sm font-medium">{{ field.label }}</label>
               <input type="time" class="form-control" />
             }
+            @case ('lookup') {
+              <label class="text-sm font-medium">{{ field.label }}</label>
+              <input
+                type="text"
+                role="combobox"
+                class="form-control"
+                placeholder="Buscar…"
+                [value]="prefill(field)"
+                [attr.data-testid]="'form-lookup-' + field.name"
+              />
+            }
             @case ('number') {
               <label class="text-sm font-medium">{{ field.label }}</label>
               <input type="number" class="form-control" [value]="prefill(field)" />
