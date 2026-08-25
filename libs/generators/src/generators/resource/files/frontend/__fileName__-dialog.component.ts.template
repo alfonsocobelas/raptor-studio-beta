@@ -75,7 +75,9 @@ export interface <%- className %>FormValue {
 <%- pad %>    controlId="<%- f.id %>"
 <%- pad %>    placeholder="<%- f.placeholder %>"
 <%- pad %>    [options]="<%- f.name %>Options()"
+<%- pad %>    [hasMore]="<%- f.name %>HasMore()"
 <%- pad %>    (searchChange)="on<%- f.name.charAt(0).toUpperCase() + f.name.slice(1) %>Search($event)"
+<%- pad %>    (loadMore)="on<%- f.name.charAt(0).toUpperCase() + f.name.slice(1) %>More()"
 <%- pad %>  />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {

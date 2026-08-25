@@ -44,6 +44,17 @@ import { AppSelectOption } from './select'
           } @empty {
             <li class="text-muted-foreground px-2 py-1.5 text-sm">Sin resultados</li>
           }
+          @if (hasMore()) {
+            <li>
+              <button
+                type="button"
+                class="text-muted-foreground hover:text-foreground w-full rounded-sm px-2 py-1.5 text-left text-sm"
+                (mousedown)="more($event)"
+              >
+                Ver más resultados…
+              </button>
+            </li>
+          }
         </ul>
       }
     </div>
@@ -53,8 +64,12 @@ export class AppLookup implements ControlValueAccessor {
   readonly options = input<AppSelectOption[]>([])
   readonly placeholder = input('')
   readonly controlId = input('')
+  /** Quedan más resultados en el servidor: se ofrece «Ver más». */
+  readonly hasMore = input(false)
   /** Término tecleado, ya con debounce: quien escucha repone [options]. */
   readonly searchChange = output<string>()
+  /** El usuario pidió la página siguiente: quien escucha AÑADE a [options]. */
+  readonly loadMore = output<void>()
 
   protected readonly value = signal<string | null>(null)
   protected readonly open = signal(false)
@@ -94,6 +109,12 @@ export class AppLookup implements ControlValueAccessor {
   protected close(): void {
     this.open.set(false)
     this._typed.set(null)
+  }
+
+  protected more(event: Event): void {
+    // ni blur ni cierre: la lista sigue abierta mientras llegan más resultados
+    event.preventDefault()
+    this.loadMore.emit()
   }
 
   protected select(option: AppSelectOption): void {

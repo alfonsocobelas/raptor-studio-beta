@@ -22,12 +22,12 @@ describe('resource generator — lookup del servicio', () => {
     return tree.read('out/frontend/supplier.service.ts', 'utf-8') ?? ''
   }
 
-  it('emite lookup(term) con su propia petición de 20 resultados', async () => {
+  it('emite lookup(term, page) paginado con su propia petición de 20 resultados', async () => {
     const emitted = await service()
 
-    expect(emitted).toContain('lookup(search: string)')
+    expect(emitted).toContain('lookup(search: string, page = 1)')
     expect(emitted).toContain('pageSize: 20')
-    expect(emitted).toContain('.then(page => page.items)')
+    expect(emitted).toContain('hasMore: page * 20 < result.total')
   })
 
   it('findOne se emite aunque el recurso no tenga ficha ni página-formulario', async () => {

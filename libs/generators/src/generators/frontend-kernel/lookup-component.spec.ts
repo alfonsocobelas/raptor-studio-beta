@@ -22,6 +22,12 @@ describe('frontend-kernel — app-lookup', () => {
     expect(lookup()).toContain('writeValue(value: string | null)')
   })
 
+  it('pagina el desplegable: hasMore pinta «Ver más» y emite loadMore', () => {
+    expect(lookup()).toContain('hasMore = input(false)')
+    expect(lookup()).toContain('loadMore')
+    expect(lookup()).toContain('Ver más')
+  })
+
   it('busca con debounce y reutiliza el contrato de opciones del select', () => {
     expect(lookup()).toContain('searchChange')
     expect(lookup()).toContain('setTimeout')

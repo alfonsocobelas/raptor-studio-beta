@@ -29,6 +29,12 @@ describe('resource generator — lookup asíncrono en el diálogo', () => {
     expect(dialog).not.toContain('.value()?.items')
   })
 
+  it('pagina el desplegable: término y página por campo, y el botón Ver más carga la siguiente', () => {
+    expect(dialog).toContain('(loadMore)="onCustomerIdMore()"')
+    expect(dialog).toContain('[hasMore]="customerIdHasMore()"')
+    expect(dialog).toContain('this._customerIdPage += 1')
+  })
+
   it('la siembra inicial y la etiqueta del referenciado al editar', () => {
     expect(dialog).toContain("this.onCustomerIdSearch('')")
     expect(dialog).toContain('this._customerService.findOne(')

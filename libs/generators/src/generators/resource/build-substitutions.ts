@@ -677,7 +677,7 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     formPageLookupProviders: lookups.map(f => {
       const resource = f.lookup?.resource ?? ''
       const service = `${resource.charAt(0).toUpperCase()}${resource.slice(1)}Service`
-      return `{ provide: ${service}, useValue: { lookup: () => Promise.resolve([]), findOne: () => new Promise(() => undefined) } }`
+      return `{ provide: ${service}, useValue: { lookup: () => Promise.resolve({ items: [], hasMore: false }), findOne: () => new Promise(() => undefined) } }`
     }),
     needsSelect: selects.some(f => !f.lookup),
     savedEmitLines: renderSavedEmit(formFields, lookups),
@@ -691,10 +691,26 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     ),
     lookupStateLines: lookups.flatMap(f => [
       `readonly ${f.name}Options = signal<AppSelectOption[]>([])`,
+      `readonly ${f.name}HasMore = signal(false)`,
+      `private _${f.name}Term = ''`,
+      `private _${f.name}Page = 1`,
       `on${cap(f.name)}Search(term: string): void {`,
-      `  void this._${f.lookup?.resource}Service.lookup(term).then(items =>`,
-      `    this.${f.name}Options.set(items.map(item => ({ value: item.id, label: item.${f.lookup?.labelField} })))`,
-      `  )`,
+      `  this._${f.name}Term = term`,
+      `  this._${f.name}Page = 1`,
+      `  void this._${f.lookup?.resource}Service.lookup(term).then(result => {`,
+      `    this.${f.name}Options.set(result.items.map(item => ({ value: item.id, label: item.${f.lookup?.labelField} })))`,
+      `    this.${f.name}HasMore.set(result.hasMore)`,
+      `  })`,
+      `}`,
+      `on${cap(f.name)}More(): void {`,
+      `  this._${f.name}Page += 1`,
+      `  void this._${f.lookup?.resource}Service.lookup(this._${f.name}Term, this._${f.name}Page).then(result => {`,
+      `    this.${f.name}Options.update(options => [`,
+      `      ...options,`,
+      `      ...result.items.map(item => ({ value: item.id, label: item.${f.lookup?.labelField} }))`,
+      `    ])`,
+      `    this.${f.name}HasMore.set(result.hasMore)`,
+      `  })`,
       `}`
     ]),
     lookupSeedLines: lookups.map(f => `this.on${cap(f.name)}Search('')`),
