@@ -366,11 +366,6 @@
           ]
         }
       ],
-      "state": {
-        "field": "veterinario",
-        "initial": "laura_montes",
-        "transitions": []
-      },
       "detail": true
     },
     {
