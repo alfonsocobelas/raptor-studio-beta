@@ -123,29 +123,13 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(styles).toMatch(/\.dark\s+[^{]*hlmbadge/i)
   })
 
-  // Alfonso, 2026-08-25: «no hay uniformidad en las fuentes de los números». La había en la
-  // tabla y en el KPI (mono) y no en kanban, calendario, cronograma ni detalle (la sans de la
-  // app). Ahora la letra de las cifras es UN token y UNA regla con todos los sitios donde
-  // viven números; añadir un bloque nuevo es añadir su hook a esa lista.
-  it.each(['cabina', 'suite'])('%s escribe TODOS los números con la misma letra', async design => {
-    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
-    const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
-
-    expect(styles).toMatch(/--font-numeric:/)
-    for (const place of ['.app-metric', '.app-cell', '.app-chip', '.app-toolbar', 'td.text-right']) {
-      expect(rule).toContain(place)
-    }
-    expect(rule).toMatch(/font-family:\s*var\(--font-numeric\)/)
-    expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/)
-  })
-
   it('cabina funde los KPIs en una tira de instrumentación: panel plano y etiqueta uppercase', async () => {
     const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
 
     // por hooks, no por clases de Tailwind: el .text-sm del sufijo del valor también casaba
     expect(styles).toMatch(/\.app-panel \{[^}]*background:\s*transparent/i)
     expect(styles).toMatch(/\.app-panel-head[^{]*\{[^}]*text-transform:\s*uppercase/i)
-    expect(styles).toMatch(/\.app-metric[^{]*\{[^}]*font-family/i)
+    expect(styles).toMatch(/\.app-metric[^{]*\{[^}]*font-size/i)
   })
 
   // Spec 67: el defecto que dejó a los presets sin tokens durante dos semanas. El bloque del
@@ -205,63 +189,35 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(panel).toContain('var(--shell-border)')
   })
 
-  // Petición de Alfonso (2026-08-25): la piel también cambia de LETRA. Nada de stacks del
-  // sistema, que en cada máquina caen en otra cosa: la fuente viaja como dependencia
-  // self-hosted, igual que la del tema (fase 3 de la spec 20).
-  it('cabina escribe en condensada y pone los datos en JetBrains Mono', async () => {
-    const files = await emit({ ...base, design: 'cabina' })
+  // Decisión de Alfonso (2026-08-25), después de verlo: las tres pieles escriben con la
+  // tipografía del NEUTRO. Una fuente por piel obligaba a arrastrar su paquete a cada app y la
+  // identidad no la da la letra, sino la forma, la densidad y el cromo.
+  it.each(['actual', 'cabina', 'suite'])('%s escribe con la letra del tema, sin fuente propia', async design => {
+    const files = await emit({ ...base, design })
     const styles = files.get(STYLES) ?? ''
     const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
 
-    expect(themeBlock(styles)).toMatch(/--font-sans:\s*'Roboto Condensed Variable'/)
-    expect(styles).toMatch(/--font-numeric:\s*'JetBrains Mono Variable'/)
-    // self-hosted: los ficheros los trae el npm install de la app, sin CDNs
-    expect(styles).toContain("@import '@fontsource-variable/roboto-condensed'")
-    expect(styles).toContain("@import '@fontsource-variable/jetbrains-mono'")
-    expect(pkg.dependencies['@fontsource-variable/roboto-condensed']).toBeDefined()
-    expect(pkg.dependencies['@fontsource-variable/jetbrains-mono']).toBeDefined()
-  })
-
-  it('suite escribe en IBM Plex Sans y titula en serif: la letra del software corporativo', async () => {
-    const files = await emit({ ...base, design: 'suite' })
-    const styles = files.get(STYLES) ?? ''
-    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
-
-    expect(themeBlock(styles)).toMatch(/--font-sans:\s*'IBM Plex Sans Variable'/)
-    expect(styles).toContain("@import '@fontsource-variable/ibm-plex-sans'")
-    expect(styles).toContain("@import '@fontsource-variable/source-serif-4'")
-    expect(pkg.dependencies['@fontsource-variable/source-serif-4']).toBeDefined()
-  })
-
-  // Alfonso, 2026-08-25: «has puesto la misma tipografía a cabina y suite». Eran dos fuentes
-  // distintas, pero las dos sans neutras: a un metro se leen igual. Lo que las separa es el
-  // ESQUELETO de los títulos — cabina titula en monospace de instrumentación, suite en serif
-  // corporativa — y eso se ve en cada pantalla sin comparar nada.
-  it('las tres pieles titulan con esqueletos distintos, no con dos sans parecidas', async () => {
-    const display = async (design: string): Promise<string> => {
-      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
-      return styles.match(/--font-display:[^;]*/)?.[0] ?? ''
-    }
-
-    expect(await display('cabina')).toContain('JetBrains Mono Variable')
-    expect(await display('suite')).toContain('Source Serif 4 Variable')
-    // el neutro no titula distinto: no tiene identidad de sector que declarar
-    expect(await display('actual')).toBe('')
-  })
-
-  it('la piel neutra no arrastra ninguna fuente: sigue con la pila del sistema', async () => {
-    const files = await emit({ ...base, design: 'actual' })
-    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
-
+    // la ÚNICA declaración de familia es la del body, que lee el token del tema
+    expect(styles.match(/font-family:/g) ?? []).toHaveLength(1)
+    expect(styles).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/)
+    expect(styles).not.toContain('@fontsource')
     expect(Object.keys(pkg.dependencies ?? {}).some(name => name.includes('fontsource'))).toBe(false)
   })
 
-  // El smoke de navegador (2026-08-25) midió -apple-system en las TRES pieles: nadie consumía
-  // --font-sans. El token estaba bien puesto y no lo leía nadie, porque el <body> no declara
-  // font-family y la preflight de Tailwind la resuelve en <html>, fuera del bloque del tema.
-  it('el body toma la letra del tema y de la piel: si no, el token no lo lee nadie', async () => {
-    const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
+  it.each(['cabina', 'suite'])('%s sí unifica las cifras: tabulares en todas las pantallas', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+    const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
 
+    for (const place of ['.app-metric', '.app-cell', '.app-chip', '.app-toolbar', 'td.text-right']) {
+      expect(rule).toContain(place)
+    }
+    expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/)
+  })
+
+  it('el body toma la letra del tema: si no, el token no lo lee nadie', async () => {
+    const styles = (await emit(base)).get(STYLES) ?? ''
+
+    // la preflight de Tailwind resuelve la letra en <html>, fuera del bloque :root .theme-x
     expect(styles).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/)
   })
 

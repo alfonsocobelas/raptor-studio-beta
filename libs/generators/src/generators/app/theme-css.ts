@@ -26,8 +26,6 @@ export interface ThemeSubstitutions {
    * bloque `:root .theme-x`, detrás de los del tema: en `:root` suelto no se aplicarían.
    */
   designTokens: string
-  /** Líneas @import de las fuentes de la piel, ya renderizadas; '' = la piel no trae letra */
-  designFontImports: string
   /** Bloque CSS del preset de diseño (spec 37); '' = el preset neutro, que no añade nada */
   designCss: string
 }
@@ -53,7 +51,6 @@ export function themeSubstitutions(themeId: string, seed?: string): ThemeSubstit
     fontPackage: tokens.font?.package ?? '',
     // el preset los sobreescribe en app.ts; por defecto el tema no lleva cromo de diseño
     designTokens: '',
-    designFontImports: '',
     designCss: ''
   }
 }

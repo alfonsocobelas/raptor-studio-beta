@@ -354,16 +354,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   const theme = {
     ...themeSubstitutions(composition.themeId, composition.themeSeed),
     designTokens: design.tokens,
-    // las fuentes de la piel viajan como las del tema: paquete self-hosted + @import
-    designFontImports: design.fonts.map(font => `@import '${font.package}';`).join('\n'),
     designCss: design.css
   }
   generateFiles(tree, path.join(__dirname, 'files-theme', ui), root, theme)
   // la fuente del tema viaja como dependencia (fase 3): self-hosted, la trae el npm install
   addFontDependency(tree, path.join(root, 'package.json'), theme.fontPackage)
-  for (const font of design.fonts) {
-    addFontDependency(tree, path.join(root, 'package.json'), font.package)
-  }
 
   // 5. lo único que depende de la composición (páginas) y de los modelos
   const testRepositories = models.flatMap(model => persistence.testRepository?.(model) ?? [])

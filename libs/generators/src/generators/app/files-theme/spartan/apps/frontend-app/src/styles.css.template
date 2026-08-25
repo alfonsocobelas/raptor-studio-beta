@@ -8,10 +8,6 @@
 /* La fuente del tema, self-hosted: los ficheros viajan con la app, sin CDNs. */
 @import '<%= fontPackage %>';
 <%_ } _%>
-<%_ if (designFontImports) { _%>
-/* Las fuentes de la piel, con el mismo trato: la letra es parte del diseño, no un detalle. */
-<%- designFontImports %>
-<%_ } _%>
 
 :root .<%= themeClass %> {
   color-scheme: light;

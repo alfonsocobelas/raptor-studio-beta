@@ -7,11 +7,14 @@
  * neutrales del ADR-003. Lo que sí se percibe al abrir la app es el SHELL (dónde vive la
  * navegación), la DENSIDAD y el cromo. Eso es lo que parametriza un preset.
  *
- * Un preset aporta cuatro cosas y ninguna más:
+ * Un preset aporta tres cosas y ninguna más:
  *   1. `files`  — su carpeta de override, copiada DESPUÉS del esqueleto (gana su app.component)
- *   2. `fonts`  — sus tipografías, self-hosted: dependencia + @import, como las del tema
- *   3. `tokens` — los tokens DEL TEMA que pisa; se inyectan dentro de `:root .theme-x`
- *   4. `css`    — sus reglas y sus tokens propios, añadidos al final del styles.css del tema
+ *   2. `tokens` — los tokens DEL TEMA que pisa; se inyectan dentro de `:root .theme-x`
+ *   3. `css`    — sus reglas y sus tokens propios, añadidos al final del styles.css del tema
+ *
+ * La LETRA no la pone la piel (decisión de Alfonso, 2026-08-25): las tres escriben con la
+ * tipografía del tema. La identidad la dan la forma, la densidad y el cromo — y una fuente por
+ * piel obligaba además a arrastrar su paquete a cada app.
  *
  * Por qué `tokens` va aparte de `css` (spec 67): el bloque `css` se añade al final del fichero,
  * y ahí `:root { --radius: 0 }` es CSS MUERTO. El tema declara ese mismo token en
@@ -30,11 +33,6 @@ export interface DesignPreset {
   description: string
   /** Carpeta de override relativa a app/, o undefined si no cambia el esqueleto */
   files?: string
-  /**
-   * Fuentes que trae la piel, self-hosted igual que la del tema: su paquete entra en el
-   * package.json de la app y su `@import` en el styles.css. Vacío = la pila del sistema.
-   */
-  fonts: { package: string; family: string }[]
   /** Declaraciones que pisan tokens del tema, inyectadas dentro de su bloque; '' si ninguna */
   tokens: string
   /** Bloque CSS del preset; '' si se conforma con los tokens del tema */
@@ -45,12 +43,9 @@ export interface DesignPreset {
  * Tokens del tema que pisa cabina. Los cinco radios se declaran uno a uno a propósito: los del
  * tema son `calc(var(--radius) - 4px)`, y pisar sólo `--radius` los dejaría en -4px.
  */
-const CABINA_TOKENS = `  /* preset «cabina»: esquinas vivas en toda la app, no sólo en los componentes vestidos */
-  /* y letra condensada: en un centro de operaciones cabe más dato por línea. Los TITULARES
-     van en la mono de los datos — lo que distingue una piel de otra a un metro es el
-     esqueleto de la letra grande, no cuál de las dos sans neutras se eligió */
-  --font-sans: 'Roboto Condensed Variable', 'Roboto Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+const CABINA_TOKENS = `  /* preset «cabina»: esquinas vivas en toda la app, no sólo en los componentes vestidos.
+     La LETRA no la toca: decisión de Alfonso (2026-08-25) — las tres pieles escriben con la
+     tipografía del neutro, y la identidad la dan la forma, la densidad y el cromo. */
   --radius: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -112,10 +107,9 @@ const CABINA_CSS = `
   font-variant-numeric: tabular-nums;
 }
 
-/* los titulares en la mono: un centro de operaciones rotula como una consola */
+/* los titulares se aprietan, pero con la letra de la app */
 .app-shell-main h1,
 .app-shell-main h2 {
-  font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
@@ -179,14 +173,10 @@ const CABINA_CSS = `
   color: oklch(0.75 0.1 250);
 }
 
-:root {
-  --font-numeric: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
-}
-
-/* los NÚMEROS de toda la app en la misma letra (2026-08-25). Antes había mono en la tabla y en
-   el KPI y la sans de la app en kanban, calendario, cronograma y detalle: tres letras para lo
-   mismo. Un token y UNA regla con todos los sitios donde vive una cifra; un bloque nuevo se
-   suma añadiendo su hook a esta lista. */
+/* los NÚMEROS de toda la app tratados igual (2026-08-25). Antes había monospace en la tabla y
+   en el KPI y la sans de la app en kanban, calendario, cronograma y detalle: tres letras para lo
+   mismo. Ya no hay letra propia — la de la app en todas partes — pero sí cifras TABULARES en
+   todos los sitios donde vive un número; un bloque nuevo se suma añadiendo su hook a la lista. */
 .app-metric,
 .app-cell,
 .app-chip,
@@ -197,7 +187,6 @@ input.app-toolbar,
 .app-shell-main table td.text-right,
 [hlminput],
 [appinput] {
-  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
 }
 
@@ -292,9 +281,7 @@ const SUITE_TOKENS = `  /* preset «suite»: rectangular y con el stack tipográ
   --radius-sm: 2px;
   --radius-md: 2px;
   --radius-lg: 2px;
-  --radius-xl: 2px;
-  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Segoe UI', Tahoma, ui-sans-serif, sans-serif;
-  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;`
+  --radius-xl: 2px;`
 
 /**
  * Cromo de Suite. Banda de marca corporativa y pestañas de módulo: el patrón que reconoce sin
@@ -343,13 +330,7 @@ const SUITE_CSS = `
 /* ── componentes y tipografía (profundización 2026-08-10): suite es un ERP — rectangular,
    corporativo y sin sombras. Tokens y selectores de directiva, nunca componentes. */
 
-/* los títulos de pantalla se contienen: un ERP no grita. Y van en serif: es lo que separa
-   esta piel de cabina de un vistazo, sin tener que comparar dos sans parecidas. */
-.app-shell-main h1,
-.app-shell-main h2 {
-  font-family: var(--font-display);
-}
-
+/* los títulos de pantalla se contienen: un ERP no grita */
 .app-shell-main h1 {
   font-size: 1.15rem;
   font-weight: 600;
@@ -421,12 +402,8 @@ input.app-toolbar {
   border-color: var(--grid-line);
 }
 
-:root {
-  --font-numeric: var(--font-sans);
-}
-
-/* los NÚMEROS de toda la app en la misma letra: un ERP no cambia de tipo entre pantallas.
-   Aquí no hay monospace — la uniformidad la dan la sans del cuerpo y las cifras tabulares. */
+/* los NÚMEROS de toda la app tratados igual: un ERP no cambia de tipo entre pantallas. La letra
+   es la de la app; la uniformidad la dan las cifras tabulares. */
 .app-metric,
 .app-cell,
 .app-chip,
@@ -437,13 +414,11 @@ input.app-toolbar,
 .app-shell-main table td.text-right,
 [hlminput],
 [appinput] {
-  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
 }
 
-/* la cifra del KPI se contiene, como todo en esta piel, y va en la serif de los titulares */
+/* la cifra del KPI se contiene, como todo en esta piel */
 .app-metric {
-  font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 600;
   line-height: 1.2;
@@ -456,7 +431,6 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     id: 'actual',
     label: 'Actual (neutro)',
     description: 'El shell que ya emite el acelerador: barra lateral sobria, sin identidad de sector',
-    fonts: [],
     tokens: '',
     css: ''
   },
@@ -465,10 +439,6 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Cabina (centro de operaciones)',
     description: 'Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro',
     files: 'files-design/cabina',
-    fonts: [
-      { package: '@fontsource-variable/roboto-condensed', family: 'Roboto Condensed Variable' },
-      { package: '@fontsource-variable/jetbrains-mono', family: 'JetBrains Mono Variable' }
-    ],
     tokens: CABINA_TOKENS,
     css: CABINA_CSS
   },
@@ -477,10 +447,6 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Suite (ERP corporativo)',
     description: 'Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP',
     files: 'files-design/suite',
-    fonts: [
-      { package: '@fontsource-variable/ibm-plex-sans', family: 'IBM Plex Sans Variable' },
-      { package: '@fontsource-variable/source-serif-4', family: 'Source Serif 4 Variable' }
-    ],
     tokens: SUITE_TOKENS,
     css: SUITE_CSS
   }
