@@ -222,10 +222,10 @@ export class ProjectsCalendarComponent {
   readonly error = this._service.projects.error
 
   constructor() {
-    // El calendario pinta TODOS los registros, no una página: ensancha la lectura
-    // compartida y la restaura al salir para no ensuciar el paginado del listado.
+    // El calendario no pagina: ensancha la lectura compartida hasta el techo del API
+    // (@Max(100) del PaginateOffsetDto) y la restaura al salir para no ensuciar el listado.
     const previous = this._service.request()
-    this._service.request.update(r => ({ ...r, page: 1, pageSize: 500 }))
+    this._service.request.update(r => ({ ...r, page: 1, pageSize: 100 }))
     inject(DestroyRef).onDestroy(() => {
       this._service.request.update(r => ({ ...r, page: previous.page, pageSize: previous.pageSize }))
     })

@@ -97,7 +97,7 @@ describe('resource generator — calendario interactivo (alta)', () => {
   it('ensancha la lectura compartida para pintar TODOS los registros y la restaura al salir', async () => {
     const calendar = await emitted(withCalendar())
 
-    expect(calendar).toMatch(/pageSize: 500/)
+    expect(calendar).toMatch(/pageSize: 100/)
     expect(calendar).toContain('DestroyRef')
     expect(calendar).toMatch(/onDestroy/)
   })
