@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, isDevMode, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { PreviewSettings, presetChrome } from './preview-settings'
+import { PreviewSettings } from './preview-settings'
+import { PresetCanvasCssService, presetTokenVars } from './preset-canvas-css'
 import { previewThemeVars } from './preview-theme'
 import { productMark } from './product-mark'
 import { NgIcon, provideIcons } from '@ng-icons/core'
@@ -339,7 +340,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                      módulo + miga sobre banda sombreada. Sin usuario en la banda: el real no lo lleva. -->
                   <header
                     class="flex h-10 shrink-0 items-center gap-3 px-4"
-                    style="background: var(--preview-banner-bg); color: var(--preview-banner-fg)"
+                    style="background: var(--banner-bg); color: var(--banner-fg)"
                     data-testid="mock-banner"
                   >
                     <span class="text-sm font-semibold capitalize tracking-wide">{{ store.appName() }}</span>
@@ -384,7 +385,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                   </nav>
                   <div
                     class="text-muted-foreground shrink-0 border-b px-4 py-1.5 text-[11px]"
-                    style="background: var(--preview-grid-head, oklch(0.91 0.014 250))"
+                    style="background: var(--grid-head-bg, oklch(0.91 0.014 250))"
                     data-testid="mock-breadcrumb"
                   >
                     Inicio › <span class="text-foreground font-semibold">{{ activeTitle() }}</span>
@@ -401,19 +402,16 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                      con subtítulo uppercase y el activo con barra izquierda — sin logo ni usuario. -->
                   <aside
                     class="flex w-56 shrink-0 flex-col"
-                    style="background: var(--preview-shell-bg); border-right: 1px solid var(--preview-shell-border)"
+                    style="background: var(--shell-bg); border-right: 1px solid var(--shell-border)"
                     data-testid="mock-sidebar"
                   >
-                    <div class="px-4 py-3" style="border-bottom: 1px solid var(--preview-shell-border)">
-                      <p
-                        class="text-[13px] font-bold capitalize tracking-wide"
-                        style="color: var(--preview-shell-fg-strong)"
-                      >
+                    <div class="px-4 py-3" style="border-bottom: 1px solid var(--shell-border)">
+                      <p class="text-[13px] font-bold capitalize tracking-wide" style="color: var(--shell-fg-strong)">
                         {{ store.appName() }}
                       </p>
                       <p
                         class="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em]"
-                        style="color: var(--preview-shell-fg)"
+                        style="color: var(--shell-fg)"
                       >
                         Centro de operaciones
                       </p>
@@ -426,11 +424,9 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                               type="button"
                               class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-left text-[12.5px]"
                               [style.color]="
-                                $index === active.designIndex()
-                                  ? 'var(--preview-shell-fg-strong)'
-                                  : 'var(--preview-shell-fg)'
+                                $index === active.designIndex() ? 'var(--shell-fg-strong)' : 'var(--shell-fg)'
                               "
-                              [style.background]="$index === active.designIndex() ? 'var(--preview-shell-active)' : ''"
+                              [style.background]="$index === active.designIndex() ? 'var(--shell-active)' : ''"
                               [style.box-shadow]="$index === active.designIndex() ? 'inset 2px 0 0 var(--primary)' : ''"
                               [class.font-semibold]="$index === active.designIndex()"
                               [attr.data-testid]="'nav-page-' + $index"
@@ -458,7 +454,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     <button
                       type="button"
                       class="flex items-center gap-2 px-4 py-2.5 text-[12px]"
-                      style="border-top: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                      style="border-top: 1px solid var(--shell-border); color: var(--shell-fg)"
                       data-testid="mock-theme-toggle"
                       (click)="preview.toggleTheme()"
                     >
@@ -468,14 +464,14 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     <button
                       type="button"
                       class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[12px]"
-                      style="border-top: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                      style="border-top: 1px solid var(--shell-border); color: var(--shell-fg)"
                       data-testid="mock-session-footer-cabina"
                       title="Mi cuenta"
                       (click)="active.selectSystem('account')"
                     >
                       <span
                         class="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold"
-                        style="background: var(--preview-shell-active)"
+                        style="background: var(--shell-active)"
                         >AL</span
                       >
                       <span>Admin Local</span>
@@ -483,7 +479,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     <button
                       type="button"
                       class="w-full px-4 py-1.5 text-left text-[11px] opacity-80"
-                      style="color: var(--preview-shell-fg)"
+                      style="color: var(--shell-fg)"
                       data-testid="mock-logout-cabina"
                       (click)="active.selectSystem('login')"
                     >
@@ -494,21 +490,21 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                     <!-- barra de estado de la maqueta: contexto / sección, en monospace -->
                     <div
                       class="mono-data flex h-8 shrink-0 items-center px-5 text-[11px]"
-                      style="background: var(--preview-shell-bg); border-bottom: 1px solid var(--preview-shell-border); color: var(--preview-shell-fg)"
+                      style="background: var(--shell-bg); border-bottom: 1px solid var(--shell-border); color: var(--shell-fg)"
                       data-testid="mock-statusbar"
                     >
                       <span class="lowercase">{{ store.appName() }}</span>
                       <span class="mx-1.5 opacity-60">/</span>
-                      <span class="lowercase" style="color: var(--preview-shell-fg-strong)">
+                      <span class="lowercase" style="color: var(--shell-fg-strong)">
                         {{ activeTitle() }}
                       </span>
                     </div>
                     <section class="min-w-0 flex-1 p-5">
                       @if (active.systemView(); as system) {
-                      <studio-system-view [viewId]="system" />
-                    } @else {
-                      <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
-                    }
+                        <studio-system-view [viewId]="system" />
+                      } @else {
+                        <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
+                      }
                     </section>
                   </div>
                 } @else {
@@ -637,7 +633,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           </div>
         </div>
 
-<!-- Accesos trae su propio panel derecho (el resumen del rol) y solo en el pivote Rol:
+        <!-- Accesos trae su propio panel derecho (el resumen del rol) y solo en el pivote Rol:
              el de Vistas no pinta nada ahí, y una cuarta columna sobra. -->
         @if (mode() === 'views' && active.systemView()) {
           <!-- una vista de sistema no se edita: el panel se pliega y el lienzo gana su ancho -->
@@ -759,10 +755,13 @@ export class StudioCanvasComponent {
   protected readonly store = inject(DesignStore)
   protected readonly history = inject(DesignHistoryService)
   protected readonly preview = inject(PreviewSettings)
-  // el cromo del preset se suma a los tokens del tema: mismo [style], una sola pasada
+  // La hoja de la piel (reglas del preset, acotadas al lienzo) la mantiene el servicio; aquí
+  // sólo viajan los tokens que el preset le PISA al tema, que tienen que ir inline para ganarle
+  // al [style] de los tokens del tema (spec 68).
+  private readonly _presetCss = inject(PresetCanvasCssService)
   protected readonly previewVars = computed(() => ({
     ...previewThemeVars(this.preview.palette(), this.preview.theme()),
-    ...presetChrome(this.preview.preset(), this.preview.theme())
+    ...presetTokenVars(this.preview.preset())
   }))
   /** La marca sigue al tema DEL ESTUDIO, no al de la app dibujada en el lienzo. */
   protected readonly mark = computed(() => productMark(this.preview.studioTheme()))

@@ -1,51 +1,54 @@
 import { describe, expect, it } from 'vitest'
-import { PREVIEW_PRESETS, presetChrome } from './preview-settings'
+import { DESIGN_PRESETS } from '@raptor/schema'
+import { PREVIEW_PRESETS } from './preview-settings'
+import { presetCanvasCss, presetTokenVars } from './preset-canvas-css'
 
 /**
- * Spec 37 en el estudio: el lienzo alternaba spartan/material — una aproximación de 12 líneas
- * de CSS que NO decía nada de la app generada (medido: las dos pieles emiten apps
- * indistinguibles). Ahora previsualiza el preset visual, que es lo que sí cambia el shell.
+ * Spec 68: el lienzo previsualiza la piel con el CSS REAL del preset, no con una copia.
+ *
+ * Antes había DOS aproximaciones escritas a mano: `presetChrome()` (tokens de color del shell) y
+ * unas 140 líneas de `.preview-scope[data-preset='…']` en el styles.css del estudio. La segunda
+ * aplanaba las esquinas listando clases a mano — `.rounded-full`, `.rounded-md`, `.rounded-lg`,
+ * `.rounded` — y se dejó fuera `rounded-xl`, que es justo la de la tarjeta KPI: de ahí que los
+ * KPIs salieran redondeados bajo cabina y suite mientras el resto se cuadraba.
  */
-describe('presets del lienzo', () => {
+describe('la piel del lienzo', () => {
   it('ofrece exactamente los presets que el generador conoce', () => {
-    expect(PREVIEW_PRESETS.map(p => p.id)).toEqual(['actual', 'cabina', 'suite'])
+    expect(PREVIEW_PRESETS.map(p => p.id)).toEqual(DESIGN_PRESETS.map(p => p.id))
   })
 
-  it('el neutro no tiñe el lienzo: es el shell de siempre', () => {
-    expect(presetChrome('actual')).toEqual({})
+  it('el neutro no tiñe el lienzo: ni tokens ni CSS', () => {
+    expect(presetTokenVars('actual')).toEqual({})
+    expect(presetCanvasCss('actual')).toBe('')
   })
 
-  // La densidad y el vestido de componentes NO viajan por aquí: viven en el styles.css global
-  // del estudio con ámbito [data-preset] — mismo mecanismo que la app emitida (2026-08-10).
-  it('cabina aporta los tokens del shell a contraste, réplica de los del generador', () => {
-    const chrome = presetChrome('cabina', 'light')
-
-    expect(chrome['--preview-shell-bg']).toBeDefined()
-    expect(chrome['--preview-shell-fg-strong']).toBeDefined()
-    expect(chrome['--preview-shell-active']).toBeDefined()
+  it('los tokens que el preset pisa del tema viajan INLINE, que es lo que gana al tema del lienzo', () => {
+    // el lienzo pinta los tokens del tema con [style]; una regla de hoja de estilos perdería
+    expect(presetTokenVars('cabina')['--radius']).toBe('0px')
+    expect(presetTokenVars('cabina')['--radius-xl']).toBe('0px')
+    expect(presetTokenVars('suite')['--radius']).toBe('2px')
   })
 
-  it('cabina en oscuro replica los tokens .dark del preset emitido, no los del claro', () => {
-    const light = presetChrome('cabina', 'light')
-    const dark = presetChrome('cabina', 'dark')
+  it('el CSS del preset llega acotado al lienzo, con sus tokens propios y sus reglas', () => {
+    const css = presetCanvasCss('cabina')
 
-    // el shell real pasa de gris azulado claro (0.97) a casi negro (0.17): visto en e2e-29
-    expect(dark['--preview-shell-bg']).toBe('oklch(0.17 0.012 240)')
-    expect(dark['--preview-shell-bg']).not.toBe(light['--preview-shell-bg'])
-    expect(dark['--preview-shell-fg-strong']).not.toBe(light['--preview-shell-fg-strong'])
+    expect(css).toContain('.preview-scope {')
+    expect(css).toContain('--shell-bg')
+    // las reglas de bloque, que es lo que la aproximación no tenía
+    expect(css).toContain('.preview-scope .app-panel')
+    expect(css).not.toContain(':root')
+    expect(css).not.toContain('.app-shell-main')
   })
 
-  it('suite aporta los tokens de la banda de marca y la rejilla', () => {
-    const chrome = presetChrome('suite', 'light')
-
-    expect(chrome['--preview-banner-bg']).toBeDefined()
-    expect(chrome['--preview-grid-head']).toBeDefined()
+  it('el modo oscuro del preset se pega al lienzo, no al documento', () => {
+    expect(presetCanvasCss('cabina')).toContain('.preview-scope.dark')
   })
 
-  it('suite en oscuro atenúa banda y rejilla como el bloque .dark del generador', () => {
-    const dark = presetChrome('suite', 'dark')
+  it('suite trae la rejilla y la banda con sus nombres reales, no con alias de previsualización', () => {
+    const css = presetCanvasCss('suite')
 
-    expect(dark['--preview-banner-bg']).toBe('oklch(0.24 0.05 250)')
-    expect(dark['--preview-grid-head']).toBe('oklch(0.26 0.016 250)')
+    expect(css).toContain('--grid-line')
+    expect(css).toContain('--banner-bg')
+    expect(css).not.toContain('--preview-')
   })
 })
