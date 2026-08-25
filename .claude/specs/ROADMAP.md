@@ -428,3 +428,38 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     generada y su `shared/components/data-table.ts` se quedó en la versión anterior; sus pantallas de
     demo (warehouse) no tienen texto largo, así que no se ve. Se arregla cuando el estudio se
     regenere, no antes.
+
+32. **Cada bloque está implementado DOS veces: el canvas del estudio y la plantilla emitida.**
+    Es la deuda que la spec 68 decide pagar en vez de saldar, y conviene tenerla contada. El
+    estudio dibuja sus propios `canvas-table`, `canvas-calendar`, `canvas-kanban`,
+    `canvas-cards`, `canvas-detail`, `canvas-form*` (doce componentes con cromo), y el generador
+    emite los suyos en `files-*/frontend/`. Nada las ata: son dos maquetas del mismo bloque
+    escritas a mano en dos sitios.
+
+    **Lo que cuesta, medido, no supuesto**: la spec 67 tuvo que poner el vocabulario de hooks en
+    las plantillas y la 68 lo repite en el canvas — dos veces el mismo trabajo, dos guards
+    (`design-drift.spec.ts` y `design-hooks-canvas.spec.ts`) para vigilar que ninguna de las dos
+    copias se quede atrás. Y ya se quedó atrás: entre el 2026-08-10 y el 2026-08-25 el estudio
+    previsualizaba las pieles con `presetChrome()`, una aproximación de colores que hizo a
+    Alfonso concluir —con razón en lo que veía— que la piel no se aplicaba. La misma familia de
+    defecto que el `data-table.ts` del estudio congelado (idea 31) y que el `previewThemeVars`
+    de antes de derivarlo del schema.
+
+    **Por qué no se ataca en la 68**: unificar exige decidir QUIÉN es la fuente. Tres caminos, y
+    ninguno barato: (a) el canvas importa los componentes emitidos —imposible hoy, son plantillas
+    EJS con `<%- %>` dentro, no Angular compilable—; (b) las plantillas se generan DESDE los
+    componentes del canvas (invertir la dirección: el estudio sería el canon y el generador
+    emitiría su transcripción); (c) un tercer artefacto —componentes Angular reales,
+    parametrizados por datos, que el canvas usa tal cual y el generador copia verbatim al
+    emitir—, que es la variante de lo que ya se hace con `files-skeleton-ui/` y con la copia
+    vendorizada de helm. (c) es la que huele mejor y la que más se parece a lo que el repo ya
+    sabe hacer.
+
+    **Cuándo deja de ser opcional**: cuando el peaje se pague por tercera vez. Cada bloque nuevo
+    son dos maquetas y dos listas de hooks; a partir de ahí el coste de unificar es menor que el
+    de seguir duplicando. Señal de alarma concreta: la próxima vez que un defecto visual se
+    arregle en un lado y siga vivo en el otro.
+
+    **Añadido por la 68 y a vigilar**: `scopePresetCss()` es un mini-parser de CSS a mano. Hoy es
+    defendible —el CSS de los presets es corto y nuestro—, pero es la primera pieza a revisar si
+    algún día un preset escribe `@media`, selectores anidados o un `:root:not(...)`.
