@@ -279,6 +279,19 @@ describe('app generator — ranura design (spec 37)', () => {
     }
   })
 
+  // Medido en navegador (2026-08-25): la tarjeta de spartan no tiene BORDE — su contorno es
+  // ring-1 + shadow-xs, y en Tailwind el ring es un box-shadow. El box-shadow:none del preset se
+  // llevaba el contorno entero y los KPIs salían flotando, sin tarjeta. Quien apaga la sombra
+  // tiene que devolver el contorno como borde explícito.
+  it.each(['cabina', 'suite'])('%s devuelve como borde el contorno que apaga con la sombra', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+    const panel = styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? ''
+
+    expect(panel).toMatch(/box-shadow:\s*none/)
+    expect(panel).toMatch(/border-width:\s*1px/)
+    expect(panel).toMatch(/border-color:\s*var\(--(shell-border|grid-line)\)/)
+  })
+
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {
     const styles = (await emit({ ...base, design: 'actual' })).get(STYLES) ?? ''
 

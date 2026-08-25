@@ -238,10 +238,15 @@ input.app-toolbar,
    instrumentación: superficies planas fundidas con la rejilla y datos en monospace.
    El color sale de los tokens --shell-*, que ya tienen su valor en claro y en oscuro; por eso
    estas reglas no necesitan gemelas bajo .dark. */
+/* La tarjeta de spartan no lleva borde: su contorno es ring-1 + shadow-xs, y en Tailwind el ring
+   es un box-shadow. Apagar la sombra deja la superficie SIN contorno (KPIs flotando, visto en
+   navegador el 2026-08-25), así que quien la apaga devuelve el contorno como borde. No se toca
+   border-style: la zona de arrastre de adjuntos es discontinua a propósito. */
 .app-panel {
   border-radius: 0;
   box-shadow: none;
   background: transparent;
+  border-width: 1px;
   border-color: var(--shell-border);
 }
 
@@ -380,9 +385,11 @@ const SUITE_CSS = `
    Mismo motivo que en cabina: el cromo escrito a mano en las plantillas necesita un punto de
    enganche. Suite lo trata como un ERP: casi recto, sin sombras, con la cabecera etiquetada y
    los bordes de la rejilla. Los colores salen de --grid-*, declarados en los dos temas. */
+/* mismo motivo que en cabina: el contorno de la tarjeta es un ring, no un borde */
 .app-panel {
   border-radius: 2px;
   box-shadow: none;
+  border-width: 1px;
   border-color: var(--grid-line);
 }
 
