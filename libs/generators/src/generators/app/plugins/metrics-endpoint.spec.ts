@@ -82,9 +82,7 @@ describe('plugin metrics — endpoint', () => {
       const offenders = plain
         .listChanges()
         .filter(change => change.path.startsWith('apps/demo/'))
-        .filter(change =>
-          /prom-client|MetricsInterceptor|MetricsTokenGuard/.test(change.content?.toString('utf-8') ?? '')
-        )
+        .filter(change => /prom-client|MetricsInterceptor|MetricsTokenGuard/.test(change.content?.toString('utf-8') ?? ''))
         .map(change => change.path)
       expect(offenders).toEqual([])
 
@@ -106,7 +104,8 @@ describe('plugin metrics — endpoint', () => {
       const controller =
         full.read('apps/demo/libs/backend/src/contexts/shared/infrastructure/metrics/metrics.controller.ts', 'utf-8') ??
         ''
-      const authModule = full.read('apps/demo/libs/backend/src/contexts/iam/modules/auth/auth.module.ts', 'utf-8') ?? ''
+      const authModule =
+        full.read('apps/demo/libs/backend/src/contexts/iam/modules/auth/auth.module.ts', 'utf-8') ?? ''
 
       // el decorador que lee el SessionGuard es el mismo que importa el controller
       expect(controller).toContain("from '../auth/public.decorator'")

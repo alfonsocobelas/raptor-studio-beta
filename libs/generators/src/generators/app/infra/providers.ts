@@ -394,10 +394,7 @@ function addAwsLogTransport(tree: Tree, context: PluginContext): void {
         "import { AppLoggerService } from './app-logger.service'",
         "import { AppLoggerService } from './app-logger.service'\nimport { awsLogTransportsProvider } from './aws-log-transports'"
       )
-      .replace(
-        '  providers: [\n    AppLoggerService,',
-        '  providers: [\n    awsLogTransportsProvider,\n    AppLoggerService,'
-      )
+      .replace('  providers: [\n    AppLoggerService,', '  providers: [\n    awsLogTransportsProvider,\n    AppLoggerService,')
   )
 }
 

@@ -6,16 +6,16 @@ SES, ECR y CloudWatch Logs. Los valores **nunca van al repo** (misma regla que A
 
 ## Qué crea cada fichero
 
-| Fichero         | Recursos                                                                    |
-| --------------- | --------------------------------------------------------------------------- |
-| `apprunner.tf`  | Servicios App Runner del back y el front (inyecta `AWS_SECRETS_PREFIX`)     |
-| `rds.tf`        | Postgres (password generada → Secrets Manager)                              |
-| `secrets.tf`    | Secretos `${local.name}/<clave>` que resuelve el config-loader (`vault.*`)  |
-| `s3.tf`         | Bucket de adjuntos (sección de config `storage`)                            |
-| `ses.tf`        | Identidad de dominio remitente (sección `ses` del plugin email)             |
-| `cloudwatch.tf` | Log group del transporte directo del logger (sección `cloudwatch`)          |
-| `iam.tf`        | Rol de instancia con menor privilegio (secretos, bucket, logs) + rol de ECR |
-| `ecr.tf`        | Repositorios de imágenes                                                    |
+| Fichero         | Recursos                                                                     |
+| --------------- | ---------------------------------------------------------------------------- |
+| `apprunner.tf`  | Servicios App Runner del back y el front (inyecta `AWS_SECRETS_PREFIX`)      |
+| `rds.tf`        | Postgres (password generada → Secrets Manager)                               |
+| `secrets.tf`    | Secretos `${local.name}/<clave>` que resuelve el config-loader (`vault.*`)   |
+| `s3.tf`         | Bucket de adjuntos (sección de config `storage`)                             |
+| `ses.tf`        | Identidad de dominio remitente (sección `ses` del plugin email)              |
+| `cloudwatch.tf` | Log group del transporte directo del logger (sección `cloudwatch`)           |
+| `iam.tf`        | Rol de instancia con menor privilegio (secretos, bucket, logs) + rol de ECR  |
+| `ecr.tf`        | Repositorios de imágenes                                                     |
 
 ## Variables
 
@@ -31,20 +31,20 @@ El config-loader del back (`loaders/aws/aws-config-loader.ts`) resuelve cada mar
 fuera el prefijo `vault.`, puntos → guiones; el namespace lo inyecta `apprunner.tf` como
 `AWS_SECRETS_PREFIX = local.name`, espejo de `AZURE_KEYVAULT_URL`).
 
-| Secreto (`${local.name}/…`) | Placeholder              | Origen                     |
-| --------------------------- | ------------------------ | -------------------------- |
-| `typeorm-host`              | `vault.typeorm.host`     | lo escribe Terraform (RDS) |
-| `typeorm-username`          | `vault.typeorm.username` | Terraform                  |
-| `typeorm-password`          | `vault.typeorm.password` | Terraform (generada)       |
-| `typeorm-database`          | `vault.typeorm.database` | Terraform                  |
+| Secreto (`${local.name}/…`) | Placeholder               | Origen                    |
+| --------------------------- | ------------------------- | ------------------------- |
+| `typeorm-host`              | `vault.typeorm.host`      | lo escribe Terraform (RDS) |
+| `typeorm-username`          | `vault.typeorm.username`  | Terraform                 |
+| `typeorm-password`          | `vault.typeorm.password`  | Terraform (generada)      |
+| `typeorm-database`          | `vault.typeorm.database`  | Terraform                 |
 
 ## Secciones de config de la app emitida
 
-| Sección      | Campos                                               | Efecto                                                                                  |
-| ------------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `storage`    | `bucket`, `region?`, `endpoint?`, `forcePathStyle?`  | presente → adjuntos a S3; ausente → disco local (endpoint+forcePathStyle = MinIO local) |
-| `cloudwatch` | `logGroup` (= output `log_group_name`), `logStream?` | presente → transporte directo a CloudWatch Logs; ausente → solo stdout                  |
-| `ses`        | `region`, `from`                                     | presente → emails por SES (plugin email)                                                |
+| Sección      | Campos                                        | Efecto                                              |
+| ------------ | --------------------------------------------- | --------------------------------------------------- |
+| `storage`    | `bucket`, `region?`, `endpoint?`, `forcePathStyle?` | presente → adjuntos a S3; ausente → disco local (endpoint+forcePathStyle = MinIO local) |
+| `cloudwatch` | `logGroup` (= output `log_group_name`), `logStream?` | presente → transporte directo a CloudWatch Logs; ausente → solo stdout |
+| `ses`        | `region`, `from`                              | presente → emails por SES (plugin email)             |
 
 **Nota sobre logs**: en App Runner el stdout del servicio ya llega solo a los log groups
 gestionados (`/aws/apprunner/...`), y el logger emite JSON estructurado en dev/prod, así

@@ -36,14 +36,12 @@ export function buildSlotsManifest(): SlotsManifest {
       label: slot.label,
       default: slot.default,
       // los proveedores internos (spec 58) no viajan: el estudio no debe ofrecerlos
-      providers: slot.providers
-        .filter(provider => !provider.internal)
-        .map(provider => ({
-          value: provider.value,
-          label: provider.label,
-          ...(provider.description ? { description: provider.description } : {}),
-          ...(provider.requires ? { requires: provider.requires } : {})
-        }))
+      providers: slot.providers.filter(provider => !provider.internal).map(provider => ({
+        value: provider.value,
+        label: provider.label,
+        ...(provider.description ? { description: provider.description } : {}),
+        ...(provider.requires ? { requires: provider.requires } : {})
+      }))
     })),
     plugins: Object.values(PLUGINS).map(plugin => ({ name: plugin.name, description: plugin.description }))
   }

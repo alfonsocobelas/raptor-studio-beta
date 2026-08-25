@@ -74,10 +74,7 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
           table: {
             show: true,
             label: 'Tipo',
-            badgeMap: {
-              cloud: { label: 'Cloud', variant: 'default' },
-              onprem: { label: 'On-premise', variant: 'outline' }
-            }
+            badgeMap: { cloud: { label: 'Cloud', variant: 'default' }, onprem: { label: 'On-premise', variant: 'outline' } }
           },
           form: { control: 'select', label: 'Tipo', optionsType: 'ContractTypeEnum' }
         },
@@ -119,17 +116,14 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
   })
 
   it('rechaza count-by sobre un campo sin valores o no filterable, y series sobre un no-fecha', () => {
-    expect(() => composeApp(appWith([{ kind: 'count-by', resource: 'contract', field: 'notes' }]), registry())).toThrow(
-      /notes/
-    )
+    expect(() =>
+      composeApp(appWith([{ kind: 'count-by', resource: 'contract', field: 'notes' }]), registry())
+    ).toThrow(/notes/)
     expect(() =>
       composeApp(appWith([{ kind: 'series', resource: 'contract', field: 'contractType' }]), registry())
     ).toThrow(/date/)
     expect(() =>
-      composeApp(
-        appWith([{ kind: 'kpi-count', resource: 'contract', field: 'notes', equals: 'x', label: 'X' }]),
-        registry()
-      )
+      composeApp(appWith([{ kind: 'kpi-count', resource: 'contract', field: 'notes', equals: 'x', label: 'X' }]), registry())
     ).toThrow(/filterable/)
   })
 
@@ -211,9 +205,7 @@ describe('composeApp — arreglos que destapó el typecheck del oro (spec 32)', 
 
     const composition = composeApp(app, registry)
 
-    expect(
-      composition.dashboardBlocks.filter(b => b.kind === 'metrics').flatMap(b => b.models.map(m => m.name))
-    ).toEqual(['customer'])
+    expect(composition.dashboardBlocks.filter(b => b.kind === 'metrics').flatMap(b => b.models.map(m => m.name))).toEqual(['customer'])
   })
 
   it('un corte que referencia a un modelo fuera lo INCLUYE: sin el padre no compila ni funciona el lookup', () => {
@@ -302,16 +294,8 @@ describe('el panel lleva listados dentro (spec 52)', () => {
 })
 
 describe('el panel es una secuencia de bloques (spec 53)', () => {
-  const contract = model({
-    name: 'contract',
-    plural: 'contracts',
-    labels: { plural: 'Contratos' }
-  } as Partial<ResourceDefinition>)
-  const project = model({
-    name: 'project',
-    plural: 'projects',
-    labels: { plural: 'Proyectos' }
-  } as Partial<ResourceDefinition>)
+  const contract = model({ name: 'contract', plural: 'contracts', labels: { plural: 'Contratos' } } as Partial<ResourceDefinition>)
+  const project = model({ name: 'project', plural: 'projects', labels: { plural: 'Proyectos' } } as Partial<ResourceDefinition>)
 
   const analytic = (property: string, width: 'full' | 'half'): ComposedDashboardBlock => ({
     kind: 'kpi-count',

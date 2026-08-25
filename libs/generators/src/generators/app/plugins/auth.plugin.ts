@@ -68,11 +68,7 @@ export const authPlugin = definePlugin({
  * plantilla trae el default (TypeORM) y no sabe de ranuras.
  */
 function emitSessionStore(tree: Tree, context: PluginContext): void {
-  copyVerbatim(
-    tree,
-    path.join(__dirname, `assets-auth-session-${context.sessionStore === 'redis' ? 'redis' : 'typeorm'}`),
-    context.root
-  )
+  copyVerbatim(tree, path.join(__dirname, `assets-auth-session-${context.sessionStore === 'redis' ? 'redis' : 'typeorm'}`), context.root)
   if (context.sessionStore !== 'redis') {
     return
   }

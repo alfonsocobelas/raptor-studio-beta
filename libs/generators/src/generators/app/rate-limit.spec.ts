@@ -63,7 +63,10 @@ describe('app generator — rate limiting con auth', () => {
       expect(validation).toContain('RateLimitValidator')
 
       for (const env of ['local', 'dev', 'qa', 'prod', 'test']) {
-        const raw = tree.read(`${BACKEND}/src/contexts/shared/infrastructure/config/environments/${env}.json`, 'utf-8')
+        const raw = tree.read(
+          `${BACKEND}/src/contexts/shared/infrastructure/config/environments/${env}.json`,
+          'utf-8'
+        )
         const config = JSON.parse(raw ?? '{}') as { rateLimit?: { globalLimit: number; trustedProxyHops: number } }
 
         expect(config.rateLimit).toBeDefined()
