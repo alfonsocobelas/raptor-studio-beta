@@ -3,7 +3,7 @@
 > Cada tarea = un commit en `develop`. TDD estricto (test del generador en rojo antes de
 > tocar plantilla); gate de oro antes de cada commit que toque plantillas.
 
-- [ ] **TASK-01**: Test + input opcional `initialValue` en la plantilla del diálogo
+- [x] **TASK-01**: Test + input opcional `initialValue` en la plantilla del diálogo
       (`__fileName__-dialog.component.ts.template`): patch del alta cuando no hay entidad.
 - [ ] **TASK-02**: Test + gesto de alta en la plantilla del calendario: botón «+» por celda
       (mes/semana) y botón en vista día, diálogo con la fecha precargada, `onSave` con

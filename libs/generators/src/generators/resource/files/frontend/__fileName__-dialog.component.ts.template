@@ -146,6 +146,8 @@ export class <%- className %>DialogComponent {
 <%_ }) _%>
 
   readonly <%- propertyName %> = input<<%- dtoName %> | null>(null)
+  /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
+  readonly initialValue = input<Partial<<%- className %>FormValue> | null>(null)
   readonly saved = output<<%- className %>FormValue>()
   readonly close = output<void>()
 <%_ if (lookupComputedLines.length) { _%>
@@ -176,6 +178,11 @@ export class <%- className %>DialogComponent {
           <%- line %>,
 <%_ }) _%>
         })
+        return
+      }
+      const initial = this.initialValue()
+      if (initial) {
+        this.form.patchValue(initial)
       }
     })
   }
