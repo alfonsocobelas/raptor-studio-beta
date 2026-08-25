@@ -13,10 +13,15 @@ import { HlmCardImports } from '@spartan-ng/helm/card'
   // cards de una misma fila queden alineadas en altura aunque su contenido difiera (spec 47).
   host: { class: 'block h-full' },
   template: `
-    <section hlmCard class="h-full" [class.border-destructive/30]="destructive()" [attr.data-testid]="testId() ?? null">
+    <section
+      hlmCard
+      class="app-panel h-full"
+      [class.border-destructive/30]="destructive()"
+      [attr.data-testid]="testId() ?? null"
+    >
       <div class="pb-2" hlmCardHeader>
         <h3
-          class="text-sm font-medium"
+          class="app-panel-head text-sm font-medium"
           [class.text-muted-foreground]="!destructive()"
           [class.text-destructive]="destructive()"
           hlmCardTitle
@@ -25,7 +30,7 @@ import { HlmCardImports } from '@spartan-ng/helm/card'
         </h3>
       </div>
       <div hlmCardContent>
-        <p class="text-2xl font-bold" [class.text-destructive]="destructive()">
+        <p class="app-metric text-2xl font-bold" [class.text-destructive]="destructive()">
           {{ value() }}
           @if (valueSuffix(); as suffix) {
             <span class="text-muted-foreground text-sm font-normal">{{ suffix }}</span>

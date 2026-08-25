@@ -69,7 +69,7 @@ const BADGE_CLASSES = [
   template: `
     @if (draft(); as resource) {
       <!-- chrome del listado (mock estático, mismo aspecto que el emitido) -->
-      <div class="mb-3 flex items-center justify-between gap-3">
+      <div class="app-toolbar mb-3 flex items-center justify-between gap-3">
         <div
           class="border-input text-muted-foreground flex w-72 items-center gap-2 rounded-md border px-3 py-2 text-sm"
         >
@@ -93,7 +93,7 @@ const BADGE_CLASSES = [
         </div>
       </div>
 
-      <div class="overflow-x-auto rounded-md border">
+      <div class="app-panel overflow-x-auto rounded-md border">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b">
@@ -239,7 +239,7 @@ const BADGE_CLASSES = [
                     [class.text-right]="field.type === 'number' || field.type === 'integer'"
                   >
                     @if (field.type === 'enum') {
-                      <span class="rounded-full px-2 py-0.5 text-xs" [class]="badgeClass(field, row)">
+                      <span class="app-chip rounded-full px-2 py-0.5 text-xs" [class]="badgeClass(field, row)">
                         {{ row[field.name] }}
                       </span>
                     } @else if (field.type === 'text') {
@@ -263,7 +263,7 @@ const BADGE_CLASSES = [
         </table>
       </div>
 
-      <div class="text-muted-foreground mt-3 flex items-center justify-between text-sm">
+      <div class="app-toolbar text-muted-foreground mt-3 flex items-center justify-between text-sm">
         <span>1-{{ rows().length }} de {{ total() }} registros</span>
         <span class="flex items-center gap-2">
           Por página: <span class="chrome-btn">{{ pageSize }}</span>
