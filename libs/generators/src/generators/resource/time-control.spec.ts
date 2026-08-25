@@ -21,6 +21,7 @@ describe('resource generator — control time', () => {
         startTime: {
           type: 'string',
           required: true,
+          vo: { name: 'ShiftStartTime', fieldName: 'Inicio' },
           table: { show: true, label: 'Inicio' },
           form: { control: 'time', label: 'Hora de inicio', section: 'general', order: 9 },
           column: { type: 'varchar', length: 5 }
@@ -49,6 +50,14 @@ describe('resource generator — control time', () => {
     const formPage = tree.read('out/frontend/shift-form-page.component.ts', 'utf-8') ?? ''
 
     expect(formPage).toContain('type="time"')
+  })
+
+  it('el test de VOs emitido importa también los VOs que solo se sanean', async () => {
+    const tree = await generate()
+    const voTest = tree.read('out/backend-tests/value-objects/shift-value-vos.vo.test.ts', 'utf-8') ?? ''
+
+    expect(voTest).toContain('ShiftStartTime.create')
+    expect(voTest).toMatch(/import \{ ShiftStartTime \}/)
   })
 
   it('el DTO valida HH:mm de 24 horas', async () => {

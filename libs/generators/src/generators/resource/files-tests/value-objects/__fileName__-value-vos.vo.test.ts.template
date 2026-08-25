@@ -1,11 +1,11 @@
 <%_ const vt = domainTests.voTests _%>
-<%_ if (vt.numbers.length || vt.texts.length || vt.exacts.length || vt.arrays.length || vt.booleans.length) { _%>
+<%_ if (vt.numbers.length || vt.texts.length || vt.exacts.length || vt.arrays.length || vt.booleans.length || vt.sanitizations.length) { _%>
 import fc from 'fast-check'
 import { InvalidArgumentError } from '../../../../../src/contexts/shared/domain/errors'
 import { <%- constantName %>_CONSTRAINTS } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-constants'
 import { <%- className %>Error } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-errors'
 <%_ const kebab = name => name.replace(/([A-Z])/g, (m, c1, o) => (o ? '-' : '') + c1.toLowerCase()) _%>
-<%_ const allVos = [...vt.numbers, ...vt.texts, ...vt.exacts, ...vt.arrays, ...vt.booleans].map(v => v.voName).sort() _%>
+<%_ const allVos = [...new Set([...vt.numbers, ...vt.texts, ...vt.exacts, ...vt.arrays, ...vt.booleans, ...vt.sanitizations].map(v => v.voName))].sort() _%>
 <%_ allVos.forEach(voName => { _%>
 import { <%- voName %> } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/value-objects/<%- kebab(voName) %>.vo'
 <%_ }) _%>
