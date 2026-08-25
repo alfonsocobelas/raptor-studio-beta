@@ -61,7 +61,12 @@ churn sin motivo.
 con CSS muerto. Pasa a comprobar que el `--radius: 0` cae **dentro** del bloque
 `:root .theme-x { … }`.
 
-## B. El vocabulario de hooks: cinco clases
+## B. El vocabulario de hooks: seis clases
+
+> Nació con cinco. `app-metric` se añadió el 2026-08-25 con motivo escrito en `hooks.ts`: los
+> KPIs se vestían por `.text-sm` y `p.text-2xl` (clases de Tailwind), lo que alcanzaba de paso
+> al sufijo del valor y no alcanzaba nada en suite. La cifra es el único elemento cuyo trabajo
+> entero es un número y las dos pieles lo quieren distinto.
 
 Se **añaden** a las clases Tailwind existentes; no sustituyen nada. El neutro se ve igual que
 hoy (única diferencia en el diff de oro: el literal de la clase).
@@ -73,6 +78,7 @@ hoy (única diferencia en el diff de oro: el literal de la clase).
 | `app-toolbar` | tira de controles o pie de vista | densidad + `button`/`input` descendientes |
 | `app-chip` | pastilla de dato | radio, fondo, tipografía, uppercase |
 | `app-cell` | celda de rejilla que no es `<table>` | bordes de rejilla, padding, mínimos |
+| `app-metric` | la cifra protagonista de un KPI | tamaño, letra de las cifras, peso |
 
 ### Colocación, plantilla a plantilla
 
@@ -83,7 +89,7 @@ hoy (única diferencia en el diff de oro: el literal de la clase).
 | `files-gantt/…-gantt.component` | contenedor scroll (l.49) | — | buscador (l.34) + paginación (l.95/103) | barra de tarea (l.67) | fila de tarea |
 | `files-gallery/…-gallery.component` | tarjeta (l.44) | — | buscador (l.26) + paginación (l.80/88) | etiqueta (l.59) | — |
 | `files-detail/…-detail.component` | `<dl>` de campos (l.106) + sección relacionada (l.132) | — | tira de acciones (l.70-95) | etiqueta (l.147) | — |
-| `files-form/…-form-page.component` | `<form>` (l.64) | título de sección (l.67) | botonera de guardar/cancelar | — | — |
+| `files-form/…-form-page.component` | ~~`<form>`~~ (retirado: no es superficie, el borde queda pegado a los campos) | título de sección (l.67) | botonera de guardar/cancelar | — | — |
 | `files-attachments-front/…-attachments.component` | zona de arrastre (l.26) | — | — | fila de fichero (l.44) | — |
 | `files-import/…-import.component` | panel de errores (l.90) | — | pie del diálogo (l.103-108) | — | — |
 
