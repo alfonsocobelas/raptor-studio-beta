@@ -31,6 +31,15 @@ export interface ProjectFormValue {
   implementer: ProjectImplementerEnum
 }
 
+/**
+ * El valor con el que se PRE-RELLENA un alta. Es el FormValue sin nulos: sus opcionales son
+ * nullables porque así los quiere el backend al guardar, pero los controles del formulario no
+ * son nullable, así que patchValue(FormValue) no compila.
+ */
+export type ProjectFormInitial = Partial<{
+  [K in keyof ProjectFormValue]: NonNullable<ProjectFormValue[K]>
+}>
+
 const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => {
   const start = group.get('startDate')?.value
   const end = group.get('endDate')?.value
@@ -117,7 +126,7 @@ export class ProjectDialogComponent {
 
   readonly project = input<ProjectDto | null>(null)
   /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
-  readonly initialValue = input<Partial<ProjectFormValue> | null>(null)
+  readonly initialValue = input<ProjectFormInitial | null>(null)
   readonly saved = output<ProjectFormValue>()
   readonly close = output<void>()
 

@@ -6,7 +6,7 @@ import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { ProjectService, OffsetPaginatedOutput } from '../../../../../../core/services/project.service'
 import { generateId } from '../../../../../../shared/utils/uuid'
-import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
+import { ProjectDialogComponent, ProjectFormInitial, ProjectFormValue } from './project-dialog.component'
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -214,7 +214,7 @@ export class ProjectsCalendarComponent {
   readonly editingProject = signal<ProjectDto | null>(null)
   /** El día pulsado (clave yyyy-mm-dd): precarga el campo fecha del alta. */
   readonly createDate = signal<string | null>(null)
-  readonly createInitial = computed<Partial<ProjectFormValue> | null>(() => {
+  readonly createInitial = computed<ProjectFormInitial | null>(() => {
     const date = this.createDate()
     return date === null ? null : { startDate: date }
   })

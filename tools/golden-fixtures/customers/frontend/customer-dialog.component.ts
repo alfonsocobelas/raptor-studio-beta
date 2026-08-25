@@ -24,6 +24,15 @@ export interface CustomerFormValue {
   customerType: CustomerClassification
 }
 
+/**
+ * El valor con el que se PRE-RELLENA un alta. Es el FormValue sin nulos: sus opcionales son
+ * nullables porque así los quiere el backend al guardar, pero los controles del formulario no
+ * son nullable, así que patchValue(FormValue) no compila.
+ */
+export type CustomerFormInitial = Partial<{
+  [K in keyof CustomerFormValue]: NonNullable<CustomerFormValue[K]>
+}>
+
 @Component({
   selector: 'app-customer-dialog',
   imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
@@ -97,7 +106,7 @@ export class CustomerDialogComponent {
 
   readonly customer = input<CustomerDto | null>(null)
   /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
-  readonly initialValue = input<Partial<CustomerFormValue> | null>(null)
+  readonly initialValue = input<CustomerFormInitial | null>(null)
   readonly saved = output<CustomerFormValue>()
   readonly close = output<void>()
 
