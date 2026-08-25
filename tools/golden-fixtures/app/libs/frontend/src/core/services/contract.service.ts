@@ -41,9 +41,18 @@ export class ContractService {
       )
   })
 
-  /** Carga un registro por id: lo que necesita la ficha (spec 16). */
+  /** Carga un registro por id: la ficha (spec 16) y la etiqueta del lookup al editar (spec 66). */
   findOne(id: string): Promise<ContractDto> {
     return firstValueFrom(this._http.get<ContractDto>(`${API_URL}/${id}`))
+  }
+
+  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
+  lookup(search: string): Promise<ContractDto[]> {
+    return firstValueFrom(
+      this._http.get<OffsetPaginatedOutput<ContractDto>>(API_URL, {
+        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+      })
+    ).then(page => page.items)
   }
 
   create(dto: RegisterContractDto): Promise<void> {

@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core'
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
 import { AppButton } from '../../../../../../shared/components/ui/button.directive'
 import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
 import { AppFormField } from '../../../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../../../shared/components/ui/input.directive'
 import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
 import {
   BillingFrequencyEnum,
   ContractDto,
@@ -65,7 +66,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
 
 @Component({
   selector: 'app-contract-dialog',
-  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect],
+  imports: [ReactiveFormsModule, AppDialogContent, AppButton, AppFormField, AppInput, AppSelect, AppLookup],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-dialog-content
@@ -91,11 +92,12 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
               />
             </app-form-field>
             <app-form-field label="Cliente" for="ccust">
-              <app-select
+              <app-lookup
                 formControlName="customerId"
                 controlId="ccust"
                 placeholder="Seleccionar cliente"
                 [options]="customerIdOptions()"
+                (searchChange)="onCustomerIdSearch($event)"
               />
               @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
                 <span class="text-destructive text-sm">Obligatorio</span>
@@ -173,10 +175,12 @@ export class ContractDialogComponent {
   readonly saved = output<ContractFormValue>()
   readonly close = output<void>()
 
-  readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
-  protected readonly customerIdOptions = computed<AppSelectOption[]>(() =>
-    this.customers().map(item => ({ value: item.id, label: item.name }))
-  )
+  readonly customerIdOptions = signal<AppSelectOption[]>([])
+  onCustomerIdSearch(term: string): void {
+    void this._customerService
+      .lookup(term)
+      .then(items => this.customerIdOptions.set(items.map(item => ({ value: item.id, label: item.name }))))
+  }
 
   protected readonly contractTypeOptions = CONTRACT_TYPE_OPTIONS
   protected readonly sourceOptions = SOURCE_OPTIONS
@@ -202,6 +206,7 @@ export class ContractDialogComponent {
   )
 
   constructor() {
+    this.onCustomerIdSearch('')
     effect(() => {
       const contract = this.contract()
       if (contract) {
@@ -218,6 +223,16 @@ export class ContractDialogComponent {
           renewalType: contract.renewalType,
           notes: contract.notes ?? ''
         })
+        // spec 66: la etiqueta del referenciado vigente, aunque no esté entre los 20 buscados
+        void this._customerService
+          .findOne(contract.customerId)
+          .then(item =>
+            this.customerIdOptions.update(options =>
+              options.some(option => option.value === item.id)
+                ? options
+                : [{ value: item.id, label: item.name }, ...options]
+            )
+          )
         return
       }
       const initial = this.initialValue()

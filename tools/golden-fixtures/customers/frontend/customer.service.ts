@@ -41,6 +41,20 @@ export class CustomerService {
       )
   })
 
+  /** Carga un registro por id: la ficha (spec 16) y la etiqueta del lookup al editar (spec 66). */
+  findOne(id: string): Promise<CustomerDto> {
+    return firstValueFrom(this._http.get<CustomerDto>(`${API_URL}/${id}`))
+  }
+
+  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
+  lookup(search: string): Promise<CustomerDto[]> {
+    return firstValueFrom(
+      this._http.get<OffsetPaginatedOutput<CustomerDto>>(API_URL, {
+        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+      })
+    ).then(page => page.items)
+  }
+
   create(dto: RegisterCustomerDto): Promise<void> {
     return firstValueFrom(this._http.post<void>(API_URL, dto)).then(() => {
       this.customers.reload()

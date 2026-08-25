@@ -51,9 +51,18 @@ export class ProjectService {
       )
   })
 
-  /** Carga un registro por id: lo que necesita la ficha (spec 16). */
+  /** Carga un registro por id: la ficha (spec 16) y la etiqueta del lookup al editar (spec 66). */
   findOne(id: string): Promise<ProjectDto> {
     return firstValueFrom(this._http.get<ProjectDto>(`${API_URL}/${id}`))
+  }
+
+  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
+  lookup(search: string): Promise<ProjectDto[]> {
+    return firstValueFrom(
+      this._http.get<OffsetPaginatedOutput<ProjectDto>>(API_URL, {
+        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+      })
+    ).then(page => page.items)
   }
 
   /** La timeline de la ficha (spec 31): los últimos eventos del registro. */

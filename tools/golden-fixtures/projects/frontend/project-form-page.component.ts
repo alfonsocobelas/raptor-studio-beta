@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { AppButton } from '../../../../../../shared/components/ui/button.directive'
 import { AppFormField } from '../../../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../../../shared/components/ui/input.directive'
 import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { generateId } from '../../../../../../shared/utils/uuid'
@@ -37,7 +38,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
  */
 @Component({
   selector: 'app-project-form-page',
-  imports: [ReactiveFormsModule, AppButton, AppFormField, AppInput, AppSelect],
+  imports: [ReactiveFormsModule, AppButton, AppFormField, AppInput, AppSelect, AppLookup],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mx-auto max-w-2xl">
@@ -65,11 +66,12 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
                 <textarea id="pdesc" class="resize-none" appInput formControlName="description" rows="3"></textarea>
               </app-form-field>
               <app-form-field label="Cliente" for="pcustomer">
-                <app-select
+                <app-lookup
                   formControlName="customerId"
                   controlId="pcustomer"
                   placeholder="Seleccionar cliente"
                   [options]="customerIdOptions()"
+                  (searchChange)="onCustomerIdSearch($event)"
                 />
                 @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
                   <span class="text-destructive text-sm">Obligatorio</span>
@@ -122,10 +124,12 @@ export class ProjectFormPageComponent {
   protected readonly canWrite = inject(AuthService).canWrite
   private readonly _customerService = inject(CustomerService)
 
-  readonly customers = computed(() => this._customerService.customers.value()?.items ?? [])
-  protected readonly customerIdOptions = computed<AppSelectOption[]>(() =>
-    this.customers().map(item => ({ value: item.id, label: item.name }))
-  )
+  readonly customerIdOptions = signal<AppSelectOption[]>([])
+  onCustomerIdSearch(term: string): void {
+    void this._customerService
+      .lookup(term)
+      .then(items => this.customerIdOptions.set(items.map(item => ({ value: item.id, label: item.name }))))
+  }
 
   protected readonly statusOptions = STATUS_OPTIONS
   protected readonly implementerOptions = IMPLEMENTER_OPTIONS
@@ -150,6 +154,7 @@ export class ProjectFormPageComponent {
   protected readonly notFound = signal(false)
 
   constructor() {
+    this.onCustomerIdSearch('')
     const id = this._route.snapshot.paramMap.get('id')
     if (id) {
       this.editingId.set(id)
@@ -170,6 +175,16 @@ export class ProjectFormPageComponent {
         status: project.status,
         implementer: project.implementer
       })
+      // spec 66: la etiqueta del referenciado vigente, aunque no esté entre los 20 buscados
+      void this._customerService
+        .findOne(project.customerId)
+        .then(item =>
+          this.customerIdOptions.update(options =>
+            options.some(option => option.value === item.id)
+              ? options
+              : [{ value: item.id, label: item.name }, ...options]
+          )
+        )
     } catch {
       this.notFound.set(true)
     } finally {

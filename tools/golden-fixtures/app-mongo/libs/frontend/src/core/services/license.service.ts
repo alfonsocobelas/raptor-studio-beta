@@ -41,6 +41,20 @@ export class LicenseService {
       )
   })
 
+  /** Carga un registro por id: la ficha (spec 16) y la etiqueta del lookup al editar (spec 66). */
+  findOne(id: string): Promise<LicenseWithConsumptionDto> {
+    return firstValueFrom(this._http.get<LicenseWithConsumptionDto>(`${API_URL}/${id}`))
+  }
+
+  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
+  lookup(search: string): Promise<LicenseWithConsumptionDto[]> {
+    return firstValueFrom(
+      this._http.get<OffsetPaginatedOutput<LicenseWithConsumptionDto>>(API_URL, {
+        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+      })
+    ).then(page => page.items)
+  }
+
   // Downloads the full filtered license set from the backend, matching the current filters and order.
   async export(format: ExportFormat): Promise<{ blob: Blob; filename: string }> {
     const params: Record<string, string> = { format, ...this.criteriaParams(this.request()) }

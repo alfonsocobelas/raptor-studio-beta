@@ -28,7 +28,10 @@ describe('ProjectFormPageComponent — página-formulario', () => {
         { provide: Router, useValue: router },
         { provide: NotificationService, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: AuthService, useValue: { canWrite: () => true } },
-        { provide: CustomerService, useValue: { customers: { value: () => undefined } } },
+        {
+          provide: CustomerService,
+          useValue: { lookup: () => Promise.resolve([]), findOne: () => new Promise(() => undefined) }
+        },
         // el componente se declara como proveedor: sin plantilla que renderizar,
         // TestBed.inject basta para ejercitar la lógica de carga y guardado
         ProjectFormPageComponent
