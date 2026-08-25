@@ -98,7 +98,7 @@ describe('resource generator — página-formulario (spec 48)', () => {
     const spec = tree.read('out/frontend/project-form-page.component.spec.ts', 'utf-8') ?? ''
 
     expect(spec).toContain('ProjectFormPageComponent')
-    expect(spec).toContain('{ provide: CustomerService, useValue: { customers: { value: () => undefined } } }')
+    expect(spec).toContain('{ provide: CustomerService, useValue: { lookup: () => Promise.resolve([]), findOne: () => new Promise(() => undefined) } }')
   })
 
   it('sin form no cambia nada de lo demás emitido', async () => {

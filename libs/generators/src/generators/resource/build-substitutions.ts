@@ -140,8 +140,14 @@ export interface ResourceSubstitutions {
   formValueBuildLines: string[]
   formHelperLines: string[]
   lookupInjectLines: string[]
-  lookupComputedLines: string[]
+  /** Estado del typeahead (spec 66): signal de opciones + método de búsqueda por campo ref */
+  lookupStateLines: string[]
+  /** Siembra inicial de cada lookup en el constructor */
+  lookupSeedLines: string[]
+  /** Al editar: resolver la etiqueta del id vigente aunque no esté entre los buscados */
+  lookupResolveLines: string[]
   lookupServiceImports: string[]
+  needsLookup: boolean
   labelsModuleImports: string[]
   groupValidatorDefs: string[]
   groupValidatorOption: string
@@ -604,8 +610,11 @@ type FormBindings = Pick<
   | 'formValueBuildLines'
   | 'formHelperLines'
   | 'lookupInjectLines'
-  | 'lookupComputedLines'
+  | 'lookupStateLines'
+  | 'lookupSeedLines'
+  | 'lookupResolveLines'
   | 'lookupServiceImports'
+  | 'needsLookup'
   | 'labelsModuleImports'
   | 'groupValidatorDefs'
   | 'groupValidatorOption'
@@ -668,9 +677,9 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     formPageLookupProviders: lookups.map(f => {
       const resource = f.lookup?.resource ?? ''
       const service = `${resource.charAt(0).toUpperCase()}${resource.slice(1)}Service`
-      return `{ provide: ${service}, useValue: { ${pluralOfResource(resource)}: { value: () => undefined } } }`
+      return `{ provide: ${service}, useValue: { lookup: () => Promise.resolve([]), findOne: () => new Promise(() => undefined) } }`
     }),
-    needsSelect: selects.length > 0,
+    needsSelect: selects.some(f => !f.lookup),
     savedEmitLines: renderSavedEmit(formFields, lookups),
     formValueBuildLines: renderFormValueBuild(formFields, lookups),
     // la plantilla solo puede leer miembros de la clase: se expone la constante
@@ -680,12 +689,25 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
     lookupInjectLines: lookups.map(
       f => `private readonly _${f.lookup?.resource}Service = inject(${cap(f.lookup?.resource ?? '')}Service)`
     ),
-    lookupComputedLines: lookups.flatMap(f => [
-      `readonly ${pluralOfResource(f.lookup?.resource)} = computed(() => this._${f.lookup?.resource}Service.${pluralOfResource(f.lookup?.resource)}.value()?.items ?? [])`,
-      `protected readonly ${f.name}Options = computed<AppSelectOption[]>(() =>`,
-      `  this.${pluralOfResource(f.lookup?.resource)}().map(item => ({ value: item.id, label: item.${f.lookup?.labelField} }))`,
+    lookupStateLines: lookups.flatMap(f => [
+      `readonly ${f.name}Options = signal<AppSelectOption[]>([])`,
+      `on${cap(f.name)}Search(term: string): void {`,
+      `  void this._${f.lookup?.resource}Service.lookup(term).then(items =>`,
+      `    this.${f.name}Options.set(items.map(item => ({ value: item.id, label: item.${f.lookup?.labelField} })))`,
+      `  )`,
+      `}`
+    ]),
+    lookupSeedLines: lookups.map(f => `this.on${cap(f.name)}Search('')`),
+    lookupResolveLines: lookups.flatMap(f => [
+      `void this._${f.lookup?.resource}Service.findOne(${propertyName}.${f.name}).then(item =>`,
+      `  this.${f.name}Options.update(options =>`,
+      `    options.some(option => option.value === item.id)`,
+      `      ? options`,
+      `      : [{ value: item.id, label: item.${f.lookup?.labelField} }, ...options]`,
+      `  )`,
       `)`
     ]),
+    needsLookup: lookups.length > 0,
     lookupServiceImports: [...new Set(lookups.map(f => f.lookup?.resource ?? ''))],
     labelsModuleImports,
     groupValidatorDefs: groupValidators.map(renderGroupValidatorDef),
@@ -693,7 +715,7 @@ function renderForm(definition: ResourceDefinition, fileName: string): FormBindi
       ? `,\n    { validators: ${groupValidators.map(v => `${v.kind}Validator`).join(', ')} }`
       : '',
     needsGroupValidatorTypes: groupValidators.length > 0,
-    needsComputed: lookups.length > 0,
+    needsComputed: false,
     // app-select recibe las opciones tipadas y resuelve la etiqueta por su cuenta:
     // ya no hace falta un Record de etiquetas ni un helper itemToString por campo.
     inlineLabelConsts: enumSelects

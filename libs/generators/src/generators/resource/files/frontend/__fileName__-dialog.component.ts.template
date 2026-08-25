@@ -1,11 +1,17 @@
-import { ChangeDetectionStrategy, Component, <% if (needsComputed) { %>computed, <% } %>effect, inject, input, output } from '@angular/core'
+import { ChangeDetectionStrategy, Component, effect, inject, input, output<% if (needsLookup) { %>, signal<% } %> } from '@angular/core'
 import { <% if (needsGroupValidatorTypes) { %>AbstractControl, <% } %>FormBuilder, ReactiveFormsModule, <% if (needsGroupValidatorTypes) { %>ValidationErrors, <% } %>Validators } from '@angular/forms'
 import { AppButton } from '../../../../../../shared/components/ui/button.directive'
 import { AppDialogContent } from '../../../../../../shared/components/ui/dialog-content'
 import { AppFormField } from '../../../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../../../shared/components/ui/input.directive'
-<%_ if (needsSelect) { _%>
+<%_ if (needsSelect && needsLookup) { _%>
 import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
+<%_ } else if (needsSelect) { _%>
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+<%_ } else if (needsLookup) { _%>
+import { AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
 <%_ } _%>
 import { <%- dialogSharedImports %> } from '<%- sharedDomainAlias %>'
 <%_ lookupServiceImports.forEach(r => { _%>
@@ -36,9 +42,14 @@ export interface <%- className %>FormValue {
     AppDialogContent,
     AppButton,
     AppFormField,
-    AppInput<%- needsSelect ? ',' : '' %>
-<%_ if (needsSelect) { _%>
+    AppInput<%- needsSelect || needsLookup ? ',' : '' %>
+<%_ if (needsSelect && needsLookup) { _%>
+    AppSelect,
+    AppLookup
+<%_ } else if (needsSelect) { _%>
     AppSelect
+<%_ } else if (needsLookup) { _%>
+    AppLookup
 <%_ } _%>
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,11 +70,12 @@ export interface <%- className %>FormValue {
 <%_ const fieldOpen = '<app-form-field label="' + f.label + '" for="' + f.id + '"' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
 <%_ if (f.lookup) { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <app-select
+<%- pad %>  <app-lookup
 <%- pad %>    formControlName="<%- f.name %>"
 <%- pad %>    controlId="<%- f.id %>"
 <%- pad %>    placeholder="<%- f.placeholder %>"
 <%- pad %>    [options]="<%- f.name %>Options()"
+<%- pad %>    (searchChange)="on<%- f.name.charAt(0).toUpperCase() + f.name.slice(1) %>Search($event)"
 <%- pad %>  />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
@@ -150,9 +162,9 @@ export class <%- className %>DialogComponent {
   readonly initialValue = input<Partial<<%- className %>FormValue> | null>(null)
   readonly saved = output<<%- className %>FormValue>()
   readonly close = output<void>()
-<%_ if (lookupComputedLines.length) { _%>
+<%_ if (lookupStateLines.length) { _%>
 
-<%_ lookupComputedLines.forEach(line => { _%>
+<%_ lookupStateLines.forEach(line => { _%>
   <%- line %>
 <%_ }) _%>
 <%_ } _%>
@@ -170,6 +182,9 @@ export class <%- className %>DialogComponent {
 <%- groupValidatorOption ? '    }' + groupValidatorOption : '  }' %>)
 
   constructor() {
+<%_ lookupSeedLines.forEach(line => { _%>
+    <%- line %>
+<%_ }) _%>
     effect(() => {
       const <%- propertyName %> = this.<%- propertyName %>()
       if (<%- propertyName %>) {
@@ -178,6 +193,12 @@ export class <%- className %>DialogComponent {
           <%- line %>,
 <%_ }) _%>
         })
+<%_ if (lookupResolveLines.length) { _%>
+        // spec 66: la etiqueta del referenciado vigente, aunque no esté entre los 20 buscados
+<%_ lookupResolveLines.forEach(line => { _%>
+        <%- line %>
+<%_ }) _%>
+<%_ } _%>
         return
       }
       const initial = this.initialValue()

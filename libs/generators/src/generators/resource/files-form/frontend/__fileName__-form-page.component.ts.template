@@ -4,8 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { AppButton } from '../../../../../../shared/components/ui/button.directive'
 import { AppFormField } from '../../../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../../../shared/components/ui/input.directive'
-<%_ if (needsSelect) { _%>
+<%_ if (needsSelect && needsLookup) { _%>
 import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
+<%_ } else if (needsSelect) { _%>
+import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
+<%_ } else if (needsLookup) { _%>
+import { AppSelectOption } from '../../../../../../shared/components/ui/select'
+import { AppLookup } from '../../../../../../shared/components/ui/lookup'
 <%_ } _%>
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
@@ -43,9 +49,14 @@ import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
     ReactiveFormsModule,
     AppButton,
     AppFormField,
-    AppInput<%- needsSelect ? ',' : '' %>
-<%_ if (needsSelect) { _%>
+    AppInput<%- needsSelect || needsLookup ? ',' : '' %>
+<%_ if (needsSelect && needsLookup) { _%>
+    AppSelect,
+    AppLookup
+<%_ } else if (needsSelect) { _%>
     AppSelect
+<%_ } else if (needsLookup) { _%>
+    AppLookup
 <%_ } _%>
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,11 +84,12 @@ import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
 <%_ const fieldOpen = '<app-form-field label="' + f.label + '" for="' + f.id + '"' + (f.fullWidth ? ' class="sm:col-span-2"' : '') + '>' _%>
 <%_ if (f.lookup) { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <app-select
+<%- pad %>  <app-lookup
 <%- pad %>    formControlName="<%- f.name %>"
 <%- pad %>    controlId="<%- f.id %>"
 <%- pad %>    placeholder="<%- f.placeholder %>"
 <%- pad %>    [options]="<%- f.name %>Options()"
+<%- pad %>    (searchChange)="on<%- f.name.charAt(0).toUpperCase() + f.name.slice(1) %>Search($event)"
 <%- pad %>  />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
@@ -174,9 +186,9 @@ export class <%- className %>FormPageComponent {
 <%_ lookupInjectLines.forEach(line => { _%>
   <%- line %>
 <%_ }) _%>
-<%_ if (lookupComputedLines.length) { _%>
+<%_ if (lookupStateLines.length) { _%>
 
-<%_ lookupComputedLines.forEach(line => { _%>
+<%_ lookupStateLines.forEach(line => { _%>
   <%- line %>
 <%_ }) _%>
 <%_ } _%>
@@ -199,6 +211,9 @@ export class <%- className %>FormPageComponent {
   protected readonly notFound = signal(false)
 
   constructor() {
+<%_ lookupSeedLines.forEach(line => { _%>
+    <%- line %>
+<%_ }) _%>
     const id = this._route.snapshot.paramMap.get('id')
     if (id) {
       this.editingId.set(id)
@@ -215,6 +230,12 @@ export class <%- className %>FormPageComponent {
         <%- line %>,
 <%_ }) _%>
       })
+<%_ if (lookupResolveLines.length) { _%>
+      // spec 66: la etiqueta del referenciado vigente, aunque no esté entre los 20 buscados
+<%_ lookupResolveLines.forEach(line => { _%>
+      <%- line %>
+<%_ }) _%>
+<%_ } _%>
     } catch {
       this.notFound.set(true)
     } finally {
