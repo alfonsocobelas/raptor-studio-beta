@@ -108,7 +108,7 @@ const SYSTEM_PROMPT = [
   'reply es una frase breve en español explicando qué cambiaste.'
 ].join('\n')
 
-const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'ref', 'enum']
+const FIELD_TYPES = ['string', 'text', 'number', 'integer', 'boolean', 'date', 'time', 'ref', 'enum']
 
 const RESPONSE_SCHEMA: Record<string, unknown> = {
   type: 'object',

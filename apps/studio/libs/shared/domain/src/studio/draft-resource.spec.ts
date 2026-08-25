@@ -71,6 +71,29 @@ describe('draftToResource', () => {
   })
 })
 
+describe('draftToResource — campo hora (spec 65)', () => {
+  it('un campo time cruza como string con control time y columna varchar(5)', () => {
+    const conHora: DraftResource = {
+      ...draft,
+      fields: [...draft.fields, { name: 'horaEntrada', label: 'Hora de entrada', type: 'time' }]
+    }
+
+    const resource = draftToResource(conHora, 'flotas')
+    const hora = resource.fields['horaEntrada']
+
+    expect(hora.type).toBe('string')
+    expect(hora.required).toBe(true)
+    expect(hora.form).toMatchObject({ control: 'time', label: 'Hora de entrada' })
+    expect(hora.column).toMatchObject({ type: 'varchar', length: 5 })
+    expect(() => defineResource(resource)).not.toThrow()
+  })
+
+  it('el tipo hora es elegible en el panel', () => {
+    expect(DRAFT_FIELD_TYPES).toContain('time')
+    expect(SELECTABLE_FIELD_TYPES).toContain('time')
+  })
+})
+
 describe('newDraftResource', () => {
   it('si el nombre ya viene en plural, deriva el singular (Empleados → empleado/empleados)', () => {
     const created = newDraftResource('Empleados')

@@ -16,6 +16,7 @@ export type DraftFieldType =
   | 'uuid'
   | 'ref'
   | 'enum'
+  | 'time'
 
 export interface DraftField {
   name: string
@@ -93,7 +94,8 @@ export const DRAFT_FIELD_TYPES: DraftFieldType[] = [
   'date',
   'uuid',
   'ref',
-  'enum'
+  'enum',
+  'time'
 ]
 
 /**
@@ -213,7 +215,7 @@ export function draftToResource(
     const voName = `${className}${pascal(field.name)}`
     const order = index + 1
     const base: FieldDefinition = {
-      type: field.type === 'text' ? 'string' : field.type,
+      type: field.type === 'text' || field.type === 'time' ? 'string' : field.type,
       form: {
         control:
           field.type === 'text'
@@ -224,7 +226,9 @@ export function draftToResource(
                 ? 'checkbox'
                 : field.type === 'date'
                   ? 'date'
-                  : 'text',
+                  : field.type === 'time'
+                    ? 'time'
+                    : 'text',
         label: field.label,
         section: 'general',
         order,
@@ -299,6 +303,14 @@ export function draftToResource(
           required: true,
           vo: { name: voName, fieldName: field.label },
           column: { type: 'date', tsType: 'string' }
+        }
+        break
+      case 'time':
+        fields[field.name] = {
+          ...base,
+          required: true,
+          vo: { name: voName, fieldName: field.label },
+          column: { type: 'varchar', length: 5 }
         }
         break
       case 'uuid':

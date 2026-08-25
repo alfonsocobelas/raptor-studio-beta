@@ -14,7 +14,8 @@ export const TYPE_LABELS: Record<DraftFieldType, string> = {
   date: 'fecha',
   uuid: 'uuid',
   ref: 'referencia a…',
-  enum: 'lista de valores'
+  enum: 'lista de valores',
+  time: 'hora'
 }
 
 /** Etiqueta con red: un tipo sin nombre se muestra por su identificador, nunca vacío. */
@@ -35,7 +36,8 @@ export const SHORT_TYPE_LABELS: Record<DraftFieldType, string> = {
   date: 'fecha',
   uuid: 'uuid',
   ref: 'ref',
-  enum: 'lista'
+  enum: 'lista',
+  time: 'hora'
 }
 
 export function shortLabelOfType(type: string): string {

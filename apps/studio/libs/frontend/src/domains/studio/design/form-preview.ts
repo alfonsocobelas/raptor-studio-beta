@@ -8,7 +8,7 @@ import type { DraftField, DraftResource } from '@app/shared/domain'
 export type FormDialogMode = 'create' | 'edit'
 
 /** El vocabulario de controles del generador: lo que emite el diálogo real. */
-export type FormControl = 'text' | 'textarea' | 'select' | 'date' | 'checkbox' | 'number'
+export type FormControl = 'text' | 'textarea' | 'select' | 'date' | 'time' | 'checkbox' | 'number'
 
 export function formDialogTitle(resource: DraftResource, mode: FormDialogMode): string {
   const lower = resource.labelSingular.toLowerCase()
@@ -34,6 +34,8 @@ export function formControlFor(field: DraftField): FormControl {
       return 'checkbox'
     case 'date':
       return 'date'
+    case 'time':
+      return 'time'
     case 'enum':
     case 'ref':
       return 'select'

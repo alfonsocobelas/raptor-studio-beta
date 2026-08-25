@@ -37,6 +37,10 @@ import { formControlFor } from './form-preview'
               <label class="text-sm font-medium">{{ field.label }}</label>
               <input type="date" class="form-control" />
             }
+            @case ('time') {
+              <label class="text-sm font-medium">{{ field.label }}</label>
+              <input type="time" class="form-control" />
+            }
             @case ('number') {
               <label class="text-sm font-medium">{{ field.label }}</label>
               <input type="number" class="form-control" [value]="prefill(field)" />
