@@ -23,6 +23,46 @@ describe('resource generator — hooks de piel', () => {
 
   afterEach(() => registerModels([MODELS['contract']]))
 
+  describe('adjuntos', () => {
+    const attachments = (): Promise<string> => emit({ attachments: true }, 'contract-attachments.component.ts')
+
+    it('la zona de arrastre es una superficie con su cabecera', async () => {
+      const html = await attachments()
+
+      expect(html).toContain('app-panel')
+      expect(html).toContain('app-panel-head')
+    })
+
+    it('cada fichero de la lista es una pastilla', async () => {
+      const html = await attachments()
+
+      expect(html).toContain('class="app-chip flex items-center justify-between rounded-md border px-3 py-2 text-sm"')
+    })
+  })
+
+  describe('importación CSV', () => {
+    const importCsv = (): Promise<string> =>
+      emit(
+        { list: { ...MODELS['contract'].list, features: { ...MODELS['contract'].list?.features, import: true } } },
+        'contracts-import.component.ts'
+      )
+
+    it('el panel de errores es una superficie y el selector de fichero un control de piel', async () => {
+      const html = await importCsv()
+
+      expect(html).toContain(
+        'class="app-panel border-destructive/40 max-h-48 space-y-1 overflow-y-auto rounded-md border p-3"'
+      )
+      expect(html).toContain('class="app-toolbar border-input w-full rounded-md border px-3 py-2 text-sm"')
+    })
+
+    it('el pie del diálogo es un toolbar', async () => {
+      const html = await importCsv()
+
+      expect(html).toContain('class="app-toolbar flex justify-end gap-2"')
+    })
+  })
+
   describe('ficha de detalle', () => {
     const detail = (): Promise<string> => emit({ history: true }, 'contract-detail.component.ts')
 
