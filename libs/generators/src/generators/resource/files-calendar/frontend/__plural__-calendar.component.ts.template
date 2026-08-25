@@ -51,7 +51,7 @@ interface CalendarCell {
         <div class="app-panel bg-card rounded-lg border">
           <div class="app-panel-head flex items-center justify-between border-b px-4 py-3">
             <h2 class="text-base font-semibold"><%- ui.title %></h2>
-            <div class="flex items-center gap-1 text-sm">
+            <div class="app-toolbar flex items-center gap-1 text-sm">
               <button type="button" class="text-muted-foreground px-2 py-1 hover:text-foreground" (click)="previousPeriod()" aria-label="Anterior">‹</button>
               <span class="min-w-28 text-center text-xs font-medium uppercase tracking-widest">{{ periodLabel() }}</span>
               <button type="button" class="text-muted-foreground px-2 py-1 hover:text-foreground" (click)="nextPeriod()" aria-label="Siguiente">›</button>
@@ -61,7 +61,7 @@ interface CalendarCell {
           @if (view() !== 'day') {
             <div class="grid" [style.grid-template-columns]="'repeat(' + dayNames.length + ', minmax(0, 1fr))'">
               @for (name of dayNames; track name) {
-                <div class="text-muted-foreground border-b px-2 py-1 text-center text-[10px] tracking-widest">{{ name }}</div>
+                <div class="app-panel-head text-muted-foreground border-b px-2 py-1 text-center text-[10px] tracking-widest">{{ name }}</div>
               }
               @for (cell of cells(); track cell.key) {
                 <div

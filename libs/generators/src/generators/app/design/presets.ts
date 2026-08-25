@@ -179,19 +179,34 @@ const CABINA_CSS = `
   color: oklch(0.75 0.1 250);
 }
 
-/* los DATOS van en monospace, como en la maqueta: cifras de tabla, buscador y paginación */
 :root {
-  --font-mono-cabina: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-numeric: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* los NÚMEROS de toda la app en la misma letra (2026-08-25). Antes había mono en la tabla y en
+   el KPI y la sans de la app en kanban, calendario, cronograma y detalle: tres letras para lo
+   mismo. Un token y UNA regla con todos los sitios donde vive una cifra; un bloque nuevo se
+   suma añadiendo su hook a esta lista. */
+.app-metric,
+.app-cell,
+.app-chip,
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar,
+.app-shell-main table td.text-right,
+[hlminput],
+[appinput] {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
 }
 
 .app-shell-main table td.text-right {
-  font-family: var(--font-mono-cabina);
   font-size: 0.74rem;
 }
 
 [hlminput],
 [appinput] {
-  font-family: var(--font-mono-cabina);
   font-size: 0.78rem;
 }
 
@@ -207,28 +222,13 @@ const CABINA_CSS = `
   border-radius: 0;
 }
 
-/* la tira de KPIs de la maqueta: panel PLANO fundido con la rejilla (fondo fuera, borde
-   del shell), etiqueta uppercase pequeña y cifra enorme en monospace tabular */
-[hlmcard] {
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-  border-color: var(--shell-border);
-}
-
-[hlmcard] .text-sm {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--shell-fg);
-}
-
-[hlmcard] p.text-2xl {
+/* la tira de KPIs de la maqueta: panel PLANO fundido con la rejilla y cifra enorme. La viste
+   .app-panel/.app-panel-head/.app-metric como cualquier otra superficie — antes iba por
+   [hlmcard] .text-sm y p.text-2xl, clases de Tailwind: alcanzaba de paso al sufijo del valor
+   y no alcanzaba nada en suite, que no repetía esos selectores. */
+.app-metric {
   font-size: 2.4rem;
   line-height: 1.1;
-  font-family: var(--font-mono-cabina);
-  font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 /* ── los hooks de piel (spec 67) ─────────────────────────────────────────────
@@ -263,7 +263,6 @@ const CABINA_CSS = `
   border-radius: 0;
   box-shadow: none;
   border-color: var(--shell-border);
-  font-family: var(--font-mono-cabina);
   font-size: 0.7rem;
   letter-spacing: 0.03em;
 }
@@ -414,6 +413,34 @@ input.app-toolbar {
 
 .app-toolbar {
   border-color: var(--grid-line);
+}
+
+:root {
+  --font-numeric: var(--font-sans);
+}
+
+/* los NÚMEROS de toda la app en la misma letra: un ERP no cambia de tipo entre pantallas.
+   Aquí no hay monospace — la uniformidad la dan la sans del cuerpo y las cifras tabulares. */
+.app-metric,
+.app-cell,
+.app-chip,
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar,
+.app-shell-main table td.text-right,
+[hlminput],
+[appinput] {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* la cifra del KPI se contiene, como todo en esta piel, y va en la serif de los titulares */
+.app-metric {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 `

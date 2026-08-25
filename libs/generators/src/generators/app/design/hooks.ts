@@ -29,5 +29,12 @@ export const DESIGN_HOOKS = [
   /** pastilla de dato: evento del calendario, tarjeta del kanban, etiqueta */
   'app-chip',
   /** celda de una rejilla que NO es <table>: día del calendario, fila del cronograma */
-  'app-cell'
+  'app-cell',
+  /**
+   * la cifra protagonista de una tarjeta KPI. Sexto hook, añadido el 2026-08-25 con motivo:
+   * cabina vestía el KPI por `.text-sm` y `p.text-2xl` — clases de Tailwind — y suite no lo
+   * vestía en absoluto, así que la tira de KPIs salía neutra o casi. Es el único elemento
+   * cuyo trabajo entero es un número, y las dos pieles lo quieren tratar distinto.
+   */
+  'app-metric'
 ] as const

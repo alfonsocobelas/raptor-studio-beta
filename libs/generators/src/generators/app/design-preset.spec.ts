@@ -123,19 +123,29 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(styles).toMatch(/\.dark\s+[^{]*hlmbadge/i)
   })
 
-  it('cabina pone los datos en monospace: cifras de tabla, buscador y paginación', async () => {
-    const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
+  // Alfonso, 2026-08-25: «no hay uniformidad en las fuentes de los números». La había en la
+  // tabla y en el KPI (mono) y no en kanban, calendario, cronograma ni detalle (la sans de la
+  // app). Ahora la letra de las cifras es UN token y UNA regla con todos los sitios donde
+  // viven números; añadir un bloque nuevo es añadir su hook a esa lista.
+  it.each(['cabina', 'suite'])('%s escribe TODOS los números con la misma letra', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+    const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
 
-    expect(styles).toMatch(/--font-mono-cabina/)
-    expect(styles).toMatch(/td\.text-right[^}]*font-family/i)
-    expect(styles).toMatch(/\[hlminput\][^}]*font-family/i)
+    expect(styles).toMatch(/--font-numeric:/)
+    for (const place of ['.app-metric', '.app-cell', '.app-chip', '.app-toolbar', 'td.text-right']) {
+      expect(rule).toContain(place)
+    }
+    expect(rule).toMatch(/font-family:\s*var\(--font-numeric\)/)
+    expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/)
   })
 
   it('cabina funde los KPIs en una tira de instrumentación: panel plano y etiqueta uppercase', async () => {
     const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
 
-    expect(styles).toMatch(/\[hlmcard\][^}]*background:\s*transparent/i)
-    expect(styles).toMatch(/\[hlmcard\][^}]*text-transform:\s*uppercase/i)
+    // por hooks, no por clases de Tailwind: el .text-sm del sufijo del valor también casaba
+    expect(styles).toMatch(/\.app-panel \{[^}]*background:\s*transparent/i)
+    expect(styles).toMatch(/\.app-panel-head[^{]*\{[^}]*text-transform:\s*uppercase/i)
+    expect(styles).toMatch(/\.app-metric[^{]*\{[^}]*font-family/i)
   })
 
   // Spec 67: el defecto que dejó a los presets sin tokens durante dos semanas. El bloque del
@@ -170,7 +180,7 @@ describe('app generator — ranura design (spec 37)', () => {
 
   // Spec 67: el cromo que las plantillas escriben a mano (panel del calendario, columna del
   // kanban, ficha de detalle…) sólo lo alcanza la piel a través del vocabulario de hooks.
-  it.each(['cabina', 'suite'])('%s viste los cinco hooks del vocabulario', async design => {
+  it.each(['cabina', 'suite'])('%s viste todos los hooks del vocabulario', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     for (const hook of DESIGN_HOOKS) {
@@ -204,7 +214,7 @@ describe('app generator — ranura design (spec 37)', () => {
     const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
 
     expect(themeBlock(styles)).toMatch(/--font-sans:\s*'Roboto Condensed Variable'/)
-    expect(styles).toMatch(/--font-mono-cabina:\s*'JetBrains Mono Variable'/)
+    expect(styles).toMatch(/--font-numeric:\s*'JetBrains Mono Variable'/)
     // self-hosted: los ficheros los trae el npm install de la app, sin CDNs
     expect(styles).toContain("@import '@fontsource-variable/roboto-condensed'")
     expect(styles).toContain("@import '@fontsource-variable/jetbrains-mono'")

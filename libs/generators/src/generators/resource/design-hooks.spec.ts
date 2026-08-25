@@ -32,6 +32,15 @@ describe('resource generator — hooks de piel', () => {
     const kernelTemplate = (relative: string): string =>
       readFileSync(join(__dirname, '..', 'frontend-kernel', relative), 'utf-8')
 
+    it('la tarjeta KPI nombra superficie, cabecera y cifra', () => {
+      const html = kernelTemplate('files-ui/spartan/shared/components/kpi-card.ts.template')
+
+      expect(html).toContain('app-panel')
+      expect(html).toContain('app-panel-head')
+      // la cifra es el sexto hook: antes la piel la buscaba por p.text-2xl, clase de Tailwind
+      expect(html).toContain('app-metric')
+    })
+
     it('el diálogo de alta y edición es una superficie de piel', () => {
       const html = kernelTemplate('files-ui/spartan/shared/components/ui/dialog.ts.template')
 
