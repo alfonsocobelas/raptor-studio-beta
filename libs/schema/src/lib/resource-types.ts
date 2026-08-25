@@ -7,7 +7,7 @@ export type FieldType = 'uuid' | 'string' | 'number' | 'integer' | 'boolean' | '
 /** Decision 2 (2026-07-30): origin governs the sync ONLY, never form editability. */
 export type FieldOrigin = 'auto' | 'sap' | 'manual'
 
-export type FormControl = 'text' | 'textarea' | 'number' | 'checkbox' | 'date' | 'select' | 'none'
+export type FormControl = 'text' | 'textarea' | 'number' | 'checkbox' | 'date' | 'time' | 'select' | 'none'
 
 export interface VoDefinition {
   /** Class name (decision 5: explicit) */

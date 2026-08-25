@@ -110,9 +110,9 @@ import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
 <%- pad %><%- fieldOpen %>
 <%- pad %>  <textarea id="<%- f.id %>" class="resize-none" appInput formControlName="<%- f.name %>" rows="<%- f.rows %>"></textarea>
 <%- pad %></app-form-field>
-<%_ } else if (f.control === 'date') { _%>
+<%_ } else if (f.control === 'date' || f.control === 'time') { _%>
 <%- pad %><%- fieldOpen %>
-<%- pad %>  <input id="<%- f.id %>" type="date" appInput formControlName="<%- f.name %>" />
+<%- pad %>  <input id="<%- f.id %>" type="<%- f.control %>" appInput formControlName="<%- f.name %>" />
 <%_ if (f.required) { _%>
 <%- pad %>  @if (form.controls.<%- f.name %>.touched && form.controls.<%- f.name %>.invalid) {
 <%- pad %>    <span class="text-destructive text-sm">Obligatorio</span>

@@ -455,6 +455,13 @@ function dtoField(c: Ctx, definition: ResourceDefinition, forceOptional: boolean
     decorators.push('@IsArray()', '@IsString({ each: true })')
     return { decorators, declaration: decl(c.name, optional, 'string[]', false) }
   }
+  if (c.field.form?.control === 'time') {
+    decorators.push('@IsString()')
+    if (!optional) decorators.push('@IsNotEmpty()')
+    // HH:mm de 24 horas: exactamente lo que emite el input type="time" del navegador
+    decorators.push('@Matches(/^([01]\\d|2[0-3]):[0-5]\\d$/)')
+    return { decorators, declaration: decl(c.name, optional, 'string', false) }
+  }
   if (c.field.type === 'date' || c.field.type === 'timestamptz') {
     const nullableDto = c.nullable && !c.required
     if (nullableDto && optional) decorators.splice(1, 0, '@ValidateIf((_obj, value) => value !== null)')

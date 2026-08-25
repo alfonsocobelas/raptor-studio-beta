@@ -195,7 +195,7 @@ export interface FormFieldSubstitution {
   name: string
   id: string
   label: string
-  control: 'text' | 'textarea' | 'select' | 'date' | 'checkbox' | 'number'
+  control: 'text' | 'textarea' | 'select' | 'date' | 'time' | 'checkbox' | 'number'
   rows?: number
   required: boolean
   options: { value: string; label: string }[]
@@ -717,7 +717,7 @@ function valueType(field: FormFieldSubstitution): string {
   if (field.optionsType) return field.optionsType
   if (field.control === 'checkbox') return 'boolean'
   if (field.control === 'number') return field.required ? 'number' : 'number | undefined'
-  if (field.control === 'date') return field.required ? 'string' : 'string | null'
+  if (field.control === 'date' || field.control === 'time') return field.required ? 'string' : 'string | null'
   return 'string'
 }
 
