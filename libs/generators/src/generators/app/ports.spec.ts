@@ -114,7 +114,7 @@ describe('applyPorts', () => {
     const tree = withApp()
     tree.write(
       'docker/docker-compose.local.yml',
-      "services:\n  postgres-local:\n    container_name: app-postgres-local\n" +
+      'services:\n  postgres-local:\n    container_name: app-postgres-local\n' +
         '    volumes:\n      - app-postgres-local-data:/var/lib/postgresql/data\n' +
         'volumes:\n  app-postgres-local-data:\n'
     )

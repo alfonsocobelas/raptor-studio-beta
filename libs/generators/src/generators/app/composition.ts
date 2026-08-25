@@ -166,7 +166,8 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
       const field = model.fields[block.field]
       const at = `App '${definition.name}': widget ${block.kind} '${block.resource}.${block.field}'`
       if (!field) throw new Error(`${at} references an unknown field`)
-      if (!field.query?.filterable) throw new Error(`${at} requires a filterable field (the count uses the list endpoint)`)
+      if (!field.query?.filterable)
+        throw new Error(`${at} requires a filterable field (the count uses the list endpoint)`)
       const api = model.api ?? `/api/v1/${model.plural}`
       const fieldLabel = field.table?.label ?? field.form?.label ?? block.field
       if (block.kind === 'count-by') {
@@ -265,7 +266,5 @@ function labelOf(model: ResourceDefinition): string {
 
 /** kebab-ish a camelCase ('contracts-by-contract-type' → 'contractsByContractType'). */
 function propertyOf(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9]+(.)/g, (_, letter: string) => letter.toUpperCase())
-    .replace(/[^a-zA-Z0-9]/g, '')
+  return name.replace(/[^a-zA-Z0-9]+(.)/g, (_, letter: string) => letter.toUpperCase()).replace(/[^a-zA-Z0-9]/g, '')
 }

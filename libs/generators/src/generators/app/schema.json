@@ -40,11 +40,7 @@
       "type": "string",
       "default": "actual",
       "description": "Design preset: shell, density and chrome of the emitted app",
-      "enum": [
-        "actual",
-        "cabina",
-        "suite"
-      ],
+      "enum": ["actual", "cabina", "suite"],
       "x-prompt": {
         "message": "¿Qué preset de diseño?",
         "type": "list",
@@ -68,10 +64,7 @@
       "type": "string",
       "default": "postgres",
       "description": "Persistence engine of the emitted app (postgres/TypeORM or mongo/Mongoose)",
-      "enum": [
-        "postgres",
-        "mongo"
-      ],
+      "enum": ["postgres", "mongo"],
       "x-prompt": {
         "message": "¿Qué motor de persistencia?",
         "type": "list",
@@ -91,10 +84,7 @@
       "type": "string",
       "default": "postgres",
       "description": "Session store of the emitted app (exclusive slot; redis requires auth=single-tenant)",
-      "enum": [
-        "postgres",
-        "redis"
-      ],
+      "enum": ["postgres", "redis"],
       "x-prompt": {
         "message": "¿Dónde se almacenan las sesiones?",
         "type": "list",
@@ -114,12 +104,7 @@
       "type": "string",
       "default": "raptor",
       "description": "Infrastructure provider of the emitted app (exclusive slot; 'none' is internal — kernel tests and the mongo golden gate)",
-      "enum": [
-        "none",
-        "azure",
-        "aws",
-        "raptor"
-      ],
+      "enum": ["none", "azure", "aws", "raptor"],
       "x-prompt": {
         "message": "¿Qué infraestructura?",
         "type": "list",
@@ -157,7 +142,5 @@
       "x-prompt": "¿Qué plugins añado? (email, metrics — separados por comas; 'none' para ninguno)"
     }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }

@@ -256,6 +256,29 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(Object.keys(pkg.dependencies ?? {}).some(name => name.includes('fontsource'))).toBe(false)
   })
 
+  // El smoke de navegador (2026-08-25) midió -apple-system en las TRES pieles: nadie consumía
+  // --font-sans. El token estaba bien puesto y no lo leía nadie, porque el <body> no declara
+  // font-family y la preflight de Tailwind la resuelve en <html>, fuera del bloque del tema.
+  it('el body toma la letra del tema y de la piel: si no, el token no lo lee nadie', async () => {
+    const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
+
+    expect(styles).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/)
+  })
+
+  it('ningún preset referencia un token que ya no declara', async () => {
+    for (const design of ['cabina', 'suite']) {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+      const used = [...styles.matchAll(/var\((--[a-z0-9-]+)\)/g)].map(m => m[1])
+      const declared = [...styles.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map(m => m[1])
+
+      // tokens de Tailwind/spartan aparte: sólo se vigilan los que inventa el acelerador
+      const ours = [...new Set(used)].filter(name => /shell|banner|grid|module|font-|row-height|table-font/.test(name))
+      for (const token of ours) {
+        expect(declared).toContain(token)
+      }
+    }
+  })
+
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {
     const styles = (await emit({ ...base, design: 'actual' })).get(STYLES) ?? ''
 

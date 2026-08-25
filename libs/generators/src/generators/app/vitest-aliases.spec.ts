@@ -7,10 +7,7 @@ import * as path from 'path'
  * resolver `@spartan-ng/helm/*` — los helm son fuente vendorizada, no un paquete.
  */
 describe('vitest de la app emitida', () => {
-  const config = fs.readFileSync(
-    path.join(__dirname, 'files-skeleton', 'vitest.config.mts.template'),
-    'utf-8'
-  )
+  const config = fs.readFileSync(path.join(__dirname, 'files-skeleton', 'vitest.config.mts.template'), 'utf-8')
 
   it('resuelve los alias desde el tsconfig, no con una lista escrita a mano', () => {
     // mantener 16 rutas duplicadas en dos ficheros es la receta para que se

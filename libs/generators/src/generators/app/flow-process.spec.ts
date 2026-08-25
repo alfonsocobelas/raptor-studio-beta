@@ -219,7 +219,8 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
     }
   }
 
-  const PROCESS_PATH = 'apps/demo/libs/backend/src/contexts/warehouse/processes/ciclo-de-pedido/ciclo-de-pedido.process.ts'
+  const PROCESS_PATH =
+    'apps/demo/libs/backend/src/contexts/warehouse/processes/ciclo-de-pedido/ciclo-de-pedido.process.ts'
   const MODULE_PATH = 'apps/demo/libs/backend/src/contexts/warehouse/processes/processes.module.ts'
 
   it('emite la clase de proceso en el contexto de la entidad citada', async () => {
@@ -248,10 +249,11 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
       ]
     }
     const tree = await generate([contratoFlow], ['customer', 'contract'])
-    const controller = tree.read(
-      'apps/demo/libs/backend/src/contexts/sap-licensing/processes/alta-de-contrato/alta-de-contrato.controller.ts',
-      'utf-8'
-    ) ?? ''
+    const controller =
+      tree.read(
+        'apps/demo/libs/backend/src/contexts/sap-licensing/processes/alta-de-contrato/alta-de-contrato.controller.ts',
+        'utf-8'
+      ) ?? ''
 
     expect(controller).toContain("from '@app/shared/domain'")
     expect(controller).not.toContain('@sap-licenses')

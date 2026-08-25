@@ -51,7 +51,10 @@ function skipRateLimitOnScrape(tree: Tree, context: PluginContext): void {
     source
       .replace(/(\nimport [^\n]*\n)(?![\s\S]*\nimport )/, "$1import { SkipThrottle } from '@nestjs/throttler'\n")
       // ancla con @Controller: el comentario del asset también dice "@Public()" y no debe ganar
-      .replace("@Public()\n@Controller('metrics')", "@Public()\n@SkipThrottle({ global: true })\n@Controller('metrics')")
+      .replace(
+        "@Public()\n@Controller('metrics')",
+        "@Public()\n@SkipThrottle({ global: true })\n@Controller('metrics')"
+      )
   )
 }
 

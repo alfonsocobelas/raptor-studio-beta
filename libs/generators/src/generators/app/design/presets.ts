@@ -276,7 +276,6 @@ input.app-toolbar,
 input.app-toolbar {
   border-radius: 0;
   box-shadow: none;
-  font-family: var(--font-mono-cabina);
   font-size: 0.74rem;
 }
 

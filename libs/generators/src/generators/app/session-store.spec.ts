@@ -70,9 +70,9 @@ describe('app generator — ranura sessionStore', () => {
       expect(module).toContain('ThrottlerStorageRedisService')
       expect(module).toContain('FailOpenThrottlerStorage')
       expect(tree.exists(`${SHARED}/infrastructure/rate-limit/fail-open-throttler-storage.ts`)).toBe(true)
-      expect(
-        tree.exists('apps/demo/libs/backend/tests/shared/rate-limit/fail-open-throttler-storage.test.ts')
-      ).toBe(true)
+      expect(tree.exists('apps/demo/libs/backend/tests/shared/rate-limit/fail-open-throttler-storage.test.ts')).toBe(
+        true
+      )
 
       const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
         dependencies?: Record<string, string>

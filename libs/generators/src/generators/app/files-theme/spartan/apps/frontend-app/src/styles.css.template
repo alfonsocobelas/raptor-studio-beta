@@ -47,6 +47,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* La letra del tema (y la que la piel pise) vive en el bloque :root .theme-x, que está en
+       el <body>. La preflight de Tailwind resuelve la suya en <html>, fuera de ese bloque, así
+       que sin esta línea --font-sans no lo leía NADIE y las tres pieles salían con la pila del
+       sistema (medido en navegador, 2026-08-25). */
+    font-family: var(--font-sans);
   }
 }
 <%_ if (designCss) { _%>

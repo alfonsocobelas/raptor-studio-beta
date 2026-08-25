@@ -11,13 +11,13 @@ ficheros, email) son SaaS con capa gratuita que se dan de alta a mano una vez �
 
 ## Qué crea cada fichero
 
-| Fichero           | Recursos                                                                  |
-| ----------------- | ------------------------------------------------------------------------- |
-| `server.tf`       | `hcloud_server` con el cloud-init, y el volumen persistente de datos       |
-| `firewall.tf`     | 80/443 abiertos al mundo; 22 solo desde `admin_cidrs`                     |
-| `cloud-init.yaml` | Docker, Caddy (TLS automático) y el enlace `/srv/data` → volumen           |
-| `main.tf`         | Naming `${project}-${env}`, etiquetas comunes y render del cloud-init      |
-| `outputs.tf`      | IPv4/IPv6 del servidor (para el registro A) y la ruta de datos             |
+| Fichero           | Recursos                                                              |
+| ----------------- | --------------------------------------------------------------------- |
+| `server.tf`       | `hcloud_server` con el cloud-init, y el volumen persistente de datos  |
+| `firewall.tf`     | 80/443 abiertos al mundo; 22 solo desde `admin_cidrs`                 |
+| `cloud-init.yaml` | Docker, Caddy (TLS automático) y el enlace `/srv/data` → volumen      |
+| `main.tf`         | Naming `${project}-${env}`, etiquetas comunes y render del cloud-init |
+| `outputs.tf`      | IPv4/IPv6 del servidor (para el registro A) y la ruta de datos        |
 
 ## Variables
 
@@ -48,7 +48,7 @@ R2 no implementa todas las APIs de S3, así que `init` necesita los `skip_*` que
 Se hacen **una vez, a mano**. Aprovisionarlos con Terraform exigiría dos proveedores más
 (Cloudflare, Grafana) para gestionar capas gratuitas que se configuran en cinco minutos.
 
-1. **Infisical** (secretos) — crear proyecto, crear una *machine identity* con universal
+1. **Infisical** (secretos) — crear proyecto, crear una _machine identity_ con universal
    auth y darle acceso de lectura al entorno. Se obtienen `INFISICAL_CLIENT_ID`,
    `INFISICAL_CLIENT_SECRET` y `INFISICAL_PROJECT_ID`, que van al entorno del contenedor.
 2. **Cloudflare R2** (ficheros) — crear bucket y un token de API con permiso de
@@ -77,26 +77,26 @@ Del stack gratuito de Grafana Cloud se copian al `.env` del servidor: la URL de
 El loader del back traduce cada marcador a un secreto en SCREAMING_SNAKE: `vault.x.y` →
 `X_Y`. Los que necesita una app completa:
 
-| Marcador en el JSON de entorno | Secreto en Infisical      |
-| ------------------------------ | ------------------------- |
-| `vault.typeorm.password`       | `TYPEORM_PASSWORD`        |
-| `vault.storage.accessKeyId`    | `STORAGE_ACCESSKEYID`     |
-| `vault.storage.secretAccessKey`| `STORAGE_SECRETACCESSKEY` |
-| `vault.loki.apiKey`            | `LOKI_APIKEY`             |
-| `vault.metrics.token`          | `METRICS_TOKEN`           |
-| `vault.sentry.dsn`             | `SENTRY_DSN`              |
-| `vault.brevo.apiKey`           | `BREVO_APIKEY`            |
+| Marcador en el JSON de entorno  | Secreto en Infisical      |
+| ------------------------------- | ------------------------- |
+| `vault.typeorm.password`        | `TYPEORM_PASSWORD`        |
+| `vault.storage.accessKeyId`     | `STORAGE_ACCESSKEYID`     |
+| `vault.storage.secretAccessKey` | `STORAGE_SECRETACCESSKEY` |
+| `vault.loki.apiKey`             | `LOKI_APIKEY`             |
+| `vault.metrics.token`           | `METRICS_TOKEN`           |
+| `vault.sentry.dsn`              | `SENTRY_DSN`              |
+| `vault.brevo.apiKey`            | `BREVO_APIKEY`            |
 
 ## Capas gratuitas (comprobadas 2026-08-17)
 
-| Servicio       | Capa gratuita                                  |
-| -------------- | ---------------------------------------------- |
-| Infisical      | Proyectos y machine identities suficientes      |
-| Cloudflare R2  | 10 GB de almacenamiento, sin coste de egress    |
-| Grafana Cloud  | ~50 GB de logs y ~10k series de métricas al mes |
-| Sentry         | ~5k eventos al mes                              |
-| Brevo          | 300 emails al día                               |
-| Hetzner        | No hay capa gratuita: ~4 €/mes el cx22          |
+| Servicio      | Capa gratuita                                   |
+| ------------- | ----------------------------------------------- |
+| Infisical     | Proyectos y machine identities suficientes      |
+| Cloudflare R2 | 10 GB de almacenamiento, sin coste de egress    |
+| Grafana Cloud | ~50 GB de logs y ~10k series de métricas al mes |
+| Sentry        | ~5k eventos al mes                              |
+| Brevo         | 300 emails al día                               |
+| Hetzner       | No hay capa gratuita: ~4 €/mes el cx22          |
 
 **Estos límites cambian sin avisar.** La cobertura del acelerador no es contractual sino
 arquitectónica: cada pieza vive detrás de un puerto que ya tiene 2+ adapters, así que

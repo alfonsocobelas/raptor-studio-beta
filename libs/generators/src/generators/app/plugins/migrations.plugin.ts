@@ -66,20 +66,20 @@ export const migrationsPlugin = definePlugin({
       ...(context.models.some(model => model.history)
         ? ['    await queryRunner.query(`DROP TABLE IF EXISTS shared.audit_events`)']
         : []),
-      ...[...ordered].reverse().flatMap(model => [
-        ...(model.attachments
-          ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}_attachments\`)`]
-          : []),
-        ...(model.composition
-          ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.composition.plural}\`)`]
-          : []),
-        `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`,
-        ...(model.code
-          ? [
-              `    await queryRunner.query(\`DROP SEQUENCE IF EXISTS ${model.schemaName}.${model.plural}_code_seq\`)`
-            ]
-          : [])
-      ])
+      ...[...ordered]
+        .reverse()
+        .flatMap(model => [
+          ...(model.attachments
+            ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}_attachments\`)`]
+            : []),
+          ...(model.composition
+            ? [`    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.composition.plural}\`)`]
+            : []),
+          `    await queryRunner.query(\`DROP TABLE IF EXISTS ${model.schemaName}.${model.plural}\`)`,
+          ...(model.code
+            ? [`    await queryRunner.query(\`DROP SEQUENCE IF EXISTS ${model.schemaName}.${model.plural}_code_seq\`)`]
+            : [])
+        ])
     ].join('\n')
 
     tree.write(
@@ -165,9 +165,7 @@ function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []):
 
   // La secuencia va ANTES de la tabla: es independiente de ella (no la referencia), pero
   // dejarlas juntas mantiene legible qué contador pertenece a qué entidad.
-  const sequence = model.code
-    ? [`    await queryRunner.query(\`CREATE SEQUENCE ${table}_code_seq\`)`]
-    : []
+  const sequence = model.code ? [`    await queryRunner.query(\`CREATE SEQUENCE ${table}_code_seq\`)`] : []
 
   return [
     `    await queryRunner.query(\`CREATE SCHEMA IF NOT EXISTS ${model.schemaName}\`)`,

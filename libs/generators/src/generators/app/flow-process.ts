@@ -228,7 +228,10 @@ function registerInRoot(tree: Tree, backendSrc: string, contexts: string[]): voi
 
   const wired = source
     .replace(/(import \{ HealthModule \}[^\n]*\n)/, `$1${importLines}`)
-    .replace(/HealthModule,(\s*)/, (_, sep: string) => `HealthModule,${sep}${entries.map(e => `${e.localName},${sep}`).join('')}`)
+    .replace(
+      /HealthModule,(\s*)/,
+      (_, sep: string) => `HealthModule,${sep}${entries.map(e => `${e.localName},${sep}`).join('')}`
+    )
   tree.write(rootPath, wired)
 }
 
@@ -296,7 +299,11 @@ export function flowRepoDeps(flow: BusinessFlow): FlowRepoDep[] {
     if (!node.entity || seen.has(node.entity)) continue
     seen.add(node.entity)
     const n = names(node.entity)
-    deps.push({ entity: node.entity, className: `${n.className}Repository`, propertyName: `${n.propertyName}Repository` })
+    deps.push({
+      entity: node.entity,
+      className: `${n.className}Repository`,
+      propertyName: `${n.propertyName}Repository`
+    })
   }
   return deps
 }

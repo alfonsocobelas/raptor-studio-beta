@@ -70,7 +70,10 @@ describe('el paso de flujo convergido con la máquina de estados', () => {
     }
     emitFlowProcesses(clean, 'backend', [plain], Object.values(MODELS), '@app/shared/domain')
     const plainSource =
-      clean.read('backend/contexts/sap-licensing/processes/del-alta-a-la-baja/del-alta-a-la-baja.process.ts', 'utf-8') ?? ''
+      clean.read(
+        'backend/contexts/sap-licensing/processes/del-alta-a-la-baja/del-alta-a-la-baja.process.ts',
+        'utf-8'
+      ) ?? ''
 
     expect(plainSource).not.toContain('EntityNotFoundError')
     expect(plainSource).toContain('@ai:begin flow-termina')
@@ -135,6 +138,8 @@ describe('el controller de procesos', () => {
     const tree = emit(plain)
 
     expect(tree.exists(controllerPath)).toBe(false)
-    expect(tree.read('backend/contexts/sap-licensing/processes/processes.module.ts', 'utf-8')).not.toContain('Controller')
+    expect(tree.read('backend/contexts/sap-licensing/processes/processes.module.ts', 'utf-8')).not.toContain(
+      'Controller'
+    )
   })
 })

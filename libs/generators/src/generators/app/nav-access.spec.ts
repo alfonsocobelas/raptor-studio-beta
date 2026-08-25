@@ -70,7 +70,9 @@ describe('applyNavAccess — el shell filtra la nav por rol de sesión', () => {
 
     expect(patched).toContain("import { AuthService } from '@app/frontend/core/services/auth.service'")
     expect(patched).toContain('@for (item of navItems(); track item.route) {')
-    expect(patched).toMatch(/NAV_ITEMS\.filter\(item => !item\.roles \|\| \(role !== undefined && item\.roles\.includes\(role\)\)\)/)
+    expect(patched).toMatch(
+      /NAV_ITEMS\.filter\(item => !item\.roles \|\| \(role !== undefined && item\.roles\.includes\(role\)\)\)/
+    )
   })
 
   it('es idempotente: aplicarlo dos veces no duplica nada', () => {

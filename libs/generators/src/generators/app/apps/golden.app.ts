@@ -62,7 +62,13 @@ export const golden = defineApp({
         { kind: 'metrics', resources: ['contract', 'project'] },
         // analíticos (spec 32): compuestos de conteos filtrados sobre el listado
         { kind: 'count-by', resource: 'contract', field: 'contractType', label: 'Contratos por tipo' },
-        { kind: 'kpi-count', resource: 'project', field: 'status', equals: 'planning', label: 'Proyectos en planificación' },
+        {
+          kind: 'kpi-count',
+          resource: 'project',
+          field: 'status',
+          equals: 'planning',
+          label: 'Proyectos en planificación'
+        },
         { kind: 'series', resource: 'contract', field: 'startDate', label: 'Altas de contrato por mes' },
         // spec 52: el listado dentro del panel — la combinación que la demo taller destapó y que
         // el oro no cubría (por eso un DTO obsoleto sobrevivió días)

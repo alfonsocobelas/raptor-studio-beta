@@ -184,7 +184,10 @@ describe('composeApp — el estado del paso es coherente con el enum (spec 39)',
     ...model('order', 'orders'),
     fields: {
       id: { type: 'uuid', pk: true },
-      status: { type: 'string', vo: { name: 'OrderStatus', fieldName: 'Order status', values: ['draft', 'open', 'closed'] } }
+      status: {
+        type: 'string',
+        vo: { name: 'OrderStatus', fieldName: 'Order status', values: ['draft', 'open', 'closed'] }
+      }
     }
   } as ResourceDefinition
   const plain = model('plain', 'plains')

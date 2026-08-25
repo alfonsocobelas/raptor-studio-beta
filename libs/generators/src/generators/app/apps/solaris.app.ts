@@ -37,14 +37,32 @@ export const solaris = defineApp({
       description: 'El recorrido de una obra desde que el comercial la presupuesta hasta que se legaliza con el CIE.',
       nodes: [
         { id: 'peticion', kind: 'start', text: 'El cliente pide presupuesto' },
-        { id: 'presupuesto', kind: 'step', text: 'Se da de alta la obra presupuestada', entity: 'installation', status: 'quoted' },
+        {
+          id: 'presupuesto',
+          kind: 'step',
+          text: 'Se da de alta la obra presupuestada',
+          entity: 'installation',
+          status: 'quoted'
+        },
         { id: 'acepta', kind: 'decision', text: '¿El cliente la aprueba?' },
         { id: 'descartada', kind: 'end', text: 'Obra descartada' },
-        { id: 'planifica', kind: 'step', text: 'Se fijan fechas de inicio y fin', entity: 'installation', status: 'approved' },
+        {
+          id: 'planifica',
+          kind: 'step',
+          text: 'Se fijan fechas de inicio y fin',
+          entity: 'installation',
+          status: 'approved'
+        },
         { id: 'montaje', kind: 'step', text: 'Los técnicos parten las visitas de montaje', entity: 'worklog' },
         { id: 'incidencia', kind: 'decision', text: '¿Hay incidencia en obra?' },
         { id: 'averia', kind: 'step', text: 'Parte de avería y vuelta a montaje', entity: 'worklog' },
-        { id: 'cie', kind: 'step', text: 'Se sube el CIE y el certificado', entity: 'installation', status: 'finished' },
+        {
+          id: 'cie',
+          kind: 'step',
+          text: 'Se sube el CIE y el certificado',
+          entity: 'installation',
+          status: 'finished'
+        },
         { id: 'legalizada', kind: 'end', text: 'Obra finalizada y legalizada' }
       ],
       edges: [
