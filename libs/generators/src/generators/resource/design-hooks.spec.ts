@@ -23,6 +23,44 @@ describe('resource generator — hooks de piel', () => {
 
   afterEach(() => registerModels([MODELS['contract']]))
 
+  describe('ficha de detalle', () => {
+    const detail = (): Promise<string> => emit({ history: true }, 'contract-detail.component.ts')
+
+    it('la rejilla de campos y el historial son superficies, con su cabecera', async () => {
+      const html = await detail()
+
+      expect(html).toContain(
+        'class="app-panel bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2"'
+      )
+      expect(html).toContain('class="app-panel bg-card rounded-lg border p-4"')
+      expect(html).toContain('app-panel-head')
+    })
+
+    it('la tira de acciones es un toolbar y los cambios del historial pastillas', async () => {
+      const html = await detail()
+
+      expect(html).toContain('app-toolbar')
+      expect(html).toContain('class="app-chip bg-muted rounded-full px-2 py-0.5 text-xs"')
+    })
+  })
+
+  describe('página-formulario', () => {
+    const formPage = (): Promise<string> => emit({ form: {} }, 'contract-form-page.component.ts')
+
+    it('el formulario es una superficie y cada sección lleva cabecera', async () => {
+      const html = await formPage()
+
+      expect(html).toContain('class="app-panel space-y-6 py-6"')
+      expect(html).toContain('app-panel-head')
+    })
+
+    it('la botonera de guardar es un toolbar', async () => {
+      const html = await formPage()
+
+      expect(html).toContain('class="app-toolbar flex justify-end gap-2 pt-2"')
+    })
+  })
+
   describe('galería', () => {
     const gallery = (): Promise<string> => emit({ gallery: {} }, 'contracts-gallery.component.ts')
 
