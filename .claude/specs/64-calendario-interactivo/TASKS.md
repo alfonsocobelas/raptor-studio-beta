@@ -12,5 +12,8 @@
       edición (guardia `entry.canEditExpr`); con `detail` se conserva la navegación.
 - [x] **TASK-04**: Re-baseline del oro — hecho por tarea (commits propios tras TASK-01 y
       TASK-02); TASK-03 no altera el oro (el modelo project tiene ficha).
+- [x] **TASK-05b (añadida)**: El calendario ensancha la petición compartida (page 1,
+      pageSize amplio) y la restaura al salir — defecto de la spec 59 destapado por la demo:
+      con paginación real solo pintaba los 10 primeros registros y el alta «no aparecía».
 - [ ] **TASK-05**: Regenerar la demo veterinaria y verificar: typecheck verde + alta de
       cita desde el calendario + apertura de tira (humo con navegador si el entorno lo da).

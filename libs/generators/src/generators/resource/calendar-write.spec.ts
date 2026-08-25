@@ -94,6 +94,14 @@ describe('resource generator — calendario interactivo (alta)', () => {
     expect(calendar).toContain('canEdit()')
   })
 
+  it('ensancha la lectura compartida para pintar TODOS los registros y la restaura al salir', async () => {
+    const calendar = await emitted(withCalendar())
+
+    expect(calendar).toMatch(/pageSize: 500/)
+    expect(calendar).toContain('DestroyRef')
+    expect(calendar).toMatch(/onDestroy/)
+  })
+
   it('sin features.edit el calendario sigue siendo de solo lectura', async () => {
     const calendar = await emitted(withCalendar({ list: { features: { edit: false } } }))
 
