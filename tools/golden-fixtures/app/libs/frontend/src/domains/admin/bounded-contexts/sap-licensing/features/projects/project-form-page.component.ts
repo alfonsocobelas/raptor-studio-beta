@@ -52,7 +52,7 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
       } @else if (notFound()) {
         <p class="text-muted-foreground py-12 text-center text-sm">No se encontró el registro solicitado.</p>
       } @else if (canWrite()) {
-        <form class="app-panel space-y-6 py-6" [formGroup]="form" (ngSubmit)="save()">
+        <form class="space-y-6 py-6" [formGroup]="form" (ngSubmit)="save()">
           <div>
             <h4 class="app-panel-head mb-3 text-sm font-semibold">Datos generales</h4>
             <div class="grid gap-4 sm:grid-cols-2">

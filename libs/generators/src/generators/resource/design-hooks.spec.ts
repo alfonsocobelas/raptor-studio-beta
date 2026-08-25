@@ -124,10 +124,13 @@ describe('resource generator — hooks de piel', () => {
   describe('página-formulario', () => {
     const formPage = (): Promise<string> => emit({ form: {} }, 'contract-form-page.component.ts')
 
-    it('el formulario es una superficie y cada sección lleva cabecera', async () => {
+    it('el <form> NO es una superficie: sólo sus secciones y su botonera llevan hook', async () => {
       const html = await formPage()
 
-      expect(html).toContain('class="app-panel space-y-6 py-6"')
+      // visto en navegador (2026-08-25): con app-panel, el borde de la piel quedaba pegado a
+      // los campos — el <form> lleva padding vertical pero no lateral, no es una superficie.
+      expect(html).toContain('class="space-y-6 py-6"')
+      expect(html).not.toContain('class="app-panel space-y-6')
       expect(html).toContain('app-panel-head')
     })
 

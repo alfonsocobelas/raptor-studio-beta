@@ -72,7 +72,7 @@ import { <%- labelsModuleImports.join(', ') %> } from './<%- fileName %>-labels'
       } @else if (notFound()) {
         <p class="text-muted-foreground py-12 text-center text-sm">No se encontró el registro solicitado.</p>
       } @else if (canWrite()) {
-        <form class="app-panel space-y-6 py-6" [formGroup]="form" (ngSubmit)="save()">
+        <form class="space-y-6 py-6" [formGroup]="form" (ngSubmit)="save()">
 <%_ formSections.forEach(section => { _%>
         <div>
           <h4 class="app-panel-head mb-3 text-sm font-semibold"><%- section.title %></h4>
