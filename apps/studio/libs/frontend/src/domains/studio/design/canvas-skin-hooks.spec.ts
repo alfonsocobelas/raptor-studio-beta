@@ -27,6 +27,16 @@ describe('hooks de piel en los bloques del lienzo', () => {
     })
   })
 
+  describe('calendario', () => {
+    const calendar = (): string => source('canvas-calendar.component.ts')
+
+    it('nombra los cinco hooks que le tocan', () => {
+      for (const hook of ['app-panel', 'app-panel-head', 'app-cell', 'app-chip', 'app-toolbar']) {
+        expect(calendar()).toContain(hook)
+      }
+    })
+  })
+
   describe('tabla', () => {
     const table = (): string => source('canvas-table.component.ts')
 

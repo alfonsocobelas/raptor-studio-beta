@@ -18,27 +18,27 @@ interface PreviewCell {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
-      <div class="bg-card rounded-lg border">
-        <div class="flex items-center justify-between border-b px-4 py-2.5">
+      <div class="app-panel bg-card rounded-lg border">
+        <div class="app-panel-head flex items-center justify-between border-b px-4 py-2.5">
           <h3 class="text-sm font-semibold">{{ v.labelPlural }}</h3>
           <span class="text-muted-foreground text-[10px] tracking-widest">‹ SEPT 2026 ›</span>
         </div>
         <div class="grid" [style.grid-template-columns]="'repeat(' + v.dayNames.length + ', minmax(0, 1fr))'">
           @for (name of v.dayNames; track name) {
-            <div class="text-muted-foreground border-b px-1 py-1 text-center text-[9px] tracking-widest">
+            <div class="app-panel-head text-muted-foreground border-b px-1 py-1 text-center text-[9px] tracking-widest">
               {{ name }}
             </div>
           }
           @for (cell of v.cells; track cell.day) {
             <div
-              class="min-h-14 border-b border-r p-1 last:border-r-0"
+              class="app-cell min-h-14 border-b border-r p-1 last:border-r-0"
               [class.ring-1]="cell.day === 9"
               [class.ring-primary]="cell.day === 9"
             >
               <span class="text-[10px]" [class.text-primary]="cell.day === 9">{{ cell.day }}</span>
               @for (strip of cell.strips; track strip.label) {
                 <div
-                  class="bg-muted mt-0.5 truncate rounded-sm border-l-2 px-1 text-[9px]"
+                  class="app-chip bg-muted mt-0.5 truncate rounded-sm border-l-2 px-1 text-[9px]"
                   [class.border-l-primary]="strip.accent"
                   [class.border-l-foreground]="!strip.accent"
                   [attr.data-testid]="'calendar-strip-' + cell.day"
@@ -50,7 +50,7 @@ interface PreviewCell {
           }
         </div>
         <div
-          class="text-muted-foreground flex items-center justify-between border-t px-4 py-1.5 text-[9px] uppercase tracking-widest"
+          class="app-toolbar text-muted-foreground flex items-center justify-between border-t px-4 py-1.5 text-[9px] uppercase tracking-widest"
         >
           <span>{{ v.labelPlural }} · campo fecha {{ v.dateLabel }}</span>
           <span><span class="text-foreground font-semibold">Mes</span> · Semana · Día</span>
