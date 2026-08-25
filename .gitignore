@@ -28,3 +28,12 @@ probe.env
 .claude/worktrees
 # cachés de Angular (apps demo anidadas)
 .angular/
+
+# Apps de demo generadas: se crean en local para cazar defectos del generador
+# y NUNCA suben al remoto (los defectos se arreglan en el generador, no aquí)
+apps/taller/
+apps/peritajes/
+apps/veterinaria/
+apps/inmobiliaria/
+apps/inmobiliaria-cabina/
+apps/inmobiliaria-suite/

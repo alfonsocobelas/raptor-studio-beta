@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "noEmit": true
-  },
-  "include": ["libs/backend/**/*.ts", "libs/shared/**/*.ts", "apps/backend-api/**/*.ts"]
-}
