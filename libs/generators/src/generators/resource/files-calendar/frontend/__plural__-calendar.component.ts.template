@@ -14,7 +14,11 @@ import { <%- detail ? 'CAN_CREATE_ROLES' : 'CAN_CREATE_ROLES, CAN_EDIT_ROLES' %>
 <%_ } _%>
 <%_ if (features.edit) { _%>
 import { generateId } from '../../../../../../shared/utils/uuid'
-import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%- fileName %>-dialog.component'
+import {
+  <%- className %>DialogComponent,
+  <%- className %>FormInitial,
+  <%- className %>FormValue
+} from './<%- fileName %>-dialog.component'
 <%_ } _%>
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
@@ -242,7 +246,7 @@ export class <%- pluralClassName %>CalendarComponent {
   readonly editing<%- className %> = signal<<%- dtoName %> | null>(null)
   /** El día pulsado (clave yyyy-mm-dd): precarga el campo fecha del alta. */
   readonly createDate = signal<string | null>(null)
-  readonly createInitial = computed<Partial<<%- className %>FormValue> | null>(() => {
+  readonly createInitial = computed<<%- className %>FormInitial | null>(() => {
     const date = this.createDate()
     return date === null ? null : { <%- calendar.dateField %>: date }
   })

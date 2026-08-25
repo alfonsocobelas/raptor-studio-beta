@@ -374,7 +374,9 @@ describe('buildSubstitutions — calendar (spec 59)', () => {
 
   it('honours explicit label and weekends', () => {
     // WHEN
-    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', label: 'supportModel', weekends: false }), [customer])
+    const subs = buildSubstitutions(withCalendar({ date: 'deliveryDate', label: 'supportModel', weekends: false }), [
+      customer
+    ])
 
     // THEN
     expect(subs.calendar?.labelField).toBe('supportModel')

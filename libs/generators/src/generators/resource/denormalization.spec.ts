@@ -110,7 +110,7 @@ describe('campos desnormalizados (spec 60)', () => {
     it('el save no añade el campo desnormalizado al payload', async () => {
       const source = read(await emit('contract'), 'frontend/contract-dialog.component.ts')
 
-      expect(source).not.toContain("customerName: this.customers().find(item => item.id === raw.customerId)")
+      expect(source).not.toContain('customerName: this.customers().find(item => item.id === raw.customerId)')
     })
 
     it('el FormValue del diálogo no declara el campo', async () => {

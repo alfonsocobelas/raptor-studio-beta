@@ -9,7 +9,8 @@ export const installation = defineResource({
   name: 'installation',
   plural: 'installations',
   context: 'solaris',
-  brief: 'La obra: lleva código propio asignado por el sistema, fechas previstas para el cronograma y acumula los documentos que la legalizan (plano, memoria, CIE y certificado).',
+  brief:
+    'La obra: lleva código propio asignado por el sistema, fechas previstas para el cronograma y acumula los documentos que la legalizan (plano, memoria, CIE y certificado).',
   schemaName: 'solaris',
   route: '/solaris/installations',
   sharedDomainAlias: '@solaris/shared/domain',

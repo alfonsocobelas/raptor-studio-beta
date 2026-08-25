@@ -22,16 +22,24 @@ describe('resource generator — initialValue del diálogo', () => {
     return tree.read('out/frontend/supplier-dialog.component.ts', 'utf-8') ?? ''
   }
 
-  it('expone el input opcional initialValue tipado con el FormValue', async () => {
+  it('expone el input opcional initialValue tipado sin nulos', async () => {
     const dialog = await dialogOf()
 
-    expect(dialog).toContain('readonly initialValue = input<Partial<SupplierFormValue> | null>(null)')
+    // El FormValue es el payload de SALIDA: sus opcionales son nullables porque el backend los
+    // quiere null. El valor de ENTRADA no puede serlo — los controles del form no son nullable
+    // (salvo el lookup), así que patchValue(FormValue) no compilaba. Detectado el 2026-08-25
+    // construyendo una app emitida: TS2345 en el diálogo y en la página-formulario.
+    expect(dialog).toContain('export type SupplierFormInitial = Partial<')
+    expect(dialog).toContain('NonNullable<SupplierFormValue[K]>')
+    expect(dialog).toContain('readonly initialValue = input<SupplierFormInitial | null>(null)')
   })
 
   it('sin entidad, el effect precarga el formulario con initialValue', async () => {
     const dialog = await dialogOf()
 
-    expect(dialog).toMatch(/const initial = this\.initialValue\(\)\s*\n\s*if \(initial\) \{\s*\n\s*this\.form\.patchValue\(initial\)/)
+    expect(dialog).toMatch(
+      /const initial = this\.initialValue\(\)\s*\n\s*if \(initial\) \{\s*\n\s*this\.form\.patchValue\(initial\)/
+    )
   })
 
   it('con entidad manda la entidad: el patch de edición corta antes del initialValue', async () => {

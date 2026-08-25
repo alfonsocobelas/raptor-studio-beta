@@ -166,7 +166,8 @@ export function renderApplication(
     d => `import { ${d.repoClass} } from '../../../${d.originPlural}/domain/${d.originFile}-repository'`
   )
   const denormIdVoImports = [...new Map(denorms.map(d => [d.idVoClass, d])).values()].map(
-    d => `import { ${d.idVoClass} } from '../../../../../shared/domain/value-objects/${d.originPlural}/${d.idVoFile}.vo'`
+    d =>
+      `import { ${d.idVoClass} } from '../../../../../shared/domain/value-objects/${d.originPlural}/${d.idVoFile}.vo'`
   )
 
   const registerDenormBlocks = denorms.map((d, i) =>

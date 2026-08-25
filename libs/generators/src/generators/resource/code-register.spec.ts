@@ -17,7 +17,8 @@ describe('alta con código de negocio', () => {
     return tree
   }
 
-  const useCase = (tree: Tree) => tree.read('out/backend/application/use-cases/register-client-usecase.service.ts', 'utf-8') ?? ''
+  const useCase = (tree: Tree) =>
+    tree.read('out/backend/application/use-cases/register-client-usecase.service.ts', 'utf-8') ?? ''
 
   it('inyecta el puerto de secuencia', async () => {
     const source = useCase(await emit('client'))

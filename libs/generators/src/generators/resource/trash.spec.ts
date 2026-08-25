@@ -240,9 +240,7 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     const typeorm = await emit('customer')
     const mongo = await emit('customer', 'mongo')
 
-    expect(read(typeorm, 'out/backend-tests-integration/typeorm-customer.repository.test.ts')).not.toContain(
-      'Deleted'
-    )
+    expect(read(typeorm, 'out/backend-tests-integration/typeorm-customer.repository.test.ts')).not.toContain('Deleted')
     expect(read(mongo, 'out/backend-tests-integration/mongoose-customer.repository.test.ts')).not.toContain('Deleted')
   })
 

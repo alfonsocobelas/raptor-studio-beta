@@ -30,6 +30,15 @@ export interface <%- className %>FormValue {
   <%- line %>
 <%_ }) _%>
 }
+
+/**
+ * El valor con el que se PRE-RELLENA un alta. Es el FormValue sin nulos: sus opcionales son
+ * nullables porque así los quiere el backend al guardar, pero los controles del formulario no
+ * son nullable, así que patchValue(FormValue) no compila.
+ */
+export type <%- className %>FormInitial = Partial<{
+  [K in keyof <%- className %>FormValue]: NonNullable<<%- className %>FormValue[K]>
+}>
 <%_ groupValidatorDefs.forEach(def => { _%>
 
 <%- def %>
@@ -161,7 +170,7 @@ export class <%- className %>DialogComponent {
 
   readonly <%- propertyName %> = input<<%- dtoName %> | null>(null)
   /** Precarga del alta (spec 64): quien abre el diálogo puede fijar campos (p. ej. la fecha del calendario). */
-  readonly initialValue = input<Partial<<%- className %>FormValue> | null>(null)
+  readonly initialValue = input<<%- className %>FormInitial | null>(null)
   readonly saved = output<<%- className %>FormValue>()
   readonly close = output<void>()
 <%_ if (lookupStateLines.length) { _%>

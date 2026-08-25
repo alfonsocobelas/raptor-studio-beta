@@ -25,9 +25,7 @@ describe('el caso de uso y el endpoint de una transición', () => {
     expect(useCase).toContain('contract.terminate()')
     expect(useCase).toContain('contractRepository.save(contract)')
 
-    expect(read('backend/application/use-cases/expire-contract-usecase.service.ts')).toContain(
-      'contract.expire()'
-    )
+    expect(read('backend/application/use-cases/expire-contract-usecase.service.ts')).toContain('contract.expire()')
   })
 
   it('emite el handler de delegación fina', () => {
@@ -94,7 +92,10 @@ describe('el cableado del módulo con verbos multi-palabra', () => {
       },
       fields: {
         id: { type: 'uuid', pk: true },
-        estado: { type: 'string', vo: { name: 'MuestraEstado', fieldName: 'Estado', values: ['recibida', 'en_analisis'] } }
+        estado: {
+          type: 'string',
+          vo: { name: 'MuestraEstado', fieldName: 'Estado', values: ['recibida', 'en_analisis'] }
+        }
       }
     }
 

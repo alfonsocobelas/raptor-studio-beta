@@ -28,7 +28,9 @@ describe('resource generator — imports cruzados de módulo con forwardRef', ()
     const module = read(await emit('account'), 'out/backend/accounts.module.ts')
 
     expect(module).toContain("import { forwardRef, Module } from '@nestjs/common'")
-    expect(module).toMatch(/imports: \[[^\]]*forwardRef\(\(\) => InstallationsModule\), forwardRef\(\(\) => WorklogsModule\)/)
+    expect(module).toMatch(
+      /imports: \[[^\]]*forwardRef\(\(\) => InstallationsModule\), forwardRef\(\(\) => WorklogsModule\)/
+    )
     expect(module).not.toMatch(/imports: \[[^\]]*(?<!\(\) => )InstallationsModule/)
   })
 

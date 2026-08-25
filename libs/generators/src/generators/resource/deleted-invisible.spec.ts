@@ -33,7 +33,10 @@ describe('resource generator — lo archivado no se ve (spec 38 TASK-09)', () =>
     })
 
     it('el repositorio TypeORM solo mira lo archivado en la papelera y en deletedOpOf', async () => {
-      const repo = read(await emit('account'), 'out/backend/infrastructure/persistence/typeorm/typeorm-account.repository.ts')
+      const repo = read(
+        await emit('account'),
+        'out/backend/infrastructure/persistence/typeorm/typeorm-account.repository.ts'
+      )
 
       // matching/count/exists no lo mencionan: heredan la exclusión del repositorio base
       expect(repo).toContain('async matching(criteria: Criteria)')

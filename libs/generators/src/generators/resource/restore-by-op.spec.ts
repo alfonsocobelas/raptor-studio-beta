@@ -30,10 +30,7 @@ describe('resource generator — restauración por operación (spec 38 TASK-06)'
   })
 
   it('el restore del padre revierte el árbol entero dentro de la transacción', async () => {
-    const useCase = read(
-      await emit('account'),
-      'out/backend/application/use-cases/restore-account-usecase.service.ts'
-    )
+    const useCase = read(await emit('account'), 'out/backend/application/use-cases/restore-account-usecase.service.ts')
 
     expect(useCase).toContain('const op = await this.accountRepository.deletedOpOf(accountId)')
     expect(useCase).toContain('await this.txManager.runInTransaction(async () => {')
@@ -43,10 +40,7 @@ describe('resource generator — restauración por operación (spec 38 TASK-06)'
   })
 
   it('una hoja restaura como siempre: su fila, sin transacción', async () => {
-    const useCase = read(
-      await emit('worklog'),
-      'out/backend/application/use-cases/restore-worklog-usecase.service.ts'
-    )
+    const useCase = read(await emit('worklog'), 'out/backend/application/use-cases/restore-worklog-usecase.service.ts')
 
     expect(useCase).toContain('.restore(WorklogId.create(input.id))')
     expect(useCase).not.toContain('runInTransaction')

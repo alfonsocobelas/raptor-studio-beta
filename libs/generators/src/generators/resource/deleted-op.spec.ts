@@ -19,7 +19,7 @@ describe('resource generator — operación de borrado (spec 38)', () => {
   it('una entidad suave lleva deletedOp junto a deletedAt', async () => {
     const entity = await emit('project')
 
-    expect(entity).toContain('@DeleteDateColumn({ type: \'timestamptz\', nullable: true })')
+    expect(entity).toContain("@DeleteDateColumn({ type: 'timestamptz', nullable: true })")
     expect(entity).toContain("@Column('uuid', { name: 'deleted_op', nullable: true })")
     expect(entity).toContain('deletedOp?: string')
   })

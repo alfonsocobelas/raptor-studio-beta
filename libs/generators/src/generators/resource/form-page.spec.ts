@@ -39,7 +39,7 @@ describe('resource generator — página-formulario (spec 48)', () => {
 
     expect(page).toContain('class InvoiceFormPageComponent')
     expect(page).toContain('this._service.create({ id: generateId(), ...value })')
-    expect(page).toContain("this._notify.success(")
+    expect(page).toContain('this._notify.success(')
     expect(page).toContain('this._router.navigate')
   })
 
@@ -98,7 +98,9 @@ describe('resource generator — página-formulario (spec 48)', () => {
     const spec = tree.read('out/frontend/project-form-page.component.spec.ts', 'utf-8') ?? ''
 
     expect(spec).toContain('ProjectFormPageComponent')
-    expect(spec).toContain('{ provide: CustomerService, useValue: { lookup: () => Promise.resolve({ items: [], hasMore: false }), findOne: () => new Promise(() => undefined) } }')
+    expect(spec).toContain(
+      '{ provide: CustomerService, useValue: { lookup: () => Promise.resolve({ items: [], hasMore: false }), findOne: () => new Promise(() => undefined) } }'
+    )
   })
 
   it('sin form no cambia nada de lo demás emitido', async () => {

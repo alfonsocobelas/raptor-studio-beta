@@ -7,7 +7,8 @@ export const account = defineResource({
   name: 'account',
   plural: 'accounts',
   context: 'solaris',
-  brief: 'Quien contrata la instalación. Se busca por nombre y por CIF; la baja es reversible porque un cliente que se fue puede volver.',
+  brief:
+    'Quien contrata la instalación. Se busca por nombre y por CIF; la baja es reversible porque un cliente que se fue puede volver.',
   schemaName: 'solaris',
   route: '/solaris/accounts',
   sharedDomainAlias: '@solaris/shared/domain',

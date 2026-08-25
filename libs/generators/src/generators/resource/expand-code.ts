@@ -43,7 +43,7 @@ export function expandCode(definition: ResourceDefinition): ResourceDefinition {
         vo: {
           name: `${className}Code`,
           // en inglés como el resto de VOs del canon ('Customer city'), no la etiqueta en español
-        fieldName: `${className} code`,
+          fieldName: `${className} code`,
           lengthRule: 'max',
           constraintKey: 'CODE'
         },

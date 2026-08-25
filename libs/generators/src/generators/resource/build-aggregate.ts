@@ -86,7 +86,9 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
   // El par de fechas del period se pliega en un solo miembro `period`
   const periodFields = period ? [period.start, period.end] : []
   const members = ctxs.filter(c => !periodFields.includes(c.name))
-  const editable = ctxs.filter(c => !c.sync && !c.isState && (!c.maint || c.field.updatable) && !periodFields.includes(c.name))
+  const editable = ctxs.filter(
+    c => !c.sync && !c.isState && (!c.maint || c.field.updatable) && !periodFields.includes(c.name)
+  )
 
   const sharedVoNames = new Set<string>()
   for (const c of ctxs) if (c.field.voShared) sharedVoNames.add(c.field.voShared.name)
@@ -154,7 +156,10 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
       ...(period ? ['period: Period'] : [])
     ],
     primitivePropsLines: ['id: string', ...ctxs.map(c => primitiveLine(c))],
-    updateOmitKeys: ['id', ...ctxs.filter(c => c.sync || c.isState || (c.maint && !c.field.updatable)).map(c => c.name)],
+    updateOmitKeys: [
+      'id',
+      ...ctxs.filter(c => c.sync || c.isState || (c.maint && !c.field.updatable)).map(c => c.name)
+    ],
     uniquenessPickKeys: ctxs.filter(c => c.unique).map(c => c.name),
     registerPropsLines: [
       'id: string',

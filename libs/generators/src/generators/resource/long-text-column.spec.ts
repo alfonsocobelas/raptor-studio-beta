@@ -54,9 +54,7 @@ describe('columnas de texto largo', () => {
   // Una columna calculada no tiene campo detrás, así que nadie puede deducir si es texto
   // largo: lo dice su autora o no lo tiene.
   it('una columna virtual no recibe techo por la política', () => {
-    const columns = renderFrontendColumns(
-      resource({}, { resumen: { show: true, order: 1, label: 'Resumen' } })
-    )
+    const columns = renderFrontendColumns(resource({}, { resumen: { show: true, order: 1, label: 'Resumen' } }))
 
     expect(columns.join('\n')).not.toContain('maxWidth')
   })

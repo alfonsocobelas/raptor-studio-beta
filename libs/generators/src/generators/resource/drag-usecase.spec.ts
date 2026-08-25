@@ -21,8 +21,12 @@ describe('resource generator — borrado transaccional del árbol (spec 38 TASK-
   it('el use case del padre inyecta los repos del árbol y el TransactionManager', async () => {
     const useCase = read(await emit('account'), 'out/backend/application/use-cases/remove-account-usecase.service.ts')
 
-    expect(useCase).toContain("import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'")
-    expect(useCase).toContain("import { InstallationRepository } from '../../../installations/domain/installation-repository'")
+    expect(useCase).toContain(
+      "import { TransactionManager } from '../../../../../shared/domain/persistence/transaction-manager'"
+    )
+    expect(useCase).toContain(
+      "import { InstallationRepository } from '../../../installations/domain/installation-repository'"
+    )
     expect(useCase).toContain("import { WorklogRepository } from '../../../worklogs/domain/worklog-repository'")
     expect(useCase).toContain('private readonly installationRepository: InstallationRepository')
     expect(useCase).toContain('private readonly txManager: TransactionManager')
@@ -36,9 +40,7 @@ describe('resource generator — borrado transaccional del árbol (spec 38 TASK-
     expect(useCase).toContain(
       'const installationIds = await this.installationRepository.removeDraggedByAccountId([accountId.value], op)'
     )
-    expect(useCase).toContain(
-      'await this.worklogRepository.removeDraggedByInstallationId(installationIds, op)'
-    )
+    expect(useCase).toContain('await this.worklogRepository.removeDraggedByInstallationId(installationIds, op)')
   })
 
   it('una hoja no abre transacción: su remove es una sola sentencia', async () => {
@@ -54,14 +56,13 @@ describe('resource generator — borrado transaccional del árbol (spec 38 TASK-
 
     expect(module).toContain("import { InstallationsModule } from '../installations/installations.module'")
     expect(module).toContain("import { WorklogsModule } from '../worklogs/worklogs.module'")
-    expect(module).toMatch(/imports: \[[^\]]*forwardRef\(\(\) => InstallationsModule\), forwardRef\(\(\) => WorklogsModule\)/)
+    expect(module).toMatch(
+      /imports: \[[^\]]*forwardRef\(\(\) => InstallationsModule\), forwardRef\(\(\) => WorklogsModule\)/
+    )
   })
 
   it('el test unitario emitido del padre construye el use case con sus colaboradores', async () => {
-    const test = read(
-      await emit('account'),
-      'out/backend-tests-application/remove-account-usecase.test.ts'
-    )
+    const test = read(await emit('account'), 'out/backend-tests-application/remove-account-usecase.test.ts')
 
     expect(test).toContain('runInTransaction')
     expect(test).toContain('removeDraggedByAccountId')

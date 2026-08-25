@@ -2,7 +2,14 @@ import { names } from '@nx/devkit'
 import { MODELS } from './models/registry'
 import { SHARED_VOS } from './models/shared-vos'
 import { denormTargets } from './denormalization'
-import { AccessRole, FieldDefinition, ResourceDefinition, resolveAccess, VoDefinition, wantsSoftDelete } from '@raptor/schema'
+import {
+  AccessRole,
+  FieldDefinition,
+  ResourceDefinition,
+  resolveAccess,
+  VoDefinition,
+  wantsSoftDelete
+} from '@raptor/schema'
 
 /**
  * Entrypoints synthesis: REST controller, class-validator body DTOs, export

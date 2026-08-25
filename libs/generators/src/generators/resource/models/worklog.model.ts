@@ -8,7 +8,8 @@ export const worklog = defineResource({
   name: 'worklog',
   plural: 'worklogs',
   context: 'solaris',
-  brief: 'La visita de un técnico a una obra, con sus horas. Entran en bloque desde la app de campo en CSV y su evolución mes a mes es lo que mira el jefe de obra.',
+  brief:
+    'La visita de un técnico a una obra, con sus horas. Entran en bloque desde la app de campo en CSV y su evolución mes a mes es lo que mira el jefe de obra.',
   schemaName: 'solaris',
   route: '/solaris/worklogs',
   sharedDomainAlias: '@solaris/shared/domain',

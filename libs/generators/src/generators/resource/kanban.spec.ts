@@ -49,8 +49,8 @@ describe('resource generator — kanban', () => {
   it('sobre un enum normal, soltar actualiza el campo con el update parcial', async () => {
     const kanban = await emitted({ kanban: { field: 'source' } })
 
-    expect(kanban).toContain(".update(")
-    expect(kanban).toContain("source: value")
+    expect(kanban).toContain('.update(')
+    expect(kanban).toContain('source: value')
     expect(kanban).not.toContain('legalMoves')
   })
 

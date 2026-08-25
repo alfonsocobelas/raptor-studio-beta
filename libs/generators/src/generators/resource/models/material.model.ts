@@ -8,7 +8,8 @@ export const material = defineResource({
   name: 'material',
   plural: 'materials',
   context: 'solaris',
-  brief: 'El catálogo que consulta compras. La tarifa llega del proveedor en CSV cada trimestre y se sube en bloque en vez de teclearse.',
+  brief:
+    'El catálogo que consulta compras. La tarifa llega del proveedor en CSV cada trimestre y se sube en bloque en vez de teclearse.',
   schemaName: 'solaris',
   route: '/solaris/materials',
   sharedDomainAlias: '@solaris/shared/domain',

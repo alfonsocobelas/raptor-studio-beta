@@ -225,9 +225,7 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
     it('la ficha condiciona editar, borrar y cada transición con sus roles', () => {
       const detail = read('frontend/permit-detail.component.ts')
 
-      expect(detail).toContain(
-        "import { CAN_DELETE_ROLES, CAN_EDIT_ROLES, TRANSITION_ROLES } from './permit-access'"
-      )
+      expect(detail).toContain("import { CAN_DELETE_ROLES, CAN_EDIT_ROLES, TRANSITION_ROLES } from './permit-access'")
       expect(detail).toMatch(/@if \(canEdit\(\)\) \{[\s\S]{0,300}lucidePencil/)
       expect(detail).toMatch(/@if \(canDelete\(\)\) \{[\s\S]{0,300}lucideTrash2/)
       expect(detail).toMatch(/@if \(canTransition\('approve'\) &&/)

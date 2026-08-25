@@ -139,7 +139,9 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     builderCreateArgs: [
       `id: ${className}Id.create(this.props.id)`,
       // el campo de estado no viaja a create(): AggregateProps lo excluye (nace en initial)
-      ...ctxs.filter(c => !c.sync && !c.isState && !periodFields.includes(c.name)).map(c => `${c.name}: ${createArg(c)}`),
+      ...ctxs
+        .filter(c => !c.sync && !c.isState && !periodFields.includes(c.name))
+        .map(c => `${c.name}: ${createArg(c)}`),
       ...(period
         ? [
             `period: Period.create(\n        this.props.${period.start} ? ContractDate.create(new Date(this.props.${period.start})) : null,\n        this.props.${period.end} ? ContractDate.create(new Date(this.props.${period.end})) : null\n      )`
