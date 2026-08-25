@@ -16,7 +16,7 @@ import { buildSampleRows } from './mock-data'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
-      <div class="mb-4 flex items-center gap-2">
+      <div class="app-toolbar mb-4 flex items-center gap-2">
         <div
           class="border-input text-muted-foreground flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-sm"
         >
@@ -29,7 +29,7 @@ import { buildSampleRows } from './mock-data'
 
       <div class="grid grid-cols-2 gap-4">
         @for (card of v.cards; track card.title) {
-          <article class="hover:border-primary/50 rounded-lg border p-4 transition-colors">
+          <article class="app-panel hover:border-primary/50 rounded-lg border p-4 transition-colors">
             <div class="mb-2 flex items-start justify-between gap-3">
               <h3 class="font-semibold leading-tight">{{ card.title }}</h3>
               @if (card.metric) {
@@ -39,7 +39,7 @@ import { buildSampleRows } from './mock-data'
             <p class="text-muted-foreground mb-3 text-sm">{{ card.subtitle }}</p>
             <div class="mb-3 flex flex-wrap gap-1.5">
               @for (chip of card.chips; track chip) {
-                <span class="bg-muted rounded-full px-2 py-0.5 text-xs">{{ chip }}</span>
+                <span class="app-chip bg-muted rounded-full px-2 py-0.5 text-xs">{{ chip }}</span>
               }
             </div>
             <div class="flex items-center justify-between border-t pt-3">

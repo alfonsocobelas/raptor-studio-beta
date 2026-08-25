@@ -20,22 +20,22 @@ interface PreviewColumn {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (view(); as v) {
-      <div class="bg-card rounded-lg border">
-        <div class="flex items-center justify-between border-b px-4 py-2.5">
+      <div class="app-panel bg-card rounded-lg border">
+        <div class="app-panel-head flex items-center justify-between border-b px-4 py-2.5">
           <h3 class="text-sm font-semibold">{{ v.labelPlural }}</h3>
           <span class="text-muted-foreground text-[10px] tracking-widest">ARRASTRA PARA CAMBIAR DE ESTADO</span>
         </div>
         <div class="grid gap-3 p-3" [style.grid-template-columns]="'repeat(' + v.columns.length + ', minmax(0, 1fr))'">
           @for (column of v.columns; track column.value) {
-            <section class="bg-background/60 min-h-24 rounded-md border">
-              <header class="flex items-center justify-between border-b px-2 py-1.5">
+            <section class="app-panel bg-background/60 min-h-24 rounded-md border">
+              <header class="app-panel-head flex items-center justify-between border-b px-2 py-1.5">
                 <span class="text-[10px] font-semibold uppercase tracking-widest">{{ column.label }}</span>
                 <span class="text-muted-foreground text-[10px]">{{ column.cards.length }}</span>
               </header>
               <div class="space-y-1.5 p-1.5">
                 @for (card of column.cards; track card) {
                   <div
-                    class="bg-card truncate rounded border px-2 py-1 text-[11px] shadow-sm"
+                    class="app-chip bg-card truncate rounded border px-2 py-1 text-[11px] shadow-sm"
                     [attr.data-testid]="'kanban-card-' + column.value"
                   >
                     {{ card }}
@@ -50,7 +50,10 @@ interface PreviewColumn {
         </div>
       </div>
     } @else {
-      <div class="bg-card text-muted-foreground rounded-lg border px-4 py-8 text-center text-sm" data-testid="kanban-empty">
+      <div
+        class="app-panel app-toolbar bg-card text-muted-foreground rounded-lg border px-4 py-8 text-center text-sm"
+        data-testid="kanban-empty"
+      >
         El tablero necesita un campo «lista de valores»: sus valores serán las columnas.
       </div>
     }

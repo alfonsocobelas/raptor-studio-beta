@@ -27,6 +27,25 @@ describe('hooks de piel en los bloques del lienzo', () => {
     })
   })
 
+  describe('kanban y tarjetas', () => {
+    it('el kanban nombra tablero, columna, cabecera y tarjeta', () => {
+      const kanban = source('canvas-kanban.component.ts')
+
+      expect(kanban.match(/app-panel[^-]/g)?.length).toBeGreaterThanOrEqual(2)
+      expect(kanban).toContain('app-panel-head')
+      expect(kanban).toContain('app-chip')
+      expect(kanban).toContain('app-toolbar')
+    })
+
+    it('la galería de tarjetas nombra tarjeta, etiqueta y su tira de filtros', () => {
+      const cards = source('canvas-cards.component.ts')
+
+      expect(cards).toContain('app-panel')
+      expect(cards).toContain('app-chip')
+      expect(cards).toContain('app-toolbar')
+    })
+  })
+
   describe('calendario', () => {
     const calendar = (): string => source('canvas-calendar.component.ts')
 
