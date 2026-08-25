@@ -71,6 +71,29 @@ describe('resource generator — calendario interactivo (alta)', () => {
     expect(calendar).toContain('CAN_CREATE_ROLES')
   })
 
+  it('sin ficha, la tira abre el diálogo de edición', async () => {
+    const calendar = await emitted(withCalendar())
+
+    expect(calendar).toContain('edit(item)')
+    expect(calendar).toContain('this.editingOrder.set(item)')
+  })
+
+  it('con ficha la tira sigue navegando al detalle, sin gesto de edición', async () => {
+    const calendar = await emitted(withCalendar({ detail: {} }))
+
+    expect(calendar).toContain('open(item)')
+    expect(calendar).not.toContain('edit(item)')
+  })
+
+  it('con matriz de accesos la edición obedece a CAN_EDIT_ROLES', async () => {
+    const calendar = await emitted(
+      withCalendar({ access: { view: ['user', 'viewer'], create: ['user'], edit: ['user'], delete: [] } })
+    )
+
+    expect(calendar).toContain('CAN_EDIT_ROLES')
+    expect(calendar).toContain('canEdit()')
+  })
+
   it('sin features.edit el calendario sigue siendo de solo lectura', async () => {
     const calendar = await emitted(withCalendar({ list: { features: { edit: false } } }))
 

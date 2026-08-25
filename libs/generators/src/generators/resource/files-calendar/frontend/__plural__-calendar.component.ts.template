@@ -10,7 +10,7 @@ import { AuthService } from '../../../../../../core/services/auth.service'
 <%_ } _%>
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
 <%_ if (features.edit && entry.accessDeclared) { _%>
-import { CAN_CREATE_ROLES } from './<%- fileName %>-access'
+import { <%- detail ? 'CAN_CREATE_ROLES' : 'CAN_CREATE_ROLES, CAN_EDIT_ROLES' %> } from './<%- fileName %>-access'
 <%_ } _%>
 <%_ if (features.edit) { _%>
 import { generateId } from '../../../../../../shared/utils/uuid'
@@ -93,6 +93,11 @@ interface CalendarCell {
                         tabindex="0"
                         (click)="open(item)"
                         (keydown.enter)="open(item)"
+<%_ } else if (features.edit) { _%>
+                        role="button"
+                        tabindex="0"
+                        (click)="edit(item)"
+                        (keydown.enter)="edit(item)"
 <%_ } _%>
                       >
                         {{ text(item, stripLabel) }}
@@ -124,6 +129,11 @@ interface CalendarCell {
                   tabindex="0"
                   (click)="open(item)"
                   (keydown.enter)="open(item)"
+<%_ } else if (features.edit) { _%>
+                  role="button"
+                  tabindex="0"
+                  (click)="edit(item)"
+                  (keydown.enter)="edit(item)"
 <%_ } _%>
                 >
                   {{ text(item, stripLabel) }}
@@ -194,6 +204,12 @@ export class <%- pluralClassName %>CalendarComponent {
     const role = this._sessionUser()?.role
     return role !== undefined && CAN_CREATE_ROLES.includes(role)
   })
+<%_ if (!detail) { _%>
+  protected readonly canEdit = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_EDIT_ROLES.includes(role)
+  })
+<%_ } _%>
 <%_ } else { _%>
   protected readonly canWrite = inject(AuthService).canWrite
 <%_ } _%>
@@ -305,6 +321,18 @@ export class <%- pluralClassName %>CalendarComponent {
     this.dialogOpen.set(true)
   }
 
+<%_ if (!detail) { _%>
+  /** Sin ficha, la tira edita en el mismo diálogo del listado; la guardia replica al @Roles del update. */
+  edit(item: <%- dtoName %>): void {
+    if (!<%- entry.canEditExpr %>) {
+      return
+    }
+    this.editing<%- className %>.set(item)
+    this.createDate.set(null)
+    this.dialogOpen.set(true)
+  }
+
+<%_ } _%>
   async onSave(value: <%- className %>FormValue): Promise<void> {
     const editing = this.editing<%- className %>()
     this.dialogOpen.set(false)

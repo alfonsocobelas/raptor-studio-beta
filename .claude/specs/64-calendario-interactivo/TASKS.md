@@ -8,9 +8,9 @@
 - [x] **TASK-02**: Test + gesto de alta en la plantilla del calendario: botón «+» por celda
       (mes/semana) y botón en vista día, diálogo con la fecha precargada, `onSave` con
       create/update + toasts. Condicionado a `features.edit` y `entry.canCreateExpr`.
-- [ ] **TASK-03**: Test + edición desde la tira sin `detail`: clic abre el diálogo de
+- [x] **TASK-03**: Test + edición desde la tira sin `detail`: clic abre el diálogo de
       edición (guardia `entry.canEditExpr`); con `detail` se conserva la navegación.
-- [ ] **TASK-04**: Re-baseline del oro (commit propio) tras revisar que el diff es SOLO
-      calendario + diálogo.
+- [x] **TASK-04**: Re-baseline del oro — hecho por tarea (commits propios tras TASK-01 y
+      TASK-02); TASK-03 no altera el oro (el modelo project tiene ficha).
 - [ ] **TASK-05**: Regenerar la demo veterinaria y verificar: typecheck verde + alta de
       cita desde el calendario + apertura de tira (humo con navegador si el entorno lo da).
