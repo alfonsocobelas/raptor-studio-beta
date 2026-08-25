@@ -213,6 +213,56 @@ const CABINA_CSS = `
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
+/* ── los hooks de piel (spec 67) ─────────────────────────────────────────────
+   Lo que las plantillas escriben a mano — el panel del calendario, la columna del kanban, la
+   ficha de detalle — no lleva directiva ninguna, así que ningún selector del preset lo
+   alcanzaba: la app era idéntica en las tres pieles salvo la tabla. Cabina lo trata como
+   instrumentación: superficies planas fundidas con la rejilla y datos en monospace.
+   El color sale de los tokens --shell-*, que ya tienen su valor en claro y en oscuro; por eso
+   estas reglas no necesitan gemelas bajo .dark. */
+.app-panel {
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  border-color: var(--shell-border);
+}
+
+.app-panel-head {
+  border-color: var(--shell-border);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+.app-cell {
+  border-color: var(--shell-border);
+  font-size: 0.74rem;
+}
+
+.app-chip {
+  border-radius: 0;
+  box-shadow: none;
+  border-color: var(--shell-border);
+  font-family: var(--font-mono-cabina);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+/* el toolbar viste también sus controles crudos: gantt, galería, importación y detalle
+   escriben <button>/<input> sin pasar por [appbtn]/[appinput], y el buscador suelto lleva el
+   hook en sí mismo (de ahí input.app-toolbar) */
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar {
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-mono-cabina);
+  font-size: 0.74rem;
+}
+
 `
 
 /** Tokens del tema que pisa suite: casi recto y con la tipografía del sector. */
@@ -303,6 +353,44 @@ const SUITE_CSS = `
   box-shadow: none;
   border-color: var(--grid-line);
 }
+/* ── los hooks de piel (spec 67) ─────────────────────────────────────────────
+   Mismo motivo que en cabina: el cromo escrito a mano en las plantillas necesita un punto de
+   enganche. Suite lo trata como un ERP: casi recto, sin sombras, con la cabecera etiquetada y
+   los bordes de la rejilla. Los colores salen de --grid-*, declarados en los dos temas. */
+.app-panel {
+  border-radius: 2px;
+  box-shadow: none;
+  border-color: var(--grid-line);
+}
+
+.app-panel-head {
+  background: var(--grid-head-bg);
+  border-color: var(--grid-line);
+  font-weight: 600;
+}
+
+.app-cell {
+  border-color: var(--grid-line);
+}
+
+.app-chip {
+  border-radius: 2px;
+  border-color: var(--grid-line);
+  font-weight: 500;
+}
+
+/* como en cabina, el toolbar arrastra a sus controles crudos y al buscador suelto */
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar {
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.app-toolbar {
+  border-color: var(--grid-line);
+}
+
 `
 
 export const DESIGN_PRESETS: readonly DesignPreset[] = [

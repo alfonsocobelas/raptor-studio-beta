@@ -1,6 +1,7 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import { appGenerator } from './app'
+import { DESIGN_HOOKS } from './design/hooks'
 
 /**
  * Spec 37: la ranura `design`. Medido en la sesión del 2026-08-09, cambiar de librería de
@@ -165,6 +166,33 @@ describe('app generator — ranura design (spec 37)', () => {
     }
     // y sigue vistiendo los hlm: data-table y kpi-card son los que los llevan
     expect(styles).toContain('[hlmbtn]')
+  })
+
+  // Spec 67: el cromo que las plantillas escriben a mano (panel del calendario, columna del
+  // kanban, ficha de detalle…) sólo lo alcanza la piel a través del vocabulario de hooks.
+  it.each(['cabina', 'suite'])('%s viste los cinco hooks del vocabulario', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+
+    for (const hook of DESIGN_HOOKS) {
+      expect(styles).toMatch(new RegExp(`\\.${hook}[^{]*\\{`))
+    }
+  })
+
+  it.each(['cabina', 'suite'])('%s alcanza los controles crudos de un toolbar', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+
+    // gantt, galería, importación y detalle escriben <button>/<input> sin contrato neutro
+    expect(styles).toContain('.app-toolbar button')
+    expect(styles).toContain('.app-toolbar input')
+    // y el control suelto que lleva el hook en sí mismo (el buscador del cronograma)
+    expect(styles).toContain('input.app-toolbar')
+  })
+
+  it('el cromo de los hooks de cabina sale de los tokens del shell: sirve en claro y en oscuro', async () => {
+    const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
+    const panel = styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? ''
+
+    expect(panel).toContain('var(--shell-border)')
   })
 
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {
