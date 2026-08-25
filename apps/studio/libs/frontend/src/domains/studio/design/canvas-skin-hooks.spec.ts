@@ -27,6 +27,15 @@ describe('hooks de piel en los bloques del lienzo', () => {
     })
   })
 
+  describe('ficha de detalle', () => {
+    const detail = (): string => source('canvas-detail.component.ts')
+
+    it('la rejilla de campos es superficie y la tira de acciones un toolbar', () => {
+      expect(detail()).toContain('app-panel')
+      expect(detail()).toContain('app-toolbar')
+    })
+  })
+
   describe('kanban y tarjetas', () => {
     it('el kanban nombra tablero, columna, cabecera y tarjeta', () => {
       const kanban = source('canvas-kanban.component.ts')

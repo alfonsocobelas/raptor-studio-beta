@@ -26,7 +26,7 @@ import { buildSampleRows } from './mock-data'
 
         <div class="flex items-start justify-between gap-4">
           <h1 class="text-2xl font-bold tracking-tight">{{ v.title }}</h1>
-          <div class="flex gap-2">
+          <div class="app-toolbar flex gap-2">
             <span class="border-input flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
               <ng-icon name="lucidePencil" size="16" />
               Editar
@@ -38,7 +38,7 @@ import { buildSampleRows } from './mock-data'
           </div>
         </div>
 
-        <dl class="bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
+        <dl class="app-panel bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
           @for (row of v.rows; track row.label) {
             <div class="min-w-0">
               <dt class="text-muted-foreground text-xs uppercase tracking-wide">{{ row.label }}</dt>
