@@ -46,13 +46,13 @@ export class ContractService {
     return firstValueFrom(this._http.get<ContractDto>(`${API_URL}/${id}`))
   }
 
-  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
-  lookup(search: string): Promise<ContractDto[]> {
+  /** Typeahead de referencias (spec 66): búsqueda propia y paginada, SIN tocar el request compartido. */
+  lookup(search: string, page = 1): Promise<{ items: ContractDto[]; hasMore: boolean }> {
     return firstValueFrom(
       this._http.get<OffsetPaginatedOutput<ContractDto>>(API_URL, {
-        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+        params: this.buildParams({ page, pageSize: 20, ...(search ? { search } : {}) })
       })
-    ).then(page => page.items)
+    ).then(result => ({ items: result.items, hasMore: page * 20 < result.total }))
   }
 
   create(dto: RegisterContractDto): Promise<void> {

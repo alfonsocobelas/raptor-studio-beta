@@ -71,7 +71,9 @@ const dateRangeValidator = (group: AbstractControl): ValidationErrors | null => 
                   controlId="pcustomer"
                   placeholder="Seleccionar cliente"
                   [options]="customerIdOptions()"
+                  [hasMore]="customerIdHasMore()"
                   (searchChange)="onCustomerIdSearch($event)"
+                  (loadMore)="onCustomerIdMore()"
                 />
                 @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
                   <span class="text-destructive text-sm">Obligatorio</span>
@@ -125,10 +127,26 @@ export class ProjectFormPageComponent {
   private readonly _customerService = inject(CustomerService)
 
   readonly customerIdOptions = signal<AppSelectOption[]>([])
+  readonly customerIdHasMore = signal(false)
+  private _customerIdTerm = ''
+  private _customerIdPage = 1
   onCustomerIdSearch(term: string): void {
-    void this._customerService
-      .lookup(term)
-      .then(items => this.customerIdOptions.set(items.map(item => ({ value: item.id, label: item.name }))))
+    this._customerIdTerm = term
+    this._customerIdPage = 1
+    void this._customerService.lookup(term).then(result => {
+      this.customerIdOptions.set(result.items.map(item => ({ value: item.id, label: item.name })))
+      this.customerIdHasMore.set(result.hasMore)
+    })
+  }
+  onCustomerIdMore(): void {
+    this._customerIdPage += 1
+    void this._customerService.lookup(this._customerIdTerm, this._customerIdPage).then(result => {
+      this.customerIdOptions.update(options => [
+        ...options,
+        ...result.items.map(item => ({ value: item.id, label: item.name }))
+      ])
+      this.customerIdHasMore.set(result.hasMore)
+    })
   }
 
   protected readonly statusOptions = STATUS_OPTIONS

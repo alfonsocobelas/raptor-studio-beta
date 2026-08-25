@@ -46,13 +46,13 @@ export class CustomerService {
     return firstValueFrom(this._http.get<CustomerDto>(`${API_URL}/${id}`))
   }
 
-  /** Typeahead de referencias (spec 66): búsqueda propia, SIN tocar el request compartido. */
-  lookup(search: string): Promise<CustomerDto[]> {
+  /** Typeahead de referencias (spec 66): búsqueda propia y paginada, SIN tocar el request compartido. */
+  lookup(search: string, page = 1): Promise<{ items: CustomerDto[]; hasMore: boolean }> {
     return firstValueFrom(
       this._http.get<OffsetPaginatedOutput<CustomerDto>>(API_URL, {
-        params: this.buildParams({ page: 1, pageSize: 20, ...(search ? { search } : {}) })
+        params: this.buildParams({ page, pageSize: 20, ...(search ? { search } : {}) })
       })
-    ).then(page => page.items)
+    ).then(result => ({ items: result.items, hasMore: page * 20 < result.total }))
   }
 
   create(dto: RegisterCustomerDto): Promise<void> {
