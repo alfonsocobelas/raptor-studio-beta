@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { ResourceDefinition } from '@raptor/schema'
 import type { Tree } from '@nx/devkit'
@@ -22,6 +24,32 @@ describe('resource generator — hooks de piel', () => {
   }
 
   afterEach(() => registerModels([MODELS['contract']]))
+
+  // Las superficies COMPARTIDAS: el diálogo de alta/edición sale en todas las pantallas, así
+  // que dejarlo neutro se lleva por delante media spec. Viven en el frontend-kernel, no en el
+  // generador de recursos, y por eso se comprueban leyendo la plantilla.
+  describe('superficies compartidas del kernel', () => {
+    const kernelTemplate = (relative: string): string =>
+      readFileSync(join(__dirname, '..', 'frontend-kernel', relative), 'utf-8')
+
+    it('el diálogo de alta y edición es una superficie de piel', () => {
+      const html = kernelTemplate('files-ui/spartan/shared/components/ui/dialog.ts.template')
+
+      expect(html).toContain('app-panel')
+    })
+
+    it('el desplegable del lookup es una superficie de piel', () => {
+      const html = kernelTemplate('files-ui/spartan/shared/components/ui/lookup.ts.template')
+
+      expect(html).toContain('app-panel')
+    })
+
+    it('la tabla de relacionados es una superficie de piel', () => {
+      const html = kernelTemplate('files/shared/components/related-table.ts.template')
+
+      expect(html).toContain('app-panel')
+    })
+  })
 
   describe('adjuntos', () => {
     const attachments = (): Promise<string> => emit({ attachments: true }, 'contract-attachments.component.ts')

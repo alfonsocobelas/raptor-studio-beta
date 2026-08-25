@@ -45,7 +45,7 @@ interface PagedResponse {
           Todavía no hay {{ title().toLowerCase() }}.
         </p>
       } @else {
-        <div class="overflow-x-auto rounded-lg border">
+        <div class="app-panel overflow-x-auto rounded-lg border">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b">
