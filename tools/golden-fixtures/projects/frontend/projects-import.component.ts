@@ -78,7 +78,7 @@ function parseCsv(text: string): string[][] {
       <input
         type="file"
         accept=".csv,text/csv"
-        class="border-input w-full rounded-md border px-3 py-2 text-sm"
+        class="app-toolbar border-input w-full rounded-md border px-3 py-2 text-sm"
         data-testid="import-file"
         (change)="onFile($event)"
       />
@@ -92,7 +92,7 @@ function parseCsv(text: string): string[][] {
         </p>
       }
       @if (failures().length) {
-        <div class="border-destructive/40 max-h-48 space-y-1 overflow-y-auto rounded-md border p-3">
+        <div class="app-panel border-destructive/40 max-h-48 space-y-1 overflow-y-auto rounded-md border p-3">
           @for (failure of failures(); track failure.row + failure.message) {
             <p class="text-destructive text-sm" data-testid="import-failure">
               Fila {{ failure.row }}: {{ failure.message }}
@@ -104,7 +104,7 @@ function parseCsv(text: string): string[][] {
         <p class="text-sm font-medium" data-testid="import-done">{{ imported() }} filas importadas</p>
       }
 
-      <div class="flex justify-end gap-2">
+      <div class="app-toolbar flex justify-end gap-2">
         <button type="button" class="border-input rounded-md border px-3 py-2 text-sm" (click)="close.emit()">
           {{ imported() === null ? 'Cancelar' : 'Cerrar' }}
         </button>

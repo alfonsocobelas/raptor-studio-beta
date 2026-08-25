@@ -34,20 +34,20 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
         <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + columns.length + ', minmax(0, 1fr))'">
           @for (column of columns; track column.value) {
             <section
-              class="bg-card flex min-h-40 flex-col rounded-lg border transition-opacity"
+              class="app-panel bg-card flex min-h-40 flex-col rounded-lg border transition-opacity"
               [class.opacity-40]="draggingFrom() !== null && !acceptsDrop(column.value)"
               [attr.data-column]="column.value"
               (dragover)="onDragOver($event, column.value)"
               (drop)="onDrop($event, column.value)"
             >
-              <header class="flex items-center justify-between border-b px-3 py-2">
+              <header class="app-panel-head flex items-center justify-between border-b px-3 py-2">
                 <h2 class="text-xs font-semibold uppercase tracking-widest">{{ column.label }}</h2>
                 <span class="text-muted-foreground text-xs">{{ cardsOf(column.value).length }}</span>
               </header>
               <div class="flex-1 space-y-2 p-2">
                 @for (item of cardsOf(column.value); track item.id) {
                   <article
-                    class="bg-background rounded-md border p-2 text-sm shadow-sm"
+                    class="app-chip bg-background rounded-md border p-2 text-sm shadow-sm"
                     draggable="true"
                     (dragstart)="onDragStart($event, item)"
                     (dragend)="draggingFrom.set(null)"
@@ -63,7 +63,7 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
             </section>
           }
         </div>
-        <p class="text-muted-foreground text-[10px] uppercase tracking-widest">
+        <p class="app-toolbar text-muted-foreground text-[10px] uppercase tracking-widest">
           Contratos · columnas por Estado · {{ total() }} en total
         </p>
       }

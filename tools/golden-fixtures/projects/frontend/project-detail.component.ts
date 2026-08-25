@@ -48,7 +48,7 @@ interface DetailRow {
       } @else if (project(); as item) {
         <div class="flex items-start justify-between gap-4">
           <h1 class="text-2xl font-bold tracking-tight">{{ item.customerName }}</h1>
-          <div class="flex gap-2">
+          <div class="app-toolbar flex gap-2">
             @if (canWrite()) {
               <button
                 type="button"
@@ -72,7 +72,7 @@ interface DetailRow {
           </div>
         </div>
 
-        <dl class="bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
+        <dl class="app-panel bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
           @for (row of rows; track row.key) {
             <div class="min-w-0">
               <dt class="text-muted-foreground text-xs uppercase tracking-wide">{{ row.label }}</dt>
@@ -84,8 +84,8 @@ interface DetailRow {
         <app-projects-attachments [projectId]="item.id" />
 
         <!-- la timeline del registro (spec 31): qué pasó, qué cambió y cuándo -->
-        <section class="bg-card rounded-lg border p-4">
-          <h2 class="mb-3 text-sm font-semibold">Historial</h2>
+        <section class="app-panel bg-card rounded-lg border p-4">
+          <h2 class="app-panel-head mb-3 text-sm font-semibold">Historial</h2>
           @if (!history().length) {
             <p class="text-muted-foreground text-sm">Sin cambios registrados</p>
           } @else {
@@ -99,7 +99,7 @@ interface DetailRow {
                   @if (changedFields(event).length) {
                     <div class="mt-1 flex flex-wrap gap-1">
                       @for (change of changedFields(event); track change.field) {
-                        <span class="bg-muted rounded-full px-2 py-0.5 text-xs">
+                        <span class="app-chip bg-muted rounded-full px-2 py-0.5 text-xs">
                           <span class="text-muted-foreground">{{ change.field }}:</span>
                           {{ change.from }} → {{ change.to }}
                         </span>

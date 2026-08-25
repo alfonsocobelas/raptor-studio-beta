@@ -47,7 +47,7 @@ interface DetailRow {
       } @else if (contract(); as item) {
         <div class="flex items-start justify-between gap-4">
           <h1 class="text-2xl font-bold tracking-tight">{{ item.contractNumber }}</h1>
-          <div class="flex gap-2">
+          <div class="app-toolbar flex gap-2">
             @if (canWrite() && ['active', 'expiring'].includes(item.status)) {
               <button
                 type="button"
@@ -83,7 +83,7 @@ interface DetailRow {
           </div>
         </div>
 
-        <dl class="bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
+        <dl class="app-panel bg-card grid grid-cols-1 gap-x-8 gap-y-4 rounded-lg border p-6 sm:grid-cols-2">
           @for (row of rows; track row.key) {
             <div class="min-w-0">
               <dt class="text-muted-foreground text-xs uppercase tracking-wide">{{ row.label }}</dt>

@@ -39,8 +39,8 @@ interface CalendarCell {
       } @else if (error()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los proyectos</p>
       } @else {
-        <div class="bg-card rounded-lg border">
-          <div class="flex items-center justify-between border-b px-4 py-3">
+        <div class="app-panel bg-card rounded-lg border">
+          <div class="app-panel-head flex items-center justify-between border-b px-4 py-3">
             <h2 class="text-base font-semibold">Proyectos</h2>
             <div class="flex items-center gap-1 text-sm">
               <button
@@ -74,7 +74,7 @@ interface CalendarCell {
               }
               @for (cell of cells(); track cell.key) {
                 <div
-                  class="group min-h-20 border-b border-r p-1 last:border-r-0"
+                  class="app-cell group min-h-20 border-b border-r p-1 last:border-r-0"
                   [class.opacity-40]="!cell.inPeriod"
                   [class.ring-1]="cell.isToday"
                   [class.ring-primary]="cell.isToday"
@@ -95,7 +95,7 @@ interface CalendarCell {
                   <div class="mt-1 space-y-1">
                     @for (item of cell.strips; track item.id) {
                       <div
-                        class="bg-muted truncate rounded-sm border-l-2 px-1 py-0.5 text-xs"
+                        class="app-chip bg-muted truncate rounded-sm border-l-2 px-1 py-0.5 text-xs"
                         [style.border-left-color]="stripColor(item)"
                         role="button"
                         tabindex="0"
@@ -122,7 +122,7 @@ interface CalendarCell {
               }
               @for (item of dayStrips(); track item.id) {
                 <div
-                  class="bg-muted rounded-sm border-l-2 px-2 py-1 text-sm"
+                  class="app-chip bg-muted rounded-sm border-l-2 px-2 py-1 text-sm"
                   [style.border-left-color]="stripColor(item)"
                   role="button"
                   tabindex="0"
@@ -138,7 +138,7 @@ interface CalendarCell {
           }
 
           <div
-            class="text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-[10px] uppercase tracking-widest"
+            class="app-toolbar text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-[10px] uppercase tracking-widest"
           >
             <span>Proyectos · campo fecha Fecha inicio</span>
             <div class="flex gap-2">
@@ -157,9 +157,9 @@ interface CalendarCell {
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-3 text-sm">
+        <div class="app-toolbar flex flex-wrap gap-3 text-sm">
           @for (entry of legend; track entry.value) {
-            <span class="bg-card inline-flex items-center gap-2 rounded-md border px-3 py-1">
+            <span class="app-chip bg-card inline-flex items-center gap-2 rounded-md border px-3 py-1">
               <span class="size-2.5 rounded-sm" [style.background-color]="colorOf(entry.colorIndex)"></span>
               {{ entry.label }}
             </span>

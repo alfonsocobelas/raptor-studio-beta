@@ -21,9 +21,9 @@ interface AttachmentDto {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="mt-6">
-      <h2 class="mb-2 text-sm font-semibold">Ficheros adjuntos</h2>
+      <h2 class="app-panel-head mb-2 text-sm font-semibold">Ficheros adjuntos</h2>
       <label
-        class="border-input hover:bg-accent/40 flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors"
+        class="app-panel border-input hover:bg-accent/40 flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors"
         [class.bg-accent]="dragging()"
         (dragover)="onDragOver($event)"
         (dragleave)="dragging.set(false)"
@@ -41,7 +41,7 @@ interface AttachmentDto {
 
       <ul class="mt-3 space-y-1">
         @for (file of files(); track file.id) {
-          <li class="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+          <li class="app-chip flex items-center justify-between rounded-md border px-3 py-2 text-sm">
             <button type="button" class="flex items-center gap-2 hover:underline" (click)="download(file)">
               <ng-icon name="lucideFile" size="14" class="text-muted-foreground" />
               {{ file.fileName }}

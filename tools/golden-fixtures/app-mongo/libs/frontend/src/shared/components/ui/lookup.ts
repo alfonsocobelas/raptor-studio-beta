@@ -29,7 +29,7 @@ import { AppSelectOption } from './select'
       />
       @if (open()) {
         <ul
-          class="bg-popover text-popover-foreground absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md"
+          class="app-panel bg-popover text-popover-foreground absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md"
         >
           @for (option of options(); track option.value) {
             <li>
