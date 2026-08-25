@@ -23,6 +23,52 @@ describe('resource generator — hooks de piel', () => {
 
   afterEach(() => registerModels([MODELS['contract']]))
 
+  describe('galería', () => {
+    const gallery = (): Promise<string> => emit({ gallery: {} }, 'contracts-gallery.component.ts')
+
+    it('cada tarjeta es una superficie y sus etiquetas pastillas', async () => {
+      const html = await gallery()
+
+      expect(html).toContain(
+        'class="app-panel bg-card flex flex-col gap-2 rounded-lg border p-4 transition-shadow hover:shadow-md"'
+      )
+      expect(html).toContain('class="app-chip bg-muted rounded-full px-2 py-0.5 text-xs"')
+    })
+
+    it('el buscador y la paginación son controles de piel', async () => {
+      const html = await gallery()
+
+      expect(html).toContain('class="app-toolbar border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"')
+      expect(html.match(/app-toolbar/g)?.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  describe('cronograma', () => {
+    const gantt = (): Promise<string> => emit({}, 'contracts-gantt.component.ts')
+
+    it('el lienzo es una superficie, su eje la cabecera y cada fila una celda', async () => {
+      const html = await gantt()
+
+      expect(html).toContain('class="app-panel bg-card overflow-x-auto rounded-lg border"')
+      expect(html).toContain('app-panel-head')
+      expect(html).toContain('app-cell')
+    })
+
+    it('la barra de tarea es una pastilla', async () => {
+      const html = await gantt()
+
+      expect(html).toContain('class="app-chip bg-primary absolute top-2 h-4 rounded-sm"')
+    })
+
+    it('el buscador y la paginación son controles de piel', async () => {
+      const html = await gantt()
+
+      // el buscador es un <input> suelto sin contrato neutro: el hook va en el propio control
+      expect(html).toContain('class="app-toolbar border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"')
+      expect(html.match(/app-toolbar/g)?.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
   describe('kanban', () => {
     const kanban = (): Promise<string> => emit({ kanban: { field: 'status' } }, 'contracts-kanban.component.ts')
 

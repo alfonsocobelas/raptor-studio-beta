@@ -18,7 +18,13 @@ export const DESIGN_HOOKS = [
   'app-panel',
   /** cabecera de esa superficie: título y controles */
   'app-panel-head',
-  /** tira de controles o pie de vista; el preset viste también sus button/input descendientes */
+  /**
+   * tira de controles o pie de vista; el preset viste también sus button/input descendientes.
+   * Sobre un control SUELTO que no pasa por [appinput]/[appbtn] (el buscador del cronograma o
+   * de la galería, escritos con Tailwind a mano), el hook va en el propio control: por eso el
+   * preset lista además `input.app-toolbar`. Que esas plantillas deberían usar los contratos
+   * neutros es un defecto aparte, anotado como backlog en la spec 67.
+   */
   'app-toolbar',
   /** pastilla de dato: evento del calendario, tarjeta del kanban, etiqueta */
   'app-chip',

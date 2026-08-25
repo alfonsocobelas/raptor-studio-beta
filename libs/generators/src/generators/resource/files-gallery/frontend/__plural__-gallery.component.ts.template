@@ -23,7 +23,7 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
       </div>
 
       <input
-        class="border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"
+        class="app-toolbar border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"
         type="search"
         placeholder="Buscar…"
         [ngModel]="search()"
@@ -41,7 +41,7 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of items(); track item.id) {
             <article
-              class="bg-card flex flex-col gap-2 rounded-lg border p-4 transition-shadow hover:shadow-md"
+              class="app-panel bg-card flex flex-col gap-2 rounded-lg border p-4 transition-shadow hover:shadow-md"
 <%_ if (detail) { _%>
               role="button"
               tabindex="0"
@@ -56,7 +56,7 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
 <%_ if (gallery.chips.length) { _%>
               <div class="flex flex-wrap gap-1">
                 @for (chip of chips; track chip.key) {
-                  <span class="bg-muted rounded-full px-2 py-0.5 text-xs">
+                  <span class="app-chip bg-muted rounded-full px-2 py-0.5 text-xs">
                     <span class="text-muted-foreground">{{ chip.label }}:</span> {{ text(item, chip.key) }}
                   </span>
                 }
@@ -72,7 +72,7 @@ import { formatValue } from '../../../../../../shared/utils/format-value'
           }
         </div>
 
-        <div class="flex items-center justify-between text-sm">
+        <div class="app-toolbar flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{{ total() }} en total</span>
           <div class="flex gap-2">
             <button

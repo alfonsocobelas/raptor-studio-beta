@@ -31,7 +31,7 @@ interface GanttRow {
       </div>
 
       <input
-        class="border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"
+        class="app-toolbar border-input w-full max-w-sm rounded-md border px-3 py-2 text-sm"
         type="search"
         placeholder="Buscar…"
         [ngModel]="search()"
@@ -46,17 +46,17 @@ interface GanttRow {
       } @else if (!rows().length) {
         <p class="text-muted-foreground py-12 text-center text-sm"><%- ui.empty %></p>
       } @else {
-        <div class="bg-card overflow-x-auto rounded-lg border">
+        <div class="app-panel bg-card overflow-x-auto rounded-lg border">
           <!-- cabecera del eje: una marca por mes del intervalo cargado -->
           @if (axis(); as scale) {
-            <div class="text-muted-foreground relative ml-48 h-6 border-b text-[10px]">
+            <div class="app-panel-head text-muted-foreground relative ml-48 h-6 border-b text-[10px]">
               @for (tick of ticks(); track tick.left) {
                 <span class="absolute top-1 -translate-x-1/2" [style.left.%]="tick.left">{{ tick.label }}</span>
               }
             </div>
           }
           @for (row of rows(); track row.id) {
-            <div class="flex items-center border-b last:border-b-0" data-testid="gantt-row">
+            <div class="app-cell flex items-center border-b last:border-b-0" data-testid="gantt-row">
               <span class="w-48 shrink-0 truncate px-3 py-2 text-sm" [title]="row.label">{{ row.label }}</span>
               <div class="relative h-8 flex-1">
                 @for (tick of ticks(); track tick.left) {
@@ -64,7 +64,7 @@ interface GanttRow {
                 }
                 @if (barOf(row); as bar) {
                   <span
-                    class="bg-primary absolute top-2 h-4 rounded-sm"
+                    class="app-chip bg-primary absolute top-2 h-4 rounded-sm"
                     [class.opacity-60]="bar.open"
                     [style.left.%]="bar.left"
                     [style.width.%]="bar.width"
@@ -87,7 +87,7 @@ interface GanttRow {
           }
         </div>
 
-        <div class="flex items-center justify-between text-sm">
+        <div class="app-toolbar flex items-center justify-between text-sm">
           <span class="text-muted-foreground">{{ total() }} en total</span>
           <div class="flex gap-2">
             <button
