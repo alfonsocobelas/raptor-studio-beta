@@ -195,6 +195,40 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(panel).toContain('var(--shell-border)')
   })
 
+  // Petición de Alfonso (2026-08-25): la piel también cambia de LETRA. Nada de stacks del
+  // sistema, que en cada máquina caen en otra cosa: la fuente viaja como dependencia
+  // self-hosted, igual que la del tema (fase 3 de la spec 20).
+  it('cabina escribe en condensada y pone los datos en JetBrains Mono', async () => {
+    const files = await emit({ ...base, design: 'cabina' })
+    const styles = files.get(STYLES) ?? ''
+    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
+
+    expect(themeBlock(styles)).toMatch(/--font-sans:\s*'Roboto Condensed Variable'/)
+    expect(styles).toMatch(/--font-mono-cabina:\s*'JetBrains Mono Variable'/)
+    // self-hosted: los ficheros los trae el npm install de la app, sin CDNs
+    expect(styles).toContain("@import '@fontsource-variable/roboto-condensed'")
+    expect(styles).toContain("@import '@fontsource-variable/jetbrains-mono'")
+    expect(pkg.dependencies['@fontsource-variable/roboto-condensed']).toBeDefined()
+    expect(pkg.dependencies['@fontsource-variable/jetbrains-mono']).toBeDefined()
+  })
+
+  it('suite escribe en IBM Plex Sans, la letra del software corporativo', async () => {
+    const files = await emit({ ...base, design: 'suite' })
+    const styles = files.get(STYLES) ?? ''
+    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
+
+    expect(themeBlock(styles)).toMatch(/--font-sans:\s*'IBM Plex Sans Variable'/)
+    expect(styles).toContain("@import '@fontsource-variable/ibm-plex-sans'")
+    expect(pkg.dependencies['@fontsource-variable/ibm-plex-sans']).toBeDefined()
+  })
+
+  it('la piel neutra no arrastra ninguna fuente: sigue con la pila del sistema', async () => {
+    const files = await emit({ ...base, design: 'actual' })
+    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
+
+    expect(Object.keys(pkg.dependencies ?? {}).some(name => name.includes('fontsource'))).toBe(false)
+  })
+
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {
     const styles = (await emit({ ...base, design: 'actual' })).get(STYLES) ?? ''
 

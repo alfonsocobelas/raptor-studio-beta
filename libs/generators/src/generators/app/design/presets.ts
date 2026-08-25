@@ -7,10 +7,11 @@
  * neutrales del ADR-003. Lo que sí se percibe al abrir la app es el SHELL (dónde vive la
  * navegación), la DENSIDAD y el cromo. Eso es lo que parametriza un preset.
  *
- * Un preset aporta tres cosas y ninguna más:
+ * Un preset aporta cuatro cosas y ninguna más:
  *   1. `files`  — su carpeta de override, copiada DESPUÉS del esqueleto (gana su app.component)
- *   2. `tokens` — los tokens DEL TEMA que pisa; se inyectan dentro de `:root .theme-x`
- *   3. `css`    — sus reglas y sus tokens propios, añadidos al final del styles.css del tema
+ *   2. `fonts`  — sus tipografías, self-hosted: dependencia + @import, como las del tema
+ *   3. `tokens` — los tokens DEL TEMA que pisa; se inyectan dentro de `:root .theme-x`
+ *   4. `css`    — sus reglas y sus tokens propios, añadidos al final del styles.css del tema
  *
  * Por qué `tokens` va aparte de `css` (spec 67): el bloque `css` se añade al final del fichero,
  * y ahí `:root { --radius: 0 }` es CSS MUERTO. El tema declara ese mismo token en
@@ -29,6 +30,11 @@ export interface DesignPreset {
   description: string
   /** Carpeta de override relativa a app/, o undefined si no cambia el esqueleto */
   files?: string
+  /**
+   * Fuentes que trae la piel, self-hosted igual que la del tema: su paquete entra en el
+   * package.json de la app y su `@import` en el styles.css. Vacío = la pila del sistema.
+   */
+  fonts: { package: string; family: string }[]
   /** Declaraciones que pisan tokens del tema, inyectadas dentro de su bloque; '' si ninguna */
   tokens: string
   /** Bloque CSS del preset; '' si se conforma con los tokens del tema */
@@ -40,6 +46,8 @@ export interface DesignPreset {
  * tema son `calc(var(--radius) - 4px)`, y pisar sólo `--radius` los dejaría en -4px.
  */
 const CABINA_TOKENS = `  /* preset «cabina»: esquinas vivas en toda la app, no sólo en los componentes vestidos */
+  /* y letra condensada: en un centro de operaciones cabe más dato por línea */
+  --font-sans: 'Roboto Condensed Variable', 'Roboto Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
   --radius: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -163,7 +171,7 @@ const CABINA_CSS = `
 
 /* los DATOS van en monospace, como en la maqueta: cifras de tabla, buscador y paginación */
 :root {
-  --font-mono-cabina: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo, monospace;
+  --font-mono-cabina: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 .app-shell-main table td.text-right {
@@ -272,7 +280,7 @@ const SUITE_TOKENS = `  /* preset «suite»: rectangular y con el stack tipográ
   --radius-md: 2px;
   --radius-lg: 2px;
   --radius-xl: 2px;
-  --font-sans: 'Segoe UI', Tahoma, Verdana, ui-sans-serif, system-ui, sans-serif;`
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Segoe UI', Tahoma, ui-sans-serif, sans-serif;`
 
 /**
  * Cromo de Suite. Banda de marca corporativa y pestañas de módulo: el patrón que reconoce sin
@@ -398,6 +406,7 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     id: 'actual',
     label: 'Actual (neutro)',
     description: 'El shell que ya emite el acelerador: barra lateral sobria, sin identidad de sector',
+    fonts: [],
     tokens: '',
     css: ''
   },
@@ -406,6 +415,10 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Cabina (centro de operaciones)',
     description: 'Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro',
     files: 'files-design/cabina',
+    fonts: [
+      { package: '@fontsource-variable/roboto-condensed', family: 'Roboto Condensed Variable' },
+      { package: '@fontsource-variable/jetbrains-mono', family: 'JetBrains Mono Variable' }
+    ],
     tokens: CABINA_TOKENS,
     css: CABINA_CSS
   },
@@ -414,6 +427,7 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Suite (ERP corporativo)',
     description: 'Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP',
     files: 'files-design/suite',
+    fonts: [{ package: '@fontsource-variable/ibm-plex-sans', family: 'IBM Plex Sans Variable' }],
     tokens: SUITE_TOKENS,
     css: SUITE_CSS
   }
