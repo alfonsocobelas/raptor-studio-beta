@@ -12,15 +12,27 @@ formulario. Cero errores de consola en las tres.
 
 ## Medida objetiva (mismas pantallas, tres pieles)
 
-| Medida (calendario)   | actual         | cabina                 | suite                   |
-| --------------------- | -------------- | ---------------------- | ----------------------- |
-| radio del panel       | 10px           | 0px                    | 2px                     |
-| letra del cuerpo      | -apple-system  | Roboto Condensed       | IBM Plex Sans           |
-| letra de los titulares| -apple-system  | JetBrains Mono         | Source Serif 4          |
-| letra de las cifras   | -apple-system  | JetBrains Mono         | IBM Plex Sans           |
-| cifras tabulares      | normal         | tabular-nums           | tabular-nums            |
-| radio de la pastilla  | 6px            | 0px                    | 2px                     |
-| cabecera de panel     | sin transformar | MAYÚSCULAS            | banda etiquetada        |
+La letra es la MISMA en las tres (decisión de Alfonso, 2026-08-25): la identidad la dan forma,
+densidad y cromo. Lo que sí cambia, medido con `getComputedStyle` sobre la app construida:
+
+| esquinas de…            | actual | cabina | suite |
+| ----------------------- | ------ | ------ | ----- |
+| tarjeta KPI             | 14px   | 0px    | 2px   |
+| panel del calendario    | 10px   | 0px    | 2px   |
+| columna del kanban      | 10px   | 0px    | 2px   |
+| tarjeta del kanban      | 8px    | 0px    | 2px   |
+| pastilla de evento      | 6px    | 0px    | 2px   |
+| botón primario          | 8px    | 0px    | 2px   |
+| buscador / input        | 8px    | 0px    | 2px   |
+| badge de estado         | 26px   | 0px    | 2px   |
+| diálogo de alta         | 10px   | 0px    | 2px   |
+| desplegable (popover)   | 8px    | 0px    | 1.6px |
+| ítem activo del menú    | 8px    | 0px    | 1.6px |
+| tarjeta KPI (t. oscuro) | 14px   | 0px    | 2px   |
+
+Más: cifras tabulares en cabina y suite (normal en el neutro), cabecera de panel en MAYÚSCULAS
+en cabina y banda etiquetada en suite, y fondo de panel transparente en cabina (opaco en las
+otras dos), también en tema oscuro.
 
 Capturas congeladas en `docs/style/smoke-67-{panel,calendario}-{actual,cabina,suite}.png`.
 
