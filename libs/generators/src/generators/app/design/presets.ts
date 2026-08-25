@@ -103,8 +103,14 @@ const CABINA_CSS = `
 
 /* el badge de la maqueta skindemo: etiqueta OUTLINE uppercase con color semántico por
    variante — fondo fuera, borde al color del texto. El hue por variante lo fija el preset
-   (verde=default, ámbar=secondary, azul=outline, rojo=destructive) en los dos temas. */
-[hlmbadge] {
+   (verde=default, ámbar=secondary, azul=outline, rojo=destructive) en los dos temas.
+
+   Cada selector de directiva lleva su contrato neutro al lado (spec 67): [hlm*] sólo existe
+   en data-table y kpi-card; el resto de las pantallas emite [appbtn]/[appinput]/[appbadge],
+   y sin ellos la piel se quedaba en las tablas. Las clases de variante coinciden en los dos
+   contratos (bg-primary, bg-secondary, bg-destructive), así que el par comparte regla. */
+[hlmbadge],
+[appbadge] {
   border-radius: 0;
   padding-top: 0;
   padding-bottom: 0;
@@ -115,35 +121,43 @@ const CABINA_CSS = `
   border: 1px solid currentColor !important;
 }
 
-[hlmbadge].bg-primary {
+[hlmbadge].bg-primary,
+[appbadge].bg-primary {
   color: oklch(0.45 0.12 160);
 }
 
-[hlmbadge].bg-secondary {
+[hlmbadge].bg-secondary,
+[appbadge].bg-secondary {
   color: oklch(0.5 0.12 75);
 }
 
-[hlmbadge].bg-destructive {
+[hlmbadge].bg-destructive,
+[appbadge].bg-destructive {
   color: oklch(0.5 0.19 25);
 }
 
-[hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
+[hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive),
+[appbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
   color: oklch(0.45 0.09 250);
 }
 
-.dark [hlmbadge].bg-primary {
+.dark [hlmbadge].bg-primary,
+.dark [appbadge].bg-primary {
   color: oklch(0.78 0.14 160);
 }
 
-.dark [hlmbadge].bg-secondary {
+.dark [hlmbadge].bg-secondary,
+.dark [appbadge].bg-secondary {
   color: oklch(0.8 0.13 80);
 }
 
-.dark [hlmbadge].bg-destructive {
+.dark [hlmbadge].bg-destructive,
+.dark [appbadge].bg-destructive {
   color: oklch(0.72 0.17 25);
 }
 
-.dark [hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
+.dark [hlmbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive),
+.dark [appbadge]:not(.bg-primary):not(.bg-secondary):not(.bg-destructive) {
   color: oklch(0.75 0.1 250);
 }
 
@@ -157,18 +171,21 @@ const CABINA_CSS = `
   font-size: 0.74rem;
 }
 
-[hlminput] {
+[hlminput],
+[appinput] {
   font-family: var(--font-mono-cabina);
   font-size: 0.78rem;
 }
 
 /* botones e inputs a la altura de la fila: un centro de operaciones no desperdicia alto */
-[hlmbtn] {
+[hlmbtn],
+[appbtn] {
   border-radius: 0;
   box-shadow: none;
 }
 
-[hlminput] {
+[hlminput],
+[appinput] {
   border-radius: 0;
 }
 
@@ -262,17 +279,20 @@ const SUITE_CSS = `
 }
 
 /* botones rectangulares, planos y con borde: nada flota en un ERP */
-[hlmbtn] {
+[hlmbtn],
+[appbtn] {
   border-radius: 2px;
   box-shadow: none;
 }
 
-[hlminput] {
+[hlminput],
+[appinput] {
   border-radius: 2px;
 }
 
 /* el badge es una etiqueta de estado rectangular, no una píldora */
-[hlmbadge] {
+[hlmbadge],
+[appbadge] {
   border-radius: 2px;
   font-weight: 500;
 }

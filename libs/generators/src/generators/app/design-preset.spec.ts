@@ -153,6 +153,20 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(styles.slice(styles.indexOf('}', styles.indexOf(':root .theme-')))).not.toMatch(/:root \{[^}]*--radius:/)
   })
 
+  // Spec 67: los selectores de directiva del preset sólo hablaban `hlm*`, y esos atributos
+  // existen en DOS plantillas de todo el emitido (data-table y kpi-card). El resto de las
+  // pantallas usa los contratos neutros del ADR-003 — [appbtn], [appinput], [appbadge] — así
+  // que la piel no las alcanzaba: salvo las tablas, la app era idéntica en las tres pieles.
+  it.each(['cabina', 'suite'])('%s viste también los contratos neutros, no sólo los hlm', async design => {
+    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+
+    for (const contract of ['appbtn', 'appinput', 'appbadge']) {
+      expect(styles).toContain(`[${contract}]`)
+    }
+    // y sigue vistiendo los hlm: data-table y kpi-card son los que los llevan
+    expect(styles).toContain('[hlmbtn]')
+  })
+
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {
     const styles = (await emit({ ...base, design: 'actual' })).get(STYLES) ?? ''
 
