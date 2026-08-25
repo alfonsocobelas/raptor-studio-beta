@@ -46,8 +46,11 @@ export interface DesignPreset {
  * tema son `calc(var(--radius) - 4px)`, y pisar sólo `--radius` los dejaría en -4px.
  */
 const CABINA_TOKENS = `  /* preset «cabina»: esquinas vivas en toda la app, no sólo en los componentes vestidos */
-  /* y letra condensada: en un centro de operaciones cabe más dato por línea */
+  /* y letra condensada: en un centro de operaciones cabe más dato por línea. Los TITULARES
+     van en la mono de los datos — lo que distingue una piel de otra a un metro es el
+     esqueleto de la letra grande, no cuál de las dos sans neutras se eligió */
   --font-sans: 'Roboto Condensed Variable', 'Roboto Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
   --radius: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -107,6 +110,13 @@ const CABINA_CSS = `
 .app-shell-main {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+}
+
+/* los titulares en la mono: un centro de operaciones rotula como una consola */
+.app-shell-main h1,
+.app-shell-main h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 /* el badge de la maqueta skindemo: etiqueta OUTLINE uppercase con color semántico por
@@ -280,7 +290,8 @@ const SUITE_TOKENS = `  /* preset «suite»: rectangular y con el stack tipográ
   --radius-md: 2px;
   --radius-lg: 2px;
   --radius-xl: 2px;
-  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Segoe UI', Tahoma, ui-sans-serif, sans-serif;`
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Segoe UI', Tahoma, ui-sans-serif, sans-serif;
+  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;`
 
 /**
  * Cromo de Suite. Banda de marca corporativa y pestañas de módulo: el patrón que reconoce sin
@@ -329,7 +340,13 @@ const SUITE_CSS = `
 /* ── componentes y tipografía (profundización 2026-08-10): suite es un ERP — rectangular,
    corporativo y sin sombras. Tokens y selectores de directiva, nunca componentes. */
 
-/* los títulos de pantalla se contienen: un ERP no grita */
+/* los títulos de pantalla se contienen: un ERP no grita. Y van en serif: es lo que separa
+   esta piel de cabina de un vistazo, sin tener que comparar dos sans parecidas. */
+.app-shell-main h1,
+.app-shell-main h2 {
+  font-family: var(--font-display);
+}
+
 .app-shell-main h1 {
   font-size: 1.15rem;
   font-weight: 600;
@@ -427,7 +444,10 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Suite (ERP corporativo)',
     description: 'Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP',
     files: 'files-design/suite',
-    fonts: [{ package: '@fontsource-variable/ibm-plex-sans', family: 'IBM Plex Sans Variable' }],
+    fonts: [
+      { package: '@fontsource-variable/ibm-plex-sans', family: 'IBM Plex Sans Variable' },
+      { package: '@fontsource-variable/source-serif-4', family: 'Source Serif 4 Variable' }
+    ],
     tokens: SUITE_TOKENS,
     css: SUITE_CSS
   }

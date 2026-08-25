@@ -212,14 +212,31 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(pkg.dependencies['@fontsource-variable/jetbrains-mono']).toBeDefined()
   })
 
-  it('suite escribe en IBM Plex Sans, la letra del software corporativo', async () => {
+  it('suite escribe en IBM Plex Sans y titula en serif: la letra del software corporativo', async () => {
     const files = await emit({ ...base, design: 'suite' })
     const styles = files.get(STYLES) ?? ''
     const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
 
     expect(themeBlock(styles)).toMatch(/--font-sans:\s*'IBM Plex Sans Variable'/)
     expect(styles).toContain("@import '@fontsource-variable/ibm-plex-sans'")
-    expect(pkg.dependencies['@fontsource-variable/ibm-plex-sans']).toBeDefined()
+    expect(styles).toContain("@import '@fontsource-variable/source-serif-4'")
+    expect(pkg.dependencies['@fontsource-variable/source-serif-4']).toBeDefined()
+  })
+
+  // Alfonso, 2026-08-25: «has puesto la misma tipografía a cabina y suite». Eran dos fuentes
+  // distintas, pero las dos sans neutras: a un metro se leen igual. Lo que las separa es el
+  // ESQUELETO de los títulos — cabina titula en monospace de instrumentación, suite en serif
+  // corporativa — y eso se ve en cada pantalla sin comparar nada.
+  it('las tres pieles titulan con esqueletos distintos, no con dos sans parecidas', async () => {
+    const display = async (design: string): Promise<string> => {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+      return styles.match(/--font-display:[^;]*/)?.[0] ?? ''
+    }
+
+    expect(await display('cabina')).toContain('JetBrains Mono Variable')
+    expect(await display('suite')).toContain('Source Serif 4 Variable')
+    // el neutro no titula distinto: no tiene identidad de sector que declarar
+    expect(await display('actual')).toBe('')
   })
 
   it('la piel neutra no arrastra ninguna fuente: sigue con la pila del sistema', async () => {
