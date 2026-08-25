@@ -73,6 +73,17 @@ export function validateDesign(design: DesignPayload): DesignPayload {
   // spec 46: la matriz de accesos habla de verbos REALES de la máquina de SU entidad — el
   // mensaje accionable llega al diseñar, como las transiciones de la 43; roles y duplicados
   // los vigila el defineResource de abajo
+  // Una máquina sin transiciones congela el campo: desaparece del formulario («solo
+  // transiciona», spec 43) pero no hay verbo que lo mueva. Lo destapó la demo veterinaria:
+  // el borrador promovió «veterinario» a estado vacío y las citas nacían sin veterinario.
+  for (const resource of design.resources) {
+    if (resource.state && resource.state.transitions.length === 0) {
+      throw new Error(
+        `La máquina de estados de ${resource.name} está sin transiciones: el campo «${resource.state.field}» quedaría congelado. Declara transiciones o deja el campo como enum normal.`
+      )
+    }
+  }
+
   for (const resource of design.resources) {
     const verbs = resource.access?.transitions ? Object.keys(resource.access.transitions) : []
     if (!verbs.length) continue

@@ -269,6 +269,13 @@ describe('validateDesign — la máquina de estados (spec 43)', () => {
     expect(() => validateDesign(base())).not.toThrow()
   })
 
+  it('una máquina sin transiciones se rechaza: congela el campo sin que nadie pueda moverlo', () => {
+    const broken = solicitud()
+    broken.state = { ...broken.state, transitions: [] }
+
+    expect(() => validateDesign(base(broken))).toThrow(/sin transiciones/)
+  })
+
   it('una máquina que no pasa el gate del schema se rechaza con su motivo', () => {
     const broken = solicitud()
     broken.state = { ...broken.state, initial: 'limbo' }
