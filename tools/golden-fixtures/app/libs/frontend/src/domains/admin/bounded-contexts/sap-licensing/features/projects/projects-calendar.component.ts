@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
 import { Router } from '@angular/router'
 import { ProjectDto } from '@app/shared/domain'
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
+import { AuthService } from '../../../../../../core/services/auth.service'
 import { ProjectService, OffsetPaginatedOutput } from '../../../../../../core/services/project.service'
+import { generateId } from '../../../../../../shared/utils/uuid'
+import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -20,7 +25,7 @@ interface CalendarCell {
  */
 @Component({
   selector: 'app-projects-calendar',
-  imports: [],
+  imports: [AppDialog, ProjectDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -69,7 +74,7 @@ interface CalendarCell {
               }
               @for (cell of cells(); track cell.key) {
                 <div
-                  class="min-h-20 border-b border-r p-1 last:border-r-0"
+                  class="group min-h-20 border-b border-r p-1 last:border-r-0"
                   [class.opacity-40]="!cell.inPeriod"
                   [class.ring-1]="cell.isToday"
                   [class.ring-primary]="cell.isToday"
@@ -77,6 +82,16 @@ interface CalendarCell {
                   <span class="text-xs" [class.text-primary]="cell.isToday" [class.font-semibold]="cell.isToday">{{
                     cell.dayNumber
                   }}</span>
+                  @if (canWrite()) {
+                    <button
+                      type="button"
+                      class="text-muted-foreground hover:text-foreground float-right px-1 text-xs opacity-0 focus:opacity-100 group-hover:opacity-100"
+                      (click)="openCreate(cell.key)"
+                      aria-label="Nuevo proyecto"
+                    >
+                      +
+                    </button>
+                  }
                   <div class="mt-1 space-y-1">
                     @for (item of cell.strips; track item.id) {
                       <div
@@ -96,6 +111,15 @@ interface CalendarCell {
             </div>
           } @else {
             <div class="space-y-1 p-4">
+              @if (canWrite()) {
+                <button
+                  type="button"
+                  class="text-muted-foreground hover:text-foreground mb-2 text-xs uppercase tracking-widest"
+                  (click)="openCreate(anchorKey())"
+                >
+                  + Nuevo proyecto
+                </button>
+              }
               @for (item of dayStrips(); track item.id) {
                 <div
                   class="bg-muted rounded-sm border-l-2 px-2 py-1 text-sm"
@@ -144,11 +168,24 @@ interface CalendarCell {
         <p class="text-muted-foreground text-sm">{{ total() }} en total</p>
       }
     </div>
+
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
+      @if (dialogOpen()) {
+        <app-project-dialog
+          [project]="editingProject()"
+          [initialValue]="createInitial()"
+          (saved)="onSave($event)"
+          (close)="dialogOpen.set(false)"
+        />
+      }
+    </app-dialog>
   `
 })
 export class ProjectsCalendarComponent {
   private readonly _service = inject(ProjectService)
   private readonly _router = inject(Router)
+  private readonly _notify = inject(NotificationService)
+  protected readonly canWrite = inject(AuthService).canWrite
 
   /** Campos que pinta la tira: los decide el generador desde el modelo. */
   readonly stripDate = 'startDate'
@@ -170,6 +207,16 @@ export class ProjectsCalendarComponent {
 
   readonly view = signal<CalendarView>('month')
   readonly anchor = signal(new Date())
+
+  readonly dialogOpen = signal(false)
+  readonly editingProject = signal<ProjectDto | null>(null)
+  /** El día pulsado (clave yyyy-mm-dd): precarga el campo fecha del alta. */
+  readonly createDate = signal<string | null>(null)
+  readonly createInitial = computed<Partial<ProjectFormValue> | null>(() => {
+    const date = this.createDate()
+    return date === null ? null : { startDate: date }
+  })
+  readonly anchorKey = computed(() => this._keyOf(this.anchor()))
 
   readonly isLoading = this._service.projects.isLoading
   readonly error = this._service.projects.error
@@ -226,6 +273,28 @@ export class ProjectsCalendarComponent {
   colorOf(index: number): string {
     const palette = ['var(--foreground)', 'var(--destructive)', 'var(--primary)', 'var(--muted-foreground)']
     return palette[index % palette.length]
+  }
+
+  openCreate(day: string): void {
+    this.editingProject.set(null)
+    this.createDate.set(day)
+    this.dialogOpen.set(true)
+  }
+
+  async onSave(value: ProjectFormValue): Promise<void> {
+    const editing = this.editingProject()
+    this.dialogOpen.set(false)
+    try {
+      if (editing) {
+        await this._service.update(editing.id, value)
+        this._notify.success('Proyecto actualizado correctamente')
+      } else {
+        await this._service.create({ id: generateId(), ...value })
+        this._notify.success('Proyecto creado correctamente')
+      }
+    } catch {
+      this._notify.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+    }
   }
 
   previousPeriod(): void {
