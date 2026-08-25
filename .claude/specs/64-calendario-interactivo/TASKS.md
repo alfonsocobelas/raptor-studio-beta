@@ -5,7 +5,7 @@
 
 - [x] **TASK-01**: Test + input opcional `initialValue` en la plantilla del diálogo
       (`__fileName__-dialog.component.ts.template`): patch del alta cuando no hay entidad.
-- [ ] **TASK-02**: Test + gesto de alta en la plantilla del calendario: botón «+» por celda
+- [x] **TASK-02**: Test + gesto de alta en la plantilla del calendario: botón «+» por celda
       (mes/semana) y botón en vista día, diálogo con la fecha precargada, `onSave` con
       create/update + toasts. Condicionado a `features.edit` y `entry.canCreateExpr`.
 - [ ] **TASK-03**: Test + edición desde la tira sin `detail`: clic abre el diálogo de

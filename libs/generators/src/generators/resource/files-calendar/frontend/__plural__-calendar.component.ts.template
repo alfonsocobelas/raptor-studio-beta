@@ -3,7 +3,19 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, sig
 import { Router } from '@angular/router'
 <%_ } _%>
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
+<%_ if (features.edit) { _%>
+import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
+import { AppDialog } from '../../../../../../shared/components/ui/dialog'
+import { AuthService } from '../../../../../../core/services/auth.service'
+<%_ } _%>
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
+<%_ if (features.edit && entry.accessDeclared) { _%>
+import { CAN_CREATE_ROLES } from './<%- fileName %>-access'
+<%_ } _%>
+<%_ if (features.edit) { _%>
+import { generateId } from '../../../../../../shared/utils/uuid'
+import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%- fileName %>-dialog.component'
+<%_ } _%>
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
 type CalendarView = 'month' | 'week' | 'day'
@@ -22,7 +34,7 @@ interface CalendarCell {
  */
 @Component({
   selector: 'app-<%- plural %>-calendar',
-  imports: [],
+  imports: [<%- features.edit ? 'AppDialog, ' + className + 'DialogComponent' : '' %>],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
@@ -53,12 +65,24 @@ interface CalendarCell {
               }
               @for (cell of cells(); track cell.key) {
                 <div
-                  class="min-h-20 border-b border-r p-1 last:border-r-0"
+                  class="group min-h-20 border-b border-r p-1 last:border-r-0"
                   [class.opacity-40]="!cell.inPeriod"
                   [class.ring-1]="cell.isToday"
                   [class.ring-primary]="cell.isToday"
                 >
                   <span class="text-xs" [class.text-primary]="cell.isToday" [class.font-semibold]="cell.isToday">{{ cell.dayNumber }}</span>
+<%_ if (features.edit) { _%>
+                  @if (<%- entry.canCreateExpr %>) {
+                    <button
+                      type="button"
+                      class="text-muted-foreground hover:text-foreground float-right px-1 text-xs opacity-0 focus:opacity-100 group-hover:opacity-100"
+                      (click)="openCreate(cell.key)"
+                      aria-label="<%- ui.createLabel %>"
+                    >
+                      +
+                    </button>
+                  }
+<%_ } _%>
                   <div class="mt-1 space-y-1">
                     @for (item of cell.strips; track item.id) {
                       <div
@@ -80,6 +104,17 @@ interface CalendarCell {
             </div>
           } @else {
             <div class="space-y-1 p-4">
+<%_ if (features.edit) { _%>
+              @if (<%- entry.canCreateExpr %>) {
+                <button
+                  type="button"
+                  class="text-muted-foreground hover:text-foreground mb-2 text-xs uppercase tracking-widest"
+                  (click)="openCreate(anchorKey())"
+                >
+                  + <%- ui.createLabel %>
+                </button>
+              }
+<%_ } _%>
               @for (item of dayStrips(); track item.id) {
                 <div
                   class="bg-muted rounded-sm border-l-2 px-2 py-1 text-sm"
@@ -130,12 +165,38 @@ interface CalendarCell {
         <p class="text-muted-foreground text-sm">{{ total() }} en total</p>
       }
     </div>
+<%_ if (features.edit) { _%>
+
+    <app-dialog [open]="dialogOpen()" (closed)="dialogOpen.set(false)">
+      @if (dialogOpen()) {
+        <app-<%- fileName %>-dialog
+          [<%- propertyName %>]="editing<%- className %>()"
+          [initialValue]="createInitial()"
+          (saved)="onSave($event)"
+          (close)="dialogOpen.set(false)"
+        />
+      }
+    </app-dialog>
+<%_ } _%>
   `
 })
 export class <%- pluralClassName %>CalendarComponent {
   private readonly _service = inject(<%- className %>Service)
 <%_ if (detail) { _%>
   private readonly _router = inject(Router)
+<%_ } _%>
+<%_ if (features.edit) { _%>
+  private readonly _notify = inject(NotificationService)
+<%_ if (entry.accessDeclared) { _%>
+  private readonly _sessionUser = inject(AuthService).currentUser
+  // La matriz granular (spec 49): el alta obedece a los mismos roles que su @Roles emitido
+  protected readonly canCreate = computed(() => {
+    const role = this._sessionUser()?.role
+    return role !== undefined && CAN_CREATE_ROLES.includes(role)
+  })
+<%_ } else { _%>
+  protected readonly canWrite = inject(AuthService).canWrite
+<%_ } _%>
 <%_ } _%>
 
   /** Campos que pinta la tira: los decide el generador desde el modelo. */
@@ -159,6 +220,18 @@ export class <%- pluralClassName %>CalendarComponent {
 
   readonly view = signal<CalendarView>('month')
   readonly anchor = signal(new Date())
+<%_ if (features.edit) { _%>
+
+  readonly dialogOpen = signal(false)
+  readonly editing<%- className %> = signal<<%- dtoName %> | null>(null)
+  /** El día pulsado (clave yyyy-mm-dd): precarga el campo fecha del alta. */
+  readonly createDate = signal<string | null>(null)
+  readonly createInitial = computed<Partial<<%- className %>FormValue> | null>(() => {
+    const date = this.createDate()
+    return date === null ? null : { <%- calendar.dateField %>: date }
+  })
+  readonly anchorKey = computed(() => this._keyOf(this.anchor()))
+<%_ } _%>
 
   readonly isLoading = this._service.<%- plural %>.isLoading
   readonly error = this._service.<%- plural %>.error
@@ -222,6 +295,30 @@ export class <%- pluralClassName %>CalendarComponent {
   colorOf(index: number): string {
     const palette = ['var(--foreground)', 'var(--destructive)', 'var(--primary)', 'var(--muted-foreground)']
     return palette[index % palette.length]
+  }
+
+<%_ } _%>
+<%_ if (features.edit) { _%>
+  openCreate(day: string): void {
+    this.editing<%- className %>.set(null)
+    this.createDate.set(day)
+    this.dialogOpen.set(true)
+  }
+
+  async onSave(value: <%- className %>FormValue): Promise<void> {
+    const editing = this.editing<%- className %>()
+    this.dialogOpen.set(false)
+    try {
+      if (editing) {
+        await this._service.update(editing.id, value)
+        this._notify.success('<%- ui.toastUpdated %>')
+      } else {
+        await this._service.create({ id: generateId(), ...value })
+        this._notify.success('<%- ui.toastCreated %>')
+      }
+    } catch {
+      this._notify.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+    }
   }
 
 <%_ } _%>
