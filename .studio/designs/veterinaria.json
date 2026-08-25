@@ -210,29 +210,7 @@
             "Jorge Talavera Gil"
           ]
         }
-      ],
-      "state": {
-        "field": "especie",
-        "initial": "perro",
-        "transitions": [
-          {
-            "name": "a-gato",
-            "label": "A gato",
-            "from": [
-              "perro"
-            ],
-            "to": "gato"
-          },
-          {
-            "name": "a-conejo",
-            "label": "A conejo",
-            "from": [
-              "perro"
-            ],
-            "to": "conejo"
-          }
-        ]
-      }
+      ]
     },
     {
       "name": "cita",
