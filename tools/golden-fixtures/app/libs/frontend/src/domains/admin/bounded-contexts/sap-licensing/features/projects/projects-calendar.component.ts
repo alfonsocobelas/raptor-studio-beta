@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, linkedSignal, signal } from '@angular/core'
 import { Router } from '@angular/router'
 import { ProjectDto } from '@app/shared/domain'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
@@ -220,6 +220,16 @@ export class ProjectsCalendarComponent {
 
   readonly isLoading = this._service.projects.isLoading
   readonly error = this._service.projects.error
+
+  constructor() {
+    // El calendario pinta TODOS los registros, no una página: ensancha la lectura
+    // compartida y la restaura al salir para no ensuciar el paginado del listado.
+    const previous = this._service.request()
+    this._service.request.update(r => ({ ...r, page: 1, pageSize: 500 }))
+    inject(DestroyRef).onDestroy(() => {
+      this._service.request.update(r => ({ ...r, page: previous.page, pageSize: previous.pageSize }))
+    })
+  }
 
   // Igual que el listado: al recargar, resource() vacía value(); conservar la última
   // página evita que la rejilla parpadee en cada navegación.
