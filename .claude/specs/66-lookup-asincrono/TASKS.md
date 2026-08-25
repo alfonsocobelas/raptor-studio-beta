@@ -6,4 +6,4 @@
       de etiqueta al editar.
 - [x] **TASK-04**: Test + página-formulario: mismo cableado.
 - [x] **TASK-05**: Re-baseline del oro (commit propio, diff revisado a mano).
-- [ ] **TASK-06**: Regenerar demo veterinaria; humo: buscar mascota por nombre en el alta.
+- [x] **TASK-06**: Regenerar demo veterinaria; humo: buscar mascota por nombre en el alta.
