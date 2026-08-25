@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { DESIGN_HOOKS } from '@raptor/schema'
 import { describe, expect, it } from 'vitest'
 
 /**
@@ -95,5 +96,58 @@ describe('hooks de piel en los bloques del lienzo', () => {
     it('el badge de estado es una pastilla', () => {
       expect(table()).toContain('app-chip')
     })
+  })
+})
+
+/**
+ * El espejo del `design-drift.spec.ts` del generador (spec 68, TASK-09). Los bloques están
+ * implementados DOS veces —aquí y en las plantillas— y esa duplicación es deuda declarada
+ * (ROADMAP idea 32). Lo que estos dos tests garantizan es que el desfase sea RUIDOSO: un bloque
+ * nuevo del lienzo que pinte cromo sin hook rompe la suite, con su fichero en el mensaje.
+ */
+describe('hooks de piel — anti-desfase del lienzo', () => {
+  /** Cromo que hace visible una superficie: si un bloque lo escribe, la piel debe alcanzarlo */
+  const CHROME = /\brounded-|\bshadow-|\bbg-card\b|\bbg-muted\b|\bbg-popover\b/
+
+  /**
+   * Componentes del lienzo con cromo que NO son bloques, con su motivo. Son el SHELL del mock:
+   * la piel real los emite el generador en `files-design/<id>/`, y el lienzo dibuja su
+   * aproximación a propósito (fuera de scope de la spec 68).
+   */
+  const EXEMPT: Record<string, string> = {
+    'canvas-header.component.ts': 'barra del mock: shell, no bloque',
+    'canvas-controls.component.ts': 'controles de zoom del LIENZO, no de la app dibujada',
+    'canvas-session-footer.component.ts': 'pie de sesión del mock: shell',
+    'canvas-admin-nav-group.component.ts': 'menú de administración del mock: shell',
+    'canvas-page.component.ts': 'compone bloques y dibuja el papel del lienzo; el cromo es suyo',
+    'canvas-notice.service.ts': 'avisos del estudio, no de la app dibujada'
+  }
+
+  const blocks = (): { file: string; content: string }[] =>
+    readdirSync(__dirname)
+      .filter(file => file.startsWith('canvas-') && file.endsWith('.ts') && !file.includes('.spec.'))
+      .map(file => ({ file, content: readFileSync(join(__dirname, file), 'utf-8') }))
+
+  it('ningún bloque del lienzo con cromo se queda sin hook de piel', () => {
+    const naked = blocks()
+      .filter(block => CHROME.test(block.content))
+      .filter(block => !DESIGN_HOOKS.some(hook => block.content.includes(hook)))
+      .map(block => block.file)
+      .filter(file => !(file in EXEMPT))
+
+    // si esto falla: ese bloque se dibuja igual en las tres pieles. Mira la tabla de colocación
+    // de .claude/specs/68-el-canvas-lleva-la-piel/DESIGN.md y ponle sus hooks.
+    expect(naked).toEqual([])
+  })
+
+  it('ningún hook del vocabulario queda sin usar en el lienzo', () => {
+    const all = blocks()
+      .map(block => block.content)
+      .join('\n')
+      .concat(readFileSync(join(__dirname, '..', '..', '..', 'shared/components/kpi-card.ts'), 'utf-8'))
+
+    for (const hook of DESIGN_HOOKS) {
+      expect(all).toContain(hook)
+    }
   })
 })
