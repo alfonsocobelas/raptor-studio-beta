@@ -158,9 +158,30 @@ export class RootModule {}
   it('el menú gana la sección Administración → Usuarios solo para admin (revisión visual 57)', () => {
     const shell = withAuth.get('apps/demo/apps/frontend-app/src/app.component.ts') ?? ''
 
-    expect(shell).toContain('Administración')
-    expect(shell).toContain('session.isAdmin()')
-    expect(shell).toContain('routerLink="/users"')
+    expect(shell).toContain('<app-admin-nav-group />')
+    expect(shell).toContain('AdminNavGroupComponent')
+  })
+
+  it('Administración es un grupo desplegable con Usuarios dentro, como el nav de dos niveles de la referencia', () => {
+    const group = withAuth.get('apps/demo/libs/frontend/src/domains/iam/admin-nav-group.component.ts') ?? ''
+
+    expect(group).toContain('Administración')
+    // solo admin ve el grupo entero
+    expect(group).toContain('auth.isAdmin()')
+    // el desplegable: cabecera pulsable con estado y las hijas dentro
+    expect(group).toContain('data-testid="admin-nav-toggle"')
+    expect(group).toContain('[attr.aria-expanded]="open()"')
+    expect(group).toContain('open.set(!open())')
+    expect(group).toContain('@if (open())')
+    expect(group).toContain('routerLink="/users"')
+    expect(group).toContain('Usuarios')
+  })
+
+  it('el cromo de Administración sale del shell: el grupo lo aporta el componente', () => {
+    const shell = withAuth.get('apps/demo/apps/frontend-app/src/app.component.ts') ?? ''
+
+    expect(shell).not.toContain('routerLink="/users"')
+    expect(shell).not.toContain('session.isAdmin()')
   })
 
   it('el pie de sesión es el dropdown del chip, como el nav-user de la referencia (spec 63)', () => {

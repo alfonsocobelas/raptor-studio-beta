@@ -142,8 +142,8 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
     tree.write(routesPath, guarded)
   }
 
-  // El shell gana la sección de Administración en el menú (solo admin, como la referencia)
-  // y el pie de sesión: quién soy, Mi cuenta y logout.
+  // El shell monta el grupo desplegable de Administración (solo admin, como el nav de dos
+  // niveles de la referencia) y el pie de sesión: quién soy, Mi cuenta y logout.
   const shellPath = path.join(app, 'app.component.ts')
   const shell = tree.read(shellPath, 'utf-8')
   if (shell && !shell.includes('SessionFooterComponent')) {
@@ -152,29 +152,13 @@ import { authGuard, loginGuard } from '${context.scope}/frontend/core/guards/aut
       shell
         .replace(
           "import { NAV_ITEMS } from './nav'",
-          `import { NAV_ITEMS } from './nav'\nimport { AuthService } from '${context.scope}/frontend/core/services/auth.service'\nimport { SessionFooterComponent } from '${context.scope}/frontend/domains/auth/session-footer.component'`
-        )
-        .replace('imports: [RouterOutlet, RouterLink, RouterLinkActive', 'imports: [SessionFooterComponent, RouterOutlet, RouterLink, RouterLinkActive')
-        .replace(
-          '</nav>',
-          `</nav>
-          @if (session.isAdmin()) {
-            <p class="text-muted-foreground mt-4 px-3 text-[10px] font-semibold tracking-wide uppercase">Administración</p>
-            <nav class="flex flex-col gap-1">
-              <a
-                routerLink="/users"
-                routerLinkActive="bg-accent text-accent-foreground font-semibold"
-                class="hover:bg-accent/60 rounded-md px-3 py-2 text-sm"
-              >
-                Usuarios
-              </a>
-            </nav>
-          }`
+          `import { NAV_ITEMS } from './nav'\nimport { AdminNavGroupComponent } from '${context.scope}/frontend/domains/iam/admin-nav-group.component'\nimport { SessionFooterComponent } from '${context.scope}/frontend/domains/auth/session-footer.component'`
         )
         .replace(
-          'protected readonly navItems = NAV_ITEMS',
-          'protected readonly session = inject(AuthService)\n  protected readonly navItems = NAV_ITEMS'
+          'imports: [RouterOutlet, RouterLink, RouterLinkActive',
+          'imports: [AdminNavGroupComponent, SessionFooterComponent, RouterOutlet, RouterLink, RouterLinkActive'
         )
+        .replace('</nav>', '</nav>\n        <app-admin-nav-group />')
         .replace('</aside>', '  <app-session-footer />\n        </aside>')
     )
   }
