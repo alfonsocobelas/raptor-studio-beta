@@ -44,6 +44,8 @@ import { ActiveViewService } from './active-view.service'
 import { CanvasNoticeService, type CanvasNotice } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
+import { CanvasAdminNavGroupComponent } from './canvas-admin-nav-group.component'
+import { CanvasSessionFooterComponent } from './canvas-session-footer.component'
 import { CanvasPageComponent } from './canvas-page.component'
 import { SystemViewComponent } from './system-view.component'
 import { SYSTEM_VIEWS } from './system-preview/system-views'
@@ -77,6 +79,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
   imports: [
     FormsModule,
     NgIcon,
+    CanvasAdminNavGroupComponent,
+    CanvasSessionFooterComponent,
     CanvasPageComponent,
     SystemViewComponent,
     ChatPanelComponent,
@@ -549,22 +553,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                         }
                       }
                     </nav>
-                    <!-- espejo del emitido: sección Administración (solo admin) → vista Usuarios -->
-                    <p class="text-muted-foreground mt-4 px-3 text-[10px] font-semibold tracking-wide uppercase">
-                      Administración
-                    </p>
-                    <nav class="flex flex-col gap-1">
-                      <button
-                        type="button"
-                        class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
-                        [class.bg-accent]="active.systemView() === 'users'"
-                        [class.font-semibold]="active.systemView() === 'users'"
-                        data-testid="mock-nav-users"
-                        (click)="active.selectSystem('users')"
-                      >
-                        Usuarios
-                      </button>
-                    </nav>
+                    <!-- espejo del emitido: grupo desplegable Administración (solo admin) → vista Usuarios -->
+                    <app-canvas-admin-nav-group />
                     <span class="flex-1"></span>
                     <!-- el botón de tema que llevará la app generada: aquí es funcional -->
                     <button
@@ -576,50 +566,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                       <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
                       <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
                     </button>
-                    <!-- pie de sesión de la maqueta (spec 63): el chip abre el menú, como el emitido -->
-                    <div class="relative border-t px-1 pt-2">
-                      @if (mockMenu()) {
-                        <div
-                          class="bg-background absolute bottom-full left-1 z-30 mb-2 w-52 rounded-lg border p-1 shadow-md"
-                          data-testid="mock-session-menu"
-                        >
-                          <button
-                            type="button"
-                            class="hover:bg-accent block w-full rounded-md px-2 py-1.5 text-left text-xs"
-                            data-testid="mock-my-account"
-                            (click)="mockMenu.set(false); active.selectSystem('account')"
-                          >
-                            Cuenta
-                          </button>
-                          <button
-                            type="button"
-                            class="hover:bg-accent block w-full rounded-md px-2 py-1.5 text-left text-xs"
-                            data-testid="mock-logout"
-                            (click)="mockMenu.set(false); active.selectSystem('login')"
-                          >
-                            Cerrar sesión
-                          </button>
-                        </div>
-                      }
-                      <button
-                        type="button"
-                        class="text-muted-foreground hover:bg-accent/60 flex w-full items-center gap-2 rounded px-1 py-1.5 text-left text-xs"
-                        data-testid="mock-session-footer"
-                        [attr.aria-expanded]="mockMenu()"
-                        (click)="mockMenu.set(!mockMenu())"
-                      >
-                        <div
-                          class="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-lg font-semibold"
-                        >
-                          AL
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-foreground truncate font-medium">Admin Local</p>
-                          <p class="truncate">admin&#64;app.local</p>
-                        </div>
-                        <ng-icon name="lucideChevronUp" size="12" />
-                      </button>
-                    </div>
+                    <!-- pie de sesión de la maqueta (spec 63): calco del session-footer emitido -->
+                    <app-canvas-session-footer />
                   </aside>
                   <section class="min-w-0 flex-1 p-6">
                     @if (active.systemView(); as system) {
@@ -824,8 +772,6 @@ export class StudioCanvasComponent {
   protected readonly accessUi = inject(AccessUiService)
   protected readonly mode = this.studioMode.mode
   protected readonly designMenu = signal(false)
-  // menú del chip de usuario de la maqueta (spec 63)
-  protected readonly mockMenu = signal(false)
   protected readonly renameSlug = signal('')
   protected readonly devMode = isDevMode()
   protected readonly active = inject(ActiveViewService)
