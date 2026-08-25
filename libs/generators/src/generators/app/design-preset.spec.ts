@@ -22,6 +22,13 @@ describe('app generator — ranura design (spec 37)', () => {
     return files
   }
 
+  /**
+   * El bloque `:root .theme-x { … }` del styles.css emitido. Los tokens del preset sólo
+   * cuentan si están AQUÍ: declarados en `:root` a secas los gana el tema, que es más
+   * específico (0,2,0 contra 0,1,0) y vive sobre el <body> (spec 67).
+   */
+  const themeBlock = (styles: string): string => styles.match(/:root \.theme-[\w-]+ \{([^}]*)\}/)?.[1] ?? ''
+
   const base = { name: 'demo', models: 'customer', skipInstall: true } as const
   const SHELL = 'apps/demo/apps/frontend-app/src/app.component.ts'
   const STYLES = 'apps/demo/apps/frontend-app/src/styles.css'
@@ -67,8 +74,10 @@ describe('app generator — ranura design (spec 37)', () => {
   it('cabina viste componentes y tipografía: esquinas vivas, condensada y cifras tabulares', async () => {
     const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
 
-    // esquinas vivas en TODA la app: el token pisa al del tema (y sus derivados calc)
-    expect(styles).toMatch(/--radius:\s*0(px|rem)?\s*;[\s\S]*--radius-md:\s*0/)
+    // esquinas vivas en TODA la app: el token pisa al del tema (y sus derivados calc).
+    // Tiene que caer DENTRO del bloque del tema: en :root suelto el token existe pero no
+    // se aplica — :root .theme-x es (0,2,0) y está sobre el <body> (spec 67).
+    expect(themeBlock(styles)).toMatch(/--radius:\s*0(px|rem)?\s*;[\s\S]*--radius-md:\s*0/)
     // tipografía propia de instrumentación: stack y tracking, no solo color
     expect(styles).toMatch(/\.app-shell-main\s*\{[^}]*letter-spacing/)
     expect(styles).toMatch(/\.app-shell-main\s*\{[^}]*font-variant-numeric:\s*tabular-nums/)
@@ -82,9 +91,9 @@ describe('app generator — ranura design (spec 37)', () => {
     const styles = (await emit({ ...base, design: 'suite' })).get(STYLES) ?? ''
 
     // casi recto, no redondeado: token propio distinto del tema y del de cabina
-    expect(styles).toMatch(/--radius:\s*2px/)
-    // stack corporativo explícito
-    expect(styles).toMatch(/--font-sans:[^;]*Segoe UI/)
+    expect(themeBlock(styles)).toMatch(/--radius:\s*2px/)
+    // stack corporativo explícito, y el ÚLTIMO --font-sans del bloque: el del tema va antes
+    expect(themeBlock(styles)).toMatch(/--font-sans:[^;]*Segoe UI/)
     // botones y badges rectangulares y planos
     expect(styles).toMatch(/\[hlmbtn\][^}]*box-shadow:\s*none/i)
     expect(styles).toMatch(/\[hlmbadge\][^}]*border-radius/i)
@@ -126,6 +135,22 @@ describe('app generator — ranura design (spec 37)', () => {
 
     expect(styles).toMatch(/\[hlmcard\][^}]*background:\s*transparent/i)
     expect(styles).toMatch(/\[hlmcard\][^}]*text-transform:\s*uppercase/i)
+  })
+
+  // Spec 67: el defecto que dejó a los presets sin tokens durante dos semanas. El bloque del
+  // preset se añade al final del fichero, y ahí `:root { --radius: 0 }` es CSS muerto. Los
+  // tokens del preset entran dentro del bloque del tema, detrás de los suyos: misma
+  // especificidad, decide el orden de declaración.
+  it('los tokens del preset van dentro del bloque del tema, detrás de los suyos', async () => {
+    const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
+    const block = themeBlock(styles)
+
+    // el tema declara su radio primero; el del preset lo pisa después, en el mismo bloque
+    expect(block.indexOf('--radius:')).toBeGreaterThanOrEqual(0)
+    expect(block.lastIndexOf('--radius:')).toBeGreaterThan(block.indexOf('--radius:'))
+    expect(block.slice(block.lastIndexOf('--radius:'))).toMatch(/--radius:\s*0/)
+    // y ya no queda ningún override de radio fuera del bloque, donde no se aplicaría
+    expect(styles.slice(styles.indexOf('}', styles.indexOf(':root .theme-')))).not.toMatch(/:root \{[^}]*--radius:/)
   })
 
   it('actual no viste nada: sigue emitiendo byte a byte lo de siempre (gate de oro)', async () => {

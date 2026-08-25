@@ -21,6 +21,11 @@ export interface ThemeSubstitutions {
   fontFamily: string
   /** Paquete npm self-hosted que aporta la fuente; '' = ninguno */
   fontPackage: string
+  /**
+   * Tokens del preset de diseño que pisan a los del tema (spec 67). Se interpolan DENTRO del
+   * bloque `:root .theme-x`, detrás de los del tema: en `:root` suelto no se aplicarían.
+   */
+  designTokens: string
   /** Bloque CSS del preset de diseño (spec 37); '' = el preset neutro, que no añade nada */
   designCss: string
 }
@@ -44,7 +49,8 @@ export function themeSubstitutions(themeId: string, seed?: string): ThemeSubstit
     radius: tokens.radius,
     fontFamily: tokens.font?.family ?? '',
     fontPackage: tokens.font?.package ?? '',
-    // el preset lo sobreescribe en app.ts; por defecto el tema no lleva cromo de diseño
+    // el preset los sobreescribe en app.ts; por defecto el tema no lleva cromo de diseño
+    designTokens: '',
     designCss: ''
   }
 }

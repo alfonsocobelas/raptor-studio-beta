@@ -7,9 +7,19 @@
  * neutrales del ADR-003. Lo que sí se percibe al abrir la app es el SHELL (dónde vive la
  * navegación), la DENSIDAD y el cromo. Eso es lo que parametriza un preset.
  *
- * Un preset aporta dos cosas y ninguna más:
+ * Un preset aporta tres cosas y ninguna más:
  *   1. `files`  — su carpeta de override, copiada DESPUÉS del esqueleto (gana su app.component)
- *   2. `css`    — su bloque de tokens de cromo, añadido al final del styles.css del tema
+ *   2. `tokens` — los tokens DEL TEMA que pisa; se inyectan dentro de `:root .theme-x`
+ *   3. `css`    — sus reglas y sus tokens propios, añadidos al final del styles.css del tema
+ *
+ * Por qué `tokens` va aparte de `css` (spec 67): el bloque `css` se añade al final del fichero,
+ * y ahí `:root { --radius: 0 }` es CSS MUERTO. El tema declara ese mismo token en
+ * `:root .theme-x`, que es más específico (0,2,0 contra 0,1,0) y además vive en el <body>, más
+ * cerca del contenido. Ningún selector estable lo bate desde fuera — `:root body` es (0,1,1) y
+ * `body[class*='theme-']` también. Lo que sí es estable es el orden de declaración dentro del
+ * mismo bloque, así que los tokens del preset entran ahí, detrás de los del tema. Se detectó
+ * el 2026-08-25: cabina llevaba dos semanas aplanando esquinas a mano, selector por selector,
+ * porque su `--radius: 0px` no se aplicaba a nada.
  *
  * No aporta componentes: los emitidos siguen siendo los mismos, con sus mismos tests.
  */
@@ -19,9 +29,22 @@ export interface DesignPreset {
   description: string
   /** Carpeta de override relativa a app/, o undefined si no cambia el esqueleto */
   files?: string
+  /** Declaraciones que pisan tokens del tema, inyectadas dentro de su bloque; '' si ninguna */
+  tokens: string
   /** Bloque CSS del preset; '' si se conforma con los tokens del tema */
   css: string
 }
+
+/**
+ * Tokens del tema que pisa cabina. Los cinco radios se declaran uno a uno a propósito: los del
+ * tema son `calc(var(--radius) - 4px)`, y pisar sólo `--radius` los dejaría en -4px.
+ */
+const CABINA_TOKENS = `  /* preset «cabina»: esquinas vivas en toda la app, no sólo en los componentes vestidos */
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;`
 
 /**
  * Cromo de Cabina. Es un centro de operaciones: barra lateral a contraste y tabla apretada.
@@ -73,14 +96,6 @@ const CABINA_CSS = `
    los presets indistinguibles a un metro de distancia. Cabina es instrumentación: esquinas
    vivas, texto condensado y cifras tabulares en toda la pantalla — vía tokens y selectores
    de directiva ([hlmbtn], [hlmbadge]…), nunca tocando los componentes emitidos. */
-:root {
-  --radius: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-}
-
 .app-shell-main {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -183,6 +198,15 @@ const CABINA_CSS = `
 }
 `
 
+/** Tokens del tema que pisa suite: casi recto y con la tipografía del sector. */
+const SUITE_TOKENS = `  /* preset «suite»: rectangular y con el stack tipográfico corporativo */
+  --radius: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --font-sans: 'Segoe UI', Tahoma, Verdana, ui-sans-serif, system-ui, sans-serif;`
+
 /**
  * Cromo de Suite. Banda de marca corporativa y pestañas de módulo: el patrón que reconoce sin
  * explicación quien viene de un ERP. Monotema a propósito — ese sector no espera modo oscuro —
@@ -229,14 +253,6 @@ const SUITE_CSS = `
 
 /* ── componentes y tipografía (profundización 2026-08-10): suite es un ERP — rectangular,
    corporativo y sin sombras. Tokens y selectores de directiva, nunca componentes. */
-:root {
-  --radius: 2px;
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 2px;
-  --radius-xl: 2px;
-  --font-sans: 'Segoe UI', Tahoma, Verdana, ui-sans-serif, system-ui, sans-serif;
-}
 
 /* los títulos de pantalla se contienen: un ERP no grita */
 .app-shell-main h1 {
@@ -274,6 +290,7 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     id: 'actual',
     label: 'Actual (neutro)',
     description: 'El shell que ya emite el acelerador: barra lateral sobria, sin identidad de sector',
+    tokens: '',
     css: ''
   },
   {
@@ -281,6 +298,7 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Cabina (centro de operaciones)',
     description: 'Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro',
     files: 'files-design/cabina',
+    tokens: CABINA_TOKENS,
     css: CABINA_CSS
   },
   {
@@ -288,6 +306,7 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     label: 'Suite (ERP corporativo)',
     description: 'Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP',
     files: 'files-design/suite',
+    tokens: SUITE_TOKENS,
     css: SUITE_CSS
   }
 ]

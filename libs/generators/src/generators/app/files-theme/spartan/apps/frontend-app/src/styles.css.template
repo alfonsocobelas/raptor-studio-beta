@@ -25,6 +25,10 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 <%= lightTokens %>
+<%_ if (designTokens) { _%>
+
+<%- designTokens %>
+<%_ } _%>
 }
 
 :root.dark .<%= themeClass %> {
