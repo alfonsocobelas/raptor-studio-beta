@@ -97,7 +97,11 @@
 
 ## Validación
 
-- [ ] TASK-14: `/golden-diff` completo + suite completa del workspace en verde.
+- [x] TASK-14: `/golden-diff` completo + suite completa del workspace en verde.
+      Verificado el 2026-08-26: oro **vacío** en los seis gates (contract 74 · customer 78 ·
+      license 44 · project 87 · app 803 · app-mongo 607 ficheros) y `nx run-many -t test --all`
+      en verde en los 17 proyectos. En el workspace del estudio: `typecheck`, `test` (jest),
+      `test:front` (vitest) y `web:build`, los cuatro en verde.
 
 ---
 
