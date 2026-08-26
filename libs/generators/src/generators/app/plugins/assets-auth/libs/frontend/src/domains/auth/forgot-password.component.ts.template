@@ -21,7 +21,7 @@ import { AuthService } from '../../core/services/auth.service'
           @if (submitted()) {
             <p class="text-sm">Si el email existe, te hemos enviado un enlace para restablecer la contraseña.</p>
           } @else {
-            <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+            <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()">
               <app-form-field label="Email" for="email">
                 <input id="email" type="email" appInput formControlName="email" placeholder="tu@empresa.com" />
               </app-form-field>

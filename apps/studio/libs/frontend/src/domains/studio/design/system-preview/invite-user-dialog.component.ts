@@ -31,7 +31,7 @@ const ROLE_OPTIONS: AppSelectOption[] = [UserRoleEnum.ADMIN, UserRoleEnum.USER, 
       title="Invitar usuario"
       description="Se le enviará un email para que establezca su contraseña."
     >
-      <form class="space-y-4 py-4" [formGroup]="form" (ngSubmit)="save()">
+      <form class="space-y-6 py-4" [formGroup]="form" (ngSubmit)="save()">
         <app-form-field label="Email" for="inviteEmail">
           <input id="inviteEmail" type="email" appInput formControlName="email" />
           @if (form.controls.email.touched && form.controls.email.invalid) {

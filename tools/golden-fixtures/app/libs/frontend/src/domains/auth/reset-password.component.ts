@@ -21,7 +21,7 @@ import { AuthService } from '../../core/services/auth.service'
           @if (!token) {
             <p class="text-destructive text-sm">El enlace no es válido. Solicita uno nuevo.</p>
           } @else {
-            <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+            <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()">
               <app-form-field label="Nueva contraseña" for="password">
                 <input id="password" type="password" appInput formControlName="password" />
               </app-form-field>

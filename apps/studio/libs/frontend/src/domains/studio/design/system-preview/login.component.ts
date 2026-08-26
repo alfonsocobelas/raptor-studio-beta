@@ -25,7 +25,7 @@ import { AppLogo } from '../../../../shared/components/app-logo'
           </div>
         </div>
         <div>
-          <form class="space-y-4" [formGroup]="form" (ngSubmit)="login()">
+          <form class="space-y-6" [formGroup]="form" (ngSubmit)="login()">
             <app-form-field label="Email" for="email">
               <input id="email" type="email" appInput formControlName="email" placeholder="tu@empresa.com" />
             </app-form-field>

@@ -50,7 +50,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
         <p class="text-muted-foreground mb-4 text-sm">
           Al guardar se cerrarán tus sesiones en el resto de dispositivos
         </p>
-        <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+        <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()">
           <app-form-field label="Contraseña actual" for="currentPassword">
             <input id="currentPassword" type="password" appInput formControlName="currentPassword" />
             @if (wrongCurrent()) {
