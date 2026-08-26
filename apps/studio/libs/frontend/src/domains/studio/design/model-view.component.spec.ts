@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
@@ -106,14 +106,23 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
     expect(draft.pending()).toBe(false)
   })
 
-  it('al confirmar se ofrece la vista de listado: con el sí, nace con su tabla', () => {
+  /** El diálogo de la oferta es el de la app (spartan), no el confirm del navegador. */
+  function offerButton(kind: 'action' | 'cancel'): HTMLButtonElement | null {
+    return document.querySelector(`button[hlmalertdialog${kind}]`)
+  }
+
+  it('al confirmar se ofrece la vista de listado en un diálogo: con el sí, nace con su tabla', () => {
     draft.start()
     const fixture = mount()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
     input.value = 'Movimientos'
     input.dispatchEvent(new Event('input'))
     input.closest('form')?.dispatchEvent(new Event('submit'))
+    fixture.detectChanges()
+
+    const action = offerButton('action')
+    expect(action).not.toBeNull()
+    action?.click()
     fixture.detectChanges()
 
     expect(store.pages().at(-1)).toEqual({
@@ -122,10 +131,9 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
     })
   })
 
-  it('con el no, la entidad queda suelta: sin vista nueva', () => {
+  it('con el no, la entidad queda suelta: sin vista nueva', async () => {
     draft.start()
     const fixture = mount()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     const antes = store.pages().length
     const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
     input.value = 'Movimientos'
@@ -133,8 +141,14 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
     input.closest('form')?.dispatchEvent(new Event('submit'))
     fixture.detectChanges()
 
+    offerButton('cancel')?.click()
+    fixture.detectChanges()
+    // el overlay se desmonta en asíncrono: se espera a que el cierre termine
+    await fixture.whenStable()
+
     expect(store.resources().map(r => r.name)).toContain('movimiento')
     expect(store.pages().length).toBe(antes)
+    expect(offerButton('action')).toBeNull()
   })
 
   it('picar fuera con nombre escrito confirma el alta: el blur vale lo que el Enter', () => {

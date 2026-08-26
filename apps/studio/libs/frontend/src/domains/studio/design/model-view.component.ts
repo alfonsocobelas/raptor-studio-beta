@@ -24,6 +24,7 @@ import {
   type NodeBox,
   type NodePosition
 } from '@app/shared/domain'
+import { AppConfirmDialog } from '../../../shared/components/ui/confirm-dialog'
 import { ActiveViewService } from './active-view.service'
 import { CanvasControlsComponent } from './canvas-controls.component'
 import { CanvasViewportService } from './canvas-viewport.service'
@@ -64,7 +65,7 @@ interface DiagramEdge {
 @Component({
   selector: 'studio-model-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CanvasControlsComponent, LifecycleViewComponent],
+  imports: [AppConfirmDialog, CanvasControlsComponent, LifecycleViewComponent],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)' },
   template: `
     @if (lifecycle.open()) {
@@ -317,6 +318,17 @@ interface DiagramEdge {
         </div>
       </div>
     }
+
+    <!-- la oferta de vista tras crear la entidad: el diálogo de la app, no el confirm del navegador -->
+    <app-confirm-dialog
+      [open]="offered() !== null"
+      title="Entidad creada"
+      [description]="'¿Crear también la vista de listado de «' + (offered()?.plural ?? '') + '»?'"
+      confirmLabel="Crear la vista"
+      cancelLabel="Solo la entidad"
+      (confirmed)="createOfferedView()"
+      (closed)="offered.set(null)"
+    />
   `,
   styles: `
     /* Rejilla del diagrama, como en la referencia: líneas finas sobre el papel. El
@@ -489,12 +501,18 @@ export class ModelViewComponent {
     if (created) {
       this.active.selectResource(created.name)
       this.select.emit(created.name)
-      if (window.confirm(`¿Crear también la vista de listado de «${created.labelPlural}»?`)) {
-        // addPage reutiliza la entidad recién creada: mismo label, mismo nombre derivado
-        this.store.addPage('list', label)
-      }
+      this.offered.set({ label, plural: created.labelPlural })
     }
     this.cancelDraft()
+  }
+
+  /** La oferta de vista pendiente: el label escrito (para addPage) y el plural (para el texto). */
+  protected readonly offered = signal<{ label: string; plural: string } | null>(null)
+
+  protected createOfferedView(): void {
+    const offer = this.offered()
+    // addPage reutiliza la entidad recién creada: mismo label, mismo nombre derivado
+    if (offer) this.store.addPage('list', offer.label)
   }
 
   protected cancelDraft(): void {
