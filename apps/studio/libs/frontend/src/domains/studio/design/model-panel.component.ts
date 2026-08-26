@@ -265,6 +265,16 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
                   </button>
                 </div>
               }
+
+              <!-- borrar arrastra sus bloques y las refs entrantes: se confirma, como quitar el estado -->
+              <button
+                type="button"
+                class="text-destructive hover:border-destructive/50 mt-4 rounded-md border px-2.5 py-1.5 text-xs transition-colors"
+                data-testid="entity-delete"
+                (click)="removeResource(resource)"
+              >
+                Borrar entidad
+              </button>
             } @else {
               <p class="text-muted-foreground text-xs" data-testid="entity-empty">
                 Elige una entidad en el diagrama para ver todas sus columnas.
@@ -509,5 +519,12 @@ export class ModelPanelComponent {
 
   protected removeRelation(resource: string, fieldIndex: number): void {
     this.store.removeRelation(resource, fieldIndex)
+  }
+
+  /** Borrar la entidad arrastra sus bloques y las relaciones entrantes: se confirma antes. */
+  protected removeResource(name: string): void {
+    const label = this.store.resources().find(r => r.name === name)?.labelSingular ?? name
+    if (!window.confirm(`Borrar «${label}» quita también sus bloques y las relaciones que le llegan. ¿Seguro?`)) return
+    if (this.store.removeResource(name)) this.active.selectResource(null)
   }
 }

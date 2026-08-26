@@ -483,6 +483,30 @@ export class DesignStore {
     return this.mutate(resources, pages)
   }
 
+  /**
+   * Borra la entidad y arrastra lo que la usaba: sus bloques caen (las vistas
+   * quedan, aunque sea vacías), los KPIs compartidos solo la dejan de medir, y
+   * las relaciones entrantes de otras entidades se van con ella — un `ref` a una
+   * entidad que ya no existe no pasaría el gate.
+   */
+  removeResource(name: string): boolean {
+    if (!this._resources().some(r => r.name === name)) {
+      this._lastError.set(`No existe la entidad «${name}»`)
+      return false
+    }
+    const resources = this._resources()
+      .filter(r => r.name !== name)
+      .map(r => ({ ...r, fields: r.fields.filter(f => !(f.type === 'ref' && f.refTo === name)) }))
+    const pages = this._pages().map(page => ({
+      ...page,
+      blocks: page.blocks
+        .filter(b => b.resource !== name)
+        .map(b => (b.resources?.includes(name) ? { ...b, resources: b.resources.filter(x => x !== name) } : b))
+        .filter(b => !(b.kind === 'kpis' && !b.resources?.length))
+    }))
+    return this.mutate(resources, pages)
+  }
+
   movePage(from: number, to: number): boolean {
     const pages = [...this._pages()]
     const [moved] = pages.splice(from, 1)

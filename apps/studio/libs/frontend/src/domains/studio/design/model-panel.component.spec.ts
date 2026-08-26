@@ -468,3 +468,51 @@ describe('ModelPanelComponent — el conmutador de estado (spec 43)', () => {
     expect((testId(fixture, 'field-state-toggle') as HTMLInputElement).checked).toBe(true)
   })
 })
+
+/**
+ * Borrar la entidad vive en la pestaña Entidad: pide confirmación (arrastra bloques
+ * y relaciones entrantes) y al hacerlo deja de haber entidad elegida.
+ */
+describe('ModelPanelComponent — borrar la entidad', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Producto')
+    active.selectResource('producto')
+  })
+
+  function openEntityTab(fixture: ReturnType<typeof mount>): void {
+    testId(fixture, 'model-tab-entity')?.click()
+    fixture.detectChanges()
+  }
+
+  it('el botón confirma y borra la entidad, y la selección se suelta', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    testId(fixture, 'entity-delete')?.click()
+    fixture.detectChanges()
+
+    expect(store.resources()).toEqual([])
+    expect(active.resource()).toBeNull()
+    expect(testId(fixture, 'entity-empty')).not.toBeNull()
+  })
+
+  it('sin confirmación no se toca nada', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+    expect(testId(fixture, 'entity-delete')).not.toBeNull()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    testId(fixture, 'entity-delete')?.click()
+    fixture.detectChanges()
+
+    expect(store.resources().map(r => r.name)).toEqual(['producto'])
+    expect(active.resource()).toBe('producto')
+  })
+})

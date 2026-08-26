@@ -870,4 +870,64 @@ describe('DesignStore — puertos locales', () => {
     store.setPorts(undefined)
     expect(store.ports()).toBeUndefined()
   })
+
+  it('removeResource borra una entidad suelta del modelo', () => {
+    const store = new DesignStore()
+    store.addResource('Cliente')
+
+    const ok = store.removeResource('cliente')
+
+    expect(ok).toBe(true)
+    expect(store.resources()).toEqual([])
+  })
+
+  it('removeResource se lleva consigo los bloques que la usaban; la vista queda', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+
+    const ok = store.removeResource('pedido')
+
+    expect(ok).toBe(true)
+    expect(store.resources()).toEqual([])
+    expect(store.pages()).toEqual([{ title: 'Pedidos', blocks: [] }])
+  })
+
+  it('removeResource la quita de los KPIs compartidos sin tumbar el bloque', () => {
+    const store = new DesignStore()
+    store.addPage('panel', 'Ventas') // kpis:[venta] + table:venta
+    store.addResource('Cliente')
+    store.addBlock(0, { kind: 'kpis', resources: ['cliente'] }) // suma cliente al bloque
+
+    const ok = store.removeResource('venta')
+
+    expect(ok).toBe(true)
+    expect(store.resources().map(r => r.name)).toEqual(['cliente'])
+    // la tabla de venta cae; los KPIs sobreviven midiendo solo a cliente
+    expect(store.pages()[0].blocks).toEqual([{ kind: 'kpis', resources: ['cliente'], width: 'full' }])
+  })
+
+  it('removeResource borra también las relaciones entrantes de otras entidades', () => {
+    const store = new DesignStore()
+    store.addResource('Cliente')
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'cliente')
+
+    const ok = store.removeResource('cliente')
+
+    expect(ok).toBe(true)
+    expect(store.resources().map(r => r.name)).toEqual(['pedido'])
+    const pedido = store.resources()[0]
+    expect(pedido.fields.some(f => f.type === 'ref')).toBe(false)
+  })
+
+  it('removeResource sobre una entidad inexistente no toca nada y lo dice', () => {
+    const store = new DesignStore()
+    store.addResource('Cliente')
+
+    const ok = store.removeResource('fantasma')
+
+    expect(ok).toBe(false)
+    expect(store.resources().map(r => r.name)).toEqual(['cliente'])
+    expect(store.lastError()).toContain('fantasma')
+  })
 })
