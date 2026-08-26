@@ -475,6 +475,9 @@ export class ModelViewComponent {
    * Confirmar crea la entidad de verdad y la deja elegida, lista para recibir campos.
    * Si el store la rechaza (nombre repetido) el alta sigue abierta con lo escrito: el
    * error ya lo cuenta el store y cerrar aquí perdería el texto.
+   *
+   * Al confirmar se ofrece también su vista de listado: sin la pregunta, la entidad
+   * nacía suelta en silencio y en Vistas parecía que se había perdido.
    */
   protected confirmDraft(event: Event): void {
     event.preventDefault()
@@ -486,6 +489,10 @@ export class ModelViewComponent {
     if (created) {
       this.active.selectResource(created.name)
       this.select.emit(created.name)
+      if (window.confirm(`¿Crear también la vista de listado de «${created.labelPlural}»?`)) {
+        // addPage reutiliza la entidad recién creada: mismo label, mismo nombre derivado
+        this.store.addPage('list', label)
+      }
     }
     this.cancelDraft()
   }

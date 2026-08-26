@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
@@ -104,6 +104,37 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
 
     expect(store.resources().length).toBe(antes)
     expect(draft.pending()).toBe(false)
+  })
+
+  it('al confirmar se ofrece la vista de listado: con el sí, nace con su tabla', () => {
+    draft.start()
+    const fixture = mount()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
+    input.value = 'Movimientos'
+    input.dispatchEvent(new Event('input'))
+    input.closest('form')?.dispatchEvent(new Event('submit'))
+    fixture.detectChanges()
+
+    expect(store.pages().at(-1)).toEqual({
+      title: 'Movimientos',
+      blocks: [{ kind: 'table', resource: 'movimiento', width: 'full' }]
+    })
+  })
+
+  it('con el no, la entidad queda suelta: sin vista nueva', () => {
+    draft.start()
+    const fixture = mount()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const antes = store.pages().length
+    const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
+    input.value = 'Movimientos'
+    input.dispatchEvent(new Event('input'))
+    input.closest('form')?.dispatchEvent(new Event('submit'))
+    fixture.detectChanges()
+
+    expect(store.resources().map(r => r.name)).toContain('movimiento')
+    expect(store.pages().length).toBe(antes)
   })
 
   it('picar fuera con nombre escrito confirma el alta: el blur vale lo que el Enter', () => {
