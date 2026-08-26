@@ -56,10 +56,24 @@
 
 ## Validación
 
-- [ ] **TASK-12**: Suite completa + `npm run web:build` + demo en navegador: máquina diseñada
+- [x] **TASK-12**: Suite completa + `npm run web:build` + demo en navegador: máquina diseñada
       en el estudio (chat y gestos), app generada, aprobar/descartar ejercitados con botones
       que aparecen/desaparecen, 204 no-op y 409 comprobados. Capturas a `docs/style/`.
       Añadir la spec de convergencia flujos↔transiciones al ROADMAP.
+
+      Cerrada el 2026-08-26 con dos guiones que quedan en el repo:
+
+      - `apps/studio/tools/smoke-machine-access.ts` — en el estudio: arrastrar el asa de
+        «Rechazada» a «Presupuestada» crea la transición, el editor inline la renombra a
+        `reabrir` / «Reabrir presupuesto» y el diseño guardado la lleva.
+      - `apps/studio/tools/validate-emitted-machine-access.ts` — sobre la app generada:
+        `aprobar` desde «recibida» → **409**, `presupuestar` → **204**, re-aplicarla →
+        **204 no-op**, orden inexistente → **404**; y en la ficha, presupuestar hace
+        **desaparecer** su botón y **aparecer** los del estado nuevo.
+
+      Capturas: `docs/style/spec43-1..5-*.png`. La spec 44 ya figura en el ROADMAP
+      («Convergencia flujos↔transiciones»). El chat ya había diseñado la máquina del taller
+      (demo 2026-08-18); aquí se ejercitan los **gestos**.
 
 ---
 

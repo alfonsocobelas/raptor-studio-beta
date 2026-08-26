@@ -47,9 +47,22 @@
 
 ## Validación
 
-- [ ] **TASK-09**: Suite completa + `web:build` + `/golden-diff` + navegador: matriz editada
+- [x] **TASK-09**: Suite completa + `web:build` + `/golden-diff` + navegador: matriz editada
       en el estudio (viewer sin Ver en una entidad, transición restringida), app generada
       con auth, y en vivo: viewer sin «Nuevo» ni entrada de nav, 403 real en la API, botón
       de transición solo para quien toca. Capturas a `docs/style/`.
+
+      Cerrada el 2026-08-26. En el estudio (`apps/studio/tools/smoke-machine-access.ts`):
+      Consulta pierde «Ver» en Recambios y a Usuario se le retira la transición `facturar`;
+      la matriz explícita viaja al diseño. En la app generada con auth
+      (`apps/studio/tools/validate-emitted-machine-access.ts`):
+
+      - Consulta: sin «Recambios» en la nav, **403 real** en `GET /recambios`, sin botón de
+        alta en Órdenes y **sin un solo botón de transición** en la ficha.
+      - Usuario: ve «Terminar reparación» y **no** «Facturar» (retirada en el estudio) ni
+        «Aprobar presupuesto» (solo admin); `POST /ordenes/:id/aprobar` → **403 real**.
+      - Admin: los mismos botones sí están.
+
+      Capturas: `docs/style/spec46-1..5-*.png`.
 
 ---
