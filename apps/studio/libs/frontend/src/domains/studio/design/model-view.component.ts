@@ -301,6 +301,7 @@ interface DiagramEdge {
                   [value]="draftName()"
                   (input)="onDraftName($event)"
                   (keydown.escape)="cancelDraft()"
+                  (blur)="confirmDraft($event)"
                 />
               </div>
               <!-- el id lo emite siempre el generador: la caja ya lo enseña de nacimiento -->

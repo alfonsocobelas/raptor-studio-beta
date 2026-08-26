@@ -106,6 +106,31 @@ it('el alta pendiente dibuja una caja fantasma con el nombre en edición', () =>
     expect(draft.pending()).toBe(false)
   })
 
+  it('picar fuera con nombre escrito confirma el alta: el blur vale lo que el Enter', () => {
+    draft.start()
+    const fixture = mount()
+    const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
+    input.value = 'Movimientos'
+    input.dispatchEvent(new Event('input'))
+    input.dispatchEvent(new Event('blur'))
+    fixture.detectChanges()
+
+    expect(store.resources().map(r => r.name)).toContain('movimiento')
+    expect(draft.pending()).toBe(false)
+  })
+
+  it('picar fuera sin nombre descarta la caja fantasma', () => {
+    draft.start()
+    const fixture = mount()
+    const antes = store.resources().length
+    const input = fixture.nativeElement.querySelector('[data-testid=\'model-draft-name\']') as HTMLInputElement
+    input.dispatchEvent(new Event('blur'))
+    fixture.detectChanges()
+
+    expect(store.resources().length).toBe(antes)
+    expect(draft.pending()).toBe(false)
+  })
+
   it('un nombre vacío no crea nada: cierra el alta y ya', () => {
     draft.start()
     const fixture = mount()
