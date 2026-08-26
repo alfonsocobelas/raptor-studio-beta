@@ -457,7 +457,7 @@ export class ModelPanelComponent {
     const current = this.pending()
     if (!current) return ''
     return current.kind === 'entity'
-      ? 'Se van con ella sus bloques en las vistas y las relaciones que le llegan de otras entidades.'
+      ? 'Se van con ella sus bloques, las vistas que queden vacías y las relaciones que le llegan de otras entidades.'
       : 'Quitar el estado tira las transiciones dibujadas.'
   })
 

@@ -484,10 +484,12 @@ export class DesignStore {
   }
 
   /**
-   * Borra la entidad y arrastra lo que la usaba: sus bloques caen (las vistas
-   * quedan, aunque sea vacías), los KPIs compartidos solo la dejan de medir, y
-   * las relaciones entrantes de otras entidades se van con ella — un `ref` a una
-   * entidad que ya no existe no pasaría el gate.
+   * Borra la entidad y arrastra lo que la usaba: sus bloques caen, y con ellos la
+   * vista que se quede vacía —era solo suya y en el menú sería basura—; una vista
+   * con más contenido sobrevive sin ellos, y una ya vacía de antes no se toca. Los
+   * KPIs compartidos solo la dejan de medir, y las relaciones entrantes de otras
+   * entidades se van con ella — un `ref` a una entidad que ya no existe no
+   * pasaría el gate.
    */
   removeResource(name: string): boolean {
     if (!this._resources().some(r => r.name === name)) {
@@ -497,13 +499,15 @@ export class DesignStore {
     const resources = this._resources()
       .filter(r => r.name !== name)
       .map(r => ({ ...r, fields: r.fields.filter(f => !(f.type === 'ref' && f.refTo === name)) }))
-    const pages = this._pages().map(page => ({
-      ...page,
-      blocks: page.blocks
-        .filter(b => b.resource !== name)
-        .map(b => (b.resources?.includes(name) ? { ...b, resources: b.resources.filter(x => x !== name) } : b))
-        .filter(b => !(b.kind === 'kpis' && !b.resources?.length))
-    }))
+    const pages = this._pages()
+      .map(page => ({
+        ...page,
+        blocks: page.blocks
+          .filter(b => b.resource !== name)
+          .map(b => (b.resources?.includes(name) ? { ...b, resources: b.resources.filter(x => x !== name) } : b))
+          .filter(b => !(b.kind === 'kpis' && !b.resources?.length))
+      }))
+      .filter((page, i) => page.blocks.length > 0 || this._pages()[i].blocks.length === 0)
     return this.mutate(resources, pages)
   }
 

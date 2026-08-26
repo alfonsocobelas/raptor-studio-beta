@@ -881,7 +881,7 @@ describe('DesignStore — puertos locales', () => {
     expect(store.resources()).toEqual([])
   })
 
-  it('removeResource se lleva consigo los bloques que la usaban; la vista queda', () => {
+  it('removeResource tira también la vista que se queda vacía sin sus bloques', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')
 
@@ -889,7 +889,30 @@ describe('DesignStore — puertos locales', () => {
 
     expect(ok).toBe(true)
     expect(store.resources()).toEqual([])
-    expect(store.pages()).toEqual([{ title: 'Pedidos', blocks: [] }])
+    expect(store.pages()).toEqual([])
+  })
+
+  it('removeResource respeta la vista con más contenido: pierde los bloques y sigue', () => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addBlock(0, { kind: 'text', text: 'Aviso para el equipo' })
+
+    const ok = store.removeResource('pedido')
+
+    expect(ok).toBe(true)
+    expect(store.pages()[0].title).toBe('Pedidos')
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['text'])
+  })
+
+  it('removeResource no toca una vista que ya estaba vacía antes', () => {
+    const store = new DesignStore()
+    store.addPage('blank', 'Notas')
+    store.addResource('Cliente')
+
+    const ok = store.removeResource('cliente')
+
+    expect(ok).toBe(true)
+    expect(store.pages()).toEqual([{ title: 'Notas', blocks: [] }])
   })
 
   it('removeResource la quita de los KPIs compartidos sin tumbar el bloque', () => {
