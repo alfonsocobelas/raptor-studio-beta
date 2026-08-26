@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { chooseInSelect, openSelect, selectValueLabel } from '../../../shared/components/ui/select.harness'
 import { ActiveViewService } from './active-view.service'
@@ -14,6 +14,11 @@ function mount() {
 
 function testId(fixture: ReturnType<typeof mount>, id: string): HTMLElement | null {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
+}
+
+/** El diálogo de confirmación se monta en un portal: sus botones se buscan en el documento. */
+function dialogButton(kind: 'action' | 'cancel'): HTMLButtonElement | null {
+  return document.querySelector(`button[hlmalertdialog${kind}]`)
 }
 
 describe('ModelPanelComponent', () => {
@@ -445,24 +450,29 @@ describe('ModelPanelComponent — el conmutador de estado (spec 43)', () => {
     expect((testId(fixture, 'field-state-toggle') as HTMLInputElement).checked).toBe(true)
   })
 
-  it('desmarcarlo pide confirmación y, con ella, tira la máquina', () => {
+  it('desmarcarlo abre el diálogo de la app y, con la confirmación, tira la máquina', () => {
     store.promoteState('solicitud', 'nombre')
     const fixture = mount()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     ;(testId(fixture, 'field-state-toggle') as HTMLInputElement).click()
+    fixture.detectChanges()
+
+    dialogButton('action')?.click()
     fixture.detectChanges()
 
     expect(store.resources()[0].state).toBeUndefined()
   })
 
-  it('sin confirmación la máquina se queda como estaba', () => {
+  it('sin confirmación la máquina se queda como estaba, con el checkbox marcado', async () => {
     store.promoteState('solicitud', 'nombre')
     const fixture = mount()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     ;(testId(fixture, 'field-state-toggle') as HTMLInputElement).click()
     fixture.detectChanges()
+
+    dialogButton('cancel')?.click()
+    fixture.detectChanges()
+    await fixture.whenStable()
 
     expect(store.resources()[0].state?.field).toBe('nombre')
     expect((testId(fixture, 'field-state-toggle') as HTMLInputElement).checked).toBe(true)
@@ -490,12 +500,14 @@ describe('ModelPanelComponent — borrar la entidad', () => {
     fixture.detectChanges()
   }
 
-  it('el botón confirma y borra la entidad, y la selección se suelta', () => {
+  it('el botón abre el diálogo de la app y, confirmado, borra la entidad y suelta la selección', () => {
     const fixture = mount()
     openEntityTab(fixture)
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     testId(fixture, 'entity-delete')?.click()
+    fixture.detectChanges()
+
+    dialogButton('action')?.click()
     fixture.detectChanges()
 
     expect(store.resources()).toEqual([])
@@ -503,16 +515,20 @@ describe('ModelPanelComponent — borrar la entidad', () => {
     expect(testId(fixture, 'entity-empty')).not.toBeNull()
   })
 
-  it('sin confirmación no se toca nada', () => {
+  it('sin confirmación no se toca nada', async () => {
     const fixture = mount()
     openEntityTab(fixture)
     expect(testId(fixture, 'entity-delete')).not.toBeNull()
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     testId(fixture, 'entity-delete')?.click()
     fixture.detectChanges()
 
+    dialogButton('cancel')?.click()
+    fixture.detectChanges()
+    await fixture.whenStable()
+
     expect(store.resources().map(r => r.name)).toEqual(['producto'])
     expect(active.resource()).toBe('producto')
+    expect(dialogButton('action')).toBeNull()
   })
 })

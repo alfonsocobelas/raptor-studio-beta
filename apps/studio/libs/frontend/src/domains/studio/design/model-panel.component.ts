@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SELECTABLE_FIELD_TYPES, modelEdges, type DraftFieldType } from '@app/shared/domain'
+import { AppConfirmDialog } from '../../../shared/components/ui/confirm-dialog'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
@@ -28,7 +29,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
 @Component({
   selector: 'studio-model-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, AppSelect, InspectorComponent],
+  imports: [FormsModule, AppConfirmDialog, AppSelect, InspectorComponent],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -62,7 +63,7 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
 
               <div class="studio-row">
                 <label for="field-type">Tipo</label>
-              <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
+                <!-- una referencia no elige tipo: la columna que se emite es un uuid con su lookup -->
                 <app-select
                   controlId="field-type"
                   [options]="typeOptions(current.type)"
@@ -192,8 +193,8 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
                   <span>
                     Es el estado de la entidad
                     <span class="text-muted-foreground block text-xs">
-                      Sus valores pasan a ser el ciclo de vida: se dibujan transiciones, el campo sale del
-                      formulario y cada registro nace en el valor inicial.
+                      Sus valores pasan a ser el ciclo de vida: se dibujan transiciones, el campo sale del formulario y
+                      cada registro nace en el valor inicial.
                     </span>
                   </span>
                 </label>
@@ -252,8 +253,8 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
                 <div class="mt-4 rounded-lg border p-3" data-testid="lifecycle-offer">
                   <p class="studio-eyebrow">Ciclo de vida</p>
                   <p class="text-muted-foreground mt-0.5 text-xs">
-                    «{{ anchor.label }}» puede ser el estado de la entidad: sus valores pasan a ser el ciclo de
-                    vida y cada registro nace en el inicial.
+                    «{{ anchor.label }}» puede ser el estado de la entidad: sus valores pasan a ser el ciclo de vida y
+                    cada registro nace en el inicial.
                   </p>
                   <button
                     type="button"
@@ -311,6 +312,16 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
           }
         }
       </div>
+
+      <!-- las dos confirmaciones destructivas del panel comparten el diálogo de la app -->
+      <app-confirm-dialog
+        [open]="pending() !== null"
+        [title]="confirmTitle()"
+        [description]="confirmDescription()"
+        [confirmLabel]="confirmLabel()"
+        (confirmed)="confirmPending()"
+        (closed)="pending.set(null)"
+      />
     </div>
   `
 })
@@ -426,11 +437,42 @@ export class ModelPanelComponent {
       }
       return
     }
-    if (window.confirm('Quitar el estado tira las transiciones dibujadas. ¿Seguro?')) {
+    // el checkbox no se destilda: si el diálogo confirma, lo destilda la señal
+    event.preventDefault()
+    this.pending.set({ kind: 'demote', resource: current.resource })
+  }
+
+  /** La confirmación destructiva pendiente: borrar la entidad o quitar su estado. */
+  protected readonly pending = signal<
+    { kind: 'entity'; name: string; label: string } | { kind: 'demote'; resource: string } | null
+  >(null)
+
+  protected readonly confirmTitle = computed(() => {
+    const current = this.pending()
+    if (!current) return ''
+    return current.kind === 'entity' ? `¿Borrar «${current.label}»?` : '¿Quitar el estado de la entidad?'
+  })
+
+  protected readonly confirmDescription = computed(() => {
+    const current = this.pending()
+    if (!current) return ''
+    return current.kind === 'entity'
+      ? 'Se van con ella sus bloques en las vistas y las relaciones que le llegan de otras entidades.'
+      : 'Quitar el estado tira las transiciones dibujadas.'
+  })
+
+  protected readonly confirmLabel = computed(() =>
+    this.pending()?.kind === 'entity' ? 'Borrar entidad' : 'Quitar el estado'
+  )
+
+  protected confirmPending(): void {
+    const current = this.pending()
+    if (!current) return
+    if (current.kind === 'demote') {
       this.store.demoteState(current.resource)
-    } else {
-      ;(event.target as HTMLInputElement).checked = true
+      return
     }
+    if (this.store.removeResource(current.name)) this.active.selectResource(null)
   }
 
   /** Renombrar deriva el value; un label vacío o que choca con otro slug se descarta y el input vuelve. */
@@ -521,10 +563,9 @@ export class ModelPanelComponent {
     this.store.removeRelation(resource, fieldIndex)
   }
 
-  /** Borrar la entidad arrastra sus bloques y las relaciones entrantes: se confirma antes. */
+  /** Borrar la entidad arrastra sus bloques y las relaciones entrantes: se confirma en el diálogo. */
   protected removeResource(name: string): void {
     const label = this.store.resources().find(r => r.name === name)?.labelSingular ?? name
-    if (!window.confirm(`Borrar «${label}» quita también sus bloques y las relaciones que le llegan. ¿Seguro?`)) return
-    if (this.store.removeResource(name)) this.active.selectResource(null)
+    this.pending.set({ kind: 'entity', name, label })
   }
 }
