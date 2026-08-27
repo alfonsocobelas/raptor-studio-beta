@@ -1,4 +1,5 @@
 export * from './lib/access'
+export * from './lib/aggregate-ops'
 export * from './lib/app-types'
 export * from './lib/define-app'
 export * from './lib/define-resource'
