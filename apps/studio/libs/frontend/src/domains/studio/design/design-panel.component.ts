@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, linkedSignal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
 import { CalendarConfigComponent } from './calendar-config.component'
 import { KanbanConfigComponent } from './kanban-config.component'
+import { DesignStore } from './design-store'
 import { KpiConfigComponent } from './kpi-config.component'
 import { TopNConfigComponent } from './top-n-config.component'
 import { InspectorComponent } from './inspector.component'
+import type { BlockKind } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings } from './preview-settings'
 
@@ -25,6 +27,12 @@ const PANEL_TABS: readonly PanelTabOption[] = [
  * schema o de los presets del generador: aquí no se inventan acentos,
  * tipografías ni radios, porque nada de eso viaja al código emitido.
  */
+/** Bloques que se dibujan a partir de las columnas de la entidad. */
+const COLUMN_BLOCKS: BlockKind[] = ['table', 'cards', 'fields', 'form']
+
+/** Bloques con panel de configuración propio. */
+const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'top-n']
+
 @Component({
   selector: 'studio-design-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,7 +131,14 @@ const PANEL_TABS: readonly PanelTabOption[] = [
               <studio-kanban-config [resource]="view.resource()" />
               <studio-kpi-config [resource]="view.resource()" />
               <studio-top-n-config [resource]="view.resource()" />
-              <studio-inspector [resource]="view.resource()" (close)="view.selectResource(null)" />
+              @if (columnsMatterHere()) {
+                <studio-inspector [resource]="view.resource()" (close)="view.selectResource(null)" />
+              } @else if (!hasBlockConfig()) {
+                <p class="text-muted-foreground text-xs" data-testid="component-no-columns">
+                  Esta vista no pinta columnas: se compone de bloques. Las columnas de la entidad se
+                  editan en Modelo.
+                </p>
+              }
             } @else {
               <p class="text-muted-foreground text-xs" data-testid="component-empty">
                 Elige una entidad en el lienzo y aquí aparecerán sus columnas.
@@ -146,6 +161,26 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 export class DesignPanelComponent {
   protected readonly preview = inject(PreviewSettings)
   protected readonly view = inject(ActiveViewService)
+  private readonly store = inject(DesignStore)
+
+  /**
+   * Bloques cuya pantalla se construye con las COLUMNAS de la entidad. Solo ahí tiene sentido el
+   * inspector: en un panel ofrecía editar la tabla de una vista que no tiene tabla (2026-08-27).
+   * El calendario y el kanban se quedan fuera a propósito — pintan uno o dos campos elegidos en
+   * su propio panel, no el conjunto de columnas.
+   */
+  protected readonly columnsMatterHere = computed(() => {
+    const resource = this.view.resource()
+    const blocks = this.store.pages()[this.view.index()]?.blocks ?? []
+    return blocks.some(block => COLUMN_BLOCKS.includes(block.kind) && block.resource === resource)
+  })
+
+  /** ¿Algún bloque de esta vista trae panel propio? Si no, el hueco se explica en vez de quedar en blanco. */
+  protected readonly hasBlockConfig = computed(() => {
+    const resource = this.view.resource()
+    const blocks = this.store.pages()[this.view.index()]?.blocks ?? []
+    return blocks.some(block => CONFIGURABLE_BLOCKS.includes(block.kind) && block.resource === resource)
+  })
 
   protected readonly tabs = PANEL_TABS
   protected readonly palettes = PREVIEW_PALETTES

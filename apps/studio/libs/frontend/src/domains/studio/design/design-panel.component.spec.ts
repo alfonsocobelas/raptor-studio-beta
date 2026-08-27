@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
 import { ActiveViewService } from './active-view.service'
 import { DesignPanelComponent } from './design-panel.component'
+import { DesignStore } from './design-store'
 import { PreviewSettings } from './preview-settings'
 
 function mount() {
@@ -76,5 +77,73 @@ describe('DesignPanelComponent', () => {
     fixture.detectChanges()
 
     expect(testId(fixture, 'panel-tab-component')?.getAttribute('aria-selected')).toBe('true')
+  })
+})
+
+/**
+ * El inspector edita las COLUMNAS de la entidad, así que solo tiene sentido donde la vista
+ * las pinta (tabla, galería, ficha, formulario). En un panel ofrecía configurar la tabla de
+ * una vista que no tiene tabla (reportado 2026-08-27: «¿por qué aparece Inmueble · columnas?»).
+ */
+describe('DesignPanelComponent — el inspector solo donde las columnas pintan algo', () => {
+  let active: ActiveViewService
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    active = TestBed.inject(ActiveViewService)
+    store = TestBed.inject(DesignStore)
+    store.addResource('Inmueble')
+  })
+
+  const openComponentTab = (fixture: ReturnType<typeof mount>): void => {
+    testId(fixture, 'panel-tab-component')?.click()
+    fixture.detectChanges()
+  }
+
+  it('en una vista con tabla enseña las columnas', () => {
+    store.addPage('blank', 'Inmuebles')
+    store.addBlock(0, { kind: 'table', resource: 'inmueble' })
+    active.selectResource('inmueble')
+
+    const fixture = mount()
+    openComponentTab(fixture)
+
+    expect(fixture.nativeElement.textContent).toContain('Inmueble · columnas')
+  })
+
+  it('en un panel NO enseña las columnas, y sí la config del bloque', () => {
+    store.addPage('blank', 'Panel')
+    store.addBlock(0, { kind: 'kpi', resource: 'inmueble' })
+    active.selectResource('inmueble')
+
+    const fixture = mount()
+    openComponentTab(fixture)
+
+    expect(fixture.nativeElement.textContent).not.toContain('Inmueble · columnas')
+    expect(testId(fixture, 'kpi-config')).not.toBeNull()
+  })
+
+  it('en un panel sin bloque configurable dice por qué está vacío, en vez de quedarse en blanco', () => {
+    store.addPage('blank', 'Panel')
+    store.addBlock(0, { kind: 'kpis', resources: ['inmueble'] })
+    active.selectResource('inmueble')
+
+    const fixture = mount()
+    openComponentTab(fixture)
+
+    expect(testId(fixture, 'component-no-columns')).not.toBeNull()
+    expect(fixture.nativeElement.textContent).not.toContain('Inmueble · columnas')
+  })
+
+  it('la galería y el formulario también pintan columnas', () => {
+    store.addPage('blank', 'Cartera')
+    store.addBlock(0, { kind: 'cards', resource: 'inmueble' })
+    active.selectResource('inmueble')
+
+    const fixture = mount()
+    openComponentTab(fixture)
+
+    expect(fixture.nativeElement.textContent).toContain('Inmueble · columnas')
   })
 })
