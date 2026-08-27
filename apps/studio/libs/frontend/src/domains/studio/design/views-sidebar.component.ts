@@ -3,19 +3,21 @@ import { VIEW_PRESETS, type BlockKind, type DesignBlock, type DesignPage } from 
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
   lucideCalendar,
-  lucideSquareKanban,
   lucideChartNoAxesColumn,
   lucideChevronDown,
   lucideChevronRight,
   lucideClipboardList,
+  lucideGauge,
   lucideGripVertical,
   lucideIdCard,
   lucideLayoutGrid,
+  lucideLock,
   lucidePaperclip,
   lucidePlus,
   lucideSquareDashed,
+  lucideSquareKanban,
   lucideTable,
-  lucideLock
+  lucideTrophy
 } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
@@ -28,6 +30,8 @@ import { SYSTEM_VIEWS } from './system-preview/system-views'
 
 const SIDEBAR_ICONS = {
   lucideCalendar,
+  lucideGauge,
+  lucideTrophy,
   lucideSquareKanban,
   lucideChartNoAxesColumn,
   lucideLock,
@@ -80,6 +84,8 @@ function opensDetailOf(page: DesignPage, resource: string): boolean {
 const BLOCK_TOOLS: BlockTool[] = [
   { kind: 'table', icon: 'lucideTable', label: 'Tabla' },
   { kind: 'kpis', icon: 'lucideChartNoAxesColumn', label: 'KPIs' },
+  { kind: 'kpi', icon: 'lucideGauge', label: 'KPI' },
+  { kind: 'top-n', icon: 'lucideTrophy', label: 'Top N' },
   { kind: 'cards', icon: 'lucideLayoutGrid', label: 'Galería' },
   { kind: 'form', icon: 'lucideClipboardList', label: 'Formulario' },
   { kind: 'calendar', icon: 'lucideCalendar', label: 'Calendario' },

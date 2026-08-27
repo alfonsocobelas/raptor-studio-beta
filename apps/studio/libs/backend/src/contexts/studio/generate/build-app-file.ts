@@ -36,7 +36,10 @@ export function buildAppFile(design: DesignPayload, name: string): AppFileConten
     ...(design.brief ? { brief: design.brief } : {}),
     // los procesos dibujados acompañan al diseño: sección del CLAUDE.md emitido (spec 28)
     ...(design.flows?.length ? { flows: design.flows } : {}),
-    pages: designPagesToAppPages(design.pages),
+    pages: designPagesToAppPages(
+      design.pages,
+      resource => design.resources.find(r => r.name === resource)?.labelPlural ?? resource
+    ),
     resources: design.resources.map(r => draftToResource(r, name, design.resources))
   }
 }

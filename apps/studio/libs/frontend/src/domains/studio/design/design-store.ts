@@ -327,7 +327,17 @@ export class DesignStore {
         : // el kanban nace en el campo de la máquina de estados, o el primer enum (spec 61)
           block.kind === 'kanban' && block.resource && !block.columnsField
           ? { ...block, columnsField: this.defaultKanbanField(block.resource) }
-          : block
+          : // el top-n nace con 5 filas y el primer campo numérico de la entidad (spec 70)
+            block.kind === 'top-n' && block.resource && !block.topField
+            ? {
+                ...block,
+                topN: block.topN ?? 5,
+                topDir: block.topDir ?? ('desc' as const),
+                topField: this._resources()
+                  .find(r => r.name === block.resource)
+                  ?.fields.find(f => f.type === 'number' || f.type === 'integer')?.name
+              }
+            : block
     const pages = this._pages().map((page, i) => {
       if (i !== pageIndex) return page
       const blocks = [...page.blocks]
@@ -383,6 +393,41 @@ export class DesignStore {
       r.name === block.resource ? { ...r, kanban: kanbanConfigOf(updated) } : r
     )
     return this.mutate(resources, pages)
+  }
+
+
+  /**
+   * Config de los bloques KPI y Top N (spec 70). A diferencia del calendario y el kanban, NO se
+   * replica en la entidad: una tarjeta es de la vista, no del modelo — la misma entidad puede
+   * tener cinco tarjetas distintas en el mismo panel.
+   *
+   * Dos reglas se hacen cumplir aquí y no solo en el panel, porque el diseño se puede editar por
+   * otras vías (el chat, un JSON pegado): ratio y objetivo son excluyentes, y sin ventana no hay
+   * comparación posible.
+   */
+  setKpiConfig(pageIndex: number, blockIndex: number, patch: Partial<DesignBlock>): boolean {
+    const page = this._pages()[pageIndex]
+    const block = page?.blocks[blockIndex]
+    if (!block || (block.kind !== 'kpi' && block.kind !== 'top-n')) return false
+
+    const updated: DesignBlock = { ...block, ...patch }
+    // el select vacío llega como '': eso es «sin ventana», no una ventana llamada ''
+    if (updated.kpiWindowPreset === '') delete updated.kpiWindowPreset
+    if (updated.kpiWindowField === '') delete updated.kpiWindowField
+    if (updated.kpiConditionField === '') {
+      delete updated.kpiConditionField
+      delete updated.kpiConditionOperator
+      delete updated.kpiConditionValue
+    }
+    if (patch.kpiRatio === true) delete updated.kpiTarget
+    if (patch.kpiTarget !== undefined) delete updated.kpiRatio
+    if (!updated.kpiWindowPreset) delete updated.kpiCompare
+    if (updated.kpiWindowPreset !== 'days') delete updated.kpiWindowDays
+
+    const pages = this._pages().map((p, i) =>
+      i === pageIndex ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? updated : b)) } : p
+    )
+    return this.mutate(this._resources(), pages)
   }
 
   /** Config del panel del bloque calendario (spec 59): vive en el bloque y se replica en la entidad. */
@@ -976,7 +1021,10 @@ export class DesignStore {
     return {
       schemaVersion: 1,
       name: this._appName(),
-      pages: designPagesToAppPages(this._pages()),
+      pages: designPagesToAppPages(
+        this._pages(),
+        resource => this._resources().find(r => r.name === resource)?.labelPlural ?? resource
+      ),
       ...(this._flows().length ? { flows: this._flows() } : {}),
       ...(this._brief() ? { brief: this._brief() } : {})
     }

@@ -235,3 +235,90 @@ describe('designPagesToAppPages — kanban (spec 61)', () => {
     expect(designPagesToAppPages(pages)).toEqual([])
   })
 })
+
+describe('designPagesToAppPages — tarjeta KPI y top-n (spec 70)', () => {
+  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
+
+  it('una vista con SOLO una tarjeta KPI ya abre el panel', () => {
+    const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'Pendientes' }])
+
+    expect(designPagesToAppPages(pages)).toEqual([
+      {
+        kind: 'dashboard',
+        label: 'Panel',
+        blocks: [{ kind: 'kpi', resource: 'pedido', label: 'Pendientes', measure: 'count', width: 'full' }]
+      }
+    ])
+  })
+
+  it('ensambla la condición y la ventana desde los campos planos', () => {
+    const pages = panel([
+      {
+        kind: 'kpi',
+        resource: 'pedido',
+        kpiLabel: 'Pendientes este mes',
+        kpiConditionField: 'estado',
+        kpiConditionOperator: 'eq',
+        kpiConditionValue: 'pendiente',
+        kpiWindowField: 'creado',
+        kpiWindowPreset: 'month',
+        kpiCompare: true,
+        width: 'half'
+      }
+    ])
+
+    expect(designPagesToAppPages(pages)[0]).toMatchObject({
+      blocks: [
+        {
+          kind: 'kpi',
+          condition: { field: 'estado', operator: 'eq', value: 'pendiente' },
+          window: { field: 'creado', preset: 'month' },
+          compare: true,
+          width: 'half'
+        }
+      ]
+    })
+  })
+
+  it('sin etiqueta usa el plural de la entidad: el app-schema la exige', () => {
+    const pages = panel([{ kind: 'kpi', resource: 'pedido' }])
+
+    expect(designPagesToAppPages(pages, () => 'Pedidos')[0]).toMatchObject({
+      blocks: [{ label: 'Pedidos' }]
+    })
+  })
+
+  it('una comparación sin ventana no cruza: no hay periodo anterior de «siempre»', () => {
+    const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiCompare: true }])
+
+    const [panelPage] = designPagesToAppPages(pages)
+    expect(panelPage.kind === 'dashboard' && panelPage.blocks[0]).not.toHaveProperty('compare')
+  })
+
+  it('una ventana sin campo fecha no cruza: no acotaría nada', () => {
+    const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiWindowPreset: 'month' }])
+
+    const [panelPage] = designPagesToAppPages(pages)
+    expect(panelPage.kind === 'dashboard' && panelPage.blocks[0]).not.toHaveProperty('window')
+  })
+
+  it('el preset de N días arrastra su longitud, con 30 por defecto', () => {
+    const pages = panel([
+      { kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiWindowField: 'creado', kpiWindowPreset: 'days' }
+    ])
+
+    expect(designPagesToAppPages(pages)[0]).toMatchObject({
+      blocks: [{ window: { field: 'creado', preset: 'days', days: 30 } }]
+    })
+  })
+
+  it('el top-n cruza con su campo de orden, y sin él no cruza nada', () => {
+    const withField = panel([{ kind: 'top-n', resource: 'pedido', topField: 'importe', topN: 3 }])
+    expect(designPagesToAppPages(withField)[0]).toMatchObject({
+      blocks: [{ kind: 'top-n', resource: 'pedido', field: 'importe', n: 3, dir: 'desc' }]
+    })
+
+    const withoutField = panel([{ kind: 'top-n', resource: 'pedido' }])
+    expect(designPagesToAppPages(withoutField)).toEqual([])
+  })
+})

@@ -4,7 +4,18 @@
  * coordenadas. Los «arquetipos» son presets de bloques, no tipos rígidos de
  * página: la tabla es un bloque más, tan opcional como los ficheros.
  */
-export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form' | 'calendar' | 'kanban'
+export type BlockKind =
+  | 'table'
+  | 'kpis'
+  | 'kpi'
+  | 'top-n'
+  | 'fields'
+  | 'cards'
+  | 'attachments'
+  | 'text'
+  | 'form'
+  | 'calendar'
+  | 'kanban'
 
 export interface DesignBlock {
   kind: BlockKind
@@ -26,6 +37,31 @@ export interface DesignBlock {
   weekends?: boolean
   /** Kanban (spec 61): campo enum cuyos valores son las columnas */
   columnsField?: string
+  /**
+   * Tarjeta KPI (spec 70). Campos PLANOS, como el calendario y el kanban: el autosave parchea
+   * campo a campo y el diseño guardado se lee de un vistazo. La frontera los ensambla en los
+   * objetos anidados del app-schema.
+   */
+  kpiLabel?: string
+  /** Condición: qué se cuenta. Los tres van juntos o no van ninguno */
+  kpiConditionField?: string
+  kpiConditionOperator?: string
+  kpiConditionValue?: string
+  /** Ventana: cuándo. El campo es una fecha del recurso */
+  kpiWindowField?: string
+  kpiWindowPreset?: string
+  kpiWindowDays?: number
+  /** El valor como porcentaje del total del recurso en la misma ventana */
+  kpiRatio?: boolean
+  /** Variación contra la ventana anterior (exige ventana) */
+  kpiCompare?: boolean
+  /** Objetivo de la barra de progreso (excluyente con kpiRatio) */
+  kpiTarget?: number
+  /** Top N (spec 70): campo de orden, cuántas filas, qué se muestra y en qué sentido */
+  topField?: string
+  topN?: number
+  topLabelField?: string
+  topDir?: 'asc' | 'desc'
 }
 
 export interface DesignPage {
@@ -106,7 +142,18 @@ export const VIEW_PRESETS: BlockPreset[] = [
 /** Bloques que solo tienen sentido en la ficha de un registro. */
 export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
 
-export const GENERABLE_BLOCKS: BlockKind[] = ['table', 'kpis', 'fields', 'cards', 'attachments', 'form', 'calendar', 'kanban']
+export const GENERABLE_BLOCKS: BlockKind[] = [
+  'table',
+  'kpis',
+  'kpi',
+  'top-n',
+  'fields',
+  'cards',
+  'attachments',
+  'form',
+  'calendar',
+  'kanban'
+]
 
 /**
  * ¿El generador emite ESTE bloque en ESTA vista? La generabilidad no es solo del

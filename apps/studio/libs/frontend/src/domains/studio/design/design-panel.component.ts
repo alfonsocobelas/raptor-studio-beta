@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, linkedSignal } from '@angular/core'
 import { CalendarConfigComponent } from './calendar-config.component'
 import { KanbanConfigComponent } from './kanban-config.component'
+import { KpiConfigComponent } from './kpi-config.component'
+import { TopNConfigComponent } from './top-n-config.component'
 import { InspectorComponent } from './inspector.component'
 import { ActiveViewService } from './active-view.service'
 import { PREVIEW_PALETTES, PREVIEW_PRESETS, PreviewSettings } from './preview-settings'
@@ -26,7 +28,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 @Component({
   selector: 'studio-design-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent],
+  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, TopNConfigComponent],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -114,6 +116,8 @@ const PANEL_TABS: readonly PanelTabOption[] = [
             @if (view.resource()) {
               <studio-calendar-config [resource]="view.resource()" />
               <studio-kanban-config [resource]="view.resource()" />
+              <studio-kpi-config [resource]="view.resource()" />
+              <studio-top-n-config [resource]="view.resource()" />
               <studio-inspector [resource]="view.resource()" (close)="view.selectResource(null)" />
             } @else {
               <p class="text-muted-foreground text-xs" data-testid="component-empty">

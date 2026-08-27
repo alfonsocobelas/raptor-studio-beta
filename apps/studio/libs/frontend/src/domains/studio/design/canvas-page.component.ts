@@ -14,6 +14,8 @@ import { CanvasCardsComponent } from './canvas-cards.component'
 import { CanvasFormComponent } from './canvas-form.component'
 import { CanvasCalendarComponent } from './canvas-calendar.component'
 import { CanvasKanbanComponent } from './canvas-kanban.component'
+import { CanvasKpiComponent } from './canvas-kpi.component'
+import { CanvasTopNComponent } from './canvas-top-n.component'
 import { mockTotal } from './mock-data'
 
 /**
@@ -23,7 +25,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, NgIcon],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, CanvasKpiComponent, CanvasTopNComponent, NgIcon],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -106,6 +108,12 @@ import { mockTotal } from './mock-data'
               }
               @case ('kanban') {
                 <studio-canvas-kanban [block]="block" />
+              }
+              @case ('kpi') {
+                <studio-canvas-kpi [block]="block" />
+              }
+              @case ('top-n') {
+                <studio-canvas-top-n [block]="block" />
               }
               @case ('kpis') {
                 <div
@@ -262,6 +270,8 @@ export class CanvasPageComponent {
     if (block.kind === 'calendar' && !block.dateField) return false
     // ídem: un kanban sin campo enum (spec 61)
     if (block.kind === 'kanban' && !block.columnsField) return false
+    // un top-n sin campo de orden no tiene por qué ordenar: es diseño y nada más (spec 70)
+    if (block.kind === 'top-n' && !block.topField) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }

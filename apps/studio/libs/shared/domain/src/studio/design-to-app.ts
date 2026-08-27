@@ -1,6 +1,6 @@
 import type { AppDefinition } from '@raptor/schema'
-import type { DashboardBlock } from '@raptor/schema'
-import type { DesignPage } from './design-page'
+import type { DashboardBlock, KpiOperator, KpiWindowPreset } from '@raptor/schema'
+import type { DesignBlock, DesignPage } from './design-page'
 
 /**
  * Traduce las VISTAS del lienzo (composición de bloques) a las páginas del
@@ -17,7 +17,7 @@ import type { DesignPage } from './design-page'
  * Los bloques del panel que ESTA vista dibuja, en su orden y con su ancho (spec 53): la fila de
  * KPIs y los listados. Sin repetidos: la frontera colapsaría dos bloques iguales de todos modos.
  */
-function panelBlocks(page: DesignPage): DashboardBlock[] {
+function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): DashboardBlock[] {
   const blocks: DashboardBlock[] = []
   const tables: string[] = []
 
@@ -25,6 +25,23 @@ function panelBlocks(page: DesignPage): DashboardBlock[] {
     const width = block.width === 'half' ? 'half' : 'full'
     if (block.kind === 'kpis' && block.resources?.length) {
       blocks.push({ kind: 'metrics', resources: block.resources, width })
+      continue
+    }
+    if (block.kind === 'kpi' && block.resource) {
+      blocks.push(kpiBlockOf(block, width, labelOf(block.resource)))
+      continue
+    }
+    if (block.kind === 'top-n' && block.resource && block.topField) {
+      blocks.push({
+        kind: 'top-n',
+        resource: block.resource,
+        field: block.topField,
+        n: block.topN ?? 5,
+        dir: block.topDir ?? 'desc',
+        ...(block.topLabelField ? { labelField: block.topLabelField } : {}),
+        ...(block.kpiLabel?.trim() ? { label: block.kpiLabel.trim() } : {}),
+        width
+      })
       continue
     }
     if (block.kind === 'table' && block.resource && !tables.includes(block.resource)) {
@@ -36,22 +53,77 @@ function panelBlocks(page: DesignPage): DashboardBlock[] {
   return blocks
 }
 
+/**
+ * Los campos PLANOS del bloque dibujado se ensamblan aquí en los objetos anidados del
+ * app-schema (spec 70). La etiqueta nunca falta: el app-schema la exige y el lienzo no obliga a
+ * escribirla, así que sin ella se usa el plural de la entidad.
+ */
+function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: string): DashboardBlock {
+  const condition =
+    block.kpiConditionField && block.kpiConditionValue !== undefined && block.kpiConditionValue !== ''
+      ? {
+          field: block.kpiConditionField,
+          operator: (block.kpiConditionOperator ?? 'eq') as KpiOperator,
+          value: block.kpiConditionValue
+        }
+      : undefined
+  // una ventana sin campo fecha no acota nada: no cruza
+  const window =
+    block.kpiWindowPreset && block.kpiWindowField
+      ? {
+          field: block.kpiWindowField,
+          preset: block.kpiWindowPreset as KpiWindowPreset,
+          ...(block.kpiWindowPreset === 'days' ? { days: block.kpiWindowDays ?? 30 } : {})
+        }
+      : undefined
+
+  return {
+    kind: 'kpi',
+    resource: block.resource as string,
+    label: block.kpiLabel?.trim() || fallbackLabel,
+    measure: 'count',
+    ...(condition ? { condition } : {}),
+    ...(window ? { window } : {}),
+    ...(block.kpiRatio ? { ratio: true } : {}),
+    // sin ventana no hay periodo anterior con el que comparar
+    ...(block.kpiCompare && window ? { compare: true } : {}),
+    ...(block.kpiTarget !== undefined && !block.kpiRatio ? { target: block.kpiTarget } : {}),
+    width
+  }
+}
+
+/** Los bloques que viven DENTRO del panel: cualquiera de ellos abre el dashboard de la vista. */
+function isPanelBlock(block: DesignBlock): boolean {
+  if (block.kind === 'kpis') return (block.resources?.length ?? 0) > 0
+  if (block.kind === 'kpi') return block.resource !== undefined
+  if (block.kind === 'top-n') return block.resource !== undefined && block.topField !== undefined
+  return false
+}
+
 /** Los recursos cuyo listado viaja DENTRO del panel: no emiten además su pantalla. */
 function carriedTables(blocks: DashboardBlock[]): string[] {
   return blocks.filter(block => block.kind === 'table').map(block => block.resource)
 }
 
-export function designPagesToAppPages(pages: DesignPage[]): AppDefinition['pages'] {
+/**
+ * @param labelOf etiqueta legible de una entidad; solo la usa la tarjeta KPI cuando el diseño no
+ *   le ha puesto etiqueta (el app-schema la exige). Por defecto, el propio nombre de la entidad.
+ */
+export function designPagesToAppPages(
+  pages: DesignPage[],
+  labelOf: (resource: string) => string = resource => resource
+): AppDefinition['pages'] {
   const result: AppDefinition['pages'] = []
   const listed = new Set<string>()
   let hasDashboard = false
 
   for (const page of pages) {
-    const kpis = page.blocks.some(b => b.kind === 'kpis' && b.resources?.length)
+    // cualquier bloque de panel abre el dashboard, no solo la fila de KPIs (spec 70)
+    const kpis = page.blocks.some(isPanelBlock)
     // spec 52 y 53: los bloques DE ESTA VISTA viven dentro del panel, en el orden dibujado.
     // Antes los listados salían fuera, el panel quedaba sin tabla y el listado se comía el
     // título de la siguiente vista que repitiera el recurso (demo taller).
-    const blocks = kpis && !hasDashboard ? panelBlocks(page) : []
+    const blocks = kpis && !hasDashboard ? panelBlocks(page, labelOf) : []
     const carried = carriedTables(blocks)
     if (blocks.length) {
       result.push({ kind: 'dashboard', label: page.title, blocks })
