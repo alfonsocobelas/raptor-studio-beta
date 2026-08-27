@@ -214,6 +214,58 @@ const MODEL_TABS: readonly { id: ModelTab; label: string }[] = [
 
           @case ('entity') {
             @if (active.resource(); as resource) {
+              <!-- las etiquetas son de la ENTIDAD y se editan donde se edita la entidad. El
+                   identificador no se toca aquí: lo referencian bloques, páginas y relaciones -->
+              <section class="mb-4" data-testid="resource-labels">
+                <h3 class="studio-eyebrow mb-2">Cómo se llama</h3>
+                <div class="space-y-2 text-xs">
+                  <label class="flex items-center justify-between gap-2">
+                    <span>Una</span>
+                    <input
+                      class="border-input w-[150px] shrink-0 rounded border px-2 py-1 text-xs"
+                      [value]="labels().labelSingular"
+                      (change)="saveLabel(resource, 'labelSingular', $event)"
+                      data-testid="resource-label-singular"
+                    />
+                  </label>
+                  <label class="flex items-center justify-between gap-2">
+                    <span>Varias</span>
+                    <input
+                      class="border-input w-[150px] shrink-0 rounded border px-2 py-1 text-xs"
+                      [value]="labels().labelPlural"
+                      (change)="saveLabel(resource, 'labelPlural', $event)"
+                      data-testid="resource-label-plural"
+                    />
+                  </label>
+                  <label class="flex items-center justify-between gap-2">
+                    <span>Género</span>
+                    <app-select
+                      class="w-[150px] shrink-0"
+                      size="sm"
+                      [options]="genderOptions"
+                      [ngModel]="labels().gender"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="saveGender(resource, $event)"
+                      data-testid="resource-gender"
+                    />
+                  </label>
+                  <label class="flex items-center justify-between gap-2">
+                    <span>Entradilla</span>
+                    <input
+                      class="border-input w-[150px] shrink-0 rounded border px-2 py-1 text-xs"
+                      placeholder="opcional"
+                      [value]="labels().subtitle"
+                      (change)="saveLabel(resource, 'subtitle', $event)"
+                      data-testid="resource-subtitle"
+                    />
+                  </label>
+                  <p class="text-muted-foreground text-[10px]">
+                    El género decide los textos de la app: «{{ labels().gender === 'f' ? 'La' : 'El' }}
+                    {{ labels().labelSingular.toLowerCase() }} se ha guardado».
+                  </p>
+                </div>
+              </section>
+
               <studio-inspector [resource]="resource" (close)="active.selectResource(null)" />
 
               <!-- la frase es de la ENTIDAD: se escribe donde se edita la entidad, no en el
@@ -340,6 +392,30 @@ export class ModelPanelComponent {
     return current === 'ref'
       ? [{ value: 'ref', label: 'referencia (uuid)' }]
       : SELECTABLE_FIELD_TYPES.map(type => ({ value: type, label: TYPE_LABELS[type] }))
+  }
+
+  protected readonly genderOptions: AppSelectOption[] = [
+    { value: 'm', label: 'masculino' },
+    { value: 'f', label: 'femenino' }
+  ]
+
+  /** Las etiquetas de la entidad elegida, con los huecos ya resueltos para los inputs. */
+  protected readonly labels = computed(() => {
+    const draft = this.store.resources().find(r => r.name === this.active.resource())
+    return {
+      labelSingular: draft?.labelSingular ?? '',
+      labelPlural: draft?.labelPlural ?? '',
+      gender: draft?.gender ?? 'm',
+      subtitle: draft?.subtitle ?? ''
+    }
+  })
+
+  protected saveLabel(name: string, key: 'labelSingular' | 'labelPlural' | 'subtitle', event: Event): void {
+    this.store.setResourceLabels(name, { [key]: (event.target as HTMLInputElement).value })
+  }
+
+  protected saveGender(name: string, gender: string): void {
+    if (gender === 'm' || gender === 'f') this.store.setResourceLabels(name, { gender })
   }
 
   protected readonly brief = computed(

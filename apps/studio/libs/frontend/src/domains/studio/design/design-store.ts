@@ -226,6 +226,54 @@ export class DesignStore {
     return true
   }
 
+
+  /**
+   * Las ETIQUETAS de una entidad: singular, plural, género y entradilla (2026-08-27). El
+   * identificador (`name`, `plural`) NO se toca: lo referencian los bloques, las páginas y las
+   * relaciones, y de él salen las rutas y los esquemas de la app emitida — renombrarlo es otra
+   * operación, con su migración.
+   *
+   * El género no es adorno: de él dependen los textos del emitido («El cliente» / «La factura»).
+   */
+  setResourceLabels(
+    name: string,
+    patch: { labelSingular?: string; labelPlural?: string; gender?: 'm' | 'f'; subtitle?: string }
+  ): boolean {
+    const target = this._resources().find(r => r.name === name)
+    if (!target) {
+      this._lastError.set(`No existe la entidad «${name}»`)
+      return false
+    }
+
+    const singular = patch.labelSingular?.trim()
+    const plural = patch.labelPlural?.trim()
+    if (patch.labelSingular !== undefined && !singular) {
+      this._lastError.set('El nombre en singular no puede quedar vacío')
+      return false
+    }
+    if (patch.labelPlural !== undefined && !plural) {
+      this._lastError.set('El nombre en plural no puede quedar vacío')
+      return false
+    }
+
+    return this.updateResource(name, draft => {
+      const updated = {
+        ...draft,
+        ...(singular ? { labelSingular: singular } : {}),
+        ...(plural ? { labelPlural: plural } : {}),
+        ...(patch.gender ? { gender: patch.gender } : {})
+      }
+      if (patch.subtitle === undefined) return updated
+      // la entradilla vacía se quita, no se guarda en blanco (mismo criterio que el brief)
+      const trimmed = patch.subtitle.trim()
+      if (!trimmed) {
+        const { subtitle: _gone, ...rest } = updated
+        return rest
+      }
+      return { ...updated, subtitle: trimmed }
+    })
+  }
+
   /** La frase de negocio de una entidad; el texto vacío la quita. */
   setResourceBrief(name: string, text: string): boolean {
     const trimmed = text.trim()

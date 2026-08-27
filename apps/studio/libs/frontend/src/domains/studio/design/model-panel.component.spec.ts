@@ -532,3 +532,83 @@ describe('ModelPanelComponent — borrar la entidad', () => {
     expect(dialogButton('action')).toBeNull()
   })
 })
+
+/**
+ * Renombrar una entidad (2026-08-27). Hasta ahora el estudio no sabía cambiar el nombre de una
+ * entidad por ningún sitio: lo que se escribía al crearla se quedaba para siempre, y el género
+ * nacía en masculino aunque la entidad fuese «factura».
+ */
+describe('ModelPanelComponent — cómo se llama la entidad', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Cliente')
+    active.selectResource('cliente')
+  })
+
+  const openEntityTab = (fixture: ReturnType<typeof mount>): void => {
+    testId(fixture, 'model-tab-entity')?.click()
+    fixture.detectChanges()
+  }
+
+  const type = (fixture: ReturnType<typeof mount>, id: string, value: string): void => {
+    const input = testId(fixture, id) as HTMLInputElement
+    input.value = value
+    input.dispatchEvent(new Event('change'))
+    fixture.detectChanges()
+  }
+
+  it('trae las etiquetas actuales de la entidad', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    expect((testId(fixture, 'resource-label-singular') as HTMLInputElement).value).toBe('Cliente')
+    expect((testId(fixture, 'resource-label-plural') as HTMLInputElement).value).toBe('Clientes')
+  })
+
+  it('renombra en singular y en plural sin tocar el identificador', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    type(fixture, 'resource-label-singular', 'Factura')
+    type(fixture, 'resource-label-plural', 'Facturas')
+
+    expect(store.resources()[0]).toMatchObject({
+      name: 'cliente',
+      plural: 'clientes',
+      labelSingular: 'Factura',
+      labelPlural: 'Facturas'
+    })
+  })
+
+  it('guarda la entradilla, y vacía la quita', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    type(fixture, 'resource-subtitle', 'Las facturas emitidas')
+    expect(store.resources()[0].subtitle).toBe('Las facturas emitidas')
+
+    type(fixture, 'resource-subtitle', '')
+    expect(store.resources()[0]).not.toHaveProperty('subtitle')
+  })
+
+  it('una etiqueta vacía no se guarda: el menú de la app quedaría sin nombre', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    type(fixture, 'resource-label-singular', '   ')
+
+    expect(store.resources()[0].labelSingular).toBe('Cliente')
+  })
+
+  it('enseña cómo sonará el texto de la app según el género', () => {
+    const fixture = mount()
+    openEntityTab(fixture)
+
+    expect(fixture.nativeElement.textContent).toContain('El cliente se ha guardado')
+  })
+})
