@@ -14,6 +14,9 @@ interface KpiFilter {
 }
 
 interface KpiSpec {
+  /** count cuenta filas con el listado; el resto mide un campo con /aggregate (spec 71) */
+  measure: 'count' | 'sum' | 'avg' | 'min' | 'max' | 'distinct'
+  field?: string
   filters: KpiFilter[]
   window?: { field: string; preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'; days?: number }
   ratio: boolean
@@ -22,11 +25,12 @@ interface KpiSpec {
 }
 
 export interface KpiValue {
-  value: number
+  /** null = no hay dato. La media de un conjunto vacío no es cero (spec 71) */
+  value: number | null
   /** El mismo conteo en la ventana anterior; solo si la tarjeta compara */
-  previous?: number
+  previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
-  total?: number
+  total?: number | null
 }
 
 /**
@@ -52,36 +56,62 @@ export class DashboardService {
   ])
 
   readonly projectsKpiStatusEqPlanning = this._kpi('/api/v1/projects', {
+    measure: 'count',
     filters: [{ field: 'status', operator: 'eq', value: 'planning' }],
     ratio: false,
     compare: false
   })
-  readonly projectsKpiStatusEqPlanningValue = computed(() => this.projectsKpiStatusEqPlanning.value()?.value ?? 0)
+  readonly projectsKpiStatusEqPlanningValue = computed(() => this.projectsKpiStatusEqPlanning.value()?.value ?? null)
 
   readonly contractsKpiContractTypeEqCloudStartDateMonthDelta = this._kpi('/api/v1/contracts', {
+    measure: 'count',
     filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
     window: { field: 'startDate', preset: 'month' },
     ratio: false,
     compare: true
   })
   readonly contractsKpiContractTypeEqCloudStartDateMonthDeltaValue = computed(
-    () => this.contractsKpiContractTypeEqCloudStartDateMonthDelta.value()?.value ?? 0
+    () => this.contractsKpiContractTypeEqCloudStartDateMonthDelta.value()?.value ?? null
   )
 
   readonly projectsKpiStatusEqClosedRatio = this._kpi('/api/v1/projects', {
+    measure: 'count',
     filters: [{ field: 'status', operator: 'eq', value: 'closed' }],
     ratio: true,
     compare: false
   })
-  readonly projectsKpiStatusEqClosedRatioValue = computed(() => this.projectsKpiStatusEqClosedRatio.value()?.value ?? 0)
+  readonly projectsKpiStatusEqClosedRatioValue = computed(
+    () => this.projectsKpiStatusEqClosedRatio.value()?.value ?? null
+  )
 
   readonly contractsKpiTotalTarget60 = this._kpi('/api/v1/contracts', {
+    measure: 'count',
     filters: [],
     ratio: false,
     compare: false,
     target: 60
   })
-  readonly contractsKpiTotalTarget60Value = computed(() => this.contractsKpiTotalTarget60.value()?.value ?? 0)
+  readonly contractsKpiTotalTarget60Value = computed(() => this.contractsKpiTotalTarget60.value()?.value ?? null)
+
+  readonly contractsKpiSumTotalValue = this._kpi('/api/v1/contracts', {
+    measure: 'sum',
+    field: 'totalValue',
+    filters: [],
+    ratio: false,
+    compare: false
+  })
+  readonly contractsKpiSumTotalValueValue = computed(() => this.contractsKpiSumTotalValue.value()?.value ?? null)
+
+  readonly contractsKpiAvgTotalValueContractTypeEqCloud = this._kpi('/api/v1/contracts', {
+    measure: 'avg',
+    field: 'totalValue',
+    filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
+    ratio: false,
+    compare: false
+  })
+  readonly contractsKpiAvgTotalValueContractTypeEqCloudValue = computed(
+    () => this.contractsKpiAvgTotalValueContractTypeEqCloud.value()?.value ?? null
+  )
 
   readonly contractsTopTotalValue5Desc = this._top('/api/v1/contracts', 'totalValue', 'desc', 5)
 
@@ -96,6 +126,8 @@ export class DashboardService {
       this.contractsKpiContractTypeEqCloudStartDateMonthDelta.isLoading() ||
       this.projectsKpiStatusEqClosedRatio.isLoading() ||
       this.contractsKpiTotalTarget60.isLoading() ||
+      this.contractsKpiSumTotalValue.isLoading() ||
+      this.contractsKpiAvgTotalValueContractTypeEqCloud.isLoading() ||
       this.contractsTopTotalValue5Desc.isLoading() ||
       this.contractsSeriesStartDate.isLoading()
   )
@@ -108,6 +140,8 @@ export class DashboardService {
       this.contractsKpiContractTypeEqCloudStartDateMonthDelta.error() !== undefined ||
       this.projectsKpiStatusEqClosedRatio.error() !== undefined ||
       this.contractsKpiTotalTarget60.error() !== undefined ||
+      this.contractsKpiSumTotalValue.error() !== undefined ||
+      this.contractsKpiAvgTotalValueContractTypeEqCloud.error() !== undefined ||
       this.contractsTopTotalValue5Desc.error() !== undefined ||
       this.contractsSeriesStartDate.error() !== undefined
   )
@@ -145,11 +179,14 @@ export class DashboardService {
     const now = new Date()
     const range = spec.window ? windowRange(spec.window.preset, spec.window.days, now) : undefined
     const scoped = [...spec.filters, ...this._rangeFilters(spec.window?.field, range)]
+    // contar filas lo sabe el listado; medir un campo exige el endpoint de agregación (spec 71)
+    const measured = (filters: KpiFilter[]): Promise<number | null> =>
+      spec.measure === 'count' ? this._countBy(api, filters) : this._aggregate(api, spec, filters)
 
     const [value, previous, total] = await Promise.all([
-      this._countBy(api, scoped),
+      measured(scoped),
       spec.compare && spec.window
-        ? this._countBy(api, [
+        ? measured([
             ...spec.filters,
             ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
           ])
@@ -158,6 +195,13 @@ export class DashboardService {
     ])
 
     return { value, previous, total }
+  }
+
+  private _aggregate(api: string, spec: KpiSpec, filters: KpiFilter[]): Promise<number | null> {
+    const params: Record<string, string> = { page: '1', pageSize: '1', op: spec.measure, field: spec.field ?? '' }
+    if (filters.length) params['filters'] = JSON.stringify(filters)
+
+    return firstValueFrom(this._http.get<{ value: number | null }>(`${api}/aggregate`, { params })).then(r => r.value)
   }
 
   private _rangeFilters(field: string | undefined, range: KpiRange | undefined): KpiFilter[] {

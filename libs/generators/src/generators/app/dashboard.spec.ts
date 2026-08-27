@@ -258,7 +258,7 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
 
     expect(subs['resourceEntries']).toContain("_counts('/api/v1/contracts', 'contractType'")
     expect(subs['resourceEntries']).toContain(
-      "_kpi('/api/v1/contracts', { filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }], ratio: false, compare: false })"
+      "_kpi('/api/v1/contracts', { measure: 'count', filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }], ratio: false, compare: false })"
     )
     expect(subs['resourceEntries']).toContain("_series('/api/v1/contracts', 'startDate')")
     expect(subs['panelSections']).toContain('Cloud activos')

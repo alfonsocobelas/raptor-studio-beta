@@ -67,27 +67,37 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
           </div>
           <app-kpi-card
             title="Proyectos en planificación"
-            [value]="service.projectsKpiStatusEqPlanningValue()"
+            [value]="kpiText(service.projectsKpiStatusEqPlanningValue(), 'count')"
             testId="kpi-projectsKpiStatusEqPlanning"
           />
           <app-kpi-card
             title="Altas de cloud este mes"
-            [value]="service.contractsKpiContractTypeEqCloudStartDateMonthDeltaValue()"
+            [value]="kpiText(service.contractsKpiContractTypeEqCloudStartDateMonthDeltaValue(), 'count')"
             [delta]="delta(service.contractsKpiContractTypeEqCloudStartDateMonthDelta.value())"
             testId="kpi-contractsKpiContractTypeEqCloudStartDateMonthDelta"
           />
           <app-kpi-card
             title="Proyectos cerrados"
-            [value]="service.projectsKpiStatusEqClosedRatioValue()"
+            [value]="kpiText(service.projectsKpiStatusEqClosedRatioValue(), 'count')"
             [percent]="percent(service.projectsKpiStatusEqClosedRatio.value())"
             testId="kpi-projectsKpiStatusEqClosedRatio"
           />
           <app-kpi-card
             title="Contratos del año"
-            [value]="service.contractsKpiTotalTarget60Value()"
+            [value]="kpiText(service.contractsKpiTotalTarget60Value(), 'count')"
             [progress]="progress(service.contractsKpiTotalTarget60.value(), 60)"
             [target]="60"
             testId="kpi-contractsKpiTotalTarget60"
+          />
+          <app-kpi-card
+            title="Valor contratado"
+            [value]="kpiText(service.contractsKpiSumTotalValueValue(), 'numeric')"
+            testId="kpi-contractsKpiSumTotalValue"
+          />
+          <app-kpi-card
+            title="Valor medio de cloud"
+            [value]="kpiText(service.contractsKpiAvgTotalValueContractTypeEqCloudValue(), 'numeric')"
+            testId="kpi-contractsKpiAvgTotalValueContractTypeEqCloud"
           />
           <div class="bg-card rounded-lg border p-4" data-testid="top-contractsTopTotalValue5Desc">
             <h2 class="mb-3 text-sm font-semibold">Mayores contratos</h2>
@@ -146,8 +156,17 @@ export class DashboardComponent {
     return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
   }
 
+  kpiText(value: number | null, kind: 'count' | 'numeric' | 'date'): string {
+    if (value === null) return '—'
+    if (kind === 'date') return new Date(value).toLocaleDateString('es-ES')
+    return value.toLocaleString('es-ES')
+  }
+
   delta(value: KpiValue | undefined): KpiDelta | undefined {
-    return value?.previous === undefined ? undefined : deltaOf(value.value, value.previous)
+    // sin dato o sin periodo anterior no hay variación: comparar contra un cero inventado mentiría
+    if (value?.value === null || value?.value === undefined) return undefined
+    if (value.previous === null || value.previous === undefined) return undefined
+    return deltaOf(value.value, value.previous)
   }
 
   percent(value: KpiValue | undefined): number {

@@ -82,13 +82,12 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
 
     const column = `entity.${field}`
     const expression = op === 'distinct' ? `COUNT(DISTINCT ${column})` : `${op.toUpperCase()}(${column})`
-    const raw = await qb.select(expression, 'value').getRawOne<{ value: string | number | null }>()
+    const raw = await qb.select(expression, 'value').getRawOne<{ value: string | number | Date | null }>()
 
     if (raw?.value === null || raw?.value === undefined) {
       return op === 'sum' || op === 'distinct' ? 0 : null
     }
-    // numeric de PostgreSQL vuelve como cadena: sin esto, `sum` concatenaría
-    return Number(raw.value)
+    return toAggregateNumber(raw.value)
   }
 
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {
@@ -112,4 +111,22 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
       qb.andWhere(`entity.${deleteColumn.propertyName} IS NULL`)
     }
   }
+}
+
+/**
+ * El motor devuelve cada columna a su manera: `numeric` vuelve como CADENA (sin esto, `sum`
+ * concatenaría), una `timestamptz` como Date y una `date` como cadena 'YYYY-MM-DD'.
+ *
+ * Una fecha se transporta como milisegundos de época —el único número en el que cabe— y quien la
+ * pinta la vuelve a fecha. Lo que no se pueda leer como número no es un 0: es «no hay dato».
+ */
+export function toAggregateNumber(value: string | number | Date): number | null {
+  if (typeof value === 'number') return value
+  if (value instanceof Date) return value.getTime()
+
+  const numeric = Number(value)
+  if (!Number.isNaN(numeric)) return numeric
+
+  const asDate = new Date(value).getTime()
+  return Number.isNaN(asDate) ? null : asDate
 }

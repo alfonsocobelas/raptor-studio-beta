@@ -372,9 +372,11 @@ function aggregateKindOf(field: FieldDefinition): 'numeric' | 'date' | undefined
 function kpiSlug(block: Extract<DashboardBlock, { kind: 'kpi' }>): string {
   const condition = block.condition
   const window = block.window
+  const measured = block.measure !== undefined && block.measure !== 'count'
   return [
-    block.measure && block.measure !== 'count' ? `${block.measure}-${block.field}` : '',
-    condition ? `${condition.field}-${condition.operator}-${condition.value}` : 'total',
+    measured ? `${block.measure}-${block.field}` : '',
+    // «total» solo nombra el conteo sin condición: con medida, la medida ya nombra la tarjeta
+    condition ? `${condition.field}-${condition.operator}-${condition.value}` : measured ? '' : 'total',
     window ? `${window.field}-${window.preset}${window.days ?? ''}` : '',
     block.ratio === true ? 'ratio' : '',
     block.compare === true ? 'delta' : '',

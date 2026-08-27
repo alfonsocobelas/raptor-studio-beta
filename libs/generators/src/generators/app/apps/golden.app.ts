@@ -84,6 +84,24 @@ export const golden = defineApp({
           width: 'half'
         },
         { kind: 'kpi', resource: 'contract', label: 'Contratos del año', target: 60, width: 'half' },
+        // spec 71: las medidas de verdad, sobre el endpoint de agregación
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Valor contratado',
+          measure: 'sum',
+          field: 'totalValue',
+          width: 'half'
+        },
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Valor medio de cloud',
+          measure: 'avg',
+          field: 'totalValue',
+          condition: { field: 'contractType', operator: 'eq', value: 'cloud' },
+          width: 'half'
+        },
         // spec 70: la lista corta ordenada — una petición, no una agregación
         {
           kind: 'top-n',

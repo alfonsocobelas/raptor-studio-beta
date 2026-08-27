@@ -63,14 +63,18 @@ export abstract class MongooseRepository<T> {
         : [{ $group: { _id: null, value: { [`$${op}`]: `$${field}` } } }]
 
     const rows = await this.model()
-      .aggregate<{ value: number | null }>([{ $match: match }, ...group])
+      .aggregate<{ value: number | Date | null }>([{ $match: match }, ...group])
       .session(this.session())
       .exec()
 
     if (!rows.length || rows[0].value === null || rows[0].value === undefined) {
       return op === 'sum' || op === 'distinct' ? 0 : null
     }
-    return Number(rows[0].value)
+    // `$max` sobre una fecha devuelve una Date: se transporta como milisegundos de época
+    const value = rows[0].value
+    if (value instanceof Date) return value.getTime()
+    const numeric = Number(value)
+    return Number.isNaN(numeric) ? null : numeric
   }
 
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {

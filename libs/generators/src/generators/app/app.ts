@@ -547,7 +547,7 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
       return `  readonly ${block.property} = this._top('${block.api}', '${top?.field}', '${top?.dir}', ${top?.n})`
     }
     return `  readonly ${block.property} = this._kpi('${block.api}', ${kpiSpecLiteral(block)})
-  readonly ${block.property}Value = computed(() => this.${block.property}.value()?.value ?? 0)`
+  readonly ${block.property}Value = computed(() => this.${block.property}.value()?.value ?? null)`
   })
   const allProperties = [...entries.map(e => e.property), ...analytics.map(block => block.property ?? '')]
 
@@ -649,7 +649,9 @@ function kpiSpecLiteral(block: ComposedDashboardBlock): string {
   const filters = spec.filters
     .map(f => `{ field: '${f.field}', operator: '${f.operator}', value: '${f.value}' }`)
     .join(', ')
-  const parts = [`filters: [${filters}]`]
+  const parts = [`measure: '${spec.measure}'`]
+  if (spec.field) parts.push(`field: '${spec.field}'`)
+  parts.push(`filters: [${filters}]`)
   if (spec.window) {
     const days = spec.window.days === undefined ? '' : `, days: ${spec.window.days}`
     parts.push(`window: { field: '${spec.window.field}', preset: '${spec.window.preset}'${days} }`)
@@ -765,6 +767,9 @@ interface KpiFilter {
 }
 
 interface KpiSpec {
+  /** count cuenta filas con el listado; el resto mide un campo con /aggregate (spec 71) */
+  measure: 'count' | 'sum' | 'avg' | 'min' | 'max' | 'distinct'
+  field?: string
   filters: KpiFilter[]
   window?: { field: string; preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'; days?: number }
   ratio: boolean
@@ -773,11 +778,12 @@ interface KpiSpec {
 }
 
 export interface KpiValue {
-  value: number
+  /** null = no hay dato. La media de un conjunto vacío no es cero (spec 71) */
+  value: number | null
   /** El mismo conteo en la ventana anterior; solo si la tarjeta compara */
-  previous?: number
+  previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
-  total?: number
+  total?: number | null
 }`
   }
 }
@@ -817,11 +823,14 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     const now = new Date()
     const range = spec.window ? windowRange(spec.window.preset, spec.window.days, now) : undefined
     const scoped = [...spec.filters, ...this._rangeFilters(spec.window?.field, range)]
+    // contar filas lo sabe el listado; medir un campo exige el endpoint de agregación (spec 71)
+    const measured = (filters: KpiFilter[]): Promise<number | null> =>
+      spec.measure === 'count' ? this._countBy(api, filters) : this._aggregate(api, spec, filters)
 
     const [value, previous, total] = await Promise.all([
-      this._countBy(api, scoped),
+      measured(scoped),
       spec.compare && spec.window
-        ? this._countBy(api, [
+        ? measured([
             ...spec.filters,
             ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
           ])
@@ -830,6 +839,15 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     ])
 
     return { value, previous, total }
+  }
+
+  private _aggregate(api: string, spec: KpiSpec, filters: KpiFilter[]): Promise<number | null> {
+    const params: Record<string, string> = { page: '1', pageSize: '1', op: spec.measure, field: spec.field ?? '' }
+    if (filters.length) params['filters'] = JSON.stringify(filters)
+
+    return firstValueFrom(this._http.get<{ value: number | null }>(\`\${api}/aggregate\`, { params })).then(
+      r => r.value
+    )
   }
 
   private _rangeFilters(field: string | undefined, range: KpiRange | undefined): KpiFilter[] {
@@ -923,12 +941,14 @@ function renderAnalyticCard(block: ComposedDashboardBlock, pad: string): string 
       extra.push(`\n${pad}  [progress]="progress(service.${block.property}.value(), ${spec.target})"`)
       extra.push(`\n${pad}  [target]="${spec.target}"`)
     }
+    const kind = spec?.measure === 'count' ? 'count' : (spec?.fieldKind ?? 'numeric')
+    const value = `kpiText(service.${block.property}Value(), '${kind}')`
     if (!extra.length) {
-      return `${pad}<app-kpi-card title="${block.label}" [value]="service.${block.property}Value()" testId="kpi-${block.property}" />`
+      return `${pad}<app-kpi-card title="${block.label}" [value]="${value}" testId="kpi-${block.property}" />`
     }
     return `${pad}<app-kpi-card
 ${pad}  title="${block.label}"
-${pad}  [value]="service.${block.property}Value()"${extra.join('')}
+${pad}  [value]="${value}"${extra.join('')}
 ${pad}  testId="kpi-${block.property}"
 ${pad}/>`
   }
@@ -1002,10 +1022,23 @@ function renderAnalyticComponentHelpers(analytics: ComposedDashboardBlock[]): st
     return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
   }`)
   }
+  // el texto de la tarjeta: un conteo se lee tal cual, un importe con separadores y una fecha
+  // como fecha. Y «no hay dato» se pinta «—», nunca 0: un 0 en «Importe medio» es una
+  // afirmación falsa sobre el negocio (spec 71)
+  if (analytics.some(block => block.kind === 'kpi')) {
+    blocks.push(`  kpiText(value: number | null, kind: 'count' | 'numeric' | 'date'): string {
+    if (value === null) return '—'
+    if (kind === 'date') return new Date(value).toLocaleDateString('es-ES')
+    return value.toLocaleString('es-ES')
+  }`)
+  }
   // los tres puentes de la tarjeta KPI: la aritmética vive en kpi-math, aquí solo el destino
   if (analytics.some(block => block.kind === 'kpi' && block.kpi?.compare)) {
     blocks.push(`  delta(value: KpiValue | undefined): KpiDelta | undefined {
-    return value?.previous === undefined ? undefined : deltaOf(value.value, value.previous)
+    // sin dato o sin periodo anterior no hay variación: comparar contra un cero inventado mentiría
+    if (value?.value === null || value?.value === undefined) return undefined
+    if (value.previous === null || value.previous === undefined) return undefined
+    return deltaOf(value.value, value.previous)
   }`)
   }
   if (analytics.some(block => block.kind === 'kpi' && block.kpi?.ratio)) {
