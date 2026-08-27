@@ -111,28 +111,6 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
   }
-<%_ if (app.trash) { _%>
-
-  async matchingDeleted(criteria: Criteria): Promise<<%- className %>[]> {
-    const docs = await this.searchDeletedByCriteria(criteria)
-
-    return docs.map(<%- className %>Mapper.toDomain)
-  }
-
-  async countDeleted(criteria: Criteria): Promise<number> {
-    return this.countDeletedByCriteria(criteria)
-  }
-
-  // Solo se restaura lo borrado: un id vivo (o inexistente) devuelve false y el use case da 404.
-  async restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean> {
-    const result = await this.model()
-      .updateOne({ id: <%- propertyName %>Id.value, deletedAt: { $ne: null } }, { $set: { deletedAt: null } })
-      .session(this.session())
-      .exec()
-
-    return result.matchedCount > 0
-  }
-<%_ } _%>
 
 <%_ dragged.forEach(d => { _%>
 
@@ -152,28 +130,6 @@ export class Mongoose<%- className %>Repository extends MongooseRepository<<%- c
     return ids
   }
 <%_ }) _%>
-<%_ if (softContract) { _%>
-
-  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
-  async restoreByOp(op: DeleteOperationId): Promise<number> {
-    const result = await this.model()
-      .updateMany({ deletedOp: op.value }, { $set: { deletedAt: null, deletedOp: null } })
-      .session(this.session())
-      .exec()
-    return result.modifiedCount
-  }
-<%_ } _%>
-<%_ if (app.trash && dragPlan.length) { _%>
-
-  // ¿Con qué operación cayó este documento archivado? Es lo que el restore del padre revierte.
-  async deletedOpOf(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<DeleteOperationId>> {
-    const row = await this.model()
-      .findOne({ id: <%- propertyName %>Id.value, deletedAt: { $ne: null } }, { deletedOp: 1 })
-      .session(this.session())
-      .exec()
-    return row?.deletedOp ? DeleteOperationId.create(row.deletedOp) : null
-  }
-<%_ } _%>
 
   // @ai:begin repository-extra — implementación de los finders del port-extra
   // @ai:end

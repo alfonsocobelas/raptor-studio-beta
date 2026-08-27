@@ -32,7 +32,7 @@ describe('resource generator — lo archivado no se ve (spec 38 TASK-09)', () =>
       expect(exporter).not.toContain('withDeleted')
     })
 
-    it('el repositorio TypeORM solo mira lo archivado en la papelera y en deletedOpOf', async () => {
+    it('el repositorio TypeORM no mira nunca lo archivado', async () => {
       const repo = read(
         await emit('account'),
         'out/backend/infrastructure/persistence/typeorm/typeorm-account.repository.ts'
@@ -41,9 +41,8 @@ describe('resource generator — lo archivado no se ve (spec 38 TASK-09)', () =>
       // matching/count/exists no lo mencionan: heredan la exclusión del repositorio base
       expect(repo).toContain('async matching(criteria: Criteria)')
       expect(repo).toContain('this.searchByCriteria(criteria)')
-      // withDeleted aparece UNA sola vez, en deletedOpOf (la papelera usa searchDeletedByCriteria)
-      expect(repo.match(/withDeleted/g) ?? []).toHaveLength(1)
-      expect(repo).toMatch(/deletedOpOf[\s\S]{0,300}withDeleted: true/)
+      // sin papelera ni restauración por operación, nada consulta lo archivado
+      expect(repo).not.toContain('withDeleted')
     })
 
     it('el repositorio Mongoose filtra deletedAt: null en las lecturas vivas', async () => {

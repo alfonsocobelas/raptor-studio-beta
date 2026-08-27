@@ -31,7 +31,7 @@ describe('resource generator — borrado suave por defecto (spec 38)', () => {
       }
     }) as unknown as ResourceDefinition
 
-  it('un modelo que NO declara softDelete archiva: DeleteDateColumn y papelera', async () => {
+  it('un modelo que NO declara softDelete archiva: DeleteDateColumn', async () => {
     const model = base()
     delete (model as { softDelete?: boolean }).softDelete
     const tree = await emit(model)
@@ -39,12 +39,9 @@ describe('resource generator — borrado suave por defecto (spec 38)', () => {
     expect(read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-expediente.entity.ts')).toContain(
       'DeleteDateColumn'
     )
-    const port = read(tree, 'out/backend/domain/expediente-repository.ts')
-    expect(port).toContain('matchingDeleted')
-    expect(port).toContain('restore(')
   })
 
-  it('softDelete: false es la escotilla física: sin DeleteDateColumn y sin papelera', async () => {
+  it('softDelete: false es la escotilla física: sin DeleteDateColumn', async () => {
     const tree = await emit({ ...base(), softDelete: false })
 
     expect(read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-expediente.entity.ts')).not.toContain(

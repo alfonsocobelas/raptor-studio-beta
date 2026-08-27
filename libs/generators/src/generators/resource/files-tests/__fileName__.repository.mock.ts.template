@@ -51,47 +51,12 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   count(criteria: Criteria): Promise<number> {
     return this.getMock('count')(criteria)
   }
-<%_ if (app.trash) { _%>
-
-  matchingDeleted(criteria: Criteria): Promise<<%- className %>[]> {
-    return this.getMock('matchingDeleted')(criteria)
-  }
-
-  countDeleted(criteria: Criteria): Promise<number> {
-    return this.getMock('countDeleted')(criteria)
-  }
-
-  restore(<%- propertyName %>Id: <%- className %>Id): Promise<boolean> {
-    return this.getMock('restore')(<%- propertyName %>Id)
-  }
-<%_ } _%>
 <%_ dragged.forEach(d => { _%>
 
   <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
     return this.getMock('<%- d.method %>')(parentIds, op)
   }
 <%_ }) _%>
-<%_ if (softContract) { _%>
-
-  restoreByOp(op: DeleteOperationId): Promise<number> {
-    return this.getMock('restoreByOp')(op)
-  }
-
-<%_ if (app.trash && dragPlan.length) { _%>
-  deletedOpOf(<%- propertyName %>Id: <%- className %>Id): Promise<Nullable<DeleteOperationId>> {
-    return this.getMock('deletedOpOf')(<%- propertyName %>Id)
-  }
-
-  givenDeletedOp(op: Nullable<DeleteOperationId>): void {
-    this.setMockResult('deletedOpOf', op)
-  }
-
-  whenRestoreByOpSucceeds(): void {
-    this.setMockResult('restoreByOp', 1)
-  }
-
-<%_ } _%>
-<%_ } _%>
 
   // helpers
   givenFound(<%- propertyName %>: <%- className %>): void {
@@ -151,24 +116,6 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
 
   whenRemoveSuccess(): void {
     this.setMockResult('remove', undefined)
-  }
-<%_ } _%>
-<%_ if (app.trash) { _%>
-
-  givenDeleted(<%- plural %>: <%- className %>[]): void {
-    this.setMockResult('matchingDeleted', <%- plural %>)
-  }
-
-  givenDeletedCount(count: number): void {
-    this.setMockResult('countDeleted', count)
-  }
-
-  whenRestoreSucceeds(): void {
-    this.setMockResult('restore', true)
-  }
-
-  whenRestoreFindsNothing(): void {
-    this.setMockResult('restore', false)
   }
 <%_ } _%>
 

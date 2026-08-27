@@ -43,23 +43,12 @@ describe('resource generator — contrato de borrado suave (spec 38 TASK-04)', (
     expect(repo).toContain('if (!parentIds.length) return []')
   })
 
-  it('toda entidad suave con borrado o arrastre sabe revertir una operación', async () => {
-    const tree = await emit('installation')
-
-    const port = read(tree, 'out/backend/domain/installation-repository.ts')
-    expect(port).toContain('abstract restoreByOp(op: DeleteOperationId): Promise<number>')
-    const repo = read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-installation.repository.ts')
-    expect(repo).toContain('deletedOp: op.value')
-    expect(repo).toMatch(/restoreByOp[\s\S]{0,200}deletedAt: null,\s*deletedOp: null/)
-  })
-
   it('la entidad física conserva el contrato de siempre', async () => {
     const tree = await emit('material')
 
     const port = read(tree, 'out/backend/domain/material-repository.ts')
     expect(port).toContain('abstract remove(materialId: MaterialId): Promise<void>')
     expect(port).not.toContain('DeleteOperationId')
-    expect(port).not.toContain('restoreByOp')
   })
 
   it('el use case genera la operación y la pasa al remove', async () => {
@@ -76,6 +65,5 @@ describe('resource generator — contrato de borrado suave (spec 38 TASK-04)', (
     const mock = read(tree, 'out/backend-tests/installation.repository.mock.ts')
     expect(mock).toContain('remove(installationId: InstallationId, op: DeleteOperationId): Promise<void>')
     expect(mock).toContain('removeDraggedByAccountId(')
-    expect(mock).toContain('restoreByOp(')
   })
 })

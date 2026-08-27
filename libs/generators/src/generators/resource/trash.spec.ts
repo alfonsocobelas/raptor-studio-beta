@@ -19,26 +19,29 @@ describe('resource generator — papelera (spec 29)', () => {
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('project (softDelete + delete) declara los métodos de papelera en el port', async () => {
+  it('project (softDelete + delete) no declara métodos de papelera en el port', async () => {
     const tree = await emit('project')
 
     const port = read(tree, 'out/backend/domain/project-repository.ts')
-    expect(port).toContain('abstract matchingDeleted(criteria: Criteria): Promise<Project[]>')
-    expect(port).toContain('abstract countDeleted(criteria: Criteria): Promise<number>')
-    expect(port).toContain('abstract restore(projectId: ProjectId): Promise<boolean>')
+    expect(port).not.toContain('matchingDeleted')
+    expect(port).not.toContain('countDeleted')
+    expect(port).not.toContain('restore')
   })
 
-  it('el repositorio TypeORM de project implementa la papelera sobre el criteria del kernel', async () => {
+  it('el repositorio TypeORM de project no implementa papelera', async () => {
     const tree = await emit('project')
 
     const repo = read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-project.repository.ts')
-    expect(repo).toContain('async matchingDeleted(criteria: Criteria): Promise<Project[]>')
-    expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
-    expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
-    expect(repo).toContain('this.countDeletedByCriteria(criteria)')
-    expect(repo).toContain('async restore(projectId: ProjectId): Promise<boolean>')
-    // solo se restaura lo que está borrado: restaurar un vivo (o un id inexistente) devuelve false
-    expect(repo).toContain('.restore({ id: projectId.value, deletedAt: Not(IsNull()) })')
+    expect(repo).not.toContain('Deleted(')
+    expect(repo).not.toContain('restore')
+  })
+
+  it('el repositorio Mongoose de project no implementa papelera', async () => {
+    const tree = await emit('project', 'mongo')
+
+    const repo = read(tree, 'out/backend/infrastructure/persistence/mongoose/mongoose-project.repository.ts')
+    expect(repo).not.toContain('Deleted(')
+    expect(repo).not.toContain('restore')
   })
 
   it('el repositorio TypeORM de customer (sin papelera) no cambia', async () => {
@@ -47,19 +50,6 @@ describe('resource generator — papelera (spec 29)', () => {
     const repo = read(tree, 'out/backend/infrastructure/persistence/typeorm/typeorm-customer.repository.ts')
     expect(repo).not.toContain('Deleted')
     expect(repo).not.toContain('restore')
-  })
-
-  it('el repositorio Mongoose de project implementa la papelera (borrados $ne null y restore)', async () => {
-    const tree = await emit('project', 'mongo')
-
-    const repo = read(tree, 'out/backend/infrastructure/persistence/mongoose/mongoose-project.repository.ts')
-    expect(repo).toContain('async matchingDeleted(criteria: Criteria): Promise<Project[]>')
-    expect(repo).toContain('this.searchDeletedByCriteria(criteria)')
-    expect(repo).toContain('async countDeleted(criteria: Criteria): Promise<number>')
-    expect(repo).toContain('this.countDeletedByCriteria(criteria)')
-    expect(repo).toContain('async restore(projectId: ProjectId): Promise<boolean>')
-    expect(repo).toContain('{ id: projectId.value, deletedAt: { $ne: null } }')
-    expect(repo).toContain('{ $set: { deletedAt: null } }')
   })
 
   it('project no emite ningún fichero de restore ni de search de borrados', async () => {
@@ -121,17 +111,14 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('el mock del repositorio de project implementa y ayuda con los métodos de papelera', async () => {
+  it('el mock del repositorio de project no crece con métodos de papelera', async () => {
     const tree = await emit('project')
 
     const mock = read(tree, 'out/backend-tests/project.repository.mock.ts')
-    expect(mock).toContain("this.getMock('matchingDeleted')(criteria)")
-    expect(mock).toContain("this.getMock('countDeleted')(criteria)")
-    expect(mock).toContain("this.getMock('restore')(projectId)")
-    expect(mock).toContain('givenDeleted(')
-    expect(mock).toContain('givenDeletedCount(')
-    expect(mock).toContain('whenRestoreSucceeds(')
-    expect(mock).toContain('whenRestoreFindsNothing(')
+    expect(mock).not.toContain('matchingDeleted')
+    expect(mock).not.toContain('countDeleted')
+    expect(mock).not.toContain('givenDeleted')
+    expect(mock).not.toContain('Restore')
   })
 
   it('el mock de customer no crece', async () => {
@@ -147,21 +134,12 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     expect(tree.exists('out/backend-tests-application/search-deleted-projects-usecase.test.ts')).toBe(false)
   })
 
-  it('la integración TypeORM de project ejercita borrar → papelera → restaurar', async () => {
-    const tree = await emit('project')
+  it('las integraciones de project no ejercitan papelera', async () => {
+    const typeorm = await emit('project')
+    const mongo = await emit('project', 'mongo')
 
-    const test = read(tree, 'out/backend-tests-integration/typeorm-project.repository.test.ts')
-    expect(test).toContain('matchingDeleted')
-    expect(test).toContain('countDeleted')
-    expect(test).toContain('repository.restore(')
-  })
-
-  it('la integración Mongoose de project ejercita borrar → papelera → restaurar', async () => {
-    const tree = await emit('project', 'mongo')
-
-    const test = read(tree, 'out/backend-tests-integration/mongoose-project.repository.test.ts')
-    expect(test).toContain('matchingDeleted')
-    expect(test).toContain('repository.restore(')
+    expect(read(typeorm, 'out/backend-tests-integration/typeorm-project.repository.test.ts')).not.toContain('Deleted')
+    expect(read(mongo, 'out/backend-tests-integration/mongoose-project.repository.test.ts')).not.toContain('Deleted')
   })
 
   it('el servicio frontend de project consulta /deleted y restaura recargando ambos', async () => {
