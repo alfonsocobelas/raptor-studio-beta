@@ -562,6 +562,149 @@ input.app-toolbar,
 }
 `
 
+/**
+ * Tokens de Banco. Los cinco radios uno a uno, por el mismo motivo que en cabina: los del tema
+ * son `calc(var(--radius) - 4px)` y pisar sólo `--radius` los dejaría en negativo.
+ */
+const BANCO_TOKENS = `  /* preset «banco»: banco de trabajo — la misma casa que taller, apretada.
+     Superficies derivadas del tema (ver la nota de la familia raptor) y esquinas casi rectas. */
+  --radius: 6px;
+  --radius-sm: 6px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 6px;
+  --shell-bg: color-mix(in oklab, var(--muted) 70%, var(--card));
+  --shell-fg: var(--muted-foreground);
+  --shell-fg-strong: var(--foreground);
+  --shell-border: color-mix(in oklab, var(--border) 70%, var(--foreground) 12%);
+  --shell-active: color-mix(in oklab, var(--muted) 100%, var(--foreground) 6%);
+  --shell-accent: var(--ring);`
+
+/**
+ * Cromo de Banco. Es la piel DENSA de la familia: diez filas donde taller pone seis, KPIs
+ * fundidos sin tarjeta y etiquetas de estado en contorno. Se diferencia de cabina en que NO
+ * invierte el raíl a contraste ni cambia de letra: es la misma casa, apretada.
+ */
+const BANCO_CSS = `
+/* ── preset «banco»: banco de trabajo ───────────────────────────────────── */
+/* Sin @layer: dentro de una capa estas reglas perderían contra las utilidades de Tailwind. */
+.app-shell-main {
+  font-size: 0.8rem;
+}
+
+/* la cabecera de la tabla es una BANDA de lino con versalitas, no una fila más */
+.app-shell-main table th {
+  background: var(--shell-bg);
+  border-bottom: 1px solid var(--shell-border);
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+.app-shell-main table td {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: 0.78rem;
+}
+
+/* ── los contratos neutros y sus gemelos hlm (spec 67) ───────────────────── */
+[hlmbtn],
+[appbtn] {
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.75rem;
+}
+
+[hlminput],
+[appinput] {
+  border-radius: 6px;
+  font-size: 0.78rem;
+}
+
+/* la etiqueta de estado es un contorno rectangular: fondo fuera, borde al color del texto.
+   El color lo trae la variante desde el contrato, así que aquí sólo se cambia la forma. */
+[hlmbadge],
+[appbadge] {
+  border-radius: 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent !important;
+  border: 1px solid currentColor !important;
+}
+
+/* ── los hooks de piel (spec 67) ─────────────────────────────────────────── */
+/* La tarjeta de spartan no lleva borde: su contorno es ring-1 + shadow-xs, y en Tailwind el ring
+   es un box-shadow. Quien apaga la sombra devuelve el contorno como borde (visto en navegador el
+   2026-08-25: los KPIs salían flotando). */
+.app-panel {
+  border-radius: 6px;
+  box-shadow: none;
+  border-width: 1px;
+  border-color: var(--shell-border);
+}
+
+.app-panel-head {
+  background: var(--shell-bg);
+  border-color: var(--shell-border);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+.app-cell {
+  border-color: var(--shell-border);
+  font-size: 0.78rem;
+}
+
+.app-chip {
+  border-radius: 4px;
+  box-shadow: none;
+  border-color: var(--shell-border);
+  font-size: 0.7rem;
+}
+
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar {
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.75rem;
+}
+
+/* la cifra se contiene: en un banco de trabajo caben cuatro en una tira, no tres en tarjetas */
+.app-metric {
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+/* los NÚMEROS de toda la app tratados igual: cifras tabulares en todos los sitios donde vive un
+   número. Un bloque nuevo se suma añadiendo su hook a esta lista. */
+.app-metric,
+.app-cell,
+.app-chip,
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar,
+.app-shell-main table td.text-right,
+[hlminput],
+[appinput] {
+  font-variant-numeric: tabular-nums;
+}
+`
+
 export const DESIGN_PRESETS: readonly DesignPreset[] = [
   {
     id: 'actual',
@@ -585,6 +728,15 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     files: 'files-design/taller',
     tokens: TALLER_TOKENS,
     css: TALLER_CSS
+  },
+  {
+    id: 'banco',
+    label: 'Banco de trabajo (raptor)',
+    description:
+      'La misma casa que taller, apretada: filas densas, cabecera en banda de lino, KPIs fundidos y etiquetas en contorno',
+    files: 'files-design/banco',
+    tokens: BANCO_TOKENS,
+    css: BANCO_CSS
   },
   {
     id: 'suite',

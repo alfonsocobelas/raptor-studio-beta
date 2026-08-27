@@ -89,4 +89,14 @@ describe('el shell del lienzo por piel', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="mock-session-footer"]')).not.toBeNull()
     expect(chrome(fixture)).toMatchSnapshot()
   })
+
+  it('banco: el mismo raíl apretado, con la ruta arriba', () => {
+    const fixture = mount('banco')
+
+    // la barra de ruta es lo que lo separa de taller; el raíl sigue siendo de lino, no invertido
+    const path = fixture.nativeElement.querySelector('[data-testid="mock-statusbar"]')
+    expect(path?.textContent).toContain('mi-app')
+    expect(fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')).not.toBeNull()
+    expect(chrome(fixture)).toMatchSnapshot()
+  })
 })

@@ -152,19 +152,22 @@ describe('app generator — ranura design (spec 37)', () => {
   // existen en DOS plantillas de todo el emitido (data-table y kpi-card). El resto de las
   // pantallas usa los contratos neutros del ADR-003 — [appbtn], [appinput], [appbadge] — así
   // que la piel no las alcanzaba: salvo las tablas, la app era idéntica en las tres pieles.
-  it.each(['cabina', 'suite', 'taller'])('%s viste también los contratos neutros, no sólo los hlm', async design => {
-    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+  it.each(['cabina', 'suite', 'taller', 'banco'])(
+    '%s viste también los contratos neutros, no sólo los hlm',
+    async design => {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
-    for (const contract of ['appbtn', 'appinput', 'appbadge']) {
-      expect(styles).toContain(`[${contract}]`)
+      for (const contract of ['appbtn', 'appinput', 'appbadge']) {
+        expect(styles).toContain(`[${contract}]`)
+      }
+      // y sigue vistiendo los hlm: data-table y kpi-card son los que los llevan
+      expect(styles).toContain('[hlmbtn]')
     }
-    // y sigue vistiendo los hlm: data-table y kpi-card son los que los llevan
-    expect(styles).toContain('[hlmbtn]')
-  })
+  )
 
   // Spec 67: el cromo que las plantillas escriben a mano (panel del calendario, columna del
   // kanban, ficha de detalle…) sólo lo alcanza la piel a través del vocabulario de hooks.
-  it.each(['cabina', 'suite', 'taller'])('%s viste todos los hooks del vocabulario', async design => {
+  it.each(['cabina', 'suite', 'taller', 'banco'])('%s viste todos los hooks del vocabulario', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     for (const hook of DESIGN_HOOKS) {
@@ -172,7 +175,7 @@ describe('app generator — ranura design (spec 37)', () => {
     }
   })
 
-  it.each(['cabina', 'suite', 'taller'])('%s alcanza los controles crudos de un toolbar', async design => {
+  it.each(['cabina', 'suite', 'taller', 'banco'])('%s alcanza los controles crudos de un toolbar', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     // gantt, galería, importación y detalle escriben <button>/<input> sin contrato neutro
@@ -192,7 +195,7 @@ describe('app generator — ranura design (spec 37)', () => {
   // Decisión de Alfonso (2026-08-25), después de verlo: las tres pieles escriben con la
   // tipografía del NEUTRO. Una fuente por piel obligaba a arrastrar su paquete a cada app y la
   // identidad no la da la letra, sino la forma, la densidad y el cromo.
-  it.each(['actual', 'cabina', 'suite', 'taller'])(
+  it.each(['actual', 'cabina', 'suite', 'taller', 'banco'])(
     '%s escribe con la letra del tema, sin fuente propia',
     async design => {
       const files = await emit({ ...base, design })
@@ -207,15 +210,18 @@ describe('app generator — ranura design (spec 37)', () => {
     }
   )
 
-  it.each(['cabina', 'suite', 'taller'])('%s sí unifica las cifras: tabulares en todas las pantallas', async design => {
-    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
-    const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
+  it.each(['cabina', 'suite', 'taller', 'banco'])(
+    '%s sí unifica las cifras: tabulares en todas las pantallas',
+    async design => {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+      const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
 
-    for (const place of ['.app-metric', '.app-cell', '.app-chip', '.app-toolbar', 'td.text-right']) {
-      expect(rule).toContain(place)
+      for (const place of ['.app-metric', '.app-cell', '.app-chip', '.app-toolbar', 'td.text-right']) {
+        expect(rule).toContain(place)
+      }
+      expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/)
     }
-    expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/)
-  })
+  )
 
   it('el body toma la letra del tema: si no, el token no lo lee nadie', async () => {
     const styles = (await emit(base)).get(STYLES) ?? ''
@@ -242,7 +248,7 @@ describe('app generator — ranura design (spec 37)', () => {
   // ring-1 + shadow-xs, y en Tailwind el ring es un box-shadow. El box-shadow:none del preset se
   // llevaba el contorno entero y los KPIs salían flotando, sin tarjeta. Quien apaga la sombra
   // tiene que devolver el contorno como borde explícito.
-  it.each(['cabina', 'suite'])('%s devuelve como borde el contorno que apaga con la sombra', async design => {
+  it.each(['cabina', 'suite', 'banco'])('%s devuelve como borde el contorno que apaga con la sombra', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
     const panel = styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? ''
 
@@ -294,6 +300,44 @@ describe('app generator — ranura design (spec 37)', () => {
       expect(themeBlock(styles)).not.toMatch(/--radius:\s*0(px|rem)?\s*;/)
       // el panel conserva su contorno y su relieve: aquí no se apaga la sombra
       expect(styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? '').not.toMatch(/box-shadow:\s*none/)
+    })
+  })
+
+  describe('banco — banco de trabajo', () => {
+    it('emite raíl estrecho y barra de ruta: la misma casa que taller, apretada', async () => {
+      const shell = (await emit({ ...base, design: 'banco' })).get(SHELL) ?? ''
+
+      expect(shell).toContain('app-shell-side')
+      // la barra de ruta arriba, como cabina, pero sin invertir el raíl a contraste
+      expect(shell).toContain('app-shell-topbar')
+      expect(shell).toContain('currentSection')
+      expect(shell).not.toMatch(/#f15539|#d75f3d/)
+    })
+
+    it('aplana las esquinas a 6px por token, no selector por selector', async () => {
+      const styles = (await emit({ ...base, design: 'banco' })).get(STYLES) ?? ''
+      const block = themeBlock(styles)
+
+      // los cinco radios, uno a uno: los del tema son calc(var(--radius) - 4px) y pisar
+      // sólo --radius los dejaría negativos (lección de cabina)
+      for (const token of ['--radius', '--radius-sm', '--radius-md', '--radius-lg', '--radius-xl']) {
+        expect(block).toMatch(new RegExp(`${token}:\\s*6px`))
+      }
+    })
+
+    it('aprieta la tabla y le pone cabecera en banda, como la maqueta', async () => {
+      const styles = (await emit({ ...base, design: 'banco' })).get(STYLES) ?? ''
+
+      expect(styles).toMatch(/\.app-shell-main table th\s*\{[^}]*text-transform:\s*uppercase/)
+      expect(styles).toMatch(/\.app-shell-main table th\s*\{[^}]*background:\s*var\(--shell-bg\)/)
+      expect(styles).toMatch(/\.app-shell-main table td\s*\{[^}]*font-size/)
+    })
+
+    it('funde los KPIs y deja las etiquetas en contorno', async () => {
+      const styles = (await emit({ ...base, design: 'banco' })).get(STYLES) ?? ''
+
+      expect(styles).toMatch(/\.app-panel \{[^}]*box-shadow:\s*none/)
+      expect(styles).toMatch(/\[hlmbadge\][^}]*background:\s*transparent/i)
     })
   })
 

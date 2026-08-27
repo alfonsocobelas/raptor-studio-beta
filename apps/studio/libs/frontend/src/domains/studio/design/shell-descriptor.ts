@@ -38,7 +38,7 @@ export interface ShellRail {
    * Densidad de las entradas de navegación. `house` es la métrica del propio estudio (13px/600,
    * radio de 7px) que usa la familia raptor; el activo se marca con el acento del tema.
    */
-  navDensity: 'comfortable' | 'compact' | 'house'
+  navDensity: 'comfortable' | 'compact' | 'house' | 'house-tight'
   /** Contador de registros por entrada: la seña del centro de operaciones */
   counters: boolean
   /** Pie de sesión: el componente calcado del emitido, o los botones sueltos de cabina */
@@ -115,6 +115,26 @@ const TALLER: ShellDescriptor = {
   adminNav: true
 }
 
+/**
+ * Banco de trabajo: la misma casa que taller, apretada, con la ruta arriba. Se separa de cabina
+ * en que el raíl no se invierte a contraste ni cambia la letra.
+ */
+const BANCO: ShellDescriptor = {
+  layout: 'rail',
+  rail: {
+    width: 'w-48',
+    surface: 'shell',
+    header: 'eyebrow',
+    eyebrow: 'Banco de trabajo',
+    navDensity: 'house-tight',
+    counters: false,
+    footer: 'component'
+  },
+  statusbar: 'path',
+  padding: 'p-4',
+  adminNav: true
+}
+
 /** ERP: banda de marca, pestañas de módulo y miga. */
 const SUITE: ShellDescriptor = {
   layout: 'banner',
@@ -128,6 +148,7 @@ export const SHELL_DESCRIPTORS: Record<PreviewPreset, ShellDescriptor> = {
   actual: ACTUAL,
   cabina: CABINA,
   taller: TALLER,
+  banco: BANCO,
   suite: SUITE
 }
 

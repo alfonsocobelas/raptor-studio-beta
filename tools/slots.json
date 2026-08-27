@@ -47,6 +47,11 @@
           "description": "El marco del propio estudio: raíl de lino, versalitas anchas y el acento del tema; densidad cómoda"
         },
         {
+          "value": "banco",
+          "label": "Banco de trabajo (raptor)",
+          "description": "La misma casa que taller, apretada: filas densas, cabecera en banda de lino, KPIs fundidos y etiquetas en contorno"
+        },
+        {
           "value": "suite",
           "label": "Suite (ERP corporativo)",
           "description": "Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP"

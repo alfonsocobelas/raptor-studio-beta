@@ -40,7 +40,7 @@
       "type": "string",
       "default": "actual",
       "description": "Design preset: shell, density and chrome of the emitted app",
-      "enum": ["actual", "cabina", "taller", "suite"],
+      "enum": ["actual", "cabina", "taller", "banco", "suite"],
       "x-prompt": {
         "message": "¿Qué preset de diseño?",
         "type": "list",
@@ -56,6 +56,10 @@
           {
             "value": "taller",
             "label": "Taller (raptor)"
+          },
+          {
+            "value": "banco",
+            "label": "Banco de trabajo (raptor)"
           },
           {
             "value": "suite",
