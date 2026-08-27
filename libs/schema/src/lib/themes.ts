@@ -152,6 +152,84 @@ export const THEMES: NamedTheme[] = [
       sidebarPrimary: 'oklch(0.7 0.14 16)',
       sidebarPrimaryForeground: 'oklch(0.17 0 0)'
     }
+  },
+  {
+    /**
+     * «raptor»: la paleta del PROPIO estudio, bajada al emitido (spec 69). No es un tono con un
+     * croma, y por eso necesitó `chromaByStep`/`hueByStep`: es un cálido cuyo croma sube al bajar
+     * la luminancia —0.003 en el papel, 0.008 en el borde, 0.013 en el gris medio— y cuyo tono se
+     * mueve entre 63 y 85. Con un croma único no había valor bueno (a 0.003 el borde sale neutro;
+     * a 0.008 el papel se recorta contra sRGB y sale blanco).
+     *
+     * Los valores son los de `apps/studio/apps/frontend-app/src/styles.css`, y el test los LEE de
+     * ahí en vez de copiarlos: si la casa se recalibra y nadie lo baja aquí, la suite lo canta.
+     *
+     * El CTA dominante es TINTA y el naranja de marca vive en `ring`: el estudio reserva el
+     * naranja a un acento por pantalla, y ese acento lo pone la piel (`taller`, `banco`, `rotulo`).
+     */
+    id: 'raptor',
+    label: 'Raptor (la casa)',
+    surface: {
+      // semillas de respaldo: todos los escalones que se usan declaran las suyas
+      chroma: 0.005,
+      hue: 70,
+      ramp: {
+        page: 0.985,
+        subtle: 0.985,
+        wash: 0.962,
+        line: 0.918,
+        dim: 0.56,
+        deep: 0.215,
+        ink: 0.215,
+        night: 0.19,
+        slate: 0.245,
+        raised: 0.3,
+        faint: 0.72
+      },
+      chromaByStep: {
+        page: 0.003,
+        subtle: 0.003,
+        wash: 0.006,
+        line: 0.008,
+        dim: 0.013,
+        deep: 0.005,
+        ink: 0.005,
+        night: 0.004,
+        slate: 0.005,
+        raised: 0.006,
+        faint: 0.011
+      },
+      hueByStep: {
+        page: 85,
+        subtle: 85,
+        wash: 75,
+        line: 74,
+        dim: 63,
+        deep: 68,
+        ink: 68,
+        night: 68,
+        slate: 70,
+        raised: 70,
+        faint: 70
+      },
+      // la tarjeta, blanca sobre el papel cálido: es lo que le da relieve
+      untinted: [...TINTED.untinted]
+    },
+    light: {
+      primary: 'oklch(0.215 0.005 68)',
+      primaryForeground: 'oklch(0.985 0.003 85)',
+      ring: 'oklch(0.656 0.197 32)',
+      sidebarPrimary: 'oklch(0.215 0.005 68)',
+      sidebarPrimaryForeground: 'oklch(0.985 0.003 85)'
+    },
+    dark: {
+      // en oscuro la tinta no contrasta: el CTA se invierte a papel, como en el estudio
+      primary: 'oklch(0.94 0.004 80)',
+      primaryForeground: 'oklch(0.215 0.005 68)',
+      ring: 'oklch(0.7 0.19 33)',
+      sidebarPrimary: 'oklch(0.985 0.003 85)',
+      sidebarPrimaryForeground: 'oklch(0.215 0.005 68)'
+    }
   }
 ]
 

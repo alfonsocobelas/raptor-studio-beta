@@ -1,4 +1,6 @@
-import { deriveTheme } from './derive-theme'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { deriveTheme, TOKEN_ORDER } from './derive-theme'
 import { findTheme, resolveThemeId, THEME_IDS, THEMES } from './themes'
 import { insideSrgb, isSurfaceToken } from './testing/srgb'
 
@@ -79,12 +81,20 @@ describe('theme catalog', () => {
       }
     })
 
-    it('tints the page enough to be seen, not by a rounding error', () => {
+    it('tints the page, and the tint survives sRGB', () => {
       // GIVEN los temas con color
-      // WHEN se mira la luminancia de su fondo claro
-      // THEN está donde el gamut sRGB admite croma: por encima de 0.97 no cabe
+      // WHEN se deriva su fondo claro
+      // THEN lleva croma Y cabe en sRGB — un token recortado se dibuja neutro
+      //
+      // Antes esto se comprobaba con un techo de luminancia (`ramp.page <= 0.97`), que era un
+      // PROXY: por encima de ahí casi no cabe croma. «Raptor» lo rompe legítimamente —papel a
+      // 0.985 con croma 0.003, que es lo que sirve el estudio y cabe de sobra—, así que el
+      // invariante se afirma directamente en vez de por su proxy (spec 69).
       for (const theme of coloured()) {
-        expect(theme.surface.ramp?.page).toBeLessThanOrEqual(0.97)
+        const page = deriveTheme(theme).light['background']
+        const chroma = Number(page.match(/oklch\([\d.]+ ([\d.]+)/)?.[1])
+        expect({ theme: theme.id, chroma, inside: insideSrgb(page) }).toMatchObject({ inside: true })
+        expect(chroma).toBeGreaterThan(0)
       }
     })
 
@@ -141,5 +151,108 @@ describe('theme catalog', () => {
       // THEN manda el nombre nuevo
       expect(resolveThemeId({ id: 'forest', palette: 'ocean' })).toBe('forest')
     })
+  })
+})
+
+/**
+ * El tema «raptor» (spec 69): la paleta que viste al PROPIO estudio, bajada al emitido.
+ *
+ * El test no copia los valores: LEE el `styles.css` del estudio y compara token a token. Si
+ * mañana se recalibra la paleta de la casa y nadie baja el cambio al catálogo, esto lo canta —
+ * que es exactamente el desfase que la spec quiere evitar.
+ */
+describe('raptor: la paleta de la casa', () => {
+  const STUDIO_STYLES = join(__dirname, '../../../../apps/studio/apps/frontend-app/src/styles.css')
+
+  /**
+   * Los tokens de un bloque `{ … }` del styles.css del estudio, filtrados a los que el
+   * derivador emite (el estudio declara además --brand, --font-sans, --radius* y sus --studio-*).
+   */
+  const studioBlock = (selector: string): Record<string, string> => {
+    const css = readFileSync(STUDIO_STYLES, 'utf-8')
+    const start = css.indexOf(`${selector} {`)
+    expect(start).toBeGreaterThan(-1)
+    const block = css.slice(start, css.indexOf('\n}', start))
+
+    const tokens: Record<string, string> = {}
+    for (const [, name, value] of block.matchAll(/--([a-z-]+):\s*([^;]+);/g)) {
+      if (TOKEN_ORDER.includes(name)) tokens[name] = value.trim()
+    }
+    return tokens
+  }
+
+  /**
+   * La ÚNICA desviación deliberada. `--sidebar` sale del escalón `subtle`, que el derivador
+   * comparte con el `--foreground` del modo oscuro: ponerlo en blanco puro (como el estudio)
+   * dejaría el texto de la app oscura en blanco puro, más duro que el papel del estudio. Se
+   * queda en el papel cálido, y no lo ve nadie: ninguna plantilla del emitido consume --sidebar
+   * ni `bg-sidebar` (comprobado el 2026-08-27); el aside pinta con `bg-card`.
+   */
+  const DEVIATIONS = ['sidebar']
+
+  const compare = (mode: 'light' | 'dark', selector: string) => {
+    const raptor = findTheme('raptor')
+    expect(raptor).toBeDefined()
+    const derived = deriveTheme(raptor!)[mode]
+    const studio = studioBlock(selector)
+
+    // el bloque del estudio tiene que traer el juego completo, o el test se estaría auto-aprobando
+    expect(Object.keys(studio).length).toBe(TOKEN_ORDER.length)
+
+    for (const [token, value] of Object.entries(studio)) {
+      if (DEVIATIONS.includes(token)) continue
+      expect(`${token}: ${derived[token]}`).toBe(`${token}: ${value}`)
+    }
+  }
+
+  it('is in the catalog with a label for the studio selector', () => {
+    // GIVEN el catálogo
+    // WHEN se busca raptor
+    const raptor = findTheme('raptor')
+
+    // THEN existe y se puede nombrar
+    expect(raptor?.label).toBe('Raptor (la casa)')
+  })
+
+  it('reproduces the studio light block token for token', () => {
+    compare('light', ':root .theme-neutral')
+  })
+
+  it('reproduces the studio dark block token for token', () => {
+    compare('dark', ':root.dark .theme-neutral')
+  })
+
+  it('keeps the card white over the warm paper: that is what gives it relief', () => {
+    // GIVEN el tema raptor
+    // WHEN se deriva
+    const tokens = deriveTheme(findTheme('raptor')!)
+
+    // THEN la tarjeta es blanca y la página lleva el tono cálido
+    expect(tokens.light['card']).toBe('oklch(1 0 0)')
+    expect(tokens.light['background']).toBe('oklch(0.985 0.003 85)')
+  })
+
+  it('reserves the orange for the ring: the dominant CTA is ink', () => {
+    // GIVEN el tema raptor
+    // WHEN se deriva
+    const tokens = deriveTheme(findTheme('raptor')!)
+
+    // THEN el CTA es tinta y el naranja de marca vive en el foco (como en el estudio)
+    expect(tokens.light['primary']).toBe('oklch(0.215 0.005 68)')
+    expect(tokens.light['ring']).toBe('oklch(0.656 0.197 32)')
+    expect(tokens.dark['ring']).toBe('oklch(0.7 0.19 33)')
+  })
+
+  it('stays inside sRGB: a clipped surface loses the tint silently', () => {
+    // GIVEN el tema raptor
+    const tokens = deriveTheme(findTheme('raptor')!)
+
+    // WHEN se revisan sus superficies
+    // THEN todas caben en sRGB
+    for (const mode of ['light', 'dark'] as const) {
+      for (const [token, value] of Object.entries(tokens[mode])) {
+        if (isSurfaceToken(token)) expect(insideSrgb(value)).toBe(true)
+      }
+    }
   })
 })
