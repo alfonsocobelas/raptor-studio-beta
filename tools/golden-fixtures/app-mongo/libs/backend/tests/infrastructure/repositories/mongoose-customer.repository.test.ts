@@ -108,6 +108,46 @@ describe('MongooseCustomerRepository (integration)', () => {
     })
   })
 
+  describe('aggregateGrouped (spec 72)', () => {
+    it('desglosa en UNA consulta, con su clave y su valor', async () => {
+      const customer = CustomerMother.random()
+      await repository.register(customer)
+
+      const groups = await repository.aggregateGrouped(CustomerWithIdSpecification.withId(customer.id), {
+        op: 'count',
+        groupBy: 'customerType',
+        limit: 50
+      })
+
+      expect(groups).toHaveLength(1)
+      expect(groups[0].key).toBe(String(customer.toPrimitives().customerType))
+      expect(groups[0].value).toBe(1)
+    })
+
+    it('un conjunto vacío no tiene grupos: no los inventa a 0', async () => {
+      const groups = await repository.aggregateGrouped(
+        CustomerWithIdSpecification.withId(CustomerId.create(uuidv7())),
+        { op: 'count', groupBy: 'customerType', limit: 50 }
+      )
+
+      expect(groups).toEqual([])
+    })
+
+    it('agrupa por mes con la clave YYYY-MM', async () => {
+      const customer = CustomerMother.random()
+      await repository.register(customer)
+
+      const groups = await repository.aggregateGrouped(CustomerWithIdSpecification.withId(customer.id), {
+        op: 'count',
+        bucketField: 'archivedAt',
+        limit: 50
+      })
+
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
+      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+    })
+  })
+
   describe('unique opcional (partialFilterExpression)', () => {
     it('admite varios customer con taxId vacío sin que choque el índice único', async () => {
       // el índice de taxId es parcial: solo indexa los documentos que lo traen con valor,

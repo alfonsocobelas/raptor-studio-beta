@@ -39,6 +39,9 @@ export interface ComposedDashboardBlock {
   label?: string
   /** count-by: valores del enum con su etiqueta legible (badgeMap → options → capitalizado) */
   values?: { value: string; label: string }[]
+  /** count-by / series: la medida de las barras y el campo medido (spec 72) */
+  measure?: KpiMeasure
+  measureField?: string
   /** kpi: descriptor que el servicio emitido recibe tal cual (spec 70) */
   kpi?: ComposedKpi
   /** top-n: la página corta y ordenada que la tarjeta pinta (spec 70) */
@@ -49,6 +52,8 @@ export interface ComposedDashboardBlock {
 export interface ComposedKpi {
   /** 'count' sale del listado; el resto va al endpoint `aggregate` (spec 71) */
   measure: KpiMeasure
+  /** Mini-serie de 12 meses en la tarjeta (spec 72); va en la misma petición agrupada */
+  sparkline?: boolean
   /** Campo medido, y su tipo, cuando la medida no es un conteo */
   field?: string
   fieldKind?: 'numeric' | 'date'
@@ -211,11 +216,13 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
       if (block.kind === 'count-by') {
         const values = (typeof field.vo === 'object' ? field.vo.values : undefined) ?? []
         if (!values.length) throw new Error(`${at} requires an enum field (vo.values)`)
+        const measured = measuredOf(block, model, at)
         dashboardBlocks.push({
           kind: 'count-by',
           width,
           models: [model],
-          property: propertyOf(`${model.plural}-by-${block.field}`),
+          ...measured,
+          property: propertyOf(`${model.plural}-by-${block.field}${measuredSlug(block)}`),
           api,
           field: block.field,
           label: block.label ?? fieldLabel,
@@ -231,11 +238,13 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
         if (field.type !== 'date' && field.type !== 'timestamptz') {
           throw new Error(`${at} requires a date field`)
         }
+        const measuredSeries = measuredOf(block, model, at)
         dashboardBlocks.push({
           kind: 'series',
           width,
           models: [model],
-          property: propertyOf(`${model.plural}-series-${block.field}`),
+          ...measuredSeries,
+          property: propertyOf(`${model.plural}-series-${block.field}${measuredSlug(block)}`),
           api,
           field: block.field,
           label: block.label ?? fieldLabel
@@ -355,11 +364,43 @@ function composeKpi(
       ...(block.window ? { window: block.window } : {}),
       ratio: block.ratio === true,
       compare: block.compare === true,
+      ...(block.sparkline === true ? { sparkline: true } : {}),
       ...(block.target === undefined ? {} : { target: block.target })
     }
   }
 }
 
+
+
+/**
+ * La medida de unas barras o de una serie (spec 72), validada contra el modelo: el campo medido
+ * existe, se puede medir y la operación tiene respuesta sobre su tipo. Igual que en la tarjeta, el
+ * error llega al DISEÑAR.
+ */
+function measuredOf(
+  block: Extract<DashboardBlock, { kind: 'count-by' | 'series' }>,
+  model: ResourceDefinition,
+  at: string
+): { measure?: KpiMeasure; measureField?: string } {
+  const measure = block.measure ?? 'count'
+  if (measure === 'count') return {}
+
+  const field = model.fields[block.measureField ?? '']
+  if (!field) throw new Error(`${at} measures an unknown field '${block.measureField}'`)
+  const kind = aggregateKindOf(field)
+  if (!kind) throw new Error(`${at} measures '${block.measureField}', which is neither numeric nor a date`)
+  if (!opAllowedOn(measure, kind)) {
+    throw new Error(`${at} applies '${measure}' to a ${kind} field, which has no answer`)
+  }
+
+  return { measure, measureField: block.measureField }
+}
+
+/** Sufijo de la propiedad emitida: una suma y un conteo del mismo eje son dos bloques distintos. */
+function measuredSlug(block: Extract<DashboardBlock, { kind: 'count-by' | 'series' }>): string {
+  const measure = block.measure ?? 'count'
+  return measure === 'count' ? '' : `-${measure}-${block.measureField}`
+}
 
 /** El tipo agregable de un campo, o undefined si no se puede medir (spec 71). */
 function aggregateKindOf(field: FieldDefinition): 'numeric' | 'date' | undefined {
@@ -380,7 +421,8 @@ function kpiSlug(block: Extract<DashboardBlock, { kind: 'kpi' }>): string {
     window ? `${window.field}-${window.preset}${window.days ?? ''}` : '',
     block.ratio === true ? 'ratio' : '',
     block.compare === true ? 'delta' : '',
-    block.target === undefined ? '' : `target${block.target}`
+    block.target === undefined ? '' : `target${block.target}`,
+    block.sparkline === true ? 'spark' : ''
   ]
     .filter(part => part !== '')
     .join('-')

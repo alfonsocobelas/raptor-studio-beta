@@ -115,6 +115,46 @@ describe('MongooseContractRepository (integration)', () => {
     })
   })
 
+  describe('aggregateGrouped (spec 72)', () => {
+    it('desglosa en UNA consulta, con su clave y su valor', async () => {
+      const contract = ContractMother.random()
+      await repository.register(contract)
+
+      const groups = await repository.aggregateGrouped(ContractWithIdSpecification.withId(contract.id), {
+        op: 'count',
+        groupBy: 'contractType',
+        limit: 50
+      })
+
+      expect(groups).toHaveLength(1)
+      expect(groups[0].key).toBe(String(contract.toPrimitives().contractType))
+      expect(groups[0].value).toBe(1)
+    })
+
+    it('un conjunto vacío no tiene grupos: no los inventa a 0', async () => {
+      const groups = await repository.aggregateGrouped(
+        ContractWithIdSpecification.withId(ContractId.create(uuidv7())),
+        { op: 'count', groupBy: 'contractType', limit: 50 }
+      )
+
+      expect(groups).toEqual([])
+    })
+
+    it('agrupa por mes con la clave YYYY-MM', async () => {
+      const contract = ContractMother.random()
+      await repository.register(contract)
+
+      const groups = await repository.aggregateGrouped(ContractWithIdSpecification.withId(contract.id), {
+        op: 'count',
+        bucketField: 'startDate',
+        limit: 50
+      })
+
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
+      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+    })
+  })
+
   describe('save', () => {
     it('replaces the whole document instead of inserting a second one', async () => {
       const contract = ContractMother.random()

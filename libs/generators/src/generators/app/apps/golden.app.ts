@@ -62,6 +62,16 @@ export const golden = defineApp({
         { kind: 'metrics', resources: ['contract', 'project'] },
         // analíticos (spec 32): compuestos de conteos filtrados sobre el listado
         { kind: 'count-by', resource: 'contract', field: 'contractType', label: 'Contratos por tipo' },
+        // spec 72: las mismas barras, pero enseñando una MEDIDA en vez de un conteo
+        {
+          kind: 'count-by',
+          resource: 'contract',
+          field: 'contractType',
+          measure: 'sum',
+          measureField: 'totalValue',
+          label: 'Valor por tipo de contrato',
+          width: 'half'
+        },
         // el alias histórico: se sigue leyendo y se normaliza a `kpi` (spec 70)
         { kind: 'kpi-count', resource: 'project', field: 'status', equals: 'planning', label: 'Proyectos en planificación' },
         // spec 70: los tres modificadores de la tarjeta, uno por bloque, para que el oro congele
@@ -73,6 +83,7 @@ export const golden = defineApp({
           condition: { field: 'contractType', operator: 'eq', value: 'cloud' },
           window: { field: 'startDate', preset: 'month' },
           compare: true,
+          sparkline: true,
           width: 'half'
         },
         {
@@ -112,6 +123,16 @@ export const golden = defineApp({
           width: 'half'
         },
         { kind: 'series', resource: 'contract', field: 'startDate', label: 'Altas de contrato por mes' },
+        // spec 72: la misma serie, sumando en vez de contando
+        {
+          kind: 'series',
+          resource: 'contract',
+          field: 'startDate',
+          measure: 'sum',
+          measureField: 'totalValue',
+          label: 'Valor contratado por mes',
+          width: 'half'
+        },
         // spec 52: el listado dentro del panel — la combinación que la demo taller destapó y que
         // el oro no cubría (por eso un DTO obsoleto sobrevivió días)
         { kind: 'table', resource: 'contract' }

@@ -16,6 +16,36 @@ describe('AggregateProjectsUseCase', () => {
     useCase = new AggregateProjectsUseCase(repositoryMock)
   })
 
+  it('cuenta sin campo: contar filas no mide ninguna columna (spec 72)', async () => {
+    repositoryMock.givenCount(7)
+
+    await expect(useCase.invoke({ op: 'count' })).resolves.toEqual({ value: 7 })
+  })
+
+  it('desglosa y devuelve el total en la misma respuesta', async () => {
+    repositoryMock.givenCount(10)
+    repositoryMock.givenAggregateGrouped([
+      { key: 'a', value: 6 },
+      { key: 'b', value: 4 }
+    ])
+
+    const result = await useCase.invoke({ op: 'count', groupBy: 'customerId' })
+
+    expect(result.value).toBe(10)
+    expect(result.groups).toHaveLength(2)
+    expect(result.truncated).toBeUndefined()
+  })
+
+  it('rechaza agrupar por un campo que no está en la lista blanca', async () => {
+    await expect(useCase.invoke({ op: 'count', groupBy: 'notAField' })).rejects.toThrow(InvalidArgumentError)
+  })
+
+  it('rechaza los dos ejes a la vez: una tabla cruzada es otra pregunta', async () => {
+    await expect(
+      useCase.invoke({ op: 'count', groupBy: 'customerId', bucket: 'month', bucketField: 'x' })
+    ).rejects.toThrow(InvalidArgumentError)
+  })
+
   it('rechaza sumar o promediar una fecha: no es una pregunta con respuesta', async () => {
     await expect(useCase.invoke({ op: 'sum', field: 'startDate' })).rejects.toThrow(InvalidArgumentError)
     await expect(useCase.invoke({ op: 'avg', field: 'startDate' })).rejects.toThrow(InvalidArgumentError)

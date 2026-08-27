@@ -257,10 +257,11 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     const subs = dashboardSubstitutions(composition.dashboardBlocks)
 
     expect(subs['resourceEntries']).toContain("_counts('/api/v1/contracts', 'contractType'")
+    expect(subs['resourceEntries']).toContain("'count', undefined)")
     expect(subs['resourceEntries']).toContain(
       "_kpi('/api/v1/contracts', { measure: 'count', filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }], ratio: false, compare: false })"
     )
-    expect(subs['resourceEntries']).toContain("_series('/api/v1/contracts', 'startDate')")
+    expect(subs['resourceEntries']).toContain("_series('/api/v1/contracts', 'startDate', 'count', undefined)")
     expect(subs['panelSections']).toContain('Cloud activos')
     expect(subs['panelSections']).toContain('data-testid="count-by-')
     expect(subs['panelSections']).toContain('data-testid="series-')
@@ -562,5 +563,87 @@ describe('composeApp — medidas del kpi (spec 71)', () => {
     const properties = composition.dashboardBlocks.map(b => b.property)
 
     expect(new Set(properties).size).toBe(properties.length)
+  })
+})
+
+/** Spec 72: las barras y la serie pueden enseñar una MEDIDA, no solo un conteo. */
+describe('composeApp — barras y serie con medida (spec 72)', () => {
+  const model = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        status: {
+          type: 'string',
+          vo: { name: 'Status', fieldName: 'Status', values: ['open', 'closed'] },
+          query: { filterable: true }
+        },
+        amount: { type: 'number', query: { sortable: 1 } },
+        issuedAt: { type: 'date', query: { filterable: true } },
+        notes: { type: 'string' }
+      }
+    }) as unknown as ResourceDefinition
+
+  const appWith = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+  const registry = () => ({ contract: model() })
+
+  it('unas barras con suma llevan la medida y su campo', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'amount' }]),
+      registry()
+    )
+
+    expect(composition.dashboardBlocks[0]).toMatchObject({ measure: 'sum', measureField: 'amount' })
+  })
+
+  it('emite la medida al helper agrupado', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'series', resource: 'contract', field: 'issuedAt', measure: 'sum', measureField: 'amount' }]),
+      registry()
+    )
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    expect(subs['resourceEntries']).toContain("_series('/api/v1/contracts', 'issuedAt', 'sum', 'amount')")
+  })
+
+  it('un conteo y una suma del mismo eje son dos bloques distintos, no una colisión', () => {
+    const composition = composeApp(
+      appWith([
+        { kind: 'count-by', resource: 'contract', field: 'status' },
+        { kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'amount' }
+      ]),
+      registry()
+    )
+    const properties = composition.dashboardBlocks.map(b => b.property)
+
+    expect(new Set(properties).size).toBe(properties.length)
+  })
+
+  it('rechaza medir un texto o sumar una fecha en las barras', () => {
+    expect(() =>
+      composeApp(
+        appWith([{ kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'notes' }]),
+        registry()
+      )
+    ).toThrow(/numeric/)
+    expect(() =>
+      composeApp(
+        appWith([
+          { kind: 'count-by', resource: 'contract', field: 'status', measure: 'avg', measureField: 'issuedAt' }
+        ]),
+        registry()
+      )
+    ).toThrow(/no answer/)
   })
 })

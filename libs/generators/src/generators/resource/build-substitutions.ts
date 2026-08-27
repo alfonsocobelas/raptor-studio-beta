@@ -61,6 +61,8 @@ export interface ResourceSubstitutions {
   aggregatableFields: { name: string; kind: 'numeric' | 'date' }[]
   /** Campos por los que la API puede AGRUPAR (spec 72): enums y referencias, nunca importes */
   groupableFields: string[]
+  /** Campo con el que el test de integración prueba el desglose; null si no hay */
+  groupProbe: string | null
   /** Campo numérico con el que el test de integración prueba la agregación; null si no hay */
   aggregateProbe: string | null
   /** Campo fecha con el que se prueba que sumar fechas se rechaza; null si no hay */
@@ -389,6 +391,7 @@ export function buildSubstitutions(
     allowedFilters: orderedQueryList(fields, 'filterable'),
     aggregatableFields: aggregatableList(fields),
     groupableFields: groupableList(fields),
+    groupProbe: groupableList(fields)[0] ?? null,
     aggregateProbe: aggregateProbeOf(fields),
     aggregateDateProbe: aggregatableList(fields).find(f => f.kind === 'date')?.name ?? null,
     allowedOrders: orderedQueryList(fields, 'sortable'),

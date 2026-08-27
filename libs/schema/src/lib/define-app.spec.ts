@@ -592,3 +592,44 @@ describe('defineApp — medidas del kpi (spec 71)', () => {
     ).toContainEqual(expect.stringContaining('measure'))
   })
 })
+
+/** Spec 72: la huella de las barras y la serie incluye su medida. */
+describe('defineApp — un conteo y una suma del mismo eje no son duplicados', () => {
+  const withBlocks = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+
+  const problemsOf = (definition: AppDefinition): string[] => {
+    try {
+      defineApp(definition)
+      return []
+    } catch (error) {
+      return (error as { problems: string[] }).problems
+    }
+  }
+
+  it('las mismas barras contando y sumando conviven', () => {
+    const app = defineApp(
+      withBlocks([
+        { kind: 'count-by', resource: 'contract', field: 'status' },
+        { kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'amount' }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('dos barras con la misma medida siguen siendo un duplicado', () => {
+    expect(
+      problemsOf(
+        withBlocks([
+          { kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'amount' },
+          { kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum', measureField: 'amount' }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('duplicated'))
+  })
+})

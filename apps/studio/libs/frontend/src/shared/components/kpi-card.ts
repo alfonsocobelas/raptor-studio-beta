@@ -56,6 +56,15 @@ import { HlmCardImports } from '@spartan-ng/helm/card'
             {{ variation.percent === undefined ? signed(variation.absolute) : variation.percent + '%' }}
           </p>
         }
+        @if (spark(); as points) {
+          <!-- mini-serie: barras de altura relativa. Sin ejes ni tooltip a propósito: es la FORMA
+               de la evolución, y quien quiera el número tiene el gráfico de la serie -->
+          <div class="mt-2 flex h-6 items-end gap-0.5" data-testid="kpi-spark">
+            @for (point of sparkBars(points); track $index) {
+              <div class="bg-primary/40 min-h-px flex-1 rounded-sm" [style.height.%]="point"></div>
+            }
+          </div>
+        }
         @if (progress() !== undefined) {
           <div class="bg-muted mt-2 h-2 overflow-hidden rounded-sm">
             <div class="bg-primary h-full rounded-sm" [style.width.%]="progress()"></div>
@@ -82,8 +91,16 @@ export class KpiCardComponent {
   /** Progreso hacia el objetivo, ya saturado a 100 */
   readonly progress = input<number>()
   readonly target = input<number>()
+  /** Mini-serie de 12 meses; la tarjeta solo la dibuja, no la calcula */
+  readonly spark = input<number[]>()
 
   protected readonly destructive = computed(() => this.variant() === 'destructive')
+
+  /** Alturas en % relativas al mayor. Con todo a 0 no se dibuja nada, y eso es correcto. */
+  protected sparkBars(points: number[]): number[] {
+    const max = Math.max(...points, 0)
+    return max === 0 ? points.map(() => 0) : points.map(point => (point / max) * 100)
+  }
 
   protected signed(value: number): string {
     return value > 0 ? `+${value}` : `${value}`

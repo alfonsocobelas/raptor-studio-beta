@@ -44,8 +44,21 @@ export interface KpiWindow {
 export type DashboardBlock =
   /** Fila de tarjetas con el total de cada recurso (antes los widgets `kpi-total`) */
   | { kind: 'metrics'; resources: string[]; width?: BlockWidth }
-  /** Una barra por valor del enum, con su conteo (spec 32). Exige campo enum filterable. */
-  | { kind: 'count-by'; resource: string; field: string; label?: string; width?: BlockWidth }
+  /**
+   * Una barra por valor del enum (spec 32). Con `measure` distinta de `count` la barra enseña una
+   * MEDIDA y no un conteo (spec 72: lo que iba a ser un kind `sum-by`) — un cajón por combinación
+   * es lo que la regla 7 prohíbe.
+   */
+  | {
+      kind: 'count-by'
+      resource: string
+      field: string
+      measure?: KpiMeasure
+      /** Campo medido; obligatorio (y solo válido) cuando la medida no es `count` */
+      measureField?: string
+      label?: string
+      width?: BlockWidth
+    }
   /**
    * @deprecated spec 70: usa `kpi` con `condition`. Se sigue leyendo y `normalizeDashboardBlocks`
    * lo traduce, para no romper los app-schema y los diseños ya guardados.
@@ -71,6 +84,8 @@ export type DashboardBlock =
       compare?: boolean
       /** Barra de progreso hacia este objetivo (excluyente con `ratio`) */
       target?: number
+      /** Mini-serie de 12 meses dentro de la tarjeta (spec 72); exige la fecha de la ventana */
+      sparkline?: boolean
       width?: BlockWidth
     }
   /** Lista corta ordenada por un campo: «Top 5 pedidos por importe» (spec 70). Una petición. */
@@ -86,8 +101,19 @@ export type DashboardBlock =
       label?: string
       width?: BlockWidth
     }
-  /** Evolución mensual de altas (últimos 12 meses) sobre un campo fecha filterable (spec 32) */
-  | { kind: 'series'; resource: string; field: string; label?: string; width?: BlockWidth }
+  /**
+   * Evolución mensual (últimos 12 meses) sobre un campo fecha filterable (spec 32). Con `measure`
+   * distinta de `count` la serie enseña una MEDIDA por mes (spec 72: el kind `series-sum`).
+   */
+  | {
+      kind: 'series'
+      resource: string
+      field: string
+      measure?: KpiMeasure
+      measureField?: string
+      label?: string
+      width?: BlockWidth
+    }
   /** El listado del recurso, embebido: mismo componente, sin su cabecera de pantalla (spec 52) */
   | { kind: 'table'; resource: string; width?: BlockWidth }
 

@@ -65,6 +65,30 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
               </div>
             }
           </div>
+          <div class="bg-card rounded-lg border p-4" data-testid="count-by-contractsByContractTypeSumTotalValue">
+            <h2 class="mb-3 text-sm font-semibold">Valor por tipo de contrato</h2>
+            @if (service.contractsByContractTypeSumTotalValue.hasValue()) {
+              <div class="space-y-2">
+                @for (
+                  bar of bars(service.contractsByContractTypeSumTotalValue.value(), [
+                    'Cloud',
+                    'On-premise',
+                    'Mixto',
+                    'Mantenimiento'
+                  ]);
+                  track bar.label
+                ) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="text-muted-foreground w-28 shrink-0 truncate">{{ bar.label }}</span>
+                    <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
+                      <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
+                    </div>
+                    <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
           <app-kpi-card
             title="Proyectos en planificación"
             [value]="kpiText(service.projectsKpiStatusEqPlanningValue(), 'count')"
@@ -72,9 +96,10 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
           />
           <app-kpi-card
             title="Altas de cloud este mes"
-            [value]="kpiText(service.contractsKpiContractTypeEqCloudStartDateMonthDeltaValue(), 'count')"
-            [delta]="delta(service.contractsKpiContractTypeEqCloudStartDateMonthDelta.value())"
-            testId="kpi-contractsKpiContractTypeEqCloudStartDateMonthDelta"
+            [value]="kpiText(service.contractsKpiContractTypeEqCloudStartDateMonthDeltaSparkValue(), 'count')"
+            [delta]="delta(service.contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark.value())"
+            [spark]="service.contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark.value()?.spark"
+            testId="kpi-contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark"
           />
           <app-kpi-card
             title="Proyectos cerrados"
@@ -118,6 +143,26 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
             @if (service.contractsSeriesStartDate.hasValue()) {
               <div class="flex items-end gap-1">
                 @for (point of points(service.contractsSeriesStartDate.value()); track point.label) {
+                  <div class="flex flex-1 flex-col items-center gap-1">
+                    <!-- carril de altura fija: un % necesita un padre con altura definida -->
+                    <div class="flex h-24 w-full items-end">
+                      <div
+                        class="bg-primary w-full rounded-t-sm"
+                        [style.height.%]="point.height"
+                        [title]="point.count"
+                      ></div>
+                    </div>
+                    <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="bg-card rounded-lg border p-4" data-testid="series-contractsSeriesStartDateSumTotalValue">
+            <h2 class="mb-3 text-sm font-semibold">Valor contratado por mes</h2>
+            @if (service.contractsSeriesStartDateSumTotalValue.hasValue()) {
+              <div class="flex items-end gap-1">
+                @for (point of points(service.contractsSeriesStartDateSumTotalValue.value()); track point.label) {
                   <div class="flex flex-1 flex-col items-center gap-1">
                     <!-- carril de altura fija: un % necesita un padre con altura definida -->
                     <div class="flex h-24 w-full items-end">

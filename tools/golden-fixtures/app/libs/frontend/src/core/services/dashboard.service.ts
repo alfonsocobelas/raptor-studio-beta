@@ -23,6 +23,7 @@ interface KpiSpec {
   ratio: boolean
   compare: boolean
   target?: number
+  sparkline?: boolean
 }
 
 export interface KpiValue {
@@ -32,6 +33,8 @@ export interface KpiValue {
   previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
   total?: number | null
+  /** La mini-serie de 12 meses; solo si la tarjeta la pide */
+  spark?: number[]
 }
 
 interface GroupedRequest {
@@ -57,12 +60,21 @@ export class DashboardService {
   readonly projects = this._total('/api/v1/projects')
   readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
 
-  readonly contractsByContractType = this._counts('/api/v1/contracts', 'contractType', [
-    'cloud',
-    'onprem',
-    'mixed',
-    'maintenance'
-  ])
+  readonly contractsByContractType = this._counts(
+    '/api/v1/contracts',
+    'contractType',
+    ['cloud', 'onprem', 'mixed', 'maintenance'],
+    'count',
+    undefined
+  )
+
+  readonly contractsByContractTypeSumTotalValue = this._counts(
+    '/api/v1/contracts',
+    'contractType',
+    ['cloud', 'onprem', 'mixed', 'maintenance'],
+    'sum',
+    'totalValue'
+  )
 
   readonly projectsKpiStatusEqPlanning = this._kpi('/api/v1/projects', {
     measure: 'count',
@@ -72,15 +84,16 @@ export class DashboardService {
   })
   readonly projectsKpiStatusEqPlanningValue = computed(() => this.projectsKpiStatusEqPlanning.value()?.value ?? null)
 
-  readonly contractsKpiContractTypeEqCloudStartDateMonthDelta = this._kpi('/api/v1/contracts', {
+  readonly contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark = this._kpi('/api/v1/contracts', {
     measure: 'count',
     filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
     window: { field: 'startDate', preset: 'month' },
     ratio: false,
-    compare: true
+    compare: true,
+    sparkline: true
   })
-  readonly contractsKpiContractTypeEqCloudStartDateMonthDeltaValue = computed(
-    () => this.contractsKpiContractTypeEqCloudStartDateMonthDelta.value()?.value ?? null
+  readonly contractsKpiContractTypeEqCloudStartDateMonthDeltaSparkValue = computed(
+    () => this.contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark.value()?.value ?? null
   )
 
   readonly projectsKpiStatusEqClosedRatio = this._kpi('/api/v1/projects', {
@@ -124,35 +137,41 @@ export class DashboardService {
 
   readonly contractsTopTotalValue5Desc = this._top('/api/v1/contracts', 'totalValue', 'desc', 5)
 
-  readonly contractsSeriesStartDate = this._series('/api/v1/contracts', 'startDate')
+  readonly contractsSeriesStartDate = this._series('/api/v1/contracts', 'startDate', 'count', undefined)
+
+  readonly contractsSeriesStartDateSumTotalValue = this._series('/api/v1/contracts', 'startDate', 'sum', 'totalValue')
 
   readonly loading = computed(
     () =>
       this.contracts.isLoading() ||
       this.projects.isLoading() ||
       this.contractsByContractType.isLoading() ||
+      this.contractsByContractTypeSumTotalValue.isLoading() ||
       this.projectsKpiStatusEqPlanning.isLoading() ||
-      this.contractsKpiContractTypeEqCloudStartDateMonthDelta.isLoading() ||
+      this.contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark.isLoading() ||
       this.projectsKpiStatusEqClosedRatio.isLoading() ||
       this.contractsKpiTotalTarget60.isLoading() ||
       this.contractsKpiSumTotalValue.isLoading() ||
       this.contractsKpiAvgTotalValueContractTypeEqCloud.isLoading() ||
       this.contractsTopTotalValue5Desc.isLoading() ||
-      this.contractsSeriesStartDate.isLoading()
+      this.contractsSeriesStartDate.isLoading() ||
+      this.contractsSeriesStartDateSumTotalValue.isLoading()
   )
   readonly loadError = computed(
     () =>
       this.contracts.error() !== undefined ||
       this.projects.error() !== undefined ||
       this.contractsByContractType.error() !== undefined ||
+      this.contractsByContractTypeSumTotalValue.error() !== undefined ||
       this.projectsKpiStatusEqPlanning.error() !== undefined ||
-      this.contractsKpiContractTypeEqCloudStartDateMonthDelta.error() !== undefined ||
+      this.contractsKpiContractTypeEqCloudStartDateMonthDeltaSpark.error() !== undefined ||
       this.projectsKpiStatusEqClosedRatio.error() !== undefined ||
       this.contractsKpiTotalTarget60.error() !== undefined ||
       this.contractsKpiSumTotalValue.error() !== undefined ||
       this.contractsKpiAvgTotalValueContractTypeEqCloud.error() !== undefined ||
       this.contractsTopTotalValue5Desc.error() !== undefined ||
-      this.contractsSeriesStartDate.error() !== undefined
+      this.contractsSeriesStartDate.error() !== undefined ||
+      this.contractsSeriesStartDateSumTotalValue.error() !== undefined
   )
 
   private _total(api: string) {
@@ -168,10 +187,10 @@ export class DashboardService {
    * El orden lo manda el ENUM y no la respuesta: el desglose vuelve ordenado por valor, y las
    * barras tienen que salir siempre en el mismo orden.
    */
-  private _counts(api: string, field: string, values: string[]) {
+  private _counts(api: string, field: string, values: string[], measure: string, measureField?: string) {
     return resource<number[], unknown>({
       loader: () =>
-        this._grouped(api, { measure: 'count', groupBy: field }).then(groups => {
+        this._grouped(api, { measure, field: measureField, groupBy: field }).then(groups => {
           const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
           return values.map(value => found.get(value) ?? 0)
         })
@@ -195,7 +214,7 @@ export class DashboardService {
     const measured = (filters: KpiFilter[]): Promise<number | null> =>
       spec.measure === 'count' ? this._countBy(api, filters) : this._aggregate(api, spec, filters)
 
-    const [value, previous, total] = await Promise.all([
+    const [value, previous, total, spark] = await Promise.all([
       measured(scoped),
       spec.compare && spec.window
         ? measured([
@@ -203,10 +222,19 @@ export class DashboardService {
             ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
           ])
         : Promise.resolve(undefined),
-      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined)
+      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined),
+      // la mini-serie es UNA petición agrupada por mes, no doce (spec 72)
+      spec.sparkline && spec.window
+        ? this._grouped(api, {
+            measure: spec.measure,
+            field: spec.field,
+            bucketField: spec.window.field,
+            months: 12
+          }).then(groups => groups.map(group => group.value ?? 0))
+        : Promise.resolve(undefined)
     ])
 
-    return { value, previous, total }
+    return { value, previous, total, spark }
   }
 
   private _aggregate(api: string, spec: KpiSpec, filters: KpiFilter[]): Promise<number | null> {
@@ -253,10 +281,10 @@ export class DashboardService {
    * La etiqueta se compone aquí: el backend devuelve la clave 'YYYY-MM', que es dato; el nombre
    * del mes es presentación.
    */
-  private _series(api: string, field: string) {
+  private _series(api: string, field: string, measure: string, measureField?: string) {
     return resource<{ label: string; count: number }[], unknown>({
       loader: () =>
-        this._grouped(api, { measure: 'count', bucketField: field, months: 12 }).then(groups =>
+        this._grouped(api, { measure, field: measureField, bucketField: field, months: 12 }).then(groups =>
           groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
         )
     })

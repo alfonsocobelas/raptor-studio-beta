@@ -141,6 +141,49 @@ describe('Mongoose<%- className %>Repository (integration)', () => {
     })
   })
 <%_ } _%>
+<%_ if (groupProbe) { _%>
+
+  describe('aggregateGrouped (spec 72)', () => {
+    it('desglosa en UNA consulta, con su clave y su valor', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const groups = await repository.aggregateGrouped(
+        <%- className %>WithIdSpecification.withId(<%- propertyName %>.id),
+        { op: 'count', groupBy: '<%- groupProbe %>', limit: 50 }
+      )
+
+      expect(groups).toHaveLength(1)
+      expect(groups[0].key).toBe(String(<%- propertyName %>.toPrimitives().<%- groupProbe %>))
+      expect(groups[0].value).toBe(1)
+    })
+
+    it('un conjunto vacío no tiene grupos: no los inventa a 0', async () => {
+      const groups = await repository.aggregateGrouped(
+        <%- className %>WithIdSpecification.withId(<%- className %>Id.create(uuidv7())),
+        { op: 'count', groupBy: '<%- groupProbe %>', limit: 50 }
+      )
+
+      expect(groups).toEqual([])
+    })
+<%_ if (aggregateDateProbe) { _%>
+
+    it('agrupa por mes con la clave YYYY-MM', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const groups = await repository.aggregateGrouped(
+        <%- className %>WithIdSpecification.withId(<%- propertyName %>.id),
+        { op: 'count', bucketField: '<%- aggregateDateProbe %>', limit: 50 }
+      )
+
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
+      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+    })
+<%_ } _%>
+  })
+<%_ } _%>
+
 
 
 <%_ if (mongo.optionalUniques.length) { _%>

@@ -87,4 +87,45 @@ describe('TypeOrmLicenseRepository (integration)', () => {
       expect(typeof sum).toBe('number')
     })
   })
+
+  describe('aggregateGrouped (spec 72)', () => {
+    it('desglosa en UNA consulta, con su clave y su valor', async () => {
+      const license = LicenseMother.random()
+      await repository.register(license)
+
+      const groups = await repository.aggregateGrouped(LicenseWithIdSpecification.withId(license.id), {
+        op: 'count',
+        groupBy: 'contractId',
+        limit: 50
+      })
+
+      expect(groups).toHaveLength(1)
+      expect(groups[0].key).toBe(String(license.toPrimitives().contractId))
+      expect(groups[0].value).toBe(1)
+    })
+
+    it('un conjunto vacío no tiene grupos: no los inventa a 0', async () => {
+      const groups = await repository.aggregateGrouped(LicenseWithIdSpecification.withId(LicenseId.create(uuidv7())), {
+        op: 'count',
+        groupBy: 'contractId',
+        limit: 50
+      })
+
+      expect(groups).toEqual([])
+    })
+
+    it('agrupa por mes con la clave YYYY-MM', async () => {
+      const license = LicenseMother.random()
+      await repository.register(license)
+
+      const groups = await repository.aggregateGrouped(LicenseWithIdSpecification.withId(license.id), {
+        op: 'count',
+        bucketField: 'contractEndDate',
+        limit: 50
+      })
+
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
+      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+    })
+  })
 })

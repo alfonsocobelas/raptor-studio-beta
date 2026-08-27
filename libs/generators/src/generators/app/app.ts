@@ -541,10 +541,10 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
   const analyticEntries = analytics.map(block => {
     if (block.kind === 'count-by') {
       const values = (block.values ?? []).map(v => `'${v.value}'`).join(', ')
-      return `  readonly ${block.property} = this._counts('${block.api}', '${block.field}', [${values}])`
+      return `  readonly ${block.property} = this._counts('${block.api}', '${block.field}', [${values}], ${measureArgs(block)})`
     }
     if (block.kind === 'series') {
-      return `  readonly ${block.property} = this._series('${block.api}', '${block.field}')`
+      return `  readonly ${block.property} = this._series('${block.api}', '${block.field}', ${measureArgs(block)})`
     }
     if (block.kind === 'top-n') {
       const top = block.top
@@ -600,8 +600,10 @@ function renderPanelRequestTest(metrics: number, analytics: ComposedDashboardBlo
 
   // spec 72: el desglose y la serie son UNA petición cada uno. Antes eran N y 12.
   const requestsOf = (block: ComposedDashboardBlock): number => {
-    if (block.kind === 'kpi') return 1 + (block.kpi?.compare ? 1 : 0) + (block.kpi?.ratio ? 1 : 0)
-    return 1
+    if (block.kind !== 'kpi') return 1
+    const spec = block.kpi
+    // la mini-serie es una petición más: va en la misma tanda, no en la misma llamada
+    return 1 + (spec?.compare ? 1 : 0) + (spec?.ratio ? 1 : 0) + (spec?.sparkline ? 1 : 0)
   }
   const total = metrics + analytics.reduce((sum, block) => sum + requestsOf(block), 0)
 
@@ -644,6 +646,13 @@ function renderKpiMathImports(analytics: ComposedDashboardBlock[]): string {
   return `import { ${wanted.sort().join(', ')} } from '../../../core/services/kpi-math'${value}\n`
 }
 
+
+/** Los dos argumentos de medida que reciben las barras y la serie (spec 72). */
+function measureArgs(block: ComposedDashboardBlock): string {
+  const measure = block.measure ?? 'count'
+  return `'${measure}', ${block.measureField ? `'${block.measureField}'` : 'undefined'}`
+}
+
 /** El descriptor del KPI, serializado tal cual para el servicio emitido (regla 8). */
 function kpiSpecLiteral(block: ComposedDashboardBlock): string {
   const spec = block.kpi
@@ -660,6 +669,7 @@ function kpiSpecLiteral(block: ComposedDashboardBlock): string {
     parts.push(`window: { field: '${spec.window.field}', preset: '${spec.window.preset}'${days} }`)
   }
   parts.push(`ratio: ${spec.ratio}`, `compare: ${spec.compare}`)
+  if (spec.sparkline) parts.push('sparkline: true')
   if (spec.target !== undefined) parts.push(`target: ${spec.target}`)
 
   return `{ ${parts.join(', ')} }`
@@ -758,7 +768,7 @@ function renderDashboardLists(tables: ResourceDefinition[]): Record<string, stri
  */
 function renderAnalyticServiceTypes(analytics: ComposedDashboardBlock[]): Record<string, string> {
   const kinds = new Set(analytics.map(block => block.kind))
-  const grouped = kinds.has('count-by') || kinds.has('series')
+  const grouped = kinds.has('count-by') || kinds.has('series') || analytics.some(b => b.kpi?.sparkline)
   if (!kinds.has('kpi') && !grouped) return { analyticImports: '', analyticTypes: '' }
 
   // el desglose vive en su propio fichero emitido: la clave del mes es dato y su etiqueta no
@@ -802,6 +812,7 @@ interface KpiSpec {
   ratio: boolean
   compare: boolean
   target?: number
+  sparkline?: boolean
 }
 
 export interface KpiValue {
@@ -811,6 +822,8 @@ export interface KpiValue {
   previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
   total?: number | null
+  /** La mini-serie de 12 meses; solo si la tarjeta la pide */
+  spark?: number[]
 }${groupedTypes}`
   }
 }
@@ -829,10 +842,10 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
    * El orden lo manda el ENUM y no la respuesta: el desglose vuelve ordenado por valor, y las
    * barras tienen que salir siempre en el mismo orden.
    */
-  private _counts(api: string, field: string, values: string[]) {
+  private _counts(api: string, field: string, values: string[], measure: string, measureField?: string) {
     return resource<number[], unknown>({
       loader: () =>
-        this._grouped(api, { measure: 'count', groupBy: field }).then(groups => {
+        this._grouped(api, { measure, field: measureField, groupBy: field }).then(groups => {
           const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
           return values.map(value => found.get(value) ?? 0)
         })
@@ -857,7 +870,7 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     const measured = (filters: KpiFilter[]): Promise<number | null> =>
       spec.measure === 'count' ? this._countBy(api, filters) : this._aggregate(api, spec, filters)
 
-    const [value, previous, total] = await Promise.all([
+    const [value, previous, total, spark] = await Promise.all([
       measured(scoped),
       spec.compare && spec.window
         ? measured([
@@ -865,10 +878,19 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
             ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
           ])
         : Promise.resolve(undefined),
-      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined)
+      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined),
+      // la mini-serie es UNA petición agrupada por mes, no doce (spec 72)
+      spec.sparkline && spec.window
+        ? this._grouped(api, {
+            measure: spec.measure,
+            field: spec.field,
+            bucketField: spec.window.field,
+            months: 12
+          }).then(groups => groups.map(group => group.value ?? 0))
+        : Promise.resolve(undefined)
     ])
 
-    return { value, previous, total }
+    return { value, previous, total, spark }
   }
 
   private _aggregate(api: string, spec: KpiSpec, filters: KpiFilter[]): Promise<number | null> {
@@ -919,17 +941,18 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
    * La etiqueta se compone aquí: el backend devuelve la clave 'YYYY-MM', que es dato; el nombre
    * del mes es presentación.
    */
-  private _series(api: string, field: string) {
+  private _series(api: string, field: string, measure: string, measureField?: string) {
     return resource<{ label: string; count: number }[], unknown>({
       loader: () =>
-        this._grouped(api, { measure: 'count', bucketField: field, months: 12 }).then(groups =>
+        this._grouped(api, { measure, field: measureField, bucketField: field, months: 12 }).then(groups =>
           groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
         )
     })
   }`)
   }
-  // el desglose: una petición al endpoint de agregación en vez de N conteos (spec 72)
-  if (kinds.has('count-by') || kinds.has('series')) {
+  // el desglose: una petición al endpoint de agregación en vez de N conteos (spec 72). Lo usan las
+  // barras, la serie y la mini-serie de una tarjeta
+  if (kinds.has('count-by') || kinds.has('series') || analytics.some(b => b.kpi?.sparkline)) {
     blocks.push(`  private _grouped(api: string, spec: GroupedRequest): Promise<AggregateGroup[]> {
     const params: Record<string, string> = { page: '1', pageSize: '1', op: spec.measure }
     if (spec.field) params['field'] = spec.field
@@ -963,6 +986,9 @@ function renderAnalyticCard(block: ComposedDashboardBlock, pad: string): string 
     }
     if (spec?.ratio) {
       extra.push(`\n${pad}  [percent]="percent(service.${block.property}.value())"`)
+    }
+    if (spec?.sparkline) {
+      extra.push(`\n${pad}  [spark]="service.${block.property}.value()?.spark"`)
     }
     if (spec?.target !== undefined) {
       extra.push(`\n${pad}  [progress]="progress(service.${block.property}.value(), ${spec.target})"`)

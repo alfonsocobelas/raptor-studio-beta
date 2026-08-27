@@ -75,6 +75,47 @@ describe('TypeOrmProjectRepository (integration)', () => {
     })
   })
 
+  describe('aggregateGrouped (spec 72)', () => {
+    it('desglosa en UNA consulta, con su clave y su valor', async () => {
+      const project = ProjectMother.random()
+      await repository.register(project)
+
+      const groups = await repository.aggregateGrouped(ProjectWithIdSpecification.withId(project.id), {
+        op: 'count',
+        groupBy: 'customerId',
+        limit: 50
+      })
+
+      expect(groups).toHaveLength(1)
+      expect(groups[0].key).toBe(String(project.toPrimitives().customerId))
+      expect(groups[0].value).toBe(1)
+    })
+
+    it('un conjunto vacío no tiene grupos: no los inventa a 0', async () => {
+      const groups = await repository.aggregateGrouped(ProjectWithIdSpecification.withId(ProjectId.create(uuidv7())), {
+        op: 'count',
+        groupBy: 'customerId',
+        limit: 50
+      })
+
+      expect(groups).toEqual([])
+    })
+
+    it('agrupa por mes con la clave YYYY-MM', async () => {
+      const project = ProjectMother.random()
+      await repository.register(project)
+
+      const groups = await repository.aggregateGrouped(ProjectWithIdSpecification.withId(project.id), {
+        op: 'count',
+        bucketField: 'startDate',
+        limit: 50
+      })
+
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
+      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+    })
+  })
+
   describe('remove', () => {
     it('removes a persisted project', async () => {
       const project = ProjectMother.random()

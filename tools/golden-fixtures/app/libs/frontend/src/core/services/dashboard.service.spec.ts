@@ -53,7 +53,7 @@ describe('DashboardService — totales por recurso', () => {
   it('spends exactly the requests the panel needs, and no more', async () => {
     await load()
 
-    expect(httpGet).toHaveBeenCalledTimes(13)
+    expect(httpGet).toHaveBeenCalledTimes(16)
     expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', {
       params: {
         page: '1',

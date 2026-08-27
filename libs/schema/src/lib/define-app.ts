@@ -129,6 +129,7 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
       if (!nonEmpty(block.label)) problems.push(`${at}: kpi-count requires a label`)
     }
     if (block.kind === 'kpi') problems.push(...kpiProblems(block, at))
+    if (block.kind === 'count-by' || block.kind === 'series') problems.push(...measuredBarsProblems(block, at))
     if (block.kind === 'top-n') problems.push(...topProblems(block, at))
 
     // un recurso admite varios bloques; el duplicado EXACTO no. La huella es la CONFIG COMPLETA,
@@ -233,12 +234,41 @@ function kpiProblems(block: Extract<DashboardBlock, { kind: 'kpi' }>, at: string
   if (block.compare === true && window === undefined) {
     problems.push(`${at}: kpi compare requires a window`)
   }
+  // la mini-serie necesita saber sobre qué fecha se hacen los meses, y eso lo dice la ventana
+  if (block.sparkline === true && block.window === undefined) {
+    problems.push(`${at}: kpi sparkline requires a window (its date field)`)
+  }
   // dos lecturas del mismo número y un solo sitio para la barra
   if (block.ratio === true && block.target !== undefined) {
     problems.push(`${at}: kpi ratio and target are mutually exclusive`)
   }
   if (block.target !== undefined && !(typeof block.target === 'number' && block.target > 0)) {
     problems.push(`${at}: kpi target must be a positive number`)
+  }
+
+  return problems
+}
+
+
+/**
+ * Las barras y la serie pueden enseñar una MEDIDA en vez de un conteo (spec 72). Misma regla que
+ * en la tarjeta: la medida distinta de `count` mide un campo, y el conteo no mide ninguno.
+ */
+function measuredBarsProblems(
+  block: Extract<DashboardBlock, { kind: 'count-by' | 'series' }>,
+  at: string
+): string[] {
+  const problems: string[] = []
+  const measure = block.measure ?? 'count'
+
+  if (!KPI_MEASURES.includes(measure)) {
+    problems.push(`${at}: unknown measure '${measure}'`)
+    return problems
+  }
+  if (measure === 'count') {
+    if (block.measureField !== undefined) problems.push(`${at}: measure 'count' takes no measureField`)
+  } else if (!nonEmpty(block.measureField)) {
+    problems.push(`${at}: measure '${measure}' requires a measureField`)
   }
 
   return problems
@@ -278,6 +308,11 @@ function fingerprintOf(block: DashboardBlock): string {
     ].join('|')
   }
   if (block.kind === 'top-n') return `${block.field}|${block.n}|${block.dir ?? 'desc'}`
+  // un conteo y una suma del MISMO eje son dos bloques distintos (spec 72), igual que dos KPIs del
+  // mismo campo con valores distintos lo eran en la 70
+  if (block.kind === 'count-by' || block.kind === 'series') {
+    return `${block.field}|${block.measure ?? 'count'}|${block.measureField ?? ''}`
+  }
 
   return 'field' in block ? block.field : ''
 }
