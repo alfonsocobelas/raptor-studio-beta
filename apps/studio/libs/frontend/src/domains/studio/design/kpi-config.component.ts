@@ -170,6 +170,15 @@ import {
                 </label>
               }
               <label class="flex items-center justify-between gap-2">
+                <span>Mini-serie de 12 meses</span>
+                <input
+                  type="checkbox"
+                  [checked]="v.block.kpiSparkline === true"
+                  (change)="patch({ kpiSparkline: v.block.kpiSparkline !== true })"
+                  data-testid="kpi-sparkline"
+                />
+              </label>
+              <label class="flex items-center justify-between gap-2">
                 <span>Comparar con el periodo anterior</span>
                 <input
                   type="checkbox"

@@ -14,6 +14,7 @@ import { CanvasCardsComponent } from './canvas-cards.component'
 import { CanvasFormComponent } from './canvas-form.component'
 import { CanvasCalendarComponent } from './canvas-calendar.component'
 import { CanvasKanbanComponent } from './canvas-kanban.component'
+import { CanvasChartComponent } from './canvas-chart.component'
 import { CanvasKpiComponent } from './canvas-kpi.component'
 import { CanvasTopNComponent } from './canvas-top-n.component'
 import { mockTotal } from './mock-data'
@@ -25,7 +26,7 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, CanvasKpiComponent, CanvasTopNComponent, NgIcon],
+  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, CanvasChartComponent, CanvasKpiComponent, CanvasTopNComponent, NgIcon],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -114,6 +115,12 @@ import { mockTotal } from './mock-data'
               }
               @case ('top-n') {
                 <studio-canvas-top-n [block]="block" />
+              }
+              @case ('count-by') {
+                <studio-canvas-chart [block]="block" />
+              }
+              @case ('series') {
+                <studio-canvas-chart [block]="block" />
               }
               @case ('kpis') {
                 <div
@@ -272,6 +279,8 @@ export class CanvasPageComponent {
     if (block.kind === 'kanban' && !block.columnsField) return false
     // un top-n sin campo de orden no tiene por qué ordenar: es diseño y nada más (spec 70)
     if (block.kind === 'top-n' && !block.topField) return false
+    // unas barras sin eje, o una serie sin fecha, no se pueden emitir (spec 72)
+    if ((block.kind === 'count-by' || block.kind === 'series') && !block.axisField) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }

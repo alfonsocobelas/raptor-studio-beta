@@ -44,6 +44,19 @@ function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): D
       })
       continue
     }
+    // barras y evolución (spec 72): sin eje no cruzan — el generador no las sabría emitir
+    if ((block.kind === 'count-by' || block.kind === 'series') && block.resource && block.axisField) {
+      const measure = block.measure && block.measure !== 'count' && block.measureField ? block.measure : 'count'
+      blocks.push({
+        kind: block.kind,
+        resource: block.resource,
+        field: block.axisField,
+        ...(measure !== 'count' ? { measure: measure as KpiMeasure, measureField: block.measureField } : {}),
+        ...(block.kpiLabel?.trim() ? { label: block.kpiLabel.trim() } : {}),
+        width
+      })
+      continue
+    }
     if (block.kind === 'table' && block.resource && !tables.includes(block.resource)) {
       tables.push(block.resource)
       blocks.push({ kind: 'table', resource: block.resource, width })
@@ -89,8 +102,9 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
     ...(condition ? { condition } : {}),
     ...(window ? { window } : {}),
     ...(block.kpiRatio && measure === 'count' ? { ratio: true } : {}),
-    // sin ventana no hay periodo anterior con el que comparar
+    // sin ventana no hay periodo anterior con el que comparar, ni fecha sobre la que hacer los meses
     ...(block.kpiCompare && window ? { compare: true } : {}),
+    ...(block.kpiSparkline && window ? { sparkline: true } : {}),
     ...(block.kpiTarget !== undefined && !block.kpiRatio ? { target: block.kpiTarget } : {}),
     width
   }
@@ -101,6 +115,9 @@ function isPanelBlock(block: DesignBlock): boolean {
   if (block.kind === 'kpis') return (block.resources?.length ?? 0) > 0
   if (block.kind === 'kpi') return block.resource !== undefined
   if (block.kind === 'top-n') return block.resource !== undefined && block.topField !== undefined
+  if (block.kind === 'count-by' || block.kind === 'series') {
+    return block.resource !== undefined && block.axisField !== undefined
+  }
   return false
 }
 

@@ -11,7 +11,9 @@ const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
   calendar: 'lucideCalendar',
   kanban: 'lucideSquareKanban',
   kpi: 'lucideGauge',
-  'top-n': 'lucideTrophy'
+  'top-n': 'lucideTrophy',
+  'count-by': 'lucideChartBar',
+  series: 'lucideChartColumn'
 }
 
 /**

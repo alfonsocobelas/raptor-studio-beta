@@ -361,3 +361,63 @@ describe('designPagesToAppPages — medidas del KPI (spec 71)', () => {
     expect(blockOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
   })
 })
+
+describe('designPagesToAppPages — barras y evolución (spec 72)', () => {
+  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
+  const blocksOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
+    const [page] = pages
+    return page?.kind === 'dashboard' ? page.blocks : []
+  }
+
+  it('las barras cruzan con su eje', () => {
+    const pages = panel([{ kind: 'count-by', resource: 'pedido', axisField: 'estado' }])
+
+    expect(blocksOf(designPagesToAppPages(pages))[0]).toMatchObject({
+      kind: 'count-by',
+      resource: 'pedido',
+      field: 'estado'
+    })
+  })
+
+  it('con medida cruzan la medida y su campo', () => {
+    const pages = panel([
+      { kind: 'series', resource: 'pedido', axisField: 'creado', measure: 'sum', measureField: 'importe' }
+    ])
+
+    expect(blocksOf(designPagesToAppPages(pages))[0]).toMatchObject({
+      kind: 'series',
+      measure: 'sum',
+      measureField: 'importe'
+    })
+  })
+
+  it('sin eje no cruzan: el generador no sabría emitirlas', () => {
+    const pages = panel([{ kind: 'count-by', resource: 'pedido' }])
+
+    expect(designPagesToAppPages(pages)).toEqual([])
+  })
+
+  it('una medida sin campo se degrada a conteo', () => {
+    const pages = panel([{ kind: 'count-by', resource: 'pedido', axisField: 'estado', measure: 'sum' }])
+    const block = blocksOf(designPagesToAppPages(pages))[0]
+
+    expect(block).not.toHaveProperty('measure')
+  })
+
+  it('el sparkline del KPI cruza solo con ventana', () => {
+    const withWindow = panel([
+      {
+        kind: 'kpi',
+        resource: 'pedido',
+        kpiLabel: 'X',
+        kpiWindowField: 'creado',
+        kpiWindowPreset: 'month',
+        kpiSparkline: true
+      }
+    ])
+    expect(blocksOf(designPagesToAppPages(withWindow))[0]).toMatchObject({ sparkline: true })
+
+    const without = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiSparkline: true }])
+    expect(blocksOf(designPagesToAppPages(without))[0]).not.toHaveProperty('sparkline')
+  })
+})

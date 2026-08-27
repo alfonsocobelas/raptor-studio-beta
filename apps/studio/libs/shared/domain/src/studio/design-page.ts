@@ -9,6 +9,8 @@ export type BlockKind =
   | 'kpis'
   | 'kpi'
   | 'top-n'
+  | 'count-by'
+  | 'series'
   | 'fields'
   | 'cards'
   | 'attachments'
@@ -60,6 +62,15 @@ export interface DesignBlock {
   kpiCompare?: boolean
   /** Objetivo de la barra de progreso (excluyente con kpiRatio) */
   kpiTarget?: number
+  /** Mini-serie de 12 meses dentro de la tarjeta (spec 72); exige la ventana */
+  kpiSparkline?: boolean
+  /**
+   * Barras y serie (spec 72): el EJE del desglose —un enum en las barras, una fecha en la serie— y
+   * la medida que enseñan. Sin medida cuentan registros, que es lo que hacían antes.
+   */
+  axisField?: string
+  measure?: string
+  measureField?: string
   /** Top N (spec 70): campo de orden, cuántas filas, qué se muestra y en qué sentido */
   topField?: string
   topN?: number
@@ -150,6 +161,8 @@ export const GENERABLE_BLOCKS: BlockKind[] = [
   'kpis',
   'kpi',
   'top-n',
+  'count-by',
+  'series',
   'fields',
   'cards',
   'attachments',

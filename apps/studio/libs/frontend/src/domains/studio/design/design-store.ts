@@ -375,7 +375,15 @@ export class DesignStore {
         : // el kanban nace en el campo de la máquina de estados, o el primer enum (spec 61)
           block.kind === 'kanban' && block.resource && !block.columnsField
           ? { ...block, columnsField: this.defaultKanbanField(block.resource) }
-          : // el top-n nace con 5 filas y el primer campo numérico de la entidad (spec 70)
+          : // las barras nacen en el primer enum y la serie en la primera fecha (spec 72)
+            (block.kind === 'count-by' || block.kind === 'series') && block.resource && !block.axisField
+            ? {
+                ...block,
+                axisField: this._resources()
+                  .find(r => r.name === block.resource)
+                  ?.fields.find(f => (block.kind === 'count-by' ? f.type === 'enum' : f.type === 'date'))?.name
+              }
+            : // el top-n nace con 5 filas y el primer campo numérico de la entidad (spec 70)
             block.kind === 'top-n' && block.resource && !block.topField
             ? {
                 ...block,
@@ -492,7 +500,8 @@ export class DesignStore {
   setKpiConfig(pageIndex: number, blockIndex: number, patch: Partial<DesignBlock>): boolean {
     const page = this._pages()[pageIndex]
     const block = page?.blocks[blockIndex]
-    if (!block || (block.kind !== 'kpi' && block.kind !== 'top-n')) return false
+    const configurable = ['kpi', 'top-n', 'count-by', 'series']
+    if (!block || !configurable.includes(block.kind)) return false
 
     const updated: DesignBlock = { ...block, ...patch }
     // el select vacío llega como '': eso es «sin ventana», no una ventana llamada ''
@@ -505,7 +514,11 @@ export class DesignStore {
     }
     if (patch.kpiRatio === true) delete updated.kpiTarget
     if (patch.kpiTarget !== undefined) delete updated.kpiRatio
-    if (!updated.kpiWindowPreset) delete updated.kpiCompare
+    if (!updated.kpiWindowPreset) {
+      delete updated.kpiCompare
+      // la mini-serie necesita la fecha de la ventana: sin ventana no hay meses que dibujar
+      delete updated.kpiSparkline
+    }
     if (updated.kpiWindowPreset !== 'days') delete updated.kpiWindowDays
 
     const pages = this._pages().map((p, i) =>

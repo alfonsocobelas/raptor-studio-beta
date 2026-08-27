@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } fr
 import { CalendarConfigComponent } from './calendar-config.component'
 import { KanbanConfigComponent } from './kanban-config.component'
 import { DesignStore } from './design-store'
+import { ChartConfigComponent } from './chart-config.component'
 import { KpiConfigComponent } from './kpi-config.component'
 import { KpisConfigComponent } from './kpis-config.component'
 import { TopNConfigComponent } from './top-n-config.component'
@@ -32,12 +33,12 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 const COLUMN_BLOCKS: BlockKind[] = ['table', 'cards', 'fields', 'form']
 
 /** Bloques con panel de configuración propio. */
-const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', 'top-n']
+const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', 'top-n', 'count-by', 'series']
 
 @Component({
   selector: 'studio-design-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, KpisConfigComponent, TopNConfigComponent],
+  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, KpisConfigComponent, TopNConfigComponent, ChartConfigComponent],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -133,6 +134,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', '
               <studio-kanban-config [resource]="view.resource()" />
               <studio-kpi-config [resource]="view.resource()" />
               <studio-top-n-config [resource]="view.resource()" />
+              <studio-chart-config [resource]="view.resource()" />
               @if (columnsMatterHere()) {
                 <studio-inspector [resource]="view.resource()" (close)="view.selectResource(null)" />
               } @else if (!hasBlockConfig()) {
