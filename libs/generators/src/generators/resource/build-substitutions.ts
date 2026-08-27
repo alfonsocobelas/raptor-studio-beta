@@ -59,6 +59,10 @@ export interface ResourceSubstitutions {
   allowedFilters: string[]
   /** Campos que la API puede agregar, con su tipo (spec 71): la lista blanca del endpoint */
   aggregatableFields: { name: string; kind: 'numeric' | 'date' }[]
+  /** Campo numérico con el que el test de integración prueba la agregación; null si no hay */
+  aggregateProbe: string | null
+  /** Campo fecha con el que se prueba que sumar fechas se rechaza; null si no hay */
+  aggregateDateProbe: string | null
   allowedOrders: string[]
   searchableFields: string[]
   /** ALLOWED_FILTERS entries with their optional comment lines */
@@ -382,6 +386,8 @@ export function buildSubstitutions(
     columns,
     allowedFilters: orderedQueryList(fields, 'filterable'),
     aggregatableFields: aggregatableList(fields),
+    aggregateProbe: aggregateProbeOf(fields),
+    aggregateDateProbe: aggregatableList(fields).find(f => f.kind === 'date')?.name ?? null,
     allowedOrders: orderedQueryList(fields, 'sortable'),
     searchableFields: orderedQueryList(fields, 'searchable'),
     filterEntries: orderedQueryList(fields, 'filterable').map(name => ({
@@ -1397,6 +1403,20 @@ type QueryFlag = 'filterable' | 'sortable' | 'searchable'
  * Solo números y fechas. Fuera quedan el texto y los enums —no hay suma que sacarles—, los uuid
  * y los booleanos: «cuántos son sí» es una CONDICIÓN del conteo, no una medida.
  */
+
+/**
+ * El campo con el que el test de integración prueba la agregación (spec 71): el primer numérico
+ * que SIEMPRE tiene valor. Uno nullable haría que la suma dependiera del Object Mother y el test
+ * fallaría un día de cada tantos.
+ */
+function aggregateProbeOf(fields: [string, FieldDefinition][]): string | null {
+  const probe = fields.find(
+    ([, f]) =>
+      (f.type === 'number' || f.type === 'integer') && !f.pk && !f.nullable && !f.optionalPrimitive && !f.syncManaged
+  )
+  return probe ? probe[0] : null
+}
+
 function aggregatableList(fields: [string, FieldDefinition][]): { name: string; kind: 'numeric' | 'date' }[] {
   return fields
     .filter(([, f]) => !f.pk)

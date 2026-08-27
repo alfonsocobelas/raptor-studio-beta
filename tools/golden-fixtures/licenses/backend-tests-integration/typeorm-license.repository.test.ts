@@ -53,4 +53,38 @@ describe('TypeOrmLicenseRepository (integration)', () => {
       expect(await repository.count(absent)).toBe(0)
     })
   })
+
+  describe('aggregate (spec 71)', () => {
+    it('agrega el conjunto filtrado, y el vacío no responde lo mismo en todas las operaciones', async () => {
+      const license = LicenseMother.random()
+      await repository.register(license)
+
+      const spec = LicenseWithIdSpecification.withId(license.id)
+      const value = license.toPrimitives().licensedUnits
+
+      expect(await repository.aggregate(spec, 'sum', 'licensedUnits')).toBe(value)
+      expect(await repository.aggregate(spec, 'avg', 'licensedUnits')).toBe(value)
+      expect(await repository.aggregate(spec, 'max', 'licensedUnits')).toBe(value)
+      expect(await repository.aggregate(spec, 'min', 'licensedUnits')).toBe(value)
+      expect(await repository.aggregate(spec, 'distinct', 'licensedUnits')).toBe(1)
+
+      const absent = LicenseWithIdSpecification.withId(LicenseId.create(uuidv7()))
+      // la suma de nada es 0 y los distintos de nada son 0…
+      expect(await repository.aggregate(absent, 'sum', 'licensedUnits')).toBe(0)
+      expect(await repository.aggregate(absent, 'distinct', 'licensedUnits')).toBe(0)
+      // …pero la media, el máximo y el mínimo de nada NO son 0: son «no hay dato»
+      expect(await repository.aggregate(absent, 'avg', 'licensedUnits')).toBeNull()
+      expect(await repository.aggregate(absent, 'max', 'licensedUnits')).toBeNull()
+      expect(await repository.aggregate(absent, 'min', 'licensedUnits')).toBeNull()
+    })
+
+    it('devuelve un número, no la cadena que el motor pueda dar por un numeric', async () => {
+      const license = LicenseMother.random()
+      await repository.register(license)
+
+      const sum = await repository.aggregate(LicenseWithIdSpecification.withId(license.id), 'sum', 'licensedUnits')
+
+      expect(typeof sum).toBe('number')
+    })
+  })
 })

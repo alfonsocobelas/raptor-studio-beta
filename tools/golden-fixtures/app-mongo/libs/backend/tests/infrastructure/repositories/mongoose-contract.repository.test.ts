@@ -81,6 +81,40 @@ describe('MongooseContractRepository (integration)', () => {
     })
   })
 
+  describe('aggregate (spec 71)', () => {
+    it('agrega el conjunto filtrado, y el vacío no responde lo mismo en todas las operaciones', async () => {
+      const contract = ContractMother.random()
+      await repository.register(contract)
+
+      const spec = ContractWithIdSpecification.withId(contract.id)
+      const value = contract.toPrimitives().nbrOfContracts
+
+      expect(await repository.aggregate(spec, 'sum', 'nbrOfContracts')).toBe(value)
+      expect(await repository.aggregate(spec, 'avg', 'nbrOfContracts')).toBe(value)
+      expect(await repository.aggregate(spec, 'max', 'nbrOfContracts')).toBe(value)
+      expect(await repository.aggregate(spec, 'min', 'nbrOfContracts')).toBe(value)
+      expect(await repository.aggregate(spec, 'distinct', 'nbrOfContracts')).toBe(1)
+
+      const absent = ContractWithIdSpecification.withId(ContractId.create(uuidv7()))
+      // la suma de nada es 0 y los distintos de nada son 0…
+      expect(await repository.aggregate(absent, 'sum', 'nbrOfContracts')).toBe(0)
+      expect(await repository.aggregate(absent, 'distinct', 'nbrOfContracts')).toBe(0)
+      // …pero la media, el máximo y el mínimo de nada NO son 0: son «no hay dato»
+      expect(await repository.aggregate(absent, 'avg', 'nbrOfContracts')).toBeNull()
+      expect(await repository.aggregate(absent, 'max', 'nbrOfContracts')).toBeNull()
+      expect(await repository.aggregate(absent, 'min', 'nbrOfContracts')).toBeNull()
+    })
+
+    it('devuelve un número, no la cadena que el motor pueda dar por un numeric', async () => {
+      const contract = ContractMother.random()
+      await repository.register(contract)
+
+      const sum = await repository.aggregate(ContractWithIdSpecification.withId(contract.id), 'sum', 'nbrOfContracts')
+
+      expect(typeof sum).toBe('number')
+    })
+  })
+
   describe('save', () => {
     it('replaces the whole document instead of inserting a second one', async () => {
       const contract = ContractMother.random()

@@ -84,6 +84,47 @@ describe('TypeOrm<%- className %>Repository (integration)', () => {
       expect(await repository.count(absent)).toBe(0)
     })
   })
+<%_ if (aggregateProbe) { _%>
+
+  describe('aggregate (spec 71)', () => {
+    it('agrega el conjunto filtrado, y el vacío no responde lo mismo en todas las operaciones', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const spec = <%- className %>WithIdSpecification.withId(<%- propertyName %>.id)
+      const value = <%- propertyName %>.toPrimitives().<%- aggregateProbe %>
+
+      expect(await repository.aggregate(spec, 'sum', '<%- aggregateProbe %>')).toBe(value)
+      expect(await repository.aggregate(spec, 'avg', '<%- aggregateProbe %>')).toBe(value)
+      expect(await repository.aggregate(spec, 'max', '<%- aggregateProbe %>')).toBe(value)
+      expect(await repository.aggregate(spec, 'min', '<%- aggregateProbe %>')).toBe(value)
+      expect(await repository.aggregate(spec, 'distinct', '<%- aggregateProbe %>')).toBe(1)
+
+      const absent = <%- className %>WithIdSpecification.withId(<%- className %>Id.create(uuidv7()))
+      // la suma de nada es 0 y los distintos de nada son 0…
+      expect(await repository.aggregate(absent, 'sum', '<%- aggregateProbe %>')).toBe(0)
+      expect(await repository.aggregate(absent, 'distinct', '<%- aggregateProbe %>')).toBe(0)
+      // …pero la media, el máximo y el mínimo de nada NO son 0: son «no hay dato»
+      expect(await repository.aggregate(absent, 'avg', '<%- aggregateProbe %>')).toBeNull()
+      expect(await repository.aggregate(absent, 'max', '<%- aggregateProbe %>')).toBeNull()
+      expect(await repository.aggregate(absent, 'min', '<%- aggregateProbe %>')).toBeNull()
+    })
+
+    it('devuelve un número, no la cadena que el motor pueda dar por un numeric', async () => {
+      const <%- propertyName %> = <%- className %>Mother.random()
+      await repository.register(<%- propertyName %>)
+
+      const sum = await repository.aggregate(
+        <%- className %>WithIdSpecification.withId(<%- propertyName %>.id),
+        'sum',
+        '<%- aggregateProbe %>'
+      )
+
+      expect(typeof sum).toBe('number')
+    })
+  })
+<%_ } _%>
+
 <%_ if (app.removes) { _%>
 
   describe('remove', () => {
