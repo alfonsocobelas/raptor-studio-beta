@@ -6,12 +6,12 @@ import { composeFlat } from '../app/composition'
 import { resourceGenerator } from './resource'
 
 /**
- * Spec 29 (fase 5 · A1): la papelera se DERIVA de flags existentes — se emite solo
- * cuando el modelo declara `softDelete` Y su listado tiene borrado (`features.delete`).
- * Matriz de los modelos de oro: project (ambos) SÍ · license (softDelete sin delete)
- * NO · customer (ninguno) NO.
+ * La papelera (spec 29) se RETIRÓ: ningún modelo la emite, ni siquiera el que reúne
+ * las dos condiciones que antes la disparaban (project: softDelete + borrado en la
+ * lista). El borrado suave sigue siendo el defecto — lo archivado deja de verse y no
+ * vuelve. Estos tests son el guard de que no reaparece por descuido.
  */
-describe('resource generator — papelera (spec 29)', () => {
+describe('resource generator — sin papelera (spec 29 retirada)', () => {
   const emit = async (name: string, database?: 'postgres' | 'mongo'): Promise<Tree> => {
     const tree: Tree = createTreeWithEmptyWorkspace()
     await resourceGenerator(tree, { name, directory: 'out', database })
@@ -103,7 +103,7 @@ describe('resource generator — papelera (spec 29)', () => {
   })
 })
 
-describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)', () => {
+describe('resource generator — sin rastro de la papelera en lo emitido', () => {
   const emit = async (name: string, database?: 'postgres' | 'mongo'): Promise<Tree> => {
     const tree: Tree = createTreeWithEmptyWorkspace()
     await resourceGenerator(tree, { name, directory: 'out', database })

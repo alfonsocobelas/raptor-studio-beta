@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import { FieldDefinition, ResourceDefinition, wantsSoftDelete } from '@raptor/schema'
+import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
 import { buildDenormalizations, DenormBinding } from './denormalization'
 
 /**
@@ -34,8 +34,6 @@ export interface ApplicationBindings {
   writes: boolean
   /** remove emitted (list.features.delete) */
   removes: boolean
-  /** papelera emitida (spec 29): borrado lógico Y listado con borrado */
-  trash: boolean
   /** historial emitido (spec 31): los use cases de escritura registran eventos */
   history: boolean
   /** import CSV validado (spec 33): exige alta (writes) para delegar en su register */
@@ -249,7 +247,6 @@ export function renderApplication(
     emit: emitAggregate,
     writes: (definition.formSections?.length ?? 0) > 0,
     removes: definition.list?.features?.delete === true,
-    trash: definition.list?.features?.delete === true && wantsSoftDelete(definition),
     history: definition.history === true,
     importCsv: definition.list?.features?.import === true && (definition.formSections?.length ?? 0) > 0,
     uniqueSpecs,

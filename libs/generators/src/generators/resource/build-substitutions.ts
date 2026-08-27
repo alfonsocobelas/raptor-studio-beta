@@ -79,7 +79,7 @@ export interface ResourceSubstitutions {
   frontendColumns: string[]
   /** Label consts referenced by valueMap columns (imported from ./<fileName>-labels) */
   valueMapImports: string[]
-  features: { view: boolean; delete: boolean; edit: boolean; trash: boolean; history: boolean; import: boolean }
+  features: { view: boolean; delete: boolean; edit: boolean; history: boolean; import: boolean }
   /** lucide icons required by the enabled actions */
   icons: string[]
   /** Comentario de las acciones de fila en el listado con ficha */
@@ -913,7 +913,6 @@ function resolveFeatures(definition: ResourceDefinition): {
   view: boolean
   delete: boolean
   edit: boolean
-  trash: boolean
   history: boolean
   import: boolean
 } {
@@ -922,8 +921,6 @@ function resolveFeatures(definition: ResourceDefinition): {
     view: definition.list?.features?.view ?? true,
     delete: canDelete,
     edit: definition.list?.features?.edit ?? true,
-    // la papelera (spec 29) se DERIVA: borrado lógico + listado que borra
-    trash: canDelete && wantsSoftDelete(definition),
     // el historial (spec 31): timeline en la ficha
     history: definition.history === true,
     // el import (spec 33): botón y diálogo; exige alta y diálogo de edición

@@ -471,8 +471,8 @@ export interface ResourceDefinition {
   auditComment?: boolean
   /** Comment lines emitted above SEARCHABLE_FIELDS in the search-config */
   searchNotes?: string[]
-  /** Borrado suave (spec 38): TRUE POR DEFECTO — todo borrado archiva (deletedAt) y es
-   *  reversible desde la papelera. `false` es la escotilla física para catálogos puros
+  /** Borrado suave (spec 38): TRUE POR DEFECTO — todo borrado archiva (deletedAt) y deja
+   *  de verse en la aplicación. `false` es la escotilla física para catálogos puros
    *  donde la permanencia no importa (p. ej. una tarifa reimportada entera por CSV). */
   softDelete?: boolean
   /** Comment lines emitted above ALLOWED_ORDERS in the search-config */
