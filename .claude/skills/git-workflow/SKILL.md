@@ -61,8 +61,13 @@ chore(claude): adapt skills from sap-licences reference
 ## Gate antes de commitear
 
 1. **Suite verde** del ámbito tocado (cuando exista el workspace: `nx test` / targets del Makefile).
-2. **Gate de oro** si se tocaron plantillas o `generator.ts` (`/golden-diff` → diffs vacíos).
-3. **Nunca commitear**: secretos, `.env` con credenciales, `tfplan`/`*.tfvars.json`, nada de
+2. **Build verde** si se tocó frontend del studio: `npm run web:build` en `apps/studio` (`ng build`).
+   **No basta `npm run typecheck`**: `tsc` no compila las plantillas Angular, así que un `NG8002`
+   —un `[input]` que el componente no declara— pasa el gate y solo aparece en el log del build.
+   Y mientras el build falla, `ng serve` sigue sirviendo el último bundle bueno: ningún cambio de
+   UI llega al navegador. Visto el 2026-08-27 con `app-kpi-card` (`delta`/`percent`/`progress`/`target`).
+3. **Gate de oro** si se tocaron plantillas o `generator.ts` (`/golden-diff` → diffs vacíos).
+4. **Nunca commitear**: secretos, `.env` con credenciales, `tfplan`/`*.tfvars.json`, nada de
    `docs/referencia/iac/terraform/terraform.auto.tfvars.json` ni `docs/referencia/probe.env`.
 
 ## Confirmación previa al commit
