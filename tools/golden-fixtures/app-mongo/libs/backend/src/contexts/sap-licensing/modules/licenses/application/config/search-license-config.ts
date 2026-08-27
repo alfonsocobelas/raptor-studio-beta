@@ -30,10 +30,26 @@ const LICENSE_ALLOWED_ORDERS: Array<LicenseAllowedField> = [
 // path applies the same fields in memory (see filter-licenses-by-search.ts).
 const LICENSE_SEARCHABLE_FIELDS: Array<LicenseAllowedField> = ['customerName', 'subSolutionAreaName', 'metric'] as const
 
+// Lo que el endpoint `aggregate` puede tocar (spec 71). El nombre del campo llega por HTTP y
+// termina dentro de la consulta: solo se agrega lo que esta lista declara, y su tipo decide qué
+// operaciones son legales (sumar fechas no es una pregunta con respuesta).
+const LICENSE_AGGREGATABLE_FIELDS = {
+  contractEndDate: 'date',
+  licensedUnits: 'numeric',
+  pricePerUnit: 'numeric',
+  archivedAt: 'date',
+  lastSeenInSyncAt: 'date',
+  currentUnits: 'numeric',
+  consumptionPct: 'numeric',
+  excessUnits: 'numeric',
+  annualValue: 'numeric'
+} as const satisfies Partial<Record<LicenseAllowedField, 'numeric' | 'date'>>
+
 const searchLicenseConfig = {
   allowedFilters: LICENSE_ALLOWED_FILTERS,
   allowedOrders: LICENSE_ALLOWED_ORDERS,
-  searchableFields: LICENSE_SEARCHABLE_FIELDS
+  searchableFields: LICENSE_SEARCHABLE_FIELDS,
+  aggregatableFields: LICENSE_AGGREGATABLE_FIELDS
 } as const
 
 export default searchLicenseConfig

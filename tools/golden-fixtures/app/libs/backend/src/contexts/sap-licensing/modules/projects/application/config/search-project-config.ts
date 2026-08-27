@@ -23,10 +23,23 @@ const PROJECT_ALLOWED_ORDERS: Array<ProjectAllowedField> = [
 // Free-text columns shown in the table (spec 25: status/implementer are badges, dates are out).
 const PROJECT_SEARCHABLE_FIELDS: Array<ProjectAllowedField> = ['name', 'customerName'] as const
 
+// Lo que el endpoint `aggregate` puede tocar (spec 71). El nombre del campo llega por HTTP y
+// termina dentro de la consulta: solo se agrega lo que esta lista declara, y su tipo decide qué
+// operaciones son legales (sumar fechas no es una pregunta con respuesta).
+const PROJECT_AGGREGATABLE_FIELDS = {
+  startDate: 'date',
+  endDate: 'date',
+  archivedAt: 'date',
+  lastSeenInSyncAt: 'date',
+  nbrOfWaves: 'numeric',
+  planToGoLive: 'date'
+} as const satisfies Partial<Record<ProjectAllowedField, 'numeric' | 'date'>>
+
 const searchProjectConfig = {
   allowedFilters: PROJECT_ALLOWED_FILTERS,
   allowedOrders: PROJECT_ALLOWED_ORDERS,
-  searchableFields: PROJECT_SEARCHABLE_FIELDS
+  searchableFields: PROJECT_SEARCHABLE_FIELDS,
+  aggregatableFields: PROJECT_AGGREGATABLE_FIELDS
 } as const
 
 export default searchProjectConfig

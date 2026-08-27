@@ -29,10 +29,20 @@ const <%- constantName %>_SEARCHABLE_FIELDS: Array<<%- className %>AllowedField>
 <%_ }) _%>
 ] as const
 
+// Lo que el endpoint `aggregate` puede tocar (spec 71). El nombre del campo llega por HTTP y
+// termina dentro de la consulta: solo se agrega lo que esta lista declara, y su tipo decide qué
+// operaciones son legales (sumar fechas no es una pregunta con respuesta).
+const <%- constantName %>_AGGREGATABLE_FIELDS = {
+<%_ aggregatableFields.forEach(f => { _%>
+  <%- f.name %>: '<%- f.kind %>',
+<%_ }) _%>
+} as const satisfies Partial<Record<<%- className %>AllowedField, 'numeric' | 'date'>>
+
 const search<%- className %>Config = {
   allowedFilters: <%- constantName %>_ALLOWED_FILTERS,
   allowedOrders: <%- constantName %>_ALLOWED_ORDERS,
-  searchableFields: <%- constantName %>_SEARCHABLE_FIELDS
+  searchableFields: <%- constantName %>_SEARCHABLE_FIELDS,
+  aggregatableFields: <%- constantName %>_AGGREGATABLE_FIELDS
 } as const
 
 export default search<%- className %>Config

@@ -57,6 +57,8 @@ export interface ResourceSubstitutions {
   columns: ColumnSubstitution[]
   /** Ordered field-name lists for the search-config (numeric flags first, then booleans in field order) */
   allowedFilters: string[]
+  /** Campos que la API puede agregar, con su tipo (spec 71): la lista blanca del endpoint */
+  aggregatableFields: { name: string; kind: 'numeric' | 'date' }[]
   allowedOrders: string[]
   searchableFields: string[]
   /** ALLOWED_FILTERS entries with their optional comment lines */
@@ -379,6 +381,7 @@ export function buildSubstitutions(
     typeormImports: renderTypeormImports(definition),
     columns,
     allowedFilters: orderedQueryList(fields, 'filterable'),
+    aggregatableFields: aggregatableList(fields),
     allowedOrders: orderedQueryList(fields, 'sortable'),
     searchableFields: orderedQueryList(fields, 'searchable'),
     filterEntries: orderedQueryList(fields, 'filterable').map(name => ({
@@ -1385,6 +1388,25 @@ function renderFrontendColumn(name: string, table: FieldTable): string {
 }
 
 type QueryFlag = 'filterable' | 'sortable' | 'searchable'
+
+
+/**
+ * Los campos que el endpoint `aggregate` puede tocar (spec 71), en el ORDEN de declaración del
+ * modelo para que el emitido sea determinista.
+ *
+ * Solo números y fechas. Fuera quedan el texto y los enums —no hay suma que sacarles—, los uuid
+ * y los booleanos: «cuántos son sí» es una CONDICIÓN del conteo, no una medida.
+ */
+function aggregatableList(fields: [string, FieldDefinition][]): { name: string; kind: 'numeric' | 'date' }[] {
+  return fields
+    .filter(([, f]) => !f.pk)
+    .map(([name, f]) => {
+      if (f.type === 'number' || f.type === 'integer') return { name, kind: 'numeric' as const }
+      if (f.type === 'date' || f.type === 'timestamptz') return { name, kind: 'date' as const }
+      return null
+    })
+    .filter((entry): entry is { name: string; kind: 'numeric' | 'date' } => entry !== null)
+}
 
 function orderedQueryList(fields: [string, FieldDefinition][], flag: QueryFlag): string[] {
   const flagged = fields
