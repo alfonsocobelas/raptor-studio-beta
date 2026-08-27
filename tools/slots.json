@@ -52,6 +52,11 @@
           "description": "La misma casa que taller, apretada: filas densas, cabecera en banda de lino, KPIs fundidos y etiquetas en contorno"
         },
         {
+          "value": "rotulo",
+          "label": "Rótulo (raptor)",
+          "description": "La marca al frente: banda de tinta con la navegación dentro, titulares y cifras holgados y el CTA en el acento del tema"
+        },
+        {
           "value": "suite",
           "label": "Suite (ERP corporativo)",
           "description": "Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP"

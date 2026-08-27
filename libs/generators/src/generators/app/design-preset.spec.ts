@@ -152,7 +152,7 @@ describe('app generator — ranura design (spec 37)', () => {
   // existen en DOS plantillas de todo el emitido (data-table y kpi-card). El resto de las
   // pantallas usa los contratos neutros del ADR-003 — [appbtn], [appinput], [appbadge] — así
   // que la piel no las alcanzaba: salvo las tablas, la app era idéntica en las tres pieles.
-  it.each(['cabina', 'suite', 'taller', 'banco'])(
+  it.each(['cabina', 'suite', 'taller', 'banco', 'rotulo'])(
     '%s viste también los contratos neutros, no sólo los hlm',
     async design => {
       const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
@@ -167,23 +167,29 @@ describe('app generator — ranura design (spec 37)', () => {
 
   // Spec 67: el cromo que las plantillas escriben a mano (panel del calendario, columna del
   // kanban, ficha de detalle…) sólo lo alcanza la piel a través del vocabulario de hooks.
-  it.each(['cabina', 'suite', 'taller', 'banco'])('%s viste todos los hooks del vocabulario', async design => {
-    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+  it.each(['cabina', 'suite', 'taller', 'banco', 'rotulo'])(
+    '%s viste todos los hooks del vocabulario',
+    async design => {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
-    for (const hook of DESIGN_HOOKS) {
-      expect(styles).toMatch(new RegExp(`\\.${hook}[^{]*\\{`))
+      for (const hook of DESIGN_HOOKS) {
+        expect(styles).toMatch(new RegExp(`\\.${hook}[^{]*\\{`))
+      }
     }
-  })
+  )
 
-  it.each(['cabina', 'suite', 'taller', 'banco'])('%s alcanza los controles crudos de un toolbar', async design => {
-    const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
+  it.each(['cabina', 'suite', 'taller', 'banco', 'rotulo'])(
+    '%s alcanza los controles crudos de un toolbar',
+    async design => {
+      const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
-    // gantt, galería, importación y detalle escriben <button>/<input> sin contrato neutro
-    expect(styles).toContain('.app-toolbar button')
-    expect(styles).toContain('.app-toolbar input')
-    // y el control suelto que lleva el hook en sí mismo (el buscador del cronograma)
-    expect(styles).toContain('input.app-toolbar')
-  })
+      // gantt, galería, importación y detalle escriben <button>/<input> sin contrato neutro
+      expect(styles).toContain('.app-toolbar button')
+      expect(styles).toContain('.app-toolbar input')
+      // y el control suelto que lleva el hook en sí mismo (el buscador del cronograma)
+      expect(styles).toContain('input.app-toolbar')
+    }
+  )
 
   it('el cromo de los hooks de cabina sale de los tokens del shell: sirve en claro y en oscuro', async () => {
     const styles = (await emit({ ...base, design: 'cabina' })).get(STYLES) ?? ''
@@ -195,7 +201,7 @@ describe('app generator — ranura design (spec 37)', () => {
   // Decisión de Alfonso (2026-08-25), después de verlo: las tres pieles escriben con la
   // tipografía del NEUTRO. Una fuente por piel obligaba a arrastrar su paquete a cada app y la
   // identidad no la da la letra, sino la forma, la densidad y el cromo.
-  it.each(['actual', 'cabina', 'suite', 'taller', 'banco'])(
+  it.each(['actual', 'cabina', 'suite', 'taller', 'banco', 'rotulo'])(
     '%s escribe con la letra del tema, sin fuente propia',
     async design => {
       const files = await emit({ ...base, design })
@@ -210,7 +216,7 @@ describe('app generator — ranura design (spec 37)', () => {
     }
   )
 
-  it.each(['cabina', 'suite', 'taller', 'banco'])(
+  it.each(['cabina', 'suite', 'taller', 'banco', 'rotulo'])(
     '%s sí unifica las cifras: tabulares en todas las pantallas',
     async design => {
       const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
@@ -338,6 +344,46 @@ describe('app generator — ranura design (spec 37)', () => {
 
       expect(styles).toMatch(/\.app-panel \{[^}]*box-shadow:\s*none/)
       expect(styles).toMatch(/\[hlmbadge\][^}]*background:\s*transparent/i)
+    })
+  })
+
+  describe('rotulo — la marca al frente', () => {
+    it('emite banda de tinta con la navegación dentro, no barra lateral', async () => {
+      const shell = (await emit({ ...base, design: 'rotulo' })).get(SHELL) ?? ''
+
+      expect(shell).toContain('app-shell-banner')
+      expect(shell).not.toContain('app-shell-side')
+      // la navegación vive EN la banda: ni pestañas de módulo aparte (eso es suite) ni raíl
+      expect(shell).toContain('app-shell-nav')
+      expect(shell).not.toContain('app-shell-modules')
+    })
+
+    it('pone el logotipo y el CTA en el acento del TEMA, no en un naranja escrito a mano', async () => {
+      const files = await emit({ ...base, design: 'rotulo' })
+      const shell = files.get(SHELL) ?? ''
+      const styles = files.get(STYLES) ?? ''
+
+      expect(shell).toContain('var(--shell-accent)')
+      expect(shell).not.toMatch(/#f15539|#d75f3d/)
+      // es la única piel de la familia con el CTA en el acento: el resto lo deja en tinta
+      expect(styles).toMatch(/\[hlmbtn\][^}]*var\(--shell-accent\)/i)
+      expect(styles).not.toMatch(/#f15539|#d75f3d/)
+    })
+
+    it('la banda sigue siendo tinta de noche: es la excepción declarada de la familia', async () => {
+      const styles = (await emit({ ...base, design: 'rotulo' })).get(STYLES) ?? ''
+
+      // ningún token del tema es oscuro en los dos modos, así que la banda va literal y con
+      // su gemela bajo .dark — y queda escrito por qué
+      expect(styles).toMatch(/--banner-bg:\s*oklch/)
+      expect(styles).toMatch(/\.dark[\s\S]*--banner-bg/)
+    })
+
+    it('respira: KPIs y cifras más grandes que en el resto de la familia', async () => {
+      const styles = (await emit({ ...base, design: 'rotulo' })).get(STYLES) ?? ''
+      const metric = styles.match(/\.app-metric \{([^}]*)\}/)?.[1] ?? ''
+
+      expect(metric).toMatch(/font-size:\s*2(\.\d+)?rem/)
     })
   })
 

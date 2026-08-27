@@ -90,6 +90,17 @@ describe('el shell del lienzo por piel', () => {
     expect(chrome(fixture)).toMatchSnapshot()
   })
 
+  it('rotulo: banda de tinta con el logotipo en el acento y la navegación dentro', () => {
+    const fixture = mount('rotulo')
+    const banner = fixture.nativeElement.querySelector('[data-testid="mock-banner"]')
+
+    // el logotipo toma el acento del TEMA y la navegación vive en la banda, no en un raíl
+    expect(banner.innerHTML).toContain('var(--shell-accent)')
+    expect(banner.querySelector('[data-testid="nav-page-0"]')).not.toBeNull()
+    expect(fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')).toBeNull()
+    expect(chrome(fixture)).toMatchSnapshot()
+  })
+
   it('banco: el mismo raíl apretado, con la ruta arriba', () => {
     const fixture = mount('banco')
 

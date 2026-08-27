@@ -51,13 +51,56 @@ import { SYSTEM_VIEWS } from './system-preview/system-views'
       <!-- Forma «banda»: réplica de files-design/suite — banda de marca + pestañas de módulo +
            miga sobre banda sombreada. Sin usuario en la banda: el real no lo lleva. -->
       <header
-        class="flex h-10 shrink-0 items-center gap-3 px-4"
+        class="flex shrink-0 items-center gap-3 px-4"
+        [class.h-10]="!shell().banner?.mark"
+        [class.h-14]="shell().banner?.mark"
+        [class.gap-6]="shell().banner?.nav === 'inline'"
         style="background: var(--banner-bg); color: var(--banner-fg)"
         data-testid="mock-banner"
       >
-        <span class="text-sm font-semibold capitalize tracking-wide">{{ store.appName() }}</span>
-        <span class="h-4 w-px bg-current opacity-30"></span>
-        <span class="text-xs opacity-70">{{ shell().banner?.subtitle }}</span>
+        @if (shell().banner?.mark) {
+          <!-- El logotipo en el acento del TEMA: mismo gesto que el shell emitido de «rotulo». -->
+          <div class="flex items-center gap-2.5">
+            <span
+              class="flex h-7 w-7 items-center justify-center rounded-[7px] text-[11px] font-bold uppercase"
+              style="background: var(--shell-accent); color: var(--banner-fg)"
+              >{{ store.appName().slice(0, 2) }}</span
+            >
+            <span class="text-[15px] font-bold capitalize tracking-tight">{{ store.appName() }}</span>
+          </div>
+        } @else {
+          <span class="text-sm font-semibold capitalize tracking-wide">{{ store.appName() }}</span>
+          <span class="h-4 w-px bg-current opacity-30"></span>
+          <span class="text-xs opacity-70">{{ shell().banner?.subtitle }}</span>
+        }
+        @if (shell().banner?.nav === 'inline') {
+          <nav class="flex items-center gap-1" data-testid="mock-modules">
+            @for (page of pages(); track $index) {
+              @if (!page.drillDown) {
+                <div class="group relative">
+                  <button
+                    type="button"
+                    class="rounded-lg px-3.5 py-2 text-[13px] font-semibold"
+                    [style.color]="$index === active.designIndex() ? 'var(--banner-fg)' : 'var(--banner-fg-dim)'"
+                    [style.background]="$index === active.designIndex() ? 'var(--banner-active)' : ''"
+                    [attr.data-testid]="'nav-page-' + $index"
+                    (click)="active.select($index)"
+                  >
+                    {{ page.title }}
+                  </button>
+                  <button
+                    type="button"
+                    class="bg-destructive absolute -right-1 top-0 hidden h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
+                    [attr.data-testid]="'nav-close-' + $index"
+                    (click)="store.removePage($index)"
+                  >
+                    <ng-icon name="lucideX" size="10" />
+                  </button>
+                </div>
+              }
+            }
+          </nav>
+        }
         <span class="flex-1"></span>
         <button
           type="button"

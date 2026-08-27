@@ -46,10 +46,14 @@ export interface ShellRail {
 }
 
 export interface ShellBanner {
-  /** Subtítulo junto al nombre en la banda */
+  /** Subtítulo junto al nombre en la banda; '' si la banda no lleva subtítulo */
   subtitle: string
   /** Pestañas de módulo bajo la banda (el patrón del ERP) */
   modules: boolean
+  /** Cuadro de iniciales en el acento del tema, a la izquierda del nombre */
+  mark?: boolean
+  /** La navegación vive DENTRO de la banda (rotulo) en vez de en pestañas aparte (suite) */
+  nav?: 'inline'
 }
 
 export interface ShellDescriptor {
@@ -135,6 +139,18 @@ const BANCO: ShellDescriptor = {
   adminNav: true
 }
 
+/**
+ * Rótulo: la marca al frente (spec 69). Banda de tinta con el logotipo en el acento del tema y la
+ * navegación dentro; ni raíl ni pestañas aparte. La piel holgada de la familia.
+ */
+const ROTULO: ShellDescriptor = {
+  layout: 'banner',
+  banner: { subtitle: '', modules: false, mark: true, nav: 'inline' },
+  statusbar: 'none',
+  padding: 'p-8',
+  adminNav: false
+}
+
 /** ERP: banda de marca, pestañas de módulo y miga. */
 const SUITE: ShellDescriptor = {
   layout: 'banner',
@@ -149,6 +165,7 @@ export const SHELL_DESCRIPTORS: Record<PreviewPreset, ShellDescriptor> = {
   cabina: CABINA,
   taller: TALLER,
   banco: BANCO,
+  rotulo: ROTULO,
   suite: SUITE
 }
 

@@ -705,6 +705,146 @@ input.app-toolbar,
 }
 `
 
+/**
+ * Tokens de Rótulo. Aquí está la ÚNICA excepción declarada de la familia raptor: la banda es de
+ * tinta y tiene que seguir siendo de tinta de noche, y ningún token del tema es oscuro en los dos
+ * modos (`--foreground` se invierte a papel). Así que la banda va en oklch literal, con su gemela
+ * bajo `.dark`, como hacen cabina y suite. El ACENTO sí sale del tema: el naranja aparece cuando
+ * se elige el tema «raptor», y con otro tema el logotipo y el CTA toman el de ese tema.
+ */
+const ROTULO_TOKENS = `  /* preset «rotulo»: la marca al frente — banda de tinta, navegación dentro de la banda y el
+     acento del tema en el logotipo y en el CTA. Es la piel holgada de la familia. */
+  --shell-accent: var(--ring);
+  --shell-border: color-mix(in oklab, var(--border) 85%, var(--foreground) 5%);`
+
+/**
+ * Cromo de Rótulo. Holgada y de marca: la banda pesa arriba, los titulares y las cifras respiran,
+ * y el CTA se va al acento (la única de la familia que lo hace: taller y banco lo dejan en
+ * tinta). Los dos temas se declaran a la vez — la piel no impone modo oscuro.
+ */
+const ROTULO_CSS = `
+/* ── preset «rotulo»: la marca al frente ────────────────────────────────── */
+:root {
+  --banner-bg: oklch(0.215 0.005 68);
+  --banner-fg: oklch(0.985 0.003 85);
+  --banner-fg-dim: oklch(0.78 0.012 70);
+  --banner-active: oklch(1 0 0 / 10%);
+}
+
+.dark {
+  --banner-bg: oklch(0.17 0.004 68);
+  --banner-fg: oklch(0.985 0.003 85);
+  --banner-fg-dim: oklch(0.74 0.012 70);
+  --banner-active: oklch(1 0 0 / 12%);
+}
+
+/* Sin @layer, como el resto de los presets: dentro de una capa perderían contra las utilidades. */
+.app-shell-main {
+  background: var(--background);
+}
+
+/* la cabecera de la tabla se subraya con una regla gruesa en tinta: la mesa del rótulo */
+.app-shell-main table th {
+  border-bottom: 2px solid var(--foreground);
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+.app-shell-main table td {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+/* los titulares de pantalla respiran: es la piel que grita */
+.app-shell-main h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ── los contratos neutros y sus gemelos hlm (spec 67) ───────────────────── */
+/* El CTA dominante SE VA AL ACENTO, al contrario que en taller y banco. Es lo que hace a esta
+   piel «de marca», y también su riesgo: el acento compite con los colores de estado. */
+[hlmbtn].bg-primary,
+[appbtn].bg-primary {
+  background: var(--shell-accent);
+  color: var(--banner-fg);
+}
+
+[hlmbtn],
+[appbtn] {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+[hlminput],
+[appinput] {
+  border-radius: 8px;
+}
+
+[hlmbadge],
+[appbadge] {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ── los hooks de piel (spec 67) ─────────────────────────────────────────── */
+.app-panel {
+  border-radius: 14px;
+  border-color: var(--shell-border);
+}
+
+.app-panel-head {
+  border-color: var(--shell-border);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.app-cell {
+  border-color: var(--shell-border);
+}
+
+.app-chip {
+  border-radius: 999px;
+  border-color: var(--shell-border);
+  font-weight: 600;
+}
+
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar {
+  border-radius: 8px;
+}
+
+/* la cifra es el titular del panel: la más grande de las cinco pieles */
+.app-metric {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+/* los NÚMEROS de toda la app tratados igual: cifras tabulares en todos los sitios donde vive un
+   número. Un bloque nuevo se suma añadiendo su hook a esta lista. */
+.app-metric,
+.app-cell,
+.app-chip,
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar,
+.app-shell-main table td.text-right,
+[hlminput],
+[appinput] {
+  font-variant-numeric: tabular-nums;
+}
+`
+
 export const DESIGN_PRESETS: readonly DesignPreset[] = [
   {
     id: 'actual',
@@ -737,6 +877,15 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     files: 'files-design/banco',
     tokens: BANCO_TOKENS,
     css: BANCO_CSS
+  },
+  {
+    id: 'rotulo',
+    label: 'Rótulo (raptor)',
+    description:
+      'La marca al frente: banda de tinta con la navegación dentro, titulares y cifras holgados y el CTA en el acento del tema',
+    files: 'files-design/rotulo',
+    tokens: ROTULO_TOKENS,
+    css: ROTULO_CSS
   },
   {
     id: 'suite',

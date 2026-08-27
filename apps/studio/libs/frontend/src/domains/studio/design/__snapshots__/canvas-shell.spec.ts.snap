@@ -48,6 +48,22 @@ mock-statusbar: <div data-testid="mock-statusbar" class="flex h-8 items-center m
 mock-theme-toggle: <button type="button" data-testid="mock-theme-toggle" class="flex gap-2 items-center px-4 py-2.5 text-[12px]" style="border-top: 1px solid var(--shell-border); color: var(--shell-fg);"> 🌙 <span>Tema oscuro</span></button>"
 `;
 
+exports[`el shell del lienzo por piel > rotulo: banda de tinta con el logotipo en el acento y la navegación dentro 1`] = `
+"scope.class=preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border max-w-6xl flex-col
+
+mock-sidebar: —
+
+mock-banner: <header data-testid="mock-banner" class="flex gap-3 gap-6 h-14 items-center px-4 shrink-0" style="background: var(--banner-bg); color: var(--banner-fg);"><div class="flex gap-2.5 items-center"><span class="flex font-bold h-7 items-center justify-center rounded-[7px] text-[11px] uppercase w-7" style="background: var(--shell-accent); color: var(--banner-fg);">mi</span><span class="capitalize font-bold text-[15px] tracking-tight">mi-app</span></div><nav data-testid="mock-modules" class="flex gap-1 items-center"><div class="group relative"><button type="button" class="font-semibold px-3.5 py-2 rounded-lg text-[13px]" style="color: var(--banner-fg); background: var(--banner-active);" data-testid="nav-page-0"> Vehículos </button><button type="button" class="-right-1 absolute bg-destructive font-bold group-hover:flex h-4 hidden items-center justify-center rounded-full text-[9px] text-white top-0 w-4" data-testid="nav-close-0"><ng-icon role="img" name="lucideX" size="10" aria-hidden="true" style="--ng-icon__size: 10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="stroke-width:var(--ng-icon__stroke-width, 2)"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></ng-icon></button></div></nav><span class="flex-1"></span><button type="button" data-testid="mock-theme-toggle" class="opacity-70 text-xs"> 🌙 </button></header>
+
+mock-modules: <nav data-testid="mock-modules" class="flex gap-1 items-center"><div class="group relative"><button type="button" class="font-semibold px-3.5 py-2 rounded-lg text-[13px]" style="color: var(--banner-fg); background: var(--banner-active);" data-testid="nav-page-0"> Vehículos </button><button type="button" class="-right-1 absolute bg-destructive font-bold group-hover:flex h-4 hidden items-center justify-center rounded-full text-[9px] text-white top-0 w-4" data-testid="nav-close-0"><ng-icon role="img" name="lucideX" size="10" aria-hidden="true" style="--ng-icon__size: 10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="stroke-width:var(--ng-icon__stroke-width, 2)"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></ng-icon></button></div></nav>
+
+mock-breadcrumb: —
+
+mock-statusbar: —
+
+mock-theme-toggle: <button type="button" data-testid="mock-theme-toggle" class="opacity-70 text-xs"> 🌙 </button>"
+`;
+
 exports[`el shell del lienzo por piel > suite: banda de marca, pestañas de módulo y miga 1`] = `
 "scope.class=preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border max-w-6xl flex-col
 
