@@ -213,13 +213,6 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(list).toMatch(/@if \(canCreate\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
     })
 
-    it('la papelera restaura solo con Borrar', () => {
-      const trash = read('frontend/permits-trash.component.ts')
-
-      expect(trash).toContain("import { CAN_DELETE_ROLES } from './permit-access'")
-      expect(trash).toContain('CAN_DELETE_ROLES.includes(role)')
-    })
-
     it('la ficha condiciona editar, borrar y cada transición con sus roles', () => {
       const detail = read('frontend/permit-detail.component.ts')
 

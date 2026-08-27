@@ -4,7 +4,6 @@ import {
   defineResource,
   resolveAccess,
   selectDesign,
-  wantsSoftDelete,
   type AppDefinition,
   type ResourceDefinition
 } from '@raptor/schema'
@@ -1127,13 +1126,6 @@ export function shellSubstitutions(composition: AppComposition): {
       ).then(m => m.${names(model.plural).className}CalendarComponent)
   }`
 
-  const trashRoute = (model: ResourceDefinition): string => `  {
-    path: '${routeOf(model)}/papelera',
-    loadComponent: () =>
-      import(
-        '${featureOf(model)}/${model.plural}-trash.component'
-      ).then(m => m.${names(model.plural).className}TrashComponent)
-  }`
 
   // alta y edición comparten componente: la página decide el modo por la presencia de :id (spec 48)
   const formRoute = (model: ResourceDefinition): string => `  {
@@ -1182,15 +1174,12 @@ export function shellSubstitutions(composition: AppComposition): {
     const wantsForm = Boolean(model.form)
     const wantsCalendar = Boolean(model.calendar)
     const wantsKanban = Boolean(model.kanban)
-    // la papelera (spec 29) se deriva de softDelete + listado que borra; sin entrada de menú
-    const wantsTrash = wantsSoftDelete(model) && model.list?.features?.delete === true
     if (wantsList) routes.push(listRoute(model))
     if (wantsGallery) routes.push(galleryRoute(model))
     if (wantsGantt) routes.push(ganttRoute(model))
     if (wantsCalendar) routes.push(calendarRoute(model))
     if (wantsKanban) routes.push(kanbanRoute(model))
     if (wantsForm) routes.push(formRoute(model))
-    if (wantsTrash) routes.push(trashRoute(model))
     if (model.detail) routes.push(detailRoute(model))
   }
 

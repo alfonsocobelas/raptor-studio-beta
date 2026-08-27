@@ -114,32 +114,6 @@ export class <%- className %>Service {
     })
   }
 <%_ } _%>
-<%_ if (features.trash) { _%>
-
-  // La papelera (spec 29): el mismo listado, sobre lo soft-borrado.
-  readonly trashRequest = signal<<%- className %>Request>(defaultRequest())
-
-  resetTrashRequest(): void {
-    this.trashRequest.set(defaultRequest())
-  }
-
-  readonly deleted = resource<OffsetPaginatedOutput<<%- dtoName %>>, <%- className %>Request>({
-    params: () => this.trashRequest(),
-    loader: ({ params: req }) =>
-      firstValueFrom(
-        this._http.get<OffsetPaginatedOutput<<%- dtoName %>>>(`${API_URL}/deleted`, {
-          params: this.buildParams(req)
-        })
-      )
-  })
-
-  restore(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/restore`, {})).then(() => {
-      this.<%- plural %>.reload()
-      this.deleted.reload()
-    })
-  }
-<%_ } _%>
 
   // Downloads the full filtered <%- fileName %> set from the backend, matching the current filters and order.
   async export(format: ExportFormat): Promise<{ blob: Blob; filename: string }> {

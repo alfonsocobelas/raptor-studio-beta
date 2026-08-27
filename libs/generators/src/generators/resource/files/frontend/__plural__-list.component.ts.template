@@ -1,10 +1,6 @@
 import { <%- angularCoreImports %> } from '@angular/core'
-<%_ if (features.view && features.trash) { _%>
-import { Router, RouterLink } from '@angular/router'
-<%_ } else if (features.view) { _%>
+<%_ if (features.view) { _%>
 import { Router } from '@angular/router'
-<%_ } else if (features.trash) { _%>
-import { RouterLink } from '@angular/router'
 <%_ } _%>
 import { provideIcons } from '@ng-icons/core'
 import { <%- icons.join(', ') %> } from '@ng-icons/lucide'
@@ -49,13 +45,13 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
 
 @Component({
   selector: 'app-<%- plural %>-list',
-  imports: [DataTable<%- features.trash ? ', RouterLink' : '' %><%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %><%- features.import ? ', ' + pluralClassName + 'ImportComponent' : '' %>],
+  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %><%- features.import ? ', ' + pluralClassName + 'ImportComponent' : '' %>],
   providers: [provideIcons({ <%- icons.join(', ') %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
       @if (!embedded()) {
-<%_ if (features.trash || features.import) { _%>
+<%_ if (features.import) { _%>
       <div class="flex items-start justify-between gap-4">
         <div>
           <h1 class="text-2xl font-bold tracking-tight"><%- ui.title %></h1>
@@ -82,13 +78,6 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
           >
             Importar
           </button>
-<%_ } _%>
-<%_ if (features.trash) { _%>
-          <a
-            routerLink="/<%- route %>/papelera"
-            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-            >Papelera</a
-          >
 <%_ } _%>
         </div>
       </div>

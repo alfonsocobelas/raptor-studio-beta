@@ -321,7 +321,7 @@ export interface UiStrings {
   deleteDescriptionSubject: string
   /** Frase completa antes del nombre del registro (spec 38) */
   deleteDescriptionPrefix: string
-  /** Cierre de la frase: archivar avisa del arrastre y de la papelera; físico, de la permanencia */
+  /** Cierre de la frase: archivar avisa del arrastre; físico, de la permanencia */
   deleteDescriptionSuffix: string
   toastDeleted: string
   toastDeleteError: string
@@ -932,7 +932,7 @@ function resolveFeatures(definition: ResourceDefinition): {
 }
 
 /**
- * El comentario de las acciones de fila cuando la entidad tiene ficha. La papelera la manda
+ * El comentario de las acciones de fila cuando la entidad tiene ficha. El borrado lo manda
  * `features.delete`, no la presencia de ficha: `customers` del canon no borra porque lo gobierna
  * un sincronismo externo (spec 32 de la referencia), y eso lo dice su schema, no la plantilla.
  */
@@ -945,7 +945,7 @@ function renderRowActionsComment(features: { delete: boolean }): string[] {
   }
   return [
     '  // Editar y borrar solo para quien puede escribir: el backend responde 403 al viewer, así que',
-    '  // ofrecer la acción solo llevaría a un error. La ficha no sustituye a la papelera: si el schema',
+    '  // ofrecer la acción solo llevaría a un error. La ficha no sustituye al borrado de la fila: si el schema',
     '  // declara la entidad borrable, se borra desde la fila igual que sin ficha.'
   ]
 }
@@ -1023,7 +1023,7 @@ function renderUiStrings(definition: ResourceDefinition, dragsChildren = false):
       ? `Se archivará ${article} ${lowerSingular}`
       : `Se eliminará permanentemente ${article} ${lowerSingular}`,
     deleteDescriptionSuffix: wantsSoftDelete(definition)
-      ? `${dragsChildren ? ' y sus registros relacionados' : ''}. Podrás restaurarl${feminine ? 'a' : 'o'} desde la papelera.`
+      ? `${dragsChildren ? ' y sus registros relacionados' : ''}. Esta acción no se puede deshacer.`
       : ' y todos sus datos asociados. Esta acción no se puede deshacer.',
     toastDeleted: `${singular} eliminad${suffix}`,
     toastDeleteError: `No se pudo eliminar ${article} ${lowerSingular}`

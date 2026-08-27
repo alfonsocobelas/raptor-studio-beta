@@ -142,15 +142,13 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     expect(read(mongo, 'out/backend-tests-integration/mongoose-project.repository.test.ts')).not.toContain('Deleted')
   })
 
-  it('el servicio frontend de project consulta /deleted y restaura recargando ambos', async () => {
+  it('el servicio frontend de project no sabe de la papelera', async () => {
     const tree = await emit('project')
 
     const service = read(tree, 'out/frontend/project.service.ts')
-    expect(service).toContain('trashRequest')
-    expect(service).toContain('`${API_URL}/deleted`')
-    expect(service).toContain('restore(id: string): Promise<void>')
-    expect(service).toContain('`${API_URL}/${id}/restore`')
-    expect(service).toContain('this.deleted.reload()')
+    expect(service).not.toContain('trashRequest')
+    expect(service).not.toContain('/deleted')
+    expect(service).not.toContain('restore')
   })
 
   it('el servicio de customer no sabe de la papelera', async () => {
@@ -167,35 +165,25 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     expect(read(mongo, 'out/backend-tests-integration/mongoose-customer.repository.test.ts')).not.toContain('Deleted')
   })
 
-  it('project emite el componente de papelera con la acción de restaurar', async () => {
-    const tree = await emit('project')
-
-    const component = read(tree, 'out/frontend/projects-trash.component.ts')
-    expect(component).toContain('export class ProjectsTrashComponent')
-    expect(component).toContain('this._service.deleted')
-    expect(component).toContain("action: 'restore'")
-    expect(component).toContain('lucideArchiveRestore')
-    expect(component).toContain('this._service.restore(')
-  })
-
-  it('customer no emite componente de papelera', async () => {
-    const tree = await emit('customer')
-
-    expect(tree.exists('out/frontend/customers-trash.component.ts')).toBe(false)
-  })
-
-  it('el listado de project enlaza a la papelera; el de customer no', async () => {
+  it('ningún recurso emite componente de papelera', async () => {
     const project = await emit('project')
     const customer = await emit('customer')
 
-    const list = read(project, 'out/frontend/projects-list.component.ts')
-    expect(list).toContain('>Papelera<')
-    expect(list).toContain('routerLink')
+    expect(project.exists('out/frontend/projects-trash.component.ts')).toBe(false)
+    expect(customer.exists('out/frontend/customers-trash.component.ts')).toBe(false)
+  })
+
+  it('ningún listado enlaza a la papelera', async () => {
+    const project = await emit('project')
+    const customer = await emit('customer')
+
+    expect(read(project, 'out/frontend/projects-list.component.ts')).not.toContain('Papelera')
     expect(read(customer, 'out/frontend/customers-list.component.ts')).not.toContain('Papelera')
   })
+
 })
 
-describe('shellSubstitutions — ruta de la papelera (spec 29)', () => {
+describe('shellSubstitutions — sin ruta de papelera (spec 29 retirada)', () => {
   const model = (extra: object = {}): ResourceDefinition =>
     ({
       schemaVersion: 1,
@@ -207,31 +195,16 @@ describe('shellSubstitutions — ruta de la papelera (spec 29)', () => {
       ...extra
     }) as ResourceDefinition
 
-  const trashy = { softDelete: true, list: { features: { delete: true } } }
+  it('un listado que borra y archiva no registra ruta de papelera', () => {
+    const subs = shellSubstitutions(
+      composeFlat([model({ softDelete: true, list: { features: { delete: true } } })], false)
+    )
 
-  it('registra <ruta>/papelera sin entrada de menú', () => {
-    const subs = shellSubstitutions(composeFlat([model(trashy)], false))
-
-    expect(subs.routeEntries).toContain("path: 'crm/projects/papelera'")
-    expect(subs.routeEntries).toContain('ProjectsTrashComponent')
-    expect(subs.navItems).not.toContain('papelera')
+    expect(subs.routeEntries).not.toContain('papelera')
+    expect(subs.routeEntries).not.toContain('TrashComponent')
   })
 
-  it('la papelera va ANTES de :id, o la ficha capturaría «papelera» como id', () => {
-    const subs = shellSubstitutions(composeFlat([model({ ...trashy, detail: {} })], false))
-
-    expect(subs.routeEntries.indexOf('projects/papelera')).toBeLessThan(subs.routeEntries.indexOf('projects/:id'))
-  })
-
-  // spec 38: el borrado es suave por defecto, así que un listado que borra YA lleva papelera;
-  // quien no la quiere declara la escotilla física
-  it('un listado que borra lleva papelera aunque no declare nada', () => {
-    const subs = shellSubstitutions(composeFlat([model({ list: { features: { delete: true } } })], false))
-
-    expect(subs.routeEntries).toContain('papelera')
-  })
-
-  it('con la escotilla física (softDelete: false) no hay ruta de papelera', () => {
+  it('con la escotilla física (softDelete: false) tampoco', () => {
     const subs = shellSubstitutions(
       composeFlat([model({ softDelete: false, list: { features: { delete: true } } })], false)
     )

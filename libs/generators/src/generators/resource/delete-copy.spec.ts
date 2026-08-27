@@ -6,7 +6,7 @@ import type { ResourceDefinition } from '@raptor/schema'
 
 /**
  * Spec 38 · TASK-08: el copy del diálogo deja de mentir. Con borrado suave nada se
- * elimina «permanentemente»: se archiva y se puede restaurar desde la papelera. Si además
+ * elimina «permanentemente»: se archiva. Si además
  * arrastra hijos, el aviso lo dice — genérico, sin conteos previos (decisión 2). La
  * permanencia solo sobrevive donde es verdad: en las entidades físicas.
  */
@@ -19,12 +19,12 @@ describe('resource generator — copy del borrado (spec 38 TASK-08)', () => {
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('un padre avisa del arrastre y de que se puede restaurar, sin conteos', async () => {
+  it('un padre avisa del arrastre, sin conteos y sin prometer restauración', async () => {
     const list = read(await emit('account'), 'out/frontend/accounts-list.component.ts')
 
     expect(list).toContain('Se archivará el cliente')
     expect(list).toContain('y sus registros relacionados')
-    expect(list).toContain('Podrás restaurarlo desde la papelera.')
+    expect(list).not.toContain('papelera')
     expect(list).not.toContain('permanentemente')
   })
 

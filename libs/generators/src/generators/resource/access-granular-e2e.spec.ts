@@ -89,7 +89,6 @@ describe('spec 49 — la granularidad llega coherente a la app emitida', () => {
       for (const path of [
         'frontend/permit-access.ts',
         'frontend/permits-list.component.ts',
-        'frontend/permits-trash.component.ts',
         'frontend/permit-detail.component.ts'
       ]) {
         expect(read(path)).not.toContain('CAN_MANAGE_ROLES')
@@ -106,13 +105,6 @@ describe('spec 49 — la granularidad llega coherente a la app emitida', () => {
       expect(list).toContain('CAN_CREATE_ROLES.includes(role)')
       expect(list).toContain('CAN_EDIT_ROLES.includes(role)')
       expect(list).toContain('CAN_DELETE_ROLES.includes(role)')
-    })
-
-    it('la papelera restaura con la capacidad de borrar', () => {
-      const trash = read('frontend/permits-trash.component.ts')
-
-      expect(trash).toContain("import { CAN_DELETE_ROLES } from './permit-access'")
-      expect(trash).toContain('CAN_DELETE_ROLES.includes(role)')
     })
 
     it('los adjuntos escriben con la capacidad de editar', () => {

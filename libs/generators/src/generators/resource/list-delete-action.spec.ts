@@ -5,7 +5,7 @@ import { MODELS, registerModels } from './models/registry'
 import type { ResourceDefinition } from '@raptor/schema'
 
 /**
- * La papelera de la fila la manda `features.delete`, no la presencia de ficha.
+ * El borrado de la fila lo manda `features.delete`, no la presencia de ficha.
  * La rama con ficha se copió de `customers` del canon, que no borra porque lo
  * gobierna un sincronismo externo (spec 32 de la referencia) — una regla de
  * dominio de ESE proyecto, no una regla de UI. El síntoma de la confusión es que
@@ -32,13 +32,13 @@ describe('resource generator — acción de borrado del listado', () => {
     return tree.read('out/frontend/invoices-list.component.ts', 'utf-8') ?? ''
   }
 
-  it('ofrece la papelera en la fila cuando la entidad tiene ficha y es borrable', async () => {
+  it('ofrece el borrado en la fila cuando la entidad tiene ficha y es borrable', async () => {
     const list = await listOf(model({ view: true, delete: true, edit: true }, { detail: {} }))
 
     expect(list).toContain("action: 'delete'")
   })
 
-  it('ofrece ver, editar y borrar juntos: la ficha no sustituye a la papelera', async () => {
+  it('ofrece ver, editar y borrar juntos: la ficha no sustituye al borrado de la fila', async () => {
     const list = await listOf(model({ view: true, delete: true, edit: true }, { detail: {} }))
 
     expect(list).toContain("action: 'view'")
@@ -46,13 +46,13 @@ describe('resource generator — acción de borrado del listado', () => {
     expect(list).toContain("action: 'delete'")
   })
 
-  it('no ofrece la papelera si el schema declara la entidad no borrable', async () => {
+  it('no ofrece el borrado si el schema declara la entidad no borrable', async () => {
     const list = await listOf(model({ view: true, delete: false, edit: true }, { detail: {} }))
 
     expect(list).not.toContain("action: 'delete'")
   })
 
-  it('sigue ofreciendo la papelera cuando la entidad no tiene ficha', async () => {
+  it('sigue ofreciendo el borrado cuando la entidad no tiene ficha', async () => {
     const list = await listOf(model({ view: false, delete: true, edit: true }))
 
     expect(list).toContain("action: 'delete'")

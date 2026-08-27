@@ -314,7 +314,7 @@ describe('buildSubstitutions — frontend bindings', () => {
       deleteDescriptionSubject: 'el cliente',
       // spec 38: el copy dice la verdad — archivar es reversible, eliminar es permanente
       deleteDescriptionPrefix: 'Se archivará el cliente',
-      deleteDescriptionSuffix: '. Podrás restaurarlo desde la papelera.',
+      deleteDescriptionSuffix: '. Esta acción no se puede deshacer.',
       toastDeleted: 'Cliente eliminado',
       toastDeleteError: 'No se pudo eliminar el cliente'
     })

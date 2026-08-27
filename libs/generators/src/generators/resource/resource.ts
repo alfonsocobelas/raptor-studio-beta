@@ -227,11 +227,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     tree.delete(path.join(outputDir, 'frontend', `${substitutions.fileName}-dialog.component.ts`))
   }
 
-  // la papelera solo existe con softDelete + listado que borra (spec 29)
-  if (!substitutions.features.trash) {
-    tree.delete(path.join(outputDir, 'frontend', `${substitutions.plural}-trash.component.ts`))
-  }
-
   // agregado + types + puerto: solo cuando el modelo declara VOs (síntesis canónica)
   if (!substitutions.aggregate.emitAggregate) {
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}.ts`))
