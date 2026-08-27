@@ -1,4 +1,4 @@
-import { AGGREGATE_OPS, opAllowedOn, opsAllowedOn } from './aggregate-ops'
+import { AGGREGATE_OPS, opAllowedOn, opNeedsField, opsAllowedOn } from './aggregate-ops'
 
 describe('aggregate — qué operación admite cada tipo de campo (spec 71)', () => {
   it('sumar y promediar solo tiene sentido sobre números', () => {
@@ -17,11 +17,17 @@ describe('aggregate — qué operación admite cada tipo de campo (spec 71)', ()
   })
 
   it('las cinco operaciones son las que el catálogo declara', () => {
-    expect(AGGREGATE_OPS).toEqual(['sum', 'avg', 'min', 'max', 'distinct'])
+    expect(AGGREGATE_OPS).toEqual(['count', 'sum', 'avg', 'min', 'max', 'distinct'])
   })
 
   it('opsAllowedOn da las operaciones de un tipo, en orden del catálogo', () => {
     expect(opsAllowedOn('numeric')).toEqual(['sum', 'avg', 'min', 'max', 'distinct'])
     expect(opsAllowedOn('date')).toEqual(['min', 'max', 'distinct'])
+  })
+
+  it('count no mide ninguna columna: no lleva campo y no aparece en las medidas de un tipo', () => {
+    expect(opNeedsField('count')).toBe(false)
+    expect(opNeedsField('sum')).toBe(true)
+    expect(opsAllowedOn('numeric')).not.toContain('count')
   })
 })

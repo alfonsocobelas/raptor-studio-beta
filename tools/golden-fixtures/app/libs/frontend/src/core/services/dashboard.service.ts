@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http'
 import { Injectable, computed, inject, resource } from '@angular/core'
 import { firstValueFrom } from 'rxjs'
 import { previousRange, windowRange, type KpiRange } from './kpi-window'
+import { monthLabel, type AggregateGroup } from './aggregate-groups'
 
 interface PaginatedTotal {
   total: number
@@ -31,6 +32,14 @@ export interface KpiValue {
   previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
   total?: number | null
+}
+
+interface GroupedRequest {
+  measure: string
+  field?: string
+  groupBy?: string
+  bucketField?: string
+  months?: number
 }
 
 /**
@@ -152,17 +161,20 @@ export class DashboardService {
     })
   }
 
-  /** N conteos, uno por valor del enum: el listado ya sabe contar filtrado. */
+  /**
+   * El conteo por valor del enum en UNA petición (spec 72): el endpoint agrupa. Antes eran N
+   * conteos —ocho para un enum de ocho valores— y el panel los pagaba al abrirse.
+   *
+   * El orden lo manda el ENUM y no la respuesta: el desglose vuelve ordenado por valor, y las
+   * barras tienen que salir siempre en el mismo orden.
+   */
   private _counts(api: string, field: string, values: string[]) {
     return resource<number[], unknown>({
       loader: () =>
-        Promise.all(
-          values.map(value =>
-            firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
-              r => r.total
-            )
-          )
-        )
+        this._grouped(api, { measure: 'count', groupBy: field }).then(groups => {
+          const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
+          return values.map(value => found.get(value) ?? 0)
+        })
     })
   }
 
@@ -234,40 +246,35 @@ export class DashboardService {
     })
   }
 
-  /** Altas por mes, últimos 12 meses: dos filtros de rango por punto. */
+  /**
+   * Altas por mes en UNA petición (spec 72): el endpoint agrupa por mes y rellena los meses
+   * vacíos. Antes eran doce peticiones, con dos filtros de rango cada una.
+   *
+   * La etiqueta se compone aquí: el backend devuelve la clave 'YYYY-MM', que es dato; el nombre
+   * del mes es presentación.
+   */
   private _series(api: string, field: string) {
-    const now = new Date()
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const start = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
-      const end = new Date(start.getFullYear(), start.getMonth() + 1, 1)
-      return { label: start.toLocaleDateString('es-ES', { month: 'short' }), start, end }
-    })
     return resource<{ label: string; count: number }[], unknown>({
       loader: () =>
-        Promise.all(
-          months.map(month =>
-            firstValueFrom(
-              this._http.get<PaginatedTotal>(api, {
-                params: {
-                  page: '1',
-                  pageSize: '1',
-                  filters: JSON.stringify([
-                    { field, operator: 'gte', value: this._day(month.start) },
-                    { field, operator: 'lt', value: this._day(month.end) }
-                  ])
-                }
-              })
-            ).then(r => ({ label: month.label, count: r.total }))
-          )
+        this._grouped(api, { measure: 'count', bucketField: field, months: 12 }).then(groups =>
+          groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
         )
     })
   }
 
-  /** El día en hora LOCAL: cortar en UTC descuadra los bordes de mes (spec 70). */
-  private _day(date: Date): string {
-    const month = `${date.getMonth() + 1}`.padStart(2, '0')
-    const day = `${date.getDate()}`.padStart(2, '0')
-    return `${date.getFullYear()}-${month}-${day}`
+  private _grouped(api: string, spec: GroupedRequest): Promise<AggregateGroup[]> {
+    const params: Record<string, string> = { page: '1', pageSize: '1', op: spec.measure }
+    if (spec.field) params['field'] = spec.field
+    if (spec.groupBy) params['groupBy'] = spec.groupBy
+    if (spec.bucketField) {
+      params['bucket'] = 'month'
+      params['bucketField'] = spec.bucketField
+      params['months'] = String(spec.months ?? 12)
+    }
+
+    return firstValueFrom(this._http.get<{ groups?: AggregateGroup[] }>(`${api}/aggregate`, { params })).then(
+      r => r.groups ?? []
+    )
   }
 
   private _countParams(field: string, operator: string, value: string) {

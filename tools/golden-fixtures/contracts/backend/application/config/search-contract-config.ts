@@ -40,11 +40,21 @@ const CONTRACT_AGGREGATABLE_FIELDS = {
   upcomingMaintenanceFee: 'numeric'
 } as const satisfies Partial<Record<ContractAllowedField, 'numeric' | 'date'>>
 
+// Por qué campos se puede AGRUPAR un desglose (spec 72). NO es la lista de agregables: agrupar por
+// un importe daría un grupo por fila. Enums, referencias y booleanos, y solo si la API los filtra.
+const CONTRACT_GROUPABLE_FIELDS: Array<ContractAllowedField> = [
+  'contractType',
+  'customerId',
+  'status',
+  'source'
+] as const
+
 const searchContractConfig = {
   allowedFilters: CONTRACT_ALLOWED_FILTERS,
   allowedOrders: CONTRACT_ALLOWED_ORDERS,
   searchableFields: CONTRACT_SEARCHABLE_FIELDS,
-  aggregatableFields: CONTRACT_AGGREGATABLE_FIELDS
+  aggregatableFields: CONTRACT_AGGREGATABLE_FIELDS,
+  groupableFields: CONTRACT_GROUPABLE_FIELDS
 } as const
 
 export default searchContractConfig

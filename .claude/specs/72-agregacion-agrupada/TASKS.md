@@ -24,7 +24,7 @@
 
 - [ ] TASK-09: `count-by` emitido con UNA petición.
 - [ ] TASK-10: `series` emitido con UNA petición.
-- [ ] TASK-11: el gasto del panel de oro cae de 27 a 9, congelado en el spec emitido.
+- [ ] TASK-11: el gasto del panel de oro cae de 27 a 13, congelado en el spec emitido.
 
 ## Kinds nuevos
 

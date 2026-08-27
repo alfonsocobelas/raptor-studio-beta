@@ -46,7 +46,7 @@ petición cada uno**, y (c) la tarjeta KPI puede llevar su sparkline sin pagar 1
 - [ ] Tests de integración por motor: agrupado por enum, por mes con huecos, techo y grupo vacío.
 - [ ] Test del caso de uso: campo no agrupable, los dos ejes a la vez, `op=count` sin campo.
 - [ ] `count-by` y `series` emitidos con UNA petición cada uno; el gasto del panel de oro baja de
-      27 a 9 y queda congelado en el spec emitido.
+      27 a 13 y queda congelado en el spec emitido.
 - [ ] Kinds `sum-by` y `series-sum` en el app-schema, la composición y el estudio.
 - [ ] `sparkline` en el bloque `kpi`, con su preview en el lienzo.
 - [ ] Golden limpio, `typecheck-emitted.sh` a 0 errores, suites y build AOT del estudio en verde.

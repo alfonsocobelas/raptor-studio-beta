@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
-import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { LicenseId } from '../../../../../../shared/domain/value-objects/licenses/license-id.vo'
 import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
@@ -70,6 +70,10 @@ export class MongooseLicenseRepository extends MongooseRepository<LicenseDoc> im
 
   async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.aggregateByCriteria(criteria, op, field)
+  }
+
+  async aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.aggregateGroupedByCriteria(criteria, spec)
   }
 
   async removeDraggedByContractId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { In, IsNull } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
-import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { ProjectId } from '../../../../../../shared/domain/value-objects/projects/project-id.vo'
 import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
@@ -78,6 +78,10 @@ export class TypeOrmProjectRepository extends TypeOrmRepository<TypeOrmProjectEn
 
   async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.aggregateByCriteria(criteria, op, field)
+  }
+
+  async aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.aggregateGroupedByCriteria(criteria, spec)
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

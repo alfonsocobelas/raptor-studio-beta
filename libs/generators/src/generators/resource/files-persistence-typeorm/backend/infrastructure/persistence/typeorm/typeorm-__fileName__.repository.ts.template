@@ -15,7 +15,7 @@ _%>
 import { <%- [...tySyms].sort().join(', ') %> } from 'typeorm'
 <%_ } _%>
 import { Nullable } from '../../../../../../shared/domain/types'
-import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { <%- className %>Id } from '../../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 <%_ if (softContract) { _%>
@@ -139,6 +139,10 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
 
   async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.aggregateByCriteria(criteria, op, field)
+  }
+
+  async aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.aggregateGroupedByCriteria(criteria, spec)
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

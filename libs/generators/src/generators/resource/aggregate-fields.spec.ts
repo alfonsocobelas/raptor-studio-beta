@@ -42,3 +42,28 @@ describe('buildSubstitutions — campos agregables (spec 71)', () => {
     expect(first.length).toBeGreaterThan(0)
   })
 })
+
+/** Spec 72: agrupar es otra pregunta que medir. */
+describe('buildSubstitutions — campos agrupables (spec 72)', () => {
+  it('declara los enums, las referencias y los booleanos filtrables', () => {
+    const groupable = buildSubstitutions(contract, [customer]).groupableFields
+
+    expect(groupable).toContain('contractType')
+    expect(groupable).toContain('status')
+    expect(groupable).toContain('customerId')
+  })
+
+  it('NO declara los importes: agrupar por un importe da un grupo por fila', () => {
+    const groupable = buildSubstitutions(contract, [customer]).groupableFields
+
+    expect(groupable).not.toContain('totalValue')
+    expect(groupable).not.toContain('startDate')
+  })
+
+  it('no declara lo que la API no filtra: el desglose usa el mismo criteria', () => {
+    const groupable = buildSubstitutions(contract, [customer]).groupableFields
+    const subs = buildSubstitutions(contract, [customer])
+
+    for (const field of groupable) expect(subs.allowedFilters).toContain(field)
+  })
+})

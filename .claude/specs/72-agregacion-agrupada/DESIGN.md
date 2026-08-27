@@ -64,7 +64,7 @@ y ninguno de los dos motores genera filas que no existen. La lista de meses se c
 de uso (que sabe cuántos se pidieron) y los grupos del motor se vuelcan sobre ella. En `avg`, `min`
 y `max` el hueco se OMITE en vez de rellenarse con 0: la media de un mes sin datos no es cero.
 
-## Emitido: de 27 peticiones a 9
+## Emitido: de 27 peticiones a 13
 
 | bloque       | antes | después |
 | ------------ | ----- | ------- |
@@ -72,6 +72,10 @@ y `max` el hueco se OMITE en vez de rellenarse con 0: la media de un mes sin dat
 | `series`     | 12    | 1       |
 | `kpi` conteo | 1     | 1       |
 | `sparkline`  | (12)  | +0 (va en la misma llamada de la serie) |
+
+**13 y no 9**: los 9 salían de contar mal — cada tarjeta KPI es al menos una petición por sí
+misma, y el panel de oro tiene ocho entre las seis tarjetas (dos gastan dos por comparar o por el
+porcentaje). Lo que esta spec ahorra son las 3 del desglose y las 11 de la serie.
 
 El servicio emitido cambia `_counts` y `_series` por una llamada a `_grouped`. **Los componentes no
 cambian**: `bars()` y `points()` siguen recibiendo la misma forma, porque el servicio mapea los

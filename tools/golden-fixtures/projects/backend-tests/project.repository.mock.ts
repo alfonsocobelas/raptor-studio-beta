@@ -1,5 +1,5 @@
 import { Nullable } from '../../../../src/contexts/shared/domain/types'
-import { AggregateOp } from '../../../../src/contexts/shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../src/contexts/shared/domain/query/aggregate'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { Project } from '../../../../src/contexts/sap-licensing/modules/projects/domain/project'
 import { ProjectRepository } from '../../../../src/contexts/sap-licensing/modules/projects/domain/project-repository'
@@ -43,6 +43,10 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.getMock('aggregate')(criteria, op, field)
+  }
+
+  aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.getMock('aggregateGrouped')(criteria, spec)
   }
 
   removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
@@ -92,6 +96,10 @@ export class ProjectRepositoryMock extends MockRepository<Project> implements Pr
 
   givenAggregate(value: number | null): void {
     this.setMockResult('aggregate', value)
+  }
+
+  givenAggregateGrouped(groups: AggregateGroup[]): void {
+    this.setMockResult('aggregateGrouped', groups)
   }
 
   whenRegisterSuccess(): void {

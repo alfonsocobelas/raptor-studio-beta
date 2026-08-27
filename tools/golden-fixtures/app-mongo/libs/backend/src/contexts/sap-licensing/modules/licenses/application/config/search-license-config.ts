@@ -45,11 +45,16 @@ const LICENSE_AGGREGATABLE_FIELDS = {
   annualValue: 'numeric'
 } as const satisfies Partial<Record<LicenseAllowedField, 'numeric' | 'date'>>
 
+// Por qué campos se puede AGRUPAR un desglose (spec 72). NO es la lista de agregables: agrupar por
+// un importe daría un grupo por fila. Enums, referencias y booleanos, y solo si la API los filtra.
+const LICENSE_GROUPABLE_FIELDS: Array<LicenseAllowedField> = ['contractId', 'customerId', 'metric', 'status'] as const
+
 const searchLicenseConfig = {
   allowedFilters: LICENSE_ALLOWED_FILTERS,
   allowedOrders: LICENSE_ALLOWED_ORDERS,
   searchableFields: LICENSE_SEARCHABLE_FIELDS,
-  aggregatableFields: LICENSE_AGGREGATABLE_FIELDS
+  aggregatableFields: LICENSE_AGGREGATABLE_FIELDS,
+  groupableFields: LICENSE_GROUPABLE_FIELDS
 } as const
 
 export default searchLicenseConfig

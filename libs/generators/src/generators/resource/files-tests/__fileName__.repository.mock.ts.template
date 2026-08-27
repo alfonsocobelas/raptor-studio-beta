@@ -1,5 +1,5 @@
 import { Nullable } from '../../../../src/contexts/shared/domain/types'
-import { AggregateOp } from '../../../../src/contexts/shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../src/contexts/shared/domain/query/aggregate'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { <%- className %> } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>'
 import { <%- className %>Repository } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>-repository'
@@ -56,6 +56,10 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
   aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.getMock('aggregate')(criteria, op, field)
   }
+
+  aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.getMock('aggregateGrouped')(criteria, spec)
+  }
 <%_ dragged.forEach(d => { _%>
 
   <%- d.method %>(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
@@ -108,6 +112,10 @@ export class <%- className %>RepositoryMock extends MockRepository<<%- className
 
   givenAggregate(value: number | null): void {
     this.setMockResult('aggregate', value)
+  }
+
+  givenAggregateGrouped(groups: AggregateGroup[]): void {
+    this.setMockResult('aggregateGrouped', groups)
   }
 
   whenRegisterSuccess(): void {

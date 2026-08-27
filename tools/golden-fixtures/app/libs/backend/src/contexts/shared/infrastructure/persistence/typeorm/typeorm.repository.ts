@@ -1,5 +1,5 @@
 import { EntityManager, EntityTarget, ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm'
-import { AggregateOp } from '../../../domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../domain/query/aggregate'
 import { Criteria } from '../../../domain/query/criteria'
 import { TypeOrmCriteriaConverter } from './typeorm-criteria-converter'
 import { TypeOrmTransactionManager } from './typeorm-transaction-manager'
@@ -90,6 +90,49 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
     return toAggregateNumber(raw.value)
   }
 
+  /**
+   * El desglose de una agregación (spec 72): un valor por grupo, en UNA consulta. Antes esto eran
+   * N conteos —ocho para un enum de ocho valores— y el panel los pagaba al abrirse.
+   *
+   * `groupBy` y `bucketField` llegan YA validados contra la lista blanca del recurso: se interpolan
+   * en la consulta igual que el campo medido.
+   *
+   * Se piden `limit + 1` filas a propósito: si vuelve una de más, el desglose venía recortado y
+   * quien llama puede decirlo en vez de fingir que eso era todo.
+   */
+  protected async aggregateGroupedByCriteria(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    const qb = this.repository().createQueryBuilder('entity')
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    if (query.filter) {
+      qb.where(query.filter.query, query.filter.params)
+    }
+    this.excludeSoftDeleted(qb)
+
+    const axis = spec.bucketField
+      ? `to_char(date_trunc('month', entity.${spec.bucketField}), 'YYYY-MM')`
+      : `entity.${spec.groupBy}`
+    const measure =
+      spec.op === 'count'
+        ? 'COUNT(*)'
+        : spec.op === 'distinct'
+          ? `COUNT(DISTINCT entity.${spec.field})`
+          : `${spec.op.toUpperCase()}(entity.${spec.field})`
+
+    const rows = await qb
+      .select(axis, 'key')
+      .addSelect(measure, 'value')
+      .groupBy(axis)
+      .orderBy('value', 'DESC')
+      .limit(spec.limit + 1)
+      .getRawMany<{ key: string | Date | null; value: string | number | Date | null }>()
+
+    return rows.map(row => ({
+      key: groupKeyOf(row.key),
+      value: row.value === null || row.value === undefined ? null : toAggregateNumber(row.value)
+    }))
+  }
+
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {
     const qb = this.repository().createQueryBuilder('entity')
     const query = this.criteriaConverter.buildQuery(criteria)
@@ -129,4 +172,11 @@ export function toAggregateNumber(value: string | number | Date): number | null 
 
   const asDate = new Date(value).getTime()
   return Number.isNaN(asDate) ? null : asDate
+}
+
+/** La clave de un grupo es TEXTO: un booleano, una fecha o un uuid se leen igual en la pantalla. */
+export function groupKeyOf(key: string | number | Date | null): string {
+  if (key === null || key === undefined) return ''
+  if (key instanceof Date) return key.toISOString().slice(0, 7)
+  return String(key)
 }

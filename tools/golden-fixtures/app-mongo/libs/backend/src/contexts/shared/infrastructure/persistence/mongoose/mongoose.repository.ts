@@ -1,5 +1,5 @@
 import { ClientSession, FilterQuery, Model } from 'mongoose'
-import { AggregateOp } from '../../../domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../domain/query/aggregate'
 import { Criteria } from '../../../domain/query/criteria'
 import { MongooseCriteriaConverter } from './mongoose-criteria-converter'
 import { MongooseTransactionManager } from './mongoose-transaction-manager'
@@ -75,6 +75,53 @@ export abstract class MongooseRepository<T> {
     if (value instanceof Date) return value.getTime()
     const numeric = Number(value)
     return Number.isNaN(numeric) ? null : numeric
+  }
+
+  /**
+   * El mismo desglose que en la otra ranura (spec 72). `date_trunc` no existe aquí: el mes se
+   * compone con `$dateToString`, que da directamente la clave 'YYYY-MM'.
+   *
+   * Se piden `limit + 1` grupos: si vuelve uno de más, el desglose venía recortado.
+   */
+  protected async aggregateGroupedByCriteria(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+    const match = this.excludeSoftDeleted(query.filter)
+
+    const axis = spec.bucketField
+      ? { $dateToString: { format: '%Y-%m', date: `$${spec.bucketField}` } }
+      : `$${spec.groupBy}`
+    const measure = spec.op === 'count' || spec.op === 'distinct' ? { $sum: 1 } : { [`$${spec.op}`]: `$${spec.field}` }
+
+    // `distinct` agrupado se resuelve en dos pasos: primero los pares (grupo, valor), luego se
+    // cuentan los valores de cada grupo — un $addToSet sobre datos grandes se sale del límite de
+    // 16 MB por documento
+    const pipeline =
+      spec.op === 'distinct'
+        ? [
+            { $match: match },
+            { $group: { _id: { key: axis, value: `$${spec.field}` } } },
+            { $group: { _id: '$_id.key', value: { $sum: 1 } } }
+          ]
+        : [{ $match: match }, { $group: { _id: axis, value: measure } }]
+
+    const rows = await this.model()
+      .aggregate<{ _id: string | Date | null; value: number | Date | null }>([
+        ...pipeline,
+        { $sort: { value: -1 } },
+        { $limit: spec.limit + 1 }
+      ])
+      .session(this.session())
+      .exec()
+
+    return rows.map(row => ({
+      key: row._id instanceof Date ? row._id.toISOString().slice(0, 7) : String(row._id ?? ''),
+      value:
+        row.value === null || row.value === undefined
+          ? null
+          : row.value instanceof Date
+            ? row.value.getTime()
+            : Number(row.value)
+    }))
   }
 
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {

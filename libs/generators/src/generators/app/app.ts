@@ -405,6 +405,10 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     if (composition.dashboardBlocks.some(block => block.kind === 'kpi')) {
       generateFiles(tree, path.join(__dirname, 'files-dashboard-kpi'), root, substitutions)
     }
+    // el desglose agrupado (spec 72): solo si hay barras o serie que lo usen
+    if (composition.dashboardBlocks.some(block => block.kind === 'count-by' || block.kind === 'series')) {
+      generateFiles(tree, path.join(__dirname, 'files-dashboard-grouped'), root, substitutions)
+    }
   }
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
@@ -594,10 +598,9 @@ function renderPanelRequestTest(metrics: number, analytics: ComposedDashboardBlo
   const kpis = analytics.filter(block => block.kind === 'kpi')
   if (!kpis.length) return ''
 
+  // spec 72: el desglose y la serie son UNA petición cada uno. Antes eran N y 12.
   const requestsOf = (block: ComposedDashboardBlock): number => {
     if (block.kind === 'kpi') return 1 + (block.kpi?.compare ? 1 : 0) + (block.kpi?.ratio ? 1 : 0)
-    if (block.kind === 'count-by') return block.values?.length ?? 0
-    if (block.kind === 'series') return 12
     return 1
   }
   const total = metrics + analytics.reduce((sum, block) => sum + requestsOf(block), 0)
@@ -754,10 +757,34 @@ function renderDashboardLists(tables: ResourceDefinition[]): Record<string, stri
  * petición son suyas; los rangos viven en `kpi-window` y la aritmética en `kpi-math`.
  */
 function renderAnalyticServiceTypes(analytics: ComposedDashboardBlock[]): Record<string, string> {
-  if (!analytics.some(block => block.kind === 'kpi')) return { analyticImports: '', analyticTypes: '' }
+  const kinds = new Set(analytics.map(block => block.kind))
+  const grouped = kinds.has('count-by') || kinds.has('series')
+  if (!kinds.has('kpi') && !grouped) return { analyticImports: '', analyticTypes: '' }
+
+  // el desglose vive en su propio fichero emitido: la clave del mes es dato y su etiqueta no
+  const groupedTypes = grouped
+    ? `
+
+interface GroupedRequest {
+  measure: string
+  field?: string
+  groupBy?: string
+  bucketField?: string
+  months?: number
+}`
+    : ''
+
+  if (!kinds.has('kpi')) {
+    return {
+      analyticImports: "import { monthLabel, type AggregateGroup } from './aggregate-groups'\n",
+      analyticTypes: groupedTypes
+    }
+  }
 
   return {
-    analyticImports: "import { previousRange, windowRange, type KpiRange } from './kpi-window'\n",
+    analyticImports:
+      "import { previousRange, windowRange, type KpiRange } from './kpi-window'\n" +
+      (grouped ? "import { monthLabel, type AggregateGroup } from './aggregate-groups'\n" : ''),
     analyticTypes: `
 
 interface KpiFilter {
@@ -784,7 +811,7 @@ export interface KpiValue {
   previous?: number | null
   /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
   total?: number | null
-}`
+}${groupedTypes}`
   }
 }
 
@@ -795,17 +822,20 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
   const blocks: string[] = []
 
   if (kinds.has('count-by')) {
-    blocks.push(`  /** N conteos, uno por valor del enum: el listado ya sabe contar filtrado. */
+    blocks.push(`  /**
+   * El conteo por valor del enum en UNA petición (spec 72): el endpoint agrupa. Antes eran N
+   * conteos —ocho para un enum de ocho valores— y el panel los pagaba al abrirse.
+   *
+   * El orden lo manda el ENUM y no la respuesta: el desglose vuelve ordenado por valor, y las
+   * barras tienen que salir siempre en el mismo orden.
+   */
   private _counts(api: string, field: string, values: string[]) {
     return resource<number[], unknown>({
       loader: () =>
-        Promise.all(
-          values.map(value =>
-            firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
-              r => r.total
-            )
-          )
-        )
+        this._grouped(api, { measure: 'count', groupBy: field }).then(groups => {
+          const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
+          return values.map(value => found.get(value) ?? 0)
+        })
     })
   }`)
   }
@@ -882,40 +912,37 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
   }`)
   }
   if (kinds.has('series')) {
-    blocks.push(`  /** Altas por mes, últimos 12 meses: dos filtros de rango por punto. */
+    blocks.push(`  /**
+   * Altas por mes en UNA petición (spec 72): el endpoint agrupa por mes y rellena los meses
+   * vacíos. Antes eran doce peticiones, con dos filtros de rango cada una.
+   *
+   * La etiqueta se compone aquí: el backend devuelve la clave 'YYYY-MM', que es dato; el nombre
+   * del mes es presentación.
+   */
   private _series(api: string, field: string) {
-    const now = new Date()
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const start = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)
-      const end = new Date(start.getFullYear(), start.getMonth() + 1, 1)
-      return { label: start.toLocaleDateString('es-ES', { month: 'short' }), start, end }
-    })
     return resource<{ label: string; count: number }[], unknown>({
       loader: () =>
-        Promise.all(
-          months.map(month =>
-            firstValueFrom(
-              this._http.get<PaginatedTotal>(api, {
-                params: {
-                  page: '1',
-                  pageSize: '1',
-                  filters: JSON.stringify([
-                    { field, operator: 'gte', value: this._day(month.start) },
-                    { field, operator: 'lt', value: this._day(month.end) }
-                  ])
-                }
-              })
-            ).then(r => ({ label: month.label, count: r.total }))
-          )
+        this._grouped(api, { measure: 'count', bucketField: field, months: 12 }).then(groups =>
+          groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
         )
     })
+  }`)
   }
+  // el desglose: una petición al endpoint de agregación en vez de N conteos (spec 72)
+  if (kinds.has('count-by') || kinds.has('series')) {
+    blocks.push(`  private _grouped(api: string, spec: GroupedRequest): Promise<AggregateGroup[]> {
+    const params: Record<string, string> = { page: '1', pageSize: '1', op: spec.measure }
+    if (spec.field) params['field'] = spec.field
+    if (spec.groupBy) params['groupBy'] = spec.groupBy
+    if (spec.bucketField) {
+      params['bucket'] = 'month'
+      params['bucketField'] = spec.bucketField
+      params['months'] = String(spec.months ?? 12)
+    }
 
-  /** El día en hora LOCAL: cortar en UTC descuadra los bordes de mes (spec 70). */
-  private _day(date: Date): string {
-    const month = \`\${date.getMonth() + 1}\`.padStart(2, '0')
-    const day = \`\${date.getDate()}\`.padStart(2, '0')
-    return \`\${date.getFullYear()}-\${month}-\${day}\`
+    return firstValueFrom(
+      this._http.get<{ groups?: AggregateGroup[] }>(\`\${api}/aggregate\`, { params })
+    ).then(r => r.groups ?? [])
   }`)
   }
   blocks.push(`  private _countParams(field: string, operator: string, value: string) {

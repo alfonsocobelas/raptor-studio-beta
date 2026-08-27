@@ -35,11 +35,16 @@ const PROJECT_AGGREGATABLE_FIELDS = {
   planToGoLive: 'date'
 } as const satisfies Partial<Record<ProjectAllowedField, 'numeric' | 'date'>>
 
+// Por qué campos se puede AGRUPAR un desglose (spec 72). NO es la lista de agregables: agrupar por
+// un importe daría un grupo por fila. Enums, referencias y booleanos, y solo si la API los filtra.
+const PROJECT_GROUPABLE_FIELDS: Array<ProjectAllowedField> = ['customerId', 'status', 'implementer', 'origin'] as const
+
 const searchProjectConfig = {
   allowedFilters: PROJECT_ALLOWED_FILTERS,
   allowedOrders: PROJECT_ALLOWED_ORDERS,
   searchableFields: PROJECT_SEARCHABLE_FIELDS,
-  aggregatableFields: PROJECT_AGGREGATABLE_FIELDS
+  aggregatableFields: PROJECT_AGGREGATABLE_FIELDS,
+  groupableFields: PROJECT_GROUPABLE_FIELDS
 } as const
 
 export default searchProjectConfig

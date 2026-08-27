@@ -1,5 +1,5 @@
 import { Nullable } from '../../../../src/contexts/shared/domain/types'
-import { AggregateOp } from '../../../../src/contexts/shared/domain/query/aggregate'
+import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../src/contexts/shared/domain/query/aggregate'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { Customer } from '../../../../src/contexts/sap-licensing/modules/customers/domain/customer'
 import { CustomerRepository } from '../../../../src/contexts/sap-licensing/modules/customers/domain/customer-repository'
@@ -43,6 +43,10 @@ export class CustomerRepositoryMock extends MockRepository<Customer> implements 
 
   aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
     return this.getMock('aggregate')(criteria, op, field)
+  }
+
+  aggregateGrouped(criteria: Criteria, spec: GroupedSpec): Promise<AggregateGroup[]> {
+    return this.getMock('aggregateGrouped')(criteria, spec)
   }
 
   // helpers
@@ -92,6 +96,10 @@ export class CustomerRepositoryMock extends MockRepository<Customer> implements 
 
   givenAggregate(value: number | null): void {
     this.setMockResult('aggregate', value)
+  }
+
+  givenAggregateGrouped(groups: AggregateGroup[]): void {
+    this.setMockResult('aggregateGrouped', groups)
   }
 
   whenRegisterSuccess(): void {

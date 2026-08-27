@@ -59,6 +59,8 @@ export interface ResourceSubstitutions {
   allowedFilters: string[]
   /** Campos que la API puede agregar, con su tipo (spec 71): la lista blanca del endpoint */
   aggregatableFields: { name: string; kind: 'numeric' | 'date' }[]
+  /** Campos por los que la API puede AGRUPAR (spec 72): enums y referencias, nunca importes */
+  groupableFields: string[]
   /** Campo numérico con el que el test de integración prueba la agregación; null si no hay */
   aggregateProbe: string | null
   /** Campo fecha con el que se prueba que sumar fechas se rechaza; null si no hay */
@@ -386,6 +388,7 @@ export function buildSubstitutions(
     columns,
     allowedFilters: orderedQueryList(fields, 'filterable'),
     aggregatableFields: aggregatableList(fields),
+    groupableFields: groupableList(fields),
     aggregateProbe: aggregateProbeOf(fields),
     aggregateDateProbe: aggregatableList(fields).find(f => f.kind === 'date')?.name ?? null,
     allowedOrders: orderedQueryList(fields, 'sortable'),
@@ -1415,6 +1418,22 @@ function aggregateProbeOf(fields: [string, FieldDefinition][]): string | null {
       (f.type === 'number' || f.type === 'integer') && !f.pk && !f.nullable && !f.optionalPrimitive && !f.syncManaged
   )
   return probe ? probe[0] : null
+}
+
+
+/**
+ * Por qué campos se puede AGRUPAR (spec 72). No es la lista de agregables: agrupar por un importe
+ * produce un grupo por fila. Se agrupa por enums y por referencias —lo que tiene un conjunto
+ * cerrado de valores— y solo si la API los filtra, porque el desglose usa el mismo criteria.
+ */
+function groupableList(fields: [string, FieldDefinition][]): string[] {
+  return fields
+    .filter(([, f]) => {
+      if (!f.query?.filterable) return false
+      const isEnum = typeof f.vo === 'object' && Array.isArray(f.vo.values) && f.vo.values.length > 0
+      return isEnum || f.relation !== undefined || f.type === 'boolean'
+    })
+    .map(([name]) => name)
 }
 
 function aggregatableList(fields: [string, FieldDefinition][]): { name: string; kind: 'numeric' | 'date' }[] {

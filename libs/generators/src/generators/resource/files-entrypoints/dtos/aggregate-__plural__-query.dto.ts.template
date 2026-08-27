@@ -1,4 +1,5 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator'
 import { AGGREGATE_OPS, AggregateOp } from '../../../../../../shared/domain/query/aggregate'
 import { PaginateOffsetDto } from '../../../../../../shared/infrastructure/dtos/paginate-offset.dto'
 
@@ -12,7 +13,30 @@ export class Aggregate<%- pluralClassName %>QueryDto extends PaginateOffsetDto {
   @IsIn(AGGREGATE_OPS)
   op!: AggregateOp
 
+  // `count` no mide ninguna columna: su campo es opcional (spec 72)
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  field!: string
+  field?: string
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  groupBy?: string
+
+  @IsOptional()
+  @IsIn(['month'])
+  bucket?: 'month'
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  bucketField?: string
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  months?: number
 }

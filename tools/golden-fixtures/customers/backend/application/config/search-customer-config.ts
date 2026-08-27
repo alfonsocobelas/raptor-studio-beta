@@ -39,11 +39,16 @@ const CUSTOMER_AGGREGATABLE_FIELDS = {
   lastSeenInSyncAt: 'date'
 } as const satisfies Partial<Record<CustomerAllowedField, 'numeric' | 'date'>>
 
+// Por qué campos se puede AGRUPAR un desglose (spec 72). NO es la lista de agregables: agrupar por
+// un importe daría un grupo por fila. Enums, referencias y booleanos, y solo si la API los filtra.
+const CUSTOMER_GROUPABLE_FIELDS: Array<CustomerAllowedField> = ['customerType'] as const
+
 const searchCustomerConfig = {
   allowedFilters: CUSTOMER_ALLOWED_FILTERS,
   allowedOrders: CUSTOMER_ALLOWED_ORDERS,
   searchableFields: CUSTOMER_SEARCHABLE_FIELDS,
-  aggregatableFields: CUSTOMER_AGGREGATABLE_FIELDS
+  aggregatableFields: CUSTOMER_AGGREGATABLE_FIELDS,
+  groupableFields: CUSTOMER_GROUPABLE_FIELDS
 } as const
 
 export default searchCustomerConfig

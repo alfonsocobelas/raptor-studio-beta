@@ -266,16 +266,18 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     expect(subs['panelSections']).toContain('data-testid="series-')
   })
 
-  it('la serie recorta el día en hora LOCAL, no con toISOString', () => {
+  it('la serie ya no compone fechas en el cliente: las agrupa el backend (spec 72)', () => {
     const composition = composeApp(appWith([{ kind: 'series', resource: 'contract', field: 'startDate' }]), registry())
 
     const subs = dashboardSubstitutions(composition.dashboardBlocks)
 
-    // `new Date(2026, 7, 1).toISOString()` en Madrid es '2026-07-31T22:00:00Z': el corte por
-    // UTC mete las altas del día 1 en el mes anterior. El día se compone de las partes locales.
+    // La spec 70 arregló aquí un desfase de zona horaria al recortar el día con toISOString. La 72
+    // quita el problema de raíz: el cliente ya no calcula rangos de fecha, pide el agrupado por mes.
+    // El riesgo se MUEVE al servidor (date_trunc agrupa en su zona), y ahí queda anotado.
     expect(subs['analyticHelpers']).not.toContain('toISOString')
-    expect(subs['analyticHelpers']).toContain('getFullYear()')
-    expect(subs['analyticHelpers']).toContain('padStart(2')
+    expect(subs['analyticHelpers']).not.toContain('_day(')
+    expect(subs['analyticHelpers']).toContain("bucketField: field")
+    expect(subs['analyticHelpers']).toContain('months: 12')
   })
 
   it('sin bloques analíticos el panel emite exactamente lo de siempre', () => {
