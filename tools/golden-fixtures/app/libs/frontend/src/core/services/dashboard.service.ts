@@ -1,9 +1,32 @@
 import { HttpClient } from '@angular/common/http'
 import { Injectable, computed, inject, resource } from '@angular/core'
 import { firstValueFrom } from 'rxjs'
+import { previousRange, windowRange, type KpiRange } from './kpi-window'
 
 interface PaginatedTotal {
   total: number
+}
+
+interface KpiFilter {
+  field: string
+  operator: string
+  value: string
+}
+
+interface KpiSpec {
+  filters: KpiFilter[]
+  window?: { field: string; preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'; days?: number }
+  ratio: boolean
+  compare: boolean
+  target?: number
+}
+
+export interface KpiValue {
+  value: number
+  /** El mismo conteo en la ventana anterior; solo si la tarjeta compara */
+  previous?: number
+  /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
+  total?: number
 }
 
 /**
@@ -28,10 +51,12 @@ export class DashboardService {
     'maintenance'
   ])
 
-  readonly projectsWhereStatusPlanning = this._countWhere('/api/v1/projects', 'status', 'planning')
-  readonly projectsWhereStatusPlanningTotal = computed(() =>
-    this.projectsWhereStatusPlanning.hasValue() ? this.projectsWhereStatusPlanning.value() : 0
-  )
+  readonly projectsKpiStatusEqPlanning = this._kpi('/api/v1/projects', {
+    filters: [{ field: 'status', operator: 'eq', value: 'planning' }],
+    ratio: false,
+    compare: false
+  })
+  readonly projectsKpiStatusEqPlanningValue = computed(() => this.projectsKpiStatusEqPlanning.value()?.value ?? 0)
 
   readonly contractsSeriesStartDate = this._series('/api/v1/contracts', 'startDate')
 
@@ -40,7 +65,7 @@ export class DashboardService {
       this.contracts.isLoading() ||
       this.projects.isLoading() ||
       this.contractsByContractType.isLoading() ||
-      this.projectsWhereStatusPlanning.isLoading() ||
+      this.projectsKpiStatusEqPlanning.isLoading() ||
       this.contractsSeriesStartDate.isLoading()
   )
   readonly loadError = computed(
@@ -48,7 +73,7 @@ export class DashboardService {
       this.contracts.error() !== undefined ||
       this.projects.error() !== undefined ||
       this.contractsByContractType.error() !== undefined ||
-      this.projectsWhereStatusPlanning.error() !== undefined ||
+      this.projectsKpiStatusEqPlanning.error() !== undefined ||
       this.contractsSeriesStartDate.error() !== undefined
   )
 
@@ -72,14 +97,50 @@ export class DashboardService {
     })
   }
 
-  /** Un conteo condicionado: cuántos cumplen field = value. */
-  private _countWhere(api: string, field: string, value: string) {
-    return resource<number, unknown>({
-      loader: () =>
-        firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
-          r => r.total
-        )
-    })
+  /**
+   * Una tarjeta KPI (spec 70): el conteo condicionado y, SOLO si el descriptor los pide, el
+   * periodo anterior y el total de la ventana. Las ramas que no se piden no llegan a la red:
+   * son `Promise.resolve(undefined)`, no peticiones vacías.
+   */
+  private _kpi(api: string, spec: KpiSpec) {
+    return resource<KpiValue, unknown>({ loader: () => this._loadKpi(api, spec) })
+  }
+
+  private async _loadKpi(api: string, spec: KpiSpec): Promise<KpiValue> {
+    const now = new Date()
+    const range = spec.window ? windowRange(spec.window.preset, spec.window.days, now) : undefined
+    const scoped = [...spec.filters, ...this._rangeFilters(spec.window?.field, range)]
+
+    const [value, previous, total] = await Promise.all([
+      this._countBy(api, scoped),
+      spec.compare && spec.window
+        ? this._countBy(api, [
+            ...spec.filters,
+            ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
+          ])
+        : Promise.resolve(undefined),
+      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined)
+    ])
+
+    return { value, previous, total }
+  }
+
+  private _rangeFilters(field: string | undefined, range: KpiRange | undefined): KpiFilter[] {
+    if (!field || !range) return []
+
+    return [
+      { field, operator: 'gte', value: range.start },
+      { field, operator: 'lt', value: range.end }
+    ]
+  }
+
+  private _countBy(api: string, filters: KpiFilter[]): Promise<number> {
+    const params =
+      filters.length === 0
+        ? { page: '1', pageSize: '1' }
+        : { page: '1', pageSize: '1', filters: JSON.stringify(filters) }
+
+    return firstValueFrom(this._http.get<PaginatedTotal>(api, { params })).then(r => r.total)
   }
 
   /** Altas por mes, últimos 12 meses: dos filtros de rango por punto. */

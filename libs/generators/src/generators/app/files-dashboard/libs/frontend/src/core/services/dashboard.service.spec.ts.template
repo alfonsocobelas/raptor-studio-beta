@@ -44,5 +44,5 @@ describe('DashboardService — totales por recurso', () => {
   it('exposes the total of every resource once loaded', async () => {
     await load()
 <%- specTotalAsserts %>
-  })
+  })<%- specKpiTests %>
 })

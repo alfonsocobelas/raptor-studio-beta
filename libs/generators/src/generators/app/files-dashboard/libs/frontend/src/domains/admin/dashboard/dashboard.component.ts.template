@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
 import { DashboardService } from '../../../core/services/dashboard.service'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
-<%- listImports %>
+<%- kpiMathImports %><%- listImports %>
 
 /**
  * Dashboard de la app: el total de cada recurso en una KPI card. Los KPIs de dominio

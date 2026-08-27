@@ -1,6 +1,10 @@
-import { DEFAULT_THEME_ID, resolveThemeId } from '@raptor/schema'
+import { DEFAULT_THEME_ID, normalizeDashboardBlocks, operatorsFor, resolveThemeId } from '@raptor/schema'
 import type {
   AppDefinition,
+  DashboardBlock,
+  FieldDefinition,
+  KpiCondition,
+  KpiWindow,
   BlockWidth,
   BusinessBrief,
   BusinessFlow,
@@ -22,7 +26,7 @@ export type ComposedPage = PageDefinition & { label: string }
  * plantilla. El ORDEN de la lista es el orden emitido, y `width` gobierna el agrupado en filas.
  */
 export interface ComposedDashboardBlock {
-  kind: 'metrics' | 'count-by' | 'kpi-count' | 'series' | 'table'
+  kind: 'metrics' | 'count-by' | 'kpi' | 'series' | 'table' | 'top-n'
   /** Resuelto al componer: 'full' si el diseño no lo declara */
   width: BlockWidth
   /** `metrics` lleva varios; el resto, exactamente uno */
@@ -34,8 +38,28 @@ export interface ComposedDashboardBlock {
   label?: string
   /** count-by: valores del enum con su etiqueta legible (badgeMap → options → capitalizado) */
   values?: { value: string; label: string }[]
-  /** kpi-count: el valor contado */
-  equals?: string
+  /** kpi: descriptor que el servicio emitido recibe tal cual (spec 70) */
+  kpi?: ComposedKpi
+  /** top-n: la página corta y ordenada que la tarjeta pinta (spec 70) */
+  top?: ComposedTop
+}
+
+/** Lo que hace falta para resolver UNA tarjeta KPI; el rango de la ventana lo calcula el emitido. */
+export interface ComposedKpi {
+  filters: KpiCondition[]
+  window?: KpiWindow
+  ratio: boolean
+  compare: boolean
+  target?: number
+}
+
+export interface ComposedTop {
+  field: string
+  n: number
+  dir: 'asc' | 'desc'
+  labelField: string
+  labelHeader: string
+  fieldHeader: string
 }
 
 export interface AppComposition {
@@ -150,7 +174,8 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   const dashboardBlocks: ComposedDashboardBlock[] = []
   for (const page of definition.pages) {
     if (page.kind !== 'dashboard') continue
-    for (const block of page.blocks) {
+    // el alias `kpi-count` muere en la puerta: aquí abajo solo existe `kpi` (spec 70)
+    for (const block of normalizeDashboardBlocks(page.blocks)) {
       // el defecto es POR KIND, y sale de lo que el emitido ya hacía: los analíticos siempre se
       // pintaron a dos columnas (media pantalla), la fila de métricas y el listado a lo ancho
       const width: BlockWidth = block.width ?? (block.kind === 'metrics' || block.kind === 'table' ? 'full' : 'half')
@@ -161,6 +186,14 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
       const model = resolve(block.resource)
       if (block.kind === 'table') {
         dashboardBlocks.push({ kind: 'table', width, models: [model] })
+        continue
+      }
+      if (block.kind === 'kpi') {
+        dashboardBlocks.push(composeKpi(block, model, definition.name, width))
+        continue
+      }
+      if (block.kind === 'top-n') {
+        dashboardBlocks.push(composeTop(block, model, definition.name, width))
         continue
       }
       const field = model.fields[block.field]
@@ -200,17 +233,6 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
           api,
           field: block.field,
           label: block.label ?? fieldLabel
-        })
-      } else {
-        dashboardBlocks.push({
-          kind: 'kpi-count',
-          width,
-          models: [model],
-          property: propertyOf(`${model.plural}-where-${block.field}-${block.equals}`),
-          api,
-          field: block.field,
-          label: block.label,
-          equals: block.equals
         })
       }
     }
@@ -264,6 +286,117 @@ function labelOf(model: ResourceDefinition): string {
 }
 
 /** kebab-ish a camelCase ('contracts-by-contract-type' → 'contractsByContractType'). */
+/**
+ * Resuelve una tarjeta KPI contra el modelo (spec 70). Todo lo que puede estar mal se caza AQUÍ,
+ * al diseñar, no al compilar la app: campo inexistente, campo que la API no filtra, operador que
+ * el tipo no admite y ventana sobre algo que no es una fecha. Un KPI mal condicionado no falla:
+ * devuelve el total entero, en silencio, y eso es peor que un error.
+ */
+function composeKpi(
+  block: Extract<DashboardBlock, { kind: 'kpi' }>,
+  model: ResourceDefinition,
+  appName: string,
+  width: BlockWidth
+): ComposedDashboardBlock {
+  const at = `App '${appName}': kpi '${block.label}' on '${block.resource}'`
+
+  const filters: KpiCondition[] = []
+  if (block.condition) {
+    const field = fieldOf(model, block.condition.field, at)
+    if (!operatorsFor(field).includes(block.condition.operator)) {
+      throw new Error(
+        `${at} uses operator '${block.condition.operator}', which '${block.condition.field}' does not admit`
+      )
+    }
+    filters.push(block.condition)
+  }
+
+  if (block.window) {
+    const field = fieldOf(model, block.window.field, at)
+    if (field.type !== 'date' && field.type !== 'timestamptz') {
+      throw new Error(`${at} narrows by '${block.window.field}', which is not a date field`)
+    }
+  }
+
+  return {
+    kind: 'kpi',
+    width,
+    models: [model],
+    // la huella entra en el nombre: dos KPIs del mismo campo son dos propiedades distintas
+    property: propertyOf(`${model.plural}-kpi-${kpiSlug(block)}`),
+    api: model.api ?? `/api/v1/${model.plural}`,
+    label: block.label,
+    kpi: {
+      filters,
+      ...(block.window ? { window: block.window } : {}),
+      ratio: block.ratio === true,
+      compare: block.compare === true,
+      ...(block.target === undefined ? {} : { target: block.target })
+    }
+  }
+}
+
+/** Nombre estable y único de la propiedad emitida: la config, no la etiqueta. */
+function kpiSlug(block: Extract<DashboardBlock, { kind: 'kpi' }>): string {
+  const condition = block.condition
+  const window = block.window
+  return [
+    condition ? `${condition.field}-${condition.operator}-${condition.value}` : 'total',
+    window ? `${window.field}-${window.preset}${window.days ?? ''}` : '',
+    block.ratio === true ? 'ratio' : '',
+    block.compare === true ? 'delta' : '',
+    block.target === undefined ? '' : `target${block.target}`
+  ]
+    .filter(part => part !== '')
+    .join('-')
+}
+
+function composeTop(
+  block: Extract<DashboardBlock, { kind: 'top-n' }>,
+  model: ResourceDefinition,
+  appName: string,
+  width: BlockWidth
+): ComposedDashboardBlock {
+  const at = `App '${appName}': top-n on '${block.resource}.${block.field}'`
+  const field = fieldOf(model, block.field, at)
+  if (!field.query?.sortable) throw new Error(`${at} requires a sortable field (the list endpoint sorts it)`)
+
+  const labelField = block.labelField ?? model.list?.deleteLabelField ?? 'name'
+  const labelDefinition = fieldOf(model, labelField, at)
+
+  return {
+    kind: 'top-n',
+    width,
+    models: [model],
+    property: propertyOf(`${model.plural}-top-${block.field}-${block.n}-${block.dir ?? 'desc'}`),
+    api: model.api ?? `/api/v1/${model.plural}`,
+    field: block.field,
+    label: block.label ?? `Top ${block.n} · ${labelOf2(field, block.field)}`,
+    top: {
+      field: block.field,
+      n: block.n,
+      dir: block.dir ?? 'desc',
+      labelField,
+      labelHeader: labelOf2(labelDefinition, labelField),
+      fieldHeader: labelOf2(field, block.field)
+    }
+  }
+}
+
+function fieldOf(model: ResourceDefinition, name: string, at: string): FieldDefinition {
+  const field = model.fields[name]
+  if (!field) throw new Error(`${at} references an unknown field '${name}'`)
+  if (!field.query?.filterable && !field.query?.sortable) {
+    throw new Error(`${at} needs '${name}' to be filterable or sortable in the list endpoint`)
+  }
+  return field
+}
+
+/** Etiqueta humana de un campo, con el nombre crudo como último recurso. */
+function labelOf2(field: FieldDefinition, name: string): string {
+  return field.table?.label ?? field.form?.label ?? name
+}
+
 function propertyOf(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9]+(.)/g, (_, letter: string) => letter.toUpperCase())

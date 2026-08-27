@@ -65,8 +65,8 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
           </div>
           <app-kpi-card
             title="Proyectos en planificación"
-            [value]="service.projectsWhereStatusPlanningTotal()"
-            testId="kpi-count-projectsWhereStatusPlanning"
+            [value]="service.projectsKpiStatusEqPlanningValue()"
+            testId="kpi-projectsKpiStatusEqPlanning"
           />
           <div class="bg-card rounded-lg border p-4" data-testid="series-contractsSeriesStartDate">
             <h2 class="mb-3 text-sm font-semibold">Altas de contrato por mes</h2>

@@ -49,4 +49,17 @@ describe('DashboardService — totales por recurso', () => {
     expect(service.contractsTotal()).toBe(7)
     expect(service.projectsTotal()).toBe(14)
   })
+
+  it('spends exactly the requests the panel needs, and no more', async () => {
+    await load()
+
+    expect(httpGet).toHaveBeenCalledTimes(19)
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', {
+      params: {
+        page: '1',
+        pageSize: '1',
+        filters: JSON.stringify([{ field: 'status', operator: 'eq', value: 'planning' }])
+      }
+    })
+  })
 })

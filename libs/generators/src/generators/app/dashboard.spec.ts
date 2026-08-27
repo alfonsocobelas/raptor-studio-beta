@@ -127,6 +127,99 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     ).toThrow(/filterable/)
   })
 
+  it('compone el bloque kpi con su descriptor de filtros y ventana', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Cloud este mes',
+          condition: { field: 'contractType', operator: 'eq', value: 'cloud' },
+          window: { field: 'startDate', preset: 'month' },
+          compare: true
+        }
+      ]),
+      registry()
+    )
+
+    const kpi = composition.dashboardBlocks.find(b => b.kind === 'kpi')
+    expect(kpi?.label).toBe('Cloud este mes')
+    expect(kpi?.api).toBe('/api/v1/contracts')
+    expect(kpi?.kpi).toEqual({
+      filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
+      window: { field: 'startDate', preset: 'month' },
+      ratio: false,
+      compare: true
+    })
+  })
+
+  it('el kpi sin condición ni ventana es el total del recurso', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'kpi', resource: 'contract', label: 'Contratos' }]),
+      registry()
+    )
+
+    expect(composition.dashboardBlocks.find(b => b.kind === 'kpi')?.kpi).toEqual({
+      filters: [],
+      ratio: false,
+      compare: false
+    })
+  })
+
+  it('el alias kpi-count se compone como un kpi de igualdad', () => {
+    const composition = composeApp(
+      appWith([
+        { kind: 'kpi-count', resource: 'contract', field: 'contractType', equals: 'cloud', label: 'Cloud' }
+      ]),
+      registry()
+    )
+
+    const kpi = composition.dashboardBlocks.find(b => b.kind === 'kpi')
+    expect(kpi?.kpi?.filters).toEqual([{ field: 'contractType', operator: 'eq', value: 'cloud' }])
+    // que no exista un `kpi-count` compuesto ya lo garantiza el tipo de ComposedDashboardBlock
+  })
+
+  it('rechaza el kpi sobre campo inexistente, no filtrable, con operador ilegal o ventana no-fecha', () => {
+    const kpi = (extra: object) => ({ kind: 'kpi', resource: 'contract', label: 'X', ...extra })
+
+    expect(() =>
+      composeApp(appWith([kpi({ condition: { field: 'ghost', operator: 'eq', value: 'a' } })]), registry())
+    ).toThrow(/ghost/)
+    expect(() =>
+      composeApp(appWith([kpi({ condition: { field: 'notes', operator: 'eq', value: 'a' } })]), registry())
+    ).toThrow(/filterable/)
+    // contains sobre un enum: legal en la API, error de diseño
+    expect(() =>
+      composeApp(appWith([kpi({ condition: { field: 'contractType', operator: 'contains', value: 'clo' } })]), registry())
+    ).toThrow(/operator/)
+    expect(() =>
+      composeApp(appWith([kpi({ window: { field: 'contractType', preset: 'month' } })]), registry())
+    ).toThrow(/date/)
+  })
+
+  it('dos kpis del mismo campo emiten propiedades distintas', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Cloud',
+          condition: { field: 'contractType', operator: 'eq', value: 'cloud' }
+        },
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'On-premise',
+          condition: { field: 'contractType', operator: 'eq', value: 'onprem' }
+        }
+      ]),
+      registry()
+    )
+
+    const properties = composition.dashboardBlocks.map(b => b.property)
+    expect(new Set(properties).size).toBe(properties.length)
+  })
+
   it('dashboardSubstitutions emite cargas y marcado para los tres widgets', () => {
     const composition = composeApp(
       appWith([
@@ -141,7 +234,9 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     const subs = dashboardSubstitutions(composition.dashboardBlocks)
 
     expect(subs['resourceEntries']).toContain("_counts('/api/v1/contracts', 'contractType'")
-    expect(subs['resourceEntries']).toContain("_countWhere('/api/v1/contracts', 'contractType', 'cloud')")
+    expect(subs['resourceEntries']).toContain(
+      "_kpi('/api/v1/contracts', { filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }], ratio: false, compare: false })"
+    )
     expect(subs['resourceEntries']).toContain("_series('/api/v1/contracts', 'startDate')")
     expect(subs['panelSections']).toContain('Cloud activos')
     expect(subs['panelSections']).toContain('data-testid="count-by-')
@@ -310,14 +405,13 @@ describe('el panel es una secuencia de bloques (spec 53)', () => {
   const project = model({ name: 'project', plural: 'projects', labels: { plural: 'Proyectos' } } as Partial<ResourceDefinition>)
 
   const analytic = (property: string, width: 'full' | 'half'): ComposedDashboardBlock => ({
-    kind: 'kpi-count',
+    kind: 'kpi',
     width,
     models: [contract],
     property,
     api: '/api/v1/contracts',
-    field: 'status',
-    equals: 'active',
-    label: property
+    label: property,
+    kpi: { filters: [{ field: 'status', operator: 'eq', value: 'active' }], ratio: false, compare: false }
   })
 
   it('emite los bloques EN EL ORDEN dibujado, no por tipo', () => {

@@ -399,12 +399,13 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     tmpl: ''
   })
   if (composition.dashboard) {
-    generateFiles(
-      tree,
-      path.join(__dirname, 'files-dashboard'),
-      root,
-      dashboardSubstitutions(composition.dashboardBlocks)
-    )
+    const substitutions = dashboardSubstitutions(composition.dashboardBlocks)
+    generateFiles(tree, path.join(__dirname, 'files-dashboard'), root, substitutions)
+    // las funciones puras del KPI (ventana y aritmética) solo viajan si hay tarjeta que las use:
+    // un fichero emitido que nadie importa es ruido en la app del cliente (spec 70)
+    if (composition.dashboardBlocks.some(block => block.kind === 'kpi')) {
+      generateFiles(tree, path.join(__dirname, 'files-dashboard-kpi'), root, substitutions)
+    }
   }
 
   // 6. migraciones de fábrica + plugins elegidos en el formulario (auth, email…).
@@ -529,7 +530,8 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
     total: (index + 1) * 7
   }))
   const analytics = blocks.filter(
-    block => block.kind === 'count-by' || block.kind === 'kpi-count' || block.kind === 'series'
+    block =>
+      block.kind === 'count-by' || block.kind === 'kpi' || block.kind === 'series' || block.kind === 'top-n'
   )
   const tables = blocks.filter(block => block.kind === 'table').map(block => block.models[0])
 
@@ -541,8 +543,12 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
     if (block.kind === 'series') {
       return `  readonly ${block.property} = this._series('${block.api}', '${block.field}')`
     }
-    return `  readonly ${block.property} = this._countWhere('${block.api}', '${block.field}', '${block.equals}')
-  readonly ${block.property}Total = computed(() => (this.${block.property}.hasValue() ? this.${block.property}.value() : 0))`
+    if (block.kind === 'top-n') {
+      const top = block.top
+      return `  readonly ${block.property} = this._top('${block.api}', '${top?.field}', '${top?.dir}', ${top?.n})`
+    }
+    return `  readonly ${block.property} = this._kpi('${block.api}', ${kpiSpecLiteral(block)})
+  readonly ${block.property}Value = computed(() => this.${block.property}.value()?.value ?? 0)`
   })
   const allProperties = [...entries.map(e => e.property), ...analytics.map(block => block.property ?? '')]
 
@@ -557,7 +563,9 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
       ...analyticEntries
     ].join('\n\n'),
     analyticHelpers: renderAnalyticServiceHelpers(analytics),
+    ...renderAnalyticServiceTypes(analytics),
     analyticComponentHelpers: renderAnalyticComponentHelpers(analytics),
+    kpiMathImports: renderKpiMathImports(analytics),
     loadingExpr: allProperties.map(p => `this.${p}.isLoading()`).join(' || '),
     errorExpr: allProperties.map(p => `this.${p}.error() !== undefined`).join(' || '),
     // el panel entero, ya montado y en orden (regla 8): la plantilla solo interpola
@@ -569,8 +577,88 @@ export function dashboardSubstitutions(blocks: ComposedDashboardBlock[]): Record
     specZeroAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(0)`).join('\n'),
     ...renderDashboardLists(tables),
     specTotalAsserts: entries.map(e => `    expect(service.${e.property}Total()).toBe(${e.total})`).join('\n'),
+    specKpiTests: renderPanelRequestTest(entries.length, analytics),
     tmpl: ''
   }
+}
+
+
+
+
+/**
+ * El GASTO del panel, congelado en el spec emitido (spec 70). Es el riesgo conocido —seis
+ * tarjetas con ratio y comparación son 18 peticiones—: se mide, no se esconde. Se cuenta el
+ * panel entero y no por endpoint, porque varios bloques comparten recurso (el total de métricas
+ * y un KPI del mismo recurso llaman al mismo sitio).
+ */
+function renderPanelRequestTest(metrics: number, analytics: ComposedDashboardBlock[]): string {
+  const kpis = analytics.filter(block => block.kind === 'kpi')
+  if (!kpis.length) return ''
+
+  const requestsOf = (block: ComposedDashboardBlock): number => {
+    if (block.kind === 'kpi') return 1 + (block.kpi?.compare ? 1 : 0) + (block.kpi?.ratio ? 1 : 0)
+    if (block.kind === 'count-by') return block.values?.length ?? 0
+    if (block.kind === 'series') return 12
+    return 1
+  }
+  const total = metrics + analytics.reduce((sum, block) => sum + requestsOf(block), 0)
+
+  const asserts = kpis
+    .map(block => {
+      const spec = block.kpi
+      const filters = spec?.filters.length
+        ? `JSON.stringify([${spec.filters.map(f => `{ field: '${f.field}', operator: '${f.operator}', value: '${f.value}' }`).join(', ')}])`
+        : undefined
+      // con ventana el valor del filtro depende del día en que corre el test: solo se fija la forma
+      const params = spec?.window
+        ? `expect.objectContaining({ page: '1', pageSize: '1', filters: expect.any(String) })`
+        : filters
+          ? `{ page: '1', pageSize: '1', filters: ${filters} }`
+          : `{ page: '1', pageSize: '1' }`
+      return `    expect(httpGet).toHaveBeenCalledWith('${block.api}', { params: ${params} })`
+    })
+    .join('\n')
+
+  return `
+
+  it('spends exactly the requests the panel needs, and no more', async () => {
+    await load()
+
+    expect(httpGet).toHaveBeenCalledTimes(${total})
+${asserts}
+  })`
+}
+
+/** Los imports de `kpi-math` que la plantilla del componente necesita, o ninguno. */
+function renderKpiMathImports(analytics: ComposedDashboardBlock[]): string {
+  const kpis = analytics.filter(block => block.kind === 'kpi')
+  const wanted: string[] = []
+  if (kpis.some(block => block.kpi?.compare)) wanted.push('deltaOf', 'type KpiDelta')
+  if (kpis.some(block => block.kpi?.ratio)) wanted.push('percentOf')
+  if (kpis.some(block => block.kpi?.target !== undefined)) wanted.push('progressOf')
+  if (!wanted.length) return ''
+
+  const value = kpis.length ? "\nimport type { KpiValue } from '../../../core/services/dashboard.service'" : ''
+  return `import { ${wanted.sort().join(', ')} } from '../../../core/services/kpi-math'${value}\n`
+}
+
+/** El descriptor del KPI, serializado tal cual para el servicio emitido (regla 8). */
+function kpiSpecLiteral(block: ComposedDashboardBlock): string {
+  const spec = block.kpi
+  if (!spec) return '{ filters: [], ratio: false, compare: false }'
+
+  const filters = spec.filters
+    .map(f => `{ field: '${f.field}', operator: '${f.operator}', value: '${f.value}' }`)
+    .join(', ')
+  const parts = [`filters: [${filters}]`]
+  if (spec.window) {
+    const days = spec.window.days === undefined ? '' : `, days: ${spec.window.days}`
+    parts.push(`window: { field: '${spec.window.field}', preset: '${spec.window.preset}'${days} }`)
+  }
+  parts.push(`ratio: ${spec.ratio}`, `compare: ${spec.compare}`)
+  if (spec.target !== undefined) parts.push(`target: ${spec.target}`)
+
+  return `{ ${parts.join(', ')} }`
 }
 
 /** El markup de UN bloque, con la sangría de su sitio. Mismo markup que emitía cada binding. */
@@ -659,6 +747,42 @@ function renderDashboardLists(tables: ResourceDefinition[]): Record<string, stri
   }
 }
 
+
+/**
+ * Imports y tipos que el servicio necesita SOLO si hay tarjetas KPI (spec 70). Las formas de la
+ * petición son suyas; los rangos viven en `kpi-window` y la aritmética en `kpi-math`.
+ */
+function renderAnalyticServiceTypes(analytics: ComposedDashboardBlock[]): Record<string, string> {
+  if (!analytics.some(block => block.kind === 'kpi')) return { analyticImports: '', analyticTypes: '' }
+
+  return {
+    analyticImports: "import { previousRange, windowRange, type KpiRange } from './kpi-window'\n",
+    analyticTypes: `
+
+interface KpiFilter {
+  field: string
+  operator: string
+  value: string
+}
+
+interface KpiSpec {
+  filters: KpiFilter[]
+  window?: { field: string; preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'; days?: number }
+  ratio: boolean
+  compare: boolean
+  target?: number
+}
+
+export interface KpiValue {
+  value: number
+  /** El mismo conteo en la ventana anterior; solo si la tarjeta compara */
+  previous?: number
+  /** El total del recurso en la ventana; solo si la tarjeta muestra porcentaje */
+  total?: number
+}`
+  }
+}
+
 /** Helpers del servicio (spec 32): solo los de los kinds presentes, o tsc acusa métodos muertos. */
 function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): string {
   if (!analytics.length) return ''
@@ -680,14 +804,63 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     })
   }`)
   }
-  if (kinds.has('kpi-count')) {
-    blocks.push(`  /** Un conteo condicionado: cuántos cumplen field = value. */
-  private _countWhere(api: string, field: string, value: string) {
-    return resource<number, unknown>({
+  if (kinds.has('kpi')) {
+    blocks.push(`  /**
+   * Una tarjeta KPI (spec 70): el conteo condicionado y, SOLO si el descriptor los pide, el
+   * periodo anterior y el total de la ventana. Las ramas que no se piden no llegan a la red:
+   * son \`Promise.resolve(undefined)\`, no peticiones vacías.
+   */
+  private _kpi(api: string, spec: KpiSpec) {
+    return resource<KpiValue, unknown>({ loader: () => this._loadKpi(api, spec) })
+  }
+
+  private async _loadKpi(api: string, spec: KpiSpec): Promise<KpiValue> {
+    const now = new Date()
+    const range = spec.window ? windowRange(spec.window.preset, spec.window.days, now) : undefined
+    const scoped = [...spec.filters, ...this._rangeFilters(spec.window?.field, range)]
+
+    const [value, previous, total] = await Promise.all([
+      this._countBy(api, scoped),
+      spec.compare && spec.window
+        ? this._countBy(api, [
+            ...spec.filters,
+            ...this._rangeFilters(spec.window.field, previousRange(spec.window.preset, spec.window.days, now))
+          ])
+        : Promise.resolve(undefined),
+      spec.ratio ? this._countBy(api, this._rangeFilters(spec.window?.field, range)) : Promise.resolve(undefined)
+    ])
+
+    return { value, previous, total }
+  }
+
+  private _rangeFilters(field: string | undefined, range: KpiRange | undefined): KpiFilter[] {
+    if (!field || !range) return []
+
+    return [
+      { field, operator: 'gte', value: range.start },
+      { field, operator: 'lt', value: range.end }
+    ]
+  }
+
+  private _countBy(api: string, filters: KpiFilter[]): Promise<number> {
+    const params =
+      filters.length === 0
+        ? { page: '1', pageSize: '1' }
+        : { page: '1', pageSize: '1', filters: JSON.stringify(filters) }
+
+    return firstValueFrom(this._http.get<PaginatedTotal>(api, { params })).then(r => r.total)
+  }`)
+  }
+  if (kinds.has('top-n')) {
+    blocks.push(`  /** Los N primeros por un campo: una sola petición, la página ya viene ordenada. */
+  private _top(api: string, field: string, dir: string, n: number) {
+    return resource<Record<string, unknown>[], unknown>({
       loader: () =>
-        firstValueFrom(this._http.get<PaginatedTotal>(api, { params: this._countParams(field, 'eq', value) })).then(
-          r => r.total
-        )
+        firstValueFrom(
+          this._http.get<{ items: Record<string, unknown>[] }>(api, {
+            params: { page: '1', pageSize: String(n), sortField: field, sortDir: dir }
+          })
+        ).then(r => r.items)
     })
   }`)
   }
@@ -737,8 +910,45 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
 
 /** Secciones del dashboard (spec 32): barras horizontales, KPI condicionado y mini serie. */
 function renderAnalyticCard(block: ComposedDashboardBlock, pad: string): string {
-  if (block.kind === 'kpi-count') {
-    return `${pad}<app-kpi-card title="${block.label}" [value]="service.${block.property}Total()" testId="kpi-count-${block.property}" />`
+  if (block.kind === 'kpi') {
+    const spec = block.kpi
+    const extra: string[] = []
+    // los tres modificadores son OPCIONALES en la tarjeta: sin ellos es la misma card de siempre
+    if (spec?.compare) {
+      extra.push(`\n${pad}  [delta]="delta(service.${block.property}.value())"`)
+    }
+    if (spec?.ratio) {
+      extra.push(`\n${pad}  [percent]="percent(service.${block.property}.value())"`)
+    }
+    if (spec?.target !== undefined) {
+      extra.push(`\n${pad}  [progress]="progress(service.${block.property}.value(), ${spec.target})"`)
+      extra.push(`\n${pad}  [target]="${spec.target}"`)
+    }
+    if (!extra.length) {
+      return `${pad}<app-kpi-card title="${block.label}" [value]="service.${block.property}Value()" testId="kpi-${block.property}" />`
+    }
+    return `${pad}<app-kpi-card
+${pad}  title="${block.label}"
+${pad}  [value]="service.${block.property}Value()"${extra.join('')}
+${pad}  testId="kpi-${block.property}"
+${pad}/>`
+  }
+  if (block.kind === 'top-n') {
+    const top = block.top
+    return `${pad}<div class="bg-card rounded-lg border p-4" data-testid="top-${block.property}">
+${pad}  <h2 class="mb-3 text-sm font-semibold">${block.label}</h2>
+${pad}  @if (service.${block.property}.hasValue()) {
+${pad}    <ol class="space-y-2">
+${pad}      @for (row of service.${block.property}.value(); track $index) {
+${pad}        <li class="flex items-center gap-2 text-sm">
+${pad}          <span class="text-muted-foreground w-6 shrink-0 tabular-nums">{{ $index + 1 }}</span>
+${pad}          <span class="flex-1 truncate">{{ row['${top?.labelField}'] }}</span>
+${pad}          <span class="text-right tabular-nums">{{ row['${top?.field}'] }}</span>
+${pad}        </li>
+${pad}      }
+${pad}    </ol>
+${pad}  }
+${pad}</div>`
   }
   if (block.kind === 'count-by') {
     const labels = (block.values ?? []).map(v => `'${v.label}'`).join(', ')
@@ -791,6 +1001,22 @@ function renderAnalyticComponentHelpers(analytics: ComposedDashboardBlock[]): st
     blocks.push(`  points(values: { label: string; count: number }[]): { label: string; count: number; height: number }[] {
     const max = Math.max(...values.map(v => v.count), 1)
     return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
+  }`)
+  }
+  // los tres puentes de la tarjeta KPI: la aritmética vive en kpi-math, aquí solo el destino
+  if (analytics.some(block => block.kind === 'kpi' && block.kpi?.compare)) {
+    blocks.push(`  delta(value: KpiValue | undefined): KpiDelta | undefined {
+    return value?.previous === undefined ? undefined : deltaOf(value.value, value.previous)
+  }`)
+  }
+  if (analytics.some(block => block.kind === 'kpi' && block.kpi?.ratio)) {
+    blocks.push(`  percent(value: KpiValue | undefined): number {
+    return percentOf(value?.value ?? 0, value?.total ?? 0)
+  }`)
+  }
+  if (analytics.some(block => block.kind === 'kpi' && block.kpi?.target !== undefined)) {
+    blocks.push(`  progress(value: KpiValue | undefined, target: number): number {
+    return progressOf(value?.value ?? 0, target)
   }`)
   }
   return blocks.length ? `\n\n${blocks.join('\n\n')}` : ''
