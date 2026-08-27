@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { In, IsNull } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
+import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { LicenseId } from '../../../../../../shared/domain/value-objects/licenses/license-id.vo'
 import { DeleteOperationId } from '../../../../../../shared/domain/value-objects/delete-operation-id.vo'
@@ -72,6 +73,10 @@ export class TypeOrmLicenseRepository extends TypeOrmRepository<TypeOrmLicenseEn
 
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
+  }
+
+  async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    return this.aggregateByCriteria(criteria, op, field)
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

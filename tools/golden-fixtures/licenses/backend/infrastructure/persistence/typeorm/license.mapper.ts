@@ -1,6 +1,4 @@
 import { License } from '../../../domain/license'
-import { ConsumptionRecord } from '../../../domain/license-types'
-import { TypeOrmConsumptionRecordEntity } from './typeorm-consumption-record.entity'
 import { TypeOrmLicenseEntity } from './typeorm-license.entity'
 
 export class LicenseMapper {
@@ -56,28 +54,10 @@ export class LicenseMapper {
     entity.consumptionPct = primitives.consumptionPct
     entity.excessUnits = primitives.excessUnits
     entity.annualValue = primitives.annualValue
+
     return entity
   }
 
-  static consumptionToDomain(entity: TypeOrmConsumptionRecordEntity): ConsumptionRecord {
-    return {
-      id: entity.id,
-      licenseId: entity.licenseId,
-      periodYear: entity.periodYear,
-      periodMonth: entity.periodMonth,
-      units: entity.units,
-      source: entity.source
-    }
-  }
-
-  static consumptionToPersistence(record: ConsumptionRecord): TypeOrmConsumptionRecordEntity {
-    const entity = new TypeOrmConsumptionRecordEntity()
-    entity.id = record.id
-    entity.licenseId = record.licenseId
-    entity.periodYear = record.periodYear
-    entity.periodMonth = record.periodMonth
-    entity.units = record.units
-    entity.source = record.source
-    return entity
-  }
+  // @ai:begin mapper-extra — transformaciones a medida (denormalizaciones, derivados)
+  // @ai:end
 }

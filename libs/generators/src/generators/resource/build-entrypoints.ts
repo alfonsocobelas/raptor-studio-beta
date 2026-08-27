@@ -162,6 +162,9 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   // el import (spec 33) delega en el register: sin alta no hay import
   if (writes && definition.list?.features?.import === true) ops.push(['Import', pluralClass])
   ops.push(['Export', pluralClass])
+  // la agregación (spec 71): un valor del conjunto filtrado. Va en `ops` para que el módulo
+  // cablee su handler y su caso de uso como los demás
+  ops.push(['Aggregate', pluralClass])
   const childOps = comp ? ['Add', 'Update', 'Remove'].map(op => `${op}${names(comp.name).className}`) : []
 
   // las transiciones (spec 43) van APARTE de ops: su slug de fichero es el del VERBO

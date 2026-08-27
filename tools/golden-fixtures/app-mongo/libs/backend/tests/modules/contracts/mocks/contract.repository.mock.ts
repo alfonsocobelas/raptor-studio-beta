@@ -1,4 +1,5 @@
 import { Nullable } from '../../../../src/contexts/shared/domain/types'
+import { AggregateOp } from '../../../../src/contexts/shared/domain/query/aggregate'
 import { Criteria } from '../../../../src/contexts/shared/domain/query/criteria'
 import { Contract } from '../../../../src/contexts/sap-licensing/modules/contracts/domain/contract'
 import { ContractRepository } from '../../../../src/contexts/sap-licensing/modules/contracts/domain/contract-repository'
@@ -34,6 +35,10 @@ export class ContractRepositoryMock extends MockRepository<Contract> implements 
 
   count(criteria: Criteria): Promise<number> {
     return this.getMock('count')(criteria)
+  }
+
+  aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    return this.getMock('aggregate')(criteria, op, field)
   }
 
   removeDraggedByCustomerId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {
@@ -79,6 +84,10 @@ export class ContractRepositoryMock extends MockRepository<Contract> implements 
 
   givenCount(count: number): void {
     this.setMockResult('count', count)
+  }
+
+  givenAggregate(value: number | null): void {
+    this.setMockResult('aggregate', value)
   }
 
   whenRegisterSuccess(): void {

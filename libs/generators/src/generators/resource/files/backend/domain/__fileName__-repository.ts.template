@@ -19,6 +19,8 @@ export abstract class <%- className %>Repository {
 <%_ }) _%>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
+  /** Una agregación del conjunto filtrado (spec 71). `null` = no hay dato, que no es lo mismo que 0. */
+  abstract aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }

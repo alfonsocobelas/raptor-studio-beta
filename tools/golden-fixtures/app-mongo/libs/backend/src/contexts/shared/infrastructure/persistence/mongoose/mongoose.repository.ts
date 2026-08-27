@@ -1,4 +1,5 @@
 import { ClientSession, FilterQuery, Model } from 'mongoose'
+import { AggregateOp } from '../../../domain/query/aggregate'
 import { Criteria } from '../../../domain/query/criteria'
 import { MongooseCriteriaConverter } from './mongoose-criteria-converter'
 import { MongooseTransactionManager } from './mongoose-transaction-manager'
@@ -43,6 +44,33 @@ export abstract class MongooseRepository<T> {
     const query = this.criteriaConverter.buildQuery(criteria)
 
     return this.model().countDocuments(this.excludeSoftDeleted(query.filter)).session(this.session()).exec()
+  }
+
+  /**
+   * La misma agregación que en la otra ranura (spec 71), con el mismo filtro y el mismo borrado
+   * lógico. `field` llega YA validado contra la lista blanca del recurso.
+   *
+   * Mongo coincide con el contrato sin forzarlo: `$sum` del vacío es 0 y `$avg` del vacío es null.
+   * Los distintos se cuentan agrupando por el valor y contando grupos.
+   */
+  protected async aggregateByCriteria(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    const query = this.criteriaConverter.buildQuery(criteria)
+    const match = this.excludeSoftDeleted(query.filter)
+
+    const group =
+      op === 'distinct'
+        ? [{ $group: { _id: `$${field}` } }, { $count: 'value' }]
+        : [{ $group: { _id: null, value: { [`$${op}`]: `$${field}` } } }]
+
+    const rows = await this.model()
+      .aggregate<{ value: number | null }>([{ $match: match }, ...group])
+      .session(this.session())
+      .exec()
+
+    if (!rows.length || rows[0].value === null || rows[0].value === undefined) {
+      return op === 'sum' || op === 'distinct' ? 0 : null
+    }
+    return Number(rows[0].value)
   }
 
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {

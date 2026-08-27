@@ -316,6 +316,7 @@ function renderPortImports(definition: ResourceDefinition, uniques: Ctx[]): stri
   const n = names(definition.name)
   const lines = [
     `import { Nullable } from '../../../../shared/domain/types'`,
+    `import { AggregateOp } from '../../../../shared/domain/query/aggregate'`,
     `import { Criteria } from '../../../../shared/domain/query/criteria'`,
     `import { ${n.className}Id } from '../../../../shared/domain/value-objects/${definition.plural}/${n.fileName}-id.vo'`
   ]

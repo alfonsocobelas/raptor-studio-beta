@@ -7,6 +7,7 @@ import { RemoveProjectHandler } from './application/handlers/remove-project.hand
 import { GetProjectHistoryHandler } from './application/handlers/get-project-history.handler'
 import { ImportProjectsHandler } from './application/handlers/import-projects.handler'
 import { ExportProjectsHandler } from './application/handlers/export-projects.handler'
+import { AggregateProjectsHandler } from './application/handlers/aggregate-projects.handler'
 import { RegisterProjectUseCase } from './application/use-cases/register-project-usecase.service'
 import { SearchProjectsUseCase } from './application/use-cases/search-projects-usecase.service'
 import { GetProjectUseCase } from './application/use-cases/get-project-usecase.service'
@@ -15,6 +16,7 @@ import { RemoveProjectUseCase } from './application/use-cases/remove-project-use
 import { GetProjectHistoryUseCase } from './application/use-cases/get-project-history-usecase.service'
 import { ImportProjectsUseCase } from './application/use-cases/import-projects-usecase.service'
 import { ExportProjectsUseCase } from './application/use-cases/export-projects-usecase.service'
+import { AggregateProjectsUseCase } from './application/use-cases/aggregate-projects-usecase.service'
 import { ProjectRepository } from './domain/project-repository'
 import { ProjectsController } from './infrastructure/entrypoints/projects.controller'
 import { TypeOrmProjectRepository } from './infrastructure/persistence/typeorm/typeorm-project.repository'
@@ -48,6 +50,7 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     GetProjectHistoryHandler,
     ImportProjectsHandler,
     ExportProjectsHandler,
+    AggregateProjectsHandler,
     RegisterProjectUseCase,
     SearchProjectsUseCase,
     GetProjectUseCase,
@@ -56,6 +59,7 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     GetProjectHistoryUseCase,
     ImportProjectsUseCase,
     ExportProjectsUseCase,
+    AggregateProjectsUseCase,
     { provide: ProjectRepository, useClass: TypeOrmProjectRepository }
   ],
   exports: [ProjectRepository]

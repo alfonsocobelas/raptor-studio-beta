@@ -4,6 +4,7 @@ import { SearchContractsHandler } from './application/handlers/search-contracts.
 import { GetContractHandler } from './application/handlers/get-contract.handler'
 import { UpdateContractHandler } from './application/handlers/update-contract.handler'
 import { ExportContractsHandler } from './application/handlers/export-contracts.handler'
+import { AggregateContractsHandler } from './application/handlers/aggregate-contracts.handler'
 import { TerminateContractHandler } from './application/handlers/terminate-contract.handler'
 import { ExpireContractHandler } from './application/handlers/expire-contract.handler'
 import { RegisterContractUseCase } from './application/use-cases/register-contract-usecase.service'
@@ -11,6 +12,7 @@ import { SearchContractsUseCase } from './application/use-cases/search-contracts
 import { GetContractUseCase } from './application/use-cases/get-contract-usecase.service'
 import { UpdateContractUseCase } from './application/use-cases/update-contract-usecase.service'
 import { ExportContractsUseCase } from './application/use-cases/export-contracts-usecase.service'
+import { AggregateContractsUseCase } from './application/use-cases/aggregate-contracts-usecase.service'
 import { TerminateContractUseCase } from './application/use-cases/terminate-contract-usecase.service'
 import { ExpireContractUseCase } from './application/use-cases/expire-contract-usecase.service'
 import { ContractRepository } from './domain/contract-repository'
@@ -31,6 +33,7 @@ import { CustomersModule } from '../customers/customers.module'
     GetContractHandler,
     UpdateContractHandler,
     ExportContractsHandler,
+    AggregateContractsHandler,
     TerminateContractHandler,
     ExpireContractHandler,
     RegisterContractUseCase,
@@ -38,6 +41,7 @@ import { CustomersModule } from '../customers/customers.module'
     GetContractUseCase,
     UpdateContractUseCase,
     ExportContractsUseCase,
+    AggregateContractsUseCase,
     TerminateContractUseCase,
     ExpireContractUseCase,
     { provide: ContractRepository, useClass: MongooseContractRepository }

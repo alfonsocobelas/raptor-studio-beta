@@ -9,11 +9,14 @@ import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator
 import { ExportContractsHandler } from '../../application/handlers/export-contracts.handler'
 import { GetContractHandler } from '../../application/handlers/get-contract.handler'
 import { RegisterContractHandler } from '../../application/handlers/register-contract.handler'
+import { AggregateContractsHandler } from '../../application/handlers/aggregate-contracts.handler'
 import { SearchContractsHandler } from '../../application/handlers/search-contracts.handler'
 import { TerminateContractHandler } from '../../application/handlers/terminate-contract.handler'
 import { ExpireContractHandler } from '../../application/handlers/expire-contract.handler'
 import { UpdateContractHandler } from '../../application/handlers/update-contract.handler'
 import { ContractPrimitiveProps, ContractUpdateProps } from '../../domain/contract-types'
+import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
+import { AggregateContractsQueryDto } from './dtos/aggregate-contracts-query.dto'
 import { ExportContractsQueryDto } from './dtos/export-contracts-query.dto'
 import { CONTRACT_EXPORT_COLUMNS } from './contracts-export-columns'
 import { RegisterContractDto } from './dtos/register-contract.dto'
@@ -24,6 +27,7 @@ export class ContractsController {
   constructor(
     private readonly registerContractHandler: RegisterContractHandler,
     private readonly searchContractsHandler: SearchContractsHandler,
+    private readonly aggregateContractsHandler: AggregateContractsHandler,
     private readonly getContractHandler: GetContractHandler,
     private readonly updateContractHandler: UpdateContractHandler,
     private readonly terminateContractHandler: TerminateContractHandler,
@@ -43,6 +47,14 @@ export class ContractsController {
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<ContractPrimitiveProps>> {
     return this.searchContractsHandler.handle(query)
+  }
+
+  // Una agregación del conjunto filtrado (spec 71). Declarado antes de `:id`, o 'aggregate' se
+  // leería como un uuid. Mismos roles que el listado: agregar es leer, no una capacidad nueva.
+  @Get('aggregate')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  aggregate(@Query(new ParseCriteriaPipe()) query: AggregateContractsQueryDto): Promise<AggregateOutput> {
+    return this.aggregateContractsHandler.handle(query)
   }
 
   // Exports the full filtered contract set (no pagination) as CSV/XLSX. Declared before `:id`.

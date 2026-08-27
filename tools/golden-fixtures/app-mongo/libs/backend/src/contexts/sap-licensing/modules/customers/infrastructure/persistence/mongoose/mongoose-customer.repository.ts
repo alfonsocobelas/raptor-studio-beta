@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
+import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { CustomerId } from '../../../../../../shared/domain/value-objects/customers/customer-id.vo'
 import { MongooseCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/mongoose/mongoose-criteria-converter'
@@ -75,6 +76,10 @@ export class MongooseCustomerRepository extends MongooseRepository<CustomerDoc> 
 
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
+  }
+
+  async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    return this.aggregateByCriteria(criteria, op, field)
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

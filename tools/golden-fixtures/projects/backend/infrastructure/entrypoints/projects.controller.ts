@@ -26,9 +26,12 @@ import { ImportProjectsHandler } from '../../application/handlers/import-project
 import { ImportProjectsOutput } from '../../application/dtos/import-projects-input.dto'
 import { RegisterProjectHandler } from '../../application/handlers/register-project.handler'
 import { RemoveProjectHandler } from '../../application/handlers/remove-project.handler'
+import { AggregateProjectsHandler } from '../../application/handlers/aggregate-projects.handler'
 import { SearchProjectsHandler } from '../../application/handlers/search-projects.handler'
 import { UpdateProjectHandler } from '../../application/handlers/update-project.handler'
 import { ProjectPrimitiveProps, ProjectUpdateProps } from '../../domain/project-types'
+import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
+import { AggregateProjectsQueryDto } from './dtos/aggregate-projects-query.dto'
 import { ExportProjectsQueryDto } from './dtos/export-projects-query.dto'
 import { PROJECT_EXPORT_COLUMNS } from './projects-export-columns'
 import { ImportProjectsDto } from './dtos/import-projects.dto'
@@ -41,6 +44,7 @@ export class ProjectsController {
     private readonly registerProjectHandler: RegisterProjectHandler,
     private readonly importProjectsHandler: ImportProjectsHandler,
     private readonly searchProjectsHandler: SearchProjectsHandler,
+    private readonly aggregateProjectsHandler: AggregateProjectsHandler,
     private readonly getProjectHandler: GetProjectHandler,
     private readonly getProjectHistoryHandler: GetProjectHistoryHandler,
     private readonly updateProjectHandler: UpdateProjectHandler,
@@ -67,6 +71,14 @@ export class ProjectsController {
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<ProjectPrimitiveProps>> {
     return this.searchProjectsHandler.handle(query)
+  }
+
+  // Una agregación del conjunto filtrado (spec 71). Declarado antes de `:id`, o 'aggregate' se
+  // leería como un uuid. Mismos roles que el listado: agregar es leer, no una capacidad nueva.
+  @Get('aggregate')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  aggregate(@Query(new ParseCriteriaPipe()) query: AggregateProjectsQueryDto): Promise<AggregateOutput> {
+    return this.aggregateProjectsHandler.handle(query)
   }
 
   // Exports the full filtered project set (no pagination) as CSV/XLSX. Declared before `:id`.

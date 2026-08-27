@@ -9,10 +9,13 @@ import { Roles } from '../../../../../shared/infrastructure/auth/roles.decorator
 import { ExportCustomersHandler } from '../../application/handlers/export-customers.handler'
 import { GetCustomerHandler } from '../../application/handlers/get-customer.handler'
 import { RegisterCustomerHandler } from '../../application/handlers/register-customer.handler'
+import { AggregateCustomersHandler } from '../../application/handlers/aggregate-customers.handler'
 import { SearchCustomersHandler } from '../../application/handlers/search-customers.handler'
 import { UpdateCustomerHandler } from '../../application/handlers/update-customer.handler'
 import { CustomerDetailOutput } from '../../application/use-cases/get-customer-usecase.service'
 import { CustomerPrimitiveProps, CustomerUpdateProps } from '../../domain/customer-types'
+import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
+import { AggregateCustomersQueryDto } from './dtos/aggregate-customers-query.dto'
 import { ExportCustomersQueryDto } from './dtos/export-customers-query.dto'
 import { CUSTOMER_EXPORT_COLUMNS } from './customers-export-columns'
 import { RegisterCustomerDto } from './dtos/register-customer.dto'
@@ -23,6 +26,7 @@ export class CustomersController {
   constructor(
     private readonly registerCustomerHandler: RegisterCustomerHandler,
     private readonly searchCustomersHandler: SearchCustomersHandler,
+    private readonly aggregateCustomersHandler: AggregateCustomersHandler,
     private readonly getCustomerHandler: GetCustomerHandler,
     private readonly updateCustomerHandler: UpdateCustomerHandler,
     private readonly exportCustomersHandler: ExportCustomersHandler
@@ -40,6 +44,14 @@ export class CustomersController {
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<CustomerPrimitiveProps>> {
     return this.searchCustomersHandler.handle(query)
+  }
+
+  // Una agregación del conjunto filtrado (spec 71). Declarado antes de `:id`, o 'aggregate' se
+  // leería como un uuid. Mismos roles que el listado: agregar es leer, no una capacidad nueva.
+  @Get('aggregate')
+  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER)
+  aggregate(@Query(new ParseCriteriaPipe()) query: AggregateCustomersQueryDto): Promise<AggregateOutput> {
+    return this.aggregateCustomersHandler.handle(query)
   }
 
   // Exports the full filtered customer set (no pagination) as CSV/XLSX. Declared before `:id`.

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { FindOptionsWhere, In, Not } from 'typeorm'
 import { Nullable } from '../../../../../../shared/domain/types'
+import { AggregateOp } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
 import { CustomerId } from '../../../../../../shared/domain/value-objects/customers/customer-id.vo'
 import { TypeOrmCriteriaConverter } from '../../../../../../shared/infrastructure/persistence/typeorm/typeorm-criteria-converter'
@@ -71,6 +72,10 @@ export class TypeOrmCustomerRepository extends TypeOrmRepository<TypeOrmCustomer
 
   async count(criteria: Criteria): Promise<number> {
     return this.countByCriteria(criteria)
+  }
+
+  async aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    return this.aggregateByCriteria(criteria, op, field)
   }
 
   // @ai:begin repository-extra — implementación de los finders del port-extra

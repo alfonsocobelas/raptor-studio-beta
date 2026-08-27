@@ -1,0 +1,45 @@
+import { Injectable } from '@nestjs/common'
+import {
+  AggregateInput,
+  AggregateOutput,
+  ensureAggregateOp,
+  opAllowedOn
+} from '../../../../../shared/domain/query/aggregate'
+import { Criteria } from '../../../../../shared/domain/query/criteria'
+import { InvalidArgumentError } from '../../../../../shared/domain/errors'
+import { LicenseRepository } from '../../domain/license-repository'
+import searchLicenseConfig from '../config/search-license-config'
+
+/**
+ * Una agregación del recurso (spec 71). La FRONTERA DE CONFIANZA está aquí: el nombre del campo
+ * llega por HTTP y acaba interpolado en la consulta, así que se comprueba contra la lista blanca
+ * emitida del recurso antes de bajar al repositorio. El DTO valida la forma; esta es la única capa
+ * por la que pasan todos los caminos.
+ */
+@Injectable()
+export class AggregateLicensesUseCase {
+  constructor(private readonly licenseRepository: LicenseRepository) {}
+
+  async invoke(input: AggregateInput): Promise<AggregateOutput> {
+    const { allowedFilters, allowedOrders, searchableFields, aggregatableFields } = searchLicenseConfig
+    const op = ensureAggregateOp(input.op)
+    const kind = (aggregatableFields as Record<string, 'numeric' | 'date' | undefined>)[input.field]
+
+    if (!kind) {
+      throw new InvalidArgumentError(`The field "${input.field}" cannot be aggregated`)
+    }
+    if (!opAllowedOn(op, kind)) {
+      throw new InvalidArgumentError(`The operation "${op}" does not apply to a ${kind} field`)
+    }
+
+    // el mismo lenguaje de filtro que el listado: una sola sintaxis en toda la app
+    const criteria = Criteria.fromOffset(
+      { page: 1, pageSize: 1, filters: input.filters } as never,
+      allowedFilters,
+      allowedOrders,
+      searchableFields
+    )
+
+    return { value: await this.licenseRepository.aggregate(criteria, op, input.field) }
+  }
+}

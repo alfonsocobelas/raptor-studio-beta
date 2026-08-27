@@ -1,4 +1,5 @@
 import { EntityManager, EntityTarget, ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm'
+import { AggregateOp } from '../../../domain/query/aggregate'
 import { Criteria } from '../../../domain/query/criteria'
 import { TypeOrmCriteriaConverter } from './typeorm-criteria-converter'
 import { TypeOrmTransactionManager } from './typeorm-transaction-manager'
@@ -60,6 +61,34 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
     this.excludeSoftDeleted(qb)
 
     return qb.getCount()
+  }
+
+  /**
+   * Una agregación sobre el conjunto filtrado (spec 71). `field` se interpola en la expresión, así
+   * que llega YA validado contra la lista blanca del recurso (`aggregatableFields` de su config):
+   * este método no es la frontera de confianza, el caso de uso lo es.
+   *
+   * El vacío no responde lo mismo en todas las operaciones: la suma de nada es 0 y los distintos
+   * de nada son 0, pero la media, el máximo y el mínimo de nada NO son 0 — son «no hay dato».
+   */
+  protected async aggregateByCriteria(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null> {
+    const qb = this.repository().createQueryBuilder('entity')
+    const query = this.criteriaConverter.buildQuery(criteria)
+
+    if (query.filter) {
+      qb.where(query.filter.query, query.filter.params)
+    }
+    this.excludeSoftDeleted(qb)
+
+    const column = `entity.${field}`
+    const expression = op === 'distinct' ? `COUNT(DISTINCT ${column})` : `${op.toUpperCase()}(${column})`
+    const raw = await qb.select(expression, 'value').getRawOne<{ value: string | number | null }>()
+
+    if (raw?.value === null || raw?.value === undefined) {
+      return op === 'sum' || op === 'distinct' ? 0 : null
+    }
+    // numeric de PostgreSQL vuelve como cadena: sin esto, `sum` concatenaría
+    return Number(raw.value)
   }
 
   protected async existsByCriteria(criteria: Criteria): Promise<boolean> {

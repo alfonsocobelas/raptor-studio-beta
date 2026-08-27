@@ -1,58 +1,62 @@
-import { Customer } from '../../../domain/customer'
 import { Contact } from '../../../domain/contact'
+import { Customer } from '../../../domain/customer'
 import { TypeOrmContactEntity } from './typeorm-contact.entity'
 import { TypeOrmCustomerEntity } from './typeorm-customer.entity'
 
 export class CustomerMapper {
-  static toDomain(customerEntity: TypeOrmCustomerEntity, contactEntities: TypeOrmContactEntity[] = []): Customer {
+  static toDomain(entity: TypeOrmCustomerEntity, contactsEntities: TypeOrmContactEntity[] = []): Customer {
     return Customer.fromPrimitives(
       {
-        id: customerEntity.id,
-        sapId: customerEntity.sapId,
-        name: customerEntity.name,
-        taxId: customerEntity.taxId,
-        industry: customerEntity.industry,
-        address: customerEntity.address,
-        phone: customerEntity.phone,
-        notes: customerEntity.notes,
-        status: customerEntity.status,
-        archivedAt: customerEntity.archivedAt?.toISOString() ?? null,
-        lastSeenInSyncAt: customerEntity.lastSeenInSyncAt?.toISOString() ?? null,
-        city: customerEntity.city,
-        country: customerEntity.country,
-        customerType: customerEntity.customerType
+        id: entity.id,
+        sapId: entity.sapId,
+        name: entity.name,
+        taxId: entity.taxId,
+        industry: entity.industry,
+        address: entity.address,
+        phone: entity.phone,
+        notes: entity.notes,
+        city: entity.city,
+        country: entity.country,
+        customerType: entity.customerType,
+        status: entity.status,
+        archivedAt: entity.archivedAt?.toISOString() ?? null,
+        lastSeenInSyncAt: entity.lastSeenInSyncAt?.toISOString() ?? null
       },
-      contactEntities.map(contact => ({
-        id: contact.id,
-        customerId: contact.customerId,
-        name: contact.name,
-        role: contact.role,
-        email: contact.email,
-        phone: contact.phone,
-        isPrimary: contact.isPrimary
+      contactsEntities.map(contactEntity => ({
+        id: contactEntity.id,
+        customerId: contactEntity.customerId,
+        name: contactEntity.name,
+        role: contactEntity.role,
+        email: contactEntity.email,
+        phone: contactEntity.phone,
+        isPrimary: contactEntity.isPrimary
       }))
     )
   }
 
   static toPersistence(domain: Customer): TypeOrmCustomerEntity {
+    const primitives = domain.toPrimitives()
     const entity = new TypeOrmCustomerEntity()
-    entity.id = domain.id.value
-    entity.sapId = domain.sapId.value
-    entity.name = domain.name.value
-    entity.taxId = domain.taxId.value
-    entity.industry = domain.industry.value
-    entity.address = domain.address.value
-    entity.phone = domain.phone.value
-    entity.notes = domain.notes.value
-    entity.status = domain.status.value
-    entity.archivedAt = domain.archivedAt ? domain.archivedAt.value : null
-    entity.lastSeenInSyncAt = domain.lastSeenInSyncAt ? domain.lastSeenInSyncAt.value : null
-    entity.city = domain.city.value
-    entity.country = domain.country.value
-    entity.customerType = domain.customerType.value
+    entity.id = primitives.id
+    entity.sapId = primitives.sapId
+    entity.name = primitives.name
+    entity.taxId = primitives.taxId
+    entity.industry = primitives.industry
+    entity.address = primitives.address
+    entity.phone = primitives.phone
+    entity.notes = primitives.notes
+    entity.city = primitives.city ?? ''
+    entity.country = primitives.country ?? ''
+    entity.customerType = primitives.customerType
+    entity.status = primitives.status ?? 'active'
+    entity.archivedAt = primitives.archivedAt ? new Date(primitives.archivedAt) : null
+    entity.lastSeenInSyncAt = primitives.lastSeenInSyncAt ? new Date(primitives.lastSeenInSyncAt) : null
 
     return entity
   }
+
+  // @ai:begin mapper-extra — transformaciones a medida (denormalizaciones, derivados)
+  // @ai:end
 
   static contactsToPersistence(domain: Customer): TypeOrmContactEntity[] {
     return domain.contacts.map(CustomerMapper.contactToPersistence)

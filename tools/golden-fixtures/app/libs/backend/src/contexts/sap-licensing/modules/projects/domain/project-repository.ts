@@ -1,6 +1,7 @@
 import { Nullable } from '../../../../shared/domain/types'
-import { Criteria } from '../../../../shared/domain/query/criteria'
+import { AggregateOp } from '../../../../shared/domain/query/aggregate'
 import { DeleteOperationId } from '../../../../shared/domain/value-objects/delete-operation-id.vo'
+import { Criteria } from '../../../../shared/domain/query/criteria'
 import { ProjectId } from '../../../../shared/domain/value-objects/projects/project-id.vo'
 import { ProjectName } from './value-objects/project-name.vo'
 import { Project } from './project'
@@ -15,6 +16,8 @@ export abstract class ProjectRepository {
   abstract findByName(name: ProjectName): Promise<Nullable<Project>>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
+  /** Una agregación del conjunto filtrado (spec 71). `null` = no hay dato, que no es lo mismo que 0. */
+  abstract aggregate(criteria: Criteria, op: AggregateOp, field: string): Promise<number | null>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }

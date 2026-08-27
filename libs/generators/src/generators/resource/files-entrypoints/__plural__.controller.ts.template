@@ -30,6 +30,7 @@ import { Register<%- className %>Handler } from '../../application/handlers/regi
 <%_ if (app.removes) { _%>
 import { Remove<%- className %>Handler } from '../../application/handlers/remove-<%- fileName %>.handler'
 <%_ } _%>
+import { Aggregate<%- pluralClassName %>Handler } from '../../application/handlers/aggregate-<%- plural %>.handler'
 import { Search<%- pluralClassName %>Handler } from '../../application/handlers/search-<%- plural %>.handler'
 <%_ entry.transitions.forEach(transition => { _%>
 import { <%- transition.className %>Handler } from '../../application/handlers/<%- transition.file %>.handler'
@@ -43,6 +44,8 @@ import { <%- className %>PrimitiveProps<% if (app.writes) { %>, <%- className %>
 <%_ } else { _%>
 import { <%- className %>PrimitiveProps<% if (app.writes) { %>, <%- className %>UpdateProps<% } %> } from '../../domain/<%- fileName %>-types'
 <%_ } _%>
+import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
+import { Aggregate<%- pluralClassName %>QueryDto } from './dtos/aggregate-<%- plural %>-query.dto'
 import { Export<%- pluralClassName %>QueryDto } from './dtos/export-<%- plural %>-query.dto'
 import { <%- constantName %>_EXPORT_COLUMNS } from './<%- plural %>-export-columns'
 <%_ if (app.importCsv) { _%>
@@ -63,6 +66,7 @@ export class <%- pluralClassName %>Controller {
     private readonly import<%- pluralClassName %>Handler: Import<%- pluralClassName %>Handler,
 <%_ } _%>
     private readonly search<%- pluralClassName %>Handler: Search<%- pluralClassName %>Handler,
+    private readonly aggregate<%- pluralClassName %>Handler: Aggregate<%- pluralClassName %>Handler,
     private readonly get<%- className %>Handler: Get<%- className %>Handler,
 <%_ if (app.history) { _%>
     private readonly get<%- className %>HistoryHandler: Get<%- className %>HistoryHandler,
@@ -102,6 +106,14 @@ export class <%- pluralClassName %>Controller {
     @Query(new ParseCriteriaPipe()) query: PaginateOffsetDto
   ): Promise<OffsetPaginatedOutput<<%- className %>PrimitiveProps>> {
     return this.search<%- pluralClassName %>Handler.handle(query)
+  }
+
+  // Una agregación del conjunto filtrado (spec 71). Declarado antes de `:id`, o 'aggregate' se
+  // leería como un uuid. Mismos roles que el listado: agregar es leer, no una capacidad nueva.
+  @Get('aggregate')
+  @Roles(<%- entry.readRoles %>)
+  aggregate(@Query(new ParseCriteriaPipe()) query: Aggregate<%- pluralClassName %>QueryDto): Promise<AggregateOutput> {
+    return this.aggregate<%- pluralClassName %>Handler.handle(query)
   }
 
   // Exports the full filtered <%- fileName %> set (no pagination) as CSV/XLSX. Declared before `:id`.
