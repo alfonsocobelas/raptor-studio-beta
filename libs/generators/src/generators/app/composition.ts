@@ -1,9 +1,10 @@
-import { DEFAULT_THEME_ID, normalizeDashboardBlocks, operatorsFor, resolveThemeId } from '@raptor/schema'
+import { DEFAULT_THEME_ID, normalizeDashboardBlocks, opAllowedOn, operatorsFor, resolveThemeId } from '@raptor/schema'
 import type {
   AppDefinition,
   DashboardBlock,
   FieldDefinition,
   KpiCondition,
+  KpiMeasure,
   KpiWindow,
   BlockWidth,
   BusinessBrief,
@@ -46,6 +47,11 @@ export interface ComposedDashboardBlock {
 
 /** Lo que hace falta para resolver UNA tarjeta KPI; el rango de la ventana lo calcula el emitido. */
 export interface ComposedKpi {
+  /** 'count' sale del listado; el resto va al endpoint `aggregate` (spec 71) */
+  measure: KpiMeasure
+  /** Campo medido, y su tipo, cuando la medida no es un conteo */
+  field?: string
+  fieldKind?: 'numeric' | 'date'
   filters: KpiCondition[]
   window?: KpiWindow
   ratio: boolean
@@ -318,6 +324,21 @@ function composeKpi(
     }
   }
 
+  // la medida de verdad mide un campo, y no todo campo se puede medir (spec 71)
+  const measure = block.measure ?? 'count'
+  let fieldKind: 'numeric' | 'date' | undefined
+  if (measure !== 'count') {
+    const measured = model.fields[block.field ?? '']
+    if (!measured) throw new Error(`${at} measures an unknown field '${block.field}'`)
+    fieldKind = aggregateKindOf(measured)
+    if (!fieldKind) {
+      throw new Error(`${at} measures '${block.field}', which is neither numeric nor a date`)
+    }
+    if (!opAllowedOn(measure, fieldKind)) {
+      throw new Error(`${at} applies '${measure}' to a ${fieldKind} field, which has no answer`)
+    }
+  }
+
   return {
     kind: 'kpi',
     width,
@@ -327,6 +348,9 @@ function composeKpi(
     api: model.api ?? `/api/v1/${model.plural}`,
     label: block.label,
     kpi: {
+      measure,
+      ...(block.field ? { field: block.field } : {}),
+      ...(fieldKind ? { fieldKind } : {}),
       filters,
       ...(block.window ? { window: block.window } : {}),
       ratio: block.ratio === true,
@@ -336,11 +360,20 @@ function composeKpi(
   }
 }
 
+
+/** El tipo agregable de un campo, o undefined si no se puede medir (spec 71). */
+function aggregateKindOf(field: FieldDefinition): 'numeric' | 'date' | undefined {
+  if (field.type === 'number' || field.type === 'integer') return 'numeric'
+  if (field.type === 'date' || field.type === 'timestamptz') return 'date'
+  return undefined
+}
+
 /** Nombre estable y único de la propiedad emitida: la config, no la etiqueta. */
 function kpiSlug(block: Extract<DashboardBlock, { kind: 'kpi' }>): string {
   const condition = block.condition
   const window = block.window
   return [
+    block.measure && block.measure !== 'count' ? `${block.measure}-${block.field}` : '',
     condition ? `${condition.field}-${condition.operator}-${condition.value}` : 'total',
     window ? `${window.field}-${window.preset}${window.days ?? ''}` : '',
     block.ratio === true ? 'ratio' : '',

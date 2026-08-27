@@ -537,3 +537,58 @@ describe('theme.seed — el tema del color de marca (spec 20, fase 4)', () => {
     )
   })
 })
+
+/** Spec 71: las medidas de verdad exigen campo, y el porcentaje deja de aplicar. */
+describe('defineApp — medidas del kpi (spec 71)', () => {
+  const withBlocks = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+
+  const problemsOf = (definition: AppDefinition): string[] => {
+    try {
+      defineApp(definition)
+      return []
+    } catch (error) {
+      return (error as { problems: string[] }).problems
+    }
+  }
+
+  it('acepta una suma con su campo', () => {
+    const app = defineApp(
+      withBlocks([{ kind: 'kpi', resource: 'contract', label: 'Facturado', measure: 'sum', field: 'totalValue' }])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('una medida distinta de conteo sin campo no vale', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', measure: 'sum' }]))
+    ).toContainEqual(expect.stringContaining('requires a field'))
+  })
+
+  it('el conteo NO lleva campo: contar filas no mide ninguna columna', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', field: 'totalValue' }]))
+    ).toContainEqual(expect.stringContaining('takes no field'))
+  })
+
+  it('el porcentaje solo aplica al conteo', () => {
+    expect(
+      problemsOf(
+        withBlocks([
+          { kind: 'kpi', resource: 'contract', label: 'X', measure: 'sum', field: 'totalValue', ratio: true }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('ratio'))
+  })
+
+  it('rechaza una medida inventada', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', measure: 'median', field: 'x' }]))
+    ).toContainEqual(expect.stringContaining('measure'))
+  })
+})

@@ -13,8 +13,11 @@ export type BlockWidth = 'full' | 'half'
  */
 export type KpiOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'starts_with' | 'ends_with'
 
-/** Medida del KPI. La spec 71 añade sum | avg | min | max | distinct cuando exista `aggregate`. */
-export type KpiMeasure = 'count'
+/**
+ * Medida del KPI. `count` sale del listado; el resto exige el endpoint `aggregate` (spec 71) y un
+ * campo sobre el que medir.
+ */
+export type KpiMeasure = 'count' | 'sum' | 'avg' | 'min' | 'max' | 'distinct'
 
 /** Ventana temporal relativa; `days` solo acompaña al preset homónimo. */
 export type KpiWindowPreset = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'
@@ -58,6 +61,8 @@ export type DashboardBlock =
       resource: string
       label: string
       measure?: KpiMeasure
+      /** Campo sobre el que se mide; obligatorio (y solo válido) cuando la medida no es `count` */
+      field?: string
       condition?: KpiCondition
       window?: KpiWindow
       /** El valor sobre el total del recurso en la misma ventana, en porcentaje */

@@ -1,4 +1,12 @@
-import { AppDefinition, BRIEF_LIMITS, DashboardBlock, KpiOperator, KpiWindowPreset, PageDefinition } from './app-types'
+import {
+  AppDefinition,
+  BRIEF_LIMITS,
+  DashboardBlock,
+  KpiMeasure,
+  KpiOperator,
+  KpiWindowPreset,
+  PageDefinition
+} from './app-types'
 import { THEME_IDS } from './themes'
 import { validateFlows } from './validate-flows'
 import { SchemaValidationError } from './validation-errors'
@@ -7,6 +15,7 @@ const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 
 const KPI_OPERATORS: KpiOperator[] = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'starts_with', 'ends_with']
 const KPI_WINDOW_PRESETS: KpiWindowPreset[] = ['today', 'week', 'month', 'quarter', 'year', 'days']
+const KPI_MEASURES: KpiMeasure[] = ['count', 'sum', 'avg', 'min', 'max', 'distinct']
 
 // Structural validation only (v1): the model registry lives in the generator,
 // so resource existence is checked there, not here.
@@ -183,6 +192,18 @@ function kpiProblems(block: Extract<DashboardBlock, { kind: 'kpi' }>, at: string
   const problems: string[] = []
 
   if (!nonEmpty(block.label)) problems.push(`${at}: kpi requires a label`)
+
+  // la medida distinta de conteo mide UN CAMPO, y el porcentaje deja de tener sentido: un tanto por
+  // ciento de una suma sobre otra suma es otra pregunta (spec 71)
+  const measure = block.measure ?? 'count'
+  if (!KPI_MEASURES.includes(measure)) {
+    problems.push(`${at}: unknown kpi measure '${measure}'`)
+  } else if (measure === 'count') {
+    if (block.field !== undefined) problems.push(`${at}: kpi with measure 'count' takes no field`)
+  } else {
+    if (!nonEmpty(block.field)) problems.push(`${at}: kpi with measure '${measure}' requires a field`)
+    if (block.ratio === true) problems.push(`${at}: kpi ratio only applies to measure 'count'`)
+  }
 
   const condition = block.condition
   if (condition !== undefined) {

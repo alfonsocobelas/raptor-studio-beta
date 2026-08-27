@@ -146,6 +146,7 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     expect(kpi?.label).toBe('Cloud este mes')
     expect(kpi?.api).toBe('/api/v1/contracts')
     expect(kpi?.kpi).toEqual({
+      measure: 'count',
       filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
       window: { field: 'startDate', preset: 'month' },
       ratio: false,
@@ -160,6 +161,7 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     )
 
     expect(composition.dashboardBlocks.find(b => b.kind === 'kpi')?.kpi).toEqual({
+      measure: 'count',
       filters: [],
       ratio: false,
       compare: false
@@ -432,7 +434,12 @@ describe('el panel es una secuencia de bloques (spec 53)', () => {
     property,
     api: '/api/v1/contracts',
     label: property,
-    kpi: { filters: [{ field: 'status', operator: 'eq', value: 'active' }], ratio: false, compare: false }
+    kpi: {
+      measure: 'count',
+      filters: [{ field: 'status', operator: 'eq', value: 'active' }],
+      ratio: false,
+      compare: false
+    }
   })
 
   it('emite los bloques EN EL ORDEN dibujado, no por tipo', () => {
@@ -486,5 +493,72 @@ describe('el panel es una secuencia de bloques (spec 53)', () => {
     ])
 
     expect(subs['resourceEntries'].match(/readonly contracts = this\._total/g)).toHaveLength(1)
+  })
+})
+
+/** Spec 71: la medida de verdad se valida contra el modelo, al DISEÑAR. */
+describe('composeApp — medidas del kpi (spec 71)', () => {
+  const model = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        totalValue: { type: 'number', query: { sortable: 1 } },
+        startDate: { type: 'date', query: { filterable: true } },
+        notes: { type: 'string' }
+      }
+    }) as unknown as ResourceDefinition
+
+  const appWith = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+
+  const registry = () => ({ contract: model() })
+  const kpi = (extra: object) => ({ kind: 'kpi', resource: 'contract', label: 'X', ...extra })
+
+  it('compone la suma con el campo y su tipo', () => {
+    const composition = composeApp(appWith([kpi({ measure: 'sum', field: 'totalValue' })]), registry())
+
+    expect(composition.dashboardBlocks.find(b => b.kind === 'kpi')?.kpi).toMatchObject({
+      measure: 'sum',
+      field: 'totalValue',
+      fieldKind: 'numeric'
+    })
+  })
+
+  it('acepta el máximo de una fecha', () => {
+    const composition = composeApp(appWith([kpi({ measure: 'max', field: 'startDate' })]), registry())
+
+    expect(composition.dashboardBlocks.find(b => b.kind === 'kpi')?.kpi).toMatchObject({
+      measure: 'max',
+      fieldKind: 'date'
+    })
+  })
+
+  it('rechaza sumar una fecha, medir un texto y medir un campo que no existe', () => {
+    expect(() => composeApp(appWith([kpi({ measure: 'sum', field: 'startDate' })]), registry())).toThrow(/no answer/)
+    expect(() => composeApp(appWith([kpi({ measure: 'sum', field: 'notes' })]), registry())).toThrow(/numeric/)
+    expect(() => composeApp(appWith([kpi({ measure: 'sum', field: 'ghost' })]), registry())).toThrow(/ghost/)
+  })
+
+  it('dos medidas del mismo campo emiten propiedades distintas', () => {
+    const composition = composeApp(
+      appWith([
+        kpi({ measure: 'sum', field: 'totalValue', label: 'Suma' }),
+        kpi({ measure: 'avg', field: 'totalValue', label: 'Media' })
+      ]),
+      registry()
+    )
+    const properties = composition.dashboardBlocks.map(b => b.property)
+
+    expect(new Set(properties).size).toBe(properties.length)
   })
 })
