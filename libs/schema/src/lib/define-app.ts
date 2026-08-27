@@ -1,9 +1,12 @@
-import { AppDefinition, BRIEF_LIMITS, PageDefinition } from './app-types'
+import { AppDefinition, BRIEF_LIMITS, DashboardBlock, KpiOperator, KpiWindowPreset, PageDefinition } from './app-types'
 import { THEME_IDS } from './themes'
 import { validateFlows } from './validate-flows'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
+
+const KPI_OPERATORS: KpiOperator[] = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'contains', 'starts_with', 'ends_with']
+const KPI_WINDOW_PRESETS: KpiWindowPreset[] = ['today', 'week', 'month', 'quarter', 'year', 'days']
 
 // Structural validation only (v1): the model registry lives in the generator,
 // so resource existence is checked there, not here.
@@ -116,6 +119,8 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
       if (!nonEmpty(block.equals)) problems.push(`${at}: kpi-count requires equals (the counted value)`)
       if (!nonEmpty(block.label)) problems.push(`${at}: kpi-count requires a label`)
     }
+    if (block.kind === 'kpi') problems.push(...kpiProblems(block, at))
+    if (block.kind === 'top-n') problems.push(...topProblems(block, at))
 
     // un recurso admite varios bloques; el duplicado EXACTO (kind+recurso+campo) no
     for (const resource of resources) {
@@ -168,4 +173,66 @@ export function briefProblems(brief: AppDefinition['brief']): string[] {
   })
 
   return problems
+}
+
+/** Reglas del bloque KPI (spec 70). El campo y su tipo los valida la composición, que sí conoce
+ *  el modelo; aquí solo la forma: qué combinaciones de modificadores tienen sentido. */
+function kpiProblems(block: Extract<DashboardBlock, { kind: 'kpi' }>, at: string): string[] {
+  const problems: string[] = []
+
+  if (!nonEmpty(block.label)) problems.push(`${at}: kpi requires a label`)
+
+  const condition = block.condition
+  if (condition !== undefined) {
+    if (!nonEmpty(condition.field)) problems.push(`${at}: kpi condition requires a field`)
+    if (!nonEmpty(condition.value)) problems.push(`${at}: kpi condition requires a value`)
+    if (!KPI_OPERATORS.includes(condition.operator)) {
+      problems.push(`${at}: unknown kpi condition operator '${condition.operator}'`)
+    }
+  }
+
+  const window = block.window
+  if (window !== undefined) {
+    if (!nonEmpty(window.field)) problems.push(`${at}: kpi window.field is required (the date it narrows)`)
+    if (!KPI_WINDOW_PRESETS.includes(window.preset)) {
+      problems.push(`${at}: unknown kpi window preset '${window.preset}'`)
+    }
+    // `days` y el preset van juntos o no van: un 'este mes' con longitud es una contradicción
+    if (window.preset === 'days' && !isCount(window.days, 1, 3650)) {
+      problems.push(`${at}: kpi window.days must be an integer between 1 and 3650`)
+    }
+    if (window.preset !== 'days' && window.days !== undefined) {
+      problems.push(`${at}: kpi window.days only applies to the 'days' preset`)
+    }
+  }
+
+  // no hay «periodo anterior» de «siempre»
+  if (block.compare === true && window === undefined) {
+    problems.push(`${at}: kpi compare requires a window`)
+  }
+  // dos lecturas del mismo número y un solo sitio para la barra
+  if (block.ratio === true && block.target !== undefined) {
+    problems.push(`${at}: kpi ratio and target are mutually exclusive`)
+  }
+  if (block.target !== undefined && !(typeof block.target === 'number' && block.target > 0)) {
+    problems.push(`${at}: kpi target must be a positive number`)
+  }
+
+  return problems
+}
+
+function topProblems(block: Extract<DashboardBlock, { kind: 'top-n' }>, at: string): string[] {
+  const problems: string[] = []
+
+  if (!nonEmpty(block.field)) problems.push(`${at}: top-n requires a field to sort by`)
+  if (!isCount(block.n, 1, 20)) problems.push(`${at}: top-n n must be an integer between 1 and 20`)
+  if (block.dir !== undefined && block.dir !== 'asc' && block.dir !== 'desc') {
+    problems.push(`${at}: top-n dir must be 'asc' or 'desc'`)
+  }
+
+  return problems
+}
+
+function isCount(value: number | undefined, min: number, max: number): boolean {
+  return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 }

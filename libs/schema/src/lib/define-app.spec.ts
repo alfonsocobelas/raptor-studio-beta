@@ -61,6 +61,84 @@ describe('bloques analíticos del panel — conteos con forma (spec 32, modelo d
     ).toContainEqual(expect.stringContaining('label'))
   })
 
+  it('acepta un kpi mínimo: recurso y etiqueta, sin condición ni ventana', () => {
+    const app = defineApp(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'Contratos' }]))
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('rechaza un kpi sin etiqueta y una condición incompleta', () => {
+    expect(problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract' }]))).toContainEqual(
+      expect.stringContaining('label')
+    )
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', condition: { field: 'status' } }]))
+    ).toContainEqual(expect.stringContaining('condition'))
+    expect(
+      problemsOf(
+        withBlocks([
+          { kind: 'kpi', resource: 'contract', label: 'X', condition: { field: 'status', operator: 'like', value: 'a' } }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('operator'))
+  })
+
+  it('la ventana exige campo, y days solo con el preset days', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', window: { preset: 'month' } }]))
+    ).toContainEqual(expect.stringContaining('window.field'))
+    expect(
+      problemsOf(
+        withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', window: { field: 'startDate', preset: 'days' } }])
+      )
+    ).toContainEqual(expect.stringContaining('window.days'))
+    expect(
+      problemsOf(
+        withBlocks([
+          {
+            kind: 'kpi',
+            resource: 'contract',
+            label: 'X',
+            window: { field: 'startDate', preset: 'month', days: 30 }
+          }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('window.days'))
+  })
+
+  it('comparar exige ventana: no hay periodo anterior de «siempre»', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', compare: true }]))
+    ).toContainEqual(expect.stringContaining('compare'))
+  })
+
+  it('ratio y target son excluyentes, y el target es positivo', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', ratio: true, target: 10 }]))
+    ).toContainEqual(expect.stringContaining('ratio'))
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', target: 0 }]))
+    ).toContainEqual(expect.stringContaining('target'))
+  })
+
+  it('top-n exige campo de orden y una n entera de 1 a 20', () => {
+    const app = defineApp(withBlocks([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }]))
+    expect(app.pages[0].kind).toBe('dashboard')
+
+    expect(problemsOf(withBlocks([{ kind: 'top-n', resource: 'contract', n: 5 }]))).toContainEqual(
+      expect.stringContaining('field')
+    )
+    expect(
+      problemsOf(withBlocks([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 0 }]))
+    ).toContainEqual(expect.stringContaining('n'))
+    expect(
+      problemsOf(withBlocks([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 21 }]))
+    ).toContainEqual(expect.stringContaining('n'))
+    expect(
+      problemsOf(withBlocks([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 2.5 }]))
+    ).toContainEqual(expect.stringContaining('n'))
+  })
+
   it('el mismo recurso admite varios bloques; el duplicado exacto no', () => {
     expect(
       problemsOf(
