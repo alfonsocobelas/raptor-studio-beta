@@ -1,5 +1,10 @@
 # Spec 29: Vista papelera (fase 5 · A1)
 
+> ⚠️ **SPEC RETIRADA (2026-08-27).** La papelera se eliminó del generador por decisión de
+> Alfonso: ni endpoints (`/deleted`, `/:id/restore`), ni casos de uso, ni métodos de puerto o
+> adapter, ni vista, ni ruta. El borrado suave se mantiene como defecto — archiva y deja de
+> verse, pero ya no vuelve. Este documento queda como registro histórico de lo que hubo.
+
 ---
 
 ## Contexto de negocio
@@ -36,7 +41,7 @@ si no, no existe ni un byte de ella en el código generado.
 - [ ] Un modelo sin `softDelete` genera EXACTAMENTE el mismo código que antes de esta spec
 - [ ] Los tests emitidos cubren el use case de restore y la integración del repositorio
 - [ ] Golden diff: license y project (softDelete) incorporan la papelera vía re-baseline
-  deliberado; customer y contract (sin softDelete) quedan byte a byte igual
+      deliberado; customer y contract (sin softDelete) quedan byte a byte igual
 
 ## Referencias (proyecto de referencia y diseño)
 

@@ -1,5 +1,8 @@
 # Diseño técnico: Vista papelera
 
+> ⚠️ **SPEC RETIRADA (2026-08-27).** La papelera se eliminó del generador; este documento
+> queda como registro histórico. Ver el aviso de REQUIREMENTS.md.
+
 > Todo lo de abajo se EMITE por el generador, condicionado a `softDelete && list.features.delete`.
 > Regla 8: las plantillas solo interpolan; la condición y los nombres se calculan en
 > `build-substitutions.ts` (nueva bandera `trash: boolean` en las sustituciones).
@@ -81,19 +84,19 @@ abstract restore(entityId: EntityId): Promise<void>
 
 ## Decisiones técnicas
 
-| Decisión | Opción elegida | Razón |
-| --- | --- | --- |
-| Endpoint de borrados | `GET /<plural>/deleted` separado | Un filtro `?deleted=true` en el search contaminaría el criteria permitido y el gate de filtros |
-| `deletedAt` en el DTO | NO se expone | El dominio no conoce la columna; subirla atravesaría las capas por una columna de UI (fuera de scope) |
-| Confirmación al restaurar | Sin diálogo | Restaurar es la operación segura |
-| Menú lateral | Sin entrada | La papelera es subordinada del listado; entrada propia = ruido |
-| Restore de id inexistente | No-op 204 idempotente | Misma semántica que el DELETE actual |
+| Decisión                  | Opción elegida                   | Razón                                                                                                 |
+| ------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Endpoint de borrados      | `GET /<plural>/deleted` separado | Un filtro `?deleted=true` en el search contaminaría el criteria permitido y el gate de filtros        |
+| `deletedAt` en el DTO     | NO se expone                     | El dominio no conoce la columna; subirla atravesaría las capas por una columna de UI (fuera de scope) |
+| Confirmación al restaurar | Sin diálogo                      | Restaurar es la operación segura                                                                      |
+| Menú lateral              | Sin entrada                      | La papelera es subordinada del listado; entrada propia = ruido                                        |
+| Restore de id inexistente | No-op 204 idempotente            | Misma semántica que el DELETE actual                                                                  |
 
 ## Riesgos identificados
 
-| Riesgo | Prob. | Impacto | Mitigación |
-| --- | --- | --- | --- |
-| El shape del golden de license/project cambia (ficheros nuevos) | segura | medio | Re-baseline deliberado, commit propio, revisando el diff completo |
-| Colisión con la sesión concurrente (data-table.ts.template en vuelo) | media | medio | La papelera NO toca data-table; adds selectivos; re-mirar `git status` antes de cada commit |
-| Ruta `/deleted` vs `:id` (matching de Nest) | baja | alto | Test e2e emitido pide `/deleted` y comprueba 200 con página, no 400 de UUID inválido |
-| `TypeOrmRepository` base no expone hook para `withDeleted` | media | medio | Medir primero; si hace falta, método protegido nuevo en el repo base del kernel (con su test) |
+| Riesgo                                                               | Prob.  | Impacto | Mitigación                                                                                    |
+| -------------------------------------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------- |
+| El shape del golden de license/project cambia (ficheros nuevos)      | segura | medio   | Re-baseline deliberado, commit propio, revisando el diff completo                             |
+| Colisión con la sesión concurrente (data-table.ts.template en vuelo) | media  | medio   | La papelera NO toca data-table; adds selectivos; re-mirar `git status` antes de cada commit   |
+| Ruta `/deleted` vs `:id` (matching de Nest)                          | baja   | alto    | Test e2e emitido pide `/deleted` y comprueba 200 con página, no 400 de UUID inválido          |
+| `TypeOrmRepository` base no expone hook para `withDeleted`           | media  | medio   | Medir primero; si hace falta, método protegido nuevo en el repo base del kernel (con su test) |

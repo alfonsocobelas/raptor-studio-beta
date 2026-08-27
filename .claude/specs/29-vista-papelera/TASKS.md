@@ -1,5 +1,10 @@
 # Tareas atómicas: Vista papelera
 
+> ⚠️ **SPEC RETIRADA (2026-08-27).** La papelera se eliminó del generador por decisión de
+> Alfonso: ni endpoints (`/deleted`, `/:id/restore`), ni casos de uso, ni métodos de puerto o
+> adapter, ni vista, ni ruta. El borrado suave se mantiene como defecto — archiva y deja de
+> verse, pero ya no vuelve. Este documento queda como registro histórico de lo que hubo.
+
 > Cada tarea = un commit atómico en develop. TDD: tests unitarios de emisión primero (specs del
 > plugin) + gate de oro. Los modelos con `softDelete` (license, project) validan la emisión; los
 > que no lo tienen (customer, contract) validan la no-regresión byte a byte.
