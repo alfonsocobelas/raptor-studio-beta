@@ -315,3 +315,89 @@ describe('el modo oscuro es gris, no negro', () => {
     expect(light['card-foreground']).toBe('oklch(0.145 0 0)')
   })
 })
+
+/**
+ * Croma y tono POR ESCALÓN (spec 69). Motivo real: la paleta de la casa —la que viste al propio
+ * estudio— no es un tono con un croma; es un tono cálido cuyo croma SUBE al bajar la luminancia
+ * (0.003 en el papel, 0.006 en `muted`, 0.008 en el borde, 0.013 en el gris medio). Con un croma
+ * único no hay valor bueno: a 0.003 el borde sale neutro y a 0.008 el papel se recorta contra el
+ * gamut sRGB y sale blanco.
+ */
+describe('croma y tono por escalón (spec 69)', () => {
+  const warm = (): Theme => ({
+    surface: {
+      chroma: 0.005,
+      hue: 70,
+      chromaByStep: { page: 0.003, wash: 0.006, line: 0.008, dim: 0.013 },
+      hueByStep: { page: 85, wash: 75, line: 74, dim: 63, deep: 68 },
+      ramp: { page: 0.985, wash: 0.962, line: 0.918, dim: 0.56, deep: 0.215 },
+      untinted: ['base']
+    },
+    light: {
+      primary: 'oklch(0.215 0.005 68)',
+      primaryForeground: 'oklch(0.985 0.003 85)',
+      ring: 'oklch(0.656 0.197 32)',
+      sidebarPrimary: 'oklch(0.215 0.005 68)',
+      sidebarPrimaryForeground: 'oklch(0.985 0.003 85)'
+    },
+    dark: {
+      primary: 'oklch(0.94 0.004 80)',
+      primaryForeground: 'oklch(0.215 0.005 68)',
+      ring: 'oklch(0.7 0.19 33)',
+      sidebarPrimary: 'oklch(0.985 0.003 85)',
+      sidebarPrimaryForeground: 'oklch(0.215 0.005 68)'
+    }
+  })
+
+  it('cada escalón lleva el croma y el tono que declara, no el de la superficie', () => {
+    // GIVEN un tema que declara croma y tono escalón a escalón
+    // WHEN se deriva
+    const tokens = deriveTheme(warm())
+
+    // THEN cada superficie sale con los suyos
+    expect(tokens.light['background']).toBe('oklch(0.985 0.003 85)')
+    expect(tokens.light['muted']).toBe('oklch(0.962 0.006 75)')
+    expect(tokens.light['border']).toBe('oklch(0.918 0.008 74)')
+    expect(tokens.light['muted-foreground']).toBe('oklch(0.56 0.013 63)')
+    expect(tokens.light['foreground']).toBe('oklch(0.215 0.005 68)')
+  })
+
+  it('el escalón sin declarar cae al croma y al tono de la superficie', () => {
+    // GIVEN el mismo tema: `subtle` no aparece en ninguno de los dos mapas
+    // WHEN se deriva
+    const tokens = deriveTheme(warm())
+
+    // THEN la barra lateral usa las semillas de la superficie
+    expect(tokens.light['sidebar']).toBe('oklch(0.985 0.005 70)')
+  })
+
+  it('un escalón sin teñir sigue neutro aunque lo declare por escalón', () => {
+    // GIVEN un tema que deja `base` fuera del tinte y además le pone croma propio
+    const theme = warm()
+    theme.surface.chromaByStep = { ...theme.surface.chromaByStep, base: 0.02 }
+
+    // WHEN se deriva
+    const tokens = deriveTheme(theme)
+
+    // THEN la tarjeta sigue blanca: `untinted` manda sobre el croma por escalón
+    expect(tokens.light['card']).toBe('oklch(1 0 0)')
+  })
+
+  it('los temas que no declaran los mapas no cambian ni un carácter', () => {
+    // GIVEN el neutro y un tema teñido del patrón de siempre (croma y tono únicos)
+    const classic: Theme = {
+      ...neutral(),
+      surface: { chroma: 0.02, hue: 300, ramp: { page: 0.965 }, untinted: ['base'] }
+    }
+
+    // WHEN se derivan
+    const plain = deriveTheme(neutral())
+    const tint = deriveTheme(classic)
+
+    // THEN emiten exactamente lo de hoy: el campo nuevo no puede tocar el catálogo vivo
+    expect(plain.light).toEqual(NEUTRAL_LIGHT)
+    expect(tint.light['background']).toBe('oklch(0.965 0.02 300)')
+    expect(tint.light['muted']).toBe('oklch(0.97 0.02 300)')
+    expect(tint.light['card']).toBe('oklch(1 0 0)')
+  })
+})

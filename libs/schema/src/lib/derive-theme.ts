@@ -75,6 +75,18 @@ export interface ThemeSurface {
    * relieve. Teñir ambas por igual devuelve una mancha plana.
    */
   untinted?: (keyof Ramp)[]
+  /**
+   * Croma escalón a escalón, para el tema que lo necesita (spec 69). El caso real es la paleta
+   * de la casa: es un cálido cuyo croma SUBE al bajar la luminancia (0.003 en el papel, 0.008 en
+   * el borde, 0.013 en el gris medio). Con un croma único no hay valor bueno —a 0.003 el borde
+   * sale neutro, a 0.008 el papel se recorta contra sRGB y sale blanco.
+   *
+   * El escalón que no aparece cae a `chroma`, así que un tema que no lo declara no cambia nada.
+   * `untinted` sigue mandando: un escalón sin teñir se queda neutro aunque tenga croma propio.
+   */
+  chromaByStep?: Partial<Record<keyof Ramp, number>>
+  /** Tono escalón a escalón, mismo contrato que `chromaByStep`: sin declarar, cae a `hue`. */
+  hueByStep?: Partial<Record<keyof Ramp, number>>
 }
 
 export interface Theme {
@@ -207,7 +219,9 @@ const surfaceTokens = (
   const untinted = new Set(surface.untinted ?? [])
   const tokens: Record<string, string> = {}
   for (const [token, step] of Object.entries(roles)) {
-    tokens[token] = untinted.has(step) ? oklch(ramp[step], 0, 0) : oklch(ramp[step], surface.chroma, surface.hue)
+    const chroma = surface.chromaByStep?.[step] ?? surface.chroma
+    const hue = surface.hueByStep?.[step] ?? surface.hue
+    tokens[token] = untinted.has(step) ? oklch(ramp[step], 0, 0) : oklch(ramp[step], chroma, hue)
   }
   return tokens
 }
