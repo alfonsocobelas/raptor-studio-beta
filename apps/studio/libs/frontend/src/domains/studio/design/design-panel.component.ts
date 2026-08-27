@@ -72,13 +72,18 @@ const PANEL_TABS: readonly PanelTabOption[] = [
             </div>
 
             <h3 class="studio-eyebrow mb-2 mt-4">Modo</h3>
-            <div class="flex items-center gap-1 rounded-md border p-0.5">
+            <div class="bg-foreground/5 flex rounded-lg p-0.5" role="group" aria-label="Modo">
               @for (mode of modes; track mode) {
                 <button
                   type="button"
-                  class="hover:ring-foreground/25 flex-1 rounded px-2 py-1 text-xs transition-shadow hover:ring-1"
-                  [class.bg-accent]="preview.theme() === mode"
+                  class="studio-ui flex-1 rounded-md px-2 py-1.5 text-center text-xs transition-colors"
+                  [class.bg-background]="preview.theme() === mode"
+                  [class.ring-1]="preview.theme() === mode"
+                  [class.ring-border]="preview.theme() === mode"
+                  [class.shadow-sm]="preview.theme() === mode"
                   [class.font-semibold]="preview.theme() === mode"
+                  [class.text-muted-foreground]="preview.theme() !== mode"
+                  [attr.aria-current]="preview.theme() === mode ? 'true' : null"
                   [attr.data-testid]="'preview-mode-' + mode"
                   (click)="preview.theme.set(mode)"
                 >
