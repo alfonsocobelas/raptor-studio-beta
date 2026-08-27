@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import {
@@ -27,14 +27,11 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (!store.resources().length) {
-      <div
-        class="flex h-full flex-col items-center justify-center text-center"
-        data-testid="access-table-empty"
-      >
+      <div class="flex h-full flex-col items-center justify-center text-center" data-testid="access-table-empty">
         <p class="text-muted-foreground mb-2 text-lg">Sin entidades todavía</p>
         <p class="text-muted-foreground max-w-md text-sm">
-          Los accesos se reparten sobre el diseño: crea entidades en la pestaña <strong>Modelo</strong> y aquí
-          decidirás quién ve, crea, edita y borra cada una.
+          Los accesos se reparten sobre el diseño: crea entidades en la pestaña <strong>Modelo</strong> y aquí decidirás
+          quién ve, crea, edita y borra cada una.
         </p>
         <button
           type="button"
@@ -50,9 +47,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 class="text-2xl font-semibold">Quién puede con {{ selectedRow()?.label }}</h1>
-            <p class="text-muted-foreground mt-1 text-sm">
-              Una fila por rol; pulsa una celda para cambiar el permiso.
-            </p>
+            <p class="text-muted-foreground mt-1 text-sm">Una fila por rol; pulsa una celda para cambiar el permiso.</p>
           </div>
           <app-select
             class="w-56"
@@ -76,13 +71,17 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Editar</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Borrar</th>
                 @if (selectedHasTransitions()) {
-                  <th class="studio-eyebrow px-4 py-3 text-left font-normal">Transiciones</th>
+                  <th class="studio-eyebrow w-[116px] px-4 py-3 text-right font-normal">Flujo</th>
                 }
               </tr>
             </thead>
             <tbody>
               @for (role of roleRows; track role) {
-                <tr class="border-border/60 border-b last:border-b-0" [class.opacity-70]="role === 'admin'">
+                <tr
+                  class="border-border/60 border-b last:border-b-0"
+                  [class.opacity-70]="role === 'admin'"
+                  [class.border-b-0]="roleFlow() === role"
+                >
                   <td class="px-4 py-3.5">
                     <span class="block font-medium">{{ roleLabels[role] }}</span>
                     @if (role === 'admin') {
@@ -106,12 +105,41 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     </td>
                   }
                   @if (selectedHasTransitions()) {
-                    <td class="px-4 py-3.5">
-                      <div class="flex flex-wrap gap-1.5">
+                    <td class="px-4 py-3.5 text-right">
+                      <button
+                        type="button"
+                        class="flow-pill"
+                        [attr.aria-expanded]="roleFlow() === role"
+                        [attr.aria-label]="flowLabel(selectedRow()!, role)"
+                        [attr.data-testid]="'access-eflow-' + role"
+                        (click)="toggleRoleFlow(role)"
+                      >
+                        <span [class]="flowCountClasses(selectedRow()!, role)"
+                          >{{ flowGranted(selectedRow()!, role)
+                          }}<span class="text-muted-foreground font-normal"
+                            >/{{ transitionCells(selectedRow()!).length }}</span
+                          ></span
+                        >
+                        <span class="flow-chevron text-muted-foreground">▾</span>
+                      </button>
+                    </td>
+                  }
+                </tr>
+                @if (selectedHasTransitions() && roleFlow() === role) {
+                  <tr class="border-border/60 border-b last:border-b-0">
+                    <td
+                      colspan="6"
+                      class="bg-secondary px-4 pt-3.5 pb-4"
+                      [attr.data-testid]="'access-eflow-panel-' + role"
+                    >
+                      <div class="studio-eyebrow mb-2.5">
+                        Transiciones de {{ selectedRow()!.label }} · {{ roleLabels[role] }}
+                      </div>
+                      <div class="flow-grid">
                         @for (cell of transitionCells(selectedRow()!); track cell.capability) {
                           <button
                             type="button"
-                            class="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                            class="rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
                             [class]="chipClasses(cell, role)"
                             [attr.aria-pressed]="granted(cell, role)"
                             [disabled]="role === 'admin'"
@@ -123,8 +151,8 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         }
                       </div>
                     </td>
-                  }
-                </tr>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -195,13 +223,17 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Editar</th>
                 <th class="studio-eyebrow w-20 px-2 py-3 text-center font-normal">Borrar</th>
                 @if (hasTransitions()) {
-                  <th class="studio-eyebrow px-4 py-3 text-left font-normal">Transiciones</th>
+                  <th class="studio-eyebrow w-[116px] px-4 py-3 text-right font-normal">Flujo</th>
                 }
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.name) {
-                <tr class="border-border/60 border-b last:border-b-0" [attr.data-testid]="'access-row-' + row.name">
+                <tr
+                  class="border-border/60 border-b last:border-b-0"
+                  [class.border-b-0]="entityFlow() === row.name"
+                  [attr.data-testid]="'access-row-' + row.name"
+                >
                   <td class="px-4 py-3.5">
                     <span class="block font-medium">{{ row.label }}</span>
                   </td>
@@ -222,12 +254,43 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     </td>
                   }
                   @if (hasTransitions()) {
-                    <td class="px-4 py-3.5">
-                      <div class="flex flex-wrap gap-1.5">
+                    <td class="px-4 py-3.5 text-right">
+                      @if (transitionCells(row).length) {
+                        <button
+                          type="button"
+                          class="flow-pill"
+                          [attr.aria-expanded]="entityFlow() === row.name"
+                          [attr.aria-label]="flowLabel(row, ui.role())"
+                          [attr.data-testid]="'access-flow-' + row.name"
+                          (click)="toggleEntityFlow(row.name)"
+                        >
+                          <span [class]="flowCountClasses(row, ui.role())"
+                            >{{ flowGranted(row, ui.role())
+                            }}<span class="text-muted-foreground font-normal"
+                              >/{{ transitionCells(row).length }}</span
+                            ></span
+                          >
+                          <span class="flow-chevron text-muted-foreground">▾</span>
+                        </button>
+                      } @else {
+                        <span class="text-muted-foreground/70">—</span>
+                      }
+                    </td>
+                  }
+                </tr>
+                @if (entityFlow() === row.name) {
+                  <tr class="border-border/60 border-b last:border-b-0">
+                    <td
+                      colspan="6"
+                      class="bg-secondary px-4 pt-3.5 pb-4"
+                      [attr.data-testid]="'access-flow-panel-' + row.name"
+                    >
+                      <div class="studio-eyebrow mb-2.5">Transiciones de {{ row.label }}</div>
+                      <div class="flow-grid">
                         @for (cell of transitionCells(row); track cell.capability) {
                           <button
                             type="button"
-                            class="rounded-full border px-2.5 py-1 text-xs transition-colors"
+                            class="rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
                             [class]="chipClasses(cell, ui.role())"
                             [attr.aria-pressed]="granted(cell, ui.role())"
                             [disabled]="ui.role() === 'admin'"
@@ -239,8 +302,8 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         }
                       </div>
                     </td>
-                  }
-                </tr>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -289,6 +352,55 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
       border-color: rgb(232 105 94 / 0.5);
       color: #f0938b;
     }
+    /* La pastilla de la columna Flujo: dice cuántas transiciones tiene concedidas el rol y
+       abre la fila desplegable. Ancho fijo de columna (116px) y contenido corto: es lo que
+       impide que muchas transiciones deformen la retícula (rediseño 2026-08-27). */
+    .flow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background-color: var(--card);
+      border-radius: 999px;
+      padding: 4px 8px 4px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      transition:
+        border-color 0.15s,
+        background-color 0.15s;
+    }
+    .flow-pill:hover {
+      background-color: color-mix(in oklab, var(--foreground) 4%, var(--card));
+    }
+    /* Abierta, la pastilla se marca con el naranja de trabajo de la casa y gira el galón. */
+    .flow-pill[aria-expanded='true'] {
+      border-color: var(--flow-accent);
+    }
+    .flow-pill[aria-expanded='true'] .flow-chevron {
+      transform: rotate(180deg);
+    }
+    .flow-chevron {
+      font-size: 10px;
+      line-height: 1;
+    }
+    .flow-count {
+      font-weight: 600;
+    }
+    /* Los chips de la fila desplegada, en columnas que se adaptan al ancho: a 4 fijas
+       salían de 310px (barras) desde que Accesos se quedó sin panel derecho. */
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px;
+    }
+    /* Cero transiciones concedidas se ve sin abrir la fila: mismo rojo que la marca ✕. */
+    .flow-none {
+      font-weight: 600;
+      color: #d1493f;
+    }
+    :host-context(.dark) .flow-none {
+      color: #e8695e;
+    }
   `
 })
 export class AccessTableComponent {
@@ -297,6 +409,37 @@ export class AccessTableComponent {
   protected readonly modeService = inject(StudioModeService)
 
   protected readonly roleLabel = computed(() => ROLE_LABELS[this.ui.role()])
+
+  /**
+   * La fila con el flujo desplegado, una sola a la vez y por pivote. Es estado de UI VIVA:
+   * no viaja al diseño ni se persiste — al salir del modo se vuelve a entrar con todo cerrado.
+   */
+  private readonly openEntity = signal<string | null>(null)
+  private readonly openRole = signal<AccessActorRole | null>(null)
+  protected readonly entityFlow = this.openEntity.asReadonly()
+  protected readonly roleFlow = this.openRole.asReadonly()
+
+  protected toggleEntityFlow(name: string): void {
+    this.openEntity.update(current => (current === name ? null : name))
+  }
+
+  protected toggleRoleFlow(role: AccessActorRole): void {
+    this.openRole.update(current => (current === role ? null : role))
+  }
+
+  /** Transiciones concedidas al rol; admin las tiene todas por definición. */
+  protected flowGranted(row: AccessTableRow, role: AccessActorRole): number {
+    return this.transitionCells(row).filter(cell => this.granted(cell, role)).length
+  }
+
+  protected flowCountClasses(row: AccessTableRow, role: AccessActorRole): string {
+    return this.flowGranted(row, role) === 0 ? 'flow-none' : 'flow-count'
+  }
+
+  protected flowLabel(row: AccessTableRow, role: AccessActorRole): string {
+    const total = this.transitionCells(row).length
+    return `Transiciones de ${row.label} — ${this.flowGranted(row, role)} de ${total} para ${ROLE_LABELS[role]}`
+  }
 
   protected readonly rows = computed<AccessTableRow[]>(() => {
     const term = this.ui.search().trim().toLowerCase()
@@ -309,7 +452,9 @@ export class AccessTableComponent {
       })
   })
 
-  protected readonly hasTransitions = computed(() => this.rows().some(row => row.cells.some(c => c.kind === 'transition')))
+  protected readonly hasTransitions = computed(() =>
+    this.rows().some(row => row.cells.some(c => c.kind === 'transition'))
+  )
 
   protected readonly roleRows = ROLE_ROWS
   protected readonly roleLabels = ROLE_LABELS
@@ -364,5 +509,4 @@ export class AccessTableComponent {
   protected onSearch(event: Event): void {
     this.ui.search.set((event.target as HTMLInputElement).value)
   }
-
 }

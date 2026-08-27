@@ -18,6 +18,26 @@ function pressed(fixture: ReturnType<typeof mount>, id: string): boolean {
   return testId(fixture, id)?.getAttribute('aria-pressed') === 'true'
 }
 
+
+/** Factura con máquina de estados y DOS transiciones: la fila que hoy deforma la tabla. */
+function facturaConMaquina(store: DesignStore): void {
+  store.addResource('Factura')
+  store.addField('factura')
+  store.updateField('factura', 1, {
+    name: 'estado',
+    label: 'Estado',
+    type: 'enum',
+    values: [
+      { value: 'borrador', label: 'Borrador' },
+      { value: 'aprobada', label: 'Aprobada' },
+      { value: 'pagada', label: 'Pagada' }
+    ]
+  })
+  store.promoteState('factura', 'estado')
+  store.addTransition('factura', 'borrador', 'aprobada')
+  store.addTransition('factura', 'aprobada', 'pagada')
+}
+
 /**
  * Spec 49: la tabla central de Accesos (mockups 30A/31B) — filas de entidad, columnas
  * Ver/Crear/Editar/Borrar más las transiciones de cada máquina; cada celda es un botón
@@ -88,21 +108,11 @@ describe('AccessTableComponent', () => {
   })
 
   it('con máquina de estados aparece un conmutador por transición', () => {
-    store.addResource('Factura')
-    store.addField('factura')
-    store.updateField('factura', 1, {
-      name: 'estado',
-      label: 'Estado',
-      type: 'enum',
-      values: [
-        { value: 'borrador', label: 'Borrador' },
-        { value: 'aprobada', label: 'Aprobada' }
-      ]
-    })
-    store.promoteState('factura', 'estado')
-    store.addTransition('factura', 'borrador', 'aprobada')
+    facturaConMaquina(store)
 
     const fixture = mount()
+    testId(fixture, 'access-flow-factura')?.click()
+    fixture.detectChanges()
     const chip = testId(fixture, 'access-cell-factura-a-aprobada')
 
     expect(chip).not.toBeNull()
@@ -111,7 +121,7 @@ describe('AccessTableComponent', () => {
     chip?.click()
     fixture.detectChanges()
 
-    expect(store.resources()[0].access?.transitions).toEqual({ 'a-aprobada': [] })
+    expect(store.resources()[0].access?.transitions).toEqual({ 'a-aprobada': [], 'a-pagada': ['user'] })
   })
 
   it('con admin activo la tabla se mira pero no se toca', () => {
@@ -158,6 +168,101 @@ describe('AccessTableComponent', () => {
     expect(testId(fixture, 'access-cell-cliente-view')).not.toBeNull()
     expect(testId(fixture, 'access-cell-factura-view')).toBeNull()
     expect(testId(fixture, 'access-count')?.textContent).toContain('1 de 2')
+  })
+
+
+  /**
+   * Rediseño de la columna (2026-08-27): los chips de transición ya no viven en la celda
+   * —con muchas transiciones envolvían y deformaban la retícula—. La celda es un contador
+   * estrecho y los chips bajan a una fila desplegable. Estado de UI viva: no se persiste.
+   */
+  describe('columna Flujo', () => {
+    it('cuenta las transiciones concedidas del rol y no pinta los chips hasta abrirla', () => {
+      facturaConMaquina(store)
+
+      const fixture = mount()
+
+      expect(testId(fixture, 'access-flow-factura')?.textContent?.replace(/\s/g, '')).toContain('2/2')
+      expect(testId(fixture, 'access-cell-factura-a-aprobada')).toBeNull()
+
+      testId(fixture, 'access-cell-factura-view') // la retícula CRUD sigue en su sitio
+      expect(testId(fixture, 'access-flow-panel-factura')).toBeNull()
+    })
+
+    it('el contador abre la fila y un segundo click la cierra', () => {
+      facturaConMaquina(store)
+
+      const fixture = mount()
+      testId(fixture, 'access-flow-factura')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-flow-panel-factura')).not.toBeNull()
+      expect(testId(fixture, 'access-cell-factura-a-aprobada')).not.toBeNull()
+      expect(testId(fixture, 'access-cell-factura-a-pagada')).not.toBeNull()
+
+      testId(fixture, 'access-flow-factura')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-flow-panel-factura')).toBeNull()
+    })
+
+    it('solo hay una fila abierta a la vez', () => {
+      facturaConMaquina(store)
+      store.addResource('Pedido')
+      store.addField('pedido')
+      store.updateField('pedido', 1, {
+        name: 'estado',
+        label: 'Estado',
+        type: 'enum',
+        values: [
+          { value: 'nuevo', label: 'Nuevo' },
+          { value: 'servido', label: 'Servido' }
+        ]
+      })
+      store.promoteState('pedido', 'estado')
+      store.addTransition('pedido', 'nuevo', 'servido')
+
+      const fixture = mount()
+      testId(fixture, 'access-flow-factura')?.click()
+      fixture.detectChanges()
+      testId(fixture, 'access-flow-pedido')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-flow-panel-pedido')).not.toBeNull()
+      expect(testId(fixture, 'access-flow-panel-factura')).toBeNull()
+    })
+
+    it('el contador refleja lo que se retira sin cerrar la fila', () => {
+      facturaConMaquina(store)
+
+      const fixture = mount()
+      testId(fixture, 'access-flow-factura')?.click()
+      fixture.detectChanges()
+      testId(fixture, 'access-cell-factura-a-pagada')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-flow-factura')?.textContent?.replace(/\s/g, '')).toContain('1/2')
+      expect(testId(fixture, 'access-flow-panel-factura')).not.toBeNull()
+    })
+
+    it('una entidad sin máquina lleva un guion en la columna, no un contador', () => {
+      facturaConMaquina(store)
+      store.addResource('Cliente')
+
+      const fixture = mount()
+
+      expect(testId(fixture, 'access-flow-cliente')).toBeNull()
+      expect(fixture.nativeElement.querySelector('[data-testid="access-row-cliente"]')?.textContent).toContain('—')
+    })
+
+    it('sin ninguna máquina en el diseño la columna no existe', () => {
+      store.addResource('Cliente')
+
+      const fixture = mount()
+
+      expect(fixture.nativeElement.textContent).not.toContain('Flujo')
+      expect(testId(fixture, 'access-flow-cliente')).toBeNull()
+    })
   })
 
   describe('pivote Entidad', () => {
@@ -235,6 +340,29 @@ describe('AccessTableComponent', () => {
       fixture.detectChanges()
 
       expect(fixture.nativeElement.textContent).toContain('Quién puede con Facturas')
+    })
+
+    it('el contador y su desplegable van por fila de rol', () => {
+      facturaConMaquina(store)
+      ui.entity.set('factura')
+
+      const fixture = mount()
+
+      expect(testId(fixture, 'access-eflow-user')?.textContent?.replace(/\s/g, '')).toContain('2/2')
+      expect(testId(fixture, 'access-eflow-viewer')?.textContent?.replace(/\s/g, '')).toContain('0/2')
+      expect(testId(fixture, 'access-ecell-user-a-aprobada')).toBeNull()
+
+      testId(fixture, 'access-eflow-user')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-eflow-panel-user')).not.toBeNull()
+      expect(testId(fixture, 'access-ecell-user-a-aprobada')?.disabled).toBe(false)
+
+      testId(fixture, 'access-eflow-admin')?.click()
+      fixture.detectChanges()
+
+      expect(testId(fixture, 'access-eflow-panel-user')).toBeNull()
+      expect(testId(fixture, 'access-ecell-admin-a-aprobada')?.disabled).toBe(true)
     })
 
     it('un click en la celda persiste el permiso del rol de esa fila', () => {

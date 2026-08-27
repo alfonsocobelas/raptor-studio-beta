@@ -138,6 +138,8 @@ async function main(): Promise<void> {
   // el rol Usuario: «aprobar» es cosa de admin, «terminar» suya, y «facturar» se le retira aquí
   await page.getByTestId('access-role-user').click()
   await page.getByText('Qué puede hacer Usuario').waitFor()
+  // las transiciones ya no viven en la celda: la columna Flujo cuenta y la fila se despliega
+  await page.getByTestId('access-flow-orden').click()
   const aprobar = page.getByTestId('access-cell-orden-aprobar')
   await aprobar.waitFor()
   if ((await aprobar.getAttribute('aria-pressed')) !== 'false') fail('«aprobar» no venía restringida a admin')
