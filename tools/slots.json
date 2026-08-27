@@ -42,6 +42,11 @@
           "description": "Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro"
         },
         {
+          "value": "taller",
+          "label": "Taller (raptor)",
+          "description": "El marco del propio estudio: raíl de lino, versalitas anchas y el acento del tema; densidad cómoda"
+        },
+        {
           "value": "suite",
           "label": "Suite (ERP corporativo)",
           "description": "Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP"

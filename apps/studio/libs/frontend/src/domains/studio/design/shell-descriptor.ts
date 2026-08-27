@@ -34,8 +34,11 @@ export interface ShellRail {
   header: 'logo' | 'eyebrow'
   /** Texto de la versalita (header: 'eyebrow') */
   eyebrow?: string
-  /** Densidad de las entradas de navegación */
-  navDensity: 'comfortable' | 'compact'
+  /**
+   * Densidad de las entradas de navegación. `house` es la métrica del propio estudio (13px/600,
+   * radio de 7px) que usa la familia raptor; el activo se marca con el acento del tema.
+   */
+  navDensity: 'comfortable' | 'compact' | 'house'
   /** Contador de registros por entrada: la seña del centro de operaciones */
   counters: boolean
   /** Pie de sesión: el componente calcado del emitido, o los botones sueltos de cabina */
@@ -92,6 +95,26 @@ const CABINA: ShellDescriptor = {
   adminNav: false
 }
 
+/**
+ * Taller: el marco del propio estudio (spec 69). Raíl de lino derivado del tema, versalita bajo
+ * el nombre y la activa marcada con el acento. La densidad es la cómoda del neutro.
+ */
+const TALLER: ShellDescriptor = {
+  layout: 'rail',
+  rail: {
+    width: 'w-52',
+    surface: 'shell',
+    header: 'eyebrow',
+    eyebrow: 'Panel de gestión',
+    navDensity: 'house',
+    counters: false,
+    footer: 'component'
+  },
+  statusbar: 'none',
+  padding: 'p-6',
+  adminNav: true
+}
+
 /** ERP: banda de marca, pestañas de módulo y miga. */
 const SUITE: ShellDescriptor = {
   layout: 'banner',
@@ -104,6 +127,7 @@ const SUITE: ShellDescriptor = {
 export const SHELL_DESCRIPTORS: Record<PreviewPreset, ShellDescriptor> = {
   actual: ACTUAL,
   cabina: CABINA,
+  taller: TALLER,
   suite: SUITE
 }
 

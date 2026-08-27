@@ -426,6 +426,142 @@ input.app-toolbar,
 
 `
 
+/**
+ * ── La familia «raptor» (spec 69) ─────────────────────────────────────────────────────────────
+ *
+ * Tres pieles con la identidad de la casa, maquetadas y aprobadas el 2026-08-27 sobre el listado
+ * real emitido. Se separan de `cabina` y `suite` en dos criterios, y los dos son deliberados:
+ *
+ *   1. Sus superficies se DERIVAN de los tokens del tema (`color-mix` sobre --muted/--card/
+ *      --border) en vez de fijar oklch a mano. Así `taller` con el tema «océano» sigue siendo
+ *      coherente en vez de arrastrar un lino cálido a una app azul, y no hacen falta gemelas
+ *      bajo `.dark`: los tokens del tema ya traen su valor de noche.
+ *   2. El acento es `--ring`. El naranja aparece porque lo pone el tema «raptor», no porque la
+ *      piel lo escriba: ninguna de las tres tiene un hex de marca dentro.
+ *
+ * Y por eso sus tokens van en `tokens` (dentro del bloque del tema) y no en `css`: en `:root`
+ * suelto, `var(--muted)` NO resuelve —el tema se declara sobre el `<body>`—, el color-mix queda
+ * inválido y la superficie cae a transparente. Es la misma trampa que costó la spec 67.
+ */
+const TALLER_TOKENS = `  /* preset «taller»: el marco del propio estudio — raíl de lino sobre papel cálido.
+     Todo derivado del tema; el acento es el del tema, no un naranja escrito a mano. */
+  --shell-bg: color-mix(in oklab, var(--muted) 55%, var(--card));
+  --shell-fg: var(--muted-foreground);
+  --shell-fg-strong: var(--foreground);
+  --shell-border: color-mix(in oklab, var(--border) 80%, var(--foreground) 8%);
+  --shell-active: var(--card);
+  --shell-accent: var(--ring);`
+
+/**
+ * Cromo de Taller. Es la piel CÓMODA de la familia: la densidad del neutro, las esquinas del
+ * tema y una versalita ancha en cada cabecera. No apaga sombras ni aplana esquinas —eso es
+ * cabina—; lo que la distingue es el raíl de lino, el aire y la letra de las cabeceras.
+ */
+const TALLER_CSS = `
+/* ── preset «taller»: el marco del estudio ──────────────────────────────── */
+/* Sin @layer, como el resto de los presets: dentro de una capa estas reglas perderían contra
+   las utilidades de Tailwind, que es de donde sale el padding del DataTable. */
+.app-shell-main {
+  background: var(--background);
+}
+
+/* la cabecera de la tabla, en versalitas anchas y apagadas: la seña de la casa */
+.app-shell-main table th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.app-shell-main table td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* ── los contratos neutros y sus gemelos hlm (spec 67) ───────────────────── */
+/* [hlm*] sólo existe en data-table y kpi-card; el resto de las pantallas emite
+   [appbtn]/[appinput]/[appbadge], y sin ellos la piel se queda en las tablas. */
+[hlmbtn],
+[appbtn] {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+[hlminput],
+[appinput] {
+  border-radius: 8px;
+}
+
+/* la etiqueta de estado es una píldora con fondo lavado, no un rectángulo */
+[hlmbadge],
+[appbadge] {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ── los hooks de piel (spec 67) ─────────────────────────────────────────── */
+/* El cromo que las plantillas escriben a mano —panel del calendario, columna del kanban, ficha
+   de detalle— no lleva directiva ninguna: sólo lo alcanza el hook. Los colores salen de los
+   tokens del tema y de los --shell-*, que ya tienen valor en claro y en oscuro. */
+.app-panel {
+  border-radius: 14px;
+  border-color: var(--shell-border);
+}
+
+.app-panel-head {
+  border-color: var(--shell-border);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.app-cell {
+  border-color: var(--shell-border);
+}
+
+.app-chip {
+  border-radius: 999px;
+  border-color: var(--shell-border);
+  font-weight: 600;
+}
+
+/* el toolbar viste también sus controles crudos: gantt, galería, importación y detalle
+   escriben <button>/<input> sin pasar por [appbtn]/[appinput], y el buscador suelto lleva el
+   hook en sí mismo (de ahí input.app-toolbar) */
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar {
+  border-radius: 8px;
+}
+
+/* la cifra del KPI manda en la tarjeta, con la etiqueta en versalita encima */
+.app-metric {
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* los NÚMEROS de toda la app tratados igual: la letra es la del tema, la uniformidad la dan
+   las cifras tabulares. Un bloque nuevo se suma añadiendo su hook a esta lista. */
+.app-metric,
+.app-cell,
+.app-chip,
+.app-toolbar,
+.app-toolbar button,
+.app-toolbar input,
+input.app-toolbar,
+.app-shell-main table td.text-right,
+[hlminput],
+[appinput] {
+  font-variant-numeric: tabular-nums;
+}
+`
+
 export const DESIGN_PRESETS: readonly DesignPreset[] = [
   {
     id: 'actual',
@@ -441,6 +577,14 @@ export const DESIGN_PRESETS: readonly DesignPreset[] = [
     files: 'files-design/cabina',
     tokens: CABINA_TOKENS,
     css: CABINA_CSS
+  },
+  {
+    id: 'taller',
+    label: 'Taller (raptor)',
+    description: 'El marco del propio estudio: raíl de lino, versalitas anchas y el acento del tema; densidad cómoda',
+    files: 'files-design/taller',
+    tokens: TALLER_TOKENS,
+    css: TALLER_CSS
   },
   {
     id: 'suite',

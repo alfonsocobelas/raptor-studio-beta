@@ -74,4 +74,19 @@ describe('el shell del lienzo por piel', () => {
   it('suite: banda de marca, pestañas de módulo y miga', () => {
     expect(chrome(mount('suite'))).toMatchSnapshot()
   })
+
+  // ── Spec 69: la familia raptor. Estas tres NO tienen foto previa que respetar (nacen aquí),
+  // así que la instantánea las fija de aquí en adelante y el test dice qué se espera de cada una.
+  it('taller: raíl de lino con versalita y marcador de acento', () => {
+    const fixture = mount('taller')
+    const rail = fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')
+
+    // el acento del TEMA, no un naranja escrito a mano
+    expect(rail.innerHTML).toContain('var(--shell-accent)')
+    expect(rail.innerHTML).not.toMatch(/#f15539|#d75f3d/)
+    // versalita bajo el nombre y el pie de sesión calcado del emitido
+    expect(rail.textContent).toContain('Panel de gestión')
+    expect(fixture.nativeElement.querySelector('[data-testid="mock-session-footer"]')).not.toBeNull()
+    expect(chrome(fixture)).toMatchSnapshot()
+  })
 })

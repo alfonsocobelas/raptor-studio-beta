@@ -4,7 +4,7 @@ import { THEMES } from '@raptor/schema'
 export type PreviewTheme = 'light' | 'dark'
 
 /** Los presets visuales que conoce el generador (ranura `design`). */
-export type PreviewPreset = 'actual' | 'cabina' | 'suite'
+export type PreviewPreset = 'actual' | 'cabina' | 'taller' | 'suite'
 
 export interface PresetOption {
   id: PreviewPreset
@@ -20,6 +20,7 @@ export interface PresetOption {
 export const PREVIEW_PRESETS: PresetOption[] = [
   { id: 'actual', label: 'Actual (neutro)' },
   { id: 'cabina', label: 'Cabina (operaciones)' },
+  { id: 'taller', label: 'Taller (raptor)' },
   { id: 'suite', label: 'Suite (ERP)' }
 ]
 

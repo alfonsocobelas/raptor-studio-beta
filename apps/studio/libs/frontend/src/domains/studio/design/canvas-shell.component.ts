@@ -196,7 +196,38 @@ import { SYSTEM_VIEWS } from './system-preview/system-views'
 
     <ng-template #railNav>
       @if (rail(); as rail) {
-        @if (rail.navDensity === 'compact') {
+        @if (rail.navDensity === 'house') {
+          <!-- La métrica del propio estudio (spec 69): 13px/600, radio de 7px y el activo con el
+               papel de la tarjeta y el marcador en el acento del TEMA. Mismo marcado que el
+               shell emitido de la familia raptor, para que el espejo no vuelva a derivar. -->
+          <nav class="flex flex-col gap-0.5 p-2">
+            @for (page of pages(); track $index) {
+              @if (!page.drillDown) {
+                <div class="group relative">
+                  <button
+                    type="button"
+                    class="w-full rounded-[7px] px-3 py-1.5 text-left text-[13px] font-semibold"
+                    [style.color]="$index === active.designIndex() ? 'var(--shell-fg-strong)' : 'var(--shell-fg)'"
+                    [style.background]="$index === active.designIndex() ? 'var(--shell-active)' : ''"
+                    [style.box-shadow]="$index === active.designIndex() ? 'inset 2px 0 0 var(--shell-accent)' : ''"
+                    [attr.data-testid]="'nav-page-' + $index"
+                    (click)="active.select($index)"
+                  >
+                    {{ page.title }}
+                  </button>
+                  <button
+                    type="button"
+                    class="bg-destructive absolute -right-1 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
+                    [attr.data-testid]="'nav-close-' + $index"
+                    (click)="store.removePage($index)"
+                  >
+                    <ng-icon name="lucideX" size="10" />
+                  </button>
+                </div>
+              }
+            }
+          </nav>
+        } @else if (rail.navDensity === 'compact') {
           <nav class="flex flex-col gap-px p-2">
             @for (page of pages(); track $index) {
               @if (!page.drillDown) {

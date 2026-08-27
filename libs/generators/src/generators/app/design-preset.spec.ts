@@ -152,7 +152,7 @@ describe('app generator — ranura design (spec 37)', () => {
   // existen en DOS plantillas de todo el emitido (data-table y kpi-card). El resto de las
   // pantallas usa los contratos neutros del ADR-003 — [appbtn], [appinput], [appbadge] — así
   // que la piel no las alcanzaba: salvo las tablas, la app era idéntica en las tres pieles.
-  it.each(['cabina', 'suite'])('%s viste también los contratos neutros, no sólo los hlm', async design => {
+  it.each(['cabina', 'suite', 'taller'])('%s viste también los contratos neutros, no sólo los hlm', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     for (const contract of ['appbtn', 'appinput', 'appbadge']) {
@@ -164,7 +164,7 @@ describe('app generator — ranura design (spec 37)', () => {
 
   // Spec 67: el cromo que las plantillas escriben a mano (panel del calendario, columna del
   // kanban, ficha de detalle…) sólo lo alcanza la piel a través del vocabulario de hooks.
-  it.each(['cabina', 'suite'])('%s viste todos los hooks del vocabulario', async design => {
+  it.each(['cabina', 'suite', 'taller'])('%s viste todos los hooks del vocabulario', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     for (const hook of DESIGN_HOOKS) {
@@ -172,7 +172,7 @@ describe('app generator — ranura design (spec 37)', () => {
     }
   })
 
-  it.each(['cabina', 'suite'])('%s alcanza los controles crudos de un toolbar', async design => {
+  it.each(['cabina', 'suite', 'taller'])('%s alcanza los controles crudos de un toolbar', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
 
     // gantt, galería, importación y detalle escriben <button>/<input> sin contrato neutro
@@ -192,19 +192,22 @@ describe('app generator — ranura design (spec 37)', () => {
   // Decisión de Alfonso (2026-08-25), después de verlo: las tres pieles escriben con la
   // tipografía del NEUTRO. Una fuente por piel obligaba a arrastrar su paquete a cada app y la
   // identidad no la da la letra, sino la forma, la densidad y el cromo.
-  it.each(['actual', 'cabina', 'suite'])('%s escribe con la letra del tema, sin fuente propia', async design => {
-    const files = await emit({ ...base, design })
-    const styles = files.get(STYLES) ?? ''
-    const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
+  it.each(['actual', 'cabina', 'suite', 'taller'])(
+    '%s escribe con la letra del tema, sin fuente propia',
+    async design => {
+      const files = await emit({ ...base, design })
+      const styles = files.get(STYLES) ?? ''
+      const pkg = JSON.parse(files.get('apps/demo/package.json') ?? '{}')
 
-    // la ÚNICA declaración de familia es la del body, que lee el token del tema
-    expect(styles.match(/font-family:/g) ?? []).toHaveLength(1)
-    expect(styles).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/)
-    expect(styles).not.toContain('@fontsource')
-    expect(Object.keys(pkg.dependencies ?? {}).some(name => name.includes('fontsource'))).toBe(false)
-  })
+      // la ÚNICA declaración de familia es la del body, que lee el token del tema
+      expect(styles.match(/font-family:/g) ?? []).toHaveLength(1)
+      expect(styles).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/)
+      expect(styles).not.toContain('@fontsource')
+      expect(Object.keys(pkg.dependencies ?? {}).some(name => name.includes('fontsource'))).toBe(false)
+    }
+  )
 
-  it.each(['cabina', 'suite'])('%s sí unifica las cifras: tabulares en todas las pantallas', async design => {
+  it.each(['cabina', 'suite', 'taller'])('%s sí unifica las cifras: tabulares en todas las pantallas', async design => {
     const styles = (await emit({ ...base, design })).get(STYLES) ?? ''
     const rule = styles.match(/(\/\* los NÚMEROS[\s\S]*?)\}/)?.[1] ?? ''
 
@@ -254,6 +257,44 @@ describe('app generator — ranura design (spec 37)', () => {
     expect(styles).not.toContain('hlmbadge')
     expect(styles).not.toMatch(/--radius:\s*0(px)?\s*;/)
     expect(styles).not.toContain('preset «')
+  })
+
+  // ── Spec 69: la familia «raptor». Tres pieles maquetadas y aprobadas el 2026-08-27 sobre el
+  // listado real emitido. Lo que las distingue de cabina y suite: sus superficies se DERIVAN de
+  // los tokens del tema en vez de fijar oklch a mano, así que la piel sirve con cualquier tema y
+  // el acento es el del tema (`--ring`). Ninguna escribe un naranja literal.
+  describe('taller — el marco del estudio', () => {
+    it('emite su propio shell: raíl sobre lino, versalita y marcador de acento', async () => {
+      const shell = (await emit({ ...base, design: 'taller' })).get(SHELL) ?? ''
+
+      expect(shell).toContain('app-shell-side')
+      expect(shell).toContain('app-shell-main')
+      // la versalita del raíl, la seña de la casa
+      expect(shell).toMatch(/tracking-\[0\.12em\]/)
+      // el activo se marca con el acento del TEMA, no con un naranja escrito a mano
+      expect(shell).toContain('var(--shell-accent)')
+      expect(shell).not.toMatch(/#f15539|#d75f3d/)
+    })
+
+    it('deriva sus superficies del tema: la piel sirve con cualquiera de los siete', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+      const block = themeBlock(styles)
+
+      // dentro del bloque del tema a propósito: en :root suelto var(--muted) no resuelve,
+      // porque el tema se declara sobre el <body> (la trampa de la spec 67)
+      expect(block).toMatch(/--shell-bg:\s*color-mix\(in oklab, var\(--muted\)/)
+      expect(block).toMatch(/--shell-accent:\s*var\(--ring\)/)
+      // y por eso NO necesita gemelas bajo .dark: los tokens del tema ya tienen su valor de noche
+      expect(styles).not.toMatch(/\.dark[\s\S]*--shell-bg/)
+    })
+
+    it('no aplana las esquinas: es la piel cómoda, no la instrumentada', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+
+      expect(themeBlock(styles)).not.toMatch(/--radius:\s*0(px|rem)?\s*;/)
+      // el panel conserva su contorno y su relieve: aquí no se apaga la sombra
+      expect(styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? '').not.toMatch(/box-shadow:\s*none/)
+    })
   })
 
   it('un diseño desconocido falla antes de emitir nada', async () => {
