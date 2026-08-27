@@ -3,8 +3,8 @@ import { AccessTableComponent } from './access-table.component'
 
 /**
  * El centro del modo Accesos (spec 49): la tabla de permisos del pivote elegido en el
- * raíl. El resumen del rol NO vive aquí: es el panel derecho del estudio (el mismo hueco
- * que Modelo y Flujos usan para el suyo).
+ * raíl. Accesos no tiene panel derecho —la tabla se lee sola y gana ese ancho—, así que
+ * este es todo el contenido del modo.
  */
 @Component({
   selector: 'studio-access-view',

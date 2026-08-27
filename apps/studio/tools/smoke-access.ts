@@ -53,7 +53,7 @@ async function main(): Promise<void> {
   await page.getByText('Qué puede hacer Administrador').waitFor()
   if (!(await page.getByTestId('access-cell-factura-delete').isDisabled())) fail('las celdas de admin no van fijas')
 
-  // Consulta pierde «Ver»: el resumen cae a 0 y la matriz explícita viaja al schema
+  // Consulta pierde «Ver»: la celda se apaga y la matriz explícita viaja al schema
   await page.getByTestId('access-role-viewer').click()
   await page.getByText('Qué puede hacer Consulta').waitFor()
   await page.getByTestId('access-cell-factura-view').click()
@@ -61,8 +61,6 @@ async function main(): Promise<void> {
     .getByTestId('access-cell-factura-view')
     .and(page.locator('[aria-pressed="false"]'))
     .waitFor()
-  const visibles = (await page.getByTestId('access-summary-view').textContent()) ?? ''
-  if (!/Puede ver\s*0\/1/.test(visibles)) fail(`el resumen no refleja la retirada de Ver: «${visibles.trim()}»`)
   await shot(page, 'smoke-access-2-viewer-sin-ver')
 
   const json = (await page.getByTestId('schema-json').textContent()) ?? '{}'

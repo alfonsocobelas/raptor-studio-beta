@@ -54,8 +54,6 @@ import { ViewsSidebarComponent } from './views-sidebar.component'
 import { ModelSidebarComponent } from './model-sidebar.component'
 import { FlowSidebarComponent } from './flow-sidebar.component'
 import { AccessSidebarComponent } from './access-sidebar.component'
-import { AccessSummaryComponent } from './access-summary.component'
-import { AccessUiService } from './access-ui.service'
 import { AccessViewComponent } from './access-view.component'
 import { DesignPanelComponent } from './design-panel.component'
 import { ModelPanelComponent } from './model-panel.component'
@@ -87,7 +85,6 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     ModelSidebarComponent,
     FlowSidebarComponent,
     AccessSidebarComponent,
-    AccessSummaryComponent,
     AccessViewComponent,
     DesignPanelComponent,
     ModelPanelComponent,
@@ -389,11 +386,11 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
           </div>
         </div>
 
-        <!-- Accesos trae su propio panel derecho (el resumen del rol) y solo en el pivote Rol:
-             el de Vistas no pinta nada ahí, y una cuarta columna sobra. -->
-        @if (mode() === 'views' && active.systemView()) {
-          <!-- una vista de sistema no se edita: el panel se pliega y el lienzo gana su ancho -->
-        } @else if (mode() !== 'access') {
+        <!-- Accesos no pinta panel derecho: la tabla se lee sola y ganaba el ancho.
+             Vistas tampoco cuando la vista es de sistema (no se edita). -->
+        @if (mode() === 'access' || (mode() === 'views' && active.systemView())) {
+          <!-- sin panel: el lienzo gana su ancho -->
+        } @else {
           <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
             @if (mode() === 'model') {
               <studio-model-panel />
@@ -402,10 +399,6 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
             } @else {
               <studio-design-panel />
             }
-          </aside>
-        } @else if (accessUi.pivot() === 'role') {
-          <aside class="studio-rail studio-rail-end flex w-80 shrink-0 flex-col border-l p-4">
-            <studio-access-summary />
           </aside>
         }
       </div>
@@ -523,7 +516,6 @@ export class StudioCanvasComponent {
 
   protected readonly modes = STUDIO_MODES
   private readonly studioMode = inject(StudioModeService)
-  protected readonly accessUi = inject(AccessUiService)
   protected readonly mode = this.studioMode.mode
   protected readonly designMenu = signal(false)
   protected readonly renameSlug = signal('')
