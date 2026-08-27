@@ -98,8 +98,9 @@ El reparto de arriba se mantuvo salvo en dos puntos, y conviene que quede escrit
 - **`params` condicional roto en el emitido**: la unión de dos formas de objeto no encaja en
   ninguna sobrecarga de `HttpClient.get`. Lo cazó `typecheck-emitted.sh`, no el oro ni la suite.
 
-### Defecto de tooling detectado (fuera de esta spec)
+### Falsa alarma de tooling (anotada y corregida el mismo día)
 
-`tools/typecheck-emitted.sh` **sale con código 0 aunque reporte errores de TypeScript**. Aquí no
-importó porque se leyó el log, pero en CI un fallo del emitido pasaría por verde. Merece su propia
-tarea.
+Se apuntó que `tools/typecheck-emitted.sh` salía con código 0 aunque reportara errores. **Es
+falso**: el script acaba en `exit 1`. El 0 venía de cómo se invocó (`script > log; tail log`, y el
+estado de salida era el del `tail`). El gate es correcto; lo que hay que cuidar es no encadenar
+comandos detrás de él al leer su resultado.
