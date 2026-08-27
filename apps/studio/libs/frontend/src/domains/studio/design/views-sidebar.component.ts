@@ -168,7 +168,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:border-foreground/45 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border-2 border-dashed px-2 py-2 text-left transition-colors"
+              class="new-view studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -273,6 +273,58 @@ const BLOCK_TOOLS: BlockTool[] = [
     }
     .block-tool.dragging .grip {
       opacity: 1;
+    }
+    /* «Nueva vista» es un BOTÓN, no un hueco por rellenar: el contorno discontinuo lo
+       dejaba más liviano que los componentes macizos de arriba y no invitaba a pulsar.
+       El volumen sale del mismo idioma que las tarjetas del lienzo —anillo de 1px y
+       halo blando— y sobre todo del ciclo de pulsación: sube al pasar por encima y se
+       HUNDE al pulsar, que es lo que hace creer que hay una tecla debajo del dedo. */
+    .new-view {
+      background-color: var(--card);
+      color: var(--foreground);
+      box-shadow:
+        inset 0 1px 0 oklch(1 0 0 / 70%),
+        0 0 0 1px oklch(0 0 0 / 12%),
+        0 2px 3px oklch(0 0 0 / 10%),
+        0 8px 16px -8px oklch(0 0 0 / 26%);
+      transition:
+        box-shadow 120ms ease,
+        transform 120ms ease;
+    }
+    /* El «+» se queda en tinta apagada: el botón ya pesa, y así sigue diciendo
+       «aquí se añade» sin volver a parecer un placeholder. */
+    .new-view ng-icon {
+      color: var(--muted-foreground);
+    }
+    .new-view:hover {
+      transform: translateY(-1.5px);
+      box-shadow:
+        inset 0 1px 0 oklch(1 0 0 / 80%),
+        0 0 0 1px oklch(0 0 0 / 16%),
+        0 4px 6px oklch(0 0 0 / 12%),
+        0 14px 24px -10px oklch(0 0 0 / 32%);
+    }
+    .new-view:active {
+      transform: translateY(1px);
+      box-shadow:
+        inset 0 1px 2px oklch(0 0 0 / 14%),
+        0 0 0 1px oklch(0 0 0 / 14%);
+    }
+    /* De noche la sombra no se ve: el relieve lo sostiene un filo claro arriba y el
+       anillo, que es lo que separa la tecla del papel oscuro. */
+    :host-context(.dark) .new-view {
+      /* De noche el fondo de tarjeta es casi el tono del raíl: sin un punto de luz el
+         botón no tiene cuerpo, solo contorno. */
+      background-color: color-mix(in oklab, var(--card) 92%, white);
+      box-shadow:
+        inset 0 1px 0 oklch(1 0 0 / 10%),
+        0 0 0 1px oklch(1 0 0 / 12%),
+        0 6px 14px -8px oklch(0 0 0 / 60%);
+    }
+    :host-context(.dark) .new-view:active {
+      box-shadow:
+        inset 0 1px 2px oklch(0 0 0 / 40%),
+        0 0 0 1px oklch(1 0 0 / 12%);
     }
   `
 })
