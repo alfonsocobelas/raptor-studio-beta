@@ -15,7 +15,7 @@ export interface AppSelectOption {
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppSelect), multi: true }],
   template: `
     <hlm-select [value]="value()" (valueChange)="onSelect($event)" [itemToString]="toLabel">
-      <hlm-select-trigger [buttonId]="controlId()">
+      <hlm-select-trigger class="app-control" [buttonId]="controlId()">
         <hlm-select-value [placeholder]="placeholder()" />
       </hlm-select-trigger>
       <hlm-select-content *hlmSelectPortal>

@@ -11,7 +11,7 @@ import { HlmFieldImports } from '@spartan-ng/helm/field'
   template: `
     <hlm-field>
       @if (label()) {
-        <label hlmFieldLabel [for]="for()">{{ label() }}</label>
+        <label class="app-label" hlmFieldLabel [for]="for()">{{ label() }}</label>
       }
       <ng-content />
       @if (error()) {

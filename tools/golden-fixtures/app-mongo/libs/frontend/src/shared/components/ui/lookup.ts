@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input, output, signal } from '@angular/core'
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
+import { AppInput } from './input.directive'
 import { AppSelectOption } from './select'
 
 /**
@@ -9,6 +10,9 @@ import { AppSelectOption } from './select'
  */
 @Component({
   selector: 'app-lookup',
+  // el <input> pasa por el CONTRATO en vez de copiar sus clases: una sola fuente para el estilo
+  // del campo, y la piel lo alcanza por [appinput] como a cualquier otro (spec 69)
+  imports: [AppInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppLookup), multi: true }],
   template: `
@@ -18,7 +22,7 @@ import { AppSelectOption } from './select'
         type="text"
         role="combobox"
         autocomplete="off"
-        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        appInput
         [placeholder]="placeholder()"
         [attr.aria-expanded]="open()"
         [value]="text()"
