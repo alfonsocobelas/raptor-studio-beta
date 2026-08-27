@@ -7,6 +7,33 @@
 export type BlockWidth = 'full' | 'half'
 
 /**
+ * Operadores con los que un KPI puede condicionar su conteo (spec 70). Son EXACTAMENTE los que
+ * el filtro del listado sabe aplicar (`FilterOperator` del emitido): el panel no inventa
+ * comparaciones que la API no pueda resolver.
+ */
+export type KpiOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'starts_with' | 'ends_with'
+
+/** Medida del KPI. La spec 71 añade sum | avg | min | max | distinct cuando exista `aggregate`. */
+export type KpiMeasure = 'count'
+
+/** Ventana temporal relativa; `days` solo acompaña al preset homónimo. */
+export type KpiWindowPreset = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'
+
+export interface KpiCondition {
+  field: string
+  operator: KpiOperator
+  value: string
+}
+
+export interface KpiWindow {
+  /** Campo fecha sobre el que se acota la ventana */
+  field: string
+  preset: KpiWindowPreset
+  /** Longitud en días; obligatoria (y solo válida) con preset 'days' */
+  days?: number
+}
+
+/**
  * Un bloque del panel. El panel es una SECUENCIA de bloques como cualquier otra vista (ADR-009,
  * spec 53): el orden y el ancho salen del dibujo, y una capacidad nueva es un `kind` más — nunca
  * un cajón más al lado de otro. Sustituye a los widgets y a la ranura `tables` de la spec 52.
@@ -16,8 +43,44 @@ export type DashboardBlock =
   | { kind: 'metrics'; resources: string[]; width?: BlockWidth }
   /** Una barra por valor del enum, con su conteo (spec 32). Exige campo enum filterable. */
   | { kind: 'count-by'; resource: string; field: string; label?: string; width?: BlockWidth }
-  /** Tarjeta con un conteo condicionado: cuántos cumplen field = equals (spec 32) */
+  /**
+   * @deprecated spec 70: usa `kpi` con `condition`. Se sigue leyendo y `normalizeDashboardBlocks`
+   * lo traduce, para no romper los app-schema y los diseños ya guardados.
+   */
   | { kind: 'kpi-count'; resource: string; field: string; equals: string; label: string; width?: BlockWidth }
+  /**
+   * Tarjeta de un número (spec 70). Un solo kind con modificadores: `condition` acota QUÉ se
+   * cuenta, `window` CUÁNDO, y `ratio`/`compare`/`target` son tres lecturas del mismo número
+   * —porcentaje, variación y progreso—. Sin condición ni ventana es el total del recurso.
+   */
+  | {
+      kind: 'kpi'
+      resource: string
+      label: string
+      measure?: KpiMeasure
+      condition?: KpiCondition
+      window?: KpiWindow
+      /** El valor sobre el total del recurso en la misma ventana, en porcentaje */
+      ratio?: boolean
+      /** Variación contra la ventana anterior de la misma longitud (exige `window`) */
+      compare?: boolean
+      /** Barra de progreso hacia este objetivo (excluyente con `ratio`) */
+      target?: number
+      width?: BlockWidth
+    }
+  /** Lista corta ordenada por un campo: «Top 5 pedidos por importe» (spec 70). Una petición. */
+  | {
+      kind: 'top-n'
+      resource: string
+      /** Campo de orden; debe ser `query.sortable` */
+      field: string
+      n: number
+      /** Campo mostrado como etiqueta de la fila; por defecto el del listado */
+      labelField?: string
+      dir?: 'asc' | 'desc'
+      label?: string
+      width?: BlockWidth
+    }
   /** Evolución mensual de altas (últimos 12 meses) sobre un campo fecha filterable (spec 32) */
   | { kind: 'series'; resource: string; field: string; label?: string; width?: BlockWidth }
   /** El listado del recurso, embebido: mismo componente, sin su cabecera de pantalla (spec 52) */
