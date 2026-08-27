@@ -117,6 +117,7 @@ describe('hooks de piel — anti-desfase del lienzo', () => {
   const EXEMPT: Record<string, string> = {
     'canvas-header.component.ts': 'barra del mock: shell, no bloque',
     'canvas-controls.component.ts': 'controles de zoom del LIENZO, no de la app dibujada',
+    'canvas-shell.component.ts': 'ES el shell del mock (spec 69): lo viste el descriptor de la piel, no un hook',
     'canvas-session-footer.component.ts': 'pie de sesión del mock: shell',
     'canvas-admin-nav-group.component.ts': 'menú de administración del mock: shell',
     'canvas-page.component.ts': 'compone bloques y dibuja el papel del lienzo; el cromo es suyo',

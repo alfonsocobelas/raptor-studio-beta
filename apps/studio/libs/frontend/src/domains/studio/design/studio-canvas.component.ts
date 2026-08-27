@@ -45,12 +45,9 @@ import { ActiveViewService } from './active-view.service'
 import { CanvasNoticeService, type CanvasNotice } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { DesignHistoryService } from './design-history.service'
-import { CanvasAdminNavGroupComponent } from './canvas-admin-nav-group.component'
-import { CanvasSessionFooterComponent } from './canvas-session-footer.component'
-import { CanvasPageComponent } from './canvas-page.component'
+import { CanvasShellComponent } from './canvas-shell.component'
+import { shellOf } from './shell-descriptor'
 import { SystemViewComponent } from './system-view.component'
-import { SYSTEM_VIEWS } from './system-preview/system-views'
-import { mockTotal } from './mock-data'
 import { ModelViewComponent } from './model-view.component'
 import { FlowViewComponent } from './flow-view.component'
 import { ViewsSidebarComponent } from './views-sidebar.component'
@@ -80,9 +77,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
   imports: [
     FormsModule,
     NgIcon,
-    CanvasAdminNavGroupComponent,
-    CanvasSessionFooterComponent,
-    CanvasPageComponent,
+    CanvasShellComponent,
     SystemViewComponent,
     ChatPanelComponent,
     GeneratePageComponent,
@@ -327,252 +322,15 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
               <div
                 class="preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border"
                 [class.max-w-6xl]="!active.systemView()"
-                [class.flex]="preview.preset() !== 'suite'"
-                [class.flex-col]="preview.preset() === 'suite'"
+                [class.flex]="shellDescriptor().layout === 'rail'"
+                [class.flex-col]="shellDescriptor().layout === 'banner'"
                 [style]="previewVars()"
                 [attr.data-palette]="preview.palette()"
                 [attr.data-preset]="preview.preset()"
                 [class.dark]="preview.theme() === 'dark'"
                 data-testid="preview-scope"
               >
-                @if (preview.preset() === 'suite') {
-                  <!-- Shell «suite», réplica de files-design/suite: banda de marca + pestañas de
-                     módulo + miga sobre banda sombreada. Sin usuario en la banda: el real no lo lleva. -->
-                  <header
-                    class="flex h-10 shrink-0 items-center gap-3 px-4"
-                    style="background: var(--banner-bg); color: var(--banner-fg)"
-                    data-testid="mock-banner"
-                  >
-                    <span class="text-sm font-semibold capitalize tracking-wide">{{ store.appName() }}</span>
-                    <span class="h-4 w-px bg-current opacity-30"></span>
-                    <span class="text-xs opacity-70">Panel de gestión</span>
-                    <span class="flex-1"></span>
-                    <button
-                      type="button"
-                      class="text-xs opacity-70"
-                      data-testid="mock-theme-toggle"
-                      (click)="preview.toggleTheme()"
-                    >
-                      {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
-                    </button>
-                  </header>
-                  <nav class="bg-card flex shrink-0 border-b px-3" data-testid="mock-modules">
-                    @for (page of pages(); track $index) {
-                      @if (!page.drillDown) {
-                        <div class="group relative">
-                          <button
-                            type="button"
-                            class="text-muted-foreground border-b-[3px] border-transparent px-4 py-2 text-[12.5px]"
-                            [class.border-b-primary]="$index === active.designIndex()"
-                            [class.text-foreground]="$index === active.designIndex()"
-                            [class.font-semibold]="$index === active.designIndex()"
-                            [attr.data-testid]="'nav-page-' + $index"
-                            (click)="active.select($index)"
-                          >
-                            {{ page.title }}
-                          </button>
-                          <button
-                            type="button"
-                            class="bg-destructive absolute -right-1 top-1 hidden h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
-                            [attr.data-testid]="'nav-close-' + $index"
-                            (click)="store.removePage($index)"
-                          >
-                            <ng-icon name="lucideX" size="10" />
-                          </button>
-                        </div>
-                      }
-                    }
-                  </nav>
-                  <div
-                    class="text-muted-foreground shrink-0 border-b px-4 py-1.5 text-[11px]"
-                    style="background: var(--grid-head-bg, oklch(0.91 0.014 250))"
-                    data-testid="mock-breadcrumb"
-                  >
-                    Inicio › <span class="text-foreground font-semibold">{{ activeTitle() }}</span>
-                  </div>
-                  <section class="min-w-0 flex-1 p-4">
-                    @if (active.systemView(); as system) {
-                      <studio-system-view [viewId]="system" />
-                    } @else {
-                      <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
-                    }
-                  </section>
-                } @else if (preview.preset() === 'cabina') {
-                  <!-- Shell «cabina», réplica de files-design/cabina: barra a contraste, cabecera
-                     con subtítulo uppercase y el activo con barra izquierda — sin logo ni usuario. -->
-                  <aside
-                    class="flex w-56 shrink-0 flex-col"
-                    style="background: var(--shell-bg); border-right: 1px solid var(--shell-border)"
-                    data-testid="mock-sidebar"
-                  >
-                    <div class="px-4 py-3" style="border-bottom: 1px solid var(--shell-border)">
-                      <p class="text-[13px] font-bold capitalize tracking-wide" style="color: var(--shell-fg-strong)">
-                        {{ store.appName() }}
-                      </p>
-                      <p
-                        class="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em]"
-                        style="color: var(--shell-fg)"
-                      >
-                        Centro de operaciones
-                      </p>
-                    </div>
-                    <nav class="flex flex-col gap-px p-2">
-                      @for (page of pages(); track $index) {
-                        @if (!page.drillDown) {
-                          <div class="group relative">
-                            <button
-                              type="button"
-                              class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-left text-[12.5px]"
-                              [style.color]="
-                                $index === active.designIndex() ? 'var(--shell-fg-strong)' : 'var(--shell-fg)'
-                              "
-                              [style.background]="$index === active.designIndex() ? 'var(--shell-active)' : ''"
-                              [style.box-shadow]="$index === active.designIndex() ? 'inset 2px 0 0 var(--primary)' : ''"
-                              [class.font-semibold]="$index === active.designIndex()"
-                              [attr.data-testid]="'nav-page-' + $index"
-                              (click)="active.select($index)"
-                            >
-                              <span>{{ page.title }}</span>
-                              <!-- contador por recurso, la seña del centro de operaciones (maqueta skindemo) -->
-                              @if (pageCount($index); as count) {
-                                <span class="mono-data text-[10.5px] opacity-70">{{ count }}</span>
-                              }
-                            </button>
-                            <button
-                              type="button"
-                              class="bg-destructive absolute -right-1 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-[9px] font-bold text-white group-hover:flex"
-                              [attr.data-testid]="'nav-close-' + $index"
-                              (click)="store.removePage($index)"
-                            >
-                              <ng-icon name="lucideX" size="10" />
-                            </button>
-                          </div>
-                        }
-                      }
-                    </nav>
-                    <span class="flex-1"></span>
-                    <button
-                      type="button"
-                      class="flex items-center gap-2 px-4 py-2.5 text-[12px]"
-                      style="border-top: 1px solid var(--shell-border); color: var(--shell-fg)"
-                      data-testid="mock-theme-toggle"
-                      (click)="preview.toggleTheme()"
-                    >
-                      {{ preview.theme() === 'light' ? '🌙' : '☀️' }}
-                      <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[12px]"
-                      style="border-top: 1px solid var(--shell-border); color: var(--shell-fg)"
-                      data-testid="mock-session-footer-cabina"
-                      title="Mi cuenta"
-                      (click)="active.selectSystem('account')"
-                    >
-                      <span
-                        class="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold"
-                        style="background: var(--shell-active)"
-                        >AL</span
-                      >
-                      <span>Admin Local</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="w-full px-4 py-1.5 text-left text-[11px] opacity-80"
-                      style="color: var(--shell-fg)"
-                      data-testid="mock-logout-cabina"
-                      (click)="active.selectSystem('login')"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </aside>
-                  <div class="flex min-w-0 flex-1 flex-col">
-                    <!-- barra de estado de la maqueta: contexto / sección, en monospace -->
-                    <div
-                      class="mono-data flex h-8 shrink-0 items-center px-5 text-[11px]"
-                      style="background: var(--shell-bg); border-bottom: 1px solid var(--shell-border); color: var(--shell-fg)"
-                      data-testid="mock-statusbar"
-                    >
-                      <span class="lowercase">{{ store.appName() }}</span>
-                      <span class="mx-1.5 opacity-60">/</span>
-                      <span class="lowercase" style="color: var(--shell-fg-strong)">
-                        {{ activeTitle() }}
-                      </span>
-                    </div>
-                    <section class="min-w-0 flex-1 p-5">
-                      @if (active.systemView(); as system) {
-                        <studio-system-view [viewId]="system" />
-                      } @else {
-                        <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
-                      }
-                    </section>
-                  </div>
-                } @else {
-                  <aside
-                    class="preview-side bg-card flex w-56 shrink-0 flex-col border-r p-4"
-                    data-testid="mock-sidebar"
-                  >
-                    <div class="mb-6 flex items-center gap-2 px-1">
-                      <div
-                        class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md text-xs font-bold uppercase"
-                      >
-                        {{ store.appName().slice(0, 2) }}
-                      </div>
-                      <div>
-                        <p class="text-sm font-bold capitalize leading-tight">{{ store.appName() }}</p>
-                        <p class="text-muted-foreground text-xs">Panel de gestión</p>
-                      </div>
-                    </div>
-                    <nav class="flex flex-col gap-1">
-                      @for (page of pages(); track $index) {
-                        @if (!page.drillDown) {
-                          <div class="group relative">
-                            <button
-                              type="button"
-                              class="hover:bg-accent/60 w-full rounded-md px-3 py-2 text-left text-sm"
-                              [class.bg-accent]="$index === active.designIndex()"
-                              [class.font-semibold]="$index === active.designIndex()"
-                              [attr.data-testid]="'nav-page-' + $index"
-                              (click)="active.select($index)"
-                            >
-                              {{ page.title }}
-                            </button>
-                            <button
-                              type="button"
-                              class="bg-destructive absolute -right-1 top-1/2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white group-hover:flex"
-                              [attr.data-testid]="'nav-close-' + $index"
-                              (click)="store.removePage($index)"
-                            >
-                              <ng-icon name="lucideX" size="11" />
-                            </button>
-                          </div>
-                        }
-                      }
-                    </nav>
-                    <!-- espejo del emitido: grupo desplegable Administración (solo admin) → vista Usuarios -->
-                    <app-canvas-admin-nav-group />
-                    <span class="flex-1"></span>
-                    <!-- el botón de tema que llevará la app generada: aquí es funcional -->
-                    <button
-                      type="button"
-                      class="hover:bg-accent/60 mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm"
-                      data-testid="mock-theme-toggle"
-                      (click)="preview.toggleTheme()"
-                    >
-                      <ng-icon [name]="preview.theme() === 'light' ? 'lucideMoon' : 'lucideSun'" size="16" />
-                      <span>{{ preview.theme() === 'light' ? 'Tema oscuro' : 'Tema claro' }}</span>
-                    </button>
-                    <!-- pie de sesión de la maqueta (spec 63): calco del session-footer emitido -->
-                    <app-canvas-session-footer />
-                  </aside>
-                  <section class="min-w-0 flex-1 p-6">
-                    @if (active.systemView(); as system) {
-                      <studio-system-view [viewId]="system" />
-                    } @else {
-                      <studio-canvas-page [pageIndex]="active.index()" (select)="active.selectResource($event)" />
-                    }
-                  </section>
-                }
+                <studio-canvas-shell [shell]="shellDescriptor()" />
               </div>
             }
           </main>
@@ -778,12 +536,8 @@ export class StudioCanvasComponent {
 
   protected readonly pages = computed(() => this.store.pages())
 
-  /** Título de la miga: la vista del diseño o, si hay una abierta, la de sistema (spec 57). */
-  protected readonly activeTitle = computed(() => {
-    const system = this.active.systemView()
-    if (system) return SYSTEM_VIEWS.find(view => view.id === system)?.title ?? system
-    return this.pages()[this.active.index()]?.title ?? ''
-  })
+  /** El shell de la piel elegida, como datos: lo pinta studio-canvas-shell (spec 69). */
+  protected readonly shellDescriptor = computed(() => shellOf(this.preview.preset()))
 
   /** «Antes de generar» (spec 41): una capa sobre el lienzo, no una ruta ni un diálogo. */
   protected readonly wizardOpen = signal(false)
@@ -803,15 +557,6 @@ export class StudioCanvasComponent {
    * Contador de la barra lateral de cabina. Mismo total de mockup que usan los KPIs y la
    * paginación, así que el lienzo no se contradice consigo mismo. Solo para vistas con recurso.
    */
-  protected pageCount(index: number): string {
-    const page = this.pages()[index]
-    const resource = page?.blocks.find(block => block.resource)?.resource
-    if (!resource) return ''
-    const position = this.store.resources().findIndex(r => r.name === resource)
-    if (position < 0) return ''
-    const total = mockTotal(position)
-    return total >= 1000 ? `${(total / 1000).toFixed(1)}k` : String(total)
-  }
 
   constructor() {
     // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue
