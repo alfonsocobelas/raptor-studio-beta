@@ -843,10 +843,10 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
   }
 
   private _countBy(api: string, filters: KpiFilter[]): Promise<number> {
-    const params =
-      filters.length === 0
-        ? { page: '1', pageSize: '1' }
-        : { page: '1', pageSize: '1', filters: JSON.stringify(filters) }
+    // Record<string, string> y no un literal condicional: la unión de dos formas de objeto
+    // no encaja en ninguna sobrecarga de HttpClient.get
+    const params: Record<string, string> = { page: '1', pageSize: '1' }
+    if (filters.length) params['filters'] = JSON.stringify(filters)
 
     return firstValueFrom(this._http.get<PaginatedTotal>(api, { params })).then(r => r.total)
   }`)
