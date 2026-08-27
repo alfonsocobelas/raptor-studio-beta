@@ -72,7 +72,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
             </div>
 
             <h3 class="studio-eyebrow mb-2 mt-4">Modo</h3>
-            <div class="bg-foreground/5 flex rounded-lg p-0.5" role="group" aria-label="Modo">
+            <div class="mode-switch flex rounded-lg p-0.5" role="group" aria-label="Modo">
               @for (mode of modes; track mode) {
                 <button
                   type="button"
@@ -133,6 +133,14 @@ const PANEL_TABS: readonly PanelTabOption[] = [
         }
       </div>
     </div>
+  `,
+  styles: `
+    /* El canal del segmentado va en el rosa arcilla del estudio, no en gris: es el
+       naranja de la rejilla (#d75f3d) ya rebajado a superficie, así el hueco se lee
+       sin discutirle el protagonismo a la píldora blanca que va dentro. */
+    .mode-switch {
+      background-color: #e3baac;
+    }
   `
 })
 export class DesignPanelComponent {
