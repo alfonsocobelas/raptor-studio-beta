@@ -511,55 +511,171 @@ const TALLER_TOKENS = `  /* preset «taller»: el marco del propio estudio — r
  * cabina—; lo que la distingue es el raíl de lino, el aire y la letra de las cabeceras.
  */
 const TALLER_CSS = `
-/* ── preset «taller»: el marco del estudio ──────────────────────────────── */
-/* Sin @layer, como el resto de los presets: dentro de una capa estas reglas perderían contra
-   las utilidades de Tailwind, que es de donde sale el padding del DataTable. */
+/* ── preset «taller»: papelería ──────────────────────────────────────────────
+   La línea de diseño, no el acabado (revisión de Alfonso, 2026-08-27: «los componentes siguen
+   siendo muy parecidos… en uno los bordes son redondeados y en otro puntiagudos, pero viene a ser
+   lo mismo»). Lo que hace de esto una piel distinta es la ANATOMÍA: la etiqueta se sienta EN LÍNEA
+   con su control, el campo es un subrayado y no una caja, la sección es un filete y no una
+   tarjeta, el botón secundario es texto, el estado es un punto y los iconos son de trazo fino.
+   Se lee como un documento bien compuesto. Ni un componente duplicado: todo son selectores que
+   las plantillas ya emiten. */
 .app-shell-main {
   background: var(--background);
 }
 
-/* la cabecera de la tabla, en versalitas anchas y apagadas: la seña de la casa */
-.app-shell-main table th {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
+/* ── el formulario: etiqueta a la izquierda, campo subrayado ─────────────── */
+/* La etiqueta EN LÍNEA es el gesto que más cambia la pantalla: convierte una pila de cajas en
+   una hoja con dos columnas. El error salta a la columna del control, o caería bajo la etiqueta.
+   El prefijo .app-shell-main NO es decorativo: en el emitido las utilidades de Tailwind se
+   importan SIN capa, así que decide la especificidad, y el flex que helm pone en el host de
+   hlm-field (una clase, 0-1-0) le gana a «app-form-field hlm-field» (dos elementos, 0-0-2). Con
+   el prefijo son 0-1-3 y manda la piel. Medido en la app construida el 2026-08-27: sin él, la
+   regla se aplicaba y el navegador seguía apilando etiqueta sobre campo. */
+.app-shell-main app-form-field hlm-field {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
 }
 
-.app-shell-main table td {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+/* el control ocupa su columna: helm pone la utilidad de ancho completo en los hijos */
+.app-shell-main app-form-field .app-label {
+  text-align: right;
+  padding-top: 0.35rem;
 }
 
-/* ── los contratos neutros y sus gemelos hlm (spec 67) ───────────────────── */
-/* [hlm*] sólo existe en data-table y kpi-card; el resto de las pantallas emite
-   [appbtn]/[appinput]/[appbadge], y sin ellos la piel se queda en las tablas. */
+.app-shell-main app-form-field hlm-field-error {
+  grid-column: 2;
+}
+
+/* El campo no es una caja: es una línea sobre la que se escribe. Sin fondo, sin radio y sin
+   sangría izquierda — la sangría la marca la columna de la etiqueta. */
+[hlminput],
+[appinput] {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+}
+
+/* el control compuesto (disparador del select) se subraya igual: mismo lenguaje */
+.app-control,
+.app-control button {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+}
+
+/* el formulario respira como un documento, no como una rejilla de tarjetas */
+.app-shell-main form {
+  max-width: 46rem;
+}
+
+/* ── los botones: uno relleno, el resto texto ────────────────────────────── */
+/* El primario sigue siendo tinta rellena (el CTA se ve de lejos). El secundario deja de ser una
+   caja con borde y pasa a ser TEXTO: en una hoja no hay tres botones compitiendo. */
 [hlmbtn],
 [appbtn] {
   border-radius: 8px;
   font-weight: 600;
 }
 
-[hlminput],
-[appinput] {
-  border-radius: 8px;
+/* :not(.bg-*) es obligatorio: la base de spartan incluye una clase de borde en TODOS sus
+   botones, así que sin la exclusión esta regla se llevaba el relleno del CTA primario y «Nuevo
+   cliente» quedaba en texto pálido sobre el papel (visto en la app construida, 2026-08-27). */
+[hlmbtn].border:not(.bg-primary):not(.bg-destructive):not(.bg-secondary),
+[appbtn].border:not(.bg-primary):not(.bg-destructive):not(.bg-secondary) {
+  border-width: 0;
+  background: transparent;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--shell-border);
 }
 
-/* la etiqueta de estado es una píldora con fondo lavado, no un rectángulo */
+/* ── el estado: un punto y su palabra, no una píldora ────────────────────── */
+/* Sin fondo ni borde, el color lo pone la variante: es la marca del documento (una nota al
+   margen), no una etiqueta de plástico. El punto va en ::before para no tocar la plantilla. */
 [hlmbadge],
 [appbadge] {
-  border-radius: 999px;
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0.5rem;
   font-weight: 600;
+  background: transparent !important;
+  border: 0 !important;
 }
 
-/* ── los hooks de piel (spec 67) ─────────────────────────────────────────── */
-/* El cromo que las plantillas escriben a mano —panel del calendario, columna del kanban, ficha
-   de detalle— no lleva directiva ninguna: sólo lo alcanza el hook. Los colores salen de los
-   tokens del tema y de los --shell-*, que ya tienen valor en claro y en oscuro. */
+[hlmbadge]::before,
+[appbadge]::before {
+  content: '●';
+  margin-right: 0.4rem;
+  font-size: 0.7em;
+  line-height: 1;
+}
+
+[hlmbadge].bg-primary,
+[appbadge].bg-primary {
+  color: var(--foreground);
+}
+
+[hlmbadge].bg-secondary,
+[appbadge].bg-secondary {
+  color: var(--muted-foreground);
+}
+
+[hlmbadge].bg-destructive,
+[appbadge].bg-destructive {
+  color: var(--destructive);
+}
+
+/* ── los iconos: trazo fino y remate a escuadra ──────────────────────────── */
+/* ng-icons resuelve el grosor con var(--ng-icon__stroke-width, 2), así que la piel SÍ alcanza al
+   icono (el tamaño no: va inline por icono). Un trazo fino con remate recto es de plumilla; el
+   redondeado de serie es de aplicación. */
+.app-shell-main {
+  --ng-icon__stroke-width: 1.25;
+}
+
+.app-shell-main ng-icon svg {
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+
+/* ── la tabla: renglones, no rejilla ────────────────────────────────────── */
+/* Regla fuerte bajo la cabecera y aire entre renglones, sin filetes verticales ni cabecera
+   sombreada: es una tabla impresa. */
+.app-shell-main table th {
+  border-bottom: 1px solid var(--foreground);
+  padding-bottom: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.app-shell-main table td {
+  border-color: color-mix(in oklab, var(--border) 55%, transparent);
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* ── las superficies: filetes, no tarjetas ──────────────────────────────── */
+/* El panel pierde la caja entera y se anuncia con un filete arriba y su título en versalita:
+   es una sección de documento. Quien apaga la sombra devuelve el contorno como borde, y aquí el
+   contorno ES el filete superior (la tarjeta de spartan no tiene borde: su contorno es un ring,
+   que en Tailwind es un box-shadow). */
 .app-panel {
-  border-radius: 14px;
-  border-color: var(--shell-border);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  border-width: 0;
+  border-top: 1px solid var(--shell-border);
 }
 
 .app-panel-head {
@@ -575,21 +691,16 @@ const TALLER_CSS = `
   border-color: var(--shell-border);
 }
 
+/* la pastilla de dato sigue el lenguaje del estado: punto y palabra, sin caja */
 .app-chip {
-  border-radius: 999px;
-  border-color: var(--shell-border);
+  border-radius: 0;
+  border-width: 0;
+  background: transparent;
+  padding-left: 0;
   font-weight: 600;
 }
 
-/* La superficie FLOTANTE mantiene el relieve de la casa: papel de tarjeta y esquina generosa.
-   No hereda el aplanado de nadie, pero se declara igual para que la piel no dependa de que
-   .app-panel no la haya tocado. */
-.app-float {
-  background: var(--card);
-  border-radius: 14px;
-}
-
-/* La etiqueta del campo, en la versalita ancha de la casa (spec 69) */
+/* La etiqueta del campo, en la versalita ancha de la casa */
 .app-label {
   font-size: 0.7rem;
   font-weight: 600;
@@ -598,28 +709,26 @@ const TALLER_CSS = `
   color: var(--muted-foreground);
 }
 
-/* El control compuesto (disparador del select): mismas esquinas que el resto de los controles.
-   Se viste junto con su button descendiente: el disparador es el hijo, no el anfitrión. */
-.app-control,
-.app-control button {
-  border-radius: 8px;
-}
-
-/* el toolbar viste también sus controles crudos: gantt, galería, importación y detalle
-   escriben <button>/<input> sin pasar por [appbtn]/[appinput], y el buscador suelto lleva el
-   hook en sí mismo (de ahí input.app-toolbar) */
+/* El toolbar tampoco es una barra de botones: son enlaces sobre el papel */
 .app-toolbar,
 .app-toolbar button,
 .app-toolbar input,
 input.app-toolbar {
-  border-radius: 8px;
+  border-radius: 0;
+  background: transparent;
 }
 
-/* la cifra del KPI manda en la tarjeta, con la etiqueta en versalita encima */
+.app-toolbar input,
+input.app-toolbar {
+  border-width: 0 0 1px;
+  padding-left: 0;
+}
+
+/* La cifra manda, con su rótulo en versalita encima y sin caja alrededor */
 .app-metric {
-  font-size: 1.9rem;
+  font-size: 2.1rem;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
@@ -636,6 +745,18 @@ input.app-toolbar,
 [hlminput],
 [appinput] {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── la superficie FLOTANTE, al final a propósito ────────────────────────── */
+/* Va DETRÁS de .app-panel: misma especificidad, decide el orden de declaración. Un diálogo no
+   puede fundirse con el velo, así que recupera papel y contorno — pero con el radio corto de una
+   hoja, no el de una tarjeta. */
+.app-float {
+  background: var(--card);
+  border-radius: 4px;
+  border-width: 1px;
+  border-color: var(--shell-border);
+  border-top-color: var(--shell-border);
 }
 `
 

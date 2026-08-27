@@ -307,12 +307,66 @@ describe('app generator — ranura design (spec 37)', () => {
       expect(styles).not.toMatch(/\.dark[\s\S]*--shell-bg/)
     })
 
-    it('no aplana las esquinas: es la piel cómoda, no la instrumentada', async () => {
+    // La línea «papelería» (2026-08-27, tras la revisión de Alfonso: «los componentes siguen
+    // siendo muy parecidos… si en uno tiene los bordes redondeados en otro son puntiagudos, pero
+    // viene a ser lo mismo»). Lo que separa dos lenguajes de diseño es la ANATOMÍA, no el
+    // acabado: dónde se sienta la etiqueta, si el campo es una caja o un subrayado, si la
+    // sección es una tarjeta o un filete. Todo esto se alcanza con los selectores que ya hay.
+    it('sienta la etiqueta EN LÍNEA con el control, no encima', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+      const field = styles.match(/app-form-field hlm-field \{([^}]*)\}/)?.[1] ?? ''
+
+      expect(field).toMatch(/display:\s*grid/)
+      expect(field).toMatch(/grid-template-columns:\s*\d+px 1fr/)
+      // el selector tiene que llevar UNA CLASE por delante o pierde contra el `flex` que helm
+      // pone en el host: en el emitido las utilidades de Tailwind van sin capa y decide la
+      // especificidad (medido en la app construida, 2026-08-27)
+      expect(styles).toMatch(/\.app-shell-main app-form-field hlm-field \{/)
+      // el error tiene que caer en la columna del control, no bajo la etiqueta
+      expect(styles).toMatch(/hlm-field-error[^{]*\{[^}]*grid-column:\s*2/)
+    })
+
+    it('el campo es un SUBRAYADO, no una caja', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+      const input = styles.match(/\[hlminput\],\n\[appinput\] \{([^}]*)\}/)?.[1] ?? ''
+
+      expect(input).toMatch(/border-width:\s*0 0 1px/)
+      expect(input).toMatch(/background:\s*transparent/)
+    })
+
+    it('la sección es un FILETE, no una tarjeta: el panel pierde la caja', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+      const panel = styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? ''
+
+      expect(panel).toMatch(/box-shadow:\s*none/)
+      expect(panel).toMatch(/background:\s*transparent/)
+      expect(panel).toMatch(/border-top/)
+      // pero la superficie FLOTANTE recupera papel: un diálogo no puede fundirse con el velo
+      expect(styles).toMatch(/\.app-float \{[^}]*background:\s*var\(--card\)/)
+    })
+
+    it('el botón secundario es TEXTO y el estado un punto, no una píldora', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+
+      // y excluye a los rellenos: la base de spartan pone una clase de borde en todos sus botones,
+      // así que sin el :not() la regla se llevaba el relleno del CTA (visto en la app construida)
+      expect(styles).toMatch(/\[appbtn\]\.border:not\(\.bg-primary\)[^{]*\{[^}]*border-width:\s*0/)
+      expect(styles).toMatch(/\[appbadge\][^{]*\{[^}]*background:\s*transparent/)
+      expect(styles).toMatch(/\[appbadge\]::before[^{]*\{[^}]*content/)
+    })
+
+    it('los ICONOS también son de la piel: trazo fino y remate a escuadra', async () => {
+      const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
+
+      // ng-icons resuelve el grosor con var(--ng-icon__stroke-width, 2): es la palanca
+      expect(styles).toMatch(/--ng-icon__stroke-width:\s*1\.\d+/)
+      expect(styles).toMatch(/stroke-linecap:\s*butt/)
+    })
+
+    it('no aplana las esquinas por token: la identidad no está en la esquina', async () => {
       const styles = (await emit({ ...base, design: 'taller' })).get(STYLES) ?? ''
 
       expect(themeBlock(styles)).not.toMatch(/--radius:\s*0(px|rem)?\s*;/)
-      // el panel conserva su contorno y su relieve: aquí no se apaga la sombra
-      expect(styles.match(/\.app-panel \{([^}]*)\}/)?.[1] ?? '').not.toMatch(/box-shadow:\s*none/)
     })
   })
 

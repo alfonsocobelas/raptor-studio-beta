@@ -23,6 +23,10 @@ interface Measures {
   panelRadius: string
   kpiRadius: string
   kpiShadow: string
+  fieldColumns: string
+  inputBorder: string
+  iconStroke: string
+  badgeBg: string
   kpiGap: string
   kpiStripRule: string
   dialogBg: string
@@ -57,6 +61,11 @@ async function measure(page: Page): Promise<Measures> {
       // la tira de KPIs: ¿cajas o líneas? La celda sin caja, el hueco cerrado y la regla de la tira
       kpiRadius: read('app-kpi-card .app-panel', 'border-radius'),
       kpiShadow: read('app-kpi-card .app-panel', 'box-shadow'),
+      // la ANATOMÍA, que es lo que separa dos lenguajes de diseño (revisión del 2026-08-27)
+      fieldColumns: read('[data-testid="form-dialog"] app-form-field hlm-field', 'grid-template-columns'),
+      inputBorder: read('[data-testid="form-dialog"] [appinput]', 'border-top-width'),
+      iconStroke: read('[appbtn] ng-icon svg, button ng-icon svg', 'stroke-width'),
+      badgeBg: read('[appbadge], [hlmbadge]', 'background-color'),
       kpiGap: read('div.grid:has(> app-kpi-card)', 'gap'),
       kpiStripRule: read('div.grid:has(> app-kpi-card)', 'border-top-width'),
       dialogBg: read('[data-testid="form-dialog"] .app-panel', 'background-color'),
@@ -182,9 +191,19 @@ async function main(): Promise<void> {
     return table['banco'].panelShadow === 'none' && table['banco'].panelRadius === '6px'
   })
 
-  await check('taller conserva el relieve de la tarjeta KPI: es la piel cómoda', async () => {
-    // el relieve vive en la TARJETA (la del panel de pantalla lo pone la plantilla, no la piel)
-    return table['taller'].kpiShadow !== 'none' && table['taller'].kpiRadius === '14px'
+  await check('taller quita la caja al KPI sin cerrar el hueco: papelería, no tira', async () => {
+    const t = table['taller']
+    console.log(`   taller → KPI ${t.kpiRadius}/${t.kpiShadow}, hueco ${t.kpiGap}`)
+    return t.kpiShadow === 'none' && t.kpiRadius === '0px' && !t.kpiGap.startsWith('0px')
+  })
+
+  // La ANATOMÍA DEL FORMULARIO (etiqueta en línea, campo subrayado, estado en punto) NO se puede
+  // medir aquí: el mock del lienzo escribe su propio <label>/<input> en vez de pasar por
+  // app-form-field y [appinput]. Se mide sobre la app CONSTRUIDA: tools/smoke-69-emitido.ts.
+
+  await check('los iconos también son de la piel: taller los afina', async () => {
+    console.log(`   trazo → taller ${table['taller'].iconStroke} · actual ${table['actual'].iconStroke}`)
+    return table['taller'].iconStroke !== table['actual'].iconStroke
   })
 
   await check('rotulo lleva la navegación en una banda y la cifra más grande de la FAMILIA', async () => {
@@ -220,16 +239,18 @@ async function main(): Promise<void> {
 
   await check('banco funde los KPIs en una tira: líneas, no cajas', async () => {
     const b = table['banco']
-    const t = table['taller']
+    const n = table['actual']
     console.log(`   banco → hueco ${b.kpiGap}, celda ${b.kpiRadius}, regla ${b.kpiStripRule}`)
-    console.log(`   taller → hueco ${t.kpiGap}, celda ${t.kpiRadius}, regla ${t.kpiStripRule}`)
-    // la tira: hueco cerrado, celda sin caja y regla arriba. El resto de las pieles, cajas con aire.
+    console.log(`   actual → hueco ${n.kpiGap}, celda ${n.kpiRadius}, regla ${n.kpiStripRule}`)
+    // la tira: hueco cerrado, celda sin caja y regla arriba. El neutro, cajas con aire.
+    // (el contraejemplo NO puede ser taller: «papelería» también le quita la caja al KPI, pero
+    // conservando el hueco — son dos maneras distintas de no ser una tarjeta)
     return (
       b.kpiGap.startsWith('0px') &&
       b.kpiRadius === '0px' &&
       b.kpiStripRule === '1px' &&
-      !t.kpiGap.startsWith('0px') &&
-      t.kpiRadius !== '0px'
+      !n.kpiGap.startsWith('0px') &&
+      n.kpiRadius !== '0px'
     )
   })
 

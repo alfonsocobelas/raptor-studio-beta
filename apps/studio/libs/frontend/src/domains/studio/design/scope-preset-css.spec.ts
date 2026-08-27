@@ -77,8 +77,11 @@ describe('scopePresetCss', () => {
         if (!selector.endsWith(',')) continue
         expect(selector.startsWith(S)).toBe(true)
       }
-      expect(scoped).not.toContain(':root')
-      expect(scoped).not.toContain('.app-shell-main')
+      // Sobre el CSS sin comentarios, no sobre el bruto: un comentario del preset puede NOMBRAR
+      // un selector para explicar por qué está ahí (el de taller explica por qué necesita el
+      // prefijo de ámbito) y eso no tiñe nada. Antes esta comprobación lo leía como una fuga.
+      expect(withoutComments).not.toContain(':root')
+      expect(withoutComments).not.toContain('.app-shell-main')
     }
   )
 })
