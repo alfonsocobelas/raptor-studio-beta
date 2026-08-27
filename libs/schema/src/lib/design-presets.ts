@@ -445,7 +445,7 @@ input.app-toolbar,
  */
 const TALLER_TOKENS = `  /* preset «taller»: el marco del propio estudio — raíl de lino sobre papel cálido.
      Todo derivado del tema; el acento es el del tema, no un naranja escrito a mano. */
-  --shell-bg: color-mix(in oklab, var(--muted) 55%, var(--card));
+  --shell-bg: var(--muted);
   --shell-fg: var(--muted-foreground);
   --shell-fg-strong: var(--foreground);
   --shell-border: color-mix(in oklab, var(--border) 80%, var(--foreground) 8%);
@@ -573,7 +573,7 @@ const BANCO_TOKENS = `  /* preset «banco»: banco de trabajo — la misma casa 
   --radius-md: 6px;
   --radius-lg: 6px;
   --radius-xl: 6px;
-  --shell-bg: color-mix(in oklab, var(--muted) 70%, var(--card));
+  --shell-bg: color-mix(in oklab, var(--muted) 92%, var(--foreground) 8%);
   --shell-fg: var(--muted-foreground);
   --shell-fg-strong: var(--foreground);
   --shell-border: color-mix(in oklab, var(--border) 70%, var(--foreground) 12%);
@@ -650,8 +650,10 @@ const BANCO_CSS = `
   border-color: var(--shell-border);
 }
 
+/* Sin fondo a propósito: la banda de lino es de la CABECERA DE TABLA. Vestida aquí, la etiqueta
+   de la tarjeta KPI salía con una tira de lino a todo lo ancho que se leía como un artefacto
+   (visto en navegador el 2026-08-27). Lo que la piel le da al panel es la versalita y la línea. */
 .app-panel-head {
-  background: var(--shell-bg);
   border-color: var(--shell-border);
   font-size: 0.6rem;
   font-weight: 600;
@@ -765,9 +767,13 @@ const ROTULO_CSS = `
 
 /* ── los contratos neutros y sus gemelos hlm (spec 67) ───────────────────── */
 /* El CTA dominante SE VA AL ACENTO, al contrario que en taller y banco. Es lo que hace a esta
-   piel «de marca», y también su riesgo: el acento compite con los colores de estado. */
+   piel «de marca», y también su riesgo: el acento compite con los colores de estado.
+   El button.bg-primary suelto entra a propósito: gantt, galería, importación y detalle
+   escriben botones a mano sin pasar por el contrato (deuda conocida del ADR-003), y sin él el
+   CTA de esas pantallas se quedaba en tinta mientras el resto iba al acento. */
 [hlmbtn].bg-primary,
-[appbtn].bg-primary {
+[appbtn].bg-primary,
+.app-shell-main button.bg-primary {
   background: var(--shell-accent);
   color: var(--banner-fg);
 }
@@ -821,7 +827,8 @@ input.app-toolbar {
   border-radius: 8px;
 }
 
-/* la cifra es el titular del panel: la más grande de las cinco pieles */
+/* la cifra es el titular del panel: la más grande de la familia raptor. No la más grande de
+   TODAS —el contador de cabina es mayor a propósito, es instrumentación— y así lo mide el smoke. */
 .app-metric {
   font-size: 2.2rem;
   font-weight: 700;

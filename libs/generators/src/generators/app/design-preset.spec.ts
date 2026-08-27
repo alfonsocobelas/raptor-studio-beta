@@ -294,8 +294,15 @@ describe('app generator — ranura design (spec 37)', () => {
 
       // dentro del bloque del tema a propósito: en :root suelto var(--muted) no resuelve,
       // porque el tema se declara sobre el <body> (la trampa de la spec 67)
-      expect(block).toMatch(/--shell-bg:\s*color-mix\(in oklab, var\(--muted\)/)
+      expect(block).toMatch(/--shell-bg:\s*var\(--muted\)/)
       expect(block).toMatch(/--shell-accent:\s*var\(--ring\)/)
+      // y NINGUNO de sus tokens de piel lleva un color literal: todos salen del tema
+      const skinTokens = [...block.matchAll(/(--shell-[a-z-]+):\s*([^;]+);/g)].map(m => m[2])
+      expect(skinTokens.length).toBeGreaterThan(0)
+      for (const value of skinTokens) {
+        expect(value).toMatch(/var\(--/)
+        expect(value).not.toMatch(/#[0-9a-f]{3,8}|oklch\(/i)
+      }
       // y por eso NO necesita gemelas bajo .dark: los tokens del tema ya tienen su valor de noche
       expect(styles).not.toMatch(/\.dark[\s\S]*--shell-bg/)
     })

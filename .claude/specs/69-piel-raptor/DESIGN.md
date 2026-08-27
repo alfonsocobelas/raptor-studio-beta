@@ -92,23 +92,23 @@ Todas comparten dos reglas nuevas respecto a `cabina`/`suite`:
 
 ### 4.1 `taller` — el marco del estudio
 
-| | |
-|---|---|
-| shell | raíl de 208px sobre lino, costura a un paso del borde, versalita «Panel de gestión», activo con papel + marcador de 2px en `--ring` |
-| densidad | la del neutro (tabla `text-sm`, filas de 40px): es la piel «cómoda» |
-| radios | los del tema (10px); recuadro de panel a 9px, nav a 7px |
-| cromo | tarjeta KPI con borde y sombra mínima, cifra a 30px; pastillas redondas con fondo lavado |
-| hooks | `app-panel` 14px + borde, `app-panel-head` versalita, `app-metric` 30px, `app-chip` píldora, `app-cell` 14px, `app-toolbar` controles a 36px |
+|          |                                                                                                                                              |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| shell    | raíl de 208px sobre lino, costura a un paso del borde, versalita «Panel de gestión», activo con papel + marcador de 2px en `--ring`          |
+| densidad | la del neutro (tabla `text-sm`, filas de 40px): es la piel «cómoda»                                                                          |
+| radios   | los del tema (10px); recuadro de panel a 9px, nav a 7px                                                                                      |
+| cromo    | tarjeta KPI con borde y sombra mínima, cifra a 30px; pastillas redondas con fondo lavado                                                     |
+| hooks    | `app-panel` 14px + borde, `app-panel-head` versalita, `app-metric` 30px, `app-chip` píldora, `app-cell` 14px, `app-toolbar` controles a 36px |
 
 ### 4.2 `banco` — banco de trabajo
 
-| | |
-|---|---|
-| shell | raíl de 184px sin sombra + **barra de ruta** arriba (`app / sección`) |
-| densidad | 12,5px, filas de 30px, cabecera de tabla en banda de lino con versalitas |
-| radios | 6px en todo (`tokens` pisa los cinco radios, como cabina) |
-| cromo | KPIs **fundidos**: tira de cuatro celdas separadas por líneas, sin tarjeta; etiquetas de estado en CONTORNO |
-| hooks | `app-panel` plano sin sombra, `app-panel-head` banda de lino, `app-metric` 22px, `app-chip` rectangular, `app-cell` 12,5px, `app-toolbar` controles a 30px |
+|          |                                                                                                                                                            |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shell    | raíl de 184px sin sombra + **barra de ruta** arriba (`app / sección`)                                                                                      |
+| densidad | 12,5px, filas de 30px, cabecera de tabla en banda de lino con versalitas                                                                                   |
+| radios   | 6px en todo (`tokens` pisa los cinco radios, como cabina)                                                                                                  |
+| cromo    | KPIs **fundidos**: tira de cuatro celdas separadas por líneas, sin tarjeta; etiquetas de estado en CONTORNO                                                |
+| hooks    | `app-panel` plano sin sombra, `app-panel-head` banda de lino, `app-metric` 22px, `app-chip` rectangular, `app-cell` 12,5px, `app-toolbar` controles a 30px |
 
 Se diferencia de `cabina` (que también es densa) en que **no invierte el raíl a contraste** ni
 va a monospace: es la misma casa que `taller`, apretada. Se documenta en la descripción del
@@ -116,19 +116,19 @@ preset para que la elección en el wizard no sea ambigua.
 
 ### 4.3 `rotulo` — la marca al frente
 
-| | |
-|---|---|
-| shell | banda de tinta de 56px con el logotipo en `--ring`, navegación horizontal, raíl blanco de 200px con los filtros guardados |
-| densidad | holgada: título de 30px, KPIs de 34px, filas de 44px |
-| radios | los del tema (8/14px) |
-| cromo | CTA en `--ring` (el único caso de la familia), versalita de sección en `--ring`, cabecera de tabla con regla de 2px en tinta |
-| hooks | `app-panel` 14px con sombra, `app-panel-head` regla gruesa, `app-metric` 34px, `app-chip` píldora, `app-cell` 14px, `app-toolbar` controles a 34px |
+|          |                                                                                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shell    | banda de tinta de 56px con el logotipo en `--ring`, navegación horizontal, raíl blanco de 200px con los filtros guardados                          |
+| densidad | holgada: título de 30px, KPIs de 34px, filas de 44px                                                                                               |
+| radios   | los del tema (8/14px)                                                                                                                              |
+| cromo    | CTA en `--ring` (el único caso de la familia), versalita de sección en `--ring`, cabecera de tabla con regla de 2px en tinta                       |
+| hooks    | `app-panel` 14px con sombra, `app-panel-head` regla gruesa, `app-metric` 34px, `app-chip` píldora, `app-cell` 14px, `app-toolbar` controles a 34px |
 
 ## 5. Gates
 
-| gate | cuándo |
-|---|---|
-| `/golden-diff` vacío | toda tarea que toque el generador o el schema (nadie declara los campos nuevos → emitido intacto) |
-| `design-drift.spec.ts` | las tres pieles: sólo hooks del vocabulario, ninguno sin vestir |
-| `npm run typecheck` | toda tarea que toque `apps/studio` (vitest no typechequea) |
-| smoke en navegador | TASK-07: tres apps generadas y construidas, dist servido, API simulada con `page.route` (patrón de la spec 67; Playwright vive en `apps/studio`) |
+| gate                   | cuándo                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/golden-diff` vacío   | toda tarea que toque el generador o el schema (nadie declara los campos nuevos → emitido intacto)                                                |
+| `design-drift.spec.ts` | las tres pieles: sólo hooks del vocabulario, ninguno sin vestir                                                                                  |
+| `npm run typecheck`    | toda tarea que toque `apps/studio` (vitest no typechequea)                                                                                       |
+| smoke en navegador     | TASK-07: tres apps generadas y construidas, dist servido, API simulada con `page.route` (patrón de la spec 67; Playwright vive en `apps/studio`) |
