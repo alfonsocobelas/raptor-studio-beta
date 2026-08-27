@@ -29,23 +29,6 @@ describe('resource generator — restauración por operación (spec 38 TASK-06)'
     expect(typeorm).toContain('withDeleted: true')
   })
 
-  it('el restore del padre revierte el árbol entero dentro de la transacción', async () => {
-    const useCase = read(await emit('account'), 'out/backend/application/use-cases/restore-account-usecase.service.ts')
-
-    expect(useCase).toContain('const op = await this.accountRepository.deletedOpOf(accountId)')
-    expect(useCase).toContain('await this.txManager.runInTransaction(async () => {')
-    expect(useCase).toContain('await this.accountRepository.restoreByOp(op)')
-    expect(useCase).toContain('await this.installationRepository.restoreByOp(op)')
-    expect(useCase).toContain('await this.worklogRepository.restoreByOp(op)')
-  })
-
-  it('una hoja restaura como siempre: su fila, sin transacción', async () => {
-    const useCase = read(await emit('worklog'), 'out/backend/application/use-cases/restore-worklog-usecase.service.ts')
-
-    expect(useCase).toContain('.restore(WorklogId.create(input.id))')
-    expect(useCase).not.toContain('runInTransaction')
-  })
-
   it('el mock emitido implementa deletedOpOf (los tests emitidos deben compilar)', async () => {
     const mock = read(await emit('account'), 'out/backend-tests/account.repository.mock.ts')
 

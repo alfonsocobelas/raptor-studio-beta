@@ -62,62 +62,31 @@ describe('resource generator — papelera (spec 29)', () => {
     expect(repo).toContain('{ $set: { deletedAt: null } }')
   })
 
-  it('project emite el use case de restore con su 404, el input y el handler', async () => {
+  it('project no emite ningún fichero de restore ni de search de borrados', async () => {
     const tree = await emit('project')
 
-    const useCase = read(tree, 'out/backend/application/use-cases/restore-project-usecase.service.ts')
-    expect(useCase).toContain('export class RestoreProjectUseCase')
-    expect(useCase).toContain('const restored = await this.projectRepository.restore(ProjectId.create(input.id))')
-    expect(useCase).toContain("throw new EntityNotFoundError('Project', input.id)")
-    expect(read(tree, 'out/backend/application/dtos/restore-project-input.dto.ts')).toContain(
-      'export interface RestoreProjectInput'
-    )
-    expect(read(tree, 'out/backend/application/handlers/restore-project.handler.ts')).toContain(
-      'export class RestoreProjectHandler'
-    )
+    expect(tree.exists('out/backend/application/use-cases/restore-project-usecase.service.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/dtos/restore-project-input.dto.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/handlers/restore-project.handler.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/use-cases/search-deleted-projects-usecase.service.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/handlers/search-deleted-projects.handler.ts')).toBe(false)
   })
 
-  it('customer no emite ningún fichero de restore', async () => {
-    const tree = await emit('customer')
-
-    expect(tree.exists('out/backend/application/use-cases/restore-customer-usecase.service.ts')).toBe(false)
-    expect(tree.exists('out/backend/application/dtos/restore-customer-input.dto.ts')).toBe(false)
-    expect(tree.exists('out/backend/application/handlers/restore-customer.handler.ts')).toBe(false)
-  })
-
-  it('project emite el search de borrados como espejo del search (mismo config y paginación)', async () => {
-    const tree = await emit('project')
-
-    const useCase = read(tree, 'out/backend/application/use-cases/search-deleted-projects-usecase.service.ts')
-    expect(useCase).toContain('export class SearchDeletedProjectsUseCase')
-    expect(useCase).toContain('searchProjectConfig')
-    expect(useCase).toContain('this.projectRepository.matchingDeleted(criteria)')
-    expect(useCase).toContain('this.projectRepository.countDeleted(criteria)')
-    expect(read(tree, 'out/backend/application/handlers/search-deleted-projects.handler.ts')).toContain(
-      'export class SearchDeletedProjectsHandler'
-    )
-  })
-
-  it('el controller de project expone GET /deleted ANTES de :id y POST /:id/restore', async () => {
+  it('el controller de project no expone GET /deleted ni POST /:id/restore', async () => {
     const tree = await emit('project')
 
     const controller = read(tree, 'out/backend/infrastructure/entrypoints/projects.controller.ts')
-    expect(controller).toContain("@Get('deleted')")
-    expect(controller).toContain("@Post(':id/restore')")
-    expect(controller).toContain('searchDeleted(')
-    expect(controller).toContain('restore(')
-    // el orden de declaración ES el orden de matching en Nest: 'deleted' no puede caer en ':id'
-    expect(controller.indexOf("@Get('deleted')")).toBeLessThan(controller.indexOf("@Get(':id')"))
+    expect(controller).not.toContain("@Get('deleted')")
+    expect(controller).not.toContain("@Post(':id/restore')")
+    expect(controller).not.toContain('searchDeleted')
   })
 
-  it('el module de project registra el handler y el use case de la papelera', async () => {
+  it('el module de project no registra handlers ni use cases de papelera', async () => {
     const tree = await emit('project')
 
     const module = read(tree, 'out/backend/projects.module.ts')
-    expect(module).toContain('SearchDeletedProjectsHandler')
-    expect(module).toContain('SearchDeletedProjectsUseCase')
-    expect(module).toContain('RestoreProjectHandler')
-    expect(module).toContain('RestoreProjectUseCase')
+    expect(module).not.toContain('SearchDeleted')
+    expect(module).not.toContain('Restore')
   })
 
   it('el controller y el module de customer no saben nada de la papelera', async () => {
@@ -125,13 +94,6 @@ describe('resource generator — papelera (spec 29)', () => {
 
     expect(read(tree, 'out/backend/infrastructure/entrypoints/customers.controller.ts')).not.toContain('deleted')
     expect(read(tree, 'out/backend/customers.module.ts')).not.toContain('Restore')
-  })
-
-  it('customer no emite el search de borrados', async () => {
-    const tree = await emit('customer')
-
-    expect(tree.exists('out/backend/application/use-cases/search-deleted-customers-usecase.service.ts')).toBe(false)
-    expect(tree.exists('out/backend/application/handlers/search-deleted-customers.handler.ts')).toBe(false)
   })
 
   it('license (softDelete SIN delete en la lista) no lleva papelera', async () => {
@@ -178,28 +140,11 @@ describe('resource generator — tests emitidos de la papelera (spec 29 TASK-07)
     expect(read(tree, 'out/backend-tests/customer.repository.mock.ts')).not.toContain('Deleted')
   })
 
-  it('emite el test del restore con su rama de 404', async () => {
+  it('no emite tests de restore ni de search de borrados', async () => {
     const tree = await emit('project')
 
-    const test = read(tree, 'out/backend-tests-application/restore-project-usecase.test.ts')
-    expect(test).toContain('RestoreProjectUseCase')
-    expect(test).toContain('whenRestoreSucceeds')
-    expect(test).toContain('EntityNotFoundError')
-  })
-
-  it('emite el test del search de borrados', async () => {
-    const tree = await emit('project')
-
-    const test = read(tree, 'out/backend-tests-application/search-deleted-projects-usecase.test.ts')
-    expect(test).toContain('SearchDeletedProjectsUseCase')
-    expect(test).toContain('givenDeleted(')
-  })
-
-  it('customer no emite tests de papelera', async () => {
-    const tree = await emit('customer')
-
-    expect(tree.exists('out/backend-tests-application/restore-customer-usecase.test.ts')).toBe(false)
-    expect(tree.exists('out/backend-tests-application/search-deleted-customers-usecase.test.ts')).toBe(false)
+    expect(tree.exists('out/backend-tests-application/restore-project-usecase.test.ts')).toBe(false)
+    expect(tree.exists('out/backend-tests-application/search-deleted-projects-usecase.test.ts')).toBe(false)
   })
 
   it('la integración TypeORM de project ejercita borrar → papelera → restaurar', async () => {

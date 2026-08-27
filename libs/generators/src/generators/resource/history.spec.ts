@@ -15,7 +15,7 @@ describe('resource generator — historial en los use cases (spec 31)', () => {
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('register/remove/restore de project registran su acción', async () => {
+  it('register y remove de project registran su acción', async () => {
     const tree = await emit('project')
 
     const register = read(tree, 'out/backend/application/use-cases/register-project-usecase.service.ts')
@@ -24,9 +24,6 @@ describe('resource generator — historial en los use cases (spec 31)', () => {
 
     expect(read(tree, 'out/backend/application/use-cases/remove-project-usecase.service.ts')).toContain(
       "action: 'deleted'"
-    )
-    expect(read(tree, 'out/backend/application/use-cases/restore-project-usecase.service.ts')).toContain(
-      "action: 'restored'"
     )
   })
 

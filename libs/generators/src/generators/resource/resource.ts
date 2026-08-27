@@ -104,13 +104,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(app, 'use-cases', `remove-${substitutions.fileName}-usecase.service.ts`))
       tree.delete(path.join(app, 'handlers', `remove-${substitutions.fileName}.handler.ts`))
     }
-    if (!substitutions.app.trash) {
-      tree.delete(path.join(app, 'dtos', `restore-${substitutions.fileName}-input.dto.ts`))
-      tree.delete(path.join(app, 'use-cases', `restore-${substitutions.fileName}-usecase.service.ts`))
-      tree.delete(path.join(app, 'handlers', `restore-${substitutions.fileName}.handler.ts`))
-      tree.delete(path.join(app, 'use-cases', `search-deleted-${substitutions.plural}-usecase.service.ts`))
-      tree.delete(path.join(app, 'handlers', `search-deleted-${substitutions.plural}.handler.ts`))
-    }
     if (!substitutions.app.history) {
       tree.delete(path.join(app, 'dtos', `get-${substitutions.fileName}-history-input.dto.ts`))
       tree.delete(path.join(app, 'use-cases', `get-${substitutions.fileName}-history-usecase.service.ts`))
@@ -274,10 +267,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       }
       if (!substitutions.app.removes) {
         tree.delete(path.join(appTests, `remove-${substitutions.fileName}-usecase.test.ts`))
-      }
-      if (!substitutions.app.trash) {
-        tree.delete(path.join(appTests, `restore-${substitutions.fileName}-usecase.test.ts`))
-        tree.delete(path.join(appTests, `search-deleted-${substitutions.plural}-usecase.test.ts`))
       }
       if (!substitutions.app.history) {
         tree.delete(path.join(appTests, `get-${substitutions.fileName}-history-usecase.test.ts`))

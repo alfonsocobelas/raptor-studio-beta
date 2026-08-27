@@ -67,7 +67,6 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
 
       expect(controller).toMatch(/@Get\(\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
       expect(controller).toMatch(/@Get\('export'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
-      expect(controller).toMatch(/@Get\('deleted'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
       expect(controller).toMatch(/@Get\(':id\/history'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
       expect(controller).not.toContain('UserRoleEnum.VIEWER')
     })
@@ -85,11 +84,10 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(controller).toMatch(/@Put\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.USER\)/)
     })
 
-    it('borrar protege DELETE y restore con los roles de Borrar (solo admin)', () => {
+    it('borrar protege DELETE con los roles de Borrar (solo admin)', () => {
       const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
 
       expect(controller).toMatch(/@Delete\(':id'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
-      expect(controller).toMatch(/@Post\(':id\/restore'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
     })
 
     it('los adjuntos declaran roles: lecturas de Ver, escrituras de Editar', () => {

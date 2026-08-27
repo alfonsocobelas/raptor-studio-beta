@@ -7,8 +7,7 @@ import {
   FieldDefinition,
   ResourceDefinition,
   resolveAccess,
-  VoDefinition,
-  wantsSoftDelete
+  VoDefinition
 } from '@raptor/schema'
 
 /**
@@ -49,7 +48,7 @@ export interface EntrypointBindings {
   createRoles: string
   /** Argumentos de @Roles(...) para editar: PUT, composición y escrituras de adjuntos */
   updateRoles: string
-  /** Argumentos de @Roles(...) para borrar: DELETE y restore */
+  /** Argumentos de @Roles(...) para borrar: DELETE */
   deleteRoles: string
   /** Import de constantes de acceso para la lista (solo con matriz declarada) */
   listAccessImports: string
@@ -158,8 +157,6 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   ops.push(['Search', pluralClass], ['Get', n.className])
   if (writes) ops.push(['Update', n.className])
   if (removes) ops.push(['Remove', n.className])
-  // la papelera (spec 29) cuelga del borrado: sin softDelete no hay nada que listar ni restaurar
-  if (removes && wantsSoftDelete(definition)) ops.push(['SearchDeleted', pluralClass], ['Restore', n.className])
   // el historial (spec 31): la timeline de la ficha lee del puerto de auditoría
   if (definition.history === true) ops.push(['Get', `${n.className}History`])
   // el import (spec 33) delega en el register: sin alta no hay import
