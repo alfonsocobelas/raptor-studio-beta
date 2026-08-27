@@ -14,7 +14,6 @@ export abstract class ContractRepository {
   abstract findByContractNumber(contractNumber: ContractNumber): Promise<Nullable<Contract>>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
-  abstract restoreByOp(op: DeleteOperationId): Promise<number>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }

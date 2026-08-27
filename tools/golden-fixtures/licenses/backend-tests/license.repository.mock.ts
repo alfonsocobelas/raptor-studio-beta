@@ -39,10 +39,6 @@ export class LicenseRepositoryMock extends MockRepository<License> implements Li
     return this.getMock('removeDraggedByCustomerId')(parentIds, op)
   }
 
-  restoreByOp(op: DeleteOperationId): Promise<number> {
-    return this.getMock('restoreByOp')(op)
-  }
-
   // helpers
   givenFound(license: License): void {
     this.setMockResult('get', license)

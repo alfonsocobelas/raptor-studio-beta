@@ -99,15 +99,6 @@ export class MongooseLicenseRepository extends MongooseRepository<LicenseDoc> im
     return ids
   }
 
-  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
-  async restoreByOp(op: DeleteOperationId): Promise<number> {
-    const result = await this.model()
-      .updateMany({ deletedOp: op.value }, { $set: { deletedAt: null, deletedOp: null } })
-      .session(this.session())
-      .exec()
-    return result.modifiedCount
-  }
-
   // @ai:begin repository-extra — implementación de los finders del port-extra
   // @ai:end
 

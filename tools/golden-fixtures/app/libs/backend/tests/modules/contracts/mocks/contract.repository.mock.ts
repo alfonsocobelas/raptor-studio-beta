@@ -40,10 +40,6 @@ export class ContractRepositoryMock extends MockRepository<Contract> implements 
     return this.getMock('removeDraggedByCustomerId')(parentIds, op)
   }
 
-  restoreByOp(op: DeleteOperationId): Promise<number> {
-    return this.getMock('restoreByOp')(op)
-  }
-
   // helpers
   givenFound(contract: Contract): void {
     this.setMockResult('get', contract)

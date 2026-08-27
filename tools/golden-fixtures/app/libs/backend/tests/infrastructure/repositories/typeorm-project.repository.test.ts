@@ -85,33 +85,4 @@ describe('TypeOrmProjectRepository (integration)', () => {
       expect(await repository.get(project.id)).toBeNull()
     })
   })
-
-  describe('trash', () => {
-    it('a removed project leaves matching and shows up in matchingDeleted', async () => {
-      const project = ProjectMother.random()
-      await repository.register(project)
-      await repository.remove(project.id, DeleteOperationId.random())
-
-      const spec = ProjectWithIdSpecification.withId(project.id)
-      expect(await repository.matching(spec)).toHaveLength(0)
-
-      const deleted = await repository.matchingDeleted(spec)
-      expect(deleted).toHaveLength(1)
-      expect(deleted[0].toPrimitives()).toEqual(project.toPrimitives())
-      expect(await repository.countDeleted(spec)).toBe(1)
-    })
-
-    it('restore brings it back; a live or unknown id restores nothing', async () => {
-      const project = ProjectMother.random()
-      await repository.register(project)
-      await repository.remove(project.id, DeleteOperationId.random())
-
-      expect(await repository.restore(project.id)).toBe(true)
-      expect(await repository.get(project.id)).not.toBeNull()
-
-      // ya está vivo: restaurarlo otra vez no encuentra nada borrado
-      expect(await repository.restore(project.id)).toBe(false)
-      expect(await repository.restore(ProjectId.create(uuidv7()))).toBe(false)
-    })
-  })
 })

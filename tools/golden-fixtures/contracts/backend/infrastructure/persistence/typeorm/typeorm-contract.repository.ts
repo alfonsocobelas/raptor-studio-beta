@@ -44,12 +44,6 @@ export class TypeOrmContractRepository extends TypeOrmRepository<TypeOrmContract
     return ids
   }
 
-  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
-  async restoreByOp(op: DeleteOperationId): Promise<number> {
-    const result = await this.repository().update({ deletedOp: op.value }, { deletedAt: null, deletedOp: null })
-    return result.affected ?? 0
-  }
-
   async get(contractId: ContractId): Promise<Nullable<Contract>> {
     const entity = await this.repository().findOneBy({ id: contractId.value })
     return entity ? ContractMapper.toDomain(entity) : null

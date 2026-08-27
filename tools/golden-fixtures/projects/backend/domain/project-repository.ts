@@ -15,10 +15,6 @@ export abstract class ProjectRepository {
   abstract findByName(name: ProjectName): Promise<Nullable<Project>>
   abstract exists(criteria: Criteria): Promise<boolean>
   abstract count(criteria: Criteria): Promise<number>
-  abstract matchingDeleted(criteria: Criteria): Promise<Project[]>
-  abstract countDeleted(criteria: Criteria): Promise<number>
-  abstract restore(projectId: ProjectId): Promise<boolean>
-  abstract restoreByOp(op: DeleteOperationId): Promise<number>
   // @ai:begin port-extra — finders no derivables (sync, agregaciones)
   // @ai:end
 }

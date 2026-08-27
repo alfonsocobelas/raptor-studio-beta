@@ -56,12 +56,6 @@ export class TypeOrmLicenseRepository extends TypeOrmRepository<TypeOrmLicenseEn
     return ids
   }
 
-  // Revierte UNA operación: vuelve exactamente lo que ella arrastró (decisión 1, spec 38)
-  async restoreByOp(op: DeleteOperationId): Promise<number> {
-    const result = await this.repository().update({ deletedOp: op.value }, { deletedAt: null, deletedOp: null })
-    return result.affected ?? 0
-  }
-
   async get(licenseId: LicenseId): Promise<Nullable<License>> {
     const entity = await this.repository().findOneBy({ id: licenseId.value })
     return entity ? LicenseMapper.toDomain(entity) : null
