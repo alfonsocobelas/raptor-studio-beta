@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core'
-import { Router, RouterLink } from '@angular/router'
+import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
@@ -23,7 +23,7 @@ import { ProjectsImportComponent } from './projects-import.component'
 
 @Component({
   selector: 'app-projects-list',
-  imports: [DataTable, RouterLink, AppDialog, AppConfirmDialog, ProjectDialogComponent, ProjectsImportComponent],
+  imports: [DataTable, AppDialog, AppConfirmDialog, ProjectDialogComponent, ProjectsImportComponent],
   providers: [provideIcons({ lucideEye, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -43,11 +43,6 @@ import { ProjectsImportComponent } from './projects-import.component'
             >
               Importar
             </button>
-            <a
-              routerLink="//sap-licensing/projects/papelera"
-              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-              >Papelera</a
-            >
           </div>
         </div>
       }
@@ -155,7 +150,7 @@ export class ProjectsListComponent {
   readonly deletingProject = signal<ProjectDto | null>(null)
   readonly deleteDialogOpen = signal(false)
   readonly deleteDescription = computed(
-    () => `Se archivará el proyecto "${this.deletingProject()?.name ?? ''}". Podrás restaurarlo desde la papelera.`
+    () => `Se archivará el proyecto "${this.deletingProject()?.name ?? ''}". Esta acción no se puede deshacer.`
   )
 
   readonly columns: ColumnDef[] = [
@@ -201,7 +196,7 @@ export class ProjectsListComponent {
   ]
 
   // Editar y borrar solo para quien puede escribir: el backend responde 403 al viewer, así que
-  // ofrecer la acción solo llevaría a un error. La ficha no sustituye a la papelera: si el schema
+  // ofrecer la acción solo llevaría a un error. La ficha no sustituye al borrado de la fila: si el schema
   // declara la entidad borrable, se borra desde la fila igual que sin ficha.
   readonly actions = computed<TableAction[]>(() => [
     { icon: 'lucideEye', label: 'Ver ficha', action: 'view' },

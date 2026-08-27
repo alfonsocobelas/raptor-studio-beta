@@ -92,13 +92,6 @@ export const routes: Routes = [
       )
   },
   {
-    path: 'sap-licensing/projects/papelera',
-    loadComponent: () =>
-      import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/projects-trash.component').then(
-        m => m.ProjectsTrashComponent
-      )
-  },
-  {
     path: 'sap-licensing/projects/:id',
     loadComponent: () =>
       import('@app/frontend/domains/admin/bounded-contexts/sap-licensing/features/projects/project-detail.component').then(

@@ -12,8 +12,8 @@ describe('CustomerService — listado', () => {
   let service: CustomerService
   let httpGet: ReturnType<typeof vi.fn>
 
-  // la papelera pide `/api/v1/customers/deleted` en el mismo tick, así que la última llamada
-  // global no siempre es la del listado: se mira la última hecha a SU url
+  // otras vistas pueden pedir en el mismo tick, así que la última llamada global no
+  // siempre es la del listado: se mira la última hecha a SU url
   const lastListCall = () => httpGet.mock.calls.filter(([url]) => url === '/api/v1/customers').at(-1)
 
   beforeEach(() => {
