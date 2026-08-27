@@ -179,6 +179,27 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     // que no exista un `kpi-count` compuesto ya lo garantiza el tipo de ComposedDashboardBlock
   })
 
+  it('el top-n nombra las filas con el campo buscable cuando el modelo no declara otro', () => {
+    const registryWithSearch = () => {
+      const model = contract()
+      model.fields['contractNumber'] = { type: 'string', query: { searchable: 1, sortable: 2 } } as never
+      model.fields['amount'] = { type: 'number', query: { sortable: 3 } } as never
+      return { contract: model }
+    }
+
+    const composition = composeApp(
+      appWith([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }]),
+      registryWithSearch()
+    )
+
+    expect(composition.dashboardBlocks.find(b => b.kind === 'top-n')?.top).toMatchObject({
+      field: 'amount',
+      n: 5,
+      dir: 'desc',
+      labelField: 'contractNumber'
+    })
+  })
+
   it('rechaza el kpi sobre campo inexistente, no filtrable, con operador ilegal o ventana no-fecha', () => {
     const kpi = (extra: object) => ({ kind: 'kpi', resource: 'contract', label: 'X', ...extra })
 

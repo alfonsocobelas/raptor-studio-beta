@@ -361,7 +361,7 @@ function composeTop(
   const field = fieldOf(model, block.field, at)
   if (!field.query?.sortable) throw new Error(`${at} requires a sortable field (the list endpoint sorts it)`)
 
-  const labelField = block.labelField ?? model.list?.deleteLabelField ?? 'name'
+  const labelField = block.labelField ?? defaultLabelField(model)
   const labelDefinition = fieldOf(model, labelField, at)
 
   return {
@@ -381,6 +381,24 @@ function composeTop(
       fieldHeader: labelOf2(field, block.field)
     }
   }
+}
+
+
+/**
+ * El campo con el que se NOMBRA un registro en la lista corta. No vale un 'name' a fuego: en el
+ * canon ni contract ni project tienen ese campo. Se toma el que el listado ya usa para nombrar
+ * (el de la confirmación de borrado), y si no hay, el primer campo buscable —que es justo el que
+ * la tabla emitida enseña como identidad—.
+ */
+function defaultLabelField(model: ResourceDefinition): string {
+  const declared = model.list?.deleteLabelField
+  if (declared) return declared
+
+  const searchable = Object.entries(model.fields).find(([, field]) => field.query?.searchable)
+  if (searchable) return searchable[0]
+
+  const text = Object.entries(model.fields).find(([, field]) => field.type === 'string')
+  return text ? text[0] : 'name'
 }
 
 function fieldOf(model: ResourceDefinition, name: string, at: string): FieldDefinition {

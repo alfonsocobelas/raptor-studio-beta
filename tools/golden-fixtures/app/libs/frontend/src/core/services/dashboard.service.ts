@@ -58,6 +58,33 @@ export class DashboardService {
   })
   readonly projectsKpiStatusEqPlanningValue = computed(() => this.projectsKpiStatusEqPlanning.value()?.value ?? 0)
 
+  readonly contractsKpiContractTypeEqCloudStartDateMonthDelta = this._kpi('/api/v1/contracts', {
+    filters: [{ field: 'contractType', operator: 'eq', value: 'cloud' }],
+    window: { field: 'startDate', preset: 'month' },
+    ratio: false,
+    compare: true
+  })
+  readonly contractsKpiContractTypeEqCloudStartDateMonthDeltaValue = computed(
+    () => this.contractsKpiContractTypeEqCloudStartDateMonthDelta.value()?.value ?? 0
+  )
+
+  readonly projectsKpiStatusEqClosedRatio = this._kpi('/api/v1/projects', {
+    filters: [{ field: 'status', operator: 'eq', value: 'closed' }],
+    ratio: true,
+    compare: false
+  })
+  readonly projectsKpiStatusEqClosedRatioValue = computed(() => this.projectsKpiStatusEqClosedRatio.value()?.value ?? 0)
+
+  readonly contractsKpiTotalTarget60 = this._kpi('/api/v1/contracts', {
+    filters: [],
+    ratio: false,
+    compare: false,
+    target: 60
+  })
+  readonly contractsKpiTotalTarget60Value = computed(() => this.contractsKpiTotalTarget60.value()?.value ?? 0)
+
+  readonly contractsTopTotalValue5Desc = this._top('/api/v1/contracts', 'totalValue', 'desc', 5)
+
   readonly contractsSeriesStartDate = this._series('/api/v1/contracts', 'startDate')
 
   readonly loading = computed(
@@ -66,6 +93,10 @@ export class DashboardService {
       this.projects.isLoading() ||
       this.contractsByContractType.isLoading() ||
       this.projectsKpiStatusEqPlanning.isLoading() ||
+      this.contractsKpiContractTypeEqCloudStartDateMonthDelta.isLoading() ||
+      this.projectsKpiStatusEqClosedRatio.isLoading() ||
+      this.contractsKpiTotalTarget60.isLoading() ||
+      this.contractsTopTotalValue5Desc.isLoading() ||
       this.contractsSeriesStartDate.isLoading()
   )
   readonly loadError = computed(
@@ -74,6 +105,10 @@ export class DashboardService {
       this.projects.error() !== undefined ||
       this.contractsByContractType.error() !== undefined ||
       this.projectsKpiStatusEqPlanning.error() !== undefined ||
+      this.contractsKpiContractTypeEqCloudStartDateMonthDelta.error() !== undefined ||
+      this.projectsKpiStatusEqClosedRatio.error() !== undefined ||
+      this.contractsKpiTotalTarget60.error() !== undefined ||
+      this.contractsTopTotalValue5Desc.error() !== undefined ||
       this.contractsSeriesStartDate.error() !== undefined
   )
 
@@ -141,6 +176,18 @@ export class DashboardService {
     if (filters.length) params['filters'] = JSON.stringify(filters)
 
     return firstValueFrom(this._http.get<PaginatedTotal>(api, { params })).then(r => r.total)
+  }
+
+  /** Los N primeros por un campo: una sola petición, la página ya viene ordenada. */
+  private _top(api: string, field: string, dir: string, n: number) {
+    return resource<Record<string, unknown>[], unknown>({
+      loader: () =>
+        firstValueFrom(
+          this._http.get<{ items: Record<string, unknown>[] }>(api, {
+            params: { page: '1', pageSize: String(n), sortField: field, sortDir: dir }
+          })
+        ).then(r => r.items)
+    })
   }
 
   /** Altas por mes, últimos 12 meses: dos filtros de rango por punto. */

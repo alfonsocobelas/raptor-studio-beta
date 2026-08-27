@@ -53,7 +53,7 @@ describe('DashboardService — totales por recurso', () => {
   it('spends exactly the requests the panel needs, and no more', async () => {
     await load()
 
-    expect(httpGet).toHaveBeenCalledTimes(19)
+    expect(httpGet).toHaveBeenCalledTimes(25)
     expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', {
       params: {
         page: '1',
@@ -61,5 +61,16 @@ describe('DashboardService — totales por recurso', () => {
         filters: JSON.stringify([{ field: 'status', operator: 'eq', value: 'planning' }])
       }
     })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', {
+      params: expect.objectContaining({ page: '1', pageSize: '1', filters: expect.any(String) })
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/projects', {
+      params: {
+        page: '1',
+        pageSize: '1',
+        filters: JSON.stringify([{ field: 'status', operator: 'eq', value: 'closed' }])
+      }
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
   })
 })

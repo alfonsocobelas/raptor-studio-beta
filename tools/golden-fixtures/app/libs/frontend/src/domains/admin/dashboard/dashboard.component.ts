@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core'
 import { DashboardService } from '../../../core/services/dashboard.service'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { deltaOf, percentOf, progressOf, type KpiDelta } from '../../../core/services/kpi-math'
+import type { KpiValue } from '../../../core/services/dashboard.service'
 import { ContractsListComponent } from '../bounded-contexts/sap-licensing/features/contracts/contracts-list.component'
 
 /**
@@ -68,6 +70,39 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
             [value]="service.projectsKpiStatusEqPlanningValue()"
             testId="kpi-projectsKpiStatusEqPlanning"
           />
+          <app-kpi-card
+            title="Altas de cloud este mes"
+            [value]="service.contractsKpiContractTypeEqCloudStartDateMonthDeltaValue()"
+            [delta]="delta(service.contractsKpiContractTypeEqCloudStartDateMonthDelta.value())"
+            testId="kpi-contractsKpiContractTypeEqCloudStartDateMonthDelta"
+          />
+          <app-kpi-card
+            title="Proyectos cerrados"
+            [value]="service.projectsKpiStatusEqClosedRatioValue()"
+            [percent]="percent(service.projectsKpiStatusEqClosedRatio.value())"
+            testId="kpi-projectsKpiStatusEqClosedRatio"
+          />
+          <app-kpi-card
+            title="Contratos del año"
+            [value]="service.contractsKpiTotalTarget60Value()"
+            [progress]="progress(service.contractsKpiTotalTarget60.value(), 60)"
+            [target]="60"
+            testId="kpi-contractsKpiTotalTarget60"
+          />
+          <div class="bg-card rounded-lg border p-4" data-testid="top-contractsTopTotalValue5Desc">
+            <h2 class="mb-3 text-sm font-semibold">Mayores contratos</h2>
+            @if (service.contractsTopTotalValue5Desc.hasValue()) {
+              <ol class="space-y-2">
+                @for (row of service.contractsTopTotalValue5Desc.value(); track $index) {
+                  <li class="flex items-center gap-2 text-sm">
+                    <span class="text-muted-foreground w-6 shrink-0 tabular-nums">{{ $index + 1 }}</span>
+                    <span class="flex-1 truncate">{{ row['contractNumber'] }}</span>
+                    <span class="text-right tabular-nums">{{ row['totalValue'] }}</span>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
           <div class="bg-card rounded-lg border p-4" data-testid="series-contractsSeriesStartDate">
             <h2 class="mb-3 text-sm font-semibold">Altas de contrato por mes</h2>
             @if (service.contractsSeriesStartDate.hasValue()) {
@@ -109,5 +144,17 @@ export class DashboardComponent {
   points(values: { label: string; count: number }[]): { label: string; count: number; height: number }[] {
     const max = Math.max(...values.map(v => v.count), 1)
     return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
+  }
+
+  delta(value: KpiValue | undefined): KpiDelta | undefined {
+    return value?.previous === undefined ? undefined : deltaOf(value.value, value.previous)
+  }
+
+  percent(value: KpiValue | undefined): number {
+    return percentOf(value?.value ?? 0, value?.total ?? 0)
+  }
+
+  progress(value: KpiValue | undefined, target: number): number {
+    return progressOf(value?.value ?? 0, target)
   }
 }
