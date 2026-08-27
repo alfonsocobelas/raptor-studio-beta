@@ -148,6 +148,18 @@ describe('widgets analíticos — composición y bindings (spec 32)', () => {
     expect(subs['panelSections']).toContain('data-testid="series-')
   })
 
+  it('la serie recorta el día en hora LOCAL, no con toISOString', () => {
+    const composition = composeApp(appWith([{ kind: 'series', resource: 'contract', field: 'startDate' }]), registry())
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    // `new Date(2026, 7, 1).toISOString()` en Madrid es '2026-07-31T22:00:00Z': el corte por
+    // UTC mete las altas del día 1 en el mes anterior. El día se compone de las partes locales.
+    expect(subs['analyticHelpers']).not.toContain('toISOString')
+    expect(subs['analyticHelpers']).toContain('getFullYear()')
+    expect(subs['analyticHelpers']).toContain('padStart(2')
+  })
+
   it('sin bloques analíticos el panel emite exactamente lo de siempre', () => {
     const composition = composeApp(appWith([{ kind: 'metrics', resources: ['contract'] }]), registry())
 

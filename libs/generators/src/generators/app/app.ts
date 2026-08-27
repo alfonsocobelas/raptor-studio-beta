@@ -721,8 +721,11 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     })
   }
 
+  /** El día en hora LOCAL: cortar en UTC descuadra los bordes de mes (spec 70). */
   private _day(date: Date): string {
-    return date.toISOString().slice(0, 10)
+    const month = \`\${date.getMonth() + 1}\`.padStart(2, '0')
+    const day = \`\${date.getDate()}\`.padStart(2, '0')
+    return \`\${date.getFullYear()}-\${month}-\${day}\`
   }`)
   }
   blocks.push(`  private _countParams(field: string, operator: string, value: string) {
