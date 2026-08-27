@@ -5,6 +5,9 @@ import type { AccessDefinition, FieldDefinition, ResourceDefinition, StateMachin
  * draftToResource la expande a un ResourceDefinition completo siguiendo los
  * patrones canónicos (VOs, constraints, columnas) — el usuario nunca ve esto.
  */
+/** Tipos que el listado sabe filtrar por comparación (spec 70): los usa la condición del KPI. */
+const FILTERABLE_TYPES: string[] = ['date', 'number', 'integer', 'boolean', 'time']
+
 export type DraftFieldType =
   | 'string'
   | 'text'
@@ -242,7 +245,14 @@ export function draftToResource(
         ...(field.type === 'date' ? { type: 'date' as const } : {}),
         minWidth: 120
       },
-      query: { sortable: order, ...(isNameField ? { filterable: 2, searchable: 1 } : {}) },
+      // fechas, números y booleanos son FILTRABLES (spec 70): el KPI y su ventana cuentan con el
+      // listado, y un campo que la API no filtra devolvería el total entero sin quejarse. El
+      // texto queda fuera a propósito: para buscar dentro de un texto está la búsqueda.
+      query: {
+        sortable: order,
+        ...(isNameField ? { filterable: 2, searchable: 1 } : {}),
+        ...(FILTERABLE_TYPES.includes(field.type) ? { filterable: order + 20 } : {})
+      },
       // los ejemplos del diseño viajan al generador: las semillas dejan de ser «Nombre seed 1»
       ...(field.samples?.length ? { samples: field.samples } : {})
     }

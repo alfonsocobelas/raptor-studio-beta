@@ -71,6 +71,24 @@ describe('draftToResource', () => {
   })
 })
 
+describe('draftToResource — lo que un KPI puede condicionar (spec 70)', () => {
+  it('las fechas, los números y los booleanos son FILTRABLES: sin eso el KPI no puede acotar', () => {
+    const resource = draftToResource(draft, 'flotas')
+
+    // el KPI cuenta con el listado: un campo que la API no filtra devolvería el total entero
+    expect(resource.fields['fechaAlta'].query?.filterable).toBeTruthy()
+    expect(resource.fields['salario'].query?.filterable).toBeTruthy()
+    expect(resource.fields['antiguedad'].query?.filterable).toBeTruthy()
+    expect(resource.fields['activo'].query?.filterable).toBeTruthy()
+  })
+
+  it('el texto largo sigue sin ser filtrable: para eso está la búsqueda', () => {
+    const resource = draftToResource(draft, 'flotas')
+
+    expect(resource.fields['notas'].query?.filterable).toBeFalsy()
+  })
+})
+
 describe('draftToResource — campo hora (spec 65)', () => {
   it('un campo time cruza como string con control time y columna varchar(5)', () => {
     const conHora: DraftResource = {
