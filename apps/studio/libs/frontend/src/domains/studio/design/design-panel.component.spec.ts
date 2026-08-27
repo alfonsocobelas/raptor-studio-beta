@@ -57,9 +57,9 @@ describe('DesignPanelComponent', () => {
     const fixture = mount()
     testId(fixture, 'panel-tab-skin')?.click()
     fixture.detectChanges()
-    testId(fixture, 'preview-preset-suite')?.click()
+    testId(fixture, 'preview-preset-actual')?.click()
 
-    expect(preview.preset()).toBe('suite')
+    expect(preview.preset()).toBe('actual')
   })
 
   it('sin nada elegido, la pestaña de componente lo dice en vez de quedarse vacía', () => {

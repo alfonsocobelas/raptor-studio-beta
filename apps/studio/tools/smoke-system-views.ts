@@ -1,7 +1,7 @@
 /**
  * Smoke visual de las vistas de sistema (spec 57): las 3 vistas (login/usuarios/mi cuenta)
- * en los 3 presets (actual/cabina/suite) — 9 capturas para la verificación con Alfonso
- * contra las pantallas de la referencia. Falla si alguna vista no monta o la página
+ * en la única piel que queda (`actual`, 2026-08-27) — 3 capturas para la verificación con
+ * Alfonso contra las pantallas de la referencia. Falla si alguna vista no monta o la página
  * lanza errores.
  *
  *   npx tsx tools/smoke-system-views.ts   (con `npm run web` corriendo)
@@ -12,7 +12,7 @@ import { chromium, type Page } from 'playwright'
 const BASE = process.env['BASE_URL'] ?? 'http://localhost:4316'
 const SHOTS = process.env['SHOTS_DIR']
 const VIEWS = ['login', 'users', 'account'] as const
-const PRESETS = ['actual', 'cabina', 'suite'] as const
+const PRESETS = ['actual'] as const
 
 async function shot(page: Page, name: string): Promise<void> {
   if (!SHOTS) return
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
 
   if (errors.length) fail(`errores de página: ${errors.join(' | ')}`)
   await browser.close()
-  console.log('Smoke de vistas de sistema: OK (3 vistas × 3 presets)')
+  console.log('Smoke de vistas de sistema: OK (3 vistas × 1 piel)')
 }
 
 main().catch(e => fail(String(e)))

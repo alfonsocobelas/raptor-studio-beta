@@ -4,7 +4,7 @@ import { THEMES } from '@raptor/schema'
 export type PreviewTheme = 'light' | 'dark'
 
 /** Los presets visuales que conoce el generador (ranura `design`). */
-export type PreviewPreset = 'actual' | 'cabina' | 'taller' | 'banco' | 'rotulo' | 'suite'
+export type PreviewPreset = 'actual'
 
 export interface PresetOption {
   id: PreviewPreset
@@ -12,19 +12,11 @@ export interface PresetOption {
 }
 
 /**
- * El selector ofrece los mismos presets que la ranura `design` del generador. Antes aquí se
- * alternaba spartan/material, que era una aproximación de 12 líneas de CSS y no decía nada de
- * la app emitida: medido el 2026-08-09, las dos librerías producen apps indistinguibles.
- * Lo que sí cambia el shell es el preset, así que es lo que se previsualiza.
+ * El selector ofrece los mismos presets que la ranura `design` del generador — hoy uno solo, el
+ * neutro: las cinco pieles se retiraron el 2026-08-27. El selector se queda porque es la costura
+ * por la que entra la siguiente, y su test lo ata a `DESIGN_PRESETS` para que no derive.
  */
-export const PREVIEW_PRESETS: PresetOption[] = [
-  { id: 'actual', label: 'Actual (neutro)' },
-  { id: 'cabina', label: 'Cabina (operaciones)' },
-  { id: 'taller', label: 'Taller (raptor)' },
-  { id: 'banco', label: 'Banco de trabajo (raptor)' },
-  { id: 'rotulo', label: 'Rótulo (raptor)' },
-  { id: 'suite', label: 'Suite (ERP)' }
-]
+export const PREVIEW_PRESETS: PresetOption[] = [{ id: 'actual', label: 'Actual (neutro)' }]
 
 export interface PreviewPalette {
   id: string

@@ -35,31 +35,6 @@
           "value": "actual",
           "label": "Actual (neutro)",
           "description": "El shell que ya emite el acelerador: barra lateral sobria, sin identidad de sector"
-        },
-        {
-          "value": "cabina",
-          "label": "Cabina (centro de operaciones)",
-          "description": "Barra lateral a contraste con contadores, tabla densa y cifras tabulares; tema claro y oscuro"
-        },
-        {
-          "value": "taller",
-          "label": "Taller (raptor)",
-          "description": "El marco del propio estudio: raíl de lino, versalitas anchas y el acento del tema; densidad cómoda"
-        },
-        {
-          "value": "banco",
-          "label": "Banco de trabajo (raptor)",
-          "description": "La misma casa que taller, apretada: filas densas, cabecera en banda de lino, KPIs fundidos y etiquetas en contorno"
-        },
-        {
-          "value": "rotulo",
-          "label": "Rótulo (raptor)",
-          "description": "La marca al frente: banda de tinta con la navegación dentro, titulares y cifras holgados y el CTA en el acento del tema"
-        },
-        {
-          "value": "suite",
-          "label": "Suite (ERP corporativo)",
-          "description": "Banda de marca, pestañas de módulo, migas y rejilla con bordes; patrón reconocible de ERP"
         }
       ]
     },

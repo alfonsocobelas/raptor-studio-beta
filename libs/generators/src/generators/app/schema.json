@@ -36,42 +36,6 @@
       "description": "Skip npm install and the Spartan UI materialisation",
       "default": false
     },
-    "design": {
-      "type": "string",
-      "default": "actual",
-      "description": "Design preset: shell, density and chrome of the emitted app",
-      "enum": ["actual", "cabina", "taller", "banco", "rotulo", "suite"],
-      "x-prompt": {
-        "message": "¿Qué preset de diseño?",
-        "type": "list",
-        "items": [
-          {
-            "value": "actual",
-            "label": "Actual (neutro)"
-          },
-          {
-            "value": "cabina",
-            "label": "Cabina (centro de operaciones)"
-          },
-          {
-            "value": "taller",
-            "label": "Taller (raptor)"
-          },
-          {
-            "value": "banco",
-            "label": "Banco de trabajo (raptor)"
-          },
-          {
-            "value": "rotulo",
-            "label": "Rótulo (raptor)"
-          },
-          {
-            "value": "suite",
-            "label": "Suite (ERP corporativo)"
-          }
-        ]
-      }
-    },
     "database": {
       "type": "string",
       "default": "postgres",

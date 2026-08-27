@@ -13,8 +13,8 @@ export const CANVAS_SCOPE = '.preview-scope'
  * unas 140 líneas de `.preview-scope[data-preset='…']` en el styles.css del estudio. La segunda
  * aplanaba esquinas listando clases a mano (`.rounded-full`, `.rounded-md`, `.rounded-lg`,
  * `.rounded`) y se dejó fuera `rounded-xl` — la de la tarjeta KPI. Resultado: los KPIs salían
- * redondeados bajo cabina y suite mientras el resto se cuadraba, y la conclusión razonable al
- * verlo era que la piel no se aplicaba.
+ * redondeados mientras el resto se cuadraba, y la conclusión razonable al verlo era que la piel
+ * no se aplicaba.
  *
  * Ahora la verdad es una: `DESIGN_PRESETS` en `@raptor/schema`, igual que los temas.
  */

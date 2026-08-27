@@ -45,11 +45,11 @@ describe('CanvasHeaderComponent', () => {
 
   it('el chip de piel dice la piel elegida, con la etiqueta del generador', () => {
     store.addPage('list', 'Productos')
-    preview.preset.set('suite')
+    preview.preset.set('actual')
 
     const fixture = mount()
 
-    expect(testId(fixture, 'chip-skin')?.textContent).toContain('Suite (ERP)')
+    expect(testId(fixture, 'chip-skin')?.textContent).toContain('Actual (neutro)')
   })
 
   it('el chip de tema dice el tema del catálogo, no un color a mano', () => {

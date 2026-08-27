@@ -320,10 +320,8 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
               </div>
             } @else {
               <div
-                class="preview-scope bg-background canvas-card mx-auto min-h-[85%] overflow-hidden rounded-xl border"
+                class="preview-scope bg-background canvas-card mx-auto flex min-h-[85%] overflow-hidden rounded-xl border"
                 [class.max-w-6xl]="!active.systemView()"
-                [class.flex]="shellDescriptor().layout === 'rail'"
-                [class.flex-col]="shellDescriptor().layout === 'banner'"
                 [style]="previewVars()"
                 [attr.data-palette]="preview.palette()"
                 [attr.data-preset]="preview.preset()"
@@ -491,8 +489,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
       border-radius: var(--radius);
       color: var(--foreground);
     }
-    /* Los shells de cabina y suite no se tiñen: se CAMBIAN (réplica de files-design/<preset>).
-       El cromo de componentes vive en el styles.css global del estudio, mismo mecanismo que
+    /* El cromo de componentes vive en el styles.css global del estudio, mismo mecanismo que
        la app emitida — desde aquí la encapsulación no alcanza a los componentes hijos. */
     .toolbar-item {
       border: 1px solid var(--border);
@@ -552,11 +549,6 @@ export class StudioCanvasComponent {
     action.run()
     this.notice.dismiss()
   }
-
-  /**
-   * Contador de la barra lateral de cabina. Mismo total de mockup que usan los KPIs y la
-   * paginación, así que el lienzo no se contradice consigo mismo. Solo para vistas con recurso.
-   */
 
   constructor() {
     // restaurar el diseño activo y poblar el selector; sin API local el lienzo sigue

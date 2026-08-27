@@ -23,10 +23,7 @@ const manifest: SlotsManifest = {
       name: 'design',
       label: 'Preset visual',
       default: 'actual',
-      providers: [
-        { value: 'actual', label: 'Actual (neutro)' },
-        { value: 'cabina', label: 'Cabina (centro de operaciones)' }
-      ]
+      providers: [{ value: 'actual', label: 'Actual (neutro)' }]
     },
     {
       name: 'infra',
@@ -228,7 +225,7 @@ describe('GeneratePageComponent', () => {
     it('el preset visual no se pregunta: lo manda el lienzo', async () => {
       const fixture = await mount()
 
-      expect(at(fixture, 'slot-design-cabina')).toBeNull()
+      expect(at(fixture, 'slot-design-actual')).toBeNull()
     })
 
     it('arranca con lo que el manifiesto trae por defecto', async () => {
@@ -306,9 +303,9 @@ describe('GeneratePageComponent', () => {
     })
 
     it('enseña el preset del lienzo, que aquí no se elige', async () => {
-      preview.preset.set('cabina')
+      preview.preset.set('actual')
 
-      expect(at(await mount(), 'generate-summary')?.textContent).toContain('Cabina')
+      expect(at(await mount(), 'generate-summary')?.textContent).toContain('Actual')
     })
 
     it('lista la pila elegida con la etiqueta de cada ranura', async () => {
@@ -669,7 +666,14 @@ describe('GeneratePageComponent', () => {
     })
 
     it('sin huecos, la sección de relleno ni aparece', async () => {
-      const fixture = await generate({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', slots: [], elapsedMs: 900 })
+      const fixture = await generate({
+        type: 'done',
+        ok: true,
+        files: 3,
+        root: 'apps/mi-app',
+        slots: [],
+        elapsedMs: 900
+      })
 
       expect(at(fixture, 'fill-slots-section')).toBeNull()
     })

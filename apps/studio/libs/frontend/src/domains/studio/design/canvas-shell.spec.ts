@@ -5,16 +5,15 @@ import { PreviewPreset, PreviewSettings } from './preview-settings'
 import { StudioCanvasComponent } from './studio-canvas.component'
 
 /**
- * El espejo del shell del lienzo, blindado antes de extraerlo a datos (spec 69, TASK-03).
+ * El espejo del shell del lienzo, fotografiado (spec 69, TASK-03).
  *
- * Hasta hoy el shell de cada piel se escribía a mano en la plantilla del lienzo con un `@if` por
- * preset. Con tres pieles nuevas eso son cinco ramas y ~300 líneas duplicadas, y ya derivó dos
- * veces respecto al emitido. La extracción a un descriptor no puede cambiar NADA de lo que hoy
- * se ve, así que estas instantáneas se graban con el código viejo y tienen que sobrevivir al
- * refactor carácter a carácter.
+ * La instantánea es lo que impide que el shell del lienzo derive respecto al emitido sin que
+ * nadie se entere: ya pasó dos veces. Se fotografían los nodos de CROMO (los `mock-*`), no el
+ * contenido del lienzo — el bloque de tabla es de otros componentes y ya tiene sus tests.
  *
- * Se fotografían los nodos de CROMO (los `mock-*`), no el contenido del lienzo: el bloque de
- * tabla es de otros componentes y ya tiene sus tests.
+ * Con las cinco pieles retiradas (2026-08-27) queda una foto: la del neutro. Los nodos de cromo
+ * que sólo tenían las pieles borradas (banda, miga, barra de estado) siguen en la lista a
+ * propósito: la foto documenta que hoy NO existen.
  */
 const CHROME = ['mock-sidebar', 'mock-banner', 'mock-modules', 'mock-breadcrumb', 'mock-statusbar', 'mock-theme-toggle']
 
@@ -65,49 +64,5 @@ describe('el shell del lienzo por piel', () => {
 
   it('actual: barra lateral neutra con logotipo, sin barra de estado', () => {
     expect(chrome(mount('actual'))).toMatchSnapshot()
-  })
-
-  it('cabina: barra a contraste con contadores y barra de estado', () => {
-    expect(chrome(mount('cabina'))).toMatchSnapshot()
-  })
-
-  it('suite: banda de marca, pestañas de módulo y miga', () => {
-    expect(chrome(mount('suite'))).toMatchSnapshot()
-  })
-
-  // ── Spec 69: la familia raptor. Estas tres NO tienen foto previa que respetar (nacen aquí),
-  // así que la instantánea las fija de aquí en adelante y el test dice qué se espera de cada una.
-  it('taller: raíl de lino con versalita y marcador de acento', () => {
-    const fixture = mount('taller')
-    const rail = fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')
-
-    // el acento del TEMA, no un naranja escrito a mano
-    expect(rail.innerHTML).toContain('var(--shell-accent)')
-    expect(rail.innerHTML).not.toMatch(/#f15539|#d75f3d/)
-    // versalita bajo el nombre y el pie de sesión calcado del emitido
-    expect(rail.textContent).toContain('Panel de gestión')
-    expect(fixture.nativeElement.querySelector('[data-testid="mock-session-footer"]')).not.toBeNull()
-    expect(chrome(fixture)).toMatchSnapshot()
-  })
-
-  it('rotulo: banda de tinta con el logotipo en el acento y la navegación dentro', () => {
-    const fixture = mount('rotulo')
-    const banner = fixture.nativeElement.querySelector('[data-testid="mock-banner"]')
-
-    // el logotipo toma el acento del TEMA y la navegación vive en la banda, no en un raíl
-    expect(banner.innerHTML).toContain('var(--shell-accent)')
-    expect(banner.querySelector('[data-testid="nav-page-0"]')).not.toBeNull()
-    expect(fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')).toBeNull()
-    expect(chrome(fixture)).toMatchSnapshot()
-  })
-
-  it('banco: el mismo raíl apretado, con la ruta arriba', () => {
-    const fixture = mount('banco')
-
-    // la barra de ruta es lo que lo separa de taller; el raíl sigue siendo de lino, no invertido
-    const path = fixture.nativeElement.querySelector('[data-testid="mock-statusbar"]')
-    expect(path?.textContent).toContain('mi-app')
-    expect(fixture.nativeElement.querySelector('[data-testid="mock-sidebar"]')).not.toBeNull()
-    expect(chrome(fixture)).toMatchSnapshot()
   })
 })

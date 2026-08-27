@@ -58,12 +58,12 @@ describe('scopePresetCss', () => {
     expect(scopePresetCss(css, S)).toContain('.app-piel .app-panel {')
   })
 
-  // El guardián: si un selector se escapara sin acotar, teñiría el estudio entero.
-  it.each(DESIGN_PRESETS.filter(preset => preset.css).map(preset => preset.id))(
-    'ningún selector del preset «%s» queda sin acotar',
-    id => {
-      const preset = DESIGN_PRESETS.find(candidate => candidate.id === id)
-      const scoped = scopePresetCss(preset?.css ?? '', S)
+  // El guardián: si un selector se escapara sin acotar, teñiría el estudio entero. Se recorre
+  // el catálogo entero — hoy sólo el neutro, que no trae CSS, así que no hay nada que acotar;
+  // el día que vuelva a haber una piel, este test la mira sin tocarlo.
+  it('ningún selector de ningún preset queda sin acotar', () => {
+    for (const preset of DESIGN_PRESETS.filter(candidate => candidate.css)) {
+      const scoped = scopePresetCss(preset.css, S)
       const withoutComments = scoped.replace(/\/\*[\s\S]*?\*\//g, '')
 
       for (const line of withoutComments.split('\n')) {
@@ -78,10 +78,9 @@ describe('scopePresetCss', () => {
         expect(selector.startsWith(S)).toBe(true)
       }
       // Sobre el CSS sin comentarios, no sobre el bruto: un comentario del preset puede NOMBRAR
-      // un selector para explicar por qué está ahí (el de taller explica por qué necesita el
-      // prefijo de ámbito) y eso no tiñe nada. Antes esta comprobación lo leía como una fuga.
+      // un selector para explicar por qué está ahí, y eso no tiñe nada.
       expect(withoutComments).not.toContain(':root')
       expect(withoutComments).not.toContain('.app-shell-main')
     }
-  )
+  })
 })

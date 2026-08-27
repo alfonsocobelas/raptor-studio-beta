@@ -165,7 +165,8 @@ export const THEMES: NamedTheme[] = [
      * ahí en vez de copiarlos: si la casa se recalibra y nadie lo baja aquí, la suite lo canta.
      *
      * El CTA dominante es TINTA y el naranja de marca vive en `ring`: el estudio reserva el
-     * naranja a un acento por pantalla, y ese acento lo pone la piel (`taller`, `banco`, `rotulo`).
+     * naranja a un acento por pantalla. Las tres pieles que lo consumían se retiraron el
+     * 2026-08-27; el tema se queda, que es lo que da el papel cálido y el naranja del foco.
      */
     id: 'raptor',
     label: 'Raptor (la casa)',

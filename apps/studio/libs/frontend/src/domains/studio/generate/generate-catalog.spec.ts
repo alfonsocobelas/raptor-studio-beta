@@ -27,10 +27,7 @@ const manifest: SlotsManifest = {
       name: 'design',
       label: 'Preset visual',
       default: 'actual',
-      providers: [
-        { value: 'actual', label: 'Actual' },
-        { value: 'cabina', label: 'Cabina' }
-      ]
+      providers: [{ value: 'actual', label: 'Actual' }]
     },
     {
       name: 'infra',
@@ -55,8 +52,8 @@ const manifest: SlotsManifest = {
           requires: { database: 'postgres' }
         }
       ]
-    }
-    ,{
+    },
+    {
       name: 'sessionStore',
       label: 'Almacén de sesiones',
       default: 'postgres',
@@ -75,7 +72,14 @@ const manifest: SlotsManifest = {
 }
 
 // espejo de defaultSelection(manifest): auth es single-tenant de fábrica desde la spec 58
-const defaults = { database: 'postgres', ui: 'spartan', design: 'actual', infra: 'raptor', auth: 'single-tenant', sessionStore: 'postgres' }
+const defaults = {
+  database: 'postgres',
+  ui: 'spartan',
+  design: 'actual',
+  infra: 'raptor',
+  auth: 'single-tenant',
+  sessionStore: 'postgres'
+}
 
 const group = (catalog: ReturnType<typeof mergeCatalog>, slot: string) => {
   const found = catalog.groups.find(g => g.slot === slot)

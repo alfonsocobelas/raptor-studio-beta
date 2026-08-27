@@ -8,9 +8,12 @@ import { presetCanvasCss, presetTokenVars } from './preset-canvas-css'
  *
  * Antes había DOS aproximaciones escritas a mano: `presetChrome()` (tokens de color del shell) y
  * unas 140 líneas de `.preview-scope[data-preset='…']` en el styles.css del estudio. La segunda
- * aplanaba las esquinas listando clases a mano — `.rounded-full`, `.rounded-md`, `.rounded-lg`,
- * `.rounded` — y se dejó fuera `rounded-xl`, que es justo la de la tarjeta KPI: de ahí que los
- * KPIs salieran redondeados bajo cabina y suite mientras el resto se cuadraba.
+ * aplanaba las esquinas listando clases a mano y se dejó fuera `rounded-xl`, que es justo la de
+ * la tarjeta KPI: de ahí que los KPIs salieran redondeados mientras el resto se cuadraba.
+ *
+ * Retiradas las cinco pieles (2026-08-27) queda el neutro, que no tiñe nada. Lo que estos tests
+ * sostienen es la COSTURA: el lienzo ofrece los presets del generador y ni uno más, y la piel que
+ * no está en el catálogo no pinta nada en vez de reventar el lienzo.
  */
 describe('la piel del lienzo', () => {
   it('ofrece exactamente los presets que el generador conoce', () => {
@@ -22,33 +25,11 @@ describe('la piel del lienzo', () => {
     expect(presetCanvasCss('actual')).toBe('')
   })
 
-  it('los tokens que el preset pisa del tema viajan INLINE, que es lo que gana al tema del lienzo', () => {
-    // el lienzo pinta los tokens del tema con [style]; una regla de hoja de estilos perdería
-    expect(presetTokenVars('cabina')['--radius']).toBe('0px')
-    expect(presetTokenVars('cabina')['--radius-xl']).toBe('0px')
-    expect(presetTokenVars('suite')['--radius']).toBe('2px')
-  })
-
-  it('el CSS del preset llega acotado al lienzo, con sus tokens propios y sus reglas', () => {
-    const css = presetCanvasCss('cabina')
-
-    expect(css).toContain('.preview-scope {')
-    expect(css).toContain('--shell-bg')
-    // las reglas de bloque, que es lo que la aproximación no tenía
-    expect(css).toContain('.preview-scope .app-panel')
-    expect(css).not.toContain(':root')
-    expect(css).not.toContain('.app-shell-main')
-  })
-
-  it('el modo oscuro del preset se pega al lienzo, no al documento', () => {
-    expect(presetCanvasCss('cabina')).toContain('.preview-scope.dark')
-  })
-
-  it('suite trae la rejilla y la banda con sus nombres reales, no con alias de previsualización', () => {
-    const css = presetCanvasCss('suite')
-
-    expect(css).toContain('--grid-line')
-    expect(css).toContain('--banner-bg')
-    expect(css).not.toContain('--preview-')
+  it('una piel que no está en el catálogo no tiñe nada: el lienzo sigue dibujándose', () => {
+    // las cinco retiradas entran por aquí si un diseño guardado las trae en su JSON
+    for (const gone of ['cabina', 'suite', 'taller', 'banco', 'rotulo']) {
+      expect(presetTokenVars(gone)).toEqual({})
+      expect(presetCanvasCss(gone)).toBe('')
+    }
   })
 })
