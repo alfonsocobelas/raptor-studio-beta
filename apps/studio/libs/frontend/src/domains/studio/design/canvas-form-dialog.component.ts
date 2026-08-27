@@ -19,7 +19,7 @@ import { formDialogDescription, formDialogTitle, type FormDialogMode } from './f
       (click)="onOverlay($event)"
     >
       <div
-        class="app-panel bg-background max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border p-6 shadow-lg"
+        class="app-panel app-float bg-background max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border p-6 shadow-lg"
         (click)="$event.stopPropagation()"
       >
         <h2 class="app-panel-head text-lg font-semibold" data-testid="form-dialog-title">{{ title() }}</h2>

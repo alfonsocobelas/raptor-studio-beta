@@ -50,5 +50,16 @@ export const DESIGN_HOOKS = [
    * cubre el que la librería monta por dentro, donde el preset no llega. El preset lo viste
    * junto con su `button` descendiente, porque el disparador es el hijo, no el anfitrión.
    */
-  'app-control'
+  'app-control',
+  /**
+   * Superficie FLOTANTE: el diálogo y el desplegable del lookup. Octavo hook, añadido el
+   * 2026-08-27 porque el defecto que lo pide es real y estaba vivo: cabina funde sus paneles con
+   * la rejilla (`.app-panel { background: transparent }`) y el diálogo lleva ese mismo hook, así
+   * que el formulario salía SIN PAPEL, flotando sobre el velo negro.
+   *
+   * No es «un app-panel con otro nombre»: un panel de pantalla puede fundirse con el fondo, y
+   * uno que flota sobre un velo no puede — necesita papel y contorno propios. Va siempre JUNTO a
+   * `app-panel` (la superficie sigue siendo una superficie), detrás en el CSS del preset.
+   */
+  'app-float'
 ] as const

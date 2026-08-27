@@ -32,7 +32,7 @@ import { AppSelectOption } from './select'
         (keydown.escape)="close()"
       />
       @if (open()) {
-        <ul class="app-panel bg-popover text-popover-foreground absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md">
+        <ul class="app-panel app-float bg-popover text-popover-foreground absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md">
           @for (option of options(); track option.value) {
             <li>
               <!-- mousedown, no click: el blur del input cerraría la lista antes del click -->

@@ -21,6 +21,13 @@ const SKINS = ['actual', 'cabina', 'taller', 'banco', 'rotulo', 'suite'] as cons
 /** Lo medido de una piel: forma, densidad y cromo, no colores sueltos. */
 interface Measures {
   panelRadius: string
+  kpiRadius: string
+  kpiShadow: string
+  kpiGap: string
+  kpiStripRule: string
+  dialogBg: string
+  dialogRadius: string
+  labelSize: string
   panelShadow: string
   metricSize: string
   cellSize: string
@@ -44,8 +51,18 @@ async function measure(page: Page): Promise<Measures> {
       return node ? getComputedStyle(node).getPropertyValue(property).trim() : '—'
     }
     return {
-      panelRadius: read('.app-panel', 'border-radius'),
-      panelShadow: read('.app-panel', 'box-shadow'),
+      // el panel de PANTALLA, no la celda de KPI: desde que banco funde la tira, `.app-panel` a
+      // secas cazaba la celda y se medía otra cosa
+      panelRadius: read('.app-panel:not(:has(.app-metric))', 'border-radius'),
+      // la tira de KPIs: ¿cajas o líneas? La celda sin caja, el hueco cerrado y la regla de la tira
+      kpiRadius: read('app-kpi-card .app-panel', 'border-radius'),
+      kpiShadow: read('app-kpi-card .app-panel', 'box-shadow'),
+      kpiGap: read('div.grid:has(> app-kpi-card)', 'gap'),
+      kpiStripRule: read('div.grid:has(> app-kpi-card)', 'border-top-width'),
+      dialogBg: read('[data-testid="form-dialog"] .app-panel', 'background-color'),
+      dialogRadius: read('[data-testid="form-dialog"] .app-panel', 'border-radius'),
+      labelSize: read('[data-testid="form-dialog"] .app-label', 'font-size'),
+      panelShadow: read('.app-panel:not(:has(.app-metric))', 'box-shadow'),
       metricSize: read('.app-metric', 'font-size'),
       cellSize: read('table td', 'font-size'),
       thTransform: read('table th', 'text-transform'),
@@ -126,8 +143,24 @@ async function main(): Promise<void> {
   for (const skin of SKINS) {
     await page.getByTestId(`preview-preset-${skin}`).click()
     await page.waitForTimeout(250)
-    table[skin] = await measure(page)
     await page.screenshot({ path: `${SHOTS}/smoke-69-${skin}.png` })
+
+    // el diálogo de alta se ABRE para medirlo: es una superficie con hooks propios y en cabina
+    // salía transparente (el .app-panel del preset alcanza al app-dialog). Se cierra pulsando
+    // el velo, no con Escape: el mock del lienzo no lo escucha.
+    await page
+      .locator('.preview-scope [data-testid="table-create"]')
+      .first()
+      .click({ timeout: 5000 })
+      .catch(() => undefined)
+    await page.waitForTimeout(350)
+    table[skin] = await measure(page)
+    if (skin === 'taller') await page.screenshot({ path: `${SHOTS}/smoke-69-dialogo-taller.png` })
+    await page
+      .locator('[data-testid="form-dialog"]')
+      .click({ position: { x: 5, y: 5 } })
+      .catch(() => undefined)
+    await page.waitForTimeout(200)
   }
 
   console.log('\n── medidas (tema raptor) ──')
@@ -149,8 +182,9 @@ async function main(): Promise<void> {
     return table['banco'].panelShadow === 'none' && table['banco'].panelRadius === '6px'
   })
 
-  await check('taller conserva el relieve del panel: es la piel cómoda', async () => {
-    return table['taller'].panelShadow !== 'none' && table['taller'].panelRadius === '14px'
+  await check('taller conserva el relieve de la tarjeta KPI: es la piel cómoda', async () => {
+    // el relieve vive en la TARJETA (la del panel de pantalla lo pone la plantilla, no la piel)
+    return table['taller'].kpiShadow !== 'none' && table['taller'].kpiRadius === '14px'
   })
 
   await check('rotulo lleva la navegación en una banda y la cifra más grande de la FAMILIA', async () => {
@@ -163,6 +197,40 @@ async function main(): Promise<void> {
     const cta = table['rotulo'].ctaBackground
     console.log(`   CTA rotulo: ${cta} · taller: ${table['taller'].ctaBackground}`)
     return cta !== table['taller'].ctaBackground
+  })
+
+  // ── Lo que se escapó en la primera vuelta (revisión de Alfonso, 2026-08-27): los componentes
+  // que ninguna piel alcanzaba. Estas dos comprobaciones son las que lo impiden en adelante.
+  await check('ninguna piel deja el diálogo sin papel', async () => {
+    for (const skin of SKINS) {
+      // transparente = el formulario flotando sobre el velo negro (defecto vivo de cabina)
+      if (table[skin].dialogBg === 'rgba(0, 0, 0, 0)' || table[skin].dialogBg === '—') {
+        console.log(`   ${skin}: ${table[skin].dialogBg}`)
+        return false
+      }
+    }
+    return true
+  })
+
+  await check('la etiqueta de campo cambia con la piel, no es 14px en todas', async () => {
+    const sizes = SKINS.map(skin => table[skin].labelSize)
+    console.log(`   etiquetas: ${sizes.join(' · ')}`)
+    return new Set(sizes).size >= 4 && !sizes.includes('—')
+  })
+
+  await check('banco funde los KPIs en una tira: líneas, no cajas', async () => {
+    const b = table['banco']
+    const t = table['taller']
+    console.log(`   banco → hueco ${b.kpiGap}, celda ${b.kpiRadius}, regla ${b.kpiStripRule}`)
+    console.log(`   taller → hueco ${t.kpiGap}, celda ${t.kpiRadius}, regla ${t.kpiStripRule}`)
+    // la tira: hueco cerrado, celda sin caja y regla arriba. El resto de las pieles, cajas con aire.
+    return (
+      b.kpiGap.startsWith('0px') &&
+      b.kpiRadius === '0px' &&
+      b.kpiStripRule === '1px' &&
+      !t.kpiGap.startsWith('0px') &&
+      t.kpiRadius !== '0px'
+    )
   })
 
   await check('sin errores de consola', async () => errors.length === 0)

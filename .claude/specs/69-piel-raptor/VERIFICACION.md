@@ -63,3 +63,52 @@ de la spec cumplido.
   `rotulo` no se ve en el acento (en el emitido sí: es `[appbtn]`). Espejo, no emitido.
 - `cabina` y `banco` compiten como pieles densas. Las descripciones las separan, pero si a la
   vista resultan redundantes, retirar `cabina` es una conversación real.
+
+---
+
+# Segunda vuelta — «no has adaptado el resto de componentes» (2026-08-27)
+
+Revisión de Alfonso, y tenía razón. Medido antes de tocar nada:
+
+|                   | actual | cabina           | taller | banco  | rotulo | suite  |
+| ----------------- | ------ | ---------------- | ------ | ------ | ------ | ------ |
+| etiqueta de campo | 14px   | 14px             | 14px   | 14px   | 14px   | 14px   |
+| fondo del diálogo | blanco | **transparente** | blanco | blanco | blanco | blanco |
+
+**Por qué se escapó**: el guard de deriva es por FICHERO. A `lookup.ts` le bastaba tener un
+`app-panel` en su desplegable para pasar, aunque su `<input>` escribiera `h-10 rounded-md border`
+a mano (violación del ADR-003 de paso). Y `app-dialog` lleva `app-panel`, así que el
+`background: transparent` con el que cabina funde sus paneles alcanzaba al diálogo: el formulario
+salía sobre el velo negro.
+
+## Lo que se hizo
+
+El kernel NOMBRA lo que no se podía vestir, y el vocabulario pasa de seis hooks a nueve:
+
+- `app-label` — la etiqueta de `app-form-field`
+- `app-control` — el disparador de `app-select` (el control que monta la librería por dentro)
+- `app-float` — la superficie FLOTANTE: diálogo y desplegable del lookup. No es «un app-panel con
+  otro nombre»: un panel de pantalla puede fundirse con el fondo y uno que flota sobre un velo no.
+
+Además el `<input>` de `app-lookup` pasa por el contrato `appInput` en vez de copiar su cadena de
+clases, y el diálogo de confirmación viste cabecera y botonera con hooks que ya existían.
+Las CINCO pieles visten los tres hooks nuevos — lo obliga el test «%s viste todos los hooks».
+
+## Medida después (tema raptor)
+
+|                   | actual | cabina  | taller | banco      | rotulo  | suite   |
+| ----------------- | ------ | ------- | ------ | ---------- | ------- | ------- |
+| etiqueta de campo | 14px   | 10,88px | 11,2px | 9,92px     | 10,88px | 12,48px |
+| fondo del diálogo | papel  | papel   | papel  | papel      | papel   | papel   |
+| tira de KPIs      | cajas  | cajas   | cajas  | **líneas** | cajas   | cajas   |
+
+La tira de `banco` es la segunda corrección de Alfonso: los KPIs no son cajas, los separan líneas.
+Se consigue sin marcado nuevo — `app-kpi-card` es un elemento y `:has(> app-kpi-card)` distingue
+la rejilla de KPIs de cualquier otra: hueco a 0, celda sin caja y regla arriba y abajo de la tira.
+
+## Trampa propia, tercera vez la misma
+
+Un **backtick dentro del literal de plantilla** del CSS rompe `design-presets.ts`. Pasó tres veces
+en esta spec. Y la suite de jest lo esconde: en vez de fallar, COLECCIONA MENOS tests (1081 → 110)
+y la línea «Tests: 110 passed» se lee como verde. Gate añadido a la rutina:
+`npx tsc --noEmit -p libs/schema/tsconfig.lib.json` después de tocar los presets.

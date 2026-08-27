@@ -248,11 +248,13 @@ input.app-toolbar,
   color: var(--shell-fg);
 }
 
-/* El DIÁLOGO también lleva app-panel (es una superficie), y con el fondo transparente de arriba
-   salía sin papel: el formulario flotaba sobre el velo negro. Medido en navegador el 2026-08-27.
-   El diálogo recupera su papel; lo que se funde con la rejilla son los paneles de pantalla. */
-app-dialog .app-panel {
+/* La superficie FLOTANTE (diálogo, desplegable del lookup) recupera papel y contorno. Lo que se
+   funde con la rejilla son los paneles de PANTALLA: con el fondo transparente de arriba, el
+   formulario del diálogo salía sobre el velo negro (medido en navegador el 2026-08-27). Va detrás
+   de .app-panel a propósito: misma especificidad, decide el orden. */
+.app-float {
   background: var(--card);
+  border-color: var(--shell-fg);
 }
 
 /* La etiqueta del campo, en versalitas como el resto del cromo de instrumentación (spec 69:
@@ -406,10 +408,14 @@ const SUITE_CSS = `
   font-weight: 600;
 }
 
-/* La cabecera etiquetada es de las superficies de PANTALLA: en el diálogo, una banda gris sobre
-   el título se leía como un error. El diálogo se queda con el título a secas. */
-app-dialog .app-panel-head,
-app-confirm-dialog .app-panel-head {
+/* La cabecera etiquetada es de las superficies de PANTALLA: en una flotante, una banda gris sobre
+   el título se leía como un error. La flotante se queda con el título a secas, y con el borde de
+   la rejilla marcado — es lo que la separa del velo. */
+.app-float {
+  border-color: var(--grid-line);
+}
+
+.app-float .app-panel-head {
   background: transparent;
 }
 
@@ -573,6 +579,14 @@ const TALLER_CSS = `
   border-radius: 999px;
   border-color: var(--shell-border);
   font-weight: 600;
+}
+
+/* La superficie FLOTANTE mantiene el relieve de la casa: papel de tarjeta y esquina generosa.
+   No hereda el aplanado de nadie, pero se declara igual para que la piel no dependa de que
+   .app-panel no la haya tocado. */
+.app-float {
+  background: var(--card);
+  border-radius: 14px;
 }
 
 /* La etiqueta del campo, en la versalita ancha de la casa (spec 69) */
@@ -755,10 +769,11 @@ const BANCO_CSS = `
   font-size: 0.78rem;
 }
 
-/* Como en cabina: el diálogo es una superficie, pero sin sombra se queda sin contorno, así que
-   mantiene su borde (el de .app-panel) y recupera el papel de la tarjeta. */
-app-dialog .app-panel {
+/* La superficie FLOTANTE conserva el papel de la tarjeta: sin sombra, lo único que la separa del
+   velo es su borde, así que se le sube el contraste. */
+.app-float {
   background: var(--card);
+  border-color: var(--shell-fg-strong);
 }
 
 .app-toolbar,
@@ -768,6 +783,30 @@ input.app-toolbar {
   border-radius: 6px;
   box-shadow: none;
   font-size: 0.75rem;
+}
+
+/* ── la tira de KPIs: LÍNEAS, no cajas ──────────────────────────────────────
+   Elección de Alfonso (2026-08-27), como la maqueta: en un banco de trabajo los indicadores son
+   una tira continua dividida por reglas, no cuatro tarjetas flotando. La tira se consigue sin
+   pedirle marcado nuevo a la plantilla: app-kpi-card es un elemento y el hueco de la rejilla
+   se cierra con :has(> app-kpi-card) —lo que distingue la rejilla de KPIs de cualquier otra. */
+.app-shell-main div.grid:has(> app-kpi-card) {
+  gap: 0;
+  border-top: 1px solid var(--shell-border);
+  border-bottom: 1px solid var(--shell-border);
+}
+
+app-kpi-card .app-panel {
+  border-radius: 0;
+  border-width: 0;
+  border-right: 1px solid var(--shell-border);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* la última celda no cierra con línea: el borde de la tira ya está */
+app-kpi-card:last-child .app-panel {
+  border-right-width: 0;
 }
 
 /* la cifra se contiene: en un banco de trabajo caben cuatro en una tira, no tres en tarjetas */
@@ -905,6 +944,12 @@ const ROTULO_CSS = `
   border-radius: 999px;
   border-color: var(--shell-border);
   font-weight: 600;
+}
+
+/* La superficie FLOTANTE, con el relieve holgado de esta piel */
+.app-float {
+  background: var(--card);
+  border-radius: 14px;
 }
 
 /* La etiqueta del campo: versalita marcada, como la de sección (spec 69) */

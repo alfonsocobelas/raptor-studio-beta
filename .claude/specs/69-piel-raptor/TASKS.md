@@ -50,16 +50,17 @@ preset alcanza los seis hooks (test de la 67: por cada hook, al menos una regla)
 > sale TRANSPARENTE. Causa: el guard de deriva es por FICHERO — a `lookup.ts` le basta un
 > `app-panel` en el desplegable para pasar aunque su `<input>` escriba el cromo a mano.
 
-- [ ] TASK-08: el kernel NOMBRA lo que le faltaba: `app-label` (etiqueta de `app-form-field`) y
+- [x] TASK-08: el kernel NOMBRA lo que le faltaba: `app-label` (etiqueta de `app-form-field`) y
       `app-control` (disparador de `app-select`) entran en `DESIGN_HOOKS`; el `<input>` de
       `app-lookup` pasa a usar el contrato `appInput` (violación del ADR-003 de paso); el diálogo
       de confirmación viste cabecera y botonera con los hooks que ya existen. Espejo del lienzo
       incluido (el guard del canvas exige que ningún hook sea CSS muerto).
       **Gate**: re-baseline del oro (cambia el emitido a propósito) + suites.
-- [ ] TASK-09: las CINCO pieles visten los hooks nuevos y `cabina` devuelve el papel del diálogo.
+- [x] TASK-09: las CINCO pieles visten los hooks nuevos y `cabina` devuelve el papel del diálogo.
       El test «%s viste todos los hooks del vocabulario» obliga a las cinco: es lo que impide que
       el siguiente componente nazca desnudo.
-- [ ] TASK-10: el smoke mide diálogo, etiqueta y select por piel; acta actualizada.
+- [x] TASK-10: el smoke mide diálogo, etiqueta, select y la tira de KPIs por piel; acta actualizada.
+- [x] TASK-11: la tira de KPIs de `banco` son LÍNEAS, no cajas (segunda corrección de Alfonso).
 
 ---
 
