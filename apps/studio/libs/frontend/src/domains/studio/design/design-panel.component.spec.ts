@@ -124,7 +124,7 @@ describe('DesignPanelComponent — el inspector solo donde las columnas pintan a
     expect(testId(fixture, 'kpi-config')).not.toBeNull()
   })
 
-  it('en un panel sin bloque configurable dice por qué está vacío, en vez de quedarse en blanco', () => {
+  it('la fila de KPIs trae su propio panel, con una tarjeta por entidad medida', () => {
     store.addPage('blank', 'Panel')
     store.addBlock(0, { kind: 'kpis', resources: ['inmueble'] })
     active.selectResource('inmueble')
@@ -132,8 +132,20 @@ describe('DesignPanelComponent — el inspector solo donde las columnas pintan a
     const fixture = mount()
     openComponentTab(fixture)
 
-    expect(testId(fixture, 'component-no-columns')).not.toBeNull()
+    expect(testId(fixture, 'kpis-config')).not.toBeNull()
+    expect(testId(fixture, 'kpis-card-inmueble')).not.toBeNull()
     expect(fixture.nativeElement.textContent).not.toContain('Inmueble · columnas')
+  })
+
+  it('un bloque sin panel propio ni columnas dice por qué está vacío, en vez de quedarse en blanco', () => {
+    store.addPage('blank', 'Panel')
+    store.addBlock(0, { kind: 'attachments', resource: 'inmueble' })
+    active.selectResource('inmueble')
+
+    const fixture = mount()
+    openComponentTab(fixture)
+
+    expect(testId(fixture, 'component-no-columns')).not.toBeNull()
   })
 
   it('la galería y el formulario también pintan columnas', () => {

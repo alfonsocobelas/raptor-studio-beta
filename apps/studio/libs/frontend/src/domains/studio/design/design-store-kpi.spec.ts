@@ -92,3 +92,58 @@ describe('DesignStore — bloques kpi y top-n (spec 70)', () => {
     expect(store.setKpiConfig(1, 0, { kpiLabel: 'X' })).toBe(false)
   })
 })
+
+/** Spec 70 (seguimiento): la fila de KPIs también se edita, y desde el panel. */
+describe('DesignStore — qué mide la fila de KPIs', () => {
+  const storeWith = (): DesignStore => {
+    const store = new DesignStore()
+    store.addPage('list', 'Pedidos')
+    store.addResource('Cliente')
+    store.addPage('blank', 'Panel')
+    store.addBlock(1, { kind: 'kpis', resources: ['pedido'] })
+    return store
+  }
+
+  it('cambia las entidades medidas', () => {
+    const store = storeWith()
+
+    const ok = store.setKpiResources(1, 0, ['pedido', 'cliente'])
+
+    expect(ok).toBe(true)
+    expect(store.pages()[1].blocks[0].resources).toEqual(['pedido', 'cliente'])
+  })
+
+  it('rechaza dejar la fila sin ninguna entidad: no mediría nada', () => {
+    const store = storeWith()
+
+    expect(store.setKpiResources(1, 0, [])).toBe(false)
+    expect(store.pages()[1].blocks[0].resources).toEqual(['pedido'])
+  })
+
+  it('rechaza entidades que no están en el modelo', () => {
+    const store = storeWith()
+
+    expect(store.setKpiResources(1, 0, ['pedido', 'fantasma'])).toBe(false)
+  })
+
+  it('rechaza repetidas: dos veces la misma entidad son dos tarjetas iguales', () => {
+    const store = storeWith()
+
+    expect(store.setKpiResources(1, 0, ['pedido', 'pedido'])).toBe(false)
+  })
+
+  it('el setter solo vale para la fila de KPIs', () => {
+    const store = storeWith()
+    store.addBlock(1, { kind: 'table', resource: 'pedido' })
+
+    expect(store.setKpiResources(1, 1, ['pedido'])).toBe(false)
+  })
+
+  it('el orden del array es el orden de las tarjetas: reordenar es fijar el array', () => {
+    const store = storeWith()
+    store.setKpiResources(1, 0, ['pedido', 'cliente'])
+
+    expect(store.setKpiResources(1, 0, ['cliente', 'pedido'])).toBe(true)
+    expect(store.pages()[1].blocks[0].resources).toEqual(['cliente', 'pedido'])
+  })
+})

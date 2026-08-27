@@ -396,6 +396,42 @@ export class DesignStore {
   }
 
 
+
+  /**
+   * Qué entidades mide la fila de KPIs (spec 70, seguimiento). La fila es UN bloque con N
+   * tarjetas: sin esto, la ✕ del lienzo se llevaba la fila entera y no había manera de quitar
+   * una sola tarjeta (reportado 2026-08-27).
+   *
+   * Se rechaza dejarla vacía —no mediría nada— y se rechazan repetidas: dos veces la misma
+   * entidad son dos tarjetas idénticas.
+   */
+  setKpiResources(pageIndex: number, blockIndex: number, resources: string[]): boolean {
+    const page = this._pages()[pageIndex]
+    const block = page?.blocks[blockIndex]
+    if (!block || block.kind !== 'kpis') return false
+    if (!resources.length) {
+      this._lastError.set('La fila de KPIs tiene que medir al menos una entidad')
+      return false
+    }
+    if (new Set(resources).size !== resources.length) {
+      this._lastError.set('La fila de KPIs no puede medir dos veces la misma entidad')
+      return false
+    }
+    const known = this._resources().map(r => r.name)
+    const unknown = resources.find(resource => !known.includes(resource))
+    if (unknown) {
+      this._lastError.set(`«${unknown}» no está en el modelo`)
+      return false
+    }
+
+    const pages = this._pages().map((p, i) =>
+      i === pageIndex
+        ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? { ...b, resources } : b)) }
+        : p
+    )
+    return this.mutate(this._resources(), pages)
+  }
+
   /**
    * Config de los bloques KPI y Top N (spec 70). A diferencia del calendario y el kanban, NO se
    * replica en la entidad: una tarjeta es de la vista, no del modelo — la misma entidad puede

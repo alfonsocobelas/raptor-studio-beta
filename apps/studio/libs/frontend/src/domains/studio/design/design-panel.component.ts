@@ -3,6 +3,7 @@ import { CalendarConfigComponent } from './calendar-config.component'
 import { KanbanConfigComponent } from './kanban-config.component'
 import { DesignStore } from './design-store'
 import { KpiConfigComponent } from './kpi-config.component'
+import { KpisConfigComponent } from './kpis-config.component'
 import { TopNConfigComponent } from './top-n-config.component'
 import { InspectorComponent } from './inspector.component'
 import type { BlockKind } from '@app/shared/domain'
@@ -31,12 +32,12 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 const COLUMN_BLOCKS: BlockKind[] = ['table', 'cards', 'fields', 'form']
 
 /** Bloques con panel de configuración propio. */
-const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'top-n']
+const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', 'top-n']
 
 @Component({
   selector: 'studio-design-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, TopNConfigComponent],
+  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, KpisConfigComponent, TopNConfigComponent],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -127,6 +128,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'top-n']
 
           @case ('component') {
             @if (view.resource()) {
+              <studio-kpis-config />
               <studio-calendar-config [resource]="view.resource()" />
               <studio-kanban-config [resource]="view.resource()" />
               <studio-kpi-config [resource]="view.resource()" />
@@ -179,7 +181,12 @@ export class DesignPanelComponent {
   protected readonly hasBlockConfig = computed(() => {
     const resource = this.view.resource()
     const blocks = this.store.pages()[this.view.index()]?.blocks ?? []
-    return blocks.some(block => CONFIGURABLE_BLOCKS.includes(block.kind) && block.resource === resource)
+    // la fila de KPIs habla de varias entidades: le basta con medir la elegida
+    return blocks.some(
+      block =>
+        CONFIGURABLE_BLOCKS.includes(block.kind) &&
+        (block.resource === resource || (block.resources ?? []).includes(resource ?? ''))
+    )
   })
 
   protected readonly tabs = PANEL_TABS

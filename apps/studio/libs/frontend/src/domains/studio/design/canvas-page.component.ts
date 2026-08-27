@@ -292,8 +292,10 @@ export class CanvasPageComponent {
     return Math.min(Math.max((block.resources ?? []).length, 2), 4)
   }
 
+  /** La fila de KPIs habla de VARIAS entidades: elige la primera, que es la que encabeza la fila. */
   protected selectBlock(block: DesignBlock): void {
-    if (block.resource) this.select.emit(block.resource)
+    const resource = block.resource ?? block.resources?.[0]
+    if (resource) this.select.emit(resource)
   }
 
   protected move(event: Event, index: number, delta: number): void {
