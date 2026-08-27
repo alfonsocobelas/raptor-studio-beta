@@ -122,9 +122,11 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
     if (block.kind === 'kpi') problems.push(...kpiProblems(block, at))
     if (block.kind === 'top-n') problems.push(...topProblems(block, at))
 
-    // un recurso admite varios bloques; el duplicado EXACTO (kind+recurso+campo) no
+    // un recurso admite varios bloques; el duplicado EXACTO no. La huella es la CONFIG COMPLETA,
+    // no `kind:recurso:campo`: dos KPIs sobre `factura.estado` —pendientes y pagadas— son el caso
+    // más normal del panel, y con la huella corta se rechazaban como duplicados.
     for (const resource of resources) {
-      const key = `${block.kind}:${resource}:${'field' in block ? block.field : ''}`
+      const key = `${block.kind}:${resource}:${fingerprintOf(block)}`
       if (seen.has(key)) problems.push(`pages[${index}]: duplicated block '${key}'`)
       seen.add(key)
     }
@@ -235,4 +237,26 @@ function topProblems(block: Extract<DashboardBlock, { kind: 'top-n' }>, at: stri
 
 function isCount(value: number | undefined, min: number, max: number): boolean {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
+}
+
+/**
+ * Huella de un bloque: lo que lo hace distinto de otro del mismo kind y recurso. La ETIQUETA no
+ * entra —dos etiquetas para el mismo número siguen siendo el mismo número, y ese duplicado sí se
+ * quiere cazar—; sí entran la condición, la ventana y los modificadores.
+ */
+function fingerprintOf(block: DashboardBlock): string {
+  if (block.kind === 'kpi') {
+    const condition = block.condition
+    const window = block.window
+    return [
+      condition ? `${condition.field}${condition.operator}${condition.value}` : '',
+      window ? `${window.field}${window.preset}${window.days ?? ''}` : '',
+      block.ratio === true ? 'ratio' : '',
+      block.compare === true ? 'compare' : '',
+      block.target ?? ''
+    ].join('|')
+  }
+  if (block.kind === 'top-n') return `${block.field}|${block.n}|${block.dir ?? 'desc'}`
+
+  return 'field' in block ? block.field : ''
 }

@@ -139,6 +139,71 @@ describe('bloques analíticos del panel — conteos con forma (spec 32, modelo d
     ).toContainEqual(expect.stringContaining('n'))
   })
 
+  it('dos kpis del mismo campo con valores distintos son legítimos', () => {
+    const app = defineApp(
+      withBlocks([
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Pendientes',
+          condition: { field: 'status', operator: 'eq', value: 'pending' }
+        },
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Activos',
+          condition: { field: 'status', operator: 'eq', value: 'active' }
+        }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('dos kpis con la MISMA configuración siguen siendo un duplicado', () => {
+    expect(
+      problemsOf(
+        withBlocks([
+          {
+            kind: 'kpi',
+            resource: 'contract',
+            label: 'Pendientes',
+            condition: { field: 'status', operator: 'eq', value: 'pending' }
+          },
+          {
+            kind: 'kpi',
+            resource: 'contract',
+            label: 'Otra etiqueta para el mismo número',
+            condition: { field: 'status', operator: 'eq', value: 'pending' }
+          }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('duplicated'))
+  })
+
+  it('dos kpis iguales salvo la ventana o el modificador no son duplicados', () => {
+    const app = defineApp(
+      withBlocks([
+        { kind: 'kpi', resource: 'contract', label: 'Total' },
+        { kind: 'kpi', resource: 'contract', label: 'Este mes', window: { field: 'startDate', preset: 'month' } },
+        { kind: 'kpi', resource: 'contract', label: 'Progreso', target: 60 }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('dos top-n iguales salvo la n no son duplicados', () => {
+    const app = defineApp(
+      withBlocks([
+        { kind: 'top-n', resource: 'contract', field: 'amount', n: 3 },
+        { kind: 'top-n', resource: 'contract', field: 'amount', n: 10 }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
   it('el mismo recurso admite varios bloques; el duplicado exacto no', () => {
     expect(
       problemsOf(
