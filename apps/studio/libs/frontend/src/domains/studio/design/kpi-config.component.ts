@@ -7,6 +7,10 @@ import { DesignStore } from './design-store'
 import {
   conditionFieldsOf,
   dateFieldsOf,
+  MEASURE_LABELS,
+  measurableFieldsOf,
+  measureAllowedOn,
+  measuresFor,
   draftOperatorsFor,
   draftValueControlFor,
   OPERATOR_LABELS,
@@ -44,6 +48,34 @@ import {
               data-testid="kpi-label"
             />
           </label>
+
+          <label class="flex items-center justify-between gap-2">
+            <span>Medida</span>
+            <app-select
+              class="w-[124px] shrink-0"
+              size="sm"
+              [options]="v.measures"
+              [ngModel]="v.measure"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onMeasure($event)"
+              data-testid="kpi-measure"
+            />
+          </label>
+
+          @if (v.measure !== 'count') {
+            <label class="flex items-center justify-between gap-2">
+              <span>Campo</span>
+              <app-select
+                class="w-[124px] shrink-0"
+                size="sm"
+                [options]="v.measurableFields"
+                [ngModel]="v.block.kpiField ?? ''"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="patch({ kpiField: $event })"
+                data-testid="kpi-field"
+              />
+            </label>
+          }
 
           <label class="flex items-center justify-between gap-2">
             <span>Condición</span>
@@ -149,15 +181,17 @@ import {
             }
           }
 
-          <label class="flex items-center justify-between gap-2">
-            <span>Porcentaje sobre el total</span>
-            <input
-              type="checkbox"
-              [checked]="v.block.kpiRatio === true"
-              (change)="patch({ kpiRatio: v.block.kpiRatio !== true })"
-              data-testid="kpi-ratio"
-            />
-          </label>
+          @if (v.measure === 'count') {
+            <label class="flex items-center justify-between gap-2">
+              <span>Porcentaje sobre el total</span>
+              <input
+                type="checkbox"
+                [checked]="v.block.kpiRatio === true"
+                (change)="patch({ kpiRatio: v.block.kpiRatio !== true })"
+                data-testid="kpi-ratio"
+              />
+            </label>
+          }
 
           @if (v.block.kpiRatio !== true) {
             <label class="flex items-center justify-between gap-2">
@@ -204,10 +238,16 @@ export class KpiConfigComponent {
     const dateFields = dateFieldsOf(draft)
     const chosen = conditionFields.find(f => f.name === block.kpiConditionField)
 
+    const measure = block.kpiMeasure ?? 'count'
+    const measurable = measurableFieldsOf(draft).filter(entry => measureAllowedOn(measure, entry.kind))
+
     return {
       pageIndex,
       blockIndex,
       block,
+      measure,
+      measures: measuresFor(draft).map(m => option(m, MEASURE_LABELS[m])),
+      measurableFields: measurable.map(entry => option(entry.field.name, entry.field.label)),
       labelPlural: draft.labelPlural,
       dateFields,
       conditionFields: [option('', '— sin condición'), ...conditionFields.map(f => option(f.name, f.label))],
@@ -239,6 +279,26 @@ export class KpiConfigComponent {
       kpiConditionField: field,
       kpiConditionOperator: definition ? draftOperatorsFor(definition)[0] : 'eq',
       kpiConditionValue: definition?.values?.[0]?.value ?? ''
+    })
+  }
+
+  /**
+   * Cambiar de medida invalida el campo si el nuevo tipo no lo admite (sumar una fecha), y apaga
+   * el porcentaje: un tanto por ciento de una suma sobre otra suma es otra pregunta.
+   */
+  protected onMeasure(measure: string): void {
+    const v = this.view()
+    if (!v) return
+    const draft = this.store.resources().find(r => r.name === this.resource())
+    const measurable = draft ? measurableFieldsOf(draft).filter(e => measureAllowedOn(measure, e.kind)) : []
+    const keeps = measurable.some(e => e.field.name === v.block.kpiField)
+
+    this.patch({
+      kpiMeasure: measure,
+      ...(measure === 'count'
+        ? { kpiField: undefined }
+        : { kpiField: keeps ? v.block.kpiField : measurable[0]?.field.name }),
+      ...(measure === 'count' ? {} : { kpiRatio: false })
     })
   }
 

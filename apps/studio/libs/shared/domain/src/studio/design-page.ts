@@ -43,6 +43,9 @@ export interface DesignBlock {
    * objetos anidados del app-schema.
    */
   kpiLabel?: string
+  /** Medida (spec 71): 'count' o una agregación sobre `kpiField` */
+  kpiMeasure?: string
+  kpiField?: string
   /** Condición: qué se cuenta. Los tres van juntos o no van ninguno */
   kpiConditionField?: string
   kpiConditionOperator?: string

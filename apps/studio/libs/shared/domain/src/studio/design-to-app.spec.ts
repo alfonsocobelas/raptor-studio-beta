@@ -322,3 +322,42 @@ describe('designPagesToAppPages — tarjeta KPI y top-n (spec 70)', () => {
     expect(designPagesToAppPages(withoutField)).toEqual([])
   })
 })
+
+describe('designPagesToAppPages — medidas del KPI (spec 71)', () => {
+  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
+  const blockOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
+    const [page] = pages
+    return page.kind === 'dashboard' ? page.blocks[0] : undefined
+  }
+
+  it('cruza la medida con su campo', () => {
+    const pages = panel([
+      { kind: 'kpi', resource: 'factura', kpiLabel: 'Facturado', kpiMeasure: 'sum', kpiField: 'importe' }
+    ])
+
+    expect(blockOf(designPagesToAppPages(pages))).toMatchObject({ measure: 'sum', field: 'importe' })
+  })
+
+  it('una medida SIN campo se degrada a conteo: el app-schema la rechazaría', () => {
+    const pages = panel([{ kind: 'kpi', resource: 'factura', kpiLabel: 'X', kpiMeasure: 'sum' }])
+    const block = blockOf(designPagesToAppPages(pages))
+
+    expect(block).toMatchObject({ measure: 'count' })
+    expect(block).not.toHaveProperty('field')
+  })
+
+  it('el porcentaje no cruza con una medida distinta de conteo', () => {
+    const pages = panel([
+      {
+        kind: 'kpi',
+        resource: 'factura',
+        kpiLabel: 'X',
+        kpiMeasure: 'avg',
+        kpiField: 'importe',
+        kpiRatio: true
+      }
+    ])
+
+    expect(blockOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
+  })
+})

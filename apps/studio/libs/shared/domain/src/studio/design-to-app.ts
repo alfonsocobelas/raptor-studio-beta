@@ -1,5 +1,5 @@
 import type { AppDefinition } from '@raptor/schema'
-import type { DashboardBlock, KpiOperator, KpiWindowPreset } from '@raptor/schema'
+import type { DashboardBlock, KpiMeasure, KpiOperator, KpiWindowPreset } from '@raptor/schema'
 import type { DesignBlock, DesignPage } from './design-page'
 
 /**
@@ -77,14 +77,18 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
         }
       : undefined
 
+  // una medida sin campo no puede cruzar: el app-schema la rechazaría (spec 71)
+  const measure = block.kpiMeasure && block.kpiMeasure !== 'count' && block.kpiField ? block.kpiMeasure : 'count'
+
   return {
     kind: 'kpi',
     resource: block.resource as string,
     label: block.kpiLabel?.trim() || fallbackLabel,
-    measure: 'count',
+    measure: measure as KpiMeasure,
+    ...(measure !== 'count' ? { field: block.kpiField } : {}),
     ...(condition ? { condition } : {}),
     ...(window ? { window } : {}),
-    ...(block.kpiRatio ? { ratio: true } : {}),
+    ...(block.kpiRatio && measure === 'count' ? { ratio: true } : {}),
     // sin ventana no hay periodo anterior con el que comparar
     ...(block.kpiCompare && window ? { compare: true } : {}),
     ...(block.kpiTarget !== undefined && !block.kpiRatio ? { target: block.kpiTarget } : {}),
