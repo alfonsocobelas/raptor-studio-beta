@@ -10,8 +10,8 @@
  * Se AÑADEN a las utilidades Tailwind que ya lleva la plantilla, nunca las sustituyen: sin
  * preset (piel `actual`) la app se ve exactamente igual que antes de existir el vocabulario.
  *
- * Cinco y no más, a propósito. Si un bloque necesita un hook nuevo, la pregunta es si su cromo
- * no es en realidad uno de estos cinco con otro nombre.
+ * Pocos y con motivo. Si un bloque necesita un hook nuevo, la pregunta es si su cromo no es en
+ * realidad uno de los que ya hay con otro nombre.
  */
 export const DESIGN_HOOKS = [
   /** superficie contenedora de un bloque: fondo, borde, radio, sombra */
@@ -36,5 +36,19 @@ export const DESIGN_HOOKS = [
    * vestía en absoluto, así que la tira de KPIs salía neutra o casi. Es el único elemento
    * cuyo trabajo entero es un número, y las dos pieles lo quieren tratar distinto.
    */
-  'app-metric'
+  'app-metric',
+  /**
+   * La etiqueta de un campo de formulario. Séptimo hook, añadido el 2026-08-27 con motivo
+   * medido: la etiqueta salía a 14px en las SEIS pieles porque nadie la alcanzaba — vive dentro
+   * de `app-form-field`, con la directiva de la librería (`hlmFieldLabel`), y ninguna piel habla
+   * ese selector. Es el elemento que más se repite en un formulario.
+   */
+  'app-label',
+  /**
+   * Un control COMPUESTO: el disparador de `app-select` (y cualquier control futuro que no sea
+   * un `<input>` a secas). Los contratos `[appinput]`/`[appbtn]` cubren el control simple; este
+   * cubre el que la librería monta por dentro, donde el preset no llega. El preset lo viste
+   * junto con su `button` descendiente, porque el disparador es el hijo, no el anfitrión.
+   */
+  'app-control'
 ] as const

@@ -9,11 +9,11 @@ import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog'
   template: `
     <hlm-alert-dialog [state]="open() ? 'open' : 'closed'" (closed)="closed.emit()">
       <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-        <hlm-alert-dialog-header>
+        <hlm-alert-dialog-header class="app-panel-head">
           <h2 hlmAlertDialogTitle>{{ title() }}</h2>
           <p hlmAlertDialogDescription>{{ description() }}</p>
         </hlm-alert-dialog-header>
-        <hlm-alert-dialog-footer>
+        <hlm-alert-dialog-footer class="app-toolbar">
           <button hlmAlertDialogCancel (click)="ctx.close()">{{ cancelLabel() }}</button>
           <button hlmAlertDialogAction (click)="confirmed.emit(); ctx.close()">{{ confirmLabel() }}</button>
         </hlm-alert-dialog-footer>

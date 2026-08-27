@@ -24,25 +24,25 @@ import { formControlFor } from './form-preview'
         >
           @switch (controlFor(field)) {
             @case ('textarea') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <textarea class="form-control resize-none" rows="3" [value]="prefill(field)"></textarea>
             }
             @case ('checkbox') {
-              <label class="flex items-center gap-2 pt-6 text-sm font-medium">
+              <label class="app-label flex items-center gap-2 pt-6 text-sm font-medium">
                 <input type="checkbox" [checked]="checkedValue(field)" />
                 {{ field.label }}
               </label>
             }
             @case ('date') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <input type="date" class="form-control" />
             }
             @case ('time') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <input type="time" class="form-control" />
             }
             @case ('lookup') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <input
                 type="text"
                 role="combobox"
@@ -53,12 +53,13 @@ import { formControlFor } from './form-preview'
               />
             }
             @case ('number') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <input type="number" class="form-control" [value]="prefill(field)" />
             }
             @case ('select') {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <app-select
+                class="app-control"
                 class="block w-full"
                 [placeholder]="selectPlaceholder(field)"
                 [options]="optionsFor(field)"
@@ -68,7 +69,7 @@ import { formControlFor } from './form-preview'
               />
             }
             @default {
-              <label class="text-sm font-medium">{{ field.label }}</label>
+              <label class="app-label text-sm font-medium">{{ field.label }}</label>
               <input type="text" class="form-control" [value]="prefill(field)" />
             }
           }

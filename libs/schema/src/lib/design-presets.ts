@@ -248,6 +248,32 @@ input.app-toolbar,
   color: var(--shell-fg);
 }
 
+/* El DIÁLOGO también lleva app-panel (es una superficie), y con el fondo transparente de arriba
+   salía sin papel: el formulario flotaba sobre el velo negro. Medido en navegador el 2026-08-27.
+   El diálogo recupera su papel; lo que se funde con la rejilla son los paneles de pantalla. */
+app-dialog .app-panel {
+  background: var(--card);
+}
+
+/* La etiqueta del campo, en versalitas como el resto del cromo de instrumentación (spec 69:
+   hasta hoy medía 14px en las seis pieles porque nadie la alcanzaba). */
+.app-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+/* El control compuesto (disparador del select) a la altura de la fila, como los demás controles.
+   Se viste junto con su button descendiente: el disparador es el hijo, no el anfitrión. */
+.app-control,
+.app-control button {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+
 .app-cell {
   border-color: var(--shell-border);
   font-size: 0.74rem;
@@ -378,6 +404,27 @@ const SUITE_CSS = `
   background: var(--grid-head-bg);
   border-color: var(--grid-line);
   font-weight: 600;
+}
+
+/* La cabecera etiquetada es de las superficies de PANTALLA: en el diálogo, una banda gris sobre
+   el título se leía como un error. El diálogo se queda con el título a secas. */
+app-dialog .app-panel-head,
+app-confirm-dialog .app-panel-head {
+  background: transparent;
+}
+
+/* La etiqueta del campo: en un ERP el formulario es la pantalla principal, así que la etiqueta
+   pesa y se contiene (spec 69). */
+.app-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* El control compuesto (disparador del select), rectangular y plano como el resto */
+.app-control,
+.app-control button {
+  border-radius: 2px;
+  box-shadow: none;
 }
 
 .app-cell {
@@ -528,6 +575,22 @@ const TALLER_CSS = `
   font-weight: 600;
 }
 
+/* La etiqueta del campo, en la versalita ancha de la casa (spec 69) */
+.app-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* El control compuesto (disparador del select): mismas esquinas que el resto de los controles.
+   Se viste junto con su button descendiente: el disparador es el hijo, no el anfitrión. */
+.app-control,
+.app-control button {
+  border-radius: 8px;
+}
+
 /* el toolbar viste también sus controles crudos: gantt, galería, importación y detalle
    escriben <button>/<input> sin pasar por [appbtn]/[appinput], y el buscador suelto lleva el
    hook en sí mismo (de ahí input.app-toolbar) */
@@ -674,6 +737,30 @@ const BANCO_CSS = `
   font-size: 0.7rem;
 }
 
+/* La etiqueta del campo, apretada y en versalita: en un banco de trabajo el formulario también
+   es denso (spec 69) */
+.app-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--shell-fg);
+}
+
+/* El control compuesto (disparador del select), a la altura de los demás controles */
+.app-control,
+.app-control button {
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+
+/* Como en cabina: el diálogo es una superficie, pero sin sombra se queda sin contorno, así que
+   mantiene su borde (el de .app-panel) y recupera el papel de la tarjeta. */
+app-dialog .app-panel {
+  background: var(--card);
+}
+
 .app-toolbar,
 .app-toolbar button,
 .app-toolbar input,
@@ -818,6 +905,21 @@ const ROTULO_CSS = `
   border-radius: 999px;
   border-color: var(--shell-border);
   font-weight: 600;
+}
+
+/* La etiqueta del campo: versalita marcada, como la de sección (spec 69) */
+.app-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* El control compuesto (disparador del select), con las esquinas del resto */
+.app-control,
+.app-control button {
+  border-radius: 8px;
 }
 
 .app-toolbar,

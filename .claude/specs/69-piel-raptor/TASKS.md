@@ -44,6 +44,23 @@ preset alcanza los seis hooks (test de la 67: por cada hook, al menos una regla)
       a `docs/style/smoke-69-<piel>-*`. Lo que cace se arregla en el GENERADOR, nunca en la app
       generada.
 
+## Los componentes que ninguna piel alcanzaba (2026-08-27, tras revisión de Alfonso)
+
+> Medido en navegador: la etiqueta de campo mide 14px en las SEIS pieles y el diálogo de `cabina`
+> sale TRANSPARENTE. Causa: el guard de deriva es por FICHERO — a `lookup.ts` le basta un
+> `app-panel` en el desplegable para pasar aunque su `<input>` escriba el cromo a mano.
+
+- [ ] TASK-08: el kernel NOMBRA lo que le faltaba: `app-label` (etiqueta de `app-form-field`) y
+      `app-control` (disparador de `app-select`) entran en `DESIGN_HOOKS`; el `<input>` de
+      `app-lookup` pasa a usar el contrato `appInput` (violación del ADR-003 de paso); el diálogo
+      de confirmación viste cabecera y botonera con los hooks que ya existen. Espejo del lienzo
+      incluido (el guard del canvas exige que ningún hook sea CSS muerto).
+      **Gate**: re-baseline del oro (cambia el emitido a propósito) + suites.
+- [ ] TASK-09: las CINCO pieles visten los hooks nuevos y `cabina` devuelve el papel del diálogo.
+      El test «%s viste todos los hooks del vocabulario» obliga a las cinco: es lo que impide que
+      el siguiente componente nazca desnudo.
+- [ ] TASK-10: el smoke mide diálogo, etiqueta y select por piel; acta actualizada.
+
 ---
 
 ## Regla del juego
