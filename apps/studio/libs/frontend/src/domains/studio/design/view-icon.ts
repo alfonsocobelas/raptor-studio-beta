@@ -9,11 +9,7 @@ const ICONS: Partial<Record<DesignBlock['kind'], string>> = {
   attachments: 'lucidePaperclip',
   form: 'lucideClipboardList',
   calendar: 'lucideCalendar',
-  kanban: 'lucideSquareKanban',
-  kpi: 'lucideGauge',
-  'top-n': 'lucideTrophy',
-  'count-by': 'lucideChartBar',
-  series: 'lucideChartColumn'
+  kanban: 'lucideSquareKanban'
 }
 
 /**

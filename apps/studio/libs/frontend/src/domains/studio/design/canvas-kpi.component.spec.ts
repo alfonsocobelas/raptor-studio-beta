@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { CanvasKpiComponent } from './canvas-kpi.component'
 import { CanvasTopNComponent } from './canvas-top-n.component'
 import { DesignStore } from './design-store'
 
-function mount(block: DesignBlock) {
+function mount(block: KpiCell) {
   const fixture = TestBed.createComponent(CanvasKpiComponent)
-  fixture.componentRef.setInput('block', block)
+  fixture.componentRef.setInput('cell', block)
   fixture.detectChanges()
   return fixture
 }
@@ -36,7 +36,7 @@ describe('CanvasKpiComponent', () => {
     })
   })
 
-  const block = (extra: Partial<DesignBlock> = {}): DesignBlock => ({ kind: 'kpi', resource: 'pedido', ...extra })
+  const block = (extra: Partial<KpiCell> = {}): KpiCell => ({ kind: 'kpi', resource: 'pedido', ...extra })
 
   it('pinta la tarjeta con la etiqueta escrita', () => {
     const fixture = mount(block({ kpiLabel: 'Pendientes' }))
@@ -82,7 +82,7 @@ describe('CanvasTopNComponent', () => {
 
   it('pinta la lista corta y dice por qué campo ordena', () => {
     const fixture = TestBed.createComponent(CanvasTopNComponent)
-    fixture.componentRef.setInput('block', { kind: 'top-n', resource: 'pedido', topField: 'importe', topN: 3 })
+    fixture.componentRef.setInput('cell', { kind: 'top-n', resource: 'pedido', topField: 'importe', topN: 3 })
     fixture.detectChanges()
 
     expect(fixture.nativeElement.textContent).toContain('Top 3')
@@ -91,7 +91,7 @@ describe('CanvasTopNComponent', () => {
 
   it('sin campo de orden lo dice, en vez de pintar una lista vacía', () => {
     const fixture = TestBed.createComponent(CanvasTopNComponent)
-    fixture.componentRef.setInput('block', { kind: 'top-n', resource: 'pedido' })
+    fixture.componentRef.setInput('cell', { kind: 'top-n', resource: 'pedido' })
     fixture.detectChanges()
 
     expect(fixture.nativeElement.textContent).toContain('Elige el campo por el que ordenar')
@@ -110,9 +110,9 @@ describe('CanvasKpiComponent — medida y mini-serie visibles', () => {
     store.updateField('factura', 2, { name: 'emitida', label: 'Emitida', type: 'date' })
   })
 
-  const mountBlock = (block: DesignBlock) => {
+  const mountBlock = (block: KpiCell) => {
     const fixture = TestBed.createComponent(CanvasKpiComponent)
-    fixture.componentRef.setInput('block', block)
+    fixture.componentRef.setInput('cell', block)
     fixture.detectChanges()
     return fixture
   }

@@ -1,4 +1,10 @@
-import { generableHere, type BlockKind, type DesignBlock, type DesignPage, type DraftResource } from '@app/shared/domain'
+import {
+  generableHere,
+  type BlockKind,
+  type DesignBlock,
+  type DesignPage,
+  type DraftResource
+} from '@app/shared/domain'
 import type { ActiveViewService } from './active-view.service'
 import type { CanvasNoticeService } from './canvas-notice.service'
 import type { DesignStore } from './design-store'
@@ -14,15 +20,19 @@ export function dropResource(
   activeResource: string | null,
   resources: DraftResource[]
 ): string | null {
-  const own = page?.blocks.map(block => block.resource ?? block.resources?.[0]).find(Boolean)
+  const own = page?.blocks.map(block => block.resource ?? block.items?.[0]?.resource).find(Boolean)
   if (own) return own
   if (activeResource && resources.some(resource => resource.name === activeResource)) return activeResource
   return resources[0]?.name ?? null
 }
 
-/** El bloque que se crea al soltar: los KPIs se alimentan de una lista de entidades. */
+/**
+ * El bloque que se crea al soltar. La fila de KPIs (spec 73) nace VACÍA, con el cuadrado «+»
+ * invitando a elegir las celdas: decidir por quien suelta qué tipo de KPI quería era justo lo
+ * que la unificación vino a quitar.
+ */
 export function blockFor(kind: BlockKind, resource: string): DesignBlock {
-  return kind === 'kpis' ? { kind, resources: [resource] } : { kind, resource }
+  return kind === 'kpis' ? { kind, items: [] } : { kind, resource }
 }
 
 /** Los tres servicios que hacen falta para colocar un bloque y contarlo. */

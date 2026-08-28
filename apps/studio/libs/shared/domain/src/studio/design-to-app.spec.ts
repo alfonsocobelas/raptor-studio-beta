@@ -1,5 +1,14 @@
 import { designPagesToAppPages } from './design-to-app'
-import type { DesignPage } from './design-page'
+import type { DesignPage, KpiCell } from './design-page'
+
+/** Fila de KPIs con celdas: el ÚNICO formato analítico del diseño desde la spec 73. */
+const row = (items: KpiCell[], width?: 'full' | 'half'): DesignPage['blocks'][number] => ({
+  kind: 'kpis',
+  items,
+  ...(width ? { width } : {})
+})
+
+const counters = (...resources: string[]): KpiCell[] => resources.map(resource => ({ kind: 'counter', resource }))
 
 describe('designPagesToAppPages — traducción de bloques a app-schema', () => {
   it('una vista con tabla se emite como página de recurso', () => {
@@ -8,14 +17,23 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'resource', resource: 'paciente', label: 'Pacientes' }])
   })
 
-  it('una vista con KPIs se emite como dashboard con un widget por entidad', () => {
-    const pages: DesignPage[] = [{ title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente', 'cita'] }] }]
+  it('una vista con KPIs se emite como dashboard con la fila y sus celdas', () => {
+    const pages: DesignPage[] = [{ title: 'Panel', blocks: [row(counters('paciente', 'cita'))] }]
 
     expect(designPagesToAppPages(pages)).toEqual([
       {
         kind: 'dashboard',
         label: 'Panel',
-        blocks: [{ kind: 'metrics', resources: ['paciente', 'cita'], width: 'full' }]
+        blocks: [
+          {
+            kind: 'kpi-row',
+            cells: [
+              { kind: 'counter', resource: 'paciente' },
+              { kind: 'counter', resource: 'cita' }
+            ],
+            width: 'full'
+          }
+        ]
       }
     ])
   })
@@ -26,10 +44,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     const pages: DesignPage[] = [
       {
         title: 'Panel',
-        blocks: [
-          { kind: 'kpis', resources: ['paciente'] },
-          { kind: 'table', resource: 'cita' }
-        ]
+        blocks: [row(counters('paciente')), { kind: 'table', resource: 'cita' }]
       }
     ]
 
@@ -38,7 +53,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
         kind: 'dashboard',
         label: 'Panel',
         blocks: [
-          { kind: 'metrics', resources: ['paciente'], width: 'full' },
+          { kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'paciente' }], width: 'full' },
           { kind: 'table', resource: 'cita', width: 'full' }
         ]
       }
@@ -49,10 +64,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     const pages: DesignPage[] = [
       {
         title: 'Panel',
-        blocks: [
-          { kind: 'kpis', resources: ['paciente'], width: 'half' },
-          { kind: 'table', resource: 'cita', width: 'half' }
-        ]
+        blocks: [row(counters('paciente'), 'half'), { kind: 'table', resource: 'cita', width: 'half' }]
       }
     ]
 
@@ -60,7 +72,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
       kind: 'dashboard',
       label: 'Panel',
       blocks: [
-        { kind: 'metrics', resources: ['paciente'], width: 'half' },
+        { kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'paciente' }], width: 'half' },
         { kind: 'table', resource: 'cita', width: 'half' }
       ]
     })
@@ -70,18 +82,12 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     const pages: DesignPage[] = [
       {
         title: 'Panel',
-        blocks: [
-          { kind: 'table', resource: 'cita' },
-          { kind: 'kpis', resources: ['paciente'] }
-        ]
+        blocks: [{ kind: 'table', resource: 'cita' }, row(counters('paciente'))]
       }
     ]
 
     expect(designPagesToAppPages(pages)[0]).toMatchObject({
-      blocks: [
-        { kind: 'table', resource: 'cita' },
-        { kind: 'metrics', resources: ['paciente'] }
-      ]
+      blocks: [{ kind: 'table', resource: 'cita' }, { kind: 'kpi-row' }]
     })
   })
 
@@ -89,10 +95,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     const pages: DesignPage[] = [
       {
         title: 'Panel',
-        blocks: [
-          { kind: 'kpis', resources: ['orden'] },
-          { kind: 'table', resource: 'orden' }
-        ]
+        blocks: [row(counters('orden')), { kind: 'table', resource: 'orden' }]
       },
       { title: 'Órdenes', blocks: [{ kind: 'table', resource: 'orden' }] }
     ]
@@ -102,7 +105,7 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
         kind: 'dashboard',
         label: 'Panel',
         blocks: [
-          { kind: 'metrics', resources: ['orden'], width: 'full' },
+          { kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'orden' }], width: 'full' },
           { kind: 'table', resource: 'orden', width: 'full' }
         ]
       },
@@ -114,19 +117,12 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     const pages: DesignPage[] = [
       {
         title: 'Panel',
-        blocks: [
-          { kind: 'kpis', resources: ['orden'] },
-          { kind: 'table', resource: 'orden' },
-          { kind: 'table', resource: 'orden' }
-        ]
+        blocks: [row(counters('orden')), { kind: 'table', resource: 'orden' }, { kind: 'table', resource: 'orden' }]
       }
     ]
 
     expect(designPagesToAppPages(pages)[0]).toMatchObject({
-      blocks: [
-        { kind: 'metrics', resources: ['orden'], width: 'full' },
-        { kind: 'table', resource: 'orden', width: 'full' }
-      ]
+      blocks: [{ kind: 'kpi-row' }, { kind: 'table', resource: 'orden', width: 'full' }]
     })
   })
 
@@ -175,10 +171,16 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
     expect(designPagesToAppPages(pages)).toEqual([])
   })
 
+  it('una fila sin celdas emitibles no cruza: ni fila vacía ni panel', () => {
+    const pages: DesignPage[] = [{ title: 'Panel', blocks: [row([])] }]
+
+    expect(designPagesToAppPages(pages)).toEqual([])
+  })
+
   it('no duplica el dashboard: solo la primera vista con KPIs lo produce', () => {
     const pages: DesignPage[] = [
-      { title: 'Panel', blocks: [{ kind: 'kpis', resources: ['paciente'] }] },
-      { title: 'Otro panel', blocks: [{ kind: 'kpis', resources: ['cita'] }] }
+      { title: 'Panel', blocks: [row(counters('paciente'))] },
+      { title: 'Otro panel', blocks: [row(counters('cita'))] }
     ]
 
     const result = designPagesToAppPages(pages)
@@ -199,7 +201,9 @@ describe('designPagesToAppPages — traducción de bloques a app-schema', () => 
 // spec 59: el bloque calendario cruza como página calendar
 describe('designPagesToAppPages — calendario (spec 59)', () => {
   it('una vista con calendario se emite como página calendar', () => {
-    const pages: DesignPage[] = [{ title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido', dateField: 'entrega' }] }]
+    const pages: DesignPage[] = [
+      { title: 'Entregas', blocks: [{ kind: 'calendar', resource: 'pedido', dateField: 'entrega' }] }
+    ]
 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'calendar', resource: 'pedido', label: 'Entregas' }])
   })
@@ -224,7 +228,9 @@ it('un calendario sin campo fecha no cruza al app-schema', () => {
 // spec 61: el bloque kanban cruza como página kanban
 describe('designPagesToAppPages — kanban (spec 61)', () => {
   it('una vista con kanban se emite como página kanban', () => {
-    const pages: DesignPage[] = [{ title: 'Tablero', blocks: [{ kind: 'kanban', resource: 'pedido', columnsField: 'estado' }] }]
+    const pages: DesignPage[] = [
+      { title: 'Tablero', blocks: [{ kind: 'kanban', resource: 'pedido', columnsField: 'estado' }] }
+    ]
 
     expect(designPagesToAppPages(pages)).toEqual([{ kind: 'kanban', resource: 'pedido', label: 'Tablero' }])
   })
@@ -236,19 +242,40 @@ describe('designPagesToAppPages — kanban (spec 61)', () => {
   })
 })
 
-describe('designPagesToAppPages — tarjeta KPI y top-n (spec 70)', () => {
-  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
+describe('designPagesToAppPages — celdas KPI y top-n (specs 70 y 73)', () => {
+  const panel = (items: KpiCell[]): DesignPage[] => [{ title: 'Panel', blocks: [row(items)] }]
+  const cellsOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
+    const [page] = pages
+    const block = page?.kind === 'dashboard' ? page.blocks[0] : undefined
+    return block?.kind === 'kpi-row' ? block.cells : []
+  }
 
-  it('una vista con SOLO una tarjeta KPI ya abre el panel', () => {
+  it('una vista con SOLO una celda KPI ya abre el panel', () => {
     const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'Pendientes' }])
 
     expect(designPagesToAppPages(pages)).toEqual([
       {
         kind: 'dashboard',
         label: 'Panel',
-        blocks: [{ kind: 'kpi', resource: 'pedido', label: 'Pendientes', measure: 'count', width: 'full' }]
+        blocks: [
+          {
+            kind: 'kpi-row',
+            cells: [{ kind: 'kpi', resource: 'pedido', label: 'Pendientes', measure: 'count' }],
+            width: 'full'
+          }
+        ]
       }
     ])
+  })
+
+  it('una fila mixta cruza sus celdas EN ORDEN: contador, kpi y top-n en la misma línea', () => {
+    const pages = panel([
+      { kind: 'counter', resource: 'pedido' },
+      { kind: 'kpi', resource: 'pedido', kpiLabel: 'Pendientes' },
+      { kind: 'top-n', resource: 'pedido', topField: 'importe', topN: 3 }
+    ])
+
+    expect(cellsOf(designPagesToAppPages(pages)).map(cell => cell.kind)).toEqual(['counter', 'kpi', 'top-n'])
   })
 
   it('ensambla la condición y la ventana desde los campos planos', () => {
@@ -262,44 +289,34 @@ describe('designPagesToAppPages — tarjeta KPI y top-n (spec 70)', () => {
         kpiConditionValue: 'pendiente',
         kpiWindowField: 'creado',
         kpiWindowPreset: 'month',
-        kpiCompare: true,
-        width: 'half'
+        kpiCompare: true
       }
     ])
 
-    expect(designPagesToAppPages(pages)[0]).toMatchObject({
-      blocks: [
-        {
-          kind: 'kpi',
-          condition: { field: 'estado', operator: 'eq', value: 'pendiente' },
-          window: { field: 'creado', preset: 'month' },
-          compare: true,
-          width: 'half'
-        }
-      ]
+    expect(cellsOf(designPagesToAppPages(pages))[0]).toMatchObject({
+      kind: 'kpi',
+      condition: { field: 'estado', operator: 'eq', value: 'pendiente' },
+      window: { field: 'creado', preset: 'month' },
+      compare: true
     })
   })
 
   it('sin etiqueta usa el plural de la entidad: el app-schema la exige', () => {
     const pages = panel([{ kind: 'kpi', resource: 'pedido' }])
 
-    expect(designPagesToAppPages(pages, () => 'Pedidos')[0]).toMatchObject({
-      blocks: [{ label: 'Pedidos' }]
-    })
+    expect(cellsOf(designPagesToAppPages(pages, () => 'Pedidos'))[0]).toMatchObject({ label: 'Pedidos' })
   })
 
   it('una comparación sin ventana no cruza: no hay periodo anterior de «siempre»', () => {
     const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiCompare: true }])
 
-    const [panelPage] = designPagesToAppPages(pages)
-    expect(panelPage.kind === 'dashboard' && panelPage.blocks[0]).not.toHaveProperty('compare')
+    expect(cellsOf(designPagesToAppPages(pages))[0]).not.toHaveProperty('compare')
   })
 
   it('una ventana sin campo fecha no cruza: no acotaría nada', () => {
     const pages = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiWindowPreset: 'month' }])
 
-    const [panelPage] = designPagesToAppPages(pages)
-    expect(panelPage.kind === 'dashboard' && panelPage.blocks[0]).not.toHaveProperty('window')
+    expect(cellsOf(designPagesToAppPages(pages))[0]).not.toHaveProperty('window')
   })
 
   it('el preset de N días arrastra su longitud, con 30 por defecto', () => {
@@ -307,27 +324,41 @@ describe('designPagesToAppPages — tarjeta KPI y top-n (spec 70)', () => {
       { kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiWindowField: 'creado', kpiWindowPreset: 'days' }
     ])
 
-    expect(designPagesToAppPages(pages)[0]).toMatchObject({
-      blocks: [{ window: { field: 'creado', preset: 'days', days: 30 } }]
+    expect(cellsOf(designPagesToAppPages(pages))[0]).toMatchObject({
+      window: { field: 'creado', preset: 'days', days: 30 }
     })
   })
 
   it('el top-n cruza con su campo de orden, y sin él no cruza nada', () => {
     const withField = panel([{ kind: 'top-n', resource: 'pedido', topField: 'importe', topN: 3 }])
-    expect(designPagesToAppPages(withField)[0]).toMatchObject({
-      blocks: [{ kind: 'top-n', resource: 'pedido', field: 'importe', n: 3, dir: 'desc' }]
+    expect(cellsOf(designPagesToAppPages(withField))[0]).toMatchObject({
+      kind: 'top-n',
+      resource: 'pedido',
+      field: 'importe',
+      n: 3,
+      dir: 'desc'
     })
 
     const withoutField = panel([{ kind: 'top-n', resource: 'pedido' }])
     expect(designPagesToAppPages(withoutField)).toEqual([])
   })
+
+  it('la celda incompleta se queda fuera pero el RESTO de la fila cruza', () => {
+    const pages = panel([
+      { kind: 'counter', resource: 'pedido' },
+      { kind: 'top-n', resource: 'pedido' }
+    ])
+
+    expect(cellsOf(designPagesToAppPages(pages))).toEqual([{ kind: 'counter', resource: 'pedido' }])
+  })
 })
 
 describe('designPagesToAppPages — medidas del KPI (spec 71)', () => {
-  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
-  const blockOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
+  const panel = (items: KpiCell[]): DesignPage[] => [{ title: 'Panel', blocks: [row(items)] }]
+  const cellOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
     const [page] = pages
-    return page.kind === 'dashboard' ? page.blocks[0] : undefined
+    const block = page?.kind === 'dashboard' ? page.blocks[0] : undefined
+    return block?.kind === 'kpi-row' ? block.cells[0] : undefined
   }
 
   it('cruza la medida con su campo', () => {
@@ -335,20 +366,20 @@ describe('designPagesToAppPages — medidas del KPI (spec 71)', () => {
       { kind: 'kpi', resource: 'factura', kpiLabel: 'Facturado', kpiMeasure: 'sum', kpiField: 'importe' }
     ])
 
-    expect(blockOf(designPagesToAppPages(pages))).toMatchObject({ measure: 'sum', field: 'importe' })
+    expect(cellOf(designPagesToAppPages(pages))).toMatchObject({ measure: 'sum', field: 'importe' })
   })
 
   it('una medida SIN campo no cruza: falsearla como conteo pondría un número de negocio falso', () => {
     const pages = panel([{ kind: 'kpi', resource: 'factura', kpiLabel: 'Importe medio', kpiMeasure: 'sum' }])
 
-    // ni el bloque ni un panel vacío: la vista entera no abre dashboard con solo esta tarjeta
+    // ni la celda ni un panel vacío: la vista entera no abre dashboard con solo esta tarjeta
     expect(designPagesToAppPages(pages)).toEqual([])
   })
 
   it('el porcentaje no cruza sin condición: sería un 100% perpetuo', () => {
     const pages = panel([{ kind: 'kpi', resource: 'factura', kpiLabel: 'X', kpiRatio: true }])
 
-    expect(blockOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
+    expect(cellOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
   })
 
   it('el porcentaje no cruza con una medida distinta de conteo', () => {
@@ -363,21 +394,22 @@ describe('designPagesToAppPages — medidas del KPI (spec 71)', () => {
       }
     ])
 
-    expect(blockOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
+    expect(cellOf(designPagesToAppPages(pages))).not.toHaveProperty('ratio')
   })
 })
 
 describe('designPagesToAppPages — barras y evolución (spec 72)', () => {
-  const panel = (blocks: DesignPage['blocks']): DesignPage[] => [{ title: 'Panel', blocks }]
-  const blocksOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
+  const panel = (items: KpiCell[]): DesignPage[] => [{ title: 'Panel', blocks: [row(items)] }]
+  const cellsOf = (pages: ReturnType<typeof designPagesToAppPages>) => {
     const [page] = pages
-    return page?.kind === 'dashboard' ? page.blocks : []
+    const block = page?.kind === 'dashboard' ? page.blocks[0] : undefined
+    return block?.kind === 'kpi-row' ? block.cells : []
   }
 
   it('las barras cruzan con su eje', () => {
     const pages = panel([{ kind: 'count-by', resource: 'pedido', axisField: 'estado' }])
 
-    expect(blocksOf(designPagesToAppPages(pages))[0]).toMatchObject({
+    expect(cellsOf(designPagesToAppPages(pages))[0]).toMatchObject({
       kind: 'count-by',
       resource: 'pedido',
       field: 'estado'
@@ -389,7 +421,7 @@ describe('designPagesToAppPages — barras y evolución (spec 72)', () => {
       { kind: 'series', resource: 'pedido', axisField: 'creado', measure: 'sum', measureField: 'importe' }
     ])
 
-    expect(blocksOf(designPagesToAppPages(pages))[0]).toMatchObject({
+    expect(cellsOf(designPagesToAppPages(pages))[0]).toMatchObject({
       kind: 'series',
       measure: 'sum',
       measureField: 'importe'
@@ -404,9 +436,8 @@ describe('designPagesToAppPages — barras y evolución (spec 72)', () => {
 
   it('una medida sin campo se degrada a conteo', () => {
     const pages = panel([{ kind: 'count-by', resource: 'pedido', axisField: 'estado', measure: 'sum' }])
-    const block = blocksOf(designPagesToAppPages(pages))[0]
 
-    expect(block).not.toHaveProperty('measure')
+    expect(cellsOf(designPagesToAppPages(pages))[0]).not.toHaveProperty('measure')
   })
 
   it('el sparkline del KPI cruza solo con ventana', () => {
@@ -420,9 +451,9 @@ describe('designPagesToAppPages — barras y evolución (spec 72)', () => {
         kpiSparkline: true
       }
     ])
-    expect(blocksOf(designPagesToAppPages(withWindow))[0]).toMatchObject({ sparkline: true })
+    expect(cellsOf(designPagesToAppPages(withWindow))[0]).toMatchObject({ sparkline: true })
 
     const without = panel([{ kind: 'kpi', resource: 'pedido', kpiLabel: 'X', kpiSparkline: true }])
-    expect(blocksOf(designPagesToAppPages(without))[0]).not.toHaveProperty('sparkline')
+    expect(cellsOf(designPagesToAppPages(without))[0]).not.toHaveProperty('sparkline')
   })
 })

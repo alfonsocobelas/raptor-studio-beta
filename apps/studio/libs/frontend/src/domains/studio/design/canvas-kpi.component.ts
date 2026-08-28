@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { DesignStore } from './design-store'
 import { MEASURE_LABELS, WINDOW_PRESET_LABELS } from './kpi-config-options'
@@ -42,12 +42,12 @@ interface KpiPreview {
   `
 })
 export class CanvasKpiComponent {
-  readonly block = input.required<DesignBlock>()
+  readonly cell = input.required<KpiCell>()
 
   private readonly _store = inject(DesignStore)
 
   protected readonly preview = computed<KpiPreview | null>(() => {
-    const block = this.block()
+    const block = this.cell()
     const draft = this._store.resources().find(r => r.name === block.resource)
     if (!draft) return null
 
@@ -82,13 +82,12 @@ export class CanvasKpiComponent {
 
   /** «Estado es Pendiente», con las etiquetas humanas del modelo. */
   private _conditionLabel(): string | undefined {
-    const block = this.block()
+    const block = this.cell()
     if (!block.kpiConditionField) return undefined
 
     const draft = this._store.resources().find(r => r.name === block.resource)
     const field = draft?.fields.find(f => f.name === block.kpiConditionField)
-    const value =
-      field?.values?.find(v => v.value === block.kpiConditionValue)?.label ?? block.kpiConditionValue ?? ''
+    const value = field?.values?.find(v => v.value === block.kpiConditionValue)?.label ?? block.kpiConditionValue ?? ''
 
     return `${field?.label ?? block.kpiConditionField} ${OPERATOR_TEXT[block.kpiConditionOperator ?? 'eq']} ${value}`
   }

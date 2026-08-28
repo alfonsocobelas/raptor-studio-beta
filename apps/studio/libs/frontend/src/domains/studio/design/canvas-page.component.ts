@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX } from '@ng-icons/lucide'
-import { duplicateOfEarlierBlock, generableHere, type DesignBlock } from '@app/shared/domain'
-import { KpiCardComponent } from '../../../shared/components/kpi-card'
+import { duplicateOfEarlierBlock, generableCell, generableHere, type DesignBlock } from '@app/shared/domain'
 import { ActiveViewService } from './active-view.service'
 import { BlockDragService } from './block-drag.service'
 import { CanvasNoticeService } from './canvas-notice.service'
@@ -14,10 +13,7 @@ import { CanvasCardsComponent } from './canvas-cards.component'
 import { CanvasFormComponent } from './canvas-form.component'
 import { CanvasCalendarComponent } from './canvas-calendar.component'
 import { CanvasKanbanComponent } from './canvas-kanban.component'
-import { CanvasChartComponent } from './canvas-chart.component'
-import { CanvasKpiComponent } from './canvas-kpi.component'
-import { CanvasTopNComponent } from './canvas-top-n.component'
-import { mockTotal } from './mock-data'
+import { CanvasKpiRowComponent } from './canvas-kpi-row.component'
 
 /**
  * Una VISTA del diseño: sus bloques en orden, cada uno a ancho completo o media
@@ -26,7 +22,16 @@ import { mockTotal } from './mock-data'
 @Component({
   selector: 'studio-canvas-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KpiCardComponent, CanvasTableComponent, CanvasDetailComponent, CanvasCardsComponent, CanvasFormComponent, CanvasCalendarComponent, CanvasKanbanComponent, CanvasChartComponent, CanvasKpiComponent, CanvasTopNComponent, NgIcon],
+  imports: [
+    CanvasTableComponent,
+    CanvasDetailComponent,
+    CanvasCardsComponent,
+    CanvasFormComponent,
+    CanvasCalendarComponent,
+    CanvasKanbanComponent,
+    CanvasKpiRowComponent,
+    NgIcon
+  ],
   providers: [provideIcons({ lucideArrowUp, lucideColumns2, lucideFile, lucidePaperclip, lucideSquare, lucideX })],
   template: `
     @if (page(); as current) {
@@ -110,32 +115,8 @@ import { mockTotal } from './mock-data'
               @case ('kanban') {
                 <studio-canvas-kanban [block]="block" />
               }
-              @case ('kpi') {
-                <studio-canvas-kpi [block]="block" />
-              }
-              @case ('top-n') {
-                <studio-canvas-top-n [block]="block" />
-              }
-              @case ('count-by') {
-                <studio-canvas-chart [block]="block" />
-              }
-              @case ('series') {
-                <studio-canvas-chart [block]="block" />
-              }
               @case ('kpis') {
-                <div
-                  class="grid gap-4"
-                  [style.grid-template-columns]="'repeat(' + kpiCols(block) + ', minmax(0, 1fr))'"
-                >
-                  @for (kpi of kpis(block); track kpi.testId) {
-                    <app-kpi-card
-                      [title]="kpi.title"
-                      [value]="kpi.value"
-                      [subtitle]="kpi.subtitle"
-                      [testId]="kpi.testId"
-                    />
-                  }
-                </div>
+                <studio-canvas-kpi-row [pageIndex]="pageIndex()" [blockIndex]="$index" [block]="block" />
               }
               @case ('attachments') {
                 <section>
@@ -277,35 +258,16 @@ export class CanvasPageComponent {
     if (block.kind === 'calendar' && !block.dateField) return false
     // ídem: un kanban sin campo enum (spec 61)
     if (block.kind === 'kanban' && !block.columnsField) return false
-    // un top-n sin campo de orden no tiene por qué ordenar: es diseño y nada más (spec 70)
-    if (block.kind === 'top-n' && !block.topField) return false
-    // unas barras sin eje, o una serie sin fecha, no se pueden emitir (spec 72)
-    if ((block.kind === 'count-by' || block.kind === 'series') && !block.axisField) return false
-    // una medida sin campo no se falsea como conteo: se etiqueta (revisión spec 70-72)
-    if (block.kind === 'kpi' && block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField) return false
+    // la fila de KPIs es generable si alguna de sus celdas lo es; las celdas
+    // incompletas llevan su propia marca dentro de la fila (spec 73)
+    if (block.kind === 'kpis' && !(block.items ?? []).some(generableCell)) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }
 
-  protected kpis(block: DesignBlock): { title: string; value: number; subtitle?: string; testId: string }[] {
-    return (block.resources ?? []).map((resource, index) => {
-      const draft = this.store.resources().find(r => r.name === resource)
-      return {
-        title: draft?.labelPlural ?? resource,
-        value: mockTotal(index),
-        subtitle: `Total de ${draft?.labelPlural.toLowerCase() ?? resource}`,
-        testId: `kpi-${resource}`
-      }
-    })
-  }
-
-  protected kpiCols(block: DesignBlock): number {
-    return Math.min(Math.max((block.resources ?? []).length, 2), 4)
-  }
-
   /** La fila de KPIs habla de VARIAS entidades: elige la primera, que es la que encabeza la fila. */
   protected selectBlock(block: DesignBlock): void {
-    const resource = block.resource ?? block.resources?.[0]
+    const resource = block.resource ?? block.items?.[0]?.resource
     if (resource) this.select.emit(resource)
   }
 

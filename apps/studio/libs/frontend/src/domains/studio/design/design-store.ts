@@ -30,7 +30,10 @@ import {
   type DraftKanban,
   type DraftField,
   type DraftResource,
-  designPagesToAppPages
+  type KpiCell,
+  type KpiCellKind,
+  designPagesToAppPages,
+  normalizeDesignPages
 } from '@app/shared/domain'
 
 /** Sin campo enum no hay tablero que generar: la entidad no lleva config (spec 61). */
@@ -226,7 +229,6 @@ export class DesignStore {
     return true
   }
 
-
   /**
    * Las ETIQUETAS de una entidad: singular, plural, género y entradilla (2026-08-27). El
    * identificador (`name`, `plural`) NO se toca: lo referencian los bloques, las páginas y las
@@ -329,40 +331,8 @@ export class DesignStore {
     return this.mutate([...this._resources(), draft], this._pages())
   }
 
-  /**
-   * Un segundo panel de KPIs en la misma vista no existe: son la misma fila de
-   * métricas. Soltar KPIs donde ya los hay SUMA una entidad al bloque que está
-   * —la que traiga el gesto si aún falta, y si no la primera del modelo sin
-   * medir—, en vez de crear un bloque gemelo que el gate rechazaría por widget
-   * duplicado. Sin entidades que añadir no hay nada que hacer, y se dice.
-   */
-  private addKpiResource(pageIndex: number, incoming: string[]): boolean {
-    const page = this._pages()[pageIndex]
-    const index = page.blocks.findIndex(block => block.kind === 'kpis')
-    const measured = page.blocks[index].resources ?? []
-    const next =
-      incoming.find(resource => !measured.includes(resource)) ??
-      this._resources().find(r => !measured.includes(r.name))?.name
-
-    if (!next) {
-      this._lastError.set(`«${page.title}» ya mide todas las entidades del modelo`)
-      return false
-    }
-
-    const blocks = page.blocks.map((block, i) =>
-      i === index ? { ...block, resources: [...measured, next] } : block
-    )
-    return this.mutate(
-      this._resources(),
-      this._pages().map((p, i) => (i === pageIndex ? { ...p, blocks } : p))
-    )
-  }
-
   /** `at` es el hueco donde cae el bloque al soltarlo; sin él se apila al final. */
   addBlock(pageIndex: number, block: DesignBlock, at?: number): boolean {
-    if (block.kind === 'kpis' && this._pages()[pageIndex]?.blocks.some(b => b.kind === 'kpis')) {
-      return this.addKpiResource(pageIndex, block.resources ?? [])
-    }
     // el calendario nace apuntando al primer campo fecha de la entidad (spec 59)
     const added =
       block.kind === 'calendar' && block.resource && !block.dateField
@@ -375,25 +345,7 @@ export class DesignStore {
         : // el kanban nace en el campo de la máquina de estados, o el primer enum (spec 61)
           block.kind === 'kanban' && block.resource && !block.columnsField
           ? { ...block, columnsField: this.defaultKanbanField(block.resource) }
-          : // las barras nacen en el primer enum y la serie en la primera fecha (spec 72)
-            (block.kind === 'count-by' || block.kind === 'series') && block.resource && !block.axisField
-            ? {
-                ...block,
-                axisField: this._resources()
-                  .find(r => r.name === block.resource)
-                  ?.fields.find(f => (block.kind === 'count-by' ? f.type === 'enum' : f.type === 'date'))?.name
-              }
-            : // el top-n nace con 5 filas y el primer campo numérico de la entidad (spec 70)
-            block.kind === 'top-n' && block.resource && !block.topField
-            ? {
-                ...block,
-                topN: block.topN ?? 5,
-                topDir: block.topDir ?? ('desc' as const),
-                topField: this._resources()
-                  .find(r => r.name === block.resource)
-                  ?.fields.find(f => f.type === 'number' || f.type === 'integer')?.name
-              }
-            : block
+          : block
     const pages = this._pages().map((page, i) => {
       if (i !== pageIndex) return page
       const blocks = [...page.blocks]
@@ -451,59 +403,70 @@ export class DesignStore {
     return this.mutate(resources, pages)
   }
 
-
-
   /**
-   * Qué entidades mide la fila de KPIs (spec 70, seguimiento). La fila es UN bloque con N
-   * tarjetas: sin esto, la ✕ del lienzo se llevaba la fila entera y no había manera de quitar
-   * una sola tarjeta (reportado 2026-08-27).
-   *
-   * Se rechaza dejarla vacía —no mediría nada— y se rechazan repetidas: dos veces la misma
-   * entidad son dos tarjetas idénticas.
+   * Añade una celda a la fila de KPIs (spec 73): es lo que hace el «+» del lienzo. La celda nace
+   * con defectos razonables por tipo — el top-n con 5 filas y el primer campo numérico, las
+   * barras en el primer enum, la serie en la primera fecha — igual que nacían los bloques
+   * sueltos que sustituye.
    */
-  setKpiResources(pageIndex: number, blockIndex: number, resources: string[]): boolean {
-    const page = this._pages()[pageIndex]
-    const block = page?.blocks[blockIndex]
+  addCell(pageIndex: number, blockIndex: number, kind: KpiCellKind, resource: string): boolean {
+    const block = this._pages()[pageIndex]?.blocks[blockIndex]
     if (!block || block.kind !== 'kpis') return false
-    if (!resources.length) {
-      this._lastError.set('La fila de KPIs tiene que medir al menos una entidad')
-      return false
-    }
-    if (new Set(resources).size !== resources.length) {
-      this._lastError.set('La fila de KPIs no puede medir dos veces la misma entidad')
-      return false
-    }
-    const known = this._resources().map(r => r.name)
-    const unknown = resources.find(resource => !known.includes(resource))
-    if (unknown) {
-      this._lastError.set(`«${unknown}» no está en el modelo`)
+    const draft = this._resources().find(r => r.name === resource)
+    if (!draft) {
+      this._lastError.set(`«${resource}» no está en el modelo`)
       return false
     }
 
-    const pages = this._pages().map((p, i) =>
-      i === pageIndex
-        ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? { ...b, resources } : b)) }
-        : p
-    )
-    return this.mutate(this._resources(), pages)
+    const cell: KpiCell =
+      kind === 'top-n'
+        ? {
+            kind,
+            resource,
+            topN: 5,
+            topDir: 'desc',
+            topField: draft.fields.find(f => f.type === 'number' || f.type === 'integer')?.name
+          }
+        : kind === 'count-by' || kind === 'series'
+          ? {
+              kind,
+              resource,
+              axisField: draft.fields.find(f => (kind === 'count-by' ? f.type === 'enum' : f.type === 'date'))?.name
+            }
+          : { kind, resource }
+
+    return this.patchCells(pageIndex, blockIndex, cells => [...cells, cell])
+  }
+
+  /** Quita UNA celda de la fila; la ✕ de la fila entera sigue siendo la del bloque. */
+  removeCell(pageIndex: number, blockIndex: number, cellIndex: number): boolean {
+    return this.patchCells(pageIndex, blockIndex, cells => cells.filter((_, i) => i !== cellIndex))
+  }
+
+  moveCell(pageIndex: number, blockIndex: number, from: number, to: number): boolean {
+    return this.patchCells(pageIndex, blockIndex, cells => {
+      if (to < 0 || to >= cells.length) return cells
+      const next = [...cells]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
   }
 
   /**
-   * Config de los bloques KPI y Top N (spec 70). A diferencia del calendario y el kanban, NO se
-   * replica en la entidad: una tarjeta es de la vista, no del modelo — la misma entidad puede
+   * Config de una celda de la fila (specs 70 y 73). A diferencia del calendario y el kanban, NO
+   * se replica en la entidad: una tarjeta es de la vista, no del modelo — la misma entidad puede
    * tener cinco tarjetas distintas en el mismo panel.
    *
    * Dos reglas se hacen cumplir aquí y no solo en el panel, porque el diseño se puede editar por
    * otras vías (el chat, un JSON pegado): ratio y objetivo son excluyentes, y sin ventana no hay
    * comparación posible.
    */
-  setKpiConfig(pageIndex: number, blockIndex: number, patch: Partial<DesignBlock>): boolean {
-    const page = this._pages()[pageIndex]
-    const block = page?.blocks[blockIndex]
-    const configurable = ['kpi', 'top-n', 'count-by', 'series']
-    if (!block || !configurable.includes(block.kind)) return false
+  setCellConfig(pageIndex: number, blockIndex: number, cellIndex: number, patch: Partial<KpiCell>): boolean {
+    const cell = this._pages()[pageIndex]?.blocks[blockIndex]?.items?.[cellIndex]
+    if (!cell) return false
 
-    const updated: DesignBlock = { ...block, ...patch }
+    const updated: KpiCell = { ...cell, ...patch, kind: cell.kind, resource: cell.resource }
     // el select vacío llega como '': eso es «sin ventana», no una ventana llamada ''
     if (updated.kpiWindowPreset === '') delete updated.kpiWindowPreset
     if (updated.kpiWindowField === '') delete updated.kpiWindowField
@@ -523,8 +486,17 @@ export class DesignStore {
     }
     if (updated.kpiWindowPreset !== 'days') delete updated.kpiWindowDays
 
+    return this.patchCells(pageIndex, blockIndex, cells => cells.map((c, i) => (i === cellIndex ? updated : c)))
+  }
+
+  /** La mutación común de las celdas de una fila, con el gate de siempre. */
+  private patchCells(pageIndex: number, blockIndex: number, fn: (cells: KpiCell[]) => KpiCell[]): boolean {
+    const block = this._pages()[pageIndex]?.blocks[blockIndex]
+    if (!block || block.kind !== 'kpis') return false
     const pages = this._pages().map((p, i) =>
-      i === pageIndex ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? updated : b)) } : p
+      i === pageIndex
+        ? { ...p, blocks: p.blocks.map((b, j) => (j === blockIndex ? { ...b, items: fn(b.items ?? []) } : b)) }
+        : p
     )
     return this.mutate(this._resources(), pages)
   }
@@ -622,7 +594,9 @@ export class DesignStore {
   /** Borra la vista; la entidad solo se va si ninguna otra vista la usa. */
   removePage(pageIndex: number): boolean {
     const pages = this._pages().filter((_, i) => i !== pageIndex)
-    const stillUsed = new Set(pages.flatMap(p => p.blocks.flatMap(b => [b.resource, ...(b.resources ?? [])])))
+    const stillUsed = new Set(
+      pages.flatMap(p => p.blocks.flatMap(b => [b.resource, ...(b.items ?? []).map(cell => cell.resource)]))
+    )
     const resources = this._resources().filter(r => stillUsed.has(r.name))
     return this.mutate(resources, pages)
   }
@@ -648,8 +622,12 @@ export class DesignStore {
         ...page,
         blocks: page.blocks
           .filter(b => b.resource !== name)
-          .map(b => (b.resources?.includes(name) ? { ...b, resources: b.resources.filter(x => x !== name) } : b))
-          .filter(b => !(b.kind === 'kpis' && !b.resources?.length))
+          .map(b =>
+            b.items?.some(cell => cell.resource === name)
+              ? { ...b, items: b.items.filter(cell => cell.resource !== name) }
+              : b
+          )
+          .filter(b => !(b.kind === 'kpis' && !b.items?.length))
       }))
       .filter((page, i) => page.blocks.length > 0 || this._pages()[i].blocks.length === 0)
     return this.mutate(resources, pages)
@@ -870,7 +848,9 @@ export class DesignStore {
     return this.mutateState(resource, machine => ({
       ...machine,
       transitions: machine.transitions.map(t =>
-        t.name === name ? { ...t, ...(patch.name ? { name: patch.name } : {}), ...(patch.label ? { label: patch.label } : {}) } : t
+        t.name === name
+          ? { ...t, ...(patch.name ? { name: patch.name } : {}), ...(patch.label ? { label: patch.label } : {}) }
+          : t
       )
     }))
   }
@@ -1023,7 +1003,14 @@ export class DesignStore {
    * principal: la salida de la condición nueva hacia el destino original nace con el
    * «sí», y la rama «no» queda pendiente de dibujar (el gate de borrador lo permite).
    */
-  insertFlowNode(flowName: string, from: string, to: string, kind: FlowNodeKind, text: string, label?: string): boolean {
+  insertFlowNode(
+    flowName: string,
+    from: string,
+    to: string,
+    kind: FlowNodeKind,
+    text: string,
+    label?: string
+  ): boolean {
     const flow = this._flows().find(f => f.name === flowName)
     const tramo = flow?.edges.find(edge => edge.from === from && edge.to === to && edge.label === label)
     if (!flow || !tramo) {
@@ -1141,9 +1128,7 @@ export class DesignStore {
           page: page.title,
           blocks: [
             ...new Set(
-              page.blocks
-                .filter(b => !generableHere(page, b) && !(b.kind === 'text' && hasScreen))
-                .map(b => b.kind)
+              page.blocks.filter(b => !generableHere(page, b) && !(b.kind === 'text' && hasScreen)).map(b => b.kind)
             )
           ]
         }
@@ -1153,6 +1138,9 @@ export class DesignStore {
 
   applyExternal(design: Design): boolean {
     const clone = structuredClone(design)
+    // los diseños guardados y los del chat pueden hablar los bloques sueltos pre-73: aquí es el
+    // ÚNICO punto por el que entran páginas de fuera, así que aquí se migran a filas con celdas
+    clone.pages = normalizeDesignPages(clone.pages)
     const flows = clone.flows ?? []
     const problem = flowDraftProblem(flows)
     if (problem) {
@@ -1188,7 +1176,7 @@ export class DesignStore {
       const registry = Object.fromEntries(resources.map(r => [r.name, defineResource(draftToResource(r, name))]))
       for (const page of pages) {
         for (const block of page.blocks) {
-          const refs = [block.resource, ...(block.resources ?? [])].filter(Boolean) as string[]
+          const refs = [block.resource, ...(block.items ?? []).map(cell => cell.resource)].filter(Boolean) as string[]
           for (const ref of refs) {
             if (!registry[ref]) {
               throw new Error(`La vista «${page.title}» referencia una entidad inexistente: ${ref}`)

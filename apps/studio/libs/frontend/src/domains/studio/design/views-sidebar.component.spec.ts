@@ -109,11 +109,7 @@ describe('ViewsSidebarComponent', () => {
     const fixture = mount()
     const visible = [...fixture.nativeElement.querySelectorAll('[data-testid^="view-item-"]')] as HTMLElement[]
 
-    expect(visible.map(item => item.textContent?.trim())).toEqual([
-      'Instalaciones',
-      'Instalación',
-      'Productos'
-    ])
+    expect(visible.map(item => item.textContent?.trim())).toEqual(['Instalaciones', 'Instalación', 'Productos'])
   })
 
   it('la ficha abierta no se pliega bajo sus propios pies', () => {
@@ -204,17 +200,13 @@ describe('ViewsSidebarComponent', () => {
     expect(button?.className).toContain('border-2')
   })
 
-  it('ofrece los doce bloques que el generador emite, y ninguno más', () => {
+  it('ofrece los ocho bloques que el generador emite, y ninguno más (la familia analítica vive en KPIs)', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')
 
     expect([...tools].map((tool: Element) => tool.getAttribute('data-testid'))).toEqual([
       'block-tool-table',
       'block-tool-kpis',
-      'block-tool-kpi',
-      'block-tool-top-n',
-      'block-tool-count-by',
-      'block-tool-series',
       'block-tool-cards',
       'block-tool-form',
       'block-tool-calendar',
@@ -259,7 +251,7 @@ describe('ViewsSidebarComponent', () => {
     testId(fixture, 'block-tool-kpis')?.click()
     fixture.detectChanges()
 
-    expect(store.pages()[0].blocks.at(-1)).toMatchObject({ kind: 'kpis', resources: ['producto'] })
+    expect(store.pages()[0].blocks.at(-1)).toMatchObject({ kind: 'kpis', items: [] })
     expect(testId(fixture, 'add-kpis-producto')).toBeNull()
   })
 
@@ -300,16 +292,16 @@ describe('ViewsSidebarComponent', () => {
     expect(notice.notice()).toBeNull()
   })
 
-  it('cuando el gate rechaza el bloque, el aviso cuenta por qué en vez de callar', () => {
+  it('soltar KPIs donde ya hay una fila crea OTRA fila, sin aviso: se combinan por celdas (spec 73)', () => {
     store.addPage('panel', 'Productos')
     const notice = TestBed.inject(CanvasNoticeService)
 
     const fixture = mount()
-    testId(fixture, 'block-tool-kpis')?.click() // la única entidad del modelo ya tiene su KPI
+    testId(fixture, 'block-tool-kpis')?.click()
     fixture.detectChanges()
 
-    expect(store.pages()[0].blocks.filter(block => block.kind === 'kpis').length).toBe(1)
-    expect(notice.notice()?.text).toContain('ya mide todas las entidades')
+    expect(store.pages()[0].blocks.filter(block => block.kind === 'kpis').length).toBe(2)
+    expect(notice.notice()).toBeNull()
   })
 
   it('la vista recién creada queda seleccionada', async () => {

@@ -112,9 +112,9 @@ describe('DesignPanelComponent — el inspector solo donde las columnas pintan a
     expect(fixture.nativeElement.textContent).toContain('Inmueble · columnas')
   })
 
-  it('en un panel NO enseña las columnas, y sí la config del bloque', () => {
+  it('en un panel NO enseña las columnas, y sí la config de la celda', () => {
     store.addPage('blank', 'Panel')
-    store.addBlock(0, { kind: 'kpi', resource: 'inmueble' })
+    store.addBlock(0, { kind: 'kpis', items: [{ kind: 'kpi', resource: 'inmueble' }] })
     active.selectResource('inmueble')
 
     const fixture = mount()
@@ -124,16 +124,16 @@ describe('DesignPanelComponent — el inspector solo donde las columnas pintan a
     expect(testId(fixture, 'kpi-config')).not.toBeNull()
   })
 
-  it('la fila de KPIs trae su propio panel, con una tarjeta por entidad medida', () => {
+  it('la fila de KPIs trae su propio panel, con una fila por celda', () => {
     store.addPage('blank', 'Panel')
-    store.addBlock(0, { kind: 'kpis', resources: ['inmueble'] })
+    store.addBlock(0, { kind: 'kpis', items: [{ kind: 'counter', resource: 'inmueble' }] })
     active.selectResource('inmueble')
 
     const fixture = mount()
     openComponentTab(fixture)
 
     expect(testId(fixture, 'kpis-config')).not.toBeNull()
-    expect(testId(fixture, 'kpis-card-inmueble')).not.toBeNull()
+    expect(testId(fixture, 'kpis-cell-0')).not.toBeNull()
     expect(fixture.nativeElement.textContent).not.toContain('Inmueble · columnas')
   })
 

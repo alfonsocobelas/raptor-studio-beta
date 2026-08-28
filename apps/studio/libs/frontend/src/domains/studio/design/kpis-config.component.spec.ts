@@ -4,7 +4,7 @@ import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import { KpisConfigComponent } from './kpis-config.component'
 
-/** Spec 70 (seguimiento): la fila de KPIs es un bloque con N tarjetas, y cada una se quita sola. */
+/** Spec 73: la fila de KPIs es un bloque con N celdas; el panel las lista, reordena y quita. */
 describe('KpisConfigComponent', () => {
   let store: DesignStore
 
@@ -24,44 +24,51 @@ describe('KpisConfigComponent', () => {
     store.addPage('blank', 'Panel')
     store.addResource('Pedido')
     store.addResource('Cliente')
-    store.addBlock(0, { kind: 'kpis', resources: ['pedido', 'cliente'] })
+    store.addBlock(0, { kind: 'kpis', items: [] })
+    store.addCell(0, 0, 'counter', 'pedido')
+    store.addCell(0, 0, 'top-n', 'cliente')
   })
 
-  it('lista una tarjeta por entidad medida, con el plural de la entidad', () => {
+  it('lista cada celda con su tipo y el plural de su entidad', () => {
     const fixture = mount()
 
+    expect(fixture.nativeElement.textContent).toContain('Contador')
     expect(fixture.nativeElement.textContent).toContain('Pedidos')
+    expect(fixture.nativeElement.textContent).toContain('Top N')
     expect(fixture.nativeElement.textContent).toContain('Clientes')
   })
 
-  it('quita UNA tarjeta sin llevarse la fila', () => {
+  it('quita UNA celda sin llevarse la fila', () => {
     const fixture = mount()
 
-    ;(testId(fixture, 'kpis-remove-pedido') as HTMLButtonElement).click()
+    ;(testId(fixture, 'kpis-remove-0') as HTMLButtonElement).click()
 
-    expect(store.pages()[0].blocks[0].resources).toEqual(['cliente'])
+    expect(store.pages()[0].blocks[0].items).toMatchObject([{ kind: 'top-n', resource: 'cliente' }])
     expect(store.pages()[0].blocks[0].kind).toBe('kpis')
   })
 
-  it('con una sola tarjeta el borrado está deshabilitado: la fila no puede quedar sin medir nada', () => {
-    store.setKpiResources(0, 0, ['pedido'])
+  it('la fila puede quedarse vacía: vuelve a ser el cuadrado con el «+»', () => {
     const fixture = mount()
 
-    expect((testId(fixture, 'kpis-remove-pedido') as HTMLButtonElement).disabled).toBe(true)
+    ;(testId(fixture, 'kpis-remove-0') as HTMLButtonElement).click()
+    fixture.detectChanges()
+    ;(testId(fixture, 'kpis-remove-0') as HTMLButtonElement).click()
+
+    expect(store.pages()[0].blocks[0].items).toEqual([])
   })
 
-  it('reordena las tarjetas', () => {
+  it('reordena las celdas', () => {
     const fixture = mount()
 
-    ;(testId(fixture, 'kpis-down-pedido') as HTMLButtonElement).click()
+    ;(testId(fixture, 'kpis-down-0') as HTMLButtonElement).click()
 
-    expect(store.pages()[0].blocks[0].resources).toEqual(['cliente', 'pedido'])
+    expect(store.pages()[0].blocks[0].items?.map(cell => cell.kind)).toEqual(['top-n', 'counter'])
   })
 
-  it('cuando ya mide todo el modelo, lo dice en vez de ofrecer un select vacío', () => {
+  it('añadir vive en el «+» del lienzo: aquí solo se explica', () => {
     const fixture = mount()
 
     expect(testId(fixture, 'kpis-add')).toBeNull()
-    expect(fixture.nativeElement.textContent).toContain('ya mide todas las entidades')
+    expect(fixture.nativeElement.textContent).toContain('«+»')
   })
 })

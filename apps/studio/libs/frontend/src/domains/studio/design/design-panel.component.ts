@@ -33,12 +33,20 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 const COLUMN_BLOCKS: BlockKind[] = ['table', 'cards', 'fields', 'form']
 
 /** Bloques con panel de configuración propio. */
-const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', 'top-n', 'count-by', 'series']
+const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpis']
 
 @Component({
   selector: 'studio-design-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InspectorComponent, CalendarConfigComponent, KanbanConfigComponent, KpiConfigComponent, KpisConfigComponent, TopNConfigComponent, ChartConfigComponent],
+  imports: [
+    InspectorComponent,
+    CalendarConfigComponent,
+    KanbanConfigComponent,
+    KpiConfigComponent,
+    KpisConfigComponent,
+    TopNConfigComponent,
+    ChartConfigComponent
+  ],
   template: `
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-4 border-b" role="tablist">
@@ -139,8 +147,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', '
                 <studio-inspector [resource]="view.resource()" (close)="view.selectResource(null)" />
               } @else if (!hasBlockConfig()) {
                 <p class="text-muted-foreground text-xs" data-testid="component-no-columns">
-                  Esta vista no pinta columnas: se compone de bloques. Las columnas de la entidad se
-                  editan en Modelo.
+                  Esta vista no pinta columnas: se compone de bloques. Las columnas de la entidad se editan en Modelo.
                 </p>
               }
             } @else {
@@ -192,11 +199,11 @@ export class DesignPanelComponent {
   protected readonly hasBlockConfig = computed(() => {
     const resource = this.view.resource()
     const blocks = this.store.pages()[this.view.index()]?.blocks ?? []
-    // la fila de KPIs habla de varias entidades: le basta con medir la elegida
+    // la fila de KPIs habla de varias entidades: le basta con que una celda mida la elegida
     return blocks.some(
       block =>
         CONFIGURABLE_BLOCKS.includes(block.kind) &&
-        (block.resource === resource || (block.resources ?? []).includes(resource ?? ''))
+        (block.resource === resource || (block.items ?? []).some(cell => cell.resource === resource))
     )
   })
 

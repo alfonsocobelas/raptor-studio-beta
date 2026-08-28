@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DesignStore } from './design-store'
 
-/** Spec 70: la tarjeta KPI y el Top N se configuran en el bloque, no en la entidad. */
-describe('DesignStore — bloques kpi y top-n (spec 70)', () => {
+/** Specs 70 y 73: las celdas de la fila de KPIs se configuran en la celda, no en la entidad. */
+describe('DesignStore — celdas de la fila de KPIs', () => {
   const storeWith = (): DesignStore => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')
@@ -19,31 +19,59 @@ describe('DesignStore — bloques kpi y top-n (spec 70)', () => {
     store.addField('pedido')
     store.updateField('pedido', 2, { name: 'importe', label: 'Importe', type: 'number' })
     store.addPage('blank', 'Panel')
+    store.addBlock(1, { kind: 'kpis', items: [] })
     return store
   }
 
-  it('el kpi nace sin condición: es el total del recurso, y ya es un diseño válido', () => {
+  it('la fila nace vacía y aún no abre el panel: sin celdas no hay nada que emitir', () => {
     const store = storeWith()
 
-    store.addBlock(1, { kind: 'kpi', resource: 'pedido' })
+    expect(store.pages()[1].blocks[0]).toMatchObject({ kind: 'kpis', items: [] })
+    expect(store.toAppSchema().pages.some(p => p.kind === 'dashboard')).toBe(false)
+  })
 
-    expect(store.pages()[1].blocks[0]).toMatchObject({ kind: 'kpi', resource: 'pedido' })
+  it('la celda kpi nace sin condición: es el total del recurso, y ya abre el panel', () => {
+    const store = storeWith()
+
+    expect(store.addCell(1, 0, 'kpi', 'pedido')).toBe(true)
+    expect(store.pages()[1].blocks[0].items?.[0]).toMatchObject({ kind: 'kpi', resource: 'pedido' })
     expect(store.toAppSchema().pages.some(p => p.kind === 'dashboard')).toBe(true)
   })
 
-  it('el top-n nace con 5 filas y el primer campo numérico', () => {
+  it('la celda top-n nace con 5 filas y el primer campo numérico', () => {
     const store = storeWith()
 
-    store.addBlock(1, { kind: 'top-n', resource: 'pedido' })
+    store.addCell(1, 0, 'top-n', 'pedido')
 
-    expect(store.pages()[1].blocks[0]).toMatchObject({ kind: 'top-n', topN: 5, topField: 'importe', topDir: 'desc' })
+    expect(store.pages()[1].blocks[0].items?.[0]).toMatchObject({
+      kind: 'top-n',
+      topN: 5,
+      topField: 'importe',
+      topDir: 'desc'
+    })
   })
 
-  it('la config del kpi se guarda en el bloque y NO toca la entidad', () => {
+  it('las barras nacen en el primer enum y la serie sin fecha queda incompleta', () => {
     const store = storeWith()
-    store.addBlock(1, { kind: 'kpi', resource: 'pedido' })
 
-    const ok = store.setKpiConfig(1, 0, {
+    store.addCell(1, 0, 'count-by', 'pedido')
+    store.addCell(1, 0, 'series', 'pedido')
+
+    expect(store.pages()[1].blocks[0].items?.[0]).toMatchObject({ kind: 'count-by', axisField: 'estado' })
+    expect(store.pages()[1].blocks[0].items?.[1].axisField).toBeUndefined()
+  })
+
+  it('rechaza una entidad que no está en el modelo', () => {
+    const store = storeWith()
+
+    expect(store.addCell(1, 0, 'counter', 'fantasma')).toBe(false)
+  })
+
+  it('la config de la celda se guarda en la celda y NO toca la entidad', () => {
+    const store = storeWith()
+    store.addCell(1, 0, 'kpi', 'pedido')
+
+    const ok = store.setCellConfig(1, 0, 0, {
       kpiLabel: 'Pendientes',
       kpiConditionField: 'estado',
       kpiConditionOperator: 'eq',
@@ -54,7 +82,7 @@ describe('DesignStore — bloques kpi y top-n (spec 70)', () => {
     })
 
     expect(ok).toBe(true)
-    expect(store.pages()[1].blocks[0]).toMatchObject({
+    expect(store.pages()[1].blocks[0].items?.[0]).toMatchObject({
       kpiLabel: 'Pendientes',
       kpiConditionField: 'estado',
       kpiConditionValue: 'pendiente',
@@ -65,85 +93,75 @@ describe('DesignStore — bloques kpi y top-n (spec 70)', () => {
 
   it('ratio y objetivo son excluyentes: encender uno apaga el otro', () => {
     const store = storeWith()
-    store.addBlock(1, { kind: 'kpi', resource: 'pedido' })
+    store.addCell(1, 0, 'kpi', 'pedido')
 
-    store.setKpiConfig(1, 0, { kpiTarget: 60 })
-    store.setKpiConfig(1, 0, { kpiRatio: true })
+    store.setCellConfig(1, 0, 0, { kpiTarget: 60 })
+    store.setCellConfig(1, 0, 0, { kpiRatio: true })
 
-    expect(store.pages()[1].blocks[0].kpiTarget).toBeUndefined()
-    expect(store.pages()[1].blocks[0].kpiRatio).toBe(true)
+    expect(store.pages()[1].blocks[0].items?.[0].kpiTarget).toBeUndefined()
+    expect(store.pages()[1].blocks[0].items?.[0].kpiRatio).toBe(true)
   })
 
   it('apagar la ventana apaga la comparación: no hay periodo anterior de «siempre»', () => {
     const store = storeWith()
-    store.addBlock(1, { kind: 'kpi', resource: 'pedido' })
-    store.setKpiConfig(1, 0, { kpiWindowField: 'creado', kpiWindowPreset: 'month', kpiCompare: true })
+    store.addCell(1, 0, 'kpi', 'pedido')
+    store.setCellConfig(1, 0, 0, { kpiWindowField: 'creado', kpiWindowPreset: 'month', kpiCompare: true })
 
-    store.setKpiConfig(1, 0, { kpiWindowPreset: '' })
+    store.setCellConfig(1, 0, 0, { kpiWindowPreset: '' })
 
-    expect(store.pages()[1].blocks[0].kpiCompare).toBeUndefined()
-    expect(store.pages()[1].blocks[0].kpiWindowPreset).toBeUndefined()
+    expect(store.pages()[1].blocks[0].items?.[0].kpiCompare).toBeUndefined()
+    expect(store.pages()[1].blocks[0].items?.[0].kpiWindowPreset).toBeUndefined()
   })
 
-  it('el setter rechaza un bloque que no es kpi ni top-n', () => {
+  it('los setters de celda rechazan un bloque que no es la fila de KPIs', () => {
     const store = storeWith()
     store.addBlock(1, { kind: 'table', resource: 'pedido' })
 
-    expect(store.setKpiConfig(1, 0, { kpiLabel: 'X' })).toBe(false)
+    expect(store.addCell(1, 1, 'kpi', 'pedido')).toBe(false)
+    expect(store.setCellConfig(1, 1, 0, { kpiLabel: 'X' })).toBe(false)
   })
 })
 
-/** Spec 70 (seguimiento): la fila de KPIs también se edita, y desde el panel. */
-describe('DesignStore — qué mide la fila de KPIs', () => {
+/** Spec 73: la fila se edita celda a celda — quitar, reordenar. */
+describe('DesignStore — quitar y reordenar celdas', () => {
   const storeWith = (): DesignStore => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')
     store.addResource('Cliente')
     store.addPage('blank', 'Panel')
-    store.addBlock(1, { kind: 'kpis', resources: ['pedido'] })
+    store.addBlock(1, { kind: 'kpis', items: [] })
+    store.addCell(1, 0, 'counter', 'pedido')
+    store.addCell(1, 0, 'counter', 'cliente')
     return store
   }
 
-  it('cambia las entidades medidas', () => {
+  it('quita UNA celda sin llevarse la fila', () => {
     const store = storeWith()
 
-    const ok = store.setKpiResources(1, 0, ['pedido', 'cliente'])
-
-    expect(ok).toBe(true)
-    expect(store.pages()[1].blocks[0].resources).toEqual(['pedido', 'cliente'])
+    expect(store.removeCell(1, 0, 0)).toBe(true)
+    expect(store.pages()[1].blocks[0].items).toEqual([{ kind: 'counter', resource: 'cliente' }])
   })
 
-  it('rechaza dejar la fila sin ninguna entidad: no mediría nada', () => {
+  it('la fila puede quedar vacía: vuelve a ser el cuadrado con el «+»', () => {
     const store = storeWith()
+    store.removeCell(1, 0, 0)
 
-    expect(store.setKpiResources(1, 0, [])).toBe(false)
-    expect(store.pages()[1].blocks[0].resources).toEqual(['pedido'])
+    expect(store.removeCell(1, 0, 0)).toBe(true)
+    expect(store.pages()[1].blocks[0].items).toEqual([])
   })
 
-  it('rechaza entidades que no están en el modelo', () => {
+  it('reordena las celdas', () => {
     const store = storeWith()
 
-    expect(store.setKpiResources(1, 0, ['pedido', 'fantasma'])).toBe(false)
+    expect(store.moveCell(1, 0, 0, 1)).toBe(true)
+    expect(store.pages()[1].blocks[0].items?.map(cell => cell.resource)).toEqual(['cliente', 'pedido'])
   })
 
-  it('rechaza repetidas: dos veces la misma entidad son dos tarjetas iguales', () => {
+  it('mover fuera de rango no cambia nada', () => {
     const store = storeWith()
 
-    expect(store.setKpiResources(1, 0, ['pedido', 'pedido'])).toBe(false)
-  })
+    store.moveCell(1, 0, 1, 2)
 
-  it('el setter solo vale para la fila de KPIs', () => {
-    const store = storeWith()
-    store.addBlock(1, { kind: 'table', resource: 'pedido' })
-
-    expect(store.setKpiResources(1, 1, ['pedido'])).toBe(false)
-  })
-
-  it('el orden del array es el orden de las tarjetas: reordenar es fijar el array', () => {
-    const store = storeWith()
-    store.setKpiResources(1, 0, ['pedido', 'cliente'])
-
-    expect(store.setKpiResources(1, 0, ['cliente', 'pedido'])).toBe(true)
-    expect(store.pages()[1].blocks[0].resources).toEqual(['cliente', 'pedido'])
+    expect(store.pages()[1].blocks[0].items?.map(cell => cell.resource)).toEqual(['pedido', 'cliente'])
   })
 })

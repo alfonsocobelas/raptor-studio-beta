@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 import {
+  cellAt,
   conditionFieldsOf,
   dateFieldsOf,
   MEASURE_LABELS,
@@ -238,11 +239,11 @@ export class KpiConfigComponent {
   protected readonly view = computed(() => {
     const pageIndex = this.active.index()
     const blocks = this.store.pages()[pageIndex]?.blocks ?? []
-    const blockIndex = blocks.findIndex(b => b.kind === 'kpi' && b.resource === this.resource())
+    const found = cellAt(blocks, ['kpi'], this.resource())
     const draft = this.store.resources().find(r => r.name === this.resource())
-    if (blockIndex < 0 || !draft) return null
+    if (!found || !draft) return null
 
-    const block = blocks[blockIndex]
+    const { blockIndex, cellIndex, cell: block } = found
     const option = (value: string, label: string): AppSelectOption => ({ value, label })
     const conditionFields = conditionFieldsOf(draft)
     const dateFields = dateFieldsOf(draft)
@@ -254,6 +255,7 @@ export class KpiConfigComponent {
     return {
       pageIndex,
       blockIndex,
+      cellIndex,
       block,
       measure,
       measures: measuresFor(draft).map(m => option(m, MEASURE_LABELS[m])),
@@ -321,11 +323,13 @@ export class KpiConfigComponent {
 
   protected onTarget(value: string): void {
     const parsed = Number(value)
-    this.patch(value === '' || !Number.isFinite(parsed) || parsed <= 0 ? { kpiTarget: undefined } : { kpiTarget: parsed })
+    this.patch(
+      value === '' || !Number.isFinite(parsed) || parsed <= 0 ? { kpiTarget: undefined } : { kpiTarget: parsed }
+    )
   }
 
-  protected patch(change: Partial<DesignBlock>): void {
+  protected patch(change: Partial<KpiCell>): void {
     const v = this.view()
-    if (v) this.store.setKpiConfig(v.pageIndex, v.blockIndex, change)
+    if (v) this.store.setCellConfig(v.pageIndex, v.blockIndex, v.cellIndex, change)
   }
 }

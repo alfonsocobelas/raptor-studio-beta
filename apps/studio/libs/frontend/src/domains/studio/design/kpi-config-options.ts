@@ -1,5 +1,5 @@
 import { AGGREGATE_OPS, opAllowedOn, type AggregateOp } from '@raptor/schema'
-import type { DraftField, DraftResource } from '@app/shared/domain'
+import type { DesignBlock, DraftField, DraftResource, KpiCell, KpiCellKind } from '@app/shared/domain'
 
 /** Etiquetas de las ventanas temporales; el orden es el que ve el panel. */
 export const WINDOW_PRESET_LABELS: Record<string, string> = {
@@ -60,9 +60,7 @@ export function conditionFieldsOf(draft: DraftResource): DraftField[] {
   // (draft-resource.ts), así que el resto no puede condicionar nada
   const nameField = draft.fields.find(field => field.type === 'string')?.name
 
-  return draft.fields.filter(
-    field => field.type !== 'text' && (field.type !== 'string' || field.name === nameField)
-  )
+  return draft.fields.filter(field => field.type !== 'text' && (field.type !== 'string' || field.name === nameField))
 }
 
 /** Los campos fecha, que son los únicos sobre los que una ventana temporal tiene sentido. */
@@ -123,4 +121,22 @@ export function nextMeasureField(draft: DraftResource, measure: string, current?
   const measurable = measurableFieldsOf(draft).filter(entry => measureAllowedOn(measure, entry.kind))
   const keeps = measurable.some(entry => entry.field.name === current)
   return keeps ? current : measurable[0]?.field.name
+}
+
+/**
+ * Localiza en la vista la PRIMERA celda de estos tipos que hable de la entidad elegida
+ * (spec 73): es como los paneles de config encuentran su celda dentro de las filas de KPIs,
+ * igual que antes encontraban su bloque suelto.
+ */
+export function cellAt(
+  blocks: DesignBlock[],
+  kinds: KpiCellKind[],
+  resource: string | null
+): { blockIndex: number; cellIndex: number; cell: KpiCell } | null {
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const items = blocks[blockIndex].items ?? []
+    const cellIndex = items.findIndex(cell => kinds.includes(cell.kind) && cell.resource === resource)
+    if (cellIndex >= 0) return { blockIndex, cellIndex, cell: items[cellIndex] }
+  }
+  return null
 }

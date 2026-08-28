@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { DesignStore } from './design-store'
 import { buildSampleRows } from './mock-data'
 
@@ -42,18 +42,19 @@ interface TopRow {
   `
 })
 export class CanvasTopNComponent {
-  readonly block = input.required<DesignBlock>()
+  readonly cell = input.required<KpiCell>()
 
   private readonly _store = inject(DesignStore)
 
   protected readonly view = computed(() => {
-    const block = this.block()
+    const block = this.cell()
     const draft = this._store.resources().find(r => r.name === block.resource)
     if (!draft) return null
 
     const n = block.topN ?? 5
     const sortField = draft.fields.find(f => f.name === block.topField)
-    const labelField = draft.fields.find(f => f.name === block.topLabelField) ?? draft.fields.find(f => f.type === 'string')
+    const labelField =
+      draft.fields.find(f => f.name === block.topLabelField) ?? draft.fields.find(f => f.type === 'string')
     const dir = block.topDir === 'asc' ? 'ascendente' : 'descendente'
 
     const samples = buildSampleRows(draft, n, this._store.resources())

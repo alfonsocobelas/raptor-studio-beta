@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { DesignStore } from './design-store'
 import { MEASURE_LABELS } from './kpi-config-options'
 import { mockTotal } from './mock-data'
@@ -55,12 +55,12 @@ import { mockTotal } from './mock-data'
   `
 })
 export class CanvasChartComponent {
-  readonly block = input.required<DesignBlock>()
+  readonly cell = input.required<KpiCell>()
 
   private readonly _store = inject(DesignStore)
 
   protected readonly view = computed(() => {
-    const block = this.block()
+    const block = this.cell()
     const draft = this._store.resources().find(r => r.name === block.resource)
     if (!draft) return null
 
@@ -68,7 +68,10 @@ export class CanvasChartComponent {
     const axis = draft.fields.find(f => f.name === block.axisField)
     const measure = block.measure ?? 'count'
     const measured = draft.fields.find(f => f.name === block.measureField)
-    const what = measure === 'count' ? draft.labelPlural.toLowerCase() : `${MEASURE_LABELS[measure].toLowerCase()} de ${measured?.label ?? '—'}`
+    const what =
+      measure === 'count'
+        ? draft.labelPlural.toLowerCase()
+        : `${MEASURE_LABELS[measure].toLowerCase()} de ${measured?.label ?? '—'}`
 
     const values = axis?.values ?? []
     const bars = values.map((value, index) => ({
@@ -84,7 +87,9 @@ export class CanvasChartComponent {
     return {
       kind,
       axis,
-      title: block.kpiLabel?.trim() || (kind === 'count-by' ? `${draft.labelPlural} por ${axis?.label ?? '—'}` : `${draft.labelPlural} por mes`),
+      title:
+        block.kpiLabel?.trim() ||
+        (kind === 'count-by' ? `${draft.labelPlural} por ${axis?.label ?? '—'}` : `${draft.labelPlural} por mes`),
       bars,
       points,
       missing:

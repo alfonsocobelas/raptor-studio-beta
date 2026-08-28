@@ -4,48 +4,27 @@
  * coordenadas. Los «arquetipos» son presets de bloques, no tipos rígidos de
  * página: la tabla es un bloque más, tan opcional como los ficheros.
  */
-export type BlockKind =
-  | 'table'
-  | 'kpis'
-  | 'kpi'
-  | 'top-n'
-  | 'count-by'
-  | 'series'
-  | 'fields'
-  | 'cards'
-  | 'attachments'
-  | 'text'
-  | 'form'
-  | 'calendar'
-  | 'kanban'
+export type BlockKind = 'table' | 'kpis' | 'fields' | 'cards' | 'attachments' | 'text' | 'form' | 'calendar' | 'kanban'
 
-export interface DesignBlock {
-  kind: BlockKind
-  /** Entidad que alimenta el bloque (todos menos `text`) */
-  resource?: string
-  /** Varios recursos para la fila de KPIs */
-  resources?: string[]
-  /** Texto de apoyo del bloque `text` */
-  text?: string
-  /** Ancho: completo o media fila (dos `half` seguidos forman dos columnas) */
-  width?: 'full' | 'half'
-  /** Calendario (spec 59): campo fecha que coloca cada registro en su día */
-  dateField?: string
-  /** Calendario: campo mostrado en la tira */
-  labelField?: string
-  /** Calendario: campo enum que colorea la tira */
-  colorField?: string
-  /** Calendario: mostrar SÁB/DOM (por defecto true) */
-  weekends?: boolean
-  /** Kanban (spec 61): campo enum cuyos valores son las columnas */
-  columnsField?: string
-  /**
-   * Tarjeta KPI (spec 70). Campos PLANOS, como el calendario y el kanban: el autosave parchea
-   * campo a campo y el diseño guardado se lee de un vistazo. La frontera los ensambla en los
-   * objetos anidados del app-schema.
-   */
+/**
+ * Tipos de celda de la fila de KPIs (spec 73). La familia analítica ya no son bloques sueltos:
+ * son celdas que conviven en una misma línea. `counter` es el total del recurso con su tarjeta
+ * (los antiguos `resources` del bloque).
+ */
+export type KpiCellKind = 'counter' | 'kpi' | 'top-n' | 'count-by' | 'series'
+
+/**
+ * Una celda de la fila. Campos PLANOS, doctrina de la spec 70: el autosave parchea y el JSON se
+ * lee de un vistazo; la frontera los ensambla en los objetos anidados del app-schema. Cada tipo
+ * usa su grupo de campos y `counter` no usa ninguno.
+ */
+export interface KpiCell {
+  kind: KpiCellKind
+  /** Entidad que alimenta la celda */
+  resource: string
+  /** Etiqueta de la tarjeta (kpi, top-n, count-by y series) */
   kpiLabel?: string
-  /** Medida (spec 71): 'count' o una agregación sobre `kpiField` */
+  /** Medida del kpi (spec 71): 'count' o una agregación sobre `kpiField` */
   kpiMeasure?: string
   kpiField?: string
   /** Condición: qué se cuenta. Los tres van juntos o no van ninguno */
@@ -66,7 +45,7 @@ export interface DesignBlock {
   kpiSparkline?: boolean
   /**
    * Barras y serie (spec 72): el EJE del desglose —un enum en las barras, una fecha en la serie— y
-   * la medida que enseñan. Sin medida cuentan registros, que es lo que hacían antes.
+   * la medida que enseñan. Sin medida cuentan registros.
    */
   axisField?: string
   measure?: string
@@ -76,6 +55,33 @@ export interface DesignBlock {
   topN?: number
   topLabelField?: string
   topDir?: 'asc' | 'desc'
+}
+
+export interface DesignBlock {
+  kind: BlockKind
+  /** Entidad que alimenta el bloque (todos menos `text` y `kpis`) */
+  resource?: string
+  /**
+   * @deprecated spec 73: formato viejo de la fila de contadores. Se sigue leyendo y
+   * `normalizeDesignPages` lo convierte en celdas `counter`; el estudio ya no lo escribe.
+   */
+  resources?: string[]
+  /** Celdas de la fila de KPIs (spec 73); solo el bloque `kpis` las usa */
+  items?: KpiCell[]
+  /** Texto de apoyo del bloque `text` */
+  text?: string
+  /** Ancho: completo o media fila (dos `half` seguidos forman dos columnas) */
+  width?: 'full' | 'half'
+  /** Calendario (spec 59): campo fecha que coloca cada registro en su día */
+  dateField?: string
+  /** Calendario: campo mostrado en la tira */
+  labelField?: string
+  /** Calendario: campo enum que colorea la tira */
+  colorField?: string
+  /** Calendario: mostrar SÁB/DOM (por defecto true) */
+  weekends?: boolean
+  /** Kanban (spec 61): campo enum cuyos valores son las columnas */
+  columnsField?: string
 }
 
 export interface DesignPage {
@@ -145,7 +151,7 @@ export const VIEW_PRESETS: BlockPreset[] = [
     blocks: resource =>
       resource
         ? [
-            { kind: 'kpis', resources: [resource], width: 'full' },
+            { kind: 'kpis', items: [{ kind: 'counter', resource }], width: 'full' },
             { kind: 'table', resource, width: 'full' }
           ]
         : []
@@ -159,10 +165,6 @@ export const DETAIL_BLOCKS: BlockKind[] = ['fields', 'attachments']
 export const GENERABLE_BLOCKS: BlockKind[] = [
   'table',
   'kpis',
-  'kpi',
-  'top-n',
-  'count-by',
-  'series',
   'fields',
   'cards',
   'attachments',
@@ -184,6 +186,19 @@ export function generableHere(page: DesignPage, block: DesignBlock): boolean {
 }
 
 /**
+ * ¿Esta celda cruza la frontera? Es la MISMA regla que aplica design-to-app al emitir (spec 73):
+ * la celda incompleta —top-n sin orden, gráfica sin eje, medida sin campo— no se falsea, se
+ * etiqueta en el lienzo y se omite al generar.
+ */
+export function generableCell(cell: KpiCell): boolean {
+  if (!cell.resource) return false
+  if (cell.kind === 'top-n') return Boolean(cell.topField)
+  if (cell.kind === 'count-by' || cell.kind === 'series') return Boolean(cell.axisField)
+  if (cell.kind === 'kpi') return !(cell.kpiMeasure && cell.kpiMeasure !== 'count' && !cell.kpiField)
+  return true
+}
+
+/**
  * ¿Este bloque repite uno anterior de la MISMA vista? La frontera colapsa dos bloques del
  * mismo tipo y recurso en una sola pantalla (o en un solo listado del panel), así que el
  * segundo no aporta nada y el lienzo lo dice ahí mismo (spec 52). Repetir la tabla en OTRA
@@ -193,7 +208,5 @@ export function duplicateOfEarlierBlock(page: DesignPage, index: number): boolea
   const block = page.blocks[index]
   if (!block?.resource) return false
 
-  return page.blocks
-    .slice(0, index)
-    .some(earlier => earlier.kind === block.kind && earlier.resource === block.resource)
+  return page.blocks.slice(0, index).some(earlier => earlier.kind === block.kind && earlier.resource === block.resource)
 }

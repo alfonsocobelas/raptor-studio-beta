@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { CanvasChartComponent } from './canvas-chart.component'
 import { DesignStore } from './design-store'
 
@@ -10,7 +10,7 @@ describe('CanvasChartComponent', () => {
 
   const mount = (block: DesignBlock) => {
     const fixture = TestBed.createComponent(CanvasChartComponent)
-    fixture.componentRef.setInput('block', block)
+    fixture.componentRef.setInput('cell', block)
     fixture.detectChanges()
     return fixture
   }

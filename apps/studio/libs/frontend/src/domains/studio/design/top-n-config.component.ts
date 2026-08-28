@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import type { DesignBlock } from '@app/shared/domain'
+import type { KpiCell } from '@app/shared/domain'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
-import { sortableFieldsOf } from './kpi-config-options'
+import { cellAt, sortableFieldsOf } from './kpi-config-options'
 
 /**
  * Panel del bloque TOP N (spec 70): por qué campo se ordena, cuántas filas y qué se muestra.
@@ -99,17 +99,18 @@ export class TopNConfigComponent {
   protected readonly view = computed(() => {
     const pageIndex = this.active.index()
     const blocks = this.store.pages()[pageIndex]?.blocks ?? []
-    const blockIndex = blocks.findIndex(b => b.kind === 'top-n' && b.resource === this.resource())
+    const found = cellAt(blocks, ['top-n'], this.resource())
     const draft = this.store.resources().find(r => r.name === this.resource())
-    if (blockIndex < 0 || !draft) return null
+    if (!found || !draft) return null
 
-    const block = blocks[blockIndex]
+    const { blockIndex, cellIndex, cell: block } = found
     const option = (value: string, label: string): AppSelectOption => ({ value, label })
     const sortable = sortableFieldsOf(draft)
 
     return {
       pageIndex,
       blockIndex,
+      cellIndex,
       block,
       placeholder: `Top ${block.topN ?? 5} · ${draft.labelPlural}`,
       sortOptions: [option('', '— elige campo'), ...sortable.map(f => option(f.name, f.label))],
@@ -125,8 +126,8 @@ export class TopNConfigComponent {
     this.patch({ topN: Math.min(20, Math.max(1, parsed)) })
   }
 
-  protected patch(change: Partial<DesignBlock>): void {
+  protected patch(change: Partial<KpiCell>): void {
     const v = this.view()
-    if (v) this.store.setKpiConfig(v.pageIndex, v.blockIndex, change)
+    if (v) this.store.setCellConfig(v.pageIndex, v.blockIndex, v.cellIndex, change)
   }
 }

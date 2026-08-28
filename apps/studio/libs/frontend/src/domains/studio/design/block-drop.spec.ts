@@ -18,8 +18,10 @@ describe('dropResource', () => {
     expect(dropResource(page({ kind: 'table', resource: 'proveedor' }), null, modelo)).toBe('proveedor')
   })
 
-  it('una fila de KPIs también da entidad a la vista: la primera que menciona', () => {
-    expect(dropResource(page({ kind: 'kpis', resources: ['proveedor'] }), null, modelo)).toBe('proveedor')
+  it('una fila de KPIs también da entidad a la vista: la de su primera celda', () => {
+    expect(
+      dropResource(page({ kind: 'kpis', items: [{ kind: 'counter', resource: 'proveedor' }] }), null, modelo)
+    ).toBe('proveedor')
   })
 
   it('en una vista sin entidad todavía, la elegida en el inspector', () => {
@@ -40,8 +42,8 @@ describe('dropResource', () => {
 })
 
 describe('blockFor', () => {
-  it('los KPIs se alimentan de una lista de entidades, no de una', () => {
-    expect(blockFor('kpis', 'producto')).toEqual({ kind: 'kpis', resources: ['producto'] })
+  it('la fila de KPIs nace VACÍA: el «+» decide las celdas (spec 73)', () => {
+    expect(blockFor('kpis', 'producto')).toEqual({ kind: 'kpis', items: [] })
   })
 
   it('el resto de bloques llevan su entidad', () => {

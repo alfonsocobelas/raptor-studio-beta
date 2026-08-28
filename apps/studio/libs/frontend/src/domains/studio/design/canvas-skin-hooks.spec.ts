@@ -121,6 +121,8 @@ describe('hooks de piel — anti-desfase del lienzo', () => {
     'canvas-session-footer.component.ts': 'pie de sesión del mock: shell',
     'canvas-admin-nav-group.component.ts': 'menú de administración del mock: shell',
     'canvas-page.component.ts': 'compone bloques y dibuja el papel del lienzo; el cromo es suyo',
+    'canvas-kpi-row.component.ts':
+      'compone celdas (que sí llevan sus hooks); su cromo es el «+» y su menú, mobiliario del estudio',
     'canvas-notice.service.ts': 'avisos del estudio, no de la app dibujada'
   }
 

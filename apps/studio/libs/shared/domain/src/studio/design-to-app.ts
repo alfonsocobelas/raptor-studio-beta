@@ -1,6 +1,6 @@
 import type { AppDefinition } from '@raptor/schema'
-import type { DashboardBlock, KpiMeasure, KpiOperator, KpiWindowPreset } from '@raptor/schema'
-import type { DesignBlock, DesignPage } from './design-page'
+import type { DashboardBlock, KpiMeasure, KpiOperator, KpiRowCell, KpiWindowPreset } from '@raptor/schema'
+import { generableCell, type DesignPage, type KpiCell } from './design-page'
 
 /**
  * Traduce las VISTAS del lienzo (composición de bloques) a las páginas del
@@ -23,39 +23,13 @@ function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): D
 
   for (const block of page.blocks) {
     const width = block.width === 'half' ? 'half' : 'full'
-    if (block.kind === 'kpis' && block.resources?.length) {
-      blocks.push({ kind: 'metrics', resources: block.resources, width })
-      continue
-    }
-    if (block.kind === 'kpi' && block.resource) {
-      const kpi = kpiBlockOf(block, width, labelOf(block.resource))
-      if (kpi) blocks.push(kpi)
-      continue
-    }
-    if (block.kind === 'top-n' && block.resource && block.topField) {
-      blocks.push({
-        kind: 'top-n',
-        resource: block.resource,
-        field: block.topField,
-        n: block.topN ?? 5,
-        dir: block.topDir ?? 'desc',
-        ...(block.topLabelField ? { labelField: block.topLabelField } : {}),
-        ...(block.kpiLabel?.trim() ? { label: block.kpiLabel.trim() } : {}),
-        width
-      })
-      continue
-    }
-    // barras y evolución (spec 72): sin eje no cruzan — el generador no las sabría emitir
-    if ((block.kind === 'count-by' || block.kind === 'series') && block.resource && block.axisField) {
-      const measure = block.measure && block.measure !== 'count' && block.measureField ? block.measure : 'count'
-      blocks.push({
-        kind: block.kind,
-        resource: block.resource,
-        field: block.axisField,
-        ...(measure !== 'count' ? { measure: measure as KpiMeasure, measureField: block.measureField } : {}),
-        ...(block.kpiLabel?.trim() ? { label: block.kpiLabel.trim() } : {}),
-        width
-      })
+    // la fila de KPIs cruza celda a celda (spec 73): la celda incompleta se queda en el diseño
+    // (el lienzo la marca) y una fila sin celdas emitibles no cruza entera
+    if (block.kind === 'kpis') {
+      const cells = (block.items ?? [])
+        .map(cell => rowCellOf(cell, labelOf))
+        .filter((cell): cell is KpiRowCell => cell !== null)
+      if (cells.length) blocks.push({ kind: 'kpi-row', cells, width })
       continue
     }
     if (block.kind === 'table' && block.resource && !tables.includes(block.resource)) {
@@ -67,53 +41,74 @@ function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): D
   return blocks
 }
 
+/** Traduce UNA celda dibujada a su celda del app-schema, o null si aún no es generable. */
+function rowCellOf(cell: KpiCell, labelOf: (resource: string) => string): KpiRowCell | null {
+  // la MISMA regla que marca la celda en el lienzo: incompleta → no cruza (no se falsea)
+  if (!generableCell(cell)) return null
+  if (cell.kind === 'counter') return { kind: 'counter', resource: cell.resource }
+  if (cell.kind === 'kpi') return kpiCellOf(cell, labelOf(cell.resource))
+  if (cell.kind === 'top-n') {
+    return {
+      kind: 'top-n',
+      resource: cell.resource,
+      field: cell.topField as string,
+      n: cell.topN ?? 5,
+      dir: cell.topDir ?? 'desc',
+      ...(cell.topLabelField ? { labelField: cell.topLabelField } : {}),
+      ...(cell.kpiLabel?.trim() ? { label: cell.kpiLabel.trim() } : {})
+    }
+  }
+  const measure = cell.measure && cell.measure !== 'count' && cell.measureField ? cell.measure : 'count'
+  return {
+    kind: cell.kind,
+    resource: cell.resource,
+    field: cell.axisField as string,
+    ...(measure !== 'count' ? { measure: measure as KpiMeasure, measureField: cell.measureField } : {}),
+    ...(cell.kpiLabel?.trim() ? { label: cell.kpiLabel.trim() } : {})
+  }
+}
+
 /**
- * Los campos PLANOS del bloque dibujado se ensamblan aquí en los objetos anidados del
+ * Los campos PLANOS de la celda dibujada se ensamblan aquí en los objetos anidados del
  * app-schema (spec 70). La etiqueta nunca falta: el app-schema la exige y el lienzo no obliga a
  * escribirla, así que sin ella se usa el plural de la entidad.
  */
-function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: string): DashboardBlock | null {
+function kpiCellOf(cell: KpiCell, fallbackLabel: string): KpiRowCell {
   const condition =
-    block.kpiConditionField && block.kpiConditionValue !== undefined && block.kpiConditionValue !== ''
+    cell.kpiConditionField && cell.kpiConditionValue !== undefined && cell.kpiConditionValue !== ''
       ? {
-          field: block.kpiConditionField,
-          operator: (block.kpiConditionOperator ?? 'eq') as KpiOperator,
-          value: block.kpiConditionValue
+          field: cell.kpiConditionField,
+          operator: (cell.kpiConditionOperator ?? 'eq') as KpiOperator,
+          value: cell.kpiConditionValue
         }
       : undefined
   // una ventana sin campo fecha no acota nada: no cruza
   const window =
-    block.kpiWindowPreset && block.kpiWindowField
+    cell.kpiWindowPreset && cell.kpiWindowField
       ? {
-          field: block.kpiWindowField,
-          preset: block.kpiWindowPreset as KpiWindowPreset,
-          ...(block.kpiWindowPreset === 'days' ? { days: block.kpiWindowDays ?? 30 } : {})
+          field: cell.kpiWindowField,
+          preset: cell.kpiWindowPreset as KpiWindowPreset,
+          ...(cell.kpiWindowPreset === 'days' ? { days: cell.kpiWindowDays ?? 30 } : {})
         }
       : undefined
 
-  // una medida sin campo NO se degrada a conteo: una tarjeta «Importe medio» enseñando filas es
-  // un número de negocio falso. El bloque no cruza y el lienzo lo marca «aún no generable»
-  // (doctrina: lo no generable se etiqueta, no se falsea).
-  if (block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField) return null
-  const measure = block.kpiMeasure && block.kpiMeasure !== 'count' ? block.kpiMeasure : 'count'
+  const measure = cell.kpiMeasure && cell.kpiMeasure !== 'count' ? cell.kpiMeasure : 'count'
 
   return {
     kind: 'kpi',
-    resource: block.resource as string,
-    label: block.kpiLabel?.trim() || fallbackLabel,
+    resource: cell.resource,
+    label: cell.kpiLabel?.trim() || fallbackLabel,
     measure: measure as KpiMeasure,
-    ...(measure !== 'count' ? { field: block.kpiField } : {}),
+    ...(measure !== 'count' ? { field: cell.kpiField } : {}),
     ...(condition ? { condition } : {}),
     ...(window ? { window } : {}),
-    ...(block.kpiRatio && measure === 'count' && condition ? { ratio: true } : {}),
+    ...(cell.kpiRatio && measure === 'count' && condition ? { ratio: true } : {}),
     // sin ventana no hay periodo anterior con el que comparar, ni fecha sobre la que hacer los meses
-    ...(block.kpiCompare && window ? { compare: true } : {}),
-    ...(block.kpiSparkline && window ? { sparkline: true } : {}),
-    ...(block.kpiTarget !== undefined && !block.kpiRatio ? { target: block.kpiTarget } : {}),
-    width
+    ...(cell.kpiCompare && window ? { compare: true } : {}),
+    ...(cell.kpiSparkline && window ? { sparkline: true } : {}),
+    ...(cell.kpiTarget !== undefined && !cell.kpiRatio ? { target: cell.kpiTarget } : {})
   }
 }
-
 
 /** Los recursos cuyo listado viaja DENTRO del panel: no emiten además su pantalla. */
 function carriedTables(blocks: DashboardBlock[]): string[] {

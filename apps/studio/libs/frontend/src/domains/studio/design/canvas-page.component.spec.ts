@@ -32,8 +32,8 @@ describe('CanvasPageComponent — pulsar un bloque elige su entidad', () => {
     store.addResource('Pedido')
   })
 
-  it('la fila de KPIs elige la primera entidad que mide', () => {
-    store.addBlock(0, { kind: 'kpis', resources: ['pedido'] })
+  it('la fila de KPIs elige la entidad de su primera celda', () => {
+    store.addBlock(0, { kind: 'kpis', items: [{ kind: 'counter', resource: 'pedido' }] })
     const fixture = mount()
 
     expect(clickBlock(fixture, 'block-kpis-0')).toBe('pedido')

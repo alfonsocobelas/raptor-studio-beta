@@ -50,39 +50,15 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     expect(store.resources().map(r => r.name)).toEqual(['pedido'])
   })
 
-  it('los KPIs no se duplican: soltarlos donde ya hay se suma al bloque existente', () => {
+  it('soltar KPIs donde ya hay crea OTRA fila: las filas conviven y se combinan por celdas (spec 73)', () => {
     const store = new DesignStore()
-    store.addPage('panel', 'Ventas') // deja kpis:[venta] + table:venta
-    store.addResource('Cliente')
+    store.addPage('panel', 'Ventas') // deja kpis:[counter venta] + table:venta
 
-    // lo que manda el lienzo es la entidad de la vista, que ya tiene su KPI
-    const added = store.addBlock(0, { kind: 'kpis', resources: ['venta'] })
+    const added = store.addBlock(0, { kind: 'kpis', items: [] })
 
     expect(added).toBe(true)
-    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis', 'table'])
-    expect(store.pages()[0].blocks[0].resources).toEqual(['venta', 'cliente'])
-  })
-
-  it('si la entidad que llega falta, es esa la que se suma y no otra', () => {
-    const store = new DesignStore()
-    store.addPage('panel', 'Ventas')
-    store.addResource('Cliente')
-    store.addResource('Proveedor')
-
-    store.addBlock(0, { kind: 'kpis', resources: ['proveedor'] })
-
-    expect(store.pages()[0].blocks[0].resources).toEqual(['venta', 'proveedor'])
-  })
-
-  it('con todas las entidades ya medidas, el bloque no cambia y dice por qué', () => {
-    const store = new DesignStore()
-    store.addPage('panel', 'Ventas')
-
-    const added = store.addBlock(0, { kind: 'kpis', resources: ['venta'] })
-
-    expect(added).toBe(false)
-    expect(store.pages()[0].blocks[0].resources).toEqual(['venta'])
-    expect(store.lastError()).toContain('Ventas')
+    expect(store.pages()[0].blocks.map(b => b.kind)).toEqual(['kpis', 'table', 'kpis'])
+    expect(store.pages()[0].blocks[2].items).toEqual([])
   })
 
   it('un bloque puede caer en un hueco concreto, no siempre al final', () => {
@@ -188,7 +164,7 @@ describe('DesignStore — lienzo en blanco por vistas y bloques', () => {
     const store = new DesignStore()
     store.addPage('list', 'Pedidos')
     store.addPage('blank', 'Resumen')
-    store.addBlock(1, { kind: 'kpis', resources: ['pedido'] })
+    store.addBlock(1, { kind: 'kpis', items: [{ kind: 'counter', resource: 'pedido' }] })
 
     expect(store.toAppSchema().pages.map(p => p.kind)).toEqual(['resource', 'dashboard'])
   })
@@ -372,7 +348,12 @@ describe('DesignStore.addRelation — la flecha del diagrama es un campo ref rea
     const ok = store.addRelation('cita', 'paciente')
 
     expect(ok).toBe(true)
-    expect(store.resources().find(r => r.name === 'cita')?.fields.at(-1)).toEqual({
+    expect(
+      store
+        .resources()
+        .find(r => r.name === 'cita')
+        ?.fields.at(-1)
+    ).toEqual({
       name: 'paciente',
       label: 'Paciente',
       type: 'ref',
@@ -426,7 +407,12 @@ describe('DesignStore.addRelation — la flecha del diagrama es un campo ref rea
     const ok = store.removeRelation('cita', index)
 
     expect(ok).toBe(true)
-    expect(store.resources().find(r => r.name === 'cita')?.fields.some(f => f.type === 'ref')).toBe(false)
+    expect(
+      store
+        .resources()
+        .find(r => r.name === 'cita')
+        ?.fields.some(f => f.type === 'ref')
+    ).toBe(false)
     expect(store.registry()['cita'].fields['pacienteId']).toBeUndefined()
   })
 
@@ -915,18 +901,20 @@ describe('DesignStore — puertos locales', () => {
     expect(store.pages()).toEqual([{ title: 'Notas', blocks: [] }])
   })
 
-  it('removeResource la quita de los KPIs compartidos sin tumbar el bloque', () => {
+  it('removeResource quita sus celdas de la fila sin tumbar el bloque', () => {
     const store = new DesignStore()
-    store.addPage('panel', 'Ventas') // kpis:[venta] + table:venta
+    store.addPage('panel', 'Ventas') // kpis:[counter venta] + table:venta
     store.addResource('Cliente')
-    store.addBlock(0, { kind: 'kpis', resources: ['cliente'] }) // suma cliente al bloque
+    store.addCell(0, 0, 'counter', 'cliente')
 
     const ok = store.removeResource('venta')
 
     expect(ok).toBe(true)
     expect(store.resources().map(r => r.name)).toEqual(['cliente'])
-    // la tabla de venta cae; los KPIs sobreviven midiendo solo a cliente
-    expect(store.pages()[0].blocks).toEqual([{ kind: 'kpis', resources: ['cliente'], width: 'full' }])
+    // la tabla de venta cae; la fila sobrevive midiendo solo a cliente
+    expect(store.pages()[0].blocks).toEqual([
+      { kind: 'kpis', items: [{ kind: 'counter', resource: 'cliente' }], width: 'full' }
+    ])
   })
 
   it('removeResource borra también las relaciones entrantes de otras entidades', () => {
