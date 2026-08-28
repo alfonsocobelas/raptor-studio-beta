@@ -39,6 +39,10 @@
       responsive. App-schema de oro reescrito con `kpi-row`; re-baseline y golden limpio;
       `typecheck-emitted.sh` a 0.
 
-- [ ] **TASK-08 — Barrido final**
+- [x] **TASK-08 — Barrido final**
       Smokes del estudio (drag incluido) migrados, suites completas, `web:build`, golden, y
       revisión de que los diseños guardados cargan (aguas/peritajes) sin marcar nada roto.
+      Nuevo smoke frío `apps/studio/tools/smoke-migrate-designs.ts`: los 10 diseños de
+      `.studio/designs` migran a filas y pasan `defineApp`. Pendiente de humano: verificación
+      visual del «+» en el navegador (el estudio necesita `nx build schema` fresco y reiniciar
+      studio-api si estaba levantado).
