@@ -62,6 +62,8 @@ export class DashboardService {
   readonly projects = this._total('/api/v1/projects')
   readonly projectsTotal = computed(() => (this.projects.hasValue() ? this.projects.value().total : 0))
 
+  readonly contractsTopTotalValue3Asc = this._top('/api/v1/contracts', 'totalValue', 'asc', 3)
+
   readonly contractsByContractType = this._counts(
     '/api/v1/contracts',
     'contractType',
@@ -147,6 +149,7 @@ export class DashboardService {
     () =>
       this.contracts.isLoading() ||
       this.projects.isLoading() ||
+      this.contractsTopTotalValue3Asc.isLoading() ||
       this.contractsByContractType.isLoading() ||
       this.contractsByContractTypeSumTotalValue.isLoading() ||
       this.projectsKpiStatusEqPlanning.isLoading() ||
@@ -163,6 +166,7 @@ export class DashboardService {
     () =>
       this.contracts.error() !== undefined ||
       this.projects.error() !== undefined ||
+      this.contractsTopTotalValue3Asc.error() !== undefined ||
       this.contractsByContractType.error() !== undefined ||
       this.contractsByContractTypeSumTotalValue.error() !== undefined ||
       this.projectsKpiStatusEqPlanning.error() !== undefined ||

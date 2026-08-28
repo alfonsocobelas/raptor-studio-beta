@@ -25,7 +25,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
       } @else if (service.loadError()) {
         <p class="text-destructive py-12 text-center text-sm">No se pudieron cargar los datos</p>
       } @else {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <app-kpi-card
             title="Contratos"
             [value]="service.contractsTotal()"
@@ -38,6 +38,20 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
             subtitle="Proyectos de implementación SAP asociados a clientes"
             testId="kpi-projects"
           />
+          <div class="bg-card rounded-lg border p-4" data-testid="top-contractsTopTotalValue3Asc">
+            <h2 class="mb-3 text-sm font-semibold">Menores contratos</h2>
+            @if (service.contractsTopTotalValue3Asc.hasValue()) {
+              <ol class="space-y-2">
+                @for (row of service.contractsTopTotalValue3Asc.value(); track $index) {
+                  <li class="flex items-center gap-2 text-sm">
+                    <span class="text-muted-foreground w-6 shrink-0 tabular-nums">{{ $index + 1 }}</span>
+                    <span class="flex-1 truncate">{{ row['contractNumber'] }}</span>
+                    <span class="text-right tabular-nums">{{ row['totalValue'] }}</span>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">

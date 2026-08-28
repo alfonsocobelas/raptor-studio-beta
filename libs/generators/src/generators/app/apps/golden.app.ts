@@ -59,7 +59,16 @@ export const golden = defineApp({
       label: 'Dashboard',
       // el panel es una secuencia de bloques (spec 53): este orden ES el emitido
       blocks: [
-        { kind: 'metrics', resources: ['contract', 'project'] },
+        // spec 73: la fila MIXTA explícita — dos contadores y una lista corta en la MISMA línea.
+        // Congela el grid por spans (tarjetas 1, gráficas 2) y el formato `kpi-row` del schema.
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'counter', resource: 'project' },
+            { kind: 'top-n', resource: 'contract', field: 'totalValue', n: 3, dir: 'asc', label: 'Menores contratos' }
+          ]
+        },
         // analíticos (spec 32): compuestos de conteos filtrados sobre el listado
         { kind: 'count-by', resource: 'contract', field: 'contractType', label: 'Contratos por tipo' },
         // spec 72: las mismas barras, pero enseñando una MEDIDA en vez de un conteo
