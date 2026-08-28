@@ -174,7 +174,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="new-view studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] px-2 py-2 text-left"
+              class="text-muted-foreground hover:text-foreground border-foreground/25 hover:border-foreground/45 hover:bg-foreground/5 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -280,58 +280,13 @@ const BLOCK_TOOLS: BlockTool[] = [
     .block-tool.dragging .grip {
       opacity: 1;
     }
-    /* «Nueva vista» es un BOTÓN, no un hueco por rellenar: el contorno discontinuo lo
-       dejaba más liviano que los componentes macizos de arriba y no invitaba a pulsar.
-       El volumen sale del mismo idioma que las tarjetas del lienzo —anillo de 1px y
-       halo blando— y sobre todo del ciclo de pulsación: sube al pasar por encima y se
-       HUNDE al pulsar, que es lo que hace creer que hay una tecla debajo del dedo. */
-    .new-view {
-      background-color: var(--card);
-      color: var(--foreground);
-      box-shadow:
-        inset 0 1px 0 oklch(1 0 0 / 70%),
-        0 0 0 1px oklch(0 0 0 / 12%),
-        0 2px 3px oklch(0 0 0 / 10%),
-        0 8px 16px -8px oklch(0 0 0 / 26%);
-      transition:
-        box-shadow 120ms ease,
-        transform 120ms ease;
-    }
-    /* El «+» se queda en tinta apagada: el botón ya pesa, y así sigue diciendo
-       «aquí se añade» sin volver a parecer un placeholder. */
-    .new-view ng-icon {
-      color: var(--muted-foreground);
-    }
-    .new-view:hover {
-      transform: translateY(-1.5px);
-      box-shadow:
-        inset 0 1px 0 oklch(1 0 0 / 80%),
-        0 0 0 1px oklch(0 0 0 / 16%),
-        0 4px 6px oklch(0 0 0 / 12%),
-        0 14px 24px -10px oklch(0 0 0 / 32%);
-    }
-    .new-view:active {
-      transform: translateY(1px);
-      box-shadow:
-        inset 0 1px 2px oklch(0 0 0 / 14%),
-        0 0 0 1px oklch(0 0 0 / 14%);
-    }
-    /* De noche la sombra no se ve: el relieve lo sostiene un filo claro arriba y el
-       anillo, que es lo que separa la tecla del papel oscuro. */
-    :host-context(.dark) .new-view {
-      /* De noche el fondo de tarjeta es casi el tono del raíl: sin un punto de luz el
-         botón no tiene cuerpo, solo contorno. */
-      background-color: color-mix(in oklab, var(--card) 92%, white);
-      box-shadow:
-        inset 0 1px 0 oklch(1 0 0 / 10%),
-        0 0 0 1px oklch(1 0 0 / 12%),
-        0 6px 14px -8px oklch(0 0 0 / 60%);
-    }
-    :host-context(.dark) .new-view:active {
-      box-shadow:
-        inset 0 1px 2px oklch(0 0 0 / 40%),
-        0 0 0 1px oklch(1 0 0 / 12%);
-    }
+    /* «Nueva vista» va en contorno DISCONTINUO, el mismo idioma que «+ Nuevo flujo» en el
+       raíl de Flujos (flow-sidebar): un raíl, un tratamiento para el verbo de crear. Sustituye
+       a la tecla con relieve —fondo de tarjeta, halo y ciclo de pulsación— que vivía aquí desde
+       agosto; se probó en maqueta a pantalla completa antes de cambiarla. La raya es de 1px y
+       en tinta al 25% (Flujos usa 2px al 35%): sobre el lino del raíl da el mismo gris #c4bcb1
+       de las tarjetas de «Antes de generar», y de noche se deriva sola del token.
+       Todo el tratamiento vive en utilidades, así que aquí no queda regla que mantener. */
   `
 })
 export class ViewsSidebarComponent {

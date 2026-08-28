@@ -188,6 +188,15 @@ describe('ViewsSidebarComponent', () => {
     expect(store.pages()).toEqual([])
   })
 
+  it('«Nueva vista» se dibuja en contorno discontinuo, no como tecla en relieve', () => {
+    const fixture = mount()
+    const button = testId(fixture, 'tool-new-view')
+
+    // el mismo idioma que «+ Nuevo flujo» en el raíl de Flujos: raya y no volumen
+    expect(button?.className).toContain('border-dashed')
+    expect(button?.className).not.toContain('new-view')
+  })
+
   it('ofrece los doce bloques que el generador emite, y ninguno más', () => {
     const fixture = mount()
     const tools = fixture.nativeElement.querySelectorAll('[data-testid^="block-tool-"]')
