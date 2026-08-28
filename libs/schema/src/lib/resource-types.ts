@@ -259,8 +259,6 @@ export interface ListDefinition {
     delete?: boolean
     /** Create/edit dialog machinery (default true; false = read-only list) */
     edit?: boolean
-    /** Import CSV validado por el dominio (spec 33): botón, diálogo y POST /import */
-    import?: boolean
   }
   actions?: ListAction[]
 }

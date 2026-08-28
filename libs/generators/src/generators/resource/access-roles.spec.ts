@@ -24,7 +24,7 @@ const permit = (): ResourceDefinition =>
     detail: { title: 'name' },
     history: true,
     access: { view: ['user'], create: [], edit: ['user'], delete: [], transitions: { approve: [] } },
-    list: { features: { delete: true, import: true } },
+    list: { features: { delete: true } },
     state: {
       field: 'status',
       initial: 'draft',

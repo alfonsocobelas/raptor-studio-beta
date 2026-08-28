@@ -187,6 +187,6 @@ export const material = defineResource({
   list: {
     deleteLabelField: 'reference',
     defaultSort: { field: 'reference', dir: 'asc' },
-    features: { create: true, export: ['csv'], search: true, view: true, edit: true, delete: true, import: true }
+    features: { create: true, export: ['csv'], search: true, view: true, edit: true, delete: true }
   }
 })

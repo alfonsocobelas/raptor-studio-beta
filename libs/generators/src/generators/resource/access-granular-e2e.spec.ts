@@ -40,7 +40,7 @@ const base = (over: Partial<ResourceDefinition>): ResourceDefinition =>
 const granular = (): ResourceDefinition =>
   base({
     attachments: true,
-    list: { features: { delete: true, import: true } },
+    list: { features: { delete: true } },
     access: { view: ['user', 'viewer'], create: [], edit: ['user'], delete: ['user', 'viewer'] }
   })
 

@@ -200,6 +200,6 @@ export const worklog = defineResource({
   list: {
     deleteLabelField: 'installationCode',
     defaultSort: { field: 'workedOn', dir: 'desc' },
-    features: { create: true, export: ['csv'], search: true, view: true, edit: true, delete: true, import: true }
+    features: { create: true, export: ['csv'], search: true, view: true, edit: true, delete: true }
   }
 })

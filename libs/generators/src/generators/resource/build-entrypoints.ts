@@ -212,13 +212,12 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     roles: rolesArgs(access.transitions[t.name] ?? ['user'])
   }))
 
-  // mismos defectos que resolveFeatures (build-substitutions): edit/view abiertos, delete/import opt-in
+  // mismos defectos que resolveFeatures (build-substitutions): edit/view abiertos, delete opt-in
   const canEdit = definition.list?.features?.edit ?? true
   const canDelete = definition.list?.features?.delete ?? false
-  const canImport = definition.list?.features?.import ?? false
   const accessDeclared = definition.access !== undefined
   const listImports = [
-    canEdit || canImport ? 'CAN_CREATE_ROLES' : null,
+    canEdit ? 'CAN_CREATE_ROLES' : null,
     canDelete ? 'CAN_DELETE_ROLES' : null,
     canEdit ? 'CAN_EDIT_ROLES' : null
   ].filter((name): name is string => name !== null)
