@@ -24,6 +24,17 @@ describe('FlowSidebarComponent', () => {
     active = TestBed.inject(ActiveViewService)
   })
 
+  it('«Nuevo flujo» va en la misma raya teñida que «Nueva vista»', () => {
+    const fixture = mount()
+    const button = testId(fixture, 'flow-new')
+
+    // un solo tratamiento del verbo de crear en los dos raíles: 2px punteados, teñidos
+    expect(button?.className).toContain('border-2')
+    expect(button?.className).toContain('border-dashed')
+    expect(button?.className).toContain('border-brand/35')
+    expect(button?.className).toContain('bg-brand/8')
+  })
+
   it('ofrece los bloques que el contrato conoce, y ninguno inventado', () => {
     const fixture = mount()
     const bloques = fixture.nativeElement.querySelectorAll('[data-testid^="flow-block-"]')

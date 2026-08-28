@@ -107,13 +107,16 @@ const FLOW_BLOCKS: FlowBlock[] = [
             </button>
           </form>
         } @else {
+          <!-- «Nuevo flujo» comparte tratamiento con «Nueva vista» (views-sidebar): 2px punteados
+               teñidos del naranja de trabajo sobre un velo del 8%. Era acromático —tinta al 35%— y
+               eran dos acentos distintos para el mismo verbo en dos raíles hermanos. -->
           <button
             type="button"
-            class="text-muted-foreground hover:border-foreground/45 hover:text-foreground mt-1 flex w-full items-center gap-2 studio-ui border-foreground/35 hover:bg-foreground/5 rounded-[7px] border-2 border-dashed px-2 py-2 text-left transition-colors"
+            class="border-brand/35 bg-brand/8 hover:border-brand/60 hover:bg-brand/14 mt-1 flex w-full items-center gap-2 studio-ui rounded-[7px] border-2 border-dashed px-2 py-2 text-left font-semibold transition-colors"
             data-testid="flow-new"
             (click)="creating.set(true)"
           >
-            <ng-icon name="lucidePlus" size="14" />
+            <ng-icon class="text-brand" name="lucidePlus" size="14" />
             Nuevo flujo
           </button>
         }
@@ -129,6 +132,13 @@ const FLOW_BLOCKS: FlowBlock[] = [
        el token --flow-accent es global (styles.css).
        Los botones de bloque van en el naranja macizo, con el texto invertido:
        la paleta se ve de un vistazo como los verbos que son. */
+    /* En este raíl --brand ES el naranja de trabajo, igual que en el de Vistas: así las
+       utilidades de marca (la raya y el velo de «Nuevo flujo») caen en el mismo naranja
+       que la paleta de bloques, y no en el #f15539 del CTA dominante. */
+    :host {
+      --brand: var(--flow-accent);
+      --brand-foreground: #fff;
+    }
     .flow-block {
       background-color: var(--flow-accent);
       border-color: transparent;
