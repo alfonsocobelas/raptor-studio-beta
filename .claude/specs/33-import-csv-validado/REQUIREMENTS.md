@@ -1,5 +1,9 @@
 # Spec 33: Import CSV validado por el dominio (fase 5 · B1v)
 
+> ⚠️ **SPEC RETIRADA (2026-08-28).** El import CSV se eliminó del generador por decisión de
+> Alfonso: ni endpoint, ni caso de uso, ni diálogo, ni botón, ni bandera de schema
+> (`list.features.import`). Este documento queda como registro histórico de lo que hubo.
+
 ---
 
 ## Contexto de negocio

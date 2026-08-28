@@ -1,12 +1,15 @@
 # Tareas atómicas: Import CSV validado
 
+> ⚠️ **SPEC RETIRADA (2026-08-28).** El import CSV se eliminó del generador por decisión de
+> Alfonso: ni endpoint, ni caso de uso, ni diálogo, ni botón, ni bandera de schema
+> (`list.features.import`). Este documento queda como registro histórico de lo que hubo.
+
 > Cada tarea = un commit. TDD + gate de oro incremental. Diseño en REQUIREMENTS.
 
 ---
 
 - [x] TASK-01 — schema: `features.import` en ListDefinition
-- [x] TASK-02 — backend: `Import<Entity>UseCase` en dos fases (errores por fila / transacción)
-      + handler + `POST /import` + wiring + tests emitidos
+- [x] TASK-02 — backend: `Import<Entity>UseCase` en dos fases (errores por fila / transacción) + handler + `POST /import` + wiring + tests emitidos
 - [x] TASK-03 — frontend: parser CSV mínimo (kernel) + `import(rows)` en el servicio
 - [x] TASK-04 — diálogo de import (fichero → preview → errores por fila → confirmar) +
       botón en la toolbar + «Descargar plantilla»
