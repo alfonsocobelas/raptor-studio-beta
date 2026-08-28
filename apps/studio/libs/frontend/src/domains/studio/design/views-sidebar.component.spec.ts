@@ -199,6 +199,8 @@ describe('ViewsSidebarComponent', () => {
     // así el hueco se lee como acción (opción H de la maqueta)
     expect(button?.className).toContain('border-brand/45')
     expect(button?.className).toContain('bg-brand/5')
+    // 2px, el mismo grosor que «+ Nuevo flujo»: a 1px la raya se disolvía sobre el lino
+    expect(button?.className).toContain('border-2')
   })
 
   it('ofrece los doce bloques que el generador emite, y ninguno más', () => {

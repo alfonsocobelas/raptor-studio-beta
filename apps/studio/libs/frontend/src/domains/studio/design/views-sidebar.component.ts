@@ -174,7 +174,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="border-brand/45 bg-brand/5 hover:border-brand/70 hover:bg-brand/10 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border border-dashed px-2 py-2 text-left font-semibold transition-colors"
+              class="border-brand/45 bg-brand/5 hover:border-brand/70 hover:bg-brand/10 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border-2 border-dashed px-2 py-2 text-left font-semibold transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -289,6 +289,8 @@ const BLOCK_TOOLS: BlockTool[] = [
        y el velo en el naranja de trabajo (--brand, que el :host de este raíl apunta a
        --flow-accent) el hueco tiene dueño: declara acción, y anticipa el color que lo llena,
        igual que ya hacen las tarjetas de «Antes de generar» al pasar por encima.
+       Grosor 2px, el mismo que «+ Nuevo flujo»: a 1px la raya se disolvía sobre el lino del
+       raíl y el botón volvía a pesar menos que las vistas que tiene encima.
        Todo el tratamiento vive en utilidades, así que aquí no queda regla que mantener. */
   `
 })
