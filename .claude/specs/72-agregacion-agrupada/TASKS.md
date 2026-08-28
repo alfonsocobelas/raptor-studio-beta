@@ -73,3 +73,42 @@ grande que dejan las specs 71 y 72 juntas, y la primera demo con datos reales es
 
 Menos peticiones no es automáticamente más rápido: un `GROUP BY` sobre una tabla grande sin índice
 puede tardar más que N conteos indexados. No hay datos de volumen para medirlo aquí.
+
+---
+
+## Revisión post-cierre (2026-08-28, 8 ángulos + verificación)
+
+Cuatro commits de corrección: `14526d17`, `a633e442`, `e4ef4418`, `35cd3321`.
+
+**Arreglado — datos falsos o suite rota:** el sparkline medía otro conjunto que su tarjeta (sin la
+condición); el spec emitido del panel se congeló EN ROJO (exigía el listado a una tarjeta que llama
+a /aggregate) porque ningún gate ejecuta la suite front del emitido; el bucket mensual perdió la
+ventana (top-51 por valor sobre TODA la historia → 0 falsos en meses flojos) — ahora se empuja el
+rango a la consulta; el `?? 0` del cliente aplastaba el null de una media; `distinct` contaba null
+en Mongo y no en Postgres; los NULL ordenaban al revés en cada motor; un apóstrofe en el valor de
+una condición rompía el build del cliente.
+
+**Arreglado — gates y honestidad:** condición/ventana sobre campo solo-ordenable pasaba el diseño y
+daba 400 al abrir el panel (ahora exige filterable); el campo etiqueta del top-n exigía de más y
+hacía ingenerables diseños válidos; la frontera degradaba una medida sin campo a conteo bajo la
+etiqueta del usuario (ahora no cruza y el lienzo la etiqueta); ratio sin condición (100% perpetuo,
+2 GETs idénticos) ahora exige condición; el preview de la tarjeta ignoraba medida y sparkline.
+
+**Arreglado — deriva:** el estudio copiaba el catálogo de medidas del schema (ya había divergido el
+orden min/max); el mapeo tipo→kind vivía ×3; `KpiMeasure` duplicaba `AggregateOp`; `onMeasure`
+byte a byte en dos paneles; `isPanelBlock` re-codificaba los guards de `panelBlocks`; `_countParams`
+muerto en todo emitido.
+
+**Pendiente, decidido no tocar aún:**
+- Los paneles de config apuntan al PRIMER bloque de su kind+recurso: dos gráficos de la misma
+  entidad en una vista pelean por un panel. Arreglo de fondo: la selección debe llevar el índice
+  del bloque, no solo el recurso. Tarea propia.
+- El value global se calcula siempre aunque solo se pidiera el desglose (el front lo tira): coste
+  conocido, sin optimizar hasta tener datos de volumen.
+- Husos horarios del bucket (Node local / date_trunc TZ servidor / $dateToString UTC): mitigado por
+  la ventana empujada; residual solo para `timestamptz` en bordes de mes.
+- Del trabajo de la otra sesión: `deletedOp` se escribe sin lectores, el evento de auditoría
+  `restored` es inalcanzable y quedan comentarios citando `restoreByOp`.
+
+**Refutado:** «kpiText miente en el tipo para fechas» — el adapter convierte a milisegundos de
+época; el number es real.
