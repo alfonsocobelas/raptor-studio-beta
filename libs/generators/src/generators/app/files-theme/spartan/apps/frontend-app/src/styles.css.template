@@ -49,6 +49,14 @@
        sistema (medido en navegador, 2026-08-25). */
     font-family: var(--font-sans);
   }
+  /* La preflight de Tailwind v4 dejó los botones con la flecha del puntero. En pantallas de
+     tablero —conmutadores, celdas, pastillas— eso se lee como UI muerta: lo que no cambia
+     bajo la mano parece que no se pulsa. Se devuelve la mano a lo vivo y solo a lo vivo:
+     deshabilitado sigue con la flecha, que es justamente la señal de «esto no se toca». */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
 }
 <%_ if (designCss) { _%>
 <%- designCss %>

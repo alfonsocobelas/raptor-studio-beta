@@ -181,6 +181,18 @@ describe('la fuente en la app emitida (fase 3)', () => {
     expect(css).toMatch(/--font-sans:\n\s+-apple-system/)
   })
 
+  /**
+   * La preflight de Tailwind v4 dejó los botones con la flecha del puntero. En una app
+   * de tablero —conmutadores, celdas, pastillas— eso se lee como UI muerta (reportado por
+   * Alfonso en el estudio, 2026-08-28), y el estudio es una app emitida: el defecto nace
+   * aquí, así que se cura aquí y no a mano en cada app.
+   */
+  it('los botones vivos recuperan la mano; los deshabilitados, no', () => {
+    const css = render(base)
+
+    expect(css).toMatch(/button:not\(:disabled\),\s*\[role='button'\]:not\(\[aria-disabled='true'\]\) \{\s*cursor: pointer;/)
+  })
+
   it('addFontDependency añade el paquete a las dependencias de la app emitida', () => {
     const tree = createTreeWithEmptyWorkspace()
     tree.write('out/package.json', JSON.stringify({ dependencies: { rxjs: '^7' } }))
