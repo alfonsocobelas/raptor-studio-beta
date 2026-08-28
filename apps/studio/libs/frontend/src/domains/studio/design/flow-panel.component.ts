@@ -46,10 +46,7 @@ function chosen(value: string): string | undefined {
             (input)="describe($event)"
             data-testid="flow-description"
           ></textarea>
-          <p class="text-muted-foreground mt-1 text-[10px]">
-            {{ (current.description ?? '').length }}/{{ LIMIT }} · viaja con el diseño y aterriza en el CLAUDE.md de la
-            app
-          </p>
+          <p class="text-muted-foreground mt-1 text-[10px]">{{ (current.description ?? '').length }}/{{ LIMIT }}</p>
         </section>
       }
 
