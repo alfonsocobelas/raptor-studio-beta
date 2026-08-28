@@ -107,6 +107,24 @@ describe('AccessTableComponent', () => {
     expect(pressed(fixture, 'access-cell-cliente-delete')).toBe(false)
   })
 
+  it('el chip de transición lleva el gancho del hover y no lo lleva cuando no se puede tocar', () => {
+    facturaConMaquina(store)
+
+    const fixture = mount()
+    testId(fixture, 'access-flow-factura')?.click()
+    fixture.detectChanges()
+    const chip = testId(fixture, 'access-cell-factura-a-aprobada')
+
+    expect(chip?.className).toContain('flow-chip')
+    expect(chip?.disabled).toBe(false)
+
+    ui.role.set('admin')
+    fixture.detectChanges()
+
+    // admin se mira pero no se toca: el botón va deshabilitado y el hover no debe responder
+    expect(testId(fixture, 'access-cell-factura-a-aprobada')?.disabled).toBe(true)
+  })
+
   it('con máquina de estados aparece un conmutador por transición', () => {
     facturaConMaquina(store)
 

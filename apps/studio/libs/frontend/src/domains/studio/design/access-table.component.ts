@@ -92,7 +92,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     <td class="px-2 py-3.5 text-center">
                       <button
                         type="button"
-                        class="hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
+                        class="access-mark hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
                         [class]="cellClasses(cell, role)"
                         [attr.aria-pressed]="granted(cell, role)"
                         [attr.aria-label]="cell.label + ' — ' + roleLabels[role]"
@@ -139,7 +139,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         @for (cell of transitionCells(selectedRow()!); track cell.capability) {
                           <button
                             type="button"
-                            class="rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
+                            class="flow-chip rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
                             [class]="chipClasses(cell, role)"
                             [attr.aria-pressed]="granted(cell, role)"
                             [disabled]="role === 'admin'"
@@ -241,7 +241,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                     <td class="px-2 py-3.5 text-center">
                       <button
                         type="button"
-                        class="hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
+                        class="access-mark hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
                         [class]="cellClasses(cell, ui.role())"
                         [attr.aria-pressed]="granted(cell, ui.role())"
                         [attr.aria-label]="cell.label + ' ' + row.label"
@@ -290,7 +290,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         @for (cell of transitionCells(row); track cell.capability) {
                           <button
                             type="button"
-                            class="rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
+                            class="flow-chip rounded-full border px-2.5 py-1 text-center text-xs transition-colors"
                             [class]="chipClasses(cell, ui.role())"
                             [attr.aria-pressed]="granted(cell, ui.role())"
                             [disabled]="ui.role() === 'admin'"
@@ -352,10 +352,61 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
       border-color: rgb(232 105 94 / 0.5);
       color: #f0938b;
     }
+    /* El chip responde a la mano: al pasar por encima sube el tinte y se cierra el borde
+       —el mismo color, un escalón más—, y al pulsar se hunde un pelo. Sin esto el chip
+       parecía una etiqueta y no un conmutador. Deshabilitado (admin) no responde a nada:
+       la retirada del hover es lo que dice «esto no se toca». */
+    .flow-chip {
+      cursor: pointer;
+      transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s,
+        transform 0.08s;
+    }
+    .flow-chip:disabled {
+      cursor: default;
+    }
+    .flow-chip:not(:disabled):active {
+      transform: translateY(1px);
+    }
+    .flow-chip:focus-visible {
+      outline: 2px solid var(--flow-accent);
+      outline-offset: 2px;
+    }
+    .chip-yes:not(:disabled):hover {
+      background-color: rgb(68 186 130 / 0.3);
+      border-color: rgb(68 186 130 / 0.8);
+    }
+    .chip-no:not(:disabled):hover {
+      background-color: rgb(209 73 63 / 0.24);
+      border-color: rgb(209 73 63 / 0.7);
+    }
+    :host-context(.dark) .chip-yes:not(:disabled):hover {
+      background-color: rgb(68 186 130 / 0.4);
+      border-color: rgb(68 186 130 / 0.85);
+    }
+    :host-context(.dark) .chip-no:not(:disabled):hover {
+      background-color: rgb(232 105 94 / 0.36);
+      border-color: rgb(232 105 94 / 0.8);
+    }
     /* La pastilla de la columna Flujo: dice cuántas transiciones tiene concedidas el rol y
        abre la fila desplegable. Ancho fijo de columna (116px) y contenido corto: es lo que
        impide que muchas transiciones deformen la retícula (rediseño 2026-08-27). */
+    /* Tailwind v4 dejó los botones con la flecha del puntero: en un tablero que se pulsa
+       casilla a casilla eso se nota como falta de respuesta, así que las tres cosas
+       pulsables de Accesos recuperan la mano (y la sueltan si están deshabilitadas). */
+    .access-mark {
+      cursor: pointer;
+    }
+    .access-mark:disabled {
+      cursor: default;
+    }
+    .access-mark:not(:disabled):active {
+      transform: translateY(1px);
+    }
     .flow-pill {
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
