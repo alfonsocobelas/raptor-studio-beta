@@ -309,3 +309,74 @@ describe('ModelViewComponent — la sub-vista del ciclo de vida', () => {
     expect(query(fixture, 'model-node-pedido')).not.toBeNull()
   })
 })
+
+/**
+ * Resaltar la vecindad de la entidad elegida (2026-08-28): elegirla no solo tiñe su
+ * cabecera — también se encienden sus flechas y las cajas al otro extremo, que es lo
+ * que hace legible «con qué se relaciona esto» de un vistazo.
+ */
+describe('ModelViewComponent — la vecindad de la entidad elegida', () => {
+  let store: DesignStore
+  let active: ActiveViewService
+
+  function query(fixture: ReturnType<typeof mount>, id: string): HTMLElement | null {
+    return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    active = TestBed.inject(ActiveViewService)
+    store.addResource('Producto')
+    store.addResource('Cliente')
+  })
+
+  it('las entidades relacionadas con la elegida se resaltan; las ajenas, no', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+    active.selectResource('pedido')
+
+    const fixture = mount()
+
+    expect(card(fixture, 'producto').classList.contains('model-card-related')).toBe(true)
+    expect(card(fixture, 'cliente').classList.contains('model-card-related')).toBe(false)
+    // la elegida no es «relacionada» de sí misma: ya viste de tinta
+    expect(card(fixture, 'pedido').classList.contains('model-card-related')).toBe(false)
+  })
+
+  it('la relación se resalta en los dos sentidos: elegir el destino marca el origen', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+    active.selectResource('producto')
+
+    const fixture = mount()
+
+    expect(card(fixture, 'pedido').classList.contains('model-card-related')).toBe(true)
+    expect(card(fixture, 'cliente').classList.contains('model-card-related')).toBe(false)
+  })
+
+  it('la flecha que toca a la elegida se pinta de marca', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+    store.addRelation('cliente', 'producto')
+    active.selectResource('pedido')
+
+    const fixture = mount()
+    const tocada = query(fixture, 'edge-pedido-producto')
+    const ajena = query(fixture, 'edge-cliente-producto')
+
+    expect(tocada?.querySelector('.model-edge-related')).not.toBeNull()
+    expect(ajena?.querySelector('.model-edge-related')).toBeNull()
+  })
+
+  it('sin entidad elegida no hay ni cajas relacionadas ni flechas de marca', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+    active.selectResource(null)
+
+    const fixture = mount()
+
+    expect(card(fixture, 'producto').classList.contains('model-card-related')).toBe(false)
+    expect(query(fixture, 'edge-pedido-producto')?.querySelector('.model-edge-related')).toBeNull()
+  })
+})

@@ -127,6 +127,18 @@ interface DiagramEdge {
               >
                 <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="stroke-foreground" stroke-width="1.8" />
               </marker>
+              <!-- punta de marca: la de las flechas que salen o entran en la entidad elegida -->
+              <marker
+                id="model-arrow-related"
+                markerWidth="13"
+                markerHeight="12"
+                refX="2"
+                refY="6"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <path d="M 2 1.5 L 9.5 6 L 2 10.5" fill="none" class="model-edge-related" stroke-width="1.8" />
+              </marker>
               <marker
                 id="model-arrow-sel"
                 markerWidth="13"
@@ -150,9 +162,9 @@ interface DiagramEdge {
                 <path
                   [attr.d]="item.line.d"
                   fill="none"
-                  [class]="isSelected(item.edge) ? 'stroke-primary' : 'stroke-foreground'"
-                  [attr.stroke-width]="isSelected(item.edge) ? 2.5 : 1.5"
-                  [attr.marker-end]="isSelected(item.edge) ? 'url(#model-arrow-sel)' : 'url(#model-arrow)'"
+                  [class]="edgeStroke(item.edge)"
+                  [attr.stroke-width]="edgeWidth(item.edge)"
+                  [attr.marker-end]="edgeMarker(item.edge)"
                 />
                 <title>{{ item.edge.label }} · {{ item.edge.from }} → {{ item.edge.to }}</title>
                 <!-- cardinalidad por extremos: la N en el lado "muchos" (el campo ref) y el 1 en el
@@ -161,9 +173,7 @@ interface DiagramEdge {
                   [attr.x]="item.line.cardinality.n.x"
                   [attr.y]="item.line.cardinality.n.y + 3"
                   text-anchor="middle"
-                  [class]="
-                    'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
-                  "
+                  [class]="'text-[10px] tracking-wider ' + cardinalityFill(item.edge)"
                 >
                   N
                 </text>
@@ -171,9 +181,7 @@ interface DiagramEdge {
                   [attr.x]="item.line.cardinality.one.x"
                   [attr.y]="item.line.cardinality.one.y + 3"
                   text-anchor="middle"
-                  [class]="
-                    'text-[10px] tracking-wider ' + (isSelected(item.edge) ? 'fill-primary' : 'fill-muted-foreground')
-                  "
+                  [class]="'text-[10px] tracking-wider ' + cardinalityFill(item.edge)"
                 >
                   1
                 </text>
@@ -215,6 +223,7 @@ interface DiagramEdge {
               class="bg-card model-card group absolute cursor-pointer overflow-hidden rounded-lg border"
               [class.ring-2]="linking()?.from === node.name"
               [class.model-card-chosen]="node.name === chosen()"
+              [class.model-card-related]="isRelated(node.name)"
               [style.left.px]="node.box.x"
               [style.top.px]="node.box.y"
               [style.width.px]="node.box.width"
@@ -234,6 +243,7 @@ interface DiagramEdge {
               <header
                 class="model-card-header studio-ui flex cursor-move select-none items-center justify-between gap-2 border-b px-3 font-semibold"
                 [class.model-card-header-chosen]="node.name === chosen()"
+                [class.model-card-header-related]="isRelated(node.name)"
                 [style.height.px]="headerHeight"
                 [attr.data-testid]="'model-node-header-' + node.name"
                 (pointerdown)="startDrag($event, node.name)"
@@ -377,6 +387,27 @@ interface DiagramEdge {
     .model-card-chosen {
       border-color: #f15539;
     }
+    /* La vecindad de la elegida: las cajas al otro extremo de sus flechas se recercan
+       con el mismo naranja rebajado a la mitad, y la cabecera se tiñe apenas. Es un eco
+       de la elegida, no un segundo protagonista: se lee «esto va con aquello» sin que
+       compitan por la mirada. */
+    .model-card-related {
+      border-color: color-mix(in oklab, #f15539 55%, var(--border));
+    }
+    .model-card-header-related {
+      background-color: color-mix(in oklab, #f15539 14%, var(--muted));
+    }
+    :host-context(.dark) .model-card-header-related {
+      background-color: color-mix(in oklab, var(--flow-accent) 26%, var(--muted));
+    }
+    /* Las flechas que salen o entran en la elegida, en el naranja pleno: son el hilo
+       que une la caja de tinta con sus vecinas. */
+    .model-edge-related {
+      stroke: #f15539;
+    }
+    .model-edge-related-fill {
+      fill: #f15539;
+    }
     /* La caja que se está nombrando: trazo discontinuo en el naranja del raíl, la misma
        seña de «esto todavía no existe» que las guías de caída del lienzo de Vistas. */
     .model-draft {
@@ -421,6 +452,55 @@ export class ModelViewComponent {
 
   /** La sub-vista del ciclo de vida: la abre la card del panel derecho, aquí solo se pinta. */
   protected readonly lifecycle = inject(LifecycleUiService)
+
+  /**
+   * Las vecinas de la elegida: las entidades al otro extremo de una relación suya, en
+   * cualquiera de los dos sentidos (apuntar y ser apuntada pesan igual en el modelo).
+   * La propia elegida queda fuera aunque se apunte a sí misma: ya viste de tinta.
+   */
+  private readonly relatedNames = computed<ReadonlySet<string>>(() => {
+    const chosen = this.chosen()
+    if (!chosen) return new Set<string>()
+    const names = new Set<string>()
+    for (const { edge } of this.edges()) {
+      if (edge.from === chosen) names.add(edge.to)
+      if (edge.to === chosen) names.add(edge.from)
+    }
+    names.delete(chosen)
+    return names
+  })
+
+  protected isRelated(name: string): boolean {
+    return this.relatedNames().has(name)
+  }
+
+  /** ¿La flecha toca a la elegida por alguno de sus extremos? */
+  private touchesChosen(edge: ModelEdge): boolean {
+    const chosen = this.chosen()
+    return chosen !== null && (edge.from === chosen || edge.to === chosen)
+  }
+
+  /* La flecha pulsada manda sobre la vecindad: la selección es un gesto explícito y
+     se sigue leyendo en tinta; el resaltado de la vecindad es contexto, y va en marca. */
+  protected edgeStroke(edge: ModelEdge): string {
+    if (this.isSelected(edge)) return 'stroke-primary'
+    return this.touchesChosen(edge) ? 'model-edge-related' : 'stroke-foreground'
+  }
+
+  protected edgeWidth(edge: ModelEdge): number {
+    if (this.isSelected(edge)) return 2.5
+    return this.touchesChosen(edge) ? 2 : 1.5
+  }
+
+  protected edgeMarker(edge: ModelEdge): string {
+    if (this.isSelected(edge)) return 'url(#model-arrow-sel)'
+    return this.touchesChosen(edge) ? 'url(#model-arrow-related)' : 'url(#model-arrow)'
+  }
+
+  protected cardinalityFill(edge: ModelEdge): string {
+    if (this.isSelected(edge)) return 'fill-primary'
+    return this.touchesChosen(edge) ? 'model-edge-related-fill' : 'fill-muted-foreground'
+  }
 
   /** ¿Es esta la columna elegida? La barra naranja de la izquierda lo señala. */
   protected isChosenField(resource: string, index: number): boolean {
