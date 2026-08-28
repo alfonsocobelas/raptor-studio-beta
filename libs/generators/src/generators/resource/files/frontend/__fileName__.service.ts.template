@@ -8,18 +8,6 @@ import { OffsetPaginatedOutput } from './pagination.types'
 import { parseContentDispositionFilename } from './export-filename'
 
 export type { OffsetPaginatedOutput } from './pagination.types'
-<%_ if (features.import) { _%>
-
-export interface ImportFailure {
-  row: number
-  message: string
-}
-
-export interface ImportOutput {
-  imported: number
-  failures: ImportFailure[]
-}
-<%_ } _%>
 
 const API_URL = `${API_PREFIX}/<%- apiResource %>`
 
@@ -101,16 +89,6 @@ export class <%- className %>Service {
   remove(id: string): Promise<void> {
     return firstValueFrom(this._http.delete<void>(`${API_URL}/${id}`)).then(() => {
       this.<%- plural %>.reload()
-    })
-  }
-<%_ } _%>
-<%_ if (features.import) { _%>
-
-  /** Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción. */
-  importRows(rows: Register<%- className %>Dto[]): Promise<ImportOutput> {
-    return firstValueFrom(this._http.post<ImportOutput>(`${API_URL}/import`, { rows })).then(result => {
-      this.<%- plural %>.reload()
-      return result
     })
   }
 <%_ } _%>

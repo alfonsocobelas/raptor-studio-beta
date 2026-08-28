@@ -206,12 +206,6 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(list).not.toContain('inject(AuthService).canWrite')
     })
 
-    it('el botón de importar solo se pinta con Crear', () => {
-      const list = read('frontend/permits-list.component.ts')
-
-      expect(list).toMatch(/@if \(canCreate\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
-    })
-
     it('la ficha condiciona editar, borrar y cada transición con sus roles', () => {
       const detail = read('frontend/permit-detail.component.ts')
 

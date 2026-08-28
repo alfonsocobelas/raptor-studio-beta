@@ -99,7 +99,6 @@ describe('spec 49 — la granularidad llega coherente a la app emitida', () => {
       const list = read('frontend/permits-list.component.ts')
 
       expect(list).toContain('[showCreate]="canCreate()"')
-      expect(list).toMatch(/@if \(canCreate\(\)\) \{[\s\S]{0,400}data-testid="open-import"/)
       expect(list).toMatch(/this\.canEdit\(\)[\s\S]{0,160}lucidePencil/)
       expect(list).toMatch(/this\.canDelete\(\)[\s\S]{0,160}lucideTrash2/)
       expect(list).toContain('CAN_CREATE_ROLES.includes(role)')

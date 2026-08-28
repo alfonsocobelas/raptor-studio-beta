@@ -39,54 +39,19 @@ import { downloadBlob } from '../../../../../../shared/utils/download-file'
 <%_ if (features.edit) { _%>
 import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%- fileName %>-dialog.component'
 <%_ } _%>
-<%_ if (features.import) { _%>
-import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.component'
-<%_ } _%>
 
 @Component({
   selector: 'app-<%- plural %>-list',
-  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %><%- features.import ? ', ' + pluralClassName + 'ImportComponent' : '' %>],
+  imports: [DataTable<%- features.edit ? ', AppDialog' : '' %><%- features.delete ? ', AppConfirmDialog' : '' %><%- features.edit ? ', ' + className + 'DialogComponent' : '' %>],
   providers: [provideIcons({ <%- icons.join(', ') %> })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
       @if (!embedded()) {
-<%_ if (features.import) { _%>
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight"><%- ui.title %></h1>
-          <p class="text-muted-foreground"><%- ui.subtitle %></p>
-        </div>
-        <div class="flex items-center gap-3">
-<%_ if (features.import && entry.accessDeclared && (features.edit || features.delete)) { _%>
-          @if (canCreate()) {
-            <button
-              type="button"
-              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-              data-testid="open-import"
-              (click)="importOpen.set(true)"
-            >
-              Importar
-            </button>
-          }
-<%_ } else if (features.import) { _%>
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-            data-testid="open-import"
-            (click)="importOpen.set(true)"
-          >
-            Importar
-          </button>
-<%_ } _%>
-        </div>
-      </div>
-<%_ } else { _%>
       <div>
         <h1 class="text-2xl font-bold tracking-tight"><%- ui.title %></h1>
         <p class="text-muted-foreground"><%- ui.subtitle %></p>
       </div>
-<%_ } _%>
       }
 
       @if (isLoading() && !hasData()) {
@@ -151,14 +116,6 @@ import { <%- pluralClassName %>ImportComponent } from './<%- plural %>-import.co
       (closed)="deleteDialogOpen.set(false)"
     />
 <%_ } _%>
-<%_ if (features.import) { _%>
-
-    <app-dialog [open]="importOpen()" (closed)="importOpen.set(false)">
-      @if (importOpen()) {
-        <app-<%- plural %>-import (close)="importOpen.set(false)" />
-      }
-    </app-dialog>
-<%_ } _%>
   `
 })
 export class <%- className %>sListComponent {
@@ -172,7 +129,7 @@ export class <%- className %>sListComponent {
 <%_ if (entry.accessDeclared && (features.edit || features.delete)) { _%>
   private readonly _sessionUser = inject(AuthService).currentUser
   // La matriz granular (spec 49): cada acción obedece a los mismos roles que su @Roles emitido
-<%_ if (features.edit || features.import) { _%>
+<%_ if (features.edit) { _%>
   protected readonly canCreate = computed(() => {
     const role = this._sessionUser()?.role
     return role !== undefined && CAN_CREATE_ROLES.includes(role)
@@ -232,9 +189,6 @@ export class <%- className %>sListComponent {
 <%_ if (features.edit) { _%>
   readonly dialogOpen = signal(false)
   readonly editing<%- className %> = signal<<%- dtoName %> | null>(null)
-<%_ } _%>
-<%_ if (features.import) { _%>
-  readonly importOpen = signal(false)
 <%_ } _%>
 <%_ if (features.delete) { _%>
   readonly deleting<%- className %> = signal<<%- dtoName %> | null>(null)

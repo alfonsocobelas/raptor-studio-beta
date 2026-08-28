@@ -183,9 +183,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
   }
 
   // el diálogo de import CSV validado (spec 33)
-  if (substitutions.importCsv) {
-    generateFiles(tree, path.join(__dirname, '..', 'resource', 'files-import'), outputDir, substitutions)
-  }
 
   // composición (B3): la entidad hija vive en el domain del padre
   if (substitutions.aggregate.composition) {
