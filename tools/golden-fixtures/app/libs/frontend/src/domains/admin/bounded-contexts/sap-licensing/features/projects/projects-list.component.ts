@@ -19,31 +19,18 @@ import {
 } from '../../../../../../shared/components/data-table'
 import { downloadBlob } from '../../../../../../shared/utils/download-file'
 import { ProjectDialogComponent, ProjectFormValue } from './project-dialog.component'
-import { ProjectsImportComponent } from './projects-import.component'
 
 @Component({
   selector: 'app-projects-list',
-  imports: [DataTable, AppDialog, AppConfirmDialog, ProjectDialogComponent, ProjectsImportComponent],
+  imports: [DataTable, AppDialog, AppConfirmDialog, ProjectDialogComponent],
   providers: [provideIcons({ lucideEye, lucidePencil, lucideTrash2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-w-0 space-y-6">
       @if (!embedded()) {
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
-            <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-              data-testid="open-import"
-              (click)="importOpen.set(true)"
-            >
-              Importar
-            </button>
-          </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
+          <p class="text-muted-foreground">Proyectos de implementación SAP asociados a clientes</p>
         </div>
       }
 
@@ -94,12 +81,6 @@ import { ProjectsImportComponent } from './projects-import.component'
       (confirmed)="confirmDelete()"
       (closed)="deleteDialogOpen.set(false)"
     />
-
-    <app-dialog [open]="importOpen()" (closed)="importOpen.set(false)">
-      @if (importOpen()) {
-        <app-projects-import (close)="importOpen.set(false)" />
-      }
-    </app-dialog>
   `
 })
 export class ProjectsListComponent {
@@ -146,7 +127,6 @@ export class ProjectsListComponent {
 
   readonly dialogOpen = signal(false)
   readonly editingProject = signal<ProjectDto | null>(null)
-  readonly importOpen = signal(false)
   readonly deletingProject = signal<ProjectDto | null>(null)
   readonly deleteDialogOpen = signal(false)
   readonly deleteDescription = computed(

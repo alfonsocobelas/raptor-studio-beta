@@ -15,16 +15,6 @@ import { parseContentDispositionFilename } from './export-filename'
 
 export type { OffsetPaginatedOutput } from './pagination.types'
 
-export interface ImportFailure {
-  row: number
-  message: string
-}
-
-export interface ImportOutput {
-  imported: number
-  failures: ImportFailure[]
-}
-
 const API_URL = `${API_PREFIX}/projects`
 
 export interface ProjectRequest {
@@ -91,14 +81,6 @@ export class ProjectService {
   remove(id: string): Promise<void> {
     return firstValueFrom(this._http.delete<void>(`${API_URL}/${id}`)).then(() => {
       this.projects.reload()
-    })
-  }
-
-  /** Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción. */
-  importRows(rows: RegisterProjectDto[]): Promise<ImportOutput> {
-    return firstValueFrom(this._http.post<ImportOutput>(`${API_URL}/import`, { rows })).then(result => {
-      this.projects.reload()
-      return result
     })
   }
 
