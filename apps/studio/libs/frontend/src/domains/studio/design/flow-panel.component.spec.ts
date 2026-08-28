@@ -167,3 +167,46 @@ describe('FlowPanelComponent — la transición del paso (spec 44)', () => {
     expect(store.flows()[0].nodes.find(n => n.id === stepId())?.transition).toBeUndefined()
   })
 })
+
+// La descripción del flujo se edita AQUÍ (antes solo la escribía la IA y se pintaba
+// suelta sobre el lienzo, donde nadie podía tocarla).
+describe('FlowPanelComponent — descripción del flujo', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow('Alta de pedido')
+    store.addFlow('Alta de pedido')
+  })
+
+  it('enseña el nombre del flujo activo y su descripción', () => {
+    store.describeFlow('Alta de pedido', 'Desde que entra el pedido hasta que se sirve')
+
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-name')?.textContent).toContain('Alta de pedido')
+    expect((testId(fixture, 'flow-description') as HTMLTextAreaElement).value).toBe(
+      'Desde que entra el pedido hasta que se sirve'
+    )
+  })
+
+  it('escribirla la guarda en el diseño; vaciarla la quita', () => {
+    const fixture = mount()
+    const area = testId(fixture, 'flow-description') as HTMLTextAreaElement
+
+    area.value = 'Lo que pasa cuando llega un pedido'
+    area.dispatchEvent(new Event('input'))
+    expect(store.flows()[0].description).toBe('Lo que pasa cuando llega un pedido')
+
+    area.value = ''
+    area.dispatchEvent(new Event('input'))
+    expect(store.flows()[0].description).toBeUndefined()
+  })
+
+  it('no deja pasar del tope del contrato', () => {
+    const fixture = mount()
+
+    expect((testId(fixture, 'flow-description') as HTMLTextAreaElement).maxLength).toBe(300)
+  })
+})

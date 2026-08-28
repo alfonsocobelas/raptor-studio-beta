@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core'
-import type { FlowNodeKind } from '@raptor/schema'
+import { FLOW_LIMITS, type FlowNodeKind } from '@raptor/schema'
 import { FormsModule } from '@angular/forms'
 import { FLOW_KIND_LABELS, flowToProse } from '@app/shared/domain'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
@@ -28,6 +28,31 @@ function chosen(value: string): string | undefined {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-0 flex-col gap-5 overflow-y-auto">
+      <!-- La descripción es del FLUJO: se edita donde se edita el flujo. Antes se pintaba
+           suelta sobre el lienzo, que solo sabía leerla (la escribía la IA y nadie más). -->
+      @if (flow(); as current) {
+        <section class="studio-box">
+          <h2 class="studio-eyebrow mb-1">Flujo</h2>
+          <p class="studio-ui mb-3 font-semibold" data-testid="flow-name">{{ current.name }}</p>
+
+          <label for="flow-description" class="text-muted-foreground block text-xs font-semibold">De qué va</label>
+          <textarea
+            id="flow-description"
+            class="border-input mt-1 w-full rounded border px-2 py-1 text-xs"
+            rows="3"
+            [attr.maxlength]="LIMIT"
+            placeholder="Una frase de negocio: cuándo arranca el proceso y qué se espera de él"
+            [value]="current.description ?? ''"
+            (input)="describe($event)"
+            data-testid="flow-description"
+          ></textarea>
+          <p class="text-muted-foreground mt-1 text-[10px]">
+            {{ (current.description ?? '').length }}/{{ LIMIT }} · viaja con el diseño y aterriza en el CLAUDE.md de la
+            app
+          </p>
+        </section>
+      }
+
       <section class="studio-box">
         <h2 class="studio-eyebrow mb-3">Nodo seleccionado</h2>
 
@@ -105,7 +130,7 @@ export class FlowPanelComponent {
   protected readonly store = inject(DesignStore)
   private readonly active = inject(ActiveViewService)
 
-  private readonly flow = computed(() => this.store.flows().find(flow => flow.name === this.active.flow()) ?? null)
+  protected readonly flow = computed(() => this.store.flows().find(flow => flow.name === this.active.flow()) ?? null)
 
   protected readonly node = computed(() => {
     const id = this.active.flowNode()
@@ -118,6 +143,8 @@ export class FlowPanelComponent {
     if (!node || node.kind !== 'step' || !node.entity) return null
     return this.store.resources().find(resource => resource.name === node.entity)?.state ?? null
   })
+
+  protected readonly LIMIT = FLOW_LIMITS.description
 
   /** «Sin entidad» es una elección, no la ausencia de una: tiene su propia opción en la lista. */
   protected readonly NONE = NONE
@@ -141,6 +168,11 @@ export class FlowPanelComponent {
     return FLOW_KIND_LABELS[kind]
   }
 
+  protected describe(event: Event): void {
+    const flow = this.flow()
+    if (flow) this.store.describeFlow(flow.name, (event.target as HTMLTextAreaElement).value)
+  }
+
   protected rename(event: Event): void {
     const flow = this.flow()
     const node = this.node()
@@ -151,8 +183,7 @@ export class FlowPanelComponent {
     const flow = this.flow()
     const node = this.node()
     // cambiar de entidad tira la transición: apuntaría a la máquina de OTRA entidad
-    if (flow && node)
-      this.store.updateFlowNode(flow.name, node.id, { entity: chosen(entity), transition: undefined })
+    if (flow && node) this.store.updateFlowNode(flow.name, node.id, { entity: chosen(entity), transition: undefined })
   }
 
   protected retransition(transition: string): void {

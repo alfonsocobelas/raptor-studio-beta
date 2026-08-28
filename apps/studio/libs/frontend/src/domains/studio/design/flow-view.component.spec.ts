@@ -666,7 +666,10 @@ describe('FlowViewComponent — la rama «no» se dibuja a rayas', () => {
     const fixture = mount()
     const media = (edge: string) => {
       const [, y1, , cy1, , cy2, , y2] =
-        visibleStroke(fixture, edge).getAttribute('d')?.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? []
+        visibleStroke(fixture, edge)
+          .getAttribute('d')
+          ?.match(/-?\d+(?:\.\d+)?/g)
+          ?.map(Number) ?? []
       return (y1 + 3 * cy1 + 3 * cy2 + y2) / 8
     }
 
@@ -844,5 +847,23 @@ describe('FlowViewComponent — insertar en un tramo', () => {
 
     expect(testId(fixture, 'flow-insert-decision')).toBeNull()
     expect(testId(fixture, 'flow-insert-step')).toBeNull()
+  })
+})
+
+// La descripción vivía suelta en el flujo del documento, tapada por el viewport
+// absoluto y sin forma de editarla: ahora es del panel derecho, no del lienzo.
+describe('FlowViewComponent — la descripción no es del lienzo', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    const store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+    store.addFlow(FLOW)
+    store.describeFlow(FLOW, 'Cuando el almacén ajusta existencias')
+  })
+
+  it('no pinta la descripción del flujo', () => {
+    const fixture = mount()
+
+    expect(fixture.nativeElement.textContent).not.toContain('Cuando el almacén ajusta existencias')
   })
 })

@@ -271,3 +271,37 @@ describe('DesignStore — los flujos viajan con el diseño', () => {
     expect(store.flows()).toEqual(before)
   })
 })
+
+// La descripción del flujo dejó de ser cosa exclusiva de la IA: el usuario la escribe
+// y la borra desde el panel derecho (antes solo llegaba en el diseño del chat).
+describe('DesignStore — descripción del flujo', () => {
+  it('describeFlow guarda el texto en el flujo indicado', () => {
+    const store = withFlow()
+
+    expect(store.describeFlow('Alta de pedido', '  Desde que entra el pedido hasta que se sirve  ')).toBe(true)
+    expect(store.flows()[0].description).toBe('Desde que entra el pedido hasta que se sirve')
+  })
+
+  it('vaciarla la quita del flujo en vez de guardar una cadena vacía', () => {
+    const store = withFlow()
+    store.describeFlow('Alta de pedido', 'algo')
+
+    expect(store.describeFlow('Alta de pedido', '   ')).toBe(true)
+    expect(store.flows()[0]).not.toHaveProperty('description')
+  })
+
+  it('rechaza una descripción que pasa del tope y deja el flujo intacto', () => {
+    const store = withFlow()
+
+    expect(store.describeFlow('Alta de pedido', 'x'.repeat(301))).toBe(false)
+    expect(store.flows()[0].description).toBeUndefined()
+    expect(store.lastError()).toMatch(/descripción/i)
+  })
+
+  it('sobre un flujo que no existe falla y lo dice', () => {
+    const store = withFlow()
+
+    expect(store.describeFlow('Devolución', 'algo')).toBe(false)
+    expect(store.lastError()).toMatch(/Devolución/)
+  })
+})

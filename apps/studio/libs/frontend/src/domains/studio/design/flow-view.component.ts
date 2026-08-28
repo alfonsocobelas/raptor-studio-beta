@@ -93,9 +93,6 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
     }
 
     @if (activeFlow(); as flow) {
-      @if (flow.description) {
-        <p class="text-muted-foreground mb-3 max-w-2xl text-sm">{{ flow.description }}</p>
-      }
       <!-- Lienzo infinito: el viewport recorta y el MUNDO se mueve con la cámara. -->
       <div
         #viewportEl
@@ -254,11 +251,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           <!-- insertar EN el tramo seleccionado: partirlo por un paso o por una condición
              (encadenar decisiones sin cirugía de borrar la rama y enlazar dos veces) -->
           @if (insertButtonsAt(); as at) {
-            <div
-              class="absolute z-20 flex -translate-x-1/2 gap-1"
-              [style.left.px]="at.x"
-              [style.top.px]="at.y"
-            >
+            <div class="absolute z-20 flex -translate-x-1/2 gap-1" [style.left.px]="at.x" [style.top.px]="at.y">
               <button
                 type="button"
                 class="studio-ui bg-card hover:border-foreground/45 rounded-full border px-2 py-0.5 text-[10px] shadow"

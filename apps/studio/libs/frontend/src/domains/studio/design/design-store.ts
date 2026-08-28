@@ -923,6 +923,19 @@ export class DesignStore {
     return this.mutateFlows(this._flows().map(f => (f.name === name ? { ...f, name: next.trim() || f.name } : f)))
   }
 
+  /**
+   * La descripción del flujo: contexto en prosa que la IA destila del chat y que ahora
+   * también se escribe a mano en el panel. Vaciarla la QUITA en vez de guardar '': un
+   * campo opcional ausente y uno vacío no deben viajar distinto en el diseño.
+   */
+  describeFlow(name: string, description: string): boolean {
+    const limpia = description.trim()
+    return this.updateFlow(name, flow => {
+      const { description: _previa, ...resto } = flow
+      return limpia ? { ...resto, description: limpia } : resto
+    })
+  }
+
   addFlowNode(flowName: string, kind: FlowNodeKind, text: string): boolean {
     return this.updateFlow(flowName, flow => ({
       ...flow,
