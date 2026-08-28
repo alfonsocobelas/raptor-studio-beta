@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { TestBed } from '@angular/core/testing'
+import { ActiveViewService } from './active-view.service'
 import { CanvasKpiRowComponent } from './canvas-kpi-row.component'
 import { CanvasNoticeService } from './canvas-notice.service'
 import { DesignStore } from './design-store'
@@ -75,6 +76,46 @@ describe('CanvasKpiRowComponent — el cuadrado «+»', () => {
     expect(testId(fixture, 'canvas-top-n')).not.toBeNull()
     expect(testId(fixture, 'canvas-count-by')).not.toBeNull()
     expect(testId(fixture, 'canvas-series')).not.toBeNull()
+  })
+
+  it('con VARIAS entidades, elegir el tipo pide después la entidad (spec 73, seguimiento)', () => {
+    store.addResource('Cliente')
+    const fixture = mount()
+
+    testId(fixture, 'kpi-row-add')?.click()
+    fixture.detectChanges()
+    testId(fixture, 'kpi-row-add-top-n')?.click()
+    fixture.detectChanges()
+
+    // segundo paso: una opción por entidad, nada añadido todavía
+    expect(store.pages()[0].blocks[0].items).toEqual([])
+    expect(testId(fixture, 'kpi-row-entity-pedido')).not.toBeNull()
+    expect(testId(fixture, 'kpi-row-entity-cliente')).not.toBeNull()
+
+    testId(fixture, 'kpi-row-entity-cliente')?.click()
+
+    expect(store.pages()[0].blocks[0].items).toMatchObject([{ kind: 'top-n', resource: 'cliente' }])
+  })
+
+  it('con UNA sola entidad no hay nada que preguntar: el tipo añade directo', () => {
+    const fixture = mount()
+
+    testId(fixture, 'kpi-row-add')?.click()
+    fixture.detectChanges()
+    testId(fixture, 'kpi-row-add-counter')?.click()
+
+    expect(store.pages()[0].blocks[0].items).toEqual([{ kind: 'counter', resource: 'pedido' }])
+  })
+
+  it('pulsar una celda elige SU entidad: es lo que trae su panel de config a la derecha', () => {
+    store.addResource('Cliente')
+    store.addCell(0, 0, 'counter', 'pedido')
+    store.addCell(0, 0, 'top-n', 'cliente')
+    const fixture = mount()
+
+    testId(fixture, 'kpi-cell-top-n-1')?.click()
+
+    expect(TestBed.inject(ActiveViewService).resource()).toBe('cliente')
   })
 
   it('cuando el gate rechaza la celda, se dice por qué en vez de callar', () => {

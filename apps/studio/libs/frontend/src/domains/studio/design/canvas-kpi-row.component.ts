@@ -14,6 +14,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { CanvasChartComponent } from './canvas-chart.component'
 import { CanvasKpiComponent } from './canvas-kpi.component'
 import { CanvasTopNComponent } from './canvas-top-n.component'
+import { ActiveViewService } from './active-view.service'
 import { CanvasNoticeService } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { mockTotal } from './mock-data'
@@ -66,6 +67,7 @@ const CELL_TOOLS: CellTool[] = [
           class="group/cell relative"
           [style.grid-column]="'span ' + spanOf(cell)"
           [attr.data-testid]="'kpi-cell-' + cell.kind + '-' + $index"
+          (click)="select(cell)"
         >
           @if (!generable(cell)) {
             <span
@@ -122,19 +124,36 @@ const CELL_TOOLS: CellTool[] = [
 
         @if (menuOpen()) {
           <div
-            class="bg-popover absolute left-0 top-full z-20 mt-1 w-40 rounded-md border p-1 shadow-md"
+            class="bg-popover absolute left-0 top-full z-20 mt-1 w-44 rounded-md border p-1 shadow-md"
             data-testid="kpi-row-menu"
           >
-            @for (tool of tools; track tool.kind) {
-              <button
-                type="button"
-                class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs"
-                [attr.data-testid]="'kpi-row-add-' + tool.kind"
-                (click)="add($event, tool.kind)"
-              >
-                <ng-icon [name]="tool.icon" size="14" class="text-muted-foreground" />
-                {{ tool.label }}
-              </button>
+            @if (pendingKind() === null) {
+              @for (tool of tools; track tool.kind) {
+                <button
+                  type="button"
+                  class="hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs"
+                  [attr.data-testid]="'kpi-row-add-' + tool.kind"
+                  (click)="add($event, tool.kind)"
+                >
+                  <ng-icon [name]="tool.icon" size="14" class="text-muted-foreground" />
+                  {{ tool.label }}
+                </button>
+              }
+            } @else {
+              <!-- segundo paso: de qué entidad habla la celda (solo con varias donde elegir) -->
+              <p class="text-muted-foreground px-2 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide">
+                ¿Sobre qué entidad?
+              </p>
+              @for (entity of entities(); track entity.name) {
+                <button
+                  type="button"
+                  class="hover:bg-accent block w-full rounded px-2 py-1.5 text-left text-xs"
+                  [attr.data-testid]="'kpi-row-entity-' + entity.name"
+                  (click)="pick($event, entity.name)"
+                >
+                  {{ entity.label }}
+                </button>
+              }
             }
           </div>
         }
@@ -149,9 +168,16 @@ export class CanvasKpiRowComponent {
 
   private readonly store = inject(DesignStore)
   private readonly notice = inject(CanvasNoticeService)
+  private readonly view = inject(ActiveViewService)
 
   protected readonly tools = CELL_TOOLS
   protected readonly menuOpen = signal(false)
+  /** Tipo elegido en el primer paso del menú, a la espera de su entidad (segundo paso). */
+  protected readonly pendingKind = signal<KpiCellKind | null>(null)
+
+  protected readonly entities = computed(() =>
+    this.store.resources().map(draft => ({ name: draft.name, label: draft.labelPlural }))
+  )
 
   protected readonly cells = computed<KpiCell[]>(() => this.block().items ?? [])
 
@@ -180,24 +206,51 @@ export class CanvasKpiRowComponent {
     return mockTotal(index)
   }
 
+  /** Pulsar una celda elige SU entidad: el panel derecho abre la config de ESA celda. */
+  protected select(cell: KpiCell): void {
+    this.view.selectResource(cell.resource)
+  }
+
   protected toggleMenu(event: Event): void {
     event.stopPropagation()
     this.menuOpen.update(open => !open)
+    this.pendingKind.set(null)
   }
 
   protected closeMenu(): void {
     this.menuOpen.set(false)
+    this.pendingKind.set(null)
   }
 
-  /** La celda nueva habla de la entidad de la que ya habla la fila, o la primera del modelo. */
+  /**
+   * Primer paso del menú: el tipo. Con UNA entidad en el modelo no hay nada que preguntar y la
+   * celda cae directa; con varias, el menú pasa al segundo paso y pregunta de cuál habla.
+   */
   protected add(event: Event, kind: KpiCellKind): void {
     event.stopPropagation()
-    this.menuOpen.set(false)
-    const resource = this.cells().at(-1)?.resource ?? this.store.resources()[0]?.name
-    if (!resource) {
+    const resources = this.store.resources()
+    if (!resources.length) {
+      this.closeMenu()
       this.notice.show('Sin entidades en el modelo no hay nada que medir: crea una primero')
       return
     }
+    if (resources.length > 1) {
+      this.pendingKind.set(kind)
+      return
+    }
+    this.closeMenu()
+    this.place(kind, resources[0].name)
+  }
+
+  /** Segundo paso: la entidad elegida para el tipo pendiente. */
+  protected pick(event: Event, resource: string): void {
+    event.stopPropagation()
+    const kind = this.pendingKind()
+    this.closeMenu()
+    if (kind) this.place(kind, resource)
+  }
+
+  private place(kind: KpiCellKind, resource: string): void {
     // el gate puede revertir la mutación (p. ej. una celda idéntica a otra); callarlo
     // era la mitad del «no funciona» (reportado 2026-08-28)
     if (!this.store.addCell(this.pageIndex(), this.blockIndex(), kind, resource)) {
