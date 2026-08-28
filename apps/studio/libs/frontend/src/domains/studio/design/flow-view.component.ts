@@ -240,7 +240,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           @if (deleteButtonAt(); as at) {
             <button
               type="button"
-              class="bg-destructive text-destructive-foreground absolute z-20 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs leading-none shadow"
+              class="bg-destructive text-destructive-foreground hover:bg-destructive/85 absolute z-20 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs leading-none shadow transition-colors"
               [style.left.px]="at.x"
               [style.top.px]="at.y"
               data-testid="flow-delete-selected"

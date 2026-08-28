@@ -163,7 +163,7 @@ const BLOCK_TOOLS: BlockTool[] = [
             />
             <button
               type="button"
-              class="bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs"
+              class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-2 py-1 text-xs transition-colors"
               data-testid="new-page-ok"
               (click)="confirmPage()"
             >

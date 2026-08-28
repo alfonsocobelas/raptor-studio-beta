@@ -45,7 +45,7 @@ import { labelOfType } from './field-type-labels'
               />
               <button
                 type="button"
-                class="text-destructive px-1 text-xs"
+                class="text-destructive hover:text-destructive/70 px-1 text-xs transition-colors"
                 [attr.data-testid]="'field-remove-' + $index"
                 (click)="store.removeField(resource.name, $index)"
               >

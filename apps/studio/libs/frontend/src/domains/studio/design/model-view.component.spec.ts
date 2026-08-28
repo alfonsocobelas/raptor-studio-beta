@@ -331,6 +331,17 @@ describe('ModelViewComponent — la vecindad de la entidad elegida', () => {
     store.addResource('Cliente')
   })
 
+  it('el botón de borrar la flecha reacciona a la mano: es destructivo y no debe ser mudo', () => {
+    store.addResource('Pedido')
+    store.addRelation('pedido', 'producto')
+
+    const fixture = mount()
+    query(fixture, 'edge-pedido-producto')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    fixture.detectChanges()
+
+    expect(query(fixture, 'delete-edge')?.className).toContain('hover:')
+  })
+
   it('las entidades relacionadas con la elegida se resaltan; las ajenas, no', () => {
     store.addResource('Pedido')
     store.addRelation('pedido', 'producto')

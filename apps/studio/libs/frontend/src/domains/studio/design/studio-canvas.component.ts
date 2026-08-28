@@ -347,7 +347,7 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
                 @if (current.action; as action) {
                   <button
                     type="button"
-                    class="shrink-0 font-semibold underline underline-offset-2"
+                    class="shrink-0 font-semibold underline underline-offset-2 transition-opacity hover:opacity-70"
                     data-testid="canvas-notice-action"
                     (click)="runNotice(action)"
                   >
@@ -411,6 +411,22 @@ import { hasPublishableDesign, spelled } from '../generate/wizard-command'
     :host-context(.dark) .generate-cta:not(:disabled) {
       background-color: #f15539;
       color: var(--brand-foreground);
+    }
+    /* El botón que más pesa de la pantalla no respondía a la mano. Aclara un punto al
+       pasar por encima y se hunde 1px al pulsar; deshabilitado sigue mudo, como debe. */
+    .generate-cta {
+      transition:
+        background-color 0.15s,
+        transform 0.08s;
+    }
+    .generate-cta:not(:disabled):hover {
+      background-color: color-mix(in oklab, var(--primary) 88%, var(--background));
+    }
+    :host-context(.dark) .generate-cta:not(:disabled):hover {
+      background-color: color-mix(in oklab, #f15539 88%, white);
+    }
+    .generate-cta:not(:disabled):active {
+      transform: translateY(1px);
     }
     /* Papel del lienzo: el MISMO que el de Modelo y Flujos, --background a secas
        (decisión de Alfonso, 2026-08-11: el gris cálido de docs/style oscurecía

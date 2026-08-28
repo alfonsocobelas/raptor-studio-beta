@@ -35,7 +35,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
         </p>
         <button
           type="button"
-          class="text-primary mt-3 text-sm underline underline-offset-4"
+          class="text-primary hover:text-primary/75 mt-3 text-sm underline underline-offset-4 transition-colors"
           data-testid="access-go-model"
           (click)="modeService.mode.set('model')"
         >

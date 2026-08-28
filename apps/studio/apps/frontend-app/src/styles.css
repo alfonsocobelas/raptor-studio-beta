@@ -217,6 +217,15 @@
   font-weight: 600;
   border-radius: 8px;
   padding: 8px 15px;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+/* La llamada a la acción del panel respondía menos que una fila de tabla: al pasar
+   por encima no cambiaba nada. Un velo de tinta al 4% y el borde cerrado bastan. */
+.studio-cta:not(:disabled):hover {
+  background-color: color-mix(in oklab, var(--foreground) 4%, var(--background));
+  border-color: color-mix(in oklab, var(--foreground) 22%, var(--border));
 }
 
 /* Fila del inspector, calibrada contra 19A: la etiqueta a la izquierda en gris y el
