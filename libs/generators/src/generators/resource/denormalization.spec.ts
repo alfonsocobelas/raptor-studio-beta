@@ -88,15 +88,6 @@ describe('campos desnormalizados (spec 60)', () => {
     })
   })
 
-  describe('import CSV (project tiene import + denormalización)', () => {
-    it('resuelve los FKs una vez y valida las filas con el valor canónico', async () => {
-      const source = read(await emit('project'), 'backend/application/use-cases/import-projects-usecase.service.ts')
-
-      expect(source).toContain('customerRepository')
-      expect(source).toContain('customerNameByCustomerId')
-    })
-  })
-
   describe('tests emitidos', () => {
     it('el test del register dobla el repositorio origen y verifica la copia del canon', async () => {
       const source = read(await emit('contract'), 'backend-tests-application/register-contract-usecase.test.ts')

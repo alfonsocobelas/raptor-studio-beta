@@ -43,6 +43,8 @@ interface GroupedRequest {
   groupBy?: string
   bucketField?: string
   months?: number
+  /** La condición de la tarjeta: la mini-serie mide EL MISMO conjunto que el número grande */
+  filters?: KpiFilter[]
 }
 
 /**
@@ -228,6 +230,8 @@ export class DashboardService {
         ? this._grouped(api, {
             measure: spec.measure,
             field: spec.field,
+            // la condición sí; el rango de la ventana no — los 12 meses son el eje de la mini-serie
+            filters: spec.filters,
             bucketField: spec.window.field,
             months: 12
           }).then(groups => groups.map(group => group.value ?? 0))
@@ -299,6 +303,7 @@ export class DashboardService {
       params['bucketField'] = spec.bucketField
       params['months'] = String(spec.months ?? 12)
     }
+    if (spec.filters?.length) params['filters'] = JSON.stringify(spec.filters)
 
     return firstValueFrom(this._http.get<{ groups?: AggregateGroup[] }>(`${api}/aggregate`, { params })).then(
       r => r.groups ?? []

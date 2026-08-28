@@ -159,8 +159,6 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   if (removes) ops.push(['Remove', n.className])
   // el historial (spec 31): la timeline de la ficha lee del puerto de auditoría
   if (definition.history === true) ops.push(['Get', `${n.className}History`])
-  // el import (spec 33) delega en el register: sin alta no hay import
-  if (writes && definition.list?.features?.import === true) ops.push(['Import', pluralClass])
   ops.push(['Export', pluralClass])
   // la agregación (spec 71): un valor del conjunto filtrado. Va en `ops` para que el módulo
   // cablee su handler y su caso de uso como los demás

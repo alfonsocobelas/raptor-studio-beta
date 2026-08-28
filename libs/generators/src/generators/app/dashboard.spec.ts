@@ -566,6 +566,60 @@ describe('composeApp — medidas del kpi (spec 71)', () => {
   })
 })
 
+/** Revisión spec 72: la mini-serie debe medir EL MISMO conjunto que la tarjeta. */
+describe('el sparkline hereda la condición de la tarjeta', () => {
+  const model = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        contractType: {
+          type: 'string',
+          vo: { name: 'ContractType', fieldName: 'Type', values: ['cloud', 'onprem'] },
+          query: { filterable: true }
+        },
+        startDate: { type: 'date', query: { filterable: true } }
+      }
+    }) as unknown as ResourceDefinition
+
+  it('la petición agrupada de la mini-serie lleva los filtros de la condición', () => {
+    const composition = composeApp(
+      {
+        schemaVersion: 1,
+        name: 'demo',
+        pages: [
+          {
+            kind: 'dashboard',
+            blocks: [
+              {
+                kind: 'kpi',
+                resource: 'contract',
+                label: 'Altas de cloud',
+                condition: { field: 'contractType', operator: 'eq', value: 'cloud' },
+                window: { field: 'startDate', preset: 'month' },
+                sparkline: true
+              }
+            ]
+          },
+          { kind: 'resource', resource: 'contract' }
+        ]
+      } as AppDefinition,
+      { contract: model() }
+    )
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    // sin esto, la tarjeta dice «cloud» y la forma de al lado habla de TODOS los contratos
+    expect(subs['analyticHelpers']).toContain('filters: spec.filters')
+    expect(subs['analyticHelpers']).toContain("if (spec.filters?.length) params['filters'] = JSON.stringify(spec.filters)")
+  })
+})
+
 /** Spec 72: las barras y la serie pueden enseñar una MEDIDA, no solo un conteo. */
 describe('composeApp — barras y serie con medida (spec 72)', () => {
   const model = (): ResourceDefinition =>

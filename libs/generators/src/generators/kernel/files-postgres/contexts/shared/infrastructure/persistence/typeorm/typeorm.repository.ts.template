@@ -123,7 +123,9 @@ export abstract class TypeOrmRepository<T extends ObjectLiteral> {
       .select(axis, 'key')
       .addSelect(measure, 'value')
       .groupBy(axis)
-      .orderBy('value', 'DESC')
+      // NULLS LAST: sin esto, Postgres pone primero los grupos sin dato (avg de un grupo vacío) y,
+      // con el techo, expulsarían a grupos reales — y Mongo los ordena justo al revés
+      .orderBy('value', 'DESC', 'NULLS LAST')
       .limit(spec.limit + 1)
       .getRawMany<{ key: string | Date | null; value: string | number | Date | null }>()
 

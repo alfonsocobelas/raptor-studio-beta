@@ -5,7 +5,6 @@ import { GetProjectHandler } from './application/handlers/get-project.handler'
 import { UpdateProjectHandler } from './application/handlers/update-project.handler'
 import { RemoveProjectHandler } from './application/handlers/remove-project.handler'
 import { GetProjectHistoryHandler } from './application/handlers/get-project-history.handler'
-import { ImportProjectsHandler } from './application/handlers/import-projects.handler'
 import { ExportProjectsHandler } from './application/handlers/export-projects.handler'
 import { AggregateProjectsHandler } from './application/handlers/aggregate-projects.handler'
 import { RegisterProjectUseCase } from './application/use-cases/register-project-usecase.service'
@@ -14,7 +13,6 @@ import { GetProjectUseCase } from './application/use-cases/get-project-usecase.s
 import { UpdateProjectUseCase } from './application/use-cases/update-project-usecase.service'
 import { RemoveProjectUseCase } from './application/use-cases/remove-project-usecase.service'
 import { GetProjectHistoryUseCase } from './application/use-cases/get-project-history-usecase.service'
-import { ImportProjectsUseCase } from './application/use-cases/import-projects-usecase.service'
 import { ExportProjectsUseCase } from './application/use-cases/export-projects-usecase.service'
 import { AggregateProjectsUseCase } from './application/use-cases/aggregate-projects-usecase.service'
 import { ProjectRepository } from './domain/project-repository'
@@ -48,7 +46,6 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     UpdateProjectHandler,
     RemoveProjectHandler,
     GetProjectHistoryHandler,
-    ImportProjectsHandler,
     ExportProjectsHandler,
     AggregateProjectsHandler,
     RegisterProjectUseCase,
@@ -57,7 +54,6 @@ import { ProjectAttachmentsService } from './infrastructure/attachments/project-
     UpdateProjectUseCase,
     RemoveProjectUseCase,
     GetProjectHistoryUseCase,
-    ImportProjectsUseCase,
     ExportProjectsUseCase,
     AggregateProjectsUseCase,
     { provide: ProjectRepository, useClass: TypeOrmProjectRepository }

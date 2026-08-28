@@ -22,8 +22,6 @@ import { AuditEvent } from '../../../../../shared/domain/audit/audit-event'
 import { ExportProjectsHandler } from '../../application/handlers/export-projects.handler'
 import { GetProjectHandler } from '../../application/handlers/get-project.handler'
 import { GetProjectHistoryHandler } from '../../application/handlers/get-project-history.handler'
-import { ImportProjectsHandler } from '../../application/handlers/import-projects.handler'
-import { ImportProjectsOutput } from '../../application/dtos/import-projects-input.dto'
 import { RegisterProjectHandler } from '../../application/handlers/register-project.handler'
 import { RemoveProjectHandler } from '../../application/handlers/remove-project.handler'
 import { AggregateProjectsHandler } from '../../application/handlers/aggregate-projects.handler'
@@ -34,7 +32,6 @@ import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
 import { AggregateProjectsQueryDto } from './dtos/aggregate-projects-query.dto'
 import { ExportProjectsQueryDto } from './dtos/export-projects-query.dto'
 import { PROJECT_EXPORT_COLUMNS } from './projects-export-columns'
-import { ImportProjectsDto } from './dtos/import-projects.dto'
 import { RegisterProjectDto } from './dtos/register-project.dto'
 import { UpdateProjectDto } from './dtos/update-project.dto'
 
@@ -42,7 +39,6 @@ import { UpdateProjectDto } from './dtos/update-project.dto'
 export class ProjectsController {
   constructor(
     private readonly registerProjectHandler: RegisterProjectHandler,
-    private readonly importProjectsHandler: ImportProjectsHandler,
     private readonly searchProjectsHandler: SearchProjectsHandler,
     private readonly aggregateProjectsHandler: AggregateProjectsHandler,
     private readonly getProjectHandler: GetProjectHandler,
@@ -56,13 +52,6 @@ export class ProjectsController {
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   register(@Body() body: RegisterProjectDto): Promise<void> {
     return this.registerProjectHandler.handle(body)
-  }
-
-  // Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción.
-  @Post('import')
-  @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
-  importRows(@Body() body: ImportProjectsDto): Promise<ImportProjectsOutput> {
-    return this.importProjectsHandler.handle({ rows: body.rows })
   }
 
   @Get()

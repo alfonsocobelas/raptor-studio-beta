@@ -3,11 +3,10 @@ import type { Tree } from '@nx/devkit'
 import { resourceGenerator } from './resource'
 
 /**
- * Spec 33 (fase 5 · B1v): el import valida cada fila con los MISMOS value objects
- * del alta, en dos fases — errores de dominio por fila, o todo dentro de una
- * transacción. `list.features.import` es lo que lo emite.
+ * El import CSV (spec 33) se RETIRÓ: `list.features.import` ya no emite nada — ni endpoint,
+ * ni caso de uso, ni diálogo, ni botón. Estos tests son el guard de que no reaparece.
  */
-describe('resource generator — import CSV validado (spec 33)', () => {
+describe('resource generator — sin import CSV (spec 33 retirada)', () => {
   const emit = async (name: string): Promise<Tree> => {
     const tree: Tree = createTreeWithEmptyWorkspace()
     await resourceGenerator(tree, { name, directory: 'out' })
@@ -15,43 +14,28 @@ describe('resource generator — import CSV validado (spec 33)', () => {
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('project emite el use case en dos fases sobre el register de siempre', async () => {
+  it('project (con features.import) no emite el use case ni el handler de import', async () => {
     const tree = await emit('project')
 
-    const useCase = read(tree, 'out/backend/application/use-cases/import-projects-usecase.service.ts')
-    expect(useCase).toContain('export class ImportProjectsUseCase')
-    // fase 1: el dominio revisa TODAS las filas y acumula errores por fila; el campo
-    // desnormalizado se resuelve del canon con caché por FK (spec 60)
-    expect(useCase).toContain('Project.register({ ...row, customerName })')
-    expect(useCase).toContain('customerNameByCustomerId')
-    expect(useCase).toContain('BaseCustomError')
-    // fase 2: todo o nada, delegando en el register (unicidad y auditoría incluidas)
-    expect(useCase).toContain('this.txManager.runInTransaction')
-    expect(useCase).toContain('this.registerProject.invoke(row)')
-    expect(useCase).toContain('MAX_IMPORT_ROWS')
-
-    expect(read(tree, 'out/backend/application/handlers/import-projects.handler.ts')).toContain(
-      'export class ImportProjectsHandler'
-    )
+    expect(tree.exists('out/backend/application/use-cases/import-projects-usecase.service.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/handlers/import-projects.handler.ts')).toBe(false)
+    expect(tree.exists('out/backend/application/dtos/import-projects-input.dto.ts')).toBe(false)
+    expect(tree.exists('out/backend/infrastructure/entrypoints/dtos/import-projects.dto.ts')).toBe(false)
   })
 
-  it('el controller expone POST /import y el module registra las piezas', async () => {
+  it('el controller no expone POST /import y el module no registra nada de import', async () => {
     const tree = await emit('project')
 
-    const controller = read(tree, 'out/backend/infrastructure/entrypoints/projects.controller.ts')
-    expect(controller).toContain("@Post('import')")
+    expect(read(tree, 'out/backend/infrastructure/entrypoints/projects.controller.ts')).not.toContain("@Post('import')")
 
     const module = read(tree, 'out/backend/projects.module.ts')
-    expect(module).toContain('ImportProjectsHandler')
-    expect(module).toContain('ImportProjectsUseCase')
+    expect(module).not.toContain('ImportProjects')
   })
 
-  it('emite el test del use case: fila mala no importa nada; limpias entran todas', async () => {
+  it('no emite el test del use case de import', async () => {
     const tree = await emit('project')
 
-    const test = read(tree, 'out/backend-tests-application/import-projects-usecase.test.ts')
-    expect(test).toContain('ImportProjectsUseCase')
-    expect(test).toContain("assertNotCalled('register')")
+    expect(tree.exists('out/backend-tests-application/import-projects-usecase.test.ts')).toBe(false)
   })
 
   it('el servicio de project envía las filas y recarga; el diálogo parsea y coacciona tipos', async () => {

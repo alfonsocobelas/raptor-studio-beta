@@ -109,11 +109,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(app, 'use-cases', `get-${substitutions.fileName}-history-usecase.service.ts`))
       tree.delete(path.join(app, 'handlers', `get-${substitutions.fileName}-history.handler.ts`))
     }
-    if (!substitutions.app.importCsv) {
-      tree.delete(path.join(app, 'dtos', `import-${substitutions.plural}-input.dto.ts`))
-      tree.delete(path.join(app, 'use-cases', `import-${substitutions.plural}-usecase.service.ts`))
-      tree.delete(path.join(app, 'handlers', `import-${substitutions.plural}.handler.ts`))
-    }
   }
 
   // entrypoints REST + module wiring
@@ -133,9 +128,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     if (!substitutions.app.writes) {
       tree.delete(path.join(entry, 'dtos', `register-${substitutions.fileName}.dto.ts`))
       tree.delete(path.join(entry, 'dtos', `update-${substitutions.fileName}.dto.ts`))
-    }
-    if (!substitutions.app.importCsv) {
-      tree.delete(path.join(entry, 'dtos', `import-${substitutions.plural}.dto.ts`))
     }
   }
 
@@ -265,9 +257,6 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       }
       if (!substitutions.app.history) {
         tree.delete(path.join(appTests, `get-${substitutions.fileName}-history-usecase.test.ts`))
-      }
-      if (!substitutions.app.importCsv) {
-        tree.delete(path.join(appTests, `import-${substitutions.plural}-usecase.test.ts`))
       }
     }
     // test de integración del repositorio (corre contra la base real del compose de test)

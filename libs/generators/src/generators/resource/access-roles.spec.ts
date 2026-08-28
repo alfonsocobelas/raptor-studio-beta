@@ -71,11 +71,10 @@ describe('los @Roles calculados desde la matriz de accesos (spec 46)', () => {
       expect(controller).not.toContain('UserRoleEnum.VIEWER')
     })
 
-    it('crear protege POST e import con los roles de Crear (solo admin)', () => {
+    it('crear protege POST con los roles de Crear (solo admin)', () => {
       const controller = read('backend/infrastructure/entrypoints/permits.controller.ts')
 
       expect(controller).toMatch(/@Post\(\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
-      expect(controller).toMatch(/@Post\('import'\)\s+@Roles\(UserRoleEnum\.ADMIN\)/)
     })
 
     it('editar protege PUT con los roles de Editar (admin+user)', () => {

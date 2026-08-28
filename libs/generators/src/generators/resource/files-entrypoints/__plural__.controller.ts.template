@@ -20,10 +20,6 @@ import { Get<%- className %>Handler } from '../../application/handlers/get-<%- f
 <%_ if (app.history) { _%>
 import { Get<%- className %>HistoryHandler } from '../../application/handlers/get-<%- fileName %>-history.handler'
 <%_ } _%>
-<%_ if (app.importCsv) { _%>
-import { Import<%- pluralClassName %>Handler } from '../../application/handlers/import-<%- plural %>.handler'
-import { Import<%- pluralClassName %>Output } from '../../application/dtos/import-<%- plural %>-input.dto'
-<%_ } _%>
 <%_ if (app.writes) { _%>
 import { Register<%- className %>Handler } from '../../application/handlers/register-<%- fileName %>.handler'
 <%_ } _%>
@@ -48,9 +44,6 @@ import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
 import { Aggregate<%- pluralClassName %>QueryDto } from './dtos/aggregate-<%- plural %>-query.dto'
 import { Export<%- pluralClassName %>QueryDto } from './dtos/export-<%- plural %>-query.dto'
 import { <%- constantName %>_EXPORT_COLUMNS } from './<%- plural %>-export-columns'
-<%_ if (app.importCsv) { _%>
-import { Import<%- pluralClassName %>Dto } from './dtos/import-<%- plural %>.dto'
-<%_ } _%>
 <%_ if (app.writes) { _%>
 import { Register<%- className %>Dto } from './dtos/register-<%- fileName %>.dto'
 import { Update<%- className %>Dto } from './dtos/update-<%- fileName %>.dto'
@@ -61,9 +54,6 @@ export class <%- pluralClassName %>Controller {
   constructor(
 <%_ if (app.writes) { _%>
     private readonly register<%- className %>Handler: Register<%- className %>Handler,
-<%_ } _%>
-<%_ if (app.importCsv) { _%>
-    private readonly import<%- pluralClassName %>Handler: Import<%- pluralClassName %>Handler,
 <%_ } _%>
     private readonly search<%- pluralClassName %>Handler: Search<%- pluralClassName %>Handler,
     private readonly aggregate<%- pluralClassName %>Handler: Aggregate<%- pluralClassName %>Handler,
@@ -88,15 +78,6 @@ export class <%- pluralClassName %>Controller {
   @Roles(<%- entry.createRoles %>)
   register(@Body() body: Register<%- className %>Dto): Promise<void> {
     return this.register<%- className %>Handler.handle(body)
-  }
-<%_ } _%>
-<%_ if (app.importCsv) { _%>
-
-  // Import validado por el dominio (spec 33): 422 con errores por fila, o todo en una transacción.
-  @Post('import')
-  @Roles(<%- entry.createRoles %>)
-  importRows(@Body() body: Import<%- pluralClassName %>Dto): Promise<Import<%- pluralClassName %>Output> {
-    return this.import<%- pluralClassName %>Handler.handle({ rows: body.rows })
   }
 <%_ } _%>
 
