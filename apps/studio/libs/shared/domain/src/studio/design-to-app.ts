@@ -28,7 +28,8 @@ function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): D
       continue
     }
     if (block.kind === 'kpi' && block.resource) {
-      blocks.push(kpiBlockOf(block, width, labelOf(block.resource)))
+      const kpi = kpiBlockOf(block, width, labelOf(block.resource))
+      if (kpi) blocks.push(kpi)
       continue
     }
     if (block.kind === 'top-n' && block.resource && block.topField) {
@@ -71,7 +72,7 @@ function panelBlocks(page: DesignPage, labelOf: (resource: string) => string): D
  * app-schema (spec 70). La etiqueta nunca falta: el app-schema la exige y el lienzo no obliga a
  * escribirla, así que sin ella se usa el plural de la entidad.
  */
-function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: string): DashboardBlock {
+function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: string): DashboardBlock | null {
   const condition =
     block.kpiConditionField && block.kpiConditionValue !== undefined && block.kpiConditionValue !== ''
       ? {
@@ -90,8 +91,11 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
         }
       : undefined
 
-  // una medida sin campo no puede cruzar: el app-schema la rechazaría (spec 71)
-  const measure = block.kpiMeasure && block.kpiMeasure !== 'count' && block.kpiField ? block.kpiMeasure : 'count'
+  // una medida sin campo NO se degrada a conteo: una tarjeta «Importe medio» enseñando filas es
+  // un número de negocio falso. El bloque no cruza y el lienzo lo marca «aún no generable»
+  // (doctrina: lo no generable se etiqueta, no se falsea).
+  if (block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField) return null
+  const measure = block.kpiMeasure && block.kpiMeasure !== 'count' ? block.kpiMeasure : 'count'
 
   return {
     kind: 'kpi',
@@ -101,7 +105,7 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
     ...(measure !== 'count' ? { field: block.kpiField } : {}),
     ...(condition ? { condition } : {}),
     ...(window ? { window } : {}),
-    ...(block.kpiRatio && measure === 'count' ? { ratio: true } : {}),
+    ...(block.kpiRatio && measure === 'count' && condition ? { ratio: true } : {}),
     // sin ventana no hay periodo anterior con el que comparar, ni fecha sobre la que hacer los meses
     ...(block.kpiCompare && window ? { compare: true } : {}),
     ...(block.kpiSparkline && window ? { sparkline: true } : {}),
@@ -113,7 +117,11 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
 /** Los bloques que viven DENTRO del panel: cualquiera de ellos abre el dashboard de la vista. */
 function isPanelBlock(block: DesignBlock): boolean {
   if (block.kind === 'kpis') return (block.resources?.length ?? 0) > 0
-  if (block.kind === 'kpi') return block.resource !== undefined
+  if (block.kind === 'kpi') {
+    if (block.resource === undefined) return false
+    // la medida sin campo no cruza: tampoco debe abrir un panel vacío
+    return !(block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField)
+  }
   if (block.kind === 'top-n') return block.resource !== undefined && block.topField !== undefined
   if (block.kind === 'count-by' || block.kind === 'series') {
     return block.resource !== undefined && block.axisField !== undefined

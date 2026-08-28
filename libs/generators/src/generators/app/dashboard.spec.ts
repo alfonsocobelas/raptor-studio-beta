@@ -723,6 +723,57 @@ describe('revisión — el emitido dice la verdad', () => {
   })
 })
 
+/** Revisión: el gate de diseño tiene que cazar lo que el runtime rechazaría. */
+describe('revisión — composición estricta con lo que la API filtra', () => {
+  const model = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        // solo ordenable: el listado NO lo filtra
+        sortOnlyDate: { type: 'date', query: { sortable: 2 } },
+        amount: { type: 'number', query: { sortable: 1 } },
+        displayName: { type: 'string', query: { searchable: 1 } },
+        startDate: { type: 'date', query: { filterable: true } }
+      }
+    }) as unknown as ResourceDefinition
+
+  const appWith = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+  const registry = () => ({ contract: model() })
+
+  it('una ventana sobre un campo solo-ordenable se rechaza al DISEÑAR, no con un 400 al abrir el panel', () => {
+    // el emitido valida los filtros contra allowedFilters: un campo sortable-solo pasaba la
+    // composición y el panel entero moría con 400 en el primer render
+    expect(() =>
+      composeApp(
+        appWith([
+          { kind: 'kpi', resource: 'contract', label: 'X', window: { field: 'sortOnlyDate', preset: 'month' } }
+        ]),
+        registry()
+      )
+    ).toThrow(/filter/)
+  })
+
+  it('el campo etiqueta del top-n solo tiene que EXISTIR: es display, no filtra ni ordena', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5, labelField: 'displayName' }]),
+      registry()
+    )
+
+    expect(composition.dashboardBlocks[0].top?.labelField).toBe('displayName')
+  })
+})
+
 /** Spec 72: las barras y la serie pueden enseñar una MEDIDA, no solo un conteo. */
 describe('composeApp — barras y serie con medida (spec 72)', () => {
   const model = (): ResourceDefinition =>

@@ -281,6 +281,8 @@ export class CanvasPageComponent {
     if (block.kind === 'top-n' && !block.topField) return false
     // unas barras sin eje, o una serie sin fecha, no se pueden emitir (spec 72)
     if ((block.kind === 'count-by' || block.kind === 'series') && !block.axisField) return false
+    // una medida sin campo no se falsea como conteo: se etiqueta (revisión spec 70-72)
+    if (block.kind === 'kpi' && block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField) return false
     const page = this.page()
     return page ? generableHere(page, block) : true
   }

@@ -121,6 +121,25 @@ describe('bloques analíticos del panel — conteos con forma (spec 32, modelo d
     ).toContainEqual(expect.stringContaining('target'))
   })
 
+  it('el porcentaje exige una condición: sin ella es un 100% perpetuo', () => {
+    expect(
+      problemsOf(withBlocks([{ kind: 'kpi', resource: 'contract', label: 'X', ratio: true }]))
+    ).toContainEqual(expect.stringContaining('condition'))
+
+    const app = defineApp(
+      withBlocks([
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'X',
+          ratio: true,
+          condition: { field: 'status', operator: 'eq', value: 'open' }
+        }
+      ])
+    )
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
   it('top-n exige campo de orden y una n entera de 1 a 20', () => {
     const app = defineApp(withBlocks([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }]))
     expect(app.pages[0].kind).toBe('dashboard')

@@ -238,6 +238,11 @@ function kpiProblems(block: Extract<DashboardBlock, { kind: 'kpi' }>, at: string
   if (block.sparkline === true && block.window === undefined) {
     problems.push(`${at}: kpi sparkline requires a window (its date field)`)
   }
+  // un porcentaje sin condición es el total sobre el total: un 100% perpetuo que además paga
+  // dos peticiones idénticas (revisión spec 70-72)
+  if (block.ratio === true && block.condition === undefined) {
+    problems.push(`${at}: kpi ratio requires a condition (the percentage of the total over itself is 100)`)
+  }
   // dos lecturas del mismo número y un solo sitio para la barra
   if (block.ratio === true && block.target !== undefined) {
     problems.push(`${at}: kpi ratio and target are mutually exclusive`)

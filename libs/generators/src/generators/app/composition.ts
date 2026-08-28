@@ -317,7 +317,7 @@ function composeKpi(
 
   const filters: KpiCondition[] = []
   if (block.condition) {
-    const field = fieldOf(model, block.condition.field, at)
+    const field = filterableFieldOf(model, block.condition.field, at)
     if (!operatorsFor(field).includes(block.condition.operator)) {
       throw new Error(
         `${at} uses operator '${block.condition.operator}', which '${block.condition.field}' does not admit`
@@ -327,7 +327,7 @@ function composeKpi(
   }
 
   if (block.window) {
-    const field = fieldOf(model, block.window.field, at)
+    const field = filterableFieldOf(model, block.window.field, at)
     if (field.type !== 'date' && field.type !== 'timestamptz') {
       throw new Error(`${at} narrows by '${block.window.field}', which is not a date field`)
     }
@@ -439,7 +439,9 @@ function composeTop(
   if (!field.query?.sortable) throw new Error(`${at} requires a sortable field (the list endpoint sorts it)`)
 
   const labelField = block.labelField ?? defaultLabelField(model)
-  const labelDefinition = fieldOf(model, labelField, at)
+  // la etiqueta de la fila es DISPLAY: sale de la página ya pedida, ni filtra ni ordena
+  const labelDefinition = model.fields[labelField]
+  if (!labelDefinition) throw new Error(`${at} references an unknown label field '${labelField}'`)
 
   return {
     kind: 'top-n',
@@ -483,6 +485,20 @@ function fieldOf(model: ResourceDefinition, name: string, at: string): FieldDefi
   if (!field) throw new Error(`${at} references an unknown field '${name}'`)
   if (!field.query?.filterable && !field.query?.sortable) {
     throw new Error(`${at} needs '${name}' to be filterable or sortable in the list endpoint`)
+  }
+  return field
+}
+
+/**
+ * La condición y la ventana del KPI se convierten en FILTROS del listado, y el emitido los valida
+ * contra allowedFilters: aceptar aquí un campo solo-ordenable era regalar un 400 al abrir el panel
+ * (revisión spec 70-72). El error tiene que llegar al diseñar.
+ */
+function filterableFieldOf(model: ResourceDefinition, name: string, at: string): FieldDefinition {
+  const field = model.fields[name]
+  if (!field) throw new Error(`${at} references an unknown field '${name}'`)
+  if (!field.query?.filterable) {
+    throw new Error(`${at} needs '${name}' to be filterable (the emitted list validates filters against it)`)
   }
   return field
 }

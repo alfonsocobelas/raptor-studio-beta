@@ -511,6 +511,8 @@ export class DesignStore {
       delete updated.kpiConditionField
       delete updated.kpiConditionOperator
       delete updated.kpiConditionValue
+      // sin condición el porcentaje es el total sobre el total: un 100% perpetuo
+      delete updated.kpiRatio
     }
     if (patch.kpiRatio === true) delete updated.kpiTarget
     if (patch.kpiTarget !== undefined) delete updated.kpiRatio

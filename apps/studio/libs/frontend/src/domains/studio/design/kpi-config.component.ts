@@ -190,7 +190,7 @@ import {
             }
           }
 
-          @if (v.measure === 'count') {
+          @if (v.measure === 'count' && v.block.kpiConditionField) {
             <label class="flex items-center justify-between gap-2">
               <span>Porcentaje sobre el total</span>
               <input

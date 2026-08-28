@@ -97,3 +97,41 @@ describe('CanvasTopNComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Elige el campo por el que ordenar')
   })
 })
+
+/** Revisión 70-72: el preview refleja la medida y la mini-serie, o el lienzo miente. */
+describe('CanvasKpiComponent — medida y mini-serie visibles', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    const store = TestBed.inject(DesignStore)
+    store.addResource('Factura')
+    store.addField('factura')
+    store.updateField('factura', 1, { name: 'importe', label: 'Importe', type: 'number' })
+    store.addField('factura')
+    store.updateField('factura', 2, { name: 'emitida', label: 'Emitida', type: 'date' })
+  })
+
+  const mountBlock = (block: DesignBlock) => {
+    const fixture = TestBed.createComponent(CanvasKpiComponent)
+    fixture.componentRef.setInput('block', block)
+    fixture.detectChanges()
+    return fixture
+  }
+
+  it('elegir una medida cambia la tarjeta dibujada', () => {
+    const fixture = mountBlock({ kind: 'kpi', resource: 'factura', kpiMeasure: 'avg', kpiField: 'importe' })
+
+    expect(fixture.nativeElement.textContent).toContain('Media de importe')
+  })
+
+  it('la mini-serie se dibuja cuando está encendida', () => {
+    const fixture = mountBlock({
+      kind: 'kpi',
+      resource: 'factura',
+      kpiWindowField: 'emitida',
+      kpiWindowPreset: 'month',
+      kpiSparkline: true
+    })
+
+    expect(fixture.nativeElement.querySelector('[data-testid="kpi-spark"]')).not.toBeNull()
+  })
+})
