@@ -244,6 +244,77 @@ describe('bloques analíticos del panel — conteos con forma (spec 32, modelo d
   })
 })
 
+describe('kpi-row — la fila de celdas analíticas mixtas (spec 73)', () => {
+  const withBlocks = (blocks: object[]): AppDefinition =>
+    ({
+      ...validDefinition(),
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+
+  it('acepta una fila que mezcla los cinco tipos de celda', () => {
+    const app = defineApp(
+      withBlocks([
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'kpi', resource: 'contract', label: 'Activos', condition: { field: 'status', operator: 'eq', value: 'active' } },
+            { kind: 'top-n', resource: 'contract', field: 'amount', n: 5 },
+            { kind: 'count-by', resource: 'contract', field: 'status' },
+            { kind: 'series', resource: 'contract', field: 'startDate' }
+          ]
+        }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
+  it('rechaza una fila sin celdas', () => {
+    expect(problemsOf(withBlocks([{ kind: 'kpi-row', cells: [] }]))).toContain(
+      'pages[0].blocks[0]: kpi-row requires at least one cell'
+    )
+  })
+
+  it('rechaza una celda con recurso mal formado', () => {
+    const problems = problemsOf(withBlocks([{ kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'Contract' }] }]))
+
+    expect(problems).toContain('pages[0].blocks[0].cells[0]: resource must be non-empty kebab-case')
+  })
+
+  it('valida cada celda con las reglas de su tipo', () => {
+    const problems = problemsOf(
+      withBlocks([
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'kpi', resource: 'contract', label: 'Suma', measure: 'sum' },
+            { kind: 'top-n', resource: 'contract', field: 'amount', n: 99 },
+            { kind: 'count-by', resource: 'contract', field: 'status', measure: 'sum' },
+            { kind: 'series', resource: 'contract' }
+          ]
+        }
+      ])
+    )
+
+    expect(problems).toContain("pages[0].blocks[0].cells[0]: kpi with measure 'sum' requires a field")
+    expect(problems).toContain('pages[0].blocks[0].cells[1]: top-n n must be an integer between 1 and 20')
+    expect(problems).toContain("pages[0].blocks[0].cells[2]: measure 'sum' requires a measureField")
+    expect(problems).toContain('pages[0].blocks[0].cells[3]: series requires a field')
+  })
+
+  it('caza el duplicado exacto también entre filas', () => {
+    const problems = problemsOf(
+      withBlocks([
+        { kind: 'kpi-row', cells: [{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }] },
+        { kind: 'kpi-row', cells: [{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }] }
+      ])
+    )
+
+    expect(problems.some(p => p.startsWith("pages[0]: duplicated block 'top-n:contract:"))).toBe(true)
+  })
+})
+
 describe('defineApp', () => {
   describe('valid definition', () => {
     it('returns the definition untouched and frozen', () => {

@@ -2,9 +2,11 @@
 
 ## Idea central
 
-La familia analítica deja de ser 5 bloques y pasa a ser **1 bloque contenedor + 4 tipos de celda**.
-«Contador» no es un tipo: es un preset de la celda `kpi` (sin condición ni ventana = total del
-recurso, doctrina spec 70). Con eso muere también la duplicidad `kpis`/`kpi`.
+La familia analítica deja de ser 5 bloques y pasa a ser **1 bloque contenedor + 5 tipos de celda**:
+`counter`, `kpi`, `top-n`, `count-by`, `series`. El contador es celda propia (no un `kpi` pelado):
+un `kpi` exige `label` —que la normalización no puede inventar porque no conoce los modelos— y el
+contador de hoy (`metrics`) ya tiene emisión probada con subtítulo y spec de totales; se conserva
+tal cual, solo cambia dónde vive (dentro de la fila).
 
 ```
 Paleta                    Lienzo                          App emitida
@@ -23,11 +25,12 @@ Paleta                    Lienzo                          App emitida
   lectura del JSON no cambian de naturaleza; solo se anida la lista):
 
 ```ts
-export type KpiCellKind = 'kpi' | 'top-n' | 'count-by' | 'series'
+export type KpiCellKind = 'counter' | 'kpi' | 'top-n' | 'count-by' | 'series'
 export interface KpiCell {
   kind: KpiCellKind
   resource: string
   // …los campos kpi*/top*/axis/measure actuales de DesignBlock, sin cambios
+  // counter no usa ninguno: es el total del recurso con su tarjeta de hoy
 }
 ```
 
@@ -57,8 +60,8 @@ ocurre al leer.
 - **Lienzo**: `canvas-kpi-row.component.ts` (evolución del caso `kpis` de `canvas-page`): pinta
   las celdas en un grid (`grid-column: span 1|2` según tipo) reutilizando los renders existentes
   (`canvas-kpi`, `canvas-top-n`, `canvas-chart`) adaptados a recibir una celda, y al final el
-  cuadrado «+» con un menú de 5 opciones (Contador, KPI, Top N, Barras, Evolución). Contador =
-  celda `kpi` pelada. El menú propone el recurso de la vista si existe.
+  cuadrado «+» con un menú de 5 opciones (Contador, KPI, Top N, Barras, Evolución), una por tipo
+  de celda. El menú propone el recurso de la vista si existe.
 - **Config**: el store gana selección de celda (`selectCell(blockIndex, cellIndex)`); los paneles
   `kpi-config`, `top-n-config` y `chart-config` se retargetan a la celda seleccionada (mismos
   controles, distinto destino del patch). Quitar celda desde el propio panel o desde la celda.
@@ -73,12 +76,12 @@ ocurre al leer.
 
 ```ts
 | { kind: 'kpi-row'; cells: KpiRowCell[]; width?: BlockWidth }
-// KpiRowCell = las variantes kpi | top-n | count-by | series actuales, sin `width`
+// KpiRowCell = { kind: 'counter'; resource } | las variantes kpi | top-n | count-by | series, sin `width`
 ```
 
 - Los kinds sueltos `metrics`, `kpi`, `top-n`, `count-by`, `series` pasan a deprecated de LECTURA
   (mismo trato que `kpi-count`): `normalizeDashboardBlocks` los envuelve en `kpi-row` de una celda
-  (`metrics` → una celda kpi por recurso). `table` no cambia.
+  (`metrics` → una celda `counter` por recurso). `table` no cambia.
 - `defineApp` valida las celdas con las mismas reglas que hoy validan los bloques.
 
 ## 5. Frontera (`design-to-app.ts`)

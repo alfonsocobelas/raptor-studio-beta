@@ -39,12 +39,30 @@ export interface KpiWindow {
 }
 
 /**
+ * Una celda de la fila de KPIs (spec 73): las variantes analíticas de siempre, sin `width` — el
+ * ancho es de la FILA; dentro, cada tipo ocupa su span (tarjetas 1, gráficas 2). `counter` es el
+ * total de un recurso con su tarjeta (la emisión histórica de `metrics`, celda a celda).
+ */
+export type KpiRowCell =
+  | { kind: 'counter'; resource: string }
+  | Omit<Extract<DashboardBlock, { kind: 'kpi' }>, 'width'>
+  | Omit<Extract<DashboardBlock, { kind: 'top-n' }>, 'width'>
+  | Omit<Extract<DashboardBlock, { kind: 'count-by' }>, 'width'>
+  | Omit<Extract<DashboardBlock, { kind: 'series' }>, 'width'>
+
+/**
  * Un bloque del panel. El panel es una SECUENCIA de bloques como cualquier otra vista (ADR-009,
  * spec 53): el orden y el ancho salen del dibujo, y una capacidad nueva es un `kind` más — nunca
  * un cajón más al lado de otro. Sustituye a los widgets y a la ranura `tables` de la spec 52.
  */
 export type DashboardBlock =
-  /** Fila de tarjetas con el total de cada recurso (antes los widgets `kpi-total`) */
+  /**
+   * Fila de celdas analíticas mixtas (spec 73): contador, KPI, Top N, Barras y Evolución
+   * conviviendo en una misma línea. Es EL formato de la familia; los kinds sueltos de abajo se
+   * siguen leyendo y `normalizeDashboardBlocks` los envuelve en filas de una celda.
+   */
+  | { kind: 'kpi-row'; cells: KpiRowCell[]; width?: BlockWidth }
+  /** @deprecated spec 73: usa `kpi-row` con celdas `counter`. Se sigue leyendo. */
   | { kind: 'metrics'; resources: string[]; width?: BlockWidth }
   /**
    * Una barra por valor del enum (spec 32). Con `measure` distinta de `count` la barra enseña una

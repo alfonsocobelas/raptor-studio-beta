@@ -132,6 +132,38 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
   }
 }
 
+/**
+ * Aplana las filas `kpi-row` (spec 73) a los bloques sueltos que la emisión de hoy entiende:
+ * contadores consecutivos vuelven a ser un `metrics` y cada celda analítica su bloque, con el
+ * ancho de la fila. TEMPORAL hasta la tarea del layout (TASK-07 de la spec 73): mientras viva,
+ * el emitido apila las celdas exactamente como apilaba los bloques sueltos.
+ */
+function flattenKpiRows(blocks: DashboardBlock[]): Exclude<DashboardBlock, { kind: 'kpi-row' }>[] {
+  const out: Exclude<DashboardBlock, { kind: 'kpi-row' }>[] = []
+  for (const block of blocks) {
+    if (block.kind !== 'kpi-row') {
+      out.push(block)
+      continue
+    }
+    const width = block.width === undefined ? {} : { width: block.width }
+    let counters: string[] = []
+    const flush = (): void => {
+      if (counters.length) out.push({ kind: 'metrics', resources: counters, ...width })
+      counters = []
+    }
+    for (const cell of block.cells) {
+      if (cell.kind === 'counter') {
+        counters.push(cell.resource)
+        continue
+      }
+      flush()
+      out.push({ ...cell, ...width })
+    }
+    flush()
+  }
+  return out
+}
+
 /** Composición declarada por un app-schema; valida cada referencia contra el registro. */
 export function composeApp(definition: AppDefinition, registry: Record<string, ResourceDefinition>): AppComposition {
   const resolve = (resource: string): ResourceDefinition => {
@@ -155,7 +187,12 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
       // todo recurso citado por un bloque del panel viaja en la app; `resolve` rechaza el que no
       // existe, así que el error llega al componer y no al compilar (spec 53)
       for (const block of page.blocks) {
-        const resources = block.kind === 'metrics' ? block.resources : [block.resource]
+        const resources =
+          block.kind === 'kpi-row'
+            ? block.cells.map(cell => cell.resource)
+            : block.kind === 'metrics'
+              ? block.resources
+              : [block.resource]
         for (const resource of resources) include(resolve(resource))
       }
       return { ...page, label: page.label ?? 'Dashboard' }
@@ -193,7 +230,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   for (const page of definition.pages) {
     if (page.kind !== 'dashboard') continue
     // el alias `kpi-count` muere en la puerta: aquí abajo solo existe `kpi` (spec 70)
-    for (const block of normalizeDashboardBlocks(page.blocks)) {
+    for (const block of flattenKpiRows(normalizeDashboardBlocks(page.blocks))) {
       // el defecto es POR KIND, y sale de lo que el emitido ya hacía: los analíticos siempre se
       // pintaron a dos columnas (media pantalla), la fila de métricas y el listado a lo ancho
       const width: BlockWidth = block.width ?? (block.kind === 'metrics' || block.kind === 'table' ? 'full' : 'half')

@@ -3,6 +3,7 @@ import {
   BRIEF_LIMITS,
   DashboardBlock,
   KpiMeasure,
+  KpiRowCell,
   KpiOperator,
   KpiWindowPreset,
   PageDefinition
@@ -105,6 +106,36 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
     // el panel es una vista como las demás: su ancho es dato, y solo hay dos (spec 53)
     if (block.width !== undefined && block.width !== 'full' && block.width !== 'half') {
       problems.push(`${at}: width must be 'full' or 'half'`)
+    }
+
+    // la fila de KPIs valida celda a celda (spec 73); la huella entra en el MISMO `seen` que los
+    // bloques sueltos: el mismo top-n dos veces es duplicado esté suelto o dentro de una fila
+    if (block.kind === 'kpi-row') {
+      if (!block.cells.length) {
+        problems.push(`${at}: kpi-row requires at least one cell`)
+        return
+      }
+      block.cells.forEach((cell, cellIndex) => {
+        const cellAt = `${at}.cells[${cellIndex}]`
+        if (!KEBAB_CASE.test(cell.resource)) {
+          problems.push(`${cellAt}: resource must be non-empty kebab-case`)
+          return
+        }
+        if (cell.kind === 'count-by' || cell.kind === 'series') {
+          if (!nonEmpty(cell.field)) {
+            problems.push(`${cellAt}: ${cell.kind} requires a field`)
+            return
+          }
+          problems.push(...measuredBarsProblems(cell, cellAt))
+        }
+        if (cell.kind === 'kpi') problems.push(...kpiProblems(cell, cellAt))
+        if (cell.kind === 'top-n') problems.push(...topProblems(cell, cellAt))
+
+        const key = `${cell.kind}:${cell.resource}:${fingerprintOf(cell)}`
+        if (seen.has(key)) problems.push(`pages[${index}]: duplicated block '${key}'`)
+        seen.add(key)
+      })
+      return
     }
 
     // la fila de métricas habla de VARIOS recursos; el resto de bloques, de uno
@@ -300,7 +331,7 @@ function isCount(value: number | undefined, min: number, max: number): boolean {
  * entra —dos etiquetas para el mismo número siguen siendo el mismo número, y ese duplicado sí se
  * quiere cazar—; sí entran la condición, la ventana y los modificadores.
  */
-function fingerprintOf(block: DashboardBlock): string {
+function fingerprintOf(block: DashboardBlock | KpiRowCell): string {
   if (block.kind === 'kpi') {
     const condition = block.condition
     const window = block.window

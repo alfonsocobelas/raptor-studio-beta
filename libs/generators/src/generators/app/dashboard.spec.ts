@@ -56,6 +56,71 @@ describe('dashboardSubstitutions — bindings del dashboard opcional', () => {
   })
 })
 
+describe('kpi-row — la fila compone igual que los bloques sueltos (spec 73)', () => {
+  const contract = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        amount: { type: 'numeric', query: { filterable: true, sortable: true } },
+        name: { type: 'string', query: { searchable: true } },
+        contractType: {
+          type: 'string',
+          vo: { name: 'ContractType', fieldName: 'Type', values: ['cloud', 'onprem'] },
+          query: { filterable: true }
+        }
+      }
+    }) as unknown as ResourceDefinition
+
+  const appWith = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [
+        { kind: 'dashboard', blocks },
+        { kind: 'resource', resource: 'contract' }
+      ]
+    }) as AppDefinition
+
+  it('una fila mixta compone celda a celda: contadores consecutivos en un metrics y el resto suelto', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'kpi', resource: 'contract', label: 'Total' },
+            { kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }
+          ]
+        }
+      ]),
+      { contract: contract() }
+    )
+
+    expect(composition.dashboardBlocks.map(b => b.kind)).toEqual(['metrics', 'kpi', 'top-n'])
+  })
+
+  it('la fila de una celda compone EXACTAMENTE como el bloque suelto equivalente', () => {
+    const loose = composeApp(
+      appWith([{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5, width: 'half' }]),
+      { contract: contract() }
+    )
+    const rowed = composeApp(
+      appWith([
+        { kind: 'kpi-row', cells: [{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }], width: 'half' }
+      ]),
+      { contract: contract() }
+    )
+
+    expect(rowed.dashboardBlocks).toEqual(loose.dashboardBlocks)
+  })
+})
+
 describe('widgets analíticos — composición y bindings (spec 32)', () => {
   const contract = (): ResourceDefinition =>
     ({

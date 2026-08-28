@@ -4,7 +4,7 @@
 > el diff de oro. Gates por tarea: suite afectada en verde; además `npm run web:build` cuando toca
 > el estudio y `/golden-diff` cuando toca plantillas o `generator.ts`.
 
-- [ ] **TASK-01 — App-schema: kind `kpi-row` + normalización de los sueltos**
+- [x] **TASK-01 — App-schema: kind `kpi-row` + normalización de los sueltos**
       `libs/schema`: tipo `kpi-row` con `cells`; `normalizeDashboardBlocks` envuelve `metrics`,
       `kpi`, `top-n`, `count-by` y `series` en filas de una celda (metrics → una celda por
       recurso); `defineApp` valida celdas. Tests de normalización e idempotencia.
@@ -25,7 +25,7 @@
 
 - [ ] **TASK-05 — Lienzo: fila con celdas y cuadrado «+»**
       `canvas-kpi-row` con grid por spans, renders de celda reutilizados, menú «+» de 5 opciones
-      (Contador = kpi pelado), marca de celda incompleta. `npm run web:build` en verde.
+      (una por tipo de celda), marca de celda incompleta. `npm run web:build` en verde.
 
 - [ ] **TASK-06 — Config por celda**
       Selección de celda en el store; `kpi-config`, `top-n-config` y `chart-config` retargetados;
