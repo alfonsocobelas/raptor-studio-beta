@@ -357,15 +357,11 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
        parecía una etiqueta y no un conmutador. Deshabilitado (admin) no responde a nada:
        la retirada del hover es lo que dice «esto no se toca». */
     .flow-chip {
-      cursor: pointer;
       transition:
         background-color 0.15s,
         border-color 0.15s,
         color 0.15s,
         transform 0.08s;
-    }
-    .flow-chip:disabled {
-      cursor: default;
     }
     .flow-chip:not(:disabled):active {
       transform: translateY(1px);
@@ -393,20 +389,12 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
     /* La pastilla de la columna Flujo: dice cuántas transiciones tiene concedidas el rol y
        abre la fila desplegable. Ancho fijo de columna (116px) y contenido corto: es lo que
        impide que muchas transiciones deformen la retícula (rediseño 2026-08-27). */
-    /* Tailwind v4 dejó los botones con la flecha del puntero: en un tablero que se pulsa
-       casilla a casilla eso se nota como falta de respuesta, así que las tres cosas
-       pulsables de Accesos recuperan la mano (y la sueltan si están deshabilitadas). */
-    .access-mark {
-      cursor: pointer;
-    }
-    .access-mark:disabled {
-      cursor: default;
-    }
+    /* La mano en los botones ya la pone styles.css para toda la app; aquí solo el hundido
+       al pulsar, que es lo que hace que una casilla se sienta conmutada. */
     .access-mark:not(:disabled):active {
       transform: translateY(1px);
     }
     .flow-pill {
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;

@@ -126,6 +126,15 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* La preflight de Tailwind v4 dejó los botones con la flecha del puntero, y el estudio se
+     pulsa casilla a casilla: lo que no cambia bajo la mano parece que no se pulsa. La mano
+     vuelve a lo vivo y solo a lo vivo — deshabilitado conserva la flecha, que es la señal de
+     «esto no se toca». Va también en la plantilla del generador (styles.css.template): el
+     estudio es una app emitida y el defecto nacía allí. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
 }
 
 /* La piel del lienzo NO se escribe aquí (spec 68). Vivía aquí: ~140 líneas de
