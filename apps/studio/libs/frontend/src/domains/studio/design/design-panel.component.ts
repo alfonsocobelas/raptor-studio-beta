@@ -160,6 +160,15 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', '
     .mode-switch {
       background-color: #f4dfd7;
     }
+    /* De noche la arcilla clara sería una banda encendida en un panel apagado: el hueco
+       se invierte —más OSCURO que el panel, con el mismo croma— y la píldora elegida se
+       aclara para seguir siendo la que manda. */
+    :host-context(.dark) .mode-switch {
+      background-color: color-mix(in oklab, #d75f3d 14%, #000);
+    }
+    :host-context(.dark) .mode-switch button[aria-current='true'] {
+      background-color: color-mix(in oklab, var(--card) 88%, white);
+    }
   `
 })
 export class DesignPanelComponent {
