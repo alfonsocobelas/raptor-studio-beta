@@ -131,6 +131,10 @@ function validateDashboard(page: Extract<PageDefinition, { kind: 'dashboard' }>,
         if (cell.kind === 'kpi') problems.push(...kpiProblems(cell, cellAt))
         if (cell.kind === 'top-n') problems.push(...topProblems(cell, cellAt))
 
+        // el contador repetido no es duplicado: en el emitido comparte el binding `_total` y solo
+        // pinta otra tarjeta — prohibirlo bloqueaba el gesto más normal al recomponer una fila
+        // (reportado 2026-08-28). El resto de celdas sí: idénticas emitirían la misma propiedad.
+        if (cell.kind === 'counter') return
         const key = `${cell.kind}:${cell.resource}:${fingerprintOf(cell)}`
         if (seen.has(key)) problems.push(`pages[${index}]: duplicated block '${key}'`)
         seen.add(key)

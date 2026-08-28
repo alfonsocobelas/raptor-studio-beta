@@ -118,13 +118,13 @@ describe('CanvasKpiRowComponent — el cuadrado «+»', () => {
     expect(TestBed.inject(ActiveViewService).resource()).toBe('cliente')
   })
 
-  it('cuando el gate rechaza la celda, se dice por qué en vez de callar', () => {
+  it('cuando el gate rechaza la celda, se dice por qué y en cristiano', () => {
     const fixture = mount()
 
-    addVia(fixture, 'counter')
-    addVia(fixture, 'counter') // el contador duplicado del mismo recurso no pasa el gate
+    addVia(fixture, 'kpi')
+    addVia(fixture, 'kpi') // una celda kpi idéntica a otra no pasa el gate
 
     expect(store.pages()[0].blocks[0].items).toHaveLength(1)
-    expect(TestBed.inject(CanvasNoticeService).notice()?.text).toContain('duplicated block')
+    expect(TestBed.inject(CanvasNoticeService).notice()?.text).toContain('misma configuración')
   })
 })

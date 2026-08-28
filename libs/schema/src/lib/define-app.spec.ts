@@ -303,6 +303,23 @@ describe('kpi-row — la fila de celdas analíticas mixtas (spec 73)', () => {
     expect(problems).toContain('pages[0].blocks[0].cells[3]: series requires a field')
   })
 
+  it('el contador repetido NO es duplicado: comparte binding en el emitido y estorbar al componer costaba más', () => {
+    const app = defineApp(
+      withBlocks([
+        { kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'contract' }] },
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }
+          ]
+        }
+      ])
+    )
+
+    expect(app.pages[0].kind).toBe('dashboard')
+  })
+
   it('caza el duplicado exacto también entre filas', () => {
     const problems = problemsOf(
       withBlocks([

@@ -73,11 +73,19 @@ describe('DesignStore — celdas de la fila de KPIs', () => {
     expect(store.pages()[1].blocks[1].items?.[0].topField).toBeUndefined()
   })
 
-  it('un contador duplicado no tiene versión incompleta: se rechaza y se dice por qué', () => {
+  it('el contador repetido SÍ cae: comparte binding en el emitido y bloquearlo estorbaba al recomponer', () => {
     const store = storeWith()
     store.addCell(1, 0, 'counter', 'pedido')
 
-    expect(store.addCell(1, 0, 'counter', 'pedido')).toBe(false)
+    expect(store.addCell(1, 0, 'counter', 'pedido')).toBe(true)
+    expect(store.pages()[1].blocks[0].items).toHaveLength(2)
+  })
+
+  it('una celda kpi idéntica a otra sí se rechaza: emitiría la misma propiedad dos veces', () => {
+    const store = storeWith()
+    store.addCell(1, 0, 'kpi', 'pedido')
+
+    expect(store.addCell(1, 0, 'kpi', 'pedido')).toBe(false)
     expect(store.lastError()).toContain('duplicated block')
   })
 

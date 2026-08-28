@@ -251,11 +251,15 @@ export class CanvasKpiRowComponent {
   }
 
   private place(kind: KpiCellKind, resource: string): void {
-    // el gate puede revertir la mutación (p. ej. una celda idéntica a otra); callarlo
-    // era la mitad del «no funciona» (reportado 2026-08-28)
-    if (!this.store.addCell(this.pageIndex(), this.blockIndex(), kind, resource)) {
-      this.notice.show(`No se ha podido añadir la celda: ${this.store.lastError() ?? 'el diseño no la admite'}`)
-    }
+    // el gate puede revertir la mutación; callarlo era la mitad del «no funciona» (2026-08-28),
+    // y soltarle el error técnico del schema, la otra mitad: aquí se traduce el caso conocido
+    if (this.store.addCell(this.pageIndex(), this.blockIndex(), kind, resource)) return
+    const error = this.store.lastError()
+    this.notice.show(
+      error?.includes('duplicated block')
+        ? 'El panel ya tiene una celda con esa misma configuración: cambia la existente o configura la nueva distinta'
+        : `No se ha podido añadir la celda: ${error ?? 'el diseño no la admite'}`
+    )
   }
 
   protected remove(event: Event, index: number): void {
