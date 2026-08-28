@@ -3,8 +3,8 @@ import type { Tree } from '@nx/devkit'
 import { resourceGenerator } from './resource'
 
 /**
- * El import CSV (spec 33) se RETIRÓ: `list.features.import` ya no emite nada — ni endpoint,
- * ni caso de uso, ni diálogo, ni botón. Estos tests son el guard de que no reaparece.
+ * El import CSV (spec 33) se RETIRÓ: no hay endpoint, ni caso de uso, ni diálogo, ni botón,
+ * y `list.features.import` ya ni existe en el schema. Estos tests son el guard de que no vuelve.
  */
 describe('resource generator — sin import CSV (spec 33 retirada)', () => {
   const emit = async (name: string): Promise<Tree> => {
@@ -14,7 +14,7 @@ describe('resource generator — sin import CSV (spec 33 retirada)', () => {
   }
   const read = (tree: Tree, path: string): string => tree.read(path, 'utf-8') ?? ''
 
-  it('project (con features.import) no emite el use case ni el handler de import', async () => {
+  it('project no emite el use case ni el handler de import', async () => {
     const tree = await emit('project')
 
     expect(tree.exists('out/backend/application/use-cases/import-projects-usecase.service.ts')).toBe(false)
