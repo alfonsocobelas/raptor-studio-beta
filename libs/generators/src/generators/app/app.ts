@@ -611,8 +611,18 @@ function renderPanelRequestTest(metrics: number, analytics: ComposedDashboardBlo
     .map(block => {
       const spec = block.kpi
       const filters = spec?.filters.length
-        ? `JSON.stringify([${spec.filters.map(f => `{ field: '${f.field}', operator: '${f.operator}', value: '${f.value}' }`).join(', ')}])`
+        ? `JSON.stringify([${spec.filters.map(filterLiteral).join(', ')}])`
         : undefined
+      // una tarjeta con MEDIDA nunca llama al listado: sus peticiones van a /aggregate con la
+      // operación y el campo — exigirle los params del listado dejaba la suite emitida en rojo
+      if (spec && spec.measure !== 'count') {
+        const measured = spec.window
+          ? `expect.objectContaining({ op: '${spec.measure}', field: ${tsStr(spec.field ?? '')}, filters: expect.any(String) })`
+          : filters
+            ? `{ page: '1', pageSize: '1', op: '${spec.measure}', field: ${tsStr(spec.field ?? '')}, filters: ${filters} }`
+            : `{ page: '1', pageSize: '1', op: '${spec.measure}', field: ${tsStr(spec.field ?? '')} }`
+        return `    expect(httpGet).toHaveBeenCalledWith('${block.api}/aggregate', { params: ${measured} })`
+      }
       // con ventana el valor del filtro depende del día en que corre el test: solo se fija la forma
       const params = spec?.window
         ? `expect.objectContaining({ page: '1', pageSize: '1', filters: expect.any(String) })`
@@ -653,14 +663,31 @@ function measureArgs(block: ComposedDashboardBlock): string {
   return `'${measure}', ${block.measureField ? `'${block.measureField}'` : 'undefined'}`
 }
 
+
+/** Un literal de cadena TS seguro: los valores vienen del diseño y pueden llevar comillas. */
+function tsStr(value: string): string {
+  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+}
+
+/** Texto seguro dentro de un atributo HTML emitido (title="..."). */
+function attrText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+/**
+ * EL serializador del filtro, único: el servicio emitido y su test se generan desde la misma
+ * cadena, o el test afirmaría contra un payload que el servicio ya no envía.
+ */
+function filterLiteral(f: { field: string; operator: string; value: string }): string {
+  return `{ field: ${tsStr(f.field)}, operator: '${f.operator}', value: ${tsStr(f.value)} }`
+}
+
 /** El descriptor del KPI, serializado tal cual para el servicio emitido (regla 8). */
 function kpiSpecLiteral(block: ComposedDashboardBlock): string {
   const spec = block.kpi
   if (!spec) return '{ filters: [], ratio: false, compare: false }'
 
-  const filters = spec.filters
-    .map(f => `{ field: '${f.field}', operator: '${f.operator}', value: '${f.value}' }`)
-    .join(', ')
+  const filters = spec.filters.map(filterLiteral).join(', ')
   const parts = [`measure: '${spec.measure}'`]
   if (spec.field) parts.push(`field: '${spec.field}'`)
   parts.push(`filters: [${filters}]`)
@@ -845,11 +872,14 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
    * barras tienen que salir siempre en el mismo orden.
    */
   private _counts(api: string, field: string, values: string[], measure: string, measureField?: string) {
-    return resource<number[], unknown>({
+    // el grupo AUSENTE vale 0 al contar o sumar (cero filas), pero la media, el máximo y el
+    // mínimo de un grupo sin filas son «no hay dato» — un 0 ahí es una afirmación falsa
+    const empty = measure === 'avg' || measure === 'min' || measure === 'max' ? null : 0
+    return resource<(number | null)[], unknown>({
       loader: () =>
         this._grouped(api, { measure, field: measureField, groupBy: field }).then(groups => {
-          const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
-          return values.map(value => found.get(value) ?? 0)
+          const found = new Map(groups.map(group => [group.key, group.value]))
+          return values.map(value => (found.has(value) ? (found.get(value) ?? null) : empty))
         })
     })
   }`)
@@ -946,10 +976,11 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
    * del mes es presentación.
    */
   private _series(api: string, field: string, measure: string, measureField?: string) {
-    return resource<{ label: string; count: number }[], unknown>({
+    // el null de un mes sin datos (media/máx/mín) se CONSERVA: lo decide monthsOf en el servidor
+    return resource<{ label: string; count: number | null }[], unknown>({
       loader: () =>
         this._grouped(api, { measure, field: measureField, bucketField: field, months: 12 }).then(groups =>
-          groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
+          groups.map(group => ({ label: monthLabel(group.key), count: group.value }))
         )
     })
   }`)
@@ -973,9 +1004,6 @@ function renderAnalyticServiceHelpers(analytics: ComposedDashboardBlock[]): stri
     ).then(r => r.groups ?? [])
   }`)
   }
-  blocks.push(`  private _countParams(field: string, operator: string, value: string) {
-    return { page: '1', pageSize: '1', filters: JSON.stringify([{ field, operator, value }]) }
-  }`)
 
   return `\n\n${blocks.join('\n\n')}`
 }
@@ -1002,10 +1030,10 @@ function renderAnalyticCard(block: ComposedDashboardBlock, pad: string): string 
     const kind = spec?.measure === 'count' ? 'count' : (spec?.fieldKind ?? 'numeric')
     const value = `kpiText(service.${block.property}Value(), '${kind}')`
     if (!extra.length) {
-      return `${pad}<app-kpi-card title="${block.label}" [value]="${value}" testId="kpi-${block.property}" />`
+      return `${pad}<app-kpi-card title="${attrText(block.label ?? '')}" [value]="${value}" testId="kpi-${block.property}" />`
     }
     return `${pad}<app-kpi-card
-${pad}  title="${block.label}"
+${pad}  title="${attrText(block.label ?? '')}"
 ${pad}  [value]="${value}"${extra.join('')}
 ${pad}  testId="kpi-${block.property}"
 ${pad}/>`
@@ -1039,7 +1067,7 @@ ${pad}          <span class="text-muted-foreground w-28 shrink-0 truncate">{{ ba
 ${pad}          <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
 ${pad}            <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
 ${pad}          </div>
-${pad}          <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+${pad}          <span class="w-8 text-right tabular-nums">{{ bar.count ?? '—' }}</span>
 ${pad}        </div>
 ${pad}      }
 ${pad}    </div>
@@ -1054,7 +1082,7 @@ ${pad}      @for (point of points(service.${block.property}.value()); track poin
 ${pad}        <div class="flex flex-1 flex-col items-center gap-1">
 ${pad}          <!-- carril de altura fija: un % necesita un padre con altura definida -->
 ${pad}          <div class="flex h-24 w-full items-end">
-${pad}            <div class="bg-primary w-full rounded-t-sm" [style.height.%]="point.height" [title]="point.count"></div>
+${pad}            <div class="bg-primary w-full rounded-t-sm" [style.height.%]="point.height" [title]="point.count ?? '—'"></div>
 ${pad}          </div>
 ${pad}          <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
 ${pad}        </div>
@@ -1069,15 +1097,17 @@ function renderAnalyticComponentHelpers(analytics: ComposedDashboardBlock[]): st
   const kinds = new Set(analytics.map(w => w.kind))
   const blocks: string[] = []
   if (kinds.has('count-by')) {
-    blocks.push(`  bars(counts: number[], labels: string[]): { label: string; count: number; width: number }[] {
-    const max = Math.max(...counts, 1)
-    return counts.map((count, index) => ({ label: labels[index], count, width: (count / max) * 100 }))
+    blocks.push(`  bars(counts: (number | null)[], labels: string[]): { label: string; count: number | null; width: number }[] {
+    const max = Math.max(...counts.map(count => count ?? 0), 1)
+    return counts.map((count, index) => ({ label: labels[index], count, width: ((count ?? 0) / max) * 100 }))
   }`)
   }
   if (kinds.has('series')) {
-    blocks.push(`  points(values: { label: string; count: number }[]): { label: string; count: number; height: number }[] {
-    const max = Math.max(...values.map(v => v.count), 1)
-    return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
+    blocks.push(`  points(
+    values: { label: string; count: number | null }[]
+  ): { label: string; count: number | null; height: number }[] {
+    const max = Math.max(...values.map(v => v.count ?? 0), 1)
+    return values.map(v => ({ ...v, height: ((v.count ?? 0) / max) * 100 }))
   }`)
   }
   // el texto de la tarjeta: un conteo se lee tal cual, un importe con separadores y una fecha

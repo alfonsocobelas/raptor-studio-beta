@@ -53,9 +53,23 @@ export class AggregateCustomersUseCase {
       if (kind !== 'date') throw new InvalidArgumentError(`The bucket needs a date field`)
     }
 
+    // La ventana del bucket se EMPUJA a la consulta (revisión spec 72): sin ella se agrupaba toda
+    // la historia y, con más meses que el techo, ORDER BY value DESC expulsaba un mes reciente
+    // flojo — que monthsOf rellenaba luego con un 0 falso. Acotar aquí también hace la consulta
+    // indexable y deja al techo sin nada que recortar en una serie.
+    const months = input.months ?? 12
+    const baseFilters = Array.isArray(input.filters) ? (input.filters as unknown[]) : []
+    const scopedFilters = input.bucket
+      ? [
+          ...baseFilters,
+          { field: input.bucketField, operator: 'gte', value: monthWindowStart(months) },
+          { field: input.bucketField, operator: 'lt', value: nextMonthStart() }
+        ]
+      : baseFilters
+
     // el mismo lenguaje de filtro que el listado: una sola sintaxis en toda la app
     const criteria = Criteria.fromOffset(
-      { page: 1, pageSize: 1, filters: input.filters } as never,
+      { page: 1, pageSize: 1, filters: scopedFilters } as never,
       allowedFilters,
       allowedOrders,
       searchableFields
@@ -79,7 +93,7 @@ export class AggregateCustomersUseCase {
 
     return {
       value,
-      groups: input.bucket ? monthsOf(groups, input.months ?? 12, op) : groups,
+      groups: input.bucket ? monthsOf(groups, months, op) : groups,
       ...(truncated ? { truncated: true } : {})
     }
   }
@@ -102,4 +116,22 @@ function monthsOf(groups: AggregateGroup[], months: number, op: string): Aggrega
     const key = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}`
     return { key, value: found.has(key) ? (found.get(key) ?? null) : empty }
   })
+}
+
+/** Primer día del PRIMER mes de la ventana, en hora local del servidor (la misma de monthsOf). */
+function monthWindowStart(months: number): string {
+  const now = new Date()
+  return localDay(new Date(now.getFullYear(), now.getMonth() - (months - 1), 1))
+}
+
+/** Primer día del mes SIGUIENTE al actual: el borde derecho semiabierto de la ventana. */
+function nextMonthStart(): string {
+  const now = new Date()
+  return localDay(new Date(now.getFullYear(), now.getMonth() + 1, 1))
+}
+
+function localDay(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }

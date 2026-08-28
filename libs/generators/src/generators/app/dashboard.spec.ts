@@ -620,6 +620,109 @@ describe('el sparkline hereda la condición de la tarjeta', () => {
   })
 })
 
+/** Revisión specs 70-72: lo que la revisión externa destapó en el emitido. */
+describe('revisión — el emitido dice la verdad', () => {
+  const model = (): ResourceDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'contract',
+      plural: 'contracts',
+      context: 'crm',
+      schemaName: 'crm',
+      labels: { singular: 'Contrato', plural: 'Contratos' },
+      fields: {
+        id: { type: 'uuid', pk: true },
+        contractType: {
+          type: 'string',
+          vo: { name: 'ContractType', fieldName: 'Type', values: ['cloud', 'onprem'] },
+          query: { filterable: true }
+        },
+        amount: { type: 'number', query: { sortable: 1 } },
+        startDate: { type: 'date', query: { filterable: true } }
+      }
+    }) as unknown as ResourceDefinition
+
+  const appWith = (blocks: object[]): AppDefinition =>
+    ({
+      schemaVersion: 1,
+      name: 'demo',
+      pages: [{ kind: 'dashboard', blocks }, { kind: 'resource', resource: 'contract' }]
+    }) as AppDefinition
+  const registry = () => ({ contract: model() })
+
+  it('el test del gasto exige /aggregate para una tarjeta con medida, no el listado', () => {
+    const composition = composeApp(
+      appWith([
+        { kind: 'metrics', resources: ['contract'] },
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'Valor medio',
+          measure: 'avg',
+          field: 'amount',
+          condition: { field: 'contractType', operator: 'eq', value: 'cloud' }
+        }
+      ]),
+      registry()
+    )
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    // la tarjeta con medida NUNCA llama al listado: exigirle esos params dejaba la suite
+    // emitida en rojo (congelada así en el oro, porque ningún gate la ejecuta)
+    expect(subs['specKpiTests']).toContain("'/api/v1/contracts/aggregate'")
+    expect(subs['specKpiTests']).toContain("op: 'avg'")
+  })
+
+  it('un valor con apóstrofe no rompe el literal emitido', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi',
+          resource: 'contract',
+          label: 'X',
+          condition: { field: 'contractType', operator: 'eq', value: "O'Brien" }
+        }
+      ]),
+      registry()
+    )
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    expect(subs['resourceEntries']).toContain("value: 'O\\'Brien'")
+  })
+
+  it('el hueco de una media en las barras queda a null, no a un 0 que miente', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'count-by',
+          resource: 'contract',
+          field: 'contractType',
+          measure: 'avg',
+          measureField: 'amount'
+        }
+      ]),
+      registry()
+    )
+
+    const subs = dashboardSubstitutions(composition.dashboardBlocks)
+
+    // el grupo ausente vale 0 al contar o sumar, pero la media de un grupo sin filas es «no hay dato»
+    expect(subs['analyticHelpers']).toContain("measure === 'avg' || measure === 'min' || measure === 'max'")
+    expect(subs['panelSections']).toContain("bar.count ?? '—'")
+  })
+
+  it('el servicio emitido ya no arrastra el _countParams muerto', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'count-by', resource: 'contract', field: 'contractType' }]),
+      registry()
+    )
+
+    expect(dashboardSubstitutions(composition.dashboardBlocks)['analyticHelpers']).not.toContain('_countParams')
+  })
+})
+
 /** Spec 72: las barras y la serie pueden enseñar una MEDIDA, no solo un conteo. */
 describe('composeApp — barras y serie con medida (spec 72)', () => {
   const model = (): ResourceDefinition =>

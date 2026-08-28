@@ -57,9 +57,10 @@ export abstract class MongooseRepository<T> {
     const query = this.criteriaConverter.buildQuery(criteria)
     const match = this.excludeSoftDeleted(query.filter)
 
+    // null no es un valor distinto: COUNT(DISTINCT) de Postgres lo excluye y los motores coinciden
     const group =
       op === 'distinct'
-        ? [{ $group: { _id: `$${field}` } }, { $count: 'value' }]
+        ? [{ $match: { [field]: { $ne: null } } }, { $group: { _id: `$${field}` } }, { $count: 'value' }]
         : [{ $group: { _id: null, value: { [`$${op}`]: `$${field}` } } }]
 
     const rows = await this.model()
@@ -100,6 +101,8 @@ export abstract class MongooseRepository<T> {
       spec.op === 'distinct'
         ? [
             { $match: match },
+            // null no es un valor distinto (mismo criterio que en la agregación simple)
+            { $match: { [spec.field as string]: { $ne: null } } },
             { $group: { _id: { key: axis, value: `$${spec.field}` } } },
             { $group: { _id: '$_id.key', value: { $sum: 1 } } }
           ]

@@ -190,11 +190,14 @@ export class DashboardService {
    * barras tienen que salir siempre en el mismo orden.
    */
   private _counts(api: string, field: string, values: string[], measure: string, measureField?: string) {
-    return resource<number[], unknown>({
+    // el grupo AUSENTE vale 0 al contar o sumar (cero filas), pero la media, el máximo y el
+    // mínimo de un grupo sin filas son «no hay dato» — un 0 ahí es una afirmación falsa
+    const empty = measure === 'avg' || measure === 'min' || measure === 'max' ? null : 0
+    return resource<(number | null)[], unknown>({
       loader: () =>
         this._grouped(api, { measure, field: measureField, groupBy: field }).then(groups => {
-          const found = new Map(groups.map(group => [group.key, group.value ?? 0]))
-          return values.map(value => found.get(value) ?? 0)
+          const found = new Map(groups.map(group => [group.key, group.value]))
+          return values.map(value => (found.has(value) ? (found.get(value) ?? null) : empty))
         })
     })
   }
@@ -286,10 +289,11 @@ export class DashboardService {
    * del mes es presentación.
    */
   private _series(api: string, field: string, measure: string, measureField?: string) {
-    return resource<{ label: string; count: number }[], unknown>({
+    // el null de un mes sin datos (media/máx/mín) se CONSERVA: lo decide monthsOf en el servidor
+    return resource<{ label: string; count: number | null }[], unknown>({
       loader: () =>
         this._grouped(api, { measure, field: measureField, bucketField: field, months: 12 }).then(groups =>
-          groups.map(group => ({ label: monthLabel(group.key), count: group.value ?? 0 }))
+          groups.map(group => ({ label: monthLabel(group.key), count: group.value }))
         )
     })
   }
@@ -308,10 +312,6 @@ export class DashboardService {
     return firstValueFrom(this._http.get<{ groups?: AggregateGroup[] }>(`${api}/aggregate`, { params })).then(
       r => r.groups ?? []
     )
-  }
-
-  private _countParams(field: string, operator: string, value: string) {
-    return { page: '1', pageSize: '1', filters: JSON.stringify([{ field, operator, value }]) }
   }
 
   // @ai:begin dashboard-service-extra — agregados de dominio (cargas propias, computed)

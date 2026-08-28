@@ -33,10 +33,12 @@ export class AggregateProjectsQueryDto extends PaginateOffsetDto {
   @IsNotEmpty()
   bucketField?: string
 
+  // el máximo es el techo de grupos: pedir más meses de los que la respuesta puede llevar
+  // volvería a recortar la ventana que el caso de uso empuja a la consulta
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(60)
+  @Max(50)
   months?: number
 }

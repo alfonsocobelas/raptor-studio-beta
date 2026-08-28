@@ -59,7 +59,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
                     <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
                       <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
                     </div>
-                    <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+                    <span class="w-8 text-right tabular-nums">{{ bar.count ?? '—' }}</span>
                   </div>
                 }
               </div>
@@ -83,7 +83,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
                     <div class="bg-muted h-3 flex-1 overflow-hidden rounded-sm">
                       <div class="bg-primary h-full rounded-sm" [style.width.%]="bar.width"></div>
                     </div>
-                    <span class="w-8 text-right tabular-nums">{{ bar.count }}</span>
+                    <span class="w-8 text-right tabular-nums">{{ bar.count ?? '—' }}</span>
                   </div>
                 }
               </div>
@@ -149,7 +149,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
                       <div
                         class="bg-primary w-full rounded-t-sm"
                         [style.height.%]="point.height"
-                        [title]="point.count"
+                        [title]="point.count ?? '—'"
                       ></div>
                     </div>
                     <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
@@ -169,7 +169,7 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
                       <div
                         class="bg-primary w-full rounded-t-sm"
                         [style.height.%]="point.height"
-                        [title]="point.count"
+                        [title]="point.count ?? '—'"
                       ></div>
                     </div>
                     <span class="text-muted-foreground text-[10px]">{{ point.label }}</span>
@@ -191,14 +191,14 @@ import { ContractsListComponent } from '../bounded-contexts/sap-licensing/featur
 export class DashboardComponent {
   protected readonly service = inject(DashboardService)
 
-  bars(counts: number[], labels: string[]): { label: string; count: number; width: number }[] {
-    const max = Math.max(...counts, 1)
-    return counts.map((count, index) => ({ label: labels[index], count, width: (count / max) * 100 }))
+  bars(counts: (number | null)[], labels: string[]): { label: string; count: number | null; width: number }[] {
+    const max = Math.max(...counts.map(count => count ?? 0), 1)
+    return counts.map((count, index) => ({ label: labels[index], count, width: ((count ?? 0) / max) * 100 }))
   }
 
-  points(values: { label: string; count: number }[]): { label: string; count: number; height: number }[] {
-    const max = Math.max(...values.map(v => v.count), 1)
-    return values.map(v => ({ ...v, height: (v.count / max) * 100 }))
+  points(values: { label: string; count: number | null }[]): { label: string; count: number | null; height: number }[] {
+    const max = Math.max(...values.map(v => v.count ?? 0), 1)
+    return values.map(v => ({ ...v, height: ((v.count ?? 0) / max) * 100 }))
   }
 
   kpiText(value: number | null, kind: 'count' | 'numeric' | 'date'): string {

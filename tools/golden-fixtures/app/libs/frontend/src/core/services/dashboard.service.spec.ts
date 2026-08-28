@@ -72,11 +72,15 @@ describe('DashboardService — totales por recurso', () => {
       }
     })
     expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', {
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts/aggregate', {
+      params: { page: '1', pageSize: '1', op: 'sum', field: 'totalValue' }
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts/aggregate', {
       params: {
         page: '1',
         pageSize: '1',
+        op: 'avg',
+        field: 'totalValue',
         filters: JSON.stringify([{ field: 'contractType', operator: 'eq', value: 'cloud' }])
       }
     })
