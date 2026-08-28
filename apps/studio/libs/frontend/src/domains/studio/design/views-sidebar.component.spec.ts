@@ -197,8 +197,9 @@ describe('ViewsSidebarComponent', () => {
     expect(button?.className).not.toContain('new-view')
     // …pero con dueño: la raya y el velo van en el naranja de trabajo, no en tinta,
     // así el hueco se lee como acción (opción H de la maqueta)
-    expect(button?.className).toContain('border-brand/45')
-    expect(button?.className).toContain('bg-brand/5')
+    // la raya baja y el velo sube: a 2px al 45% el punteado cantaba más de la cuenta
+    expect(button?.className).toContain('border-brand/35')
+    expect(button?.className).toContain('bg-brand/8')
     // 2px, el mismo grosor que «+ Nuevo flujo»: a 1px la raya se disolvía sobre el lino
     expect(button?.className).toContain('border-2')
   })

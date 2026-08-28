@@ -174,7 +174,7 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="border-brand/45 bg-brand/5 hover:border-brand/70 hover:bg-brand/10 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border-2 border-dashed px-2 py-2 text-left font-semibold transition-colors"
+              class="border-brand/35 bg-brand/8 hover:border-brand/60 hover:bg-brand/14 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border-2 border-dashed px-2 py-2 text-left font-semibold transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
@@ -290,7 +290,9 @@ const BLOCK_TOOLS: BlockTool[] = [
        --flow-accent) el hueco tiene dueño: declara acción, y anticipa el color que lo llena,
        igual que ya hacen las tarjetas de «Antes de generar» al pasar por encima.
        Grosor 2px, el mismo que «+ Nuevo flujo»: a 1px la raya se disolvía sobre el lino del
-       raíl y el botón volvía a pesar menos que las vistas que tiene encima.
+       raíl y el botón volvía a pesar menos que las vistas que tiene encima. El peso lo pone el
+       GROSOR, no la saturación: con 2px la raya se baja al 35% y el velo sube al 8%, que es lo
+       que quita al punteado el aire de cinta de obra sin devolverle la ligereza que le sobraba.
        Todo el tratamiento vive en utilidades, así que aquí no queda regla que mantener. */
   `
 })
