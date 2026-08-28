@@ -408,6 +408,11 @@ export class DesignStore {
    * con defectos razonables por tipo — el top-n con 5 filas y el primer campo numérico, las
    * barras en el primer enum, la serie en la primera fecha — igual que nacían los bloques
    * sueltos que sustituye.
+   *
+   * Si el defecto choca con una celda ya dibujada (el gate rechaza el duplicado EXACTO: emitiría
+   * el mismo binding dos veces), el gesto no se bloquea: la celda cae SIN su campo, marcada
+   * «incompleta», y se configura después. Un diseño migrado ya trae sus celdas con la config por
+   * defecto, así que el choque es el caso normal, no el raro (reportado 2026-08-28).
    */
   addCell(pageIndex: number, blockIndex: number, kind: KpiCellKind, resource: string): boolean {
     const block = this._pages()[pageIndex]?.blocks[blockIndex]
@@ -418,24 +423,24 @@ export class DesignStore {
       return false
     }
 
+    const bare: KpiCell = kind === 'top-n' ? { kind, resource, topN: 5, topDir: 'desc' } : { kind, resource }
     const cell: KpiCell =
       kind === 'top-n'
-        ? {
-            kind,
-            resource,
-            topN: 5,
-            topDir: 'desc',
-            topField: draft.fields.find(f => f.type === 'number' || f.type === 'integer')?.name
-          }
+        ? { ...bare, topField: draft.fields.find(f => f.type === 'number' || f.type === 'integer')?.name }
         : kind === 'count-by' || kind === 'series'
           ? {
-              kind,
-              resource,
+              ...bare,
               axisField: draft.fields.find(f => (kind === 'count-by' ? f.type === 'enum' : f.type === 'date'))?.name
             }
-          : { kind, resource }
+          : bare
 
-    return this.patchCells(pageIndex, blockIndex, cells => [...cells, cell])
+    if (this.patchCells(pageIndex, blockIndex, cells => [...cells, cell])) return true
+    // sin campo autoelegido no hay reintento que hacer (counter y kpi ya nacen pelados)
+    const retriable =
+      (kind === 'top-n' && cell.topField !== undefined) ||
+      ((kind === 'count-by' || kind === 'series') && cell.axisField !== undefined)
+    if (!retriable) return false
+    return this.patchCells(pageIndex, blockIndex, cells => [...cells, bare])
   }
 
   /** Quita UNA celda de la fila; la ✕ de la fila entera sigue siendo la del bloque. */

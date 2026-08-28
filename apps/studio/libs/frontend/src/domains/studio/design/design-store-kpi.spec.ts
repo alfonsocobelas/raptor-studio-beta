@@ -61,6 +61,26 @@ describe('DesignStore — celdas de la fila de KPIs', () => {
     expect(store.pages()[1].blocks[0].items?.[1].axisField).toBeUndefined()
   })
 
+  it('si el defecto choca con una celda existente, la nueva nace INCOMPLETA en vez de no nacer', () => {
+    const store = storeWith()
+    store.addCell(1, 0, 'top-n', 'pedido') // nace completa: importe|5|desc
+    store.addBlock(1, { kind: 'kpis', items: [] })
+
+    // el mismo defecto otra vez sería un duplicado exacto: el gesto no se bloquea,
+    // la celda cae sin campo (marcada «incompleta») y se configura después
+    expect(store.addCell(1, 1, 'top-n', 'pedido')).toBe(true)
+    expect(store.pages()[1].blocks[1].items?.[0]).toMatchObject({ kind: 'top-n', topN: 5, topDir: 'desc' })
+    expect(store.pages()[1].blocks[1].items?.[0].topField).toBeUndefined()
+  })
+
+  it('un contador duplicado no tiene versión incompleta: se rechaza y se dice por qué', () => {
+    const store = storeWith()
+    store.addCell(1, 0, 'counter', 'pedido')
+
+    expect(store.addCell(1, 0, 'counter', 'pedido')).toBe(false)
+    expect(store.lastError()).toContain('duplicated block')
+  })
+
   it('rechaza una entidad que no está en el modelo', () => {
     const store = storeWith()
 

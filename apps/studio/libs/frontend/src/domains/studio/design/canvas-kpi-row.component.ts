@@ -14,6 +14,7 @@ import { KpiCardComponent } from '../../../shared/components/kpi-card'
 import { CanvasChartComponent } from './canvas-chart.component'
 import { CanvasKpiComponent } from './canvas-kpi.component'
 import { CanvasTopNComponent } from './canvas-top-n.component'
+import { CanvasNoticeService } from './canvas-notice.service'
 import { DesignStore } from './design-store'
 import { mockTotal } from './mock-data'
 
@@ -147,6 +148,7 @@ export class CanvasKpiRowComponent {
   readonly block = input.required<DesignBlock>()
 
   private readonly store = inject(DesignStore)
+  private readonly notice = inject(CanvasNoticeService)
 
   protected readonly tools = CELL_TOOLS
   protected readonly menuOpen = signal(false)
@@ -192,8 +194,15 @@ export class CanvasKpiRowComponent {
     event.stopPropagation()
     this.menuOpen.set(false)
     const resource = this.cells().at(-1)?.resource ?? this.store.resources()[0]?.name
-    if (!resource) return
-    this.store.addCell(this.pageIndex(), this.blockIndex(), kind, resource)
+    if (!resource) {
+      this.notice.show('Sin entidades en el modelo no hay nada que medir: crea una primero')
+      return
+    }
+    // el gate puede revertir la mutación (p. ej. una celda idéntica a otra); callarlo
+    // era la mitad del «no funciona» (reportado 2026-08-28)
+    if (!this.store.addCell(this.pageIndex(), this.blockIndex(), kind, resource)) {
+      this.notice.show(`No se ha podido añadir la celda: ${this.store.lastError() ?? 'el diseño no la admite'}`)
+    }
   }
 
   protected remove(event: Event, index: number): void {
