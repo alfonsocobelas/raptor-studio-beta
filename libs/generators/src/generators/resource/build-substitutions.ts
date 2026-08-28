@@ -17,6 +17,7 @@ import {
   type DragPlanLevel
 } from './drag-tree'
 import {
+  aggregateFieldKindOf,
   ColumnDefinition,
   ConstraintValue,
   FieldDefinition,
@@ -1414,9 +1415,8 @@ function aggregatableList(fields: [string, FieldDefinition][]): { name: string; 
   return fields
     .filter(([, f]) => !f.pk)
     .map(([name, f]) => {
-      if (f.type === 'number' || f.type === 'integer') return { name, kind: 'numeric' as const }
-      if (f.type === 'date' || f.type === 'timestamptz') return { name, kind: 'date' as const }
-      return null
+      const kind = aggregateFieldKindOf(f)
+      return kind ? { name, kind } : null
     })
     .filter((entry): entry is { name: string; kind: 'numeric' | 'date' } => entry !== null)
 }

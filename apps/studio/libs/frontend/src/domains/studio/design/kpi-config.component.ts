@@ -11,6 +11,7 @@ import {
   measurableFieldsOf,
   measureAllowedOn,
   measuresFor,
+  nextMeasureField,
   draftOperatorsFor,
   draftValueControlFor,
   OPERATOR_LABELS,
@@ -297,16 +298,12 @@ export class KpiConfigComponent {
    */
   protected onMeasure(measure: string): void {
     const v = this.view()
-    if (!v) return
     const draft = this.store.resources().find(r => r.name === this.resource())
-    const measurable = draft ? measurableFieldsOf(draft).filter(e => measureAllowedOn(measure, e.kind)) : []
-    const keeps = measurable.some(e => e.field.name === v.block.kpiField)
+    if (!v || !draft) return
 
     this.patch({
       kpiMeasure: measure,
-      ...(measure === 'count'
-        ? { kpiField: undefined }
-        : { kpiField: keeps ? v.block.kpiField : measurable[0]?.field.name }),
+      kpiField: nextMeasureField(draft, measure, v.block.kpiField),
       ...(measure === 'count' ? {} : { kpiRatio: false })
     })
   }

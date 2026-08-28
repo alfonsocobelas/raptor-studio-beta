@@ -4,7 +4,7 @@ import type { DesignBlock } from '@app/shared/domain'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
-import { dateFieldsOf, MEASURE_LABELS, measurableFieldsOf, measureAllowedOn, measuresFor } from './kpi-config-options'
+import { dateFieldsOf, MEASURE_LABELS, measurableFieldsOf, measureAllowedOn, measuresFor, nextMeasureField } from './kpi-config-options'
 
 /**
  * Panel de los bloques BARRAS y EVOLUCIÓN (spec 72). Un panel para los dos: cambia el eje —un enum
@@ -126,17 +126,10 @@ export class ChartConfigComponent {
   /** Cambiar de medida invalida el campo si el nuevo tipo no lo admite (sumar una fecha). */
   protected onMeasure(measure: string): void {
     const v = this.view()
-    if (!v) return
     const draft = this.store.resources().find(r => r.name === this.resource())
-    const measurable = draft ? measurableFieldsOf(draft).filter(e => measureAllowedOn(measure, e.kind)) : []
-    const keeps = measurable.some(e => e.field.name === v.block.measureField)
+    if (!v || !draft) return
 
-    this.patch({
-      measure,
-      ...(measure === 'count'
-        ? { measureField: undefined }
-        : { measureField: keeps ? v.block.measureField : measurable[0]?.field.name })
-    })
+    this.patch({ measure, measureField: nextMeasureField(draft, measure, v.block.measureField) })
   }
 
   protected patch(change: Partial<DesignBlock>): void {

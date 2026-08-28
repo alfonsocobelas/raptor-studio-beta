@@ -21,13 +21,13 @@ describe('kpi-config-options — medidas (spec 71)', () => {
       ])
     )
 
-    expect(options).toEqual(['count', 'sum', 'avg', 'max', 'min', 'distinct'])
+    expect(options).toEqual(['count', 'sum', 'avg', 'min', 'max', 'distinct'])
   })
 
   it('con solo fechas no se ofrece sumar ni promediar', () => {
     const options = measuresFor(draft([{ name: 'alta', label: 'Alta', type: 'date' }]))
 
-    expect(options).toEqual(['count', 'max', 'min', 'distinct'])
+    expect(options).toEqual(['count', 'min', 'max', 'distinct'])
   })
 
   it('los campos medibles son los números y las fechas, con su tipo', () => {

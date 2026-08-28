@@ -1,4 +1,11 @@
-import { DEFAULT_THEME_ID, normalizeDashboardBlocks, opAllowedOn, operatorsFor, resolveThemeId } from '@raptor/schema'
+import {
+  aggregateFieldKindOf,
+  DEFAULT_THEME_ID,
+  normalizeDashboardBlocks,
+  opAllowedOn,
+  operatorsFor,
+  resolveThemeId
+} from '@raptor/schema'
 import type {
   AppDefinition,
   DashboardBlock,
@@ -339,7 +346,7 @@ function composeKpi(
   if (measure !== 'count') {
     const measured = model.fields[block.field ?? '']
     if (!measured) throw new Error(`${at} measures an unknown field '${block.field}'`)
-    fieldKind = aggregateKindOf(measured)
+    fieldKind = aggregateFieldKindOf(measured)
     if (!fieldKind) {
       throw new Error(`${at} measures '${block.field}', which is neither numeric nor a date`)
     }
@@ -387,7 +394,7 @@ function measuredOf(
 
   const field = model.fields[block.measureField ?? '']
   if (!field) throw new Error(`${at} measures an unknown field '${block.measureField}'`)
-  const kind = aggregateKindOf(field)
+  const kind = aggregateFieldKindOf(field)
   if (!kind) throw new Error(`${at} measures '${block.measureField}', which is neither numeric nor a date`)
   if (!opAllowedOn(measure, kind)) {
     throw new Error(`${at} applies '${measure}' to a ${kind} field, which has no answer`)
@@ -400,13 +407,6 @@ function measuredOf(
 function measuredSlug(block: Extract<DashboardBlock, { kind: 'count-by' | 'series' }>): string {
   const measure = block.measure ?? 'count'
   return measure === 'count' ? '' : `-${measure}-${block.measureField}`
-}
-
-/** El tipo agregable de un campo, o undefined si no se puede medir (spec 71). */
-function aggregateKindOf(field: FieldDefinition): 'numeric' | 'date' | undefined {
-  if (field.type === 'number' || field.type === 'integer') return 'numeric'
-  if (field.type === 'date' || field.type === 'timestamptz') return 'date'
-  return undefined
 }
 
 /** Nombre estable y único de la propiedad emitida: la config, no la etiqueta. */

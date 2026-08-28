@@ -1,3 +1,4 @@
+import type { AggregateOp } from './aggregate-ops'
 // Canonical app-schema format (spec 07, phase A of the visual editor vision).
 // Declares how an app is composed — pages, order, widgets — with a vocabulary
 // limited to what the app generator already emits (rule 7: never ahead of it).
@@ -15,9 +16,10 @@ export type KpiOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains
 
 /**
  * Medida del KPI. `count` sale del listado; el resto exige el endpoint `aggregate` (spec 71) y un
- * campo sobre el que medir.
+ * campo sobre el que medir. Es EL catálogo de operaciones: dos uniones iguales con dos nombres ya
+ * es una deriva esperando fecha (revisión specs 70-72).
  */
-export type KpiMeasure = 'count' | 'sum' | 'avg' | 'min' | 'max' | 'distinct'
+export type KpiMeasure = AggregateOp
 
 /** Ventana temporal relativa; `days` solo acompaña al preset homónimo. */
 export type KpiWindowPreset = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'days'

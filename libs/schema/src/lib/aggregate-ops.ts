@@ -27,3 +27,14 @@ export function opAllowedOn(op: AggregateOp, kind: AggregateFieldKind): boolean 
 export function opsAllowedOn(kind: AggregateFieldKind): AggregateOp[] {
   return AGGREGATE_OPS.filter(op => op !== 'count' && opAllowedOn(op, kind))
 }
+
+/**
+ * El tipo agregable de un campo del modelo, o undefined si no se puede medir. Vivía copiado en
+ * la composición, en build-substitutions y (sobre borradores) en el estudio: tres copias del
+ * mismo mapeo alrededor del módulo que ya era su dueño (revisión specs 70-72).
+ */
+export function aggregateFieldKindOf(field: { type: string }): AggregateFieldKind | undefined {
+  if (field.type === 'number' || field.type === 'integer') return 'numeric'
+  if (field.type === 'date' || field.type === 'timestamptz') return 'date'
+  return undefined
+}

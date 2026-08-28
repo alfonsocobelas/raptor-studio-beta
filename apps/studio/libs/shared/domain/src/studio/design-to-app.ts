@@ -114,20 +114,6 @@ function kpiBlockOf(block: DesignBlock, width: 'full' | 'half', fallbackLabel: s
   }
 }
 
-/** Los bloques que viven DENTRO del panel: cualquiera de ellos abre el dashboard de la vista. */
-function isPanelBlock(block: DesignBlock): boolean {
-  if (block.kind === 'kpis') return (block.resources?.length ?? 0) > 0
-  if (block.kind === 'kpi') {
-    if (block.resource === undefined) return false
-    // la medida sin campo no cruza: tampoco debe abrir un panel vacío
-    return !(block.kpiMeasure && block.kpiMeasure !== 'count' && !block.kpiField)
-  }
-  if (block.kind === 'top-n') return block.resource !== undefined && block.topField !== undefined
-  if (block.kind === 'count-by' || block.kind === 'series') {
-    return block.resource !== undefined && block.axisField !== undefined
-  }
-  return false
-}
 
 /** Los recursos cuyo listado viaja DENTRO del panel: no emiten además su pantalla. */
 function carriedTables(blocks: DashboardBlock[]): string[] {
@@ -147,12 +133,12 @@ export function designPagesToAppPages(
   let hasDashboard = false
 
   for (const page of pages) {
-    // cualquier bloque de panel abre el dashboard, no solo la fila de KPIs (spec 70)
-    const kpis = page.blocks.some(isPanelBlock)
-    // spec 52 y 53: los bloques DE ESTA VISTA viven dentro del panel, en el orden dibujado.
-    // Antes los listados salían fuera, el panel quedaba sin tabla y el listado se comía el
-    // título de la siguiente vista que repitiera el recurso (demo taller).
-    const blocks = kpis && !hasDashboard ? panelBlocks(page, labelOf) : []
+    // el disparador del panel ES lo que panelBlocks sabe cruzar: dos codificaciones paralelas de
+    // «qué bloque abre el dashboard» ya habían empezado a discrepar (revisión specs 70-72).
+    // Los LISTADOS no cuentan: una vista de solo tablas no es un panel (spec 52/53).
+    const crossed = panelBlocks(page, labelOf)
+    const kpis = crossed.some(block => block.kind !== 'table')
+    const blocks = kpis && !hasDashboard ? crossed : []
     const carried = carriedTables(blocks)
     if (blocks.length) {
       result.push({ kind: 'dashboard', label: page.title, blocks })

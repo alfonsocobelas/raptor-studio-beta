@@ -1,3 +1,4 @@
+import { AGGREGATE_OPS, opAllowedOn, type AggregateOp } from '@raptor/schema'
 import type { DraftField, DraftResource } from '@app/shared/domain'
 
 /** Etiquetas de las ventanas temporales; el orden es el que ve el panel. */
@@ -74,17 +75,15 @@ export function sortableFieldsOf(draft: DraftResource): DraftField[] {
   return draft.fields.filter(field => field.type !== 'text')
 }
 
-/** Etiquetas de las medidas, en el orden en que se ofrecen. */
+/** Etiquetas de las medidas; el ORDEN y el catálogo los manda el schema, aquí solo el texto. */
 export const MEASURE_LABELS: Record<string, string> = {
   count: 'Cuántos hay',
   sum: 'Suma',
   avg: 'Media',
-  max: 'Máximo',
   min: 'Mínimo',
+  max: 'Máximo',
   distinct: 'Valores distintos'
 }
-
-export const MEASURES = ['count', 'sum', 'avg', 'max', 'min', 'distinct'] as const
 
 /**
  * Los campos que se pueden MEDIR (spec 71) y con qué tipo. Solo números y fechas: el texto y los
@@ -100,9 +99,10 @@ export function measurableFieldsOf(draft: DraftResource): { field: DraftField; k
     .filter((entry): entry is { field: DraftField; kind: 'numeric' | 'date' } => entry !== null)
 }
 
-/** Sumar o promediar fechas no es una pregunta con respuesta (espejo de @raptor/schema). */
+/** La regla es DEL SCHEMA: el estudio solo la re-exporta con el nombre que sus paneles usan.
+ *  La copia local ya había derivado (el orden min/max no coincidía con el catálogo). */
 export function measureAllowedOn(measure: string, kind: 'numeric' | 'date'): boolean {
-  return kind === 'numeric' || (measure !== 'sum' && measure !== 'avg')
+  return opAllowedOn(measure as AggregateOp, kind)
 }
 
 /** Las medidas que ESTE borrador puede ofrecer: sin campos medibles, solo contar. */
@@ -110,7 +110,17 @@ export function measuresFor(draft: DraftResource): string[] {
   const kinds = measurableFieldsOf(draft).map(entry => entry.kind)
   if (!kinds.length) return ['count']
 
-  return MEASURES.filter(
-    measure => measure === 'count' || kinds.some(kind => measureAllowedOn(measure, kind))
-  ) as unknown as string[]
+  return ['count', ...AGGREGATE_OPS.filter(op => op !== 'count' && kinds.some(kind => opAllowedOn(op, kind)))]
+}
+
+/**
+ * El campo medido tras cambiar la medida: se conserva si el nuevo tipo lo admite y, si no, el
+ * primero que sí. Estaba copiado byte a byte en los dos paneles (tarjeta y gráficos) — la clase
+ * de espejo que este proyecto ya vio derivar tres veces.
+ */
+export function nextMeasureField(draft: DraftResource, measure: string, current?: string): string | undefined {
+  if (measure === 'count') return undefined
+  const measurable = measurableFieldsOf(draft).filter(entry => measureAllowedOn(measure, entry.kind))
+  const keeps = measurable.some(entry => entry.field.name === current)
+  return keeps ? current : measurable[0]?.field.name
 }
