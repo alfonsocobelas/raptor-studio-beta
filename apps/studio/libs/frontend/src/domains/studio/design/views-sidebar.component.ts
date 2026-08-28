@@ -174,11 +174,11 @@ const BLOCK_TOOLS: BlockTool[] = [
           <div data-menu-root="view">
             <button
               type="button"
-              class="text-muted-foreground hover:text-foreground border-foreground/25 hover:border-foreground/45 hover:bg-foreground/5 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border border-dashed px-2 py-2 text-left transition-colors"
+              class="border-brand/45 bg-brand/5 hover:border-brand/70 hover:bg-brand/10 studio-ui mt-1 flex w-full items-center gap-2 rounded-[7px] border border-dashed px-2 py-2 text-left font-semibold transition-colors"
               data-testid="tool-new-view"
               (click)="viewMenu.set(!viewMenu())"
             >
-              <ng-icon name="lucidePlus" size="14" />
+              <ng-icon class="text-brand" name="lucidePlus" size="14" />
               Nueva vista
             </button>
             @if (viewMenu()) {
@@ -283,9 +283,12 @@ const BLOCK_TOOLS: BlockTool[] = [
     /* «Nueva vista» va en contorno DISCONTINUO, el mismo idioma que «+ Nuevo flujo» en el
        raíl de Flujos (flow-sidebar): un raíl, un tratamiento para el verbo de crear. Sustituye
        a la tecla con relieve —fondo de tarjeta, halo y ciclo de pulsación— que vivía aquí desde
-       agosto; se probó en maqueta a pantalla completa antes de cambiarla. La raya es de 1px y
-       en tinta al 25% (Flujos usa 2px al 35%): sobre el lino del raíl da el mismo gris #c4bcb1
-       de las tarjetas de «Antes de generar», y de noche se deriva sola del token.
+       agosto; se probó en maqueta a pantalla completa antes de cambiarla.
+       Pero la raya va TEÑIDA, no en tinta: en tinta al 25% el botón volvía a leerse como el
+       hueco por rellenar que ya se descartó en agosto —era el defecto de origen—. Con la raya
+       y el velo en el naranja de trabajo (--brand, que el :host de este raíl apunta a
+       --flow-accent) el hueco tiene dueño: declara acción, y anticipa el color que lo llena,
+       igual que ya hacen las tarjetas de «Antes de generar» al pasar por encima.
        Todo el tratamiento vive en utilidades, así que aquí no queda regla que mantener. */
   `
 })

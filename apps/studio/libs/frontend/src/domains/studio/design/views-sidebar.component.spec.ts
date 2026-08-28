@@ -195,6 +195,10 @@ describe('ViewsSidebarComponent', () => {
     // el mismo idioma que «+ Nuevo flujo» en el raíl de Flujos: raya y no volumen
     expect(button?.className).toContain('border-dashed')
     expect(button?.className).not.toContain('new-view')
+    // …pero con dueño: la raya y el velo van en el naranja de trabajo, no en tinta,
+    // así el hueco se lee como acción (opción H de la maqueta)
+    expect(button?.className).toContain('border-brand/45')
+    expect(button?.className).toContain('bg-brand/5')
   })
 
   it('ofrece los doce bloques que el generador emite, y ninguno más', () => {
