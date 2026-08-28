@@ -702,21 +702,22 @@ function kpiSpecLiteral(block: ComposedDashboardBlock): string {
   return `{ ${parts.join(', ')} }`
 }
 
+/** La tarjeta de UN contador: la misma dentro del grid de métricas y dentro de una fila mixta. */
+function renderCounterCard(model: ResourceDefinition, metrics: MetricEntry[], pad: string): string {
+  const entry = metrics.find(m => m.property === names(model.plural).propertyName)
+  const subtitle = entry?.subtitle ? `\n${pad}  subtitle="${entry.subtitle}"` : ''
+  return `${pad}<app-kpi-card
+${pad}  title="${entry?.label ?? model.plural}"
+${pad}  [value]="service.${entry?.property}Total()"${subtitle}
+${pad}  testId="kpi-${entry?.property}"
+${pad}/>`
+}
+
 /** El markup de UN bloque, con la sangría de su sitio. Mismo markup que emitía cada binding. */
 function renderBlock(block: ComposedDashboardBlock, metrics: MetricEntry[], pad: string): string {
   if (block.kind === 'metrics') {
     const cols = Math.min(Math.max(block.models.length, 2), 4)
-    const cards = block.models
-      .map(model => {
-        const entry = metrics.find(m => m.property === names(model.plural).propertyName)
-        const subtitle = entry?.subtitle ? `\n${pad}    subtitle="${entry.subtitle}"` : ''
-        return `${pad}  <app-kpi-card
-${pad}    title="${entry?.label ?? model.plural}"
-${pad}    [value]="service.${entry?.property}Total()"${subtitle}
-${pad}    testId="kpi-${entry?.property}"
-${pad}  />`
-      })
-      .join('\n')
+    const cards = block.models.map(model => renderCounterCard(model, metrics, `${pad}  `)).join('\n')
     return `${pad}<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-${cols}">\n${cards}\n${pad}</div>`
   }
 
@@ -725,6 +726,35 @@ ${pad}  />`
   }
 
   return renderAnalyticCard(block, pad)
+}
+
+/**
+ * Una fila MIXTA de la spec 73: un grid con el span de cada celda — tarjetas a una columna,
+ * gráficas a dos (desde el corte sm; en móvil todo apila). Es el MISMO reparto que dibuja el
+ * lienzo del estudio: cambiarlo aquí sin cambiarlo allí es hacer mentir al lienzo.
+ */
+function renderRow(cells: ComposedDashboardBlock[], metrics: MetricEntry[], pad: string): string {
+  const cols = cells.reduce((sum, cell) => sum + (cell.span ?? 1), 0)
+  const markup = cells
+    .map(cell => {
+      const inner =
+        cell.kind === 'metrics'
+          ? renderCounterCard(cell.models[0], metrics, `${pad}  `)
+          : renderAnalyticCard(cell, `${pad}  `)
+      if ((cell.span ?? 1) !== 2) return inner
+      // la gráfica ocupa sus dos columnas envuelta, no tocando su propio markup
+      return `${pad}  <div class="sm:col-span-2">\n${markupIndent(inner)}\n${pad}  </div>`
+    })
+    .join('\n')
+  return `${pad}<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-${cols}">\n${markup}\n${pad}</div>`
+}
+
+/** Sangra un fragmento ya emitido un nivel más (dos espacios por línea no vacía). */
+function markupIndent(fragment: string): string {
+  return fragment
+    .split('\n')
+    .map(line => (line.length ? `  ${line}` : line))
+    .join('\n')
 }
 
 interface MetricEntry {
@@ -754,7 +784,16 @@ function renderPanelSections(blocks: ComposedDashboardBlock[], metrics: MetricEn
     pending = []
   }
 
-  for (const block of blocks) {
+  for (let index = 0; index < blocks.length; index++) {
+    const block = blocks[index]
+    // una fila mixta (spec 73) es su propio grid a lo ancho: se emite entera y de una pieza
+    if (block.rowId !== undefined) {
+      const cells = [block]
+      while (index + 1 < blocks.length && blocks[index + 1].rowId === block.rowId) cells.push(blocks[++index])
+      flush()
+      out.push(renderRow(cells, metrics, '        '))
+      continue
+    }
     if (block.width === 'half') {
       pending.push(block)
       continue

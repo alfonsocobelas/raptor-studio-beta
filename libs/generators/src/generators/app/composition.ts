@@ -37,6 +37,10 @@ export interface ComposedDashboardBlock {
   kind: 'metrics' | 'count-by' | 'kpi' | 'series' | 'table' | 'top-n'
   /** Resuelto al componer: 'full' si el diseño no lo declara */
   width: BlockWidth
+  /** Fila mixta (spec 73): las celdas de una misma fila comparten id y se emiten en UN grid */
+  rowId?: number
+  /** Columnas que ocupa la celda dentro de su fila: tarjetas 1, gráficas 2 */
+  span?: 1 | 2
   /** `metrics` lleva varios; el resto, exactamente uno */
   models: ResourceDefinition[]
   /** Propiedad emitida en el DashboardService ('contractsByContractType'); solo analíticos */
@@ -132,38 +136,6 @@ export function composeFlat(models: ResourceDefinition[], dashboard: boolean): A
   }
 }
 
-/**
- * Aplana las filas `kpi-row` (spec 73) a los bloques sueltos que la emisión de hoy entiende:
- * contadores consecutivos vuelven a ser un `metrics` y cada celda analítica su bloque, con el
- * ancho de la fila. TEMPORAL hasta la tarea del layout (TASK-07 de la spec 73): mientras viva,
- * el emitido apila las celdas exactamente como apilaba los bloques sueltos.
- */
-function flattenKpiRows(blocks: DashboardBlock[]): Exclude<DashboardBlock, { kind: 'kpi-row' }>[] {
-  const out: Exclude<DashboardBlock, { kind: 'kpi-row' }>[] = []
-  for (const block of blocks) {
-    if (block.kind !== 'kpi-row') {
-      out.push(block)
-      continue
-    }
-    const width = block.width === undefined ? {} : { width: block.width }
-    let counters: string[] = []
-    const flush = (): void => {
-      if (counters.length) out.push({ kind: 'metrics', resources: counters, ...width })
-      counters = []
-    }
-    for (const cell of block.cells) {
-      if (cell.kind === 'counter') {
-        counters.push(cell.resource)
-        continue
-      }
-      flush()
-      out.push({ ...cell, ...width })
-    }
-    flush()
-  }
-  return out
-}
-
 /** Composición declarada por un app-schema; valida cada referencia contra el registro. */
 export function composeApp(definition: AppDefinition, registry: Record<string, ResourceDefinition>): AppComposition {
   const resolve = (resource: string): ResourceDefinition => {
@@ -227,72 +199,94 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
   // contra el modelo —campo real, filterable y del tipo que el bloque necesita—: el error llega al
   // diseñar, no al compilar.
   const dashboardBlocks: ComposedDashboardBlock[] = []
-  for (const page of definition.pages) {
-    if (page.kind !== 'dashboard') continue
-    // el alias `kpi-count` muere en la puerta: aquí abajo solo existe `kpi` (spec 70)
-    for (const block of flattenKpiRows(normalizeDashboardBlocks(page.blocks))) {
-      // el defecto es POR KIND, y sale de lo que el emitido ya hacía: los analíticos siempre se
-      // pintaron a dos columnas (media pantalla), la fila de métricas y el listado a lo ancho
-      const width: BlockWidth = block.width ?? (block.kind === 'metrics' || block.kind === 'table' ? 'full' : 'half')
-      if (block.kind === 'metrics') {
-        dashboardBlocks.push({ kind: 'metrics', width, models: block.resources.map(resolve) })
-        continue
-      }
-      const model = resolve(block.resource)
-      if (block.kind === 'table') {
-        dashboardBlocks.push({ kind: 'table', width, models: [model] })
-        continue
-      }
-      if (block.kind === 'kpi') {
-        dashboardBlocks.push(composeKpi(block, model, definition.name, width))
-        continue
-      }
-      if (block.kind === 'top-n') {
-        dashboardBlocks.push(composeTop(block, model, definition.name, width))
-        continue
-      }
-      const field = model.fields[block.field]
+
+  /** Una celda analítica de la fila (o un bloque suelto histórico), resuelta contra su modelo. */
+  const composeAnalytic = (
+    block: Extract<DashboardBlock, { kind: 'kpi' | 'top-n' | 'count-by' | 'series' }>,
+    width: BlockWidth
+  ): ComposedDashboardBlock => {
+    const model = resolve(block.resource)
+    if (block.kind === 'kpi') return composeKpi(block, model, definition.name, width)
+    if (block.kind === 'top-n') return composeTop(block, model, definition.name, width)
+    const field = model.fields[block.field]
       const at = `App '${definition.name}': widget ${block.kind} '${block.resource}.${block.field}'`
       if (!field) throw new Error(`${at} references an unknown field`)
       if (!field.query?.filterable) throw new Error(`${at} requires a filterable field (the count uses the list endpoint)`)
-      const api = model.api ?? `/api/v1/${model.plural}`
-      const fieldLabel = field.table?.label ?? field.form?.label ?? block.field
-      if (block.kind === 'count-by') {
-        const values = (typeof field.vo === 'object' ? field.vo.values : undefined) ?? []
-        if (!values.length) throw new Error(`${at} requires an enum field (vo.values)`)
-        const measured = measuredOf(block, model, at)
-        dashboardBlocks.push({
-          kind: 'count-by',
-          width,
-          models: [model],
-          ...measured,
-          property: propertyOf(`${model.plural}-by-${block.field}${measuredSlug(block)}`),
-          api,
-          field: block.field,
-          label: block.label ?? fieldLabel,
-          values: values.map(value => ({
-            value,
-            label:
-              field.table?.badgeMap?.[value]?.label ??
-              field.form?.options?.find(option => option.value === value)?.label ??
-              value.charAt(0).toUpperCase() + value.slice(1)
-          }))
-        })
-      } else if (block.kind === 'series') {
-        if (field.type !== 'date' && field.type !== 'timestamptz') {
-          throw new Error(`${at} requires a date field`)
-        }
-        const measuredSeries = measuredOf(block, model, at)
-        dashboardBlocks.push({
-          kind: 'series',
-          width,
-          models: [model],
-          ...measuredSeries,
-          property: propertyOf(`${model.plural}-series-${block.field}${measuredSlug(block)}`),
-          api,
-          field: block.field,
-          label: block.label ?? fieldLabel
-        })
+    const api = model.api ?? `/api/v1/${model.plural}`
+    const fieldLabel = field.table?.label ?? field.form?.label ?? block.field
+    if (block.kind === 'count-by') {
+      const values = (typeof field.vo === 'object' ? field.vo.values : undefined) ?? []
+      if (!values.length) throw new Error(`${at} requires an enum field (vo.values)`)
+      const measured = measuredOf(block, model, at)
+      return {
+        kind: 'count-by',
+        width,
+        models: [model],
+        ...measured,
+        property: propertyOf(`${model.plural}-by-${block.field}${measuredSlug(block)}`),
+        api,
+        field: block.field,
+        label: block.label ?? fieldLabel,
+        values: values.map(value => ({
+          value,
+          label:
+            field.table?.badgeMap?.[value]?.label ??
+            field.form?.options?.find(option => option.value === value)?.label ??
+            value.charAt(0).toUpperCase() + value.slice(1)
+        }))
+      }
+    }
+    if (field.type !== 'date' && field.type !== 'timestamptz') {
+      throw new Error(`${at} requires a date field`)
+    }
+    const measuredSeries = measuredOf(block, model, at)
+    return {
+      kind: 'series',
+      width,
+      models: [model],
+      ...measuredSeries,
+      property: propertyOf(`${model.plural}-series-${block.field}${measuredSlug(block)}`),
+      api,
+      field: block.field,
+      label: block.label ?? fieldLabel
+    }
+  }
+
+  // Los bloques llegan NORMALIZADOS: la parte analítica son filas `kpi-row` (spec 73) y el resto
+  // es el listado embebido. Una fila SOLO de contadores conserva su bloque de métricas histórico
+  // (mismo grid emitido); una fila de UNA celda analítica hereda el defecto histórico de los
+  // analíticos (media pantalla); la fila mixta es la novedad: sus celdas comparten `rowId` y
+  // cada una lleva su span (tarjetas 1, gráficas 2).
+  let nextRowId = 0
+  for (const page of definition.pages) {
+    if (page.kind !== 'dashboard') continue
+    // el alias `kpi-count` muere en la puerta: aquí abajo solo existen filas (specs 70 y 73)
+    for (const block of normalizeDashboardBlocks(page.blocks)) {
+      if (block.kind === 'table') {
+        dashboardBlocks.push({ kind: 'table', width: block.width ?? 'full', models: [resolve(block.resource)] })
+        continue
+      }
+      if (block.kind !== 'kpi-row') continue
+
+      const singleAnalytic = block.cells.length === 1 && block.cells[0].kind !== 'counter'
+      const width: BlockWidth = block.width ?? (singleAnalytic ? 'half' : 'full')
+
+      if (block.cells.every(cell => cell.kind === 'counter')) {
+        dashboardBlocks.push({ kind: 'metrics', width, models: block.cells.map(cell => resolve(cell.resource)) })
+        continue
+      }
+      if (singleAnalytic && block.cells[0].kind !== 'counter') {
+        dashboardBlocks.push(composeAnalytic(block.cells[0], width))
+        continue
+      }
+      const rowId = nextRowId++
+      for (const cell of block.cells) {
+        const span = cell.kind === 'count-by' || cell.kind === 'series' ? (2 as const) : (1 as const)
+        const composed: ComposedDashboardBlock =
+          cell.kind === 'counter'
+            ? { kind: 'metrics', width, models: [resolve(cell.resource)] }
+            : composeAnalytic(cell, width)
+        dashboardBlocks.push({ ...composed, rowId, span })
       }
     }
   }

@@ -34,7 +34,7 @@
       Selección de celda en el store; `kpi-config`, `top-n-config` y `chart-config` retargetados;
       quitar celda. Tests de los paneles.
 
-- [ ] **TASK-07 — Generador: emisión del grid por fila**
+- [x] **TASK-07 — Generador: emisión del grid por fila**
       `app.ts`/`composition.ts` + plantilla del dashboard: un grid por `kpi-row`, spans por tipo,
       responsive. App-schema de oro reescrito con `kpi-row`; re-baseline y golden limpio;
       `typecheck-emitted.sh` a 0.

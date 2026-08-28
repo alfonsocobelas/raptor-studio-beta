@@ -68,6 +68,7 @@ describe('kpi-row — la fila compone igual que los bloques sueltos (spec 73)', 
       fields: {
         id: { type: 'uuid', pk: true },
         amount: { type: 'numeric', query: { filterable: true, sortable: true } },
+        startDate: { type: 'date', query: { filterable: true } },
         name: { type: 'string', query: { searchable: true } },
         contractType: {
           type: 'string',
@@ -103,6 +104,85 @@ describe('kpi-row — la fila compone igual que los bloques sueltos (spec 73)', 
     )
 
     expect(composition.dashboardBlocks.map(b => b.kind)).toEqual(['metrics', 'kpi', 'top-n'])
+  })
+
+  it('las celdas llevan su fila y su span: tarjetas a 1, gráficas a 2', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'count-by', resource: 'contract', field: 'contractType' }
+          ]
+        },
+        { kind: 'kpi-row', cells: [{ kind: 'counter', resource: 'contract' }] }
+      ]),
+      { contract: contract() }
+    )
+
+    expect(composition.dashboardBlocks.map(b => ({ kind: b.kind, rowId: b.rowId, span: b.span }))).toEqual([
+      { kind: 'metrics', rowId: 0, span: 1 },
+      { kind: 'count-by', rowId: 0, span: 2 },
+      // la fila SOLO de contadores conserva su bloque de métricas histórico, sin fila
+      { kind: 'metrics', rowId: undefined, span: undefined }
+    ])
+  })
+
+  it('la fila de UNA celda analítica hereda el defecto histórico: media fila', () => {
+    const composition = composeApp(
+      appWith([
+        { kind: 'kpi-row', cells: [{ kind: 'top-n', resource: 'contract', field: 'amount', n: 5 }] },
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'top-n', resource: 'contract', field: 'amount', n: 3 }
+          ]
+        }
+      ]),
+      { contract: contract() }
+    )
+
+    expect(composition.dashboardBlocks[0].width).toBe('half')
+    expect(composition.dashboardBlocks[1].width).toBe('full')
+    expect(composition.dashboardBlocks[2].width).toBe('full')
+  })
+
+  it('la fila mixta se emite como UN grid con el span de cada celda', () => {
+    const composition = composeApp(
+      appWith([
+        {
+          kind: 'kpi-row',
+          cells: [
+            { kind: 'counter', resource: 'contract' },
+            { kind: 'kpi', resource: 'contract', label: 'Total' },
+            { kind: 'series', resource: 'contract', field: 'startDate' }
+          ]
+        }
+      ]),
+      { contract: contract() }
+    )
+
+    const sections = dashboardSubstitutions(composition.dashboardBlocks)['panelSections']
+
+    // 1 + 1 + 2 columnas; la gráfica ocupa dos desde el corte sm
+    expect(sections).toContain('xl:grid-cols-4')
+    expect(sections).toContain('sm:col-span-2')
+    // el contador dentro de la fila es UNA tarjeta, no su propio grid
+    expect(sections?.match(/grid gap-4/g)).toHaveLength(1)
+  })
+
+  it('la fila SOLO de contadores se emite con el grid histórico de métricas', () => {
+    const composition = composeApp(
+      appWith([{ kind: 'metrics', resources: ['contract'] }]),
+      { contract: contract() }
+    )
+
+    const sections = dashboardSubstitutions(composition.dashboardBlocks)['panelSections']
+
+    // un solo contador: las dos columnas de siempre, no una tarjeta a lo ancho
+    expect(sections).toContain('sm:grid-cols-2 xl:grid-cols-2')
   })
 
   it('la fila de una celda compone EXACTAMENTE como el bloque suelto equivalente', () => {
