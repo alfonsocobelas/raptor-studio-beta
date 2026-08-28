@@ -158,7 +158,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpi', 'kpis', '
        naranja de la rejilla (#d75f3d) ya rebajado a superficie, así el hueco se lee
        sin discutirle el protagonismo a la píldora blanca que va dentro. */
     .mode-switch {
-      background-color: #e3baac;
+      background-color: #f4dfd7;
     }
   `
 })
