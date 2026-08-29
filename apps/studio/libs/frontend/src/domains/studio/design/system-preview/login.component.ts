@@ -1,6 +1,6 @@
 // GENERADO por apps/studio/tools/emit-system-preview.ts — NO EDITAR (spec 57)
 // Fuente: plugins/assets-auth/libs/frontend/src/domains/auth/login.component.ts.template
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, inject, isDevMode, signal } from '@angular/core'
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
 import { Router, RouterLink } from '@angular/router'
 import { AppButton } from '../../../../shared/components/ui/button.directive'
@@ -8,6 +8,9 @@ import { AppFormField } from '../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../shared/components/ui/input.directive'
 import { AuthService } from './preview-auth.service'
 import { AppLogo } from '../../../../shared/components/app-logo'
+
+/** Usuario y contraseña del seed local (`npm run seed:auth`), para no teclearlos en cada arranque. */
+const DEV_CREDENTIALS = { email: 'admin@app.local', password: 'password123' }
 
 @Component({
   selector: 'app-login',
@@ -53,9 +56,12 @@ export class LoginComponent {
   readonly error = signal(false)
   readonly submitting = signal(false)
 
+  // Solo en desarrollo: un build de producción deja el formulario vacío.
+  private readonly _prefill = isDevMode() ? DEV_CREDENTIALS : { email: '', password: '' }
+
   readonly form = this._fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]]
+    email: [this._prefill.email, [Validators.required, Validators.email]],
+    password: [this._prefill.password, [Validators.required, Validators.minLength(8)]]
   })
 
   async login(): Promise<void> {
