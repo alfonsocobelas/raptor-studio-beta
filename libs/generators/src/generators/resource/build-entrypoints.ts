@@ -7,6 +7,7 @@ import {
   FieldDefinition,
   ResourceDefinition,
   resolveAccess,
+  StateTransition,
   VoDefinition
 } from '@raptor/schema'
 
@@ -64,6 +65,8 @@ export interface EntrypointBindings {
   accessDeclared: boolean
   /** Las transiciones de la máquina de estados (spec 43) */
   transitions: TransitionBinding[]
+  /** Solo las visibles en la ficha (spec 74): la curación `hidden` no toca endpoint ni kanban */
+  detailTransitions: TransitionBinding[]
   registerDtoFields: DtoFieldBinding[]
   updateDtoFields: DtoFieldBinding[]
   registerValidatorImports: string[]
@@ -201,7 +204,7 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
 
   const access = resolveAccess(definition)
 
-  const transitions = (definition.state?.transitions ?? []).map(t => ({
+  const bindTransition = (t: StateTransition): TransitionBinding => ({
     verb: t.name,
     method: names(t.name).propertyName,
     className: `${names(t.name).className}${n.className}`,
@@ -210,7 +213,11 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     // la visibilidad del botón ES la máquina: solo se pinta si el from incluye el estado actual
     fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`,
     roles: rolesArgs(access.transitions[t.name] ?? ['user'])
-  }))
+  })
+  const transitions = (definition.state?.transitions ?? []).map(bindTransition)
+  // la curación (spec 74): hidden quita el botón de la ficha y nada más — el resto de
+  // consumidores (controller, servicio front, kanban, procesos) leen la lista entera
+  const detailTransitions = (definition.state?.transitions ?? []).filter(t => !t.hidden).map(bindTransition)
 
   // mismos defectos que resolveFeatures (build-substitutions): edit/view abiertos, delete opt-in
   const canEdit = definition.list?.features?.edit ?? true
@@ -224,7 +231,8 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   const detailImports = [
     canDelete ? 'CAN_DELETE_ROLES' : null,
     canEdit ? 'CAN_EDIT_ROLES' : null,
-    (definition.state?.transitions?.length ?? 0) > 0 ? 'TRANSITION_ROLES' : null
+    // TRANSITION_ROLES solo si la ficha pinta algún botón (spec 74): con todo hidden, el import sobraría
+    detailTransitions.length > 0 ? 'TRANSITION_ROLES' : null
   ].filter((name): name is string => name !== null)
 
   return {
@@ -240,6 +248,7 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     canDeleteExpr: accessDeclared ? 'canDelete()' : 'canWrite()',
     accessDeclared,
     transitions,
+    detailTransitions,
     registerDtoFields,
     updateDtoFields,
     registerValidatorImports: collectValidators(registerDtoFields),

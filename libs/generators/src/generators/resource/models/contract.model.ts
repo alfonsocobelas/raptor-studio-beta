@@ -38,7 +38,8 @@ export const contract = defineResource({
     initial: 'active',
     transitions: [
       { name: 'terminate', label: 'Terminar', from: ['active', 'expiring'], to: 'terminated' },
-      { name: 'expire', label: 'Expirar', from: ['expiring'], to: 'expired' }
+      // hidden (spec 74): el gate de oro ejercita la curación — expire sin botón en la ficha
+      { name: 'expire', label: 'Expirar', from: ['expiring'], to: 'expired', hidden: true }
     ]
   },
   // spec 61: el kanban del gate de oro vive aquí — status es el campo de la máquina,

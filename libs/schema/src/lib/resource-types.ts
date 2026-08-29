@@ -369,6 +369,8 @@ export interface StateTransition {
   from: string[]
   /** Valor del enum destino */
   to: string
+  /** Curación de la ficha (spec 74): sin botón en el detalle. Endpoint, use case y kanban intactos. */
+  hidden?: boolean
 }
 
 export interface StateMachine {

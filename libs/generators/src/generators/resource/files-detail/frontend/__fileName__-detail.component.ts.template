@@ -16,7 +16,7 @@ import { <%- className %>DialogComponent, <%- className %>FormValue } from './<%
 <%_ } _%>
 import { <%- features.history ? `AuditEventDto, ${dtoName}` : dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service } from '../../../../../../core/services/<%- fileName %>.service'
-<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.transitions.length)) { _%>
+<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.detailTransitions.length)) { _%>
 import { <%- entry.detailAccessImports %> } from './<%- fileName %>-access'
 <%_ } _%>
 import { formatValue } from '../../../../../../shared/utils/format-value'
@@ -63,7 +63,7 @@ interface DetailRow {
         <div class="flex items-start justify-between gap-4">
           <h1 class="text-2xl font-bold tracking-tight">{{ item.<%- detail.titleField %> }}</h1>
           <div class="app-toolbar flex gap-2">
-<%_ entry.transitions.forEach(transition => { _%>
+<%_ entry.detailTransitions.forEach(transition => { _%>
             @if (<%- entry.accessDeclared ? `canTransition('${transition.verb}')` : 'canWrite()' %> && <%- transition.fromCheck %>) {
               <button
                 type="button"
@@ -187,7 +187,7 @@ export class <%- className %>DetailComponent {
   private readonly _route = inject(ActivatedRoute)
   private readonly _router = inject(Router)
   private readonly _service = inject(<%- className %>Service)
-<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.transitions.length)) { _%>
+<%_ if (entry.accessDeclared && (features.edit || features.delete || entry.detailTransitions.length)) { _%>
   private readonly _auth = inject(AuthService)
   private readonly _notify = inject(NotificationService)
 
@@ -204,7 +204,7 @@ export class <%- className %>DetailComponent {
     return role !== undefined && CAN_DELETE_ROLES.includes(role)
   })
 <%_ } _%>
-<%_ if (entry.transitions.length) { _%>
+<%_ if (entry.detailTransitions.length) { _%>
 
   /** Cada botón de transición obedece a los roles de su verbo en la matriz. */
   protected canTransition(verb: string): boolean {
@@ -212,7 +212,7 @@ export class <%- className %>DetailComponent {
     return role !== undefined && (TRANSITION_ROLES[verb] ?? []).includes(role)
   }
 <%_ } _%>
-<%_ } else if (features.edit || features.delete || entry.transitions.length) { _%>
+<%_ } else if (features.edit || features.delete || entry.detailTransitions.length) { _%>
   private readonly _auth = inject(AuthService)
   private readonly _notify = inject(NotificationService)
 
@@ -341,11 +341,11 @@ export class <%- className %>DetailComponent {
   }
 <%_ } _%>
 
-<%_ if (entry.transitions.length) { _%>
+<%_ if (entry.detailTransitions.length) { _%>
 
   /** Una transición en vuelo deshabilita todos los botones: no hay dobles saltos. */
   readonly transitioning = signal(false)
-<%_ entry.transitions.forEach(transition => { _%>
+<%_ entry.detailTransitions.forEach(transition => { _%>
 
   /** Transición «<%- transition.label %>» (spec 43): un 409 es el estado rechazándola — avisa y recarga. */
   async <%- transition.method %>(id: string): Promise<void> {
