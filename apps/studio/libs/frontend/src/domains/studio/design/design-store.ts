@@ -870,6 +870,35 @@ export class DesignStore {
     }))
   }
 
+  /**
+   * La curación de la ficha (spec 74): hidden quita el botón emitido, nada más.
+   * Al volver a mostrar, la clave desaparece del todo — un `hidden: false` residual
+   * ensuciaría el diseño guardado y el diff del app-schema.
+   */
+  setTransitionHidden(resource: string, name: string, hidden: boolean): boolean {
+    return this.mutateState(resource, machine => ({
+      ...machine,
+      transitions: machine.transitions.map(t => {
+        if (t.name !== name) return t
+        const { hidden: _dropped, ...rest } = t
+        return hidden ? { ...rest, hidden: true } : rest
+      })
+    }))
+  }
+
+  /** Reordena los botones de la ficha (spec 74): el orden del array ES el orden emitido. */
+  moveTransition(resource: string, name: string, delta: -1 | 1): boolean {
+    const machine = this._resources().find(r => r.name === resource)?.state
+    const index = machine?.transitions.findIndex(t => t.name === name) ?? -1
+    const target = index + delta
+    if (!machine || index < 0 || target < 0 || target >= machine.transitions.length) return false
+    return this.mutateState(resource, current => {
+      const transitions = [...current.transitions]
+      ;[transitions[index], transitions[target]] = [transitions[target], transitions[index]]
+      return { ...current, transitions }
+    })
+  }
+
   setInitialState(resource: string, value: string): boolean {
     return this.mutateState(resource, machine => ({ ...machine, initial: value }))
   }

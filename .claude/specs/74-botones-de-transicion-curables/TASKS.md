@@ -10,7 +10,7 @@
   `state-machine-detail.spec.ts` + fixture de oro con una transición oculta + `/golden-diff`
   (re-baseline consciente).
 
-- [ ] **TASK-02 — El canvas deja de mentir: la ficha del lienzo pinta los botones.**
+- [x] **TASK-02 — El canvas deja de mentir: la ficha del lienzo pinta los botones.** (2026-08-29, commit 639e098a)
   `canvas-detail` deriva los botones visibles de la máquina del draft (orden + label),
   cromo del emitido (hooks de piel). Guard de deriva canvas↔build-entrypoints. Gate
   `npm run web:build`.

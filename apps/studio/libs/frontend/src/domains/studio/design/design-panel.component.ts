@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core'
 import { CalendarConfigComponent } from './calendar-config.component'
+import { DetailActionsConfigComponent } from './detail-actions-config.component'
 import { KanbanConfigComponent } from './kanban-config.component'
 import { DesignStore } from './design-store'
 import { ChartConfigComponent } from './chart-config.component'
@@ -33,7 +34,7 @@ const PANEL_TABS: readonly PanelTabOption[] = [
 const COLUMN_BLOCKS: BlockKind[] = ['table', 'cards', 'fields', 'form']
 
 /** Bloques con panel de configuración propio. */
-const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpis']
+const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpis', 'fields']
 
 @Component({
   selector: 'studio-design-panel',
@@ -41,6 +42,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpis']
   imports: [
     InspectorComponent,
     CalendarConfigComponent,
+    DetailActionsConfigComponent,
     KanbanConfigComponent,
     KpiConfigComponent,
     KpisConfigComponent,
@@ -138,6 +140,7 @@ const CONFIGURABLE_BLOCKS: BlockKind[] = ['calendar', 'kanban', 'kpis']
           @case ('component') {
             @if (view.resource()) {
               <studio-kpis-config />
+              <studio-detail-actions-config [resource]="view.resource()" />
               <studio-calendar-config [resource]="view.resource()" />
               <studio-kanban-config [resource]="view.resource()" />
               <studio-kpi-config [resource]="view.resource()" />

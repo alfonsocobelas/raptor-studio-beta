@@ -817,6 +817,36 @@ describe('las transiciones de la máquina (spec 43)', () => {
     expect(machineOf(store)?.transitions).toEqual([])
   })
 
+  // La curación de la ficha (spec 74): ocultar el botón y reordenarlos. El endpoint no cambia.
+  it('ocultar marca hidden y volver a mostrar lo quita del todo (sin hidden: false residual)', () => {
+    const store = setup()
+    const [a, b] = store.resources()[0].fields[0].values!.map(v => v.value)
+    store.addTransition('solicitud', a, b)
+
+    expect(store.setTransitionHidden('solicitud', verb(b), true)).toBe(true)
+    expect(machineOf(store)?.transitions[0].hidden).toBe(true)
+
+    expect(store.setTransitionHidden('solicitud', verb(b), false)).toBe(true)
+    expect('hidden' in machineOf(store)!.transitions[0]).toBe(false)
+  })
+
+  it('mover reordena el array (el orden ES el de los botones emitidos) y respeta los bordes', () => {
+    const store = setup()
+    const [a, b, c] = store.resources()[0].fields[0].values!.map(v => v.value)
+    store.addTransition('solicitud', a, b)
+    store.addTransition('solicitud', a, c)
+
+    expect(store.moveTransition('solicitud', verb(c), -1)).toBe(true)
+    expect(machineOf(store)?.transitions.map(t => t.name)).toEqual([verb(c), verb(b)])
+
+    // ya está la primera: subir otra vez no hace nada y no rompe
+    expect(store.moveTransition('solicitud', verb(c), -1)).toBe(false)
+    expect(machineOf(store)?.transitions.map(t => t.name)).toEqual([verb(c), verb(b)])
+
+    expect(store.moveTransition('solicitud', verb(c), 1)).toBe(true)
+    expect(machineOf(store)?.transitions.map(t => t.name)).toEqual([verb(b), verb(c)])
+  })
+
   it('cambiar el estado inicial se aplica; un valor ajeno al enum no pasa el gate', () => {
     const store = setup()
     const [, b] = store.resources()[0].fields[0].values!.map(v => v.value)
