@@ -32,23 +32,8 @@ const FLOW_BLOCKS: FlowBlock[] = [
   providers: [provideIcons({ lucideCircleDot, lucideDiamond, lucidePlus, lucideSquare, lucideZap })],
   template: `
     <aside class="studio-rail flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r p-4">
-      <section>
-        <h2 class="studio-eyebrow mb-2 px-1">Bloques</h2>
-        @for (block of blocks; track block.kind) {
-          <button
-            type="button"
-            class="flow-block studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
-            [disabled]="blocked(block)"
-            [attr.data-testid]="'flow-block-' + block.kind"
-            [attr.title]="blockedReason(block)"
-            (click)="addBlock(block)"
-          >
-            <ng-icon [name]="block.icon" size="15" />
-            <span class="capitalize">{{ label(block.kind) }}</span>
-          </button>
-        }
-      </section>
-
+      <!-- Los flujos van ANTES que los bloques: el primer gesto del modo es elegir (o crear)
+           un flujo — sin uno la paleta entera está apagada. El raíl se lee en ese orden. -->
       <section>
         <h2 class="studio-eyebrow mb-2 px-1">Flujos</h2>
         @for (flow of store.flows(); track flow.name) {
@@ -118,6 +103,23 @@ const FLOW_BLOCKS: FlowBlock[] = [
           >
             <ng-icon class="text-brand" name="lucidePlus" size="14" />
             Nuevo flujo
+          </button>
+        }
+      </section>
+
+      <section>
+        <h2 class="studio-eyebrow mb-2 px-1">Bloques</h2>
+        @for (block of blocks; track block.kind) {
+          <button
+            type="button"
+            class="flow-block studio-ui mb-1.5 flex w-full items-center gap-2 rounded-[7px] border px-2 py-2 text-left transition-colors disabled:opacity-40"
+            [disabled]="blocked(block)"
+            [attr.data-testid]="'flow-block-' + block.kind"
+            [attr.title]="blockedReason(block)"
+            (click)="addBlock(block)"
+          >
+            <ng-icon [name]="block.icon" size="15" />
+            <span class="capitalize">{{ label(block.kind) }}</span>
           </button>
         }
       </section>

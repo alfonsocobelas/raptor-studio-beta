@@ -35,6 +35,15 @@ describe('FlowSidebarComponent', () => {
     expect(button?.className).toContain('bg-brand/8')
   })
 
+  // El primer gesto del modo es elegir (o crear) un flujo: sin uno, la paleta de
+  // bloques está apagada. El raíl lee en ese orden: primero los flujos, luego los bloques.
+  it('los flujos van antes que los bloques en el raíl', () => {
+    const fixture = mount()
+    const titulos = [...fixture.nativeElement.querySelectorAll('h2')].map((h: HTMLElement) => h.textContent?.trim())
+
+    expect(titulos).toEqual(['Flujos', 'Bloques'])
+  })
+
   it('ofrece los bloques que el contrato conoce, y ninguno inventado', () => {
     const fixture = mount()
     const bloques = fixture.nativeElement.querySelectorAll('[data-testid^="flow-block-"]')
