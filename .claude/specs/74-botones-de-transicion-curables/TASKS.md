@@ -3,7 +3,7 @@
 > Una tarea = un commit atómico en `develop`. TDD estricto; golden gate en las que tocan
 > plantillas o generator.ts.
 
-- [ ] **TASK-01 — Contrato + generador: `hidden` filtra el botón de la ficha.**
+- [x] **TASK-01 — Contrato + generador: `hidden` filtra el botón de la ficha.** (2026-08-29, commits b3a5bd08 + 657b8e81)
   `hidden?: boolean` en `StateTransition` (schema + draft + `draftToResource`).
   `build-entrypoints`: `entry.transitions` y los métodos del componente de ficha filtran
   `hidden`; endpoint, use case, handler y kanban intactos. TDD sobre

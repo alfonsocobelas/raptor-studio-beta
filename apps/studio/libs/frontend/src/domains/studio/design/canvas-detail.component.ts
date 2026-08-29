@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideArrowLeft, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
 import { DesignStore } from './design-store'
+import { detailTransitionActions } from './detail-transitions'
 import { buildSampleRows } from './mock-data'
 
 /**
@@ -27,6 +28,11 @@ import { buildSampleRows } from './mock-data'
         <div class="flex items-start justify-between gap-4">
           <h1 class="text-2xl font-bold tracking-tight">{{ v.title }}</h1>
           <div class="app-toolbar flex gap-2">
+            @for (action of v.actions; track action.name) {
+              <span class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                {{ action.label }}
+              </span>
+            }
             <span class="border-input flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
               <ng-icon name="lucidePencil" size="16" />
               Editar
@@ -66,6 +72,8 @@ export class CanvasDetailComponent {
     return {
       title,
       labelPlural: draft.labelPlural,
+      // los botones de transición que emitirá la ficha (spec 74): misma regla que el generador
+      actions: detailTransitionActions(draft.state),
       rows: draft.fields
         .filter(f => f.name !== titleField?.name)
         .map(f => ({ label: f.label, value: String(sample[f.name] ?? '—') }))
