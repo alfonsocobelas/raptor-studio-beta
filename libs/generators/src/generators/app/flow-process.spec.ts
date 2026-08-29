@@ -314,7 +314,7 @@ describe('app generator — los flujos emiten proceso (spec 39)', () => {
       ) ?? ''
 
     // los 5 nodos step del flujo, y solo ellos
-    expect(emitted.match(/^  async \w+\(/gm)?.map(m => m.trim())).toEqual([
+    expect(emitted.match(/^ {2}async \w+\(/gm)?.map(m => m.trim())).toEqual([
       'async presupuesto(',
       'async planifica(',
       'async montaje(',
