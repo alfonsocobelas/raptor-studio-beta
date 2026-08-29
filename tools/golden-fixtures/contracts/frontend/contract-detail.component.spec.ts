@@ -18,13 +18,7 @@ const record = () =>
 
 describe('ContractDetailComponent — ficha', () => {
   const setup = (id: string | null, findOne = vi.fn().mockResolvedValue(record())) => {
-    const service = {
-      findOne,
-      update: vi.fn(),
-      remove: vi.fn(),
-      terminate: vi.fn().mockResolvedValue(undefined),
-      expire: vi.fn().mockResolvedValue(undefined)
-    }
+    const service = { findOne, update: vi.fn(), remove: vi.fn(), terminate: vi.fn().mockResolvedValue(undefined) }
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -78,17 +72,6 @@ describe('ContractDetailComponent — ficha', () => {
     await component.terminate(record().id)
 
     expect(service.terminate).toHaveBeenCalledWith(record().id)
-    // la carga del constructor más la recarga tras transicionar
-    expect(findOne).toHaveBeenCalledTimes(2)
-    expect(component.transitioning()).toBe(false)
-  })
-
-  it('la transición «Expirar» llama al verbo del servicio y recarga la ficha', async () => {
-    const { component, findOne, service } = setup(record().id)
-
-    await component.expire(record().id)
-
-    expect(service.expire).toHaveBeenCalledWith(record().id)
     // la carga del constructor más la recarga tras transicionar
     expect(findOne).toHaveBeenCalledTimes(2)
     expect(component.transitioning()).toBe(false)

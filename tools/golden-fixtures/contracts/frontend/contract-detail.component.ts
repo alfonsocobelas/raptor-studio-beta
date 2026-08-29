@@ -59,17 +59,6 @@ interface DetailRow {
                 Terminar
               </button>
             }
-            @if (canWrite() && ['expiring'].includes(item.status)) {
-              <button
-                type="button"
-                class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-                [disabled]="transitioning()"
-                data-testid="transition-expire"
-                (click)="expire(item.id)"
-              >
-                Expirar
-              </button>
-            }
             @if (canWrite()) {
               <button
                 type="button"
@@ -215,20 +204,6 @@ export class ContractDetailComponent {
     } catch (e) {
       const message = (e as { error?: { message?: string } }).error?.message
       this._notify.error(message ?? 'No se pudo aplicar «Terminar»')
-    } finally {
-      this.transitioning.set(false)
-      await this.load()
-    }
-  }
-
-  /** Transición «Expirar» (spec 43): un 409 es el estado rechazándola — avisa y recarga. */
-  async expire(id: string): Promise<void> {
-    this.transitioning.set(true)
-    try {
-      await this._service.expire(id)
-    } catch (e) {
-      const message = (e as { error?: { message?: string } }).error?.message
-      this._notify.error(message ?? 'No se pudo aplicar «Expirar»')
     } finally {
       this.transitioning.set(false)
       await this.load()
