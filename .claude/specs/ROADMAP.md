@@ -555,3 +555,13 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     fase de la idea 37, o un endpoint de sugerencias del estudio). Se ata con las ideas 33, 34,
     36 y 37: cada patrón nuevo del corpus es un candidato a vocabulario del schema por regla
     de los dos.
+
+40. **Regenerar no borra los ficheros que el generador ya no emite** (2026-08-29, cazado en la
+    verificación de la spec 74). `apps/inmobiliaria` conserva seis `*-trash.component.ts` de
+    antes de la retirada de la papelera (2026-08-28); nadie los referencia (las rutas
+    regeneradas ya no los importan) pero `ng build` compila todo el árbol y revienta con
+    TS2551/TS2339 contra los servicios actuales. Con el serve vivo, además, aplica la trampa
+    del bundle viejo: el navegador enseña la app anterior y la regeneración parece no hacer
+    nada. Arreglo hoy: borrar los huérfanos a mano tras regenerar. Arreglo de verdad a
+    debatir: manifiesto de ficheros emitidos por generación y barrido de los que sobren
+    (cuidado con lo editado a mano y los huecos @ai fuera de los ficheros emitidos).
