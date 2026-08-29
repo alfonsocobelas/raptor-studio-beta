@@ -468,3 +468,90 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     **Añadido por la 68 y a vigilar**: `scopePresetCss()` es un mini-parser de CSS a mano. Hoy es
     defendible —el CSS de los presets es corto y nuestro—, pero es la primera pieza a revisar si
     algún día un preset escribe `@media`, selectores anidados o un `:root:not(...)`.
+
+33. **Concurrencia sobre datos: condiciones de carrera y bloqueos optimistas/pesimistas**
+    (2026-08-29, apuntado por Alfonso; hablado entre sesiones sin registrar). El caso canónico
+    es el stock: dos usuarios decrementan la misma existencia a la vez y el último en escribir
+    pisa al primero. Hoy el código emitido no tiene ninguna protección: ni columna de versión
+    (bloqueo optimista con 409 al chocar), ni `SELECT … FOR UPDATE` (pesimista), ni la
+    transacción cubre leer-decidir-escribir como unidad. Afecta también a las transiciones de
+    estado (dos «Facturar» simultáneos) y a los contadores/agregados. Forma candidata a debatir:
+    bloqueo optimista por defecto en el agregado emitido (campo `version` + retry o 409 con
+    mensaje de dominio), pesimista solo donde el schema lo pida. Toca dominio, repositorios
+    (TypeORM y Mongoose), use cases y el vocabulario del schema. Requiere brainstorming antes
+    de spec.
+
+34. **Entidad intermedia para desnormalizar** (2026-08-29, hablado entre sesiones). La spec 60
+    resolvió el lookup de campos desnormalizados en el use case, pero hay modelados que piden
+    una entidad intermedia real (p. ej. línea-de-pedido entre pedido y producto, que congela
+    precio y nombre en el momento de la venta). Hoy el schema solo sabe `ref` entre agregados y
+    `composition` (hija embebida); no hay forma de declarar «tabla intermedia con campos
+    propios copiados/congelados del referenciado». Decidir si es una extensión de `composition`
+    (hija cuyos campos se rellenan por lookup al crearla) o un tercer vocablo. Regla de los dos:
+    esperar al segundo caso real, pero dejar aquí contado el primero.
+
+35. **Clases hijas no-agregado (Contact) de punta a punta** (2026-08-29; precisa y ata la idea
+    15 del backlog de memoria). El backend YA emite composición entera (`build-composition.ts`,
+    `files-composition*`: hija en el dominio del padre, use cases add/update/remove, controlador
+    anidado, persistencia TypeORM con cascade — reproduce Customer→Contact de la referencia).
+    Lo que falta: (a) **front**: la ficha del padre no pinta la colección hija (tabla embebida +
+    diálogo); (b) **estudio**: `DraftResource` no tiene ranura de composición — el lienzo no
+    sabe decir «esto cuelga de aquello»; (c) persistencia Mongoose de la hija. Orden recomendado:
+    front primero (valor propio aunque el modelo siga siendo manual), después el gesto del lienzo.
+
+36. **Botones de acción manuales en el lienzo, asociados a un paso de flujo** (2026-08-29).
+    En inmobiliaria el diseño ya declara acciones como `publicar` y `retirar` que acaban como
+    botones en la app emitida — pero nacen del flujo, no del lienzo: no existe el gesto de
+    soltar/editar un botón en una vista del estudio y decirle «este botón dispara tal paso de
+    tal flujo». El diseñador debería poder: añadir un botón a la ficha/listado, elegir el paso
+    de flujo (o transición) al que se ata, y ver la vista previa igual que la app emitida.
+    Continúa la idea 3 del backlog («el flujo se ve y se pulsa») pero desde el otro extremo:
+    allí los botones se DERIVAN del flujo por convención; aquí se pide además el gesto manual
+    de colocarlos/curarlos en el lienzo. Mantener la doctrina: el botón siempre REFERENCIA un
+    paso existente (idea 9), nunca lógica dibujada.
+
+37. **Pipeline de generación por fases: instalar → rellenar huecos IA → validar → reparar**
+    (2026-08-29, pedido por Alfonso; extiende y concreta la idea 16 y el punto (b) de su
+    memoria). Fases nuevas en la pantalla de obra, después de instalar dependencias:
+    (1) **Ejecución de flujos/procesos con IA**: correr `fill-flow-slots` (ya existe como
+    generador) sobre los huecos `@ai:begin…@ai:end` como fase integrada de la generación, no
+    como paso manual; (2) **Validación**: ejecutar la suite de tests emitida (+ typecheck y,
+    si procede, arranque real como pedía la idea 16) con informe accionable; (3) **Reparación**:
+    si falla algo generado por IA, un ciclo acotado de corrección SOLO dentro de los huecos
+    `@ai:*` — nunca sobre el código canónico emitido (doctrina «las demos detectan, no se
+    parchean»: un fallo del determinista se arregla en el generador con test rojo + golden).
+    Pendiente de spec; decidir presupuesto de reintentos de la reparación y qué corre el gate
+    (vitest de la app emitida vs. suite completa).
+
+38. **La opción `database=mongo` debe funcionar al generar, de punta a punta** (2026-08-29).
+    La ranura existe (`schema.d.ts: database?: 'postgres' | 'mongo'`) y hay fixture de oro
+    `app-mongo` con repositorios Mongoose, pero la opción no está al día con todo lo que ha
+    entrado después por el camino TypeORM (aggregate/KPIs de las specs 71-72, composición,
+    borrado, transiciones…) ni verificada end-to-end desde el estudio (elegir Mongo en «Antes
+    de generar» → app que arranca, migra/seeds y pasa su suite contra un Mongo real). Tarea:
+    auditar qué emite hoy el camino mongo, completar los huecos y verificarlo con una demo
+    como se hizo con las de Postgres. Se ata con el fleco de la spec 38 (arrastre del adapter
+    Mongoose) y con la parte (c) de la idea 35.
+
+39. **Sistema de conocimiento de modelado para la IA de los bordes** (2026-08-29, apuntado por
+    Alfonso como importante). Diseñar/pensar un corpus de conocimiento (ficheros .md curados,
+    RAG, o lo que gane el debate) que le dé a la IA criterio de ARQUITECTO, no solo de
+    redactor: dado un problema del usuario («dos operarios descuentan el mismo stock a la
+    vez»), saber qué patrón de dominio aplica (bloqueo optimista, agregado que protege el
+    invariante, entidad intermedia, máquina de estados…) y traducirlo al vocabulario que el
+    schema ya sabe emitir. Dos consumidores:
+    (a) **el chat/puente del estudio** al redactar o ampliar un modelo — hoy propone entidades
+    y campos, pero no razona patrones (idea 33: nada le diría que el stock necesita versión);
+    (b) **guiar al usuario que construye a mano desde el lienzo** — detectar por las señales
+    del diseño (un campo `stock`, dos entidades que se referencian con datos congelados, un
+    enum que huele a estado) que hay un patrón conocido y sugerirlo con su porqué, estilo
+    «esto suele modelarse así».
+    Materia prima que ya existe: los patrones canónicos de `docs/referencia/`, las skills
+    `backend-patterns`/`frontend-patterns`/`schema-authoring`, los ADRs y este mismo ROADMAP —
+    hoy todo eso lo lee Claude Code en sesión, pero NO viaja al puente del chat del estudio ni
+    a los prompts de `fill-flow-slots`. Primer debate a dar: formato (md por patrón con
+    «señales → modelado → vocabulario del schema» probablemente baste; RAG solo si el corpus
+    crece hasta no caber en contexto — YAGNI) y dónde se inyecta (system prompt del puente,
+    fase de la idea 37, o un endpoint de sugerencias del estudio). Se ata con las ideas 33, 34,
+    36 y 37: cada patrón nuevo del corpus es un candidato a vocabulario del schema por regla
+    de los dos.
