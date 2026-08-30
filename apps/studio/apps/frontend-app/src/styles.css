@@ -168,11 +168,12 @@
   border-color: var(--border);
 }
 
-/* Las barras de arriba se quedan en el #1d1c21 de siempre, un paso por debajo de las
-   columnas. La regla vivía dentro del componente del lienzo y solo pintaba la barra
-   del estudio y el panel derecho; ahora las dos barras se pintan desde aquí. */
+/* Las barras de arriba van en #050101, casi negro (pedido 2026-08-30; antes #1d1c21),
+   varios pasos por debajo de las columnas. La regla vivía dentro del componente del
+   lienzo y solo pintaba la barra del estudio y el panel derecho; ahora las dos barras
+   se pintan desde aquí. */
 :root.dark .studio-chrome {
-  background-color: #1d1c21;
+  background-color: #050101;
   border-color: var(--border);
 }
 
