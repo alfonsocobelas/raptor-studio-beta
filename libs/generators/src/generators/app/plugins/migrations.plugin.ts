@@ -105,6 +105,8 @@ ${drops}
 
 function renderTable(model: ResourceDefinition, all: ResourceDefinition[] = []): string {
   const columns = Object.entries(model.fields).map(([name, field]) => renderColumn(model, name, field))
+  // spec 78: contador de bloqueo optimista; lo incrementa el update condicional del save
+  columns.push('version INT NOT NULL DEFAULT 1')
   if (model.audit) {
     columns.push('created_at TIMESTAMPTZ NOT NULL DEFAULT now()', 'updated_at TIMESTAMPTZ NOT NULL DEFAULT now()')
   }

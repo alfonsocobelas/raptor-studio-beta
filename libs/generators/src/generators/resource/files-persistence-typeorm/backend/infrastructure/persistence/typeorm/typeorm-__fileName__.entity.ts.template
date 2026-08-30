@@ -33,6 +33,10 @@ export class TypeOrm<%- className %>Entity {
   @<%- c.decorator %>(<%- c.argsSrc %>)
   <%- c.name %>!: <%- c.tsType %>
 <%_ }) _%>
+
+  // Contador de bloqueo optimista (spec 78): lo incrementa el update condicional del save
+  @Column('int', { default: 1 })
+  version!: number
 <%_ if (audit) { _%>
 
 <%_ if (auditComment) { _%>

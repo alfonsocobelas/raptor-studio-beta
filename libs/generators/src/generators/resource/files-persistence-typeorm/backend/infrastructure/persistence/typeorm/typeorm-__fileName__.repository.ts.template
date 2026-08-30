@@ -14,6 +14,7 @@ _%>
 <%_ if (tySyms.size) { _%>
 import { <%- [...tySyms].sort().join(', ') %> } from 'typeorm'
 <%_ } _%>
+import { ConcurrencyConflictError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -58,8 +59,17 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   // ya no viven en el agregado (materializa remove<%- Child %>). Usa this.client(), así que se une a la
   // transacción que abra el use case (el boundary transaccional vive en la aplicación, no aquí).
   // El agregado siempre llega hidratado, así que el diff nunca borra <%- kids %> por hidratación parcial.
+  // El check de versión vive SOLO en la fila del padre (spec 78): los hijos siguen a su agregado.
   async save(<%- propertyName %>: <%- className %>): Promise<void> {
-    await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
+    const entity = <%- className %>Mapper.toPersistence(<%- propertyName %>)
+    const result = await this.repository().update(
+      { id: entity.id, version: entity.version },
+      { ...entity, version: () => 'version + 1' }
+    )
+
+    if (!result.affected) {
+      throw new ConcurrencyConflictError('<%- className %>', entity.id)
+    }
 
     const <%- comp.childProp %>Repository = this.client().getRepository(TypeOrm<%- Child %>Entity)
     const <%- comp.childProp %>Entities = <%- className %>Mapper.<%- kids %>ToPersistence(<%- propertyName %>)
@@ -73,8 +83,17 @@ export class TypeOrm<%- className %>Repository extends TypeOrmRepository<TypeOrm
   }
 <%_ } else { _%>
 
+  // Escritura condicional (spec 78): solo pisa la fila si nadie la movió desde la lectura
   async save(<%- propertyName %>: <%- className %>): Promise<void> {
-    await this.repository().save(<%- className %>Mapper.toPersistence(<%- propertyName %>))
+    const entity = <%- className %>Mapper.toPersistence(<%- propertyName %>)
+    const result = await this.repository().update(
+      { id: entity.id, version: entity.version },
+      { ...entity, version: () => 'version + 1' }
+    )
+
+    if (!result.affected) {
+      throw new ConcurrencyConflictError('<%- className %>', entity.id)
+    }
   }
 <%_ } _%>
 <%_ if (app.removes && softContract) { _%>

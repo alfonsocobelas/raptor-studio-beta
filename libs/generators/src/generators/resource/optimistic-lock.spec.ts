@@ -43,6 +43,39 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(builder).toContain('version: 1')
   })
 
+  it('la entidad TypeORM lleva la columna version con default 1', async () => {
+    const tree = await generate('customer')
+    const entity = tree.read('out/backend/infrastructure/persistence/typeorm/typeorm-customer.entity.ts', 'utf-8') ?? ''
+
+    expect(entity).toMatch(/@Column\('int', \{ default: 1 \}\)\n\s*version!: number/)
+  })
+
+  it('el mapper TypeORM transporta version en ambas direcciones', async () => {
+    const tree = await generate('customer')
+    const mapper = tree.read('out/backend/infrastructure/persistence/typeorm/customer.mapper.ts', 'utf-8') ?? ''
+
+    expect(mapper).toContain('version: entity.version')
+    expect(mapper).toContain('entity.version = primitives.version')
+  })
+
+  it('el save TypeORM es condicional por version y choca con ConcurrencyConflictError', async () => {
+    const tree = await generate('customer')
+    const repo = tree.read('out/backend/infrastructure/persistence/typeorm/typeorm-customer.repository.ts', 'utf-8') ?? ''
+
+    expect(repo).toContain('ConcurrencyConflictError')
+    expect(repo).toContain("version: () => 'version + 1'")
+    expect(repo).toMatch(/update\(\s*\{ id: entity\.id, version: entity\.version \}/)
+    // register() sigue siendo un insert plano: no hay con quién chocar
+    expect(repo).toMatch(/async register[\s\S]*?repository\(\)\.save\(/)
+  })
+
+  it('el test de integración emitido cubre el choque de dos saves', async () => {
+    const tree = await generate('customer')
+    const test = tree.read('out/backend-tests-integration/typeorm-customer.repository.test.ts', 'utf-8') ?? ''
+
+    expect(test).toContain('ConcurrencyConflictError')
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

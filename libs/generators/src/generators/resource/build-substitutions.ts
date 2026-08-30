@@ -406,8 +406,11 @@ export function buildSubstitutions(
           .join(', ')} }`
     ),
     hasSharedConstraints: Object.values(definition.constraints ?? {}).some(v => typeof v === 'object' && 'shared' in v),
-    toDomainProps: fields.map(([name, f]) => renderToDomainProp(name, f)),
-    toPersistenceLines: fields.map(([name, f]) => renderToPersistenceLine(name, f)),
+    toDomainProps: [...fields.map(([name, f]) => renderToDomainProp(name, f)), 'version: entity.version'],
+    toPersistenceLines: [
+      ...fields.map(([name, f]) => renderToPersistenceLine(name, f)),
+      'entity.version = primitives.version'
+    ],
     route: definition.route ?? `/${definition.context}/${definition.plural}`,
     sharedDomainAlias: definition.sharedDomainAlias ?? '@raptor/shared/domain',
     ui: renderUiStrings(definition, wantsSoftDelete(definition) ? buildDragTree(definition, others).length > 0 : false),

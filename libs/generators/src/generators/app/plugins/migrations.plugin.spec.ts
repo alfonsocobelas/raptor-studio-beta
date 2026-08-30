@@ -53,6 +53,8 @@ describe('migrationsPlugin.apply', () => {
     // esquema y tabla del modelo
     expect(migration).toContain('CREATE SCHEMA IF NOT EXISTS dealership')
     expect(migration).toContain('CREATE TABLE dealership.vehicles')
+    // spec 78: contador de bloqueo optimista en toda tabla de agregado
+    expect(migration).toMatch(/version\s+INT NOT NULL DEFAULT 1/)
     // longitud resuelta desde las constraints del recurso (VIN.MAX = 17)
     expect(migration).toContain('VARCHAR(17)')
     // unicidad y pk con constraints nombradas
