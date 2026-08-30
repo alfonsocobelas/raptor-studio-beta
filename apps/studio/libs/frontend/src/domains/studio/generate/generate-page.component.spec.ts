@@ -535,6 +535,76 @@ describe('GeneratePageComponent', () => {
    * TASK-08 (spec 42): al terminar, la MISMA pantalla cuenta el desenlace. Nada de volver a
    * un paso aparte: la obra acaba y ahí mismo está la ruta, cómo arrancarla o por qué paró.
    */
+  /**
+   * Spec 75: el desenlace cuenta la validación — qué comprobaciones pasaron y, en rojo,
+   * de quién es el fallo: de un hueco IA (reparable) o del código canónico (defecto del
+   * generador, se arregla con test rojo + golden, jamás a mano).
+   */
+  describe('el informe de validación (spec 75)', () => {
+    const runner = (): GenerateRunner => TestBed.inject(GenerateRunner)
+
+    it('en verde enseña las comprobaciones pasadas', async () => {
+      const run = runner()
+      run.outcome.set('ok')
+      run.root.set('apps/mi-app')
+      run.checks.set([
+        { name: 'typecheck', status: 'ok' },
+        { name: 'unit', status: 'ok' },
+        { name: 'front', status: 'ok' }
+      ])
+
+      const fixture = await mount()
+
+      const report = at(fixture, 'validation-report')?.textContent ?? ''
+      expect(report).toContain('typecheck')
+      expect(report).toContain('front')
+    })
+
+    it('sin comprobaciones (generación sin instalar) el informe ni aparece', async () => {
+      const run = runner()
+      run.outcome.set('ok')
+      run.root.set('apps/mi-app')
+      run.checks.set([])
+
+      expect(at(await mount(), 'validation-report')).toBeNull()
+    })
+
+    it('un rojo de la IA se atribuye a sus huecos, con la salida del fallo a mano', async () => {
+      const run = runner()
+      run.outcome.set('failed')
+      run.failedCheck.set('unit')
+      run.suspects.set(['flow-cie'])
+      run.validationOutput.set('FAIL ciclo.process.ts — expected 2 to be 3')
+
+      const fixture = await mount()
+
+      const verdict = at(fixture, 'validation-verdict')?.textContent ?? ''
+      expect(verdict).toContain('unit')
+      expect(verdict).toContain('flow-cie')
+      expect(at(fixture, 'validation-log')?.textContent).toContain('expected 2 to be 3')
+    })
+
+    it('un rojo canónico dice que se arregla en el generador, no a mano', async () => {
+      const run = runner()
+      run.outcome.set('failed')
+      run.failedCheck.set('typecheck')
+      run.suspects.set([])
+      run.validationOutput.set('error TS2307 en uuid.vo.ts')
+
+      const verdict = at(await mount(), 'validation-verdict')?.textContent ?? ''
+
+      expect(verdict).toContain('generador')
+    })
+
+    it('cancelada después de generar, el desenlace dice que la app se conserva', async () => {
+      const run = runner()
+      run.outcome.set('cancelled')
+      run.root.set('apps/mi-app')
+
+      expect(text(await mount())).toContain('se conserva')
+    })
+  })
+
   describe('el desenlace', () => {
     const settle = async (): Promise<void> => {
       for (let i = 0; i < 6; i++) await Promise.resolve()

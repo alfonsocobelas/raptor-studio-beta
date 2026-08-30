@@ -287,7 +287,7 @@ export class GenerateRunner {
     }
 
     await this.readLines(response.body.getReader(), raw => {
-      const event = raw as ValidateEvent
+      const event = raw as unknown as ValidateEvent
       if (event.type === 'check' && event.name && event.status) {
         const check: CheckState = { name: event.name, status: event.status }
         this.checks.update(checks =>
@@ -401,7 +401,7 @@ export class GenerateRunner {
 
   /** El troceado no respeta las líneas: lo que quede a medias espera al siguiente trozo. */
   private async consume(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
-    await this.readLines(reader, event => this.apply(event as GenerateEvent))
+    await this.readLines(reader, event => this.apply(event as unknown as GenerateEvent))
   }
 
   /** El lector NDJSON común de todos los streams de la obra: parte por líneas y parsea. */

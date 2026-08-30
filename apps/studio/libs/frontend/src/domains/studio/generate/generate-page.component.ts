@@ -261,6 +261,23 @@ make local-setup   # postgres + npm install + seed
 make api           # http://localhost:3000/api/v1
 make web           # http://localhost:4200</pre
                   >
+                  @if (runner.checks().length) {
+                    <!-- el informe de validación (spec 75): lo que la propia app dijo de sí misma -->
+                    <div class="mt-4 border-t pt-4" data-testid="validation-report">
+                      <p class="studio-eyebrow mb-1">Validación de la app</p>
+                      @for (check of runner.checks(); track check.name) {
+                        <div class="studio-ui flex items-center gap-2 py-1" [attr.data-status]="check.status">
+                          <span aria-hidden="true">{{ check.status === 'ok' ? '✓' : check.status === 'failed' ? '✕' : '◐' }}</span>
+                          <span class="min-w-0 flex-1 font-mono text-[11.5px]">{{ check.name }}</span>
+                        </div>
+                      }
+                      @if (runner.repaired().length) {
+                        <p class="text-muted-foreground studio-ui mt-1">
+                          {{ runner.repaired().length }} hueco(s) reparado(s) por la IA bajo gate.
+                        </p>
+                      }
+                    </div>
+                  }
                   @if (runner.slotStates().length) {
                     <!-- los pasos de negocio que quedaron como huecos (spec 45): el puente los rellena bajo gate -->
                     <div class="mt-4 border-t pt-4" data-testid="fill-slots-section">
@@ -300,12 +317,32 @@ make web           # http://localhost:4200</pre
                     {{ outcome === 'cancelled' ? 'Cancelada' : 'La generación falló' }}
                   </p>
                   <p class="text-muted-foreground studio-ui mb-3">
-                    {{
-                      outcome === 'cancelled'
-                        ? 'El generador se paró y el código a medias se borró. No queda nada a medias.'
-                        : 'El registro técnico de abajo cuenta el motivo. Puedes ajustar las decisiones y volver a intentarlo.'
-                    }}
+                    {{ stopExplanation(outcome) }}
                   </p>
+                  @if (runner.validationOutput(); as failure) {
+                    <!-- la atribución del rojo (spec 75): hueco IA reparable vs defecto del generador -->
+                    <div class="mb-3" data-testid="validation-verdict">
+                      <p class="studio-ui text-foreground mb-1">
+                        La comprobación <code class="font-mono">{{ runner.failedCheck() }}</code> quedó en rojo.
+                      </p>
+                      <p class="text-muted-foreground studio-ui">
+                        @if (runner.suspects().length) {
+                          Huecos IA implicados:
+                          <code class="font-mono">{{ runner.suspects().join(', ') }}</code
+                          >. La reparación acotada ya lo intentó; puedes reintentar el relleno o editar el hueco a mano.
+                        } @else {
+                          Sin huecos IA implicados: es un defecto del generador. Se arregla allí con test rojo +
+                          diff de oro, nunca parcheando esta app a mano.
+                        }
+                      </p>
+                      <details class="studio-box mt-2" data-testid="validation-log">
+                        <summary class="studio-eyebrow cursor-pointer">Salida del fallo</summary>
+                        <pre class="mt-2 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-[11px]">{{
+                          failure
+                        }}</pre>
+                      </details>
+                    </div>
+                  }
                   <button
                     type="button"
                     class="studio-cta border-input border"
@@ -388,6 +425,16 @@ export class GeneratePageComponent {
   protected readonly validName = computed(() => KEBAB.test(this.name()))
   /** «1 min 12 s» mientras dura: el mismo segundero que lleva el runner, en palabras. */
   protected readonly clock = computed(() => spelled(this.runner.seconds()))
+
+  /** Por qué paró: cancelar antes o después de generar no es lo mismo (spec 75). */
+  protected stopExplanation(outcome: string): string {
+    if (outcome !== 'cancelled') {
+      return 'El registro técnico de abajo cuenta el motivo. Puedes ajustar las decisiones y volver a intentarlo.'
+    }
+    return this.runner.root()
+      ? `Se pararon las fases finales; la app generada en ${this.runner.root()} se conserva.`
+      : 'El generador se paró y el código a medias se borró. No queda nada a medias.'
+  }
 
   /** El recibo del desenlace bueno: «120 ficheros · 1 min 32 s», medidos, no estimados. */
   protected readonly receipt = computed(() => {
