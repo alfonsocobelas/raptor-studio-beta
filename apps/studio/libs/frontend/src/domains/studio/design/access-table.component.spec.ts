@@ -396,3 +396,45 @@ describe('AccessTableComponent', () => {
     })
   })
 })
+
+describe('roles personalizados en la tabla (spec 76)', () => {
+  let store: DesignStore
+  let ui: AccessUiService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    ui = TestBed.inject(AccessUiService)
+    ui.search.set('')
+    ui.onlyWithAccess.set(false)
+    ui.pivot.set('role')
+    store.addResource('Cliente')
+    store.addRole({ name: 'perito', label: 'Perito' })
+  })
+
+  it('con el rol personalizado activo, la celda conmuta y persiste su permiso', () => {
+    ui.role.set('perito')
+    const fixture = mount()
+
+    expect(fixture.nativeElement.textContent).toContain('Perito')
+    expect(pressed(fixture, 'access-cell-cliente-view')).toBe(false)
+
+    testId(fixture, 'access-cell-cliente-view')?.click()
+    fixture.detectChanges()
+
+    expect(pressed(fixture, 'access-cell-cliente-view')).toBe(true)
+    expect(store.resources()[0].access?.view).toContain('perito')
+  })
+
+  it('el pivote Entidad pinta una fila por rol, incluido el personalizado', () => {
+    ui.pivot.set('entity')
+    const fixture = mount()
+
+    expect(testId(fixture, 'access-ecell-perito-view')).not.toBeNull()
+
+    testId(fixture, 'access-ecell-perito-create')?.click()
+    fixture.detectChanges()
+
+    expect(store.resources()[0].access?.create).toContain('perito')
+  })
+})

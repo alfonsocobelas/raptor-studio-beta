@@ -73,3 +73,72 @@ describe('AccessSidebarComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Admin siempre puede todo')
   })
 })
+
+describe('roles personalizados en el raíl (spec 76)', () => {
+  let ui: AccessUiService
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    ui = TestBed.inject(AccessUiService)
+    ui.role.set('user')
+    ui.pivot.set('role')
+  })
+
+  function input(fixture: ReturnType<typeof mount>, id: string): HTMLInputElement | null {
+    return fixture.nativeElement.querySelector(`[data-testid="${id}"]`)
+  }
+
+  it('«+ Nuevo rol» abre el formulario; confirmar declara el rol, lo pinta y lo activa', async () => {
+    const { DesignStore } = await import('./design-store')
+    const store = TestBed.inject(DesignStore)
+    const fixture = mount()
+
+    testId(fixture, 'access-role-add')?.click()
+    fixture.detectChanges()
+
+    const label = input(fixture, 'access-role-new-label')
+    expect(label).not.toBeNull()
+    label!.value = 'Perito'
+    label!.dispatchEvent(new Event('input'))
+    fixture.detectChanges()
+    testId(fixture, 'access-role-new-confirm')?.click()
+    fixture.detectChanges()
+
+    expect(store.roles()).toEqual([{ name: 'perito', label: 'Perito' }])
+    expect(testId(fixture, 'access-role-perito')?.textContent).toContain('Perito')
+    expect(ui.role()).toBe('perito')
+  })
+
+  it('un rol inválido enseña el motivo y no declara nada', async () => {
+    const { DesignStore } = await import('./design-store')
+    const store = TestBed.inject(DesignStore)
+    const fixture = mount()
+
+    testId(fixture, 'access-role-add')?.click()
+    fixture.detectChanges()
+    const label = input(fixture, 'access-role-new-label')
+    label!.value = 'Admin'
+    label!.dispatchEvent(new Event('input'))
+    fixture.detectChanges()
+    testId(fixture, 'access-role-new-confirm')?.click()
+    fixture.detectChanges()
+
+    expect(store.roles()).toEqual([])
+    expect(fixture.nativeElement.querySelector('[data-testid="access-role-new-error"]')?.textContent).toBeTruthy()
+  })
+
+  it('quitar un rol personalizado lo borra del catálogo y devuelve el activo a Usuario', async () => {
+    const { DesignStore } = await import('./design-store')
+    const store = TestBed.inject(DesignStore)
+    store.addRole({ name: 'perito', label: 'Perito' })
+    ui.role.set('perito')
+    const fixture = mount()
+
+    testId(fixture, 'access-role-remove-perito')?.click()
+    fixture.detectChanges()
+
+    expect(store.roles()).toEqual([])
+    expect(ui.role()).toBe('user')
+    expect(testId(fixture, 'access-role-perito')).toBeNull()
+  })
+})

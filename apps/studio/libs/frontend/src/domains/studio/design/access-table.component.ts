@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms'
 import { AppSelect, type AppSelectOption } from '../../../shared/components/ui/select'
 import {
   accessRows,
+  grantableRoles,
   toggleCapability,
   type AccessActorRole,
   type AccessCapabilityCell,
@@ -12,8 +13,7 @@ import { AccessUiService } from './access-ui.service'
 import { DesignStore } from './design-store'
 import { StudioModeService } from './studio-mode.service'
 
-const ROLE_LABELS = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta' } as const
-const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
+const FIXED_LABELS: Record<string, string> = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta' }
 
 /**
  * La tabla central de Accesos (spec 49, mockups 30A/31B): qué puede hacer el rol activo.
@@ -76,14 +76,14 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
               </tr>
             </thead>
             <tbody>
-              @for (role of roleRows; track role) {
+              @for (role of roleRows(); track role) {
                 <tr
                   class="border-border/60 border-b last:border-b-0"
                   [class.opacity-70]="role === 'admin'"
                   [class.border-b-0]="roleFlow() === role"
                 >
                   <td class="px-4 py-3.5">
-                    <span class="block font-medium">{{ roleLabels[role] }}</span>
+                    <span class="block font-medium">{{ roleLabels()[role] }}</span>
                     @if (role === 'admin') {
                       <span class="studio-eyebrow mt-0.5 block">Todo</span>
                     }
@@ -95,7 +95,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                         class="access-mark hover:bg-foreground/5 mx-auto flex h-8 w-8 items-center justify-center rounded-md text-base leading-none transition-colors"
                         [class]="cellClasses(cell, role)"
                         [attr.aria-pressed]="granted(cell, role)"
-                        [attr.aria-label]="cell.label + ' — ' + roleLabels[role]"
+                        [attr.aria-label]="cell.label + ' — ' + roleLabels()[role]"
                         [disabled]="role === 'admin'"
                         [attr.data-testid]="'access-ecell-' + role + '-' + cell.capability"
                         (click)="toggleAs(selectedRow()!, cell, role)"
@@ -133,7 +133,7 @@ const ROLE_ROWS: AccessActorRole[] = ['admin', 'user', 'viewer']
                       [attr.data-testid]="'access-eflow-panel-' + role"
                     >
                       <div class="studio-eyebrow mb-2.5">
-                        Transiciones de {{ selectedRow()!.label }} · {{ roleLabels[role] }}
+                        Transiciones de {{ selectedRow()!.label }} · {{ roleLabels()[role] }}
                       </div>
                       <div class="flow-grid">
                         @for (cell of transitionCells(selectedRow()!); track cell.capability) {
@@ -447,7 +447,19 @@ export class AccessTableComponent {
   protected readonly ui = inject(AccessUiService)
   protected readonly modeService = inject(StudioModeService)
 
-  protected readonly roleLabel = computed(() => ROLE_LABELS[this.ui.role()])
+  /** Etiquetas por rol: las fijas más las declaradas en el diseño (spec 76). */
+  protected readonly roleLabels = computed<Record<string, string>>(() => ({
+    ...FIXED_LABELS,
+    ...Object.fromEntries(this.store.roles().map(role => [role.name, role.label]))
+  }))
+
+  /** Filas del pivote Entidad: los fijos delante, los personalizados en su orden declarado. */
+  protected readonly roleRows = computed<AccessActorRole[]>(() => [
+    'admin',
+    ...grantableRoles(this.store.roles())
+  ])
+
+  protected readonly roleLabel = computed(() => this.roleLabels()[this.ui.role()] ?? this.ui.role())
 
   /**
    * La fila con el flujo desplegado, una sola a la vez y por pivote. Es estado de UI VIVA:
@@ -477,7 +489,7 @@ export class AccessTableComponent {
 
   protected flowLabel(row: AccessTableRow, role: AccessActorRole): string {
     const total = this.transitionCells(row).length
-    return `Transiciones de ${row.label} — ${this.flowGranted(row, role)} de ${total} para ${ROLE_LABELS[role]}`
+    return `Transiciones de ${row.label} — ${this.flowGranted(row, role)} de ${total} para ${this.roleLabels()[role]}`
   }
 
   protected readonly rows = computed<AccessTableRow[]>(() => {
@@ -494,9 +506,6 @@ export class AccessTableComponent {
   protected readonly hasTransitions = computed(() =>
     this.rows().some(row => row.cells.some(c => c.kind === 'transition'))
   )
-
-  protected readonly roleRows = ROLE_ROWS
-  protected readonly roleLabels = ROLE_LABELS
 
   /** La entidad del pivote Entidad: la elegida, o la primera del diseño si no hay elección. */
   protected readonly selectedRow = computed<AccessTableRow | undefined>(() => {
@@ -542,7 +551,10 @@ export class AccessTableComponent {
     if (role === 'admin') return
     const resource = this.store.resources().find(r => r.name === row.name)
     if (!resource) return
-    this.store.setResourceAccess(row.name, toggleCapability(resource, cell.capability, role))
+    this.store.setResourceAccess(
+      row.name,
+      toggleCapability(resource, cell.capability, role, grantableRoles(this.store.roles()))
+    )
   }
 
   protected onSearch(event: Event): void {
