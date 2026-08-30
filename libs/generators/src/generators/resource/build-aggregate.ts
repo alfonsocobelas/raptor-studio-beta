@@ -115,18 +115,22 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     ctorParams: [
       `private readonly _id: ${idClass}`,
       ...members.map(c => `private _${c.name}: ${memberType(c)}`),
-      ...(period ? ['private _period: Period'] : [])
+      ...(period ? ['private _period: Period'] : []),
+      // spec 78: contador de bloqueo optimista; lo incrementa el repositorio al persistir, nunca el dominio
+      'private readonly _version: number'
     ],
     getterBlocks: [
       `  get id(): ${idClass} {\n    return this._id\n  }`,
       ...members.map(c => `  get ${c.name}(): ${memberType(c)} {\n    return this._${c.name}\n  }`),
-      ...(period ? ['  get period(): Period {\n    return this._period\n  }'] : [])
+      ...(period ? ['  get period(): Period {\n    return this._period\n  }'] : []),
+      '  get version(): number {\n    return this._version\n  }'
     ],
     createArgs: [
       'props.id',
       // el estado no viaja en props: toda entidad nueva nace en el valor inicial (spec 43)
       ...members.map(c => (c.isState ? `${c.voName}.initial()` : c.sync ? syncCreateDefault(c) : `props.${c.name}`)),
-      ...(period ? ['props.period'] : [])
+      ...(period ? ['props.period'] : []),
+      '1'
     ],
     registerArgs: [
       `id: ${idClass}.create(props.id)`,
@@ -138,11 +142,13 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
     fromPrimitivesArgs: [
       `${idClass}.create(props.id)`,
       ...members.map(c => fromPrimitivesArg(c)),
-      ...(period ? [periodCreate(period, 'props')] : [])
+      ...(period ? [periodCreate(period, 'props')] : []),
+      'props.version'
     ],
     toPrimitivesLines: [
       'id: this._id.value',
-      ...ctxs.map(c => toPrimitivesLine(c, period)).filter((l): l is string => l !== null)
+      ...ctxs.map(c => toPrimitivesLine(c, period)).filter((l): l is string => l !== null),
+      'version: this._version'
     ],
     updateGuardBlocks: [...editable.map(c => updateGuard(c)), ...(period ? [periodUpdateGuard(period)] : [])],
     uniquenessMethods: [
@@ -155,7 +161,7 @@ export function renderAggregate(definition: ResourceDefinition): AggregateBindin
       ...members.filter(c => !c.sync && !c.isState).map(c => `${c.name}: ${memberType(c)}`),
       ...(period ? ['period: Period'] : [])
     ],
-    primitivePropsLines: ['id: string', ...ctxs.map(c => primitiveLine(c))],
+    primitivePropsLines: ['id: string', ...ctxs.map(c => primitiveLine(c)), 'version: number'],
     updateOmitKeys: [
       'id',
       ...ctxs.filter(c => c.sync || c.isState || (c.maint && !c.field.updatable)).map(c => c.name)

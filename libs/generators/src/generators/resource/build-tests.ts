@@ -134,7 +134,7 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     uniqueFinders,
     portImports: renderPortImports(definition, uniques),
     builderImports: renderBuilderImports(definition, ctxs, moduleBase, contextShared, globalShared),
-    builderDefaultLines: ctxs.map(c => `${c.name}: ${builderDefault(definition, c)}`),
+    builderDefaultLines: [...ctxs.map(c => `${c.name}: ${builderDefault(definition, c)}`), 'version: 1'],
     builderWiths: withFields.map(c => ({ cap: cap(c.name), name: c.name, tsType: builderWithType(c) })),
     builderCreateArgs: [
       `id: ${className}Id.create(this.props.id)`,
