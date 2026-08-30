@@ -57,6 +57,8 @@ const SYSTEM_PROMPT = [
   '    {kind:"attachments", resource} subida de ficheros',
   '  Una vista puede combinar varios bloques (p. ej. kpis + table, o fields + attachments).',
   '  El orden de vistas gobierna el menú; todo bloque referencia entidades de resources.',
+  '- roles (opcional): roles ADICIONALES a admin/user/viewer, [{name: kebab-case, label}].',
+  '  Solo si el usuario los pide; las matrices access de las entidades pueden otorgarles capacidades.',
   '',
   'Cada campo lleva samples: 10 valores de ejemplo REALISTAS y coherentes con el negocio',
   '(nombres de producto reales, precios con céntimos, ciudades, referencias tipo XXX-1041,',

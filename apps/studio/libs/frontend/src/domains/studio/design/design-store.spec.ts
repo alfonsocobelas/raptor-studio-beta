@@ -1008,3 +1008,72 @@ describe('DesignStore — puertos locales', () => {
     expect(store.lastError()).toContain('fantasma')
   })
 })
+
+describe('roles personalizados del diseño (spec 76)', () => {
+  const withResource = (): DesignStore => {
+    const store = new DesignStore()
+    store.addPage('list', 'Vehículos')
+    return store
+  }
+
+  it('addRole declara el rol, viaja en el app-schema y la matriz puede otorgarle', () => {
+    const store = withResource()
+
+    expect(store.addRole({ name: 'perito', label: 'Perito' })).toBe(true)
+    expect(store.roles()).toEqual([{ name: 'perito', label: 'Perito' }])
+    expect(store.toAppSchema().roles).toEqual([{ name: 'perito', label: 'Perito' }])
+    expect(
+      store.setResourceAccess('vehiculo', { view: ['user', 'viewer', 'perito'], create: [], edit: [], delete: [] })
+    ).toBe(true)
+  })
+
+  it('sin declarar el rol, la matriz no puede otorgarle (mismo gate que el schema)', () => {
+    const store = withResource()
+
+    expect(
+      store.setResourceAccess('vehiculo', { view: ['perito'], create: [], edit: [], delete: [] })
+    ).toBe(false)
+    expect(store.lastError()).toMatch(/perito/)
+  })
+
+  it('rechaza un rol reservado y un duplicado, con el motivo en lastError', () => {
+    const store = withResource()
+
+    expect(store.addRole({ name: 'admin', label: 'Jefe' })).toBe(false)
+    expect(store.lastError()).toMatch(/reserved/)
+
+    expect(store.addRole({ name: 'perito', label: 'Perito' })).toBe(true)
+    expect(store.addRole({ name: 'perito', label: 'Otro' })).toBe(false)
+  })
+
+  it('removeRole limpia el rol de todas las matrices del diseño', () => {
+    const store = withResource()
+    store.addRole({ name: 'perito', label: 'Perito' })
+    store.setResourceAccess('vehiculo', { view: ['user', 'perito'], create: ['perito'], edit: [], delete: [] })
+
+    expect(store.removeRole('perito')).toBe(true)
+
+    expect(store.roles()).toEqual([])
+    const access = store.resources()[0].access
+    expect(access?.view).toEqual(['user'])
+    expect(access?.create).toEqual([])
+  })
+
+  it('applyExternal carga los roles del diseño y sin roles los borra', () => {
+    const store = withResource()
+    store.addRole({ name: 'perito', label: 'Perito' })
+
+    const design = structuredClone({
+      appName: store.appName(),
+      resources: store.resources(),
+      pages: store.pages(),
+      roles: [{ name: 'tramitador', label: 'Tramitador' }]
+    })
+    expect(store.applyExternal(design)).toBe(true)
+    expect(store.roles()).toEqual([{ name: 'tramitador', label: 'Tramitador' }])
+
+    const sinRoles = structuredClone({ appName: store.appName(), resources: [], pages: [] })
+    expect(store.applyExternal(sinRoles)).toBe(true)
+    expect(store.roles()).toEqual([])
+  })
+})

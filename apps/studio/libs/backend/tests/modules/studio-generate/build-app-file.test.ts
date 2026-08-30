@@ -135,3 +135,12 @@ describe('buildAppFile — los flujos cruzan la frontera (spec 28)', () => {
     expect(() => buildAppFile(design, 'vetcare')).toThrow(/fantasma/)
   })
 })
+
+describe('buildAppFile — roles personalizados (spec 76)', () => {
+  it('los roles del diseño viajan al app-file; sin roles no se declara la clave', () => {
+    const roles = [{ name: 'perito', label: 'Perito' }]
+
+    expect(buildAppFile({ ...design, roles }, 'clinica').roles).toEqual(roles)
+    expect(buildAppFile(design, 'clinica').roles).toBeUndefined()
+  })
+})

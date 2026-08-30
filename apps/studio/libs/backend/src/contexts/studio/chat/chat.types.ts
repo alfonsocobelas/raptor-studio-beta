@@ -1,4 +1,4 @@
-import type { BusinessBrief, BusinessFlow, PortsDefinition } from '@raptor/schema'
+import type { BusinessBrief, BusinessFlow, PortsDefinition, RoleDefinition } from '@raptor/schema'
 import type { DesignPage, DraftResource } from '@app/shared/domain'
 
 export interface ChatMessage {
@@ -19,6 +19,8 @@ export interface DesignPayload {
   brief?: BusinessBrief
   /** Procesos de negocio dibujados o propuestos (spec 28); nunca generan código */
   flows?: BusinessFlow[]
+  /** Roles personalizados además de admin/user/viewer (spec 76) */
+  roles?: RoleDefinition[]
 }
 
 /** Lo que propone la IA: un reply breve y el diseño COMPLETO resultante (nunca código). */

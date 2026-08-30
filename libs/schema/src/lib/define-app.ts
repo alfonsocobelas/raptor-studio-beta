@@ -25,7 +25,7 @@ export function defineApp(definition: AppDefinition): AppDefinition {
   const problems = [
     ...validateIdentity(definition),
     ...validateTheme(definition),
-    ...validateRoles(definition.roles),
+    ...roleProblems(definition.roles),
     ...validatePages(definition.pages),
     ...validateFlows(definition.flows),
     ...briefProblems(definition.brief)
@@ -50,9 +50,10 @@ const RESERVED_ROLE_NAMES = ['admin', 'user', 'viewer'] as const
 /**
  * Roles personalizados (spec 76): actores extra de la matriz de accesos. Los fijos
  * (admin implícito, user, viewer) no se declaran; el nombre casa con el VARCHAR(20)
- * de la migración IAM y con los miembros del enum emitido.
+ * de la migración IAM y con los miembros del enum emitido. Exportada para que el
+ * estudio aplique EXACTAMENTE el mismo gate al declarar roles (patrón briefProblems).
  */
-function validateRoles(roles: AppDefinition['roles']): string[] {
+export function roleProblems(roles: AppDefinition['roles']): string[] {
   if (roles === undefined) return []
   const problems: string[] = []
 

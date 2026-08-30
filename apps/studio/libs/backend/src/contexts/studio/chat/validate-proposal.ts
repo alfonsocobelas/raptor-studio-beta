@@ -1,4 +1,4 @@
-import { BRIEF_LIMITS, briefProblems, defineResource, validateFlows } from '@raptor/schema'
+import { BRIEF_LIMITS, briefProblems, defineResource, roleProblems, validateFlows } from '@raptor/schema'
 import { draftToResource } from '@app/shared/domain'
 import type { DesignPayload } from './chat.types'
 
@@ -13,6 +13,11 @@ export function validateDesign(design: DesignPayload): DesignPayload {
   const briefIssues = briefProblems(design.brief)
   if (briefIssues.length) {
     throw new Error(`El brief no pasa el gate: ${briefIssues.join('; ')}`)
+  }
+  // los roles pasan por el MISMO gate que defineApp exigirá al generar (spec 76)
+  const roleIssues = roleProblems(design.roles)
+  if (roleIssues.length) {
+    throw new Error(`Los roles no pasan el gate: ${roleIssues.join('; ')}`)
   }
   for (const resource of design.resources) {
     if (resource.brief !== undefined) {
@@ -120,8 +125,9 @@ export function validateDesign(design: DesignPayload): DesignPayload {
     }
   }
 
+  const extraRoles = (clean.roles ?? []).map(role => role.name)
   const registry = Object.fromEntries(
-    clean.resources.map(r => [r.name, defineResource(draftToResource(r, clean.appName, clean.resources))])
+    clean.resources.map(r => [r.name, defineResource(draftToResource(r, clean.appName, clean.resources), { extraRoles })])
   )
   for (const page of clean.pages) {
     for (const block of page.blocks) {

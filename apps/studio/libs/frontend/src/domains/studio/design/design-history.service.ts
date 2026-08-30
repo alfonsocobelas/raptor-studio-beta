@@ -157,7 +157,8 @@ export class DesignHistoryService {
       pages: this.store.pages(),
       ...(this.store.flows().length ? { flows: this.store.flows() } : {}),
       ...(this.store.brief() ? { brief: this.store.brief() } : {}),
-      ...(this.store.ports() ? { ports: this.store.ports() } : {})
+      ...(this.store.ports() ? { ports: this.store.ports() } : {}),
+      ...(this.store.roles().length ? { roles: this.store.roles() } : {})
     }
   }
 

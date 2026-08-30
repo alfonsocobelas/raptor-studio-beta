@@ -5,6 +5,7 @@ import {
   briefProblems,
   defineApp,
   defineResource,
+  roleProblems,
   type AccessDefinition,
   type AppDefinition,
   type BusinessBrief,
@@ -14,7 +15,8 @@ import {
   type StateMachine,
   type FlowNodeKind,
   type PortsDefinition,
-  type ResourceDefinition
+  type ResourceDefinition,
+  type RoleDefinition
 } from '@raptor/schema'
 import {
   FLOW_BRANCHES,
@@ -171,6 +173,8 @@ export interface Design {
   brief?: BusinessBrief
   /** Puertos con los que la app correrá en local; ausente = los defectos del generador */
   ports?: PortsDefinition
+  /** Roles personalizados además de admin/user/viewer (spec 76) */
+  roles?: RoleDefinition[]
 }
 
 /**
@@ -186,6 +190,7 @@ export class DesignStore {
   private readonly _flows = signal<BusinessFlow[]>([])
   private readonly _brief = signal<BusinessBrief | undefined>(undefined)
   private readonly _ports = signal<PortsDefinition | undefined>(undefined)
+  private readonly _roles = signal<RoleDefinition[]>([])
   private readonly _lastError = signal<string | null>(null)
 
   readonly appName = this._appName.asReadonly()
@@ -194,6 +199,7 @@ export class DesignStore {
   readonly flows = this._flows.asReadonly()
   readonly brief = this._brief.asReadonly()
   readonly ports = this._ports.asReadonly()
+  readonly roles = this._roles.asReadonly()
   readonly lastError = this._lastError.asReadonly()
 
   /** Resource-schemas canónicos derivados de las entidades del diseño. */
@@ -215,6 +221,52 @@ export class DesignStore {
    */
   setPorts(ports: PortsDefinition | undefined): void {
     this._ports.set(ports)
+  }
+
+  /** Declara un rol personalizado; el gate es EXACTAMENTE el del schema (spec 76). */
+  addRole(role: RoleDefinition): boolean {
+    const next = [...this._roles(), role]
+    const problems = roleProblems(next)
+    if (problems.length) {
+      this._lastError.set(`El rol no pasa el gate: ${problems.join('; ')}`)
+      return false
+    }
+    this._roles.set(next)
+    this._lastError.set(null)
+    return true
+  }
+
+  /** Quita el rol del catálogo Y de todas las matrices: lo marcado es lo que hay. */
+  removeRole(name: string): boolean {
+    if (!this._roles().some(role => role.name === name)) {
+      this._lastError.set(`No existe el rol «${name}»`)
+      return false
+    }
+    const roles = this._roles().filter(role => role.name !== name)
+    const strip = (granted: string[] | undefined): string[] | undefined =>
+      granted?.filter(role => role !== name)
+    const resources = this._resources().map(resource => {
+      if (!resource.access) return resource
+      const access = resource.access
+      return {
+        ...resource,
+        access: {
+          ...(access.view ? { view: strip(access.view) } : {}),
+          ...(access.create ? { create: strip(access.create) } : {}),
+          ...(access.edit ? { edit: strip(access.edit) } : {}),
+          ...(access.delete ? { delete: strip(access.delete) } : {}),
+          ...(access.manage ? { manage: strip(access.manage) } : {}),
+          ...(access.transitions
+            ? {
+                transitions: Object.fromEntries(
+                  Object.entries(access.transitions).map(([verb, granted]) => [verb, strip(granted) ?? []])
+                )
+              }
+            : {})
+        }
+      }
+    })
+    return this.mutate(resources, this._pages(), undefined, roles)
   }
 
   /** El brief de la app pasa por los MISMOS topes que el schema (spec 22). */
@@ -1184,7 +1236,8 @@ export class DesignStore {
         resource => this._resources().find(r => r.name === resource)?.labelPlural ?? resource
       ),
       ...(this._flows().length ? { flows: this._flows() } : {}),
-      ...(this._brief() ? { brief: this._brief() } : {})
+      ...(this._brief() ? { brief: this._brief() } : {}),
+      ...(this._roles().length ? { roles: this._roles() } : {})
     }
   }
 
@@ -1225,7 +1278,12 @@ export class DesignStore {
       this._lastError.set(`El brief no pasa el gate: ${briefIssues.join('; ')}`)
       return false
     }
-    if (!this.mutate(clone.resources, clone.pages, clone.appName)) return false
+    const roleIssues = roleProblems(clone.roles)
+    if (roleIssues.length) {
+      this._lastError.set(`Los roles no pasan el gate: ${roleIssues.join('; ')}`)
+      return false
+    }
+    if (!this.mutate(clone.resources, clone.pages, clone.appName, clone.roles ?? [])) return false
     this._flows.set(flows)
     // sin brief en el diseño externo, se borra: el diseño aplicado es la verdad completa
     this._brief.set(clone.brief)
@@ -1241,11 +1299,20 @@ export class DesignStore {
   }
 
   /** Gate: entidades por defineResource, referencias de los bloques y app-schema por defineApp. */
-  private mutate(resources: DraftResource[], pages: DesignPage[], appName?: string): boolean {
+  private mutate(resources: DraftResource[], pages: DesignPage[], appName?: string, roles?: RoleDefinition[]): boolean {
     const name = appName ?? this._appName()
-    const previous = { resources: this._resources(), pages: this._pages(), name: this._appName() }
+    const nextRoles = roles ?? this._roles()
+    const previous = {
+      resources: this._resources(),
+      pages: this._pages(),
+      name: this._appName(),
+      roles: this._roles()
+    }
     try {
-      const registry = Object.fromEntries(resources.map(r => [r.name, defineResource(draftToResource(r, name))]))
+      const extraRoles = nextRoles.map(role => role.name)
+      const registry = Object.fromEntries(
+        resources.map(r => [r.name, defineResource(draftToResource(r, name), { extraRoles })])
+      )
       for (const page of pages) {
         for (const block of page.blocks) {
           const refs = [block.resource, ...(block.items ?? []).map(cell => cell.resource)].filter(Boolean) as string[]
@@ -1259,6 +1326,7 @@ export class DesignStore {
       this._appName.set(name)
       this._resources.set(resources)
       this._pages.set(pages)
+      this._roles.set(nextRoles)
       // sin los flujos: pueden estar a medio dibujar y su forma completa es cosa de la frontera
       const { flows: _drafts, ...schema } = this.toAppSchema()
       if (schema.pages.length) defineApp(structuredClone(schema))
@@ -1268,6 +1336,7 @@ export class DesignStore {
       this._appName.set(previous.name)
       this._resources.set(previous.resources)
       this._pages.set(previous.pages)
+      this._roles.set(previous.roles)
       this._lastError.set(e instanceof Error ? e.message : String(e))
       return false
     }
