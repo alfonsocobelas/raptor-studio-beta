@@ -80,3 +80,96 @@ describe('app generator — roles personalizados en la emisión IAM (spec 76)', 
     expect(at(files, 'auth/infrastructure/seed/local-seed.ts')).not.toContain('perito')
   }, 180000)
 })
+
+/**
+ * Spec 76 (TASK-05): la matriz que otorga a un rol personalizado llega coherente al
+ * emitido — @Roles del controller, constantes del frontend y nav — pasando por el
+ * app-file (extraRoles en el gate) y por rolesArgs (constantName, no toUpperCase).
+ */
+describe('app generator — la matriz con roles personalizados llega al emitido (spec 76)', () => {
+  const snapshot = async (options: Parameters<typeof appGenerator>[1]): Promise<Map<string, string>> => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, options)
+    const files = new Map<string, string>()
+    for (const change of tree.listChanges()) {
+      files.set(change.path, change.content?.toString('utf-8') ?? '')
+    }
+    return files
+  }
+
+  const at = (files: Map<string, string>, suffix: string): string => {
+    const match = [...files.keys()].find(f => f.endsWith(suffix))
+    if (!match) throw new Error(`No emitted file ends with ${suffix}`)
+    return files.get(match) ?? ''
+  }
+
+  const permit = {
+    schemaVersion: 1,
+    name: 'permit',
+    plural: 'permits',
+    context: 'works',
+    schemaName: 'works',
+    labels: { singular: 'Permiso', plural: 'Permisos', gender: 'm' },
+    formSections: [{ id: 'general', title: 'Datos' }],
+    detail: { title: 'name' },
+    fields: {
+      id: { type: 'uuid', pk: true },
+      name: {
+        type: 'string',
+        required: true,
+        vo: { name: 'PermitName', fieldName: 'Permit name' },
+        table: { show: true, label: 'Nombre', minWidth: 200 },
+        form: { control: 'text', label: 'Nombre', section: 'general' },
+        query: { sortable: true, filterable: true, searchable: true },
+        column: { type: 'varchar', length: 120 }
+      }
+    },
+    access: { view: ['user', 'viewer', 'back-office'], create: ['back-office'], edit: ['user'], delete: [] }
+  }
+
+  const appJson = {
+    schemaVersion: 1,
+    name: 'demo',
+    roles: [{ name: 'back-office', label: 'Back office' }],
+    pages: [{ kind: 'resource', resource: 'permit' }],
+    resources: [permit]
+  }
+
+  const writeAppJson = (content: unknown): string => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'roles-e2e-'))
+    const file = path.join(dir, 'cliente.app.json')
+    writeFileSync(file, JSON.stringify(content))
+    return file
+  }
+
+  let files: Map<string, string>
+
+  beforeAll(async () => {
+    files = await snapshot({ name: 'demo', appFile: writeAppJson(appJson), skipInstall: true })
+  }, 180000)
+
+  it('el controller protege cada verbo con el rol personalizado (constantName, no toUpperCase)', () => {
+    const controller = at(files, 'entrypoints/permits.controller.ts')
+
+    expect(controller).toMatch(/@Post\(\)\s+@Roles\(UserRoleEnum\.ADMIN, UserRoleEnum\.BACK_OFFICE\)/)
+    expect(controller).not.toContain('UserRoleEnum.BACK-OFFICE')
+  })
+
+  it('las constantes del frontend dicen lo mismo que el backend', () => {
+    expect(at(files, 'permit-access.ts')).toContain('UserRoleEnum.BACK_OFFICE')
+  })
+
+  it('la entrada de nav lleva los roles de view, con el personalizado', () => {
+    expect(at(files, 'nav.ts')).toContain(
+      'roles: [UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.VIEWER, UserRoleEnum.BACK_OFFICE]'
+    )
+  })
+
+  it('un rol NO declarado en el app-file se rechaza en el gate, no al compilar', async () => {
+    const badApp = { ...appJson, roles: [] }
+
+    await expect(
+      snapshot({ name: 'demo', appFile: writeAppJson(badApp), skipInstall: true })
+    ).rejects.toThrow(/back-office.*not a grantable role/s)
+  }, 180000)
+})

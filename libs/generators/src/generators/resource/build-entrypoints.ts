@@ -286,9 +286,13 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
   }
 }
 
-/** La matriz efectiva a los argumentos del decorador: admin implícito, siempre primero. */
+/**
+ * La matriz efectiva a los argumentos del decorador: admin implícito, siempre primero.
+ * El miembro sale de `constantName` (spec 76): `back-office` → `BACK_OFFICE`; un
+ * toUpperCase directo emitiría un miembro ilegal para los roles kebab-case.
+ */
 export function rolesArgs(roles: AccessRole[]): string {
-  return ['UserRoleEnum.ADMIN', ...roles.map(role => `UserRoleEnum.${role.toUpperCase()}`)].join(', ')
+  return ['UserRoleEnum.ADMIN', ...roles.map(role => `UserRoleEnum.${names(role).constantName}`)].join(', ')
 }
 
 /**

@@ -1198,9 +1198,11 @@ function loadAppFile(file: string): AppDefinition {
     resources?: ResourceDefinition[]
   }
   // entidades diseñadas en el estudio: pasan el MISMO gate que las registradas
-  // y entran al registro de esta generación antes de componer
+  // y entran al registro de esta generación antes de componer. Los roles del
+  // app-schema amplían los otorgables de cada matriz (spec 76).
   if (resources?.length) {
-    registerModels(resources.map(r => defineResource(r)))
+    const extraRoles = (definition.roles ?? []).map(role => role.name)
+    registerModels(resources.map(r => defineResource(r, { extraRoles })))
   }
   return defineApp(definition)
 }
