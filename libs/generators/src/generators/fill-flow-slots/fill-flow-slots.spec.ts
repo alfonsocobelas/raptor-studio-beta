@@ -6,6 +6,7 @@ import {
   fillPendingFlowSlots,
   flowFillReport,
   pendingFlowSlots,
+  repairFilledFlowSlots,
   type SlotExecutor,
   type SlotGate
 } from './fill-flow-slots'
@@ -422,6 +423,174 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       })
 
       expect(report.executor).toBe('fake')
+    })
+  })
+
+  /**
+   * Spec 75, TASK-02: modo reparación. Cuando la validación GLOBAL de la app falla y el
+   * informe implica ficheros con huecos flow-* ya rellenos, se re-proponen SOLO esos
+   * huecos con el informe en el prompt. El código canónico jamás se toca: sin huecos
+   * implicados no hay nada que reparar (el defecto es del generador).
+   */
+  describe('reparación de huecos rellenos (spec 75)', () => {
+    const FIXED = '    const garment = await this.garmentRepository.get(id)\n'
+
+    /** Una app con los dos huecos de flujo YA rellenos, uno de ellos con código malo */
+    const repairedApp = (): Tree => {
+      const tree = emittedApp()
+      let content = tree.read(PROCESS, 'utf-8') ?? ''
+      content = replaceSlotBody(content, 'flow-revisar', '    roto()\n')
+      tree.write(PROCESS, content)
+      // otro proceso relleno, en otro fichero, que NO aparece en el informe
+      tree.write(
+        'apps/demo/libs/backend/src/contexts/warehouse/processes/otro/otro.process.ts',
+        [
+          'export class OtroProcess {',
+          '  async cerrar(): Promise<void> {',
+          '    // @ai:begin flow-cerrar — Se cierra',
+          '    await this.cierre.run()',
+          '    // @ai:end',
+          '  }',
+          '}',
+          ''
+        ].join('\n')
+      )
+      return tree
+    }
+
+    const recordingExecutor = (propose: (current: string, id: string) => string | undefined): SlotExecutor & { prompts: string[] } => ({
+      name: 'fake',
+      prompts: [],
+      async propose(prompt, slot, current) {
+        this.prompts.push(prompt)
+        return propose(current, slot.id)
+      }
+    })
+
+    const greenGate = (): SlotGate & { calls: number } => ({
+      calls: 0,
+      async run() {
+        this.calls++
+        return undefined
+      }
+    })
+
+    it('repara solo los huecos rellenos cuyo fichero cita el informe', async () => {
+      const tree = repairedApp()
+      const executor = recordingExecutor((current, id) => replaceSlotBody(current, id, FIXED))
+
+      const report = await repairFilledFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor,
+        gate: greenGate(),
+        reportContent: "FAIL ciclo.process.ts\n  error TS2304: Cannot find name 'roto'"
+      })
+
+      // los dos huecos de ciclo.process.ts están rellenos y el fichero está citado
+      expect(report.filled.map(s => s.id).sort()).toEqual(['flow-revisar', 'flow-subsanar'])
+      expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe(FIXED)
+      // otro.process.ts no aparece en el informe: intacto
+      const otro = tree.read('apps/demo/libs/backend/src/contexts/warehouse/processes/otro/otro.process.ts', 'utf-8') ?? ''
+      expect(readSlotBody(otro, 'flow-cerrar')).toContain('cierre.run()')
+    })
+
+    it('el prompt de reparación lleva el informe del fallo', async () => {
+      const tree = repairedApp()
+      const executor = recordingExecutor((current, id) => replaceSlotBody(current, id, FIXED))
+
+      await repairFilledFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor,
+        gate: greenGate(),
+        reportContent: "FAIL ciclo.process.ts\n  error TS2304: Cannot find name 'roto'"
+      })
+
+      expect(executor.prompts[0]).toMatch(/validaci[oó]n/i)
+      expect(executor.prompts[0]).toContain("error TS2304: Cannot find name 'roto'")
+    })
+
+    it('no corre línea base: la app ya se sabe roja', async () => {
+      const tree = repairedApp()
+      const gate = greenGate()
+
+      await repairFilledFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor: recordingExecutor((current, id) => replaceSlotBody(current, id, FIXED)),
+        gate,
+        reportContent: 'FAIL ciclo.process.ts'
+      })
+
+      // un gate por hueco reparado, ninguno de línea base
+      expect(gate.calls).toBe(2)
+    })
+
+    it('si el gate rechaza la reparación, se restaura el cuerpo ANTERIOR (no se deja peor)', async () => {
+      const tree = repairedApp()
+      const executor = recordingExecutor((current, id) => replaceSlotBody(current, id, '    peor()\n'))
+      const gate: SlotGate = { run: async () => 'sigue en rojo' }
+
+      const report = await repairFilledFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor,
+        gate,
+        reportContent: 'FAIL ciclo.process.ts'
+      })
+
+      expect(report.filled).toEqual([])
+      expect(report.rejected.map(r => r.slot.id).sort()).toEqual(['flow-revisar', 'flow-subsanar'])
+      // el cuerpo relleno anterior sigue ahí: rechazar una reparación no vacía el hueco
+      expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe('    roto()\n')
+    })
+
+    it('sin huecos implicados no toca nada: el fallo es canónico y se arregla en el generador', async () => {
+      const tree = repairedApp()
+      const before = tree.read(PROCESS, 'utf-8')
+      const executor = recordingExecutor((current, id) => replaceSlotBody(current, id, FIXED))
+
+      const report = await repairFilledFlowSlots(tree, {
+        directory: 'apps/demo',
+        executor,
+        gate: greenGate(),
+        reportContent: 'FAIL libs/backend/src/contexts/shared/domain/uuid.vo.spec.ts'
+      })
+
+      expect(report.filled).toEqual([])
+      expect(report.rejected).toEqual([])
+      expect(executor.prompts).toEqual([])
+      expect(tree.read(PROCESS, 'utf-8')).toBe(before)
+    })
+
+    it('el generador con --repair lee el informe del fichero y repara', async () => {
+      const tree = repairedApp()
+      tree.write('tmp/validate-report.txt', "FAIL ciclo.process.ts\n  error TS2304: Cannot find name 'roto'")
+
+      await fillFlowSlotsGenerator(tree, {
+        directory: 'apps/demo',
+        repair: true,
+        report: 'tmp/validate-report.txt',
+        executor: recordingExecutor((current, id) => replaceSlotBody(current, id, FIXED)),
+        gate: greenGate()
+      })
+
+      expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe(FIXED)
+    })
+
+    it('el generador con --repair sin --report falla fuerte', async () => {
+      const tree = repairedApp()
+
+      await expect(fillFlowSlotsGenerator(tree, { directory: 'apps/demo', repair: true })).rejects.toThrow(/report/i)
+    })
+
+    it('la reparación sin gate no se acepta: la IA no entra sin frontera', async () => {
+      const tree = repairedApp()
+
+      await expect(
+        repairFilledFlowSlots(tree, {
+          directory: 'apps/demo',
+          executor: recordingExecutor(current => current),
+          reportContent: 'FAIL ciclo.process.ts'
+        })
+      ).rejects.toThrow(/gate/i)
     })
   })
 })

@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { basename } from 'node:path'
 import type { Tree } from '@nx/devkit'
-import { type AiSlotRef, listEmptyAiSlots, readSlotBody, replaceSlotBody } from '../resource/ai-slots'
+import { type AiSlotRef, harvestAiSlots, listEmptyAiSlots, readSlotBody, replaceSlotBody } from '../resource/ai-slots'
 import { bridgeSlotExecutor } from './bridge-executor'
 import { emittedAppGate } from './gate'
 import { buildFlowSlotPrompt } from './prompt'
@@ -29,6 +31,10 @@ export interface FillFlowSlotsGeneratorSchema {
   slot?: string
   /** Directorio del puente donde espera la petición; sin él no hay ejecutor */
   bridge?: string
+  /** Modo reparación (spec 75): re-propone huecos YA rellenos implicados en un informe */
+  repair?: boolean
+  /** Ruta al fichero con la salida del fallo de validación (obligatorio con repair) */
+  report?: string
 }
 
 /**
@@ -119,17 +125,42 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
     }
   }
 
+  const { filled, rejected } = await proposeAndGateSlots(tree, pending, {
+    executor,
+    gate,
+    promptFor: slot => buildFlowSlotPrompt(tree, directory, slot)
+  })
+
+  return { executor: executor.name, pending: pendingFlowSlots(tree, directory), filled, rejected }
+}
+
+interface SlotProposalContext {
+  executor: SlotExecutor
+  gate: SlotGate
+  promptFor(slot: AiSlotRef): string
+}
+
+/**
+ * El bucle de propuestas bajo gate, común al relleno y a la reparación. Presupuesto de
+ * 2 propuestas por hueco (spec 75): un rechazo (frontera o gate) da UNA segunda
+ * oportunidad con el motivo en el prompt; el segundo rechazo es definitivo. Si el gate
+ * rechaza, el fichero se restaura a como estaba al entrar (vacío en el relleno, el
+ * cuerpo anterior en la reparación): nunca se deja peor.
+ */
+async function proposeAndGateSlots(
+  tree: Tree,
+  slots: AiSlotRef[],
+  { executor, gate, promptFor }: SlotProposalContext
+): Promise<{ filled: AiSlotRef[]; rejected: FlowFillRejection[] }> {
   const filled: AiSlotRef[] = []
   const rejected: FlowFillRejection[] = []
 
-  for (const slot of pending) {
+  for (const slot of slots) {
     const original = tree.read(slot.file, 'utf-8') ?? ''
-    const basePrompt = buildFlowSlotPrompt(tree, directory, slot)
+    const basePrompt = promptFor(slot)
     let lastReason: string | undefined
     let accepted = false
 
-    // presupuesto de 2 propuestas por hueco (spec 75): un rechazo da UNA segunda
-    // oportunidad con el motivo en el prompt; el segundo rechazo es definitivo
     for (let attempt = 0; attempt < PROPOSALS_PER_SLOT && !accepted; attempt++) {
       // la obra traduce esta línea a «proponiendo…» (spec 45): sin ella, el puente espera
       // hasta 15 minutos en silencio y la pantalla parece colgada
@@ -172,6 +203,63 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
     }
   }
 
+  return { filled, rejected }
+}
+
+export interface FlowRepairOptions extends FlowFillOptions {
+  /** La salida del fallo de validación, ya leída: decide qué huecos están implicados */
+  reportContent: string
+}
+
+/**
+ * Los huecos flow-* YA rellenos cuyo fichero cita el informe de validación. La cita es
+ * por basename: suficiente para acotar, y un falso positivo solo gasta una propuesta
+ * (el gate por hueco impide empeorar).
+ */
+export function implicatedFilledFlowSlots(tree: Tree, directory: string, reportContent: string): AiSlotRef[] {
+  const implicated: AiSlotRef[] = []
+
+  for (const [file, slots] of harvestAiSlots(tree, directory)) {
+    if (!reportContent.includes(basename(file))) continue
+    for (const id of slots.keys()) {
+      if (id.startsWith(FLOW_PREFIX)) implicated.push({ file, id })
+    }
+  }
+
+  return implicated
+}
+
+/** El prompt de reparación: el del hueco más el informe del fallo que lo implica. */
+function promptWithValidationReport(basePrompt: string, report: string): string {
+  return [
+    basePrompt,
+    '',
+    'La validación global de la app ha fallado y este hueco (ya relleno) está implicado.',
+    'Informe del fallo:',
+    report,
+    'Repara el cuerpo del hueco para que la validación pase, sin tocar nada fuera de él.'
+  ].join('\n')
+}
+
+/**
+ * Modo reparación (spec 75): re-propone SOLO los huecos rellenos implicados en el
+ * informe. Sin huecos implicados no se toca nada — el fallo es del código canónico y
+ * se arregla en el generador (test rojo + golden), nunca a mano. No hay línea base:
+ * la app ya se sabe roja, es la premisa de entrada.
+ */
+export async function repairFilledFlowSlots(tree: Tree, options: FlowRepairOptions): Promise<FlowFillReport> {
+  const { directory, executor, gate, reportContent } = options
+
+  if (!executor) return flowFillReport(tree, options)
+  if (!gate) throw new Error('Una reparación sin gate no se acepta: la IA solo entra bajo gate determinista')
+
+  const implicated = implicatedFilledFlowSlots(tree, directory, reportContent)
+  const { filled, rejected } = await proposeAndGateSlots(tree, implicated, {
+    executor,
+    gate,
+    promptFor: slot => promptWithValidationReport(buildFlowSlotPrompt(tree, directory, slot), reportContent)
+  })
+
   return { executor: executor.name, pending: pendingFlowSlots(tree, directory), filled, rejected }
 }
 
@@ -193,6 +281,31 @@ export async function fillFlowSlotsGenerator(tree: Tree, options: FlowFillOption
         gate: options.gate ?? emittedAppGate(options.directory)
       }
     : options
+
+  if (options.repair) {
+    if (!options.report) {
+      throw new Error('La reparación necesita --report con la ruta del informe del fallo de validación')
+    }
+    // el informe suele vivir dentro del workspace (tmp/), pero un tmpfile del sistema
+    // queda fuera del árbol de Nx: se intenta el árbol y se cae al disco
+    const reportContent = tree.exists(options.report)
+      ? (tree.read(options.report, 'utf-8') ?? '')
+      : readFileSync(options.report, 'utf-8')
+    const repair = await repairFilledFlowSlots(tree, { ...wired, reportContent })
+
+    if (!repair.filled.length && !repair.rejected.length) {
+      console.log('Sin huecos IA implicados en el informe: el fallo es del código canónico y se arregla en el generador.')
+      return
+    }
+    for (const { slot, reason } of repair.rejected) {
+      console.log(`✗ ${slot.id}: ${reason}`)
+      console.log('  El hueco conserva su cuerpo anterior.')
+    }
+    for (const slot of repair.filled) {
+      console.log(`✓ ${slot.id} relleno y aceptado por el gate`)
+    }
+    return
+  }
 
   const report = await fillPendingFlowSlots(tree, wired)
 

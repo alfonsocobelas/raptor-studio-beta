@@ -17,6 +17,15 @@
     "bridge": {
       "type": "string",
       "description": "Bridge directory where a watching Claude Code session answers the request; without it there is no executor"
+    },
+    "repair": {
+      "type": "boolean",
+      "description": "Repair mode (spec 75): re-propose already-filled flow slots implicated in a validation failure report",
+      "default": false
+    },
+    "report": {
+      "type": "string",
+      "description": "Path to the file holding the validation failure output (required with --repair)"
     }
   },
   "required": ["directory"]
