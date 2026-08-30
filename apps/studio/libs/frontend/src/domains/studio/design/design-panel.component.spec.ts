@@ -37,7 +37,9 @@ describe('DesignPanelComponent', () => {
     const themes = fixture.nativeElement.querySelectorAll('[data-testid^="palette-"]')
 
     expect(themes.length).toBeGreaterThan(1)
-    expect(testId(fixture, 'palette-neutral')).not.toBeNull()
+    // raptor abre la lista; el neutro no se ofrece (es el esqueleto interno, no una paleta)
+    expect(testId(fixture, 'palette-raptor')).not.toBeNull()
+    expect(testId(fixture, 'palette-neutral')).toBeNull()
   })
 
   it('elegir un tema lo aplica a la app dibujada', () => {

@@ -12,8 +12,8 @@ describe('theme catalog', () => {
     // WHEN se recogen sus ids
     const ids = THEMES.map(t => t.id)
 
-    // THEN no hay repetidos y THEME_IDS los refleja
-    expect(new Set(ids).size).toBe(ids.length)
+    // THEN es exactamente este (ámbar se retiró el 2026-08-31) y THEME_IDS lo refleja
+    expect(ids).toEqual(['raptor', 'neutral', 'hydrangea', 'ocean', 'forest', 'rose'])
     expect(THEME_IDS).toEqual(ids)
   })
 
@@ -182,13 +182,19 @@ describe('raptor: la paleta de la casa', () => {
   }
 
   /**
-   * La ÚNICA desviación deliberada. `--sidebar` sale del escalón `subtle`, que el derivador
-   * comparte con el `--foreground` del modo oscuro: ponerlo en blanco puro (como el estudio)
-   * dejaría el texto de la app oscura en blanco puro, más duro que el papel del estudio. Se
-   * queda en el papel cálido, y no lo ve nadie: ninguna plantilla del emitido consume --sidebar
-   * ni `bg-sidebar` (comprobado el 2026-08-27); el aside pinta con `bg-card`.
+   * Desviaciones deliberadas respecto al chrome del estudio.
+   *
+   * `--sidebar` sale del escalón `subtle`, que el derivador comparte con el `--foreground` del
+   * modo oscuro: ponerlo en blanco puro (como el estudio) dejaría el texto de la app oscura en
+   * blanco puro, más duro que el papel del estudio. Se queda en el papel cálido, y no lo ve
+   * nadie: ninguna plantilla del emitido consume --sidebar ni `bg-sidebar` (comprobado el
+   * 2026-08-27); el aside pinta con `bg-card`.
+   *
+   * El CTA (primary y sidebar-primary, con sus foreground) se desvió el 2026-08-31: el estudio
+   * sigue con el CTA en tinta, pero el tema del catálogo lo lleva en el naranja de marca
+   * #d75f3d — el negro fuera de la paleta que ofrece el selector.
    */
-  const DEVIATIONS = ['sidebar']
+  const DEVIATIONS = ['sidebar', 'primary', 'primary-foreground', 'sidebar-primary', 'sidebar-primary-foreground']
 
   const compare = (mode: 'light' | 'dark', selector: string) => {
     const raptor = findTheme('raptor')
@@ -210,8 +216,15 @@ describe('raptor: la paleta de la casa', () => {
     // WHEN se busca raptor
     const raptor = findTheme('raptor')
 
-    // THEN existe y se puede nombrar
-    expect(raptor?.label).toBe('Raptor (la casa)')
+    // THEN existe y se puede nombrar, sin coletilla
+    expect(raptor?.label).toBe('Raptor')
+  })
+
+  it('opens the catalog: first of the list, the default the studio offers', () => {
+    // GIVEN el catálogo
+    // WHEN se mira el primer tema
+    // THEN es raptor: el selector del estudio lo ofrece como primera opción
+    expect(THEMES[0].id).toBe('raptor')
   })
 
   it('reproduces the studio light block token for token', () => {
@@ -232,13 +245,14 @@ describe('raptor: la paleta de la casa', () => {
     expect(tokens.light['background']).toBe('oklch(0.985 0.003 85)')
   })
 
-  it('reserves the orange for the ring: the dominant CTA is ink', () => {
+  it('puts the brand orange on the CTA: no ink-black button in the palette', () => {
     // GIVEN el tema raptor
     // WHEN se deriva
     const tokens = deriveTheme(findTheme('raptor')!)
 
-    // THEN el CTA es tinta y el naranja de marca vive en el foco (como en el estudio)
-    expect(tokens.light['primary']).toBe('oklch(0.215 0.005 68)')
+    // THEN el CTA es el naranja de marca #d75f3d (2026-08-31: fuera el negro) y el foco sigue naranja
+    expect(tokens.light['primary']).toBe('oklch(0.63 0.159 36.6)')
+    expect(tokens.light['primary-foreground']).toBe('oklch(0.99 0 0)')
     expect(tokens.light['ring']).toBe('oklch(0.656 0.197 32)')
     expect(tokens.dark['ring']).toBe('oklch(0.7 0.19 33)')
   })

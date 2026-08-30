@@ -1,5 +1,5 @@
 import { defineApp } from './define-app'
-import { THEME_IDS, THEMES } from './themes'
+import { DEFAULT_THEME_ID, THEME_IDS, THEMES } from './themes'
 import { AppDefinition, GENERABLE_PAGE_KINDS } from './app-types'
 import { SchemaValidationError } from './validation-errors'
 
@@ -558,8 +558,9 @@ describe('theme — tema de la app (spec 20)', () => {
     expect(() => defineApp(app({ id: 'fucsia-flúor' }))).toThrow(new RegExp(THEME_IDS.join(', ')))
   })
 
-  it('neutral es el primer tema: es el defecto y coincide con lo emitido hoy', () => {
-    expect(THEMES[0].id).toBe('neutral')
+  it('raptor abre el catálogo (2026-08-31); neutral sigue siendo el defecto del emitido', () => {
+    expect(THEMES[0].id).toBe('raptor')
+    expect(DEFAULT_THEME_ID).toBe('neutral')
   })
 })
 

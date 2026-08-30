@@ -29,8 +29,11 @@ export interface PreviewPalette {
  * Los temas del selector SON los del catálogo del schema: si el lienzo
  * ofreciera uno que el generador no conoce, lo que ves no sería lo que se
  * genera. Solo afectan a la app dibujada, nunca al chrome del estudio.
+ *
+ * El neutro no se ofrece (2026-08-31): es el esqueleto interno del generador
+ * —lo que se emite cuando la app no declara tema—, no una paleta elegible.
  */
-export const PREVIEW_PALETTES: PreviewPalette[] = THEMES.map(t => ({
+export const PREVIEW_PALETTES: PreviewPalette[] = THEMES.filter(t => t.id !== 'neutral').map(t => ({
   id: t.id,
   label: t.label,
   swatch: t.light.primary
@@ -44,7 +47,8 @@ export const PREVIEW_PALETTES: PreviewPalette[] = THEMES.map(t => ({
 @Injectable({ providedIn: 'root' })
 export class PreviewSettings {
   readonly theme = signal<PreviewTheme>('light')
-  readonly palette = signal<string>('neutral')
+  /** La casa por defecto (2026-08-31): raptor abre el selector y arranca seleccionada. */
+  readonly palette = signal<string>('raptor')
   /** Preset visual de la app dibujada; viaja al wizard como valor por defecto de la ranura. */
   readonly preset = signal<PreviewPreset>('actual')
 
