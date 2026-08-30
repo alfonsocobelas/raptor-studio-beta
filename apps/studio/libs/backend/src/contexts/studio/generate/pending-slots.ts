@@ -21,7 +21,7 @@ export function pendingFlowSlotIds(root: string): string[] {
 }
 
 /** Solo los ficheros de proceso: los huecos de paso no viven en ningún otro sitio. */
-function processFiles(root: string): string[] {
+export function processFiles(root: string): string[] {
   const found: string[] = []
   const walk = (dir: string): void => {
     let entries: string[]
