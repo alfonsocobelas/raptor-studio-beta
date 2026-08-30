@@ -2,6 +2,7 @@ import type { AppDefinition } from '@raptor/schema'
 import { demo } from './demo.app'
 import { boutique } from './boutique.app'
 import { golden } from './golden.app'
+import { goldenMongo } from './golden-mongo.app'
 import { solaris } from './solaris.app'
 
 /**
@@ -13,6 +14,7 @@ export const APPS: Record<string, AppDefinition> = {
   demo,
   boutique,
   golden,
+  'golden-mongo': goldenMongo,
   solaris
 }
 
