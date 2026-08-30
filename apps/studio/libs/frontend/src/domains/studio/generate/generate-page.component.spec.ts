@@ -645,10 +645,15 @@ describe('GeneratePageComponent', () => {
       await settle()
     })
 
-    /** Spec 45: los pasos de negocio por rellenar viven en el desenlace, con su puente. */
+    /**
+     * Spec 45: los pasos de negocio por rellenar viven en el desenlace, con su puente.
+     * Sin instalar (spec 75) el relleno no se encadena solo: el botón manual es el camino.
+     */
     it('el desenlace lista los huecos y el botón de rellenar consume el stream', async () => {
       stubOutcome({ type: 'done', ok: true, files: 3, root: 'apps/mi-app', slots: ['flow-cie'], elapsedMs: 900 })
       const fixture = await mount()
+      ;(at(fixture, 'wizard-install') as HTMLInputElement).click()
+      fixture.detectChanges()
       at(fixture, 'generate-primary')?.click()
       await settle()
       fixture.detectChanges()
