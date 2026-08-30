@@ -72,6 +72,7 @@ export class CustomersController {
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: UpdateCustomerDto): Promise<void> {
-    return this.updateCustomerHandler.handle({ id, updates: body as CustomerUpdateProps })
+    const { version, ...updates } = body
+    return this.updateCustomerHandler.handle({ id, version, updates: updates as CustomerUpdateProps })
   }
 }

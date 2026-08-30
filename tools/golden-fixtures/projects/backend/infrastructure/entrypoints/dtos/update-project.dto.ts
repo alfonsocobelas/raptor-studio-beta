@@ -1,9 +1,13 @@
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength, ValidateIf } from 'class-validator'
 import { PROJECT_CONSTRAINTS as LIMITS } from '../../../domain/project-constants'
 import { ProjectImplementer } from '../../../domain/value-objects/project-implementer.vo'
 import { ProjectStatus } from '../../../domain/value-objects/project-status.vo'
 
 export class UpdateProjectDto {
+  @IsInt()
+  @Min(1)
+  version!: number
+
   @IsOptional()
   @IsString()
   @IsUUID('7')

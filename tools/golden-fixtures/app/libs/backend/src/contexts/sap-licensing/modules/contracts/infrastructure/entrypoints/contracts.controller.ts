@@ -75,7 +75,8 @@ export class ContractsController {
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: UpdateContractDto): Promise<void> {
-    return this.updateContractHandler.handle({ id, updates: body as ContractUpdateProps })
+    const { version, ...updates } = body
+    return this.updateContractHandler.handle({ id, version, updates: updates as ContractUpdateProps })
   }
 
   /** Transición «Terminar» de la máquina de estados (spec 43): 409 si el estado la rechaza. */

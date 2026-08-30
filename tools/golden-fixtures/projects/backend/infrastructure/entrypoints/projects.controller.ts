@@ -95,7 +95,8 @@ export class ProjectsController {
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: UpdateProjectDto): Promise<void> {
-    return this.updateProjectHandler.handle({ id, updates: body as ProjectUpdateProps })
+    const { version, ...updates } = body
+    return this.updateProjectHandler.handle({ id, version, updates: updates as ProjectUpdateProps })
   }
 
   @Delete(':id')

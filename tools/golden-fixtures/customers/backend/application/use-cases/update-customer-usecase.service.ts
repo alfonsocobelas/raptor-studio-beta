@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { AlreadyExistsError, ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { CustomerRepository } from '../../domain/customer-repository'
 import { withSapId } from '../../domain/specifications/customer-with-sap-id.specification'
 import { withTaxId } from '../../domain/specifications/customer-with-tax-id.specification'
@@ -16,6 +16,11 @@ export class UpdateCustomerUseCase {
 
     if (!customer) {
       throw new EntityNotFoundError('Customer', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): la versión que el cliente leyó debe seguir siendo la actual
+    if (input.version !== customer.version) {
+      throw new ConcurrencyConflictError('Customer', input.id)
     }
 
     const newSapId = customer.newSapIdIfChanged(input.updates)

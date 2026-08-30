@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { AlreadyExistsError, ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { ContractRepository } from '../../domain/contract-repository'
 import { CustomerRepository } from '../../../customers/domain/customer-repository'
 import { CustomerId } from '../../../../../shared/domain/value-objects/customers/customer-id.vo'
@@ -20,6 +20,11 @@ export class UpdateContractUseCase {
 
     if (!contract) {
       throw new EntityNotFoundError('Contract', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): la versión que el cliente leyó debe seguir siendo la actual
+    if (input.version !== contract.version) {
+      throw new ConcurrencyConflictError('Contract', input.id)
     }
 
     const newContractNumber = contract.newContractNumberIfChanged(input.updates)

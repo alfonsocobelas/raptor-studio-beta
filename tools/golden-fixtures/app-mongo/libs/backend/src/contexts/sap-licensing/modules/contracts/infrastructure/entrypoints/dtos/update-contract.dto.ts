@@ -19,6 +19,10 @@ import { ContractType } from '../../../domain/value-objects/contract-type.vo'
 import { RenewalType } from '../../../domain/value-objects/renewal-type.vo'
 
 export class UpdateContractDto {
+  @IsInt()
+  @Min(1)
+  version!: number
+
   @IsOptional()
   @IsIn([...ContractType.VALUES])
   contractType?: string

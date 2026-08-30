@@ -1,7 +1,11 @@
 import { AuditTrailPort } from '../../../../../src/contexts/shared/domain/audit/audit-trail.port'
 import { v7 as uuidv7 } from 'uuid'
 import { UpdateProjectUseCase } from '../../../../../src/contexts/sap-licensing/modules/projects/application/use-cases/update-project-usecase.service'
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+import {
+  AlreadyExistsError,
+  ConcurrencyConflictError,
+  EntityNotFoundError
+} from '../../../../../src/contexts/shared/domain/errors'
 import { CustomerRepository } from '../../../../../src/contexts/sap-licensing/modules/customers/domain/customer-repository'
 import { ProjectMother } from '../../domain/mothers/project.mother'
 import { ProjectRepositoryMock } from '../../mocks/project.repository.mock'
@@ -25,8 +29,23 @@ describe('UpdateProjectUseCase', () => {
     it('throws EntityNotFoundError and does not save', async () => {
       repositoryMock.givenNotFound()
 
-      await expect(useCase.invoke({ id: uuidv7(), updates: {} })).rejects.toThrow(EntityNotFoundError)
+      await expect(useCase.invoke({ id: uuidv7(), version: 1, updates: {} })).rejects.toThrow(EntityNotFoundError)
       repositoryMock.assertNotCalled('save')
+    })
+  })
+
+  describe('given a stale version (bloqueo optimista, spec 78)', () => {
+    it('throws ConcurrencyConflictError and does not mutate nor save', async () => {
+      const current = ProjectMother.reconstruct()
+      repositoryMock.givenFound(current)
+      const before = current.toPrimitives()
+
+      await expect(useCase.invoke({ id: current.id.value, version: 99, updates: {} })).rejects.toThrow(
+        ConcurrencyConflictError
+      )
+
+      repositoryMock.assertNotCalled('save')
+      expect(current.toPrimitives()).toEqual(before)
     })
   })
 
@@ -35,7 +54,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.givenFound(ProjectMother.reconstruct())
       repositoryMock.whenSaveSuccess()
 
-      await useCase.invoke({ id: uuidv7(), updates: {} })
+      await useCase.invoke({ id: uuidv7(), version: 1, updates: {} })
 
       repositoryMock.assertNotCalled('exists')
       repositoryMock.assertCalled('save')
@@ -50,7 +69,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.whenSaveSuccess()
 
       // los valores de la mother son aleatorios: uno nuevo difiere del actual
-      await useCase.invoke({ id: current.id.value, updates: { name: ProjectMother.primitives().name } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { name: ProjectMother.primitives().name } })
 
       repositoryMock.assertCalledTimes('exists', 1)
       repositoryMock.assertCalled('save')
@@ -61,7 +80,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.givenAlreadyExists()
 
       await expect(
-        useCase.invoke({ id: uuidv7(), updates: { name: ProjectMother.primitives().name } })
+        useCase.invoke({ id: uuidv7(), version: 1, updates: { name: ProjectMother.primitives().name } })
       ).rejects.toThrow(AlreadyExistsError)
       repositoryMock.assertNotCalled('save')
     })
@@ -71,7 +90,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.givenFound(current)
       repositoryMock.whenSaveSuccess()
 
-      await useCase.invoke({ id: current.id.value, updates: { name: current.toPrimitives().name } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { name: current.toPrimitives().name } })
 
       repositoryMock.assertNotCalled('exists')
       repositoryMock.assertCalled('save')
@@ -86,7 +105,7 @@ describe('UpdateProjectUseCase', () => {
       const canonical = ProjectMother.primitives().customerName
       ;(customerRepository.get as jest.Mock).mockResolvedValue({ name: { value: canonical } })
 
-      await useCase.invoke({ id: current.id.value, updates: { customerId: uuidv7() } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { customerId: uuidv7() } })
 
       repositoryMock.assertCalled('save')
       expect(current.toPrimitives().customerName).toBe(canonical)
@@ -96,7 +115,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.givenFound(ProjectMother.reconstruct())
       ;(customerRepository.get as jest.Mock).mockResolvedValue(null)
 
-      await expect(useCase.invoke({ id: uuidv7(), updates: { customerId: uuidv7() } })).rejects.toThrow(
+      await expect(useCase.invoke({ id: uuidv7(), version: 1, updates: { customerId: uuidv7() } })).rejects.toThrow(
         EntityNotFoundError
       )
       repositoryMock.assertNotCalled('save')
@@ -107,7 +126,7 @@ describe('UpdateProjectUseCase', () => {
       repositoryMock.whenSaveSuccess()
       ;(customerRepository.get as jest.Mock).mockClear()
 
-      await useCase.invoke({ id: uuidv7(), updates: {} })
+      await useCase.invoke({ id: uuidv7(), version: 1, updates: {} })
 
       expect(customerRepository.get as jest.Mock).not.toHaveBeenCalled()
     })

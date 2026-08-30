@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { AlreadyExistsError, ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { changesBetween } from '../../../../../shared/domain/audit/audit-changes'
 import { AuditTrailPort } from '../../../../../shared/domain/audit/audit-trail.port'
 import { ProjectRepository } from '../../domain/project-repository'
@@ -23,6 +23,11 @@ export class UpdateProjectUseCase {
 
     if (!project) {
       throw new EntityNotFoundError('Project', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): la versión que el cliente leyó debe seguir siendo la actual
+    if (input.version !== project.version) {
+      throw new ConcurrencyConflictError('Project', input.id)
     }
 
     const newName = project.newNameIfChanged(input.updates)

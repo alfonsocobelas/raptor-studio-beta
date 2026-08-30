@@ -1,6 +1,10 @@
 import { v7 as uuidv7 } from 'uuid'
 import { UpdateCustomerUseCase } from '../../../../../src/contexts/sap-licensing/modules/customers/application/use-cases/update-customer-usecase.service'
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+import {
+  AlreadyExistsError,
+  ConcurrencyConflictError,
+  EntityNotFoundError
+} from '../../../../../src/contexts/shared/domain/errors'
 import { CustomerMother } from '../../domain/mothers/customer.mother'
 import { CustomerRepositoryMock } from '../../mocks/customer.repository.mock'
 
@@ -17,8 +21,23 @@ describe('UpdateCustomerUseCase', () => {
     it('throws EntityNotFoundError and does not save', async () => {
       repositoryMock.givenNotFound()
 
-      await expect(useCase.invoke({ id: uuidv7(), updates: {} })).rejects.toThrow(EntityNotFoundError)
+      await expect(useCase.invoke({ id: uuidv7(), version: 1, updates: {} })).rejects.toThrow(EntityNotFoundError)
       repositoryMock.assertNotCalled('save')
+    })
+  })
+
+  describe('given a stale version (bloqueo optimista, spec 78)', () => {
+    it('throws ConcurrencyConflictError and does not mutate nor save', async () => {
+      const current = CustomerMother.reconstruct()
+      repositoryMock.givenFound(current)
+      const before = current.toPrimitives()
+
+      await expect(useCase.invoke({ id: current.id.value, version: 99, updates: {} })).rejects.toThrow(
+        ConcurrencyConflictError
+      )
+
+      repositoryMock.assertNotCalled('save')
+      expect(current.toPrimitives()).toEqual(before)
     })
   })
 
@@ -27,7 +46,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.givenFound(CustomerMother.reconstruct())
       repositoryMock.whenSaveSuccess()
 
-      await useCase.invoke({ id: uuidv7(), updates: {} })
+      await useCase.invoke({ id: uuidv7(), version: 1, updates: {} })
 
       repositoryMock.assertNotCalled('exists')
       repositoryMock.assertCalled('save')
@@ -42,7 +61,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.whenSaveSuccess()
 
       // los valores de la mother son aleatorios: uno nuevo difiere del actual
-      await useCase.invoke({ id: current.id.value, updates: { sapId: CustomerMother.primitives().sapId } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { sapId: CustomerMother.primitives().sapId } })
 
       repositoryMock.assertCalledTimes('exists', 1)
       repositoryMock.assertCalled('save')
@@ -53,7 +72,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.givenAlreadyExists()
 
       await expect(
-        useCase.invoke({ id: uuidv7(), updates: { sapId: CustomerMother.primitives().sapId } })
+        useCase.invoke({ id: uuidv7(), version: 1, updates: { sapId: CustomerMother.primitives().sapId } })
       ).rejects.toThrow(AlreadyExistsError)
       repositoryMock.assertNotCalled('save')
     })
@@ -63,7 +82,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.givenFound(current)
       repositoryMock.whenSaveSuccess()
 
-      await useCase.invoke({ id: current.id.value, updates: { sapId: current.toPrimitives().sapId } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { sapId: current.toPrimitives().sapId } })
 
       repositoryMock.assertNotCalled('exists')
       repositoryMock.assertCalled('save')
@@ -78,7 +97,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.whenSaveSuccess()
 
       // los valores de la mother son aleatorios: uno nuevo difiere del actual
-      await useCase.invoke({ id: current.id.value, updates: { taxId: CustomerMother.primitives().taxId } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { taxId: CustomerMother.primitives().taxId } })
 
       repositoryMock.assertCalledTimes('exists', 1)
       repositoryMock.assertCalled('save')
@@ -89,7 +108,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.givenAlreadyExists()
 
       await expect(
-        useCase.invoke({ id: uuidv7(), updates: { taxId: CustomerMother.primitives().taxId } })
+        useCase.invoke({ id: uuidv7(), version: 1, updates: { taxId: CustomerMother.primitives().taxId } })
       ).rejects.toThrow(AlreadyExistsError)
       repositoryMock.assertNotCalled('save')
     })
@@ -99,7 +118,7 @@ describe('UpdateCustomerUseCase', () => {
       repositoryMock.givenFound(current)
       repositoryMock.whenSaveSuccess()
 
-      await useCase.invoke({ id: current.id.value, updates: { taxId: current.toPrimitives().taxId } })
+      await useCase.invoke({ id: current.id.value, version: 1, updates: { taxId: current.toPrimitives().taxId } })
 
       repositoryMock.assertNotCalled('exists')
       repositoryMock.assertCalled('save')

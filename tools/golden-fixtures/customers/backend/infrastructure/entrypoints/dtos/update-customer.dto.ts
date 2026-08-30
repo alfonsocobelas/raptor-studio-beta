@@ -1,8 +1,12 @@
-import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator'
 import { CUSTOMER_CONSTRAINTS as LIMITS } from '../../../domain/customer-constants'
 import { CustomerType } from '../../../domain/value-objects/customer-type.vo'
 
 export class UpdateCustomerDto {
+  @IsInt()
+  @Min(1)
+  version!: number
+
   @IsOptional()
   @IsString()
   @MinLength(LIMITS.SAP_ID.MIN)
