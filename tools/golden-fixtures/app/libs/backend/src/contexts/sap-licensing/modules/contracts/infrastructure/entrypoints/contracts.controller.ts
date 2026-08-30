@@ -13,6 +13,7 @@ import { AggregateContractsHandler } from '../../application/handlers/aggregate-
 import { SearchContractsHandler } from '../../application/handlers/search-contracts.handler'
 import { TerminateContractHandler } from '../../application/handlers/terminate-contract.handler'
 import { ExpireContractHandler } from '../../application/handlers/expire-contract.handler'
+import { TransitionContractDto } from './dtos/transition-contract.dto'
 import { UpdateContractHandler } from '../../application/handlers/update-contract.handler'
 import { ContractPrimitiveProps, ContractUpdateProps } from '../../domain/contract-types'
 import { AggregateOutput } from '../../../../../shared/domain/query/aggregate'
@@ -83,15 +84,15 @@ export class ContractsController {
   @Post(':id/terminate')
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
-  terminate(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
-    return this.terminateContractHandler.handle({ id })
+  terminate(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: TransitionContractDto): Promise<void> {
+    return this.terminateContractHandler.handle({ id, version: body.version })
   }
 
   /** Transición «Expirar» de la máquina de estados (spec 43): 409 si el estado la rechaza. */
   @Post(':id/expire')
   @Roles(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
-  expire(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
-    return this.expireContractHandler.handle({ id })
+  expire(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: TransitionContractDto): Promise<void> {
+    return this.expireContractHandler.handle({ id, version: body.version })
   }
 }

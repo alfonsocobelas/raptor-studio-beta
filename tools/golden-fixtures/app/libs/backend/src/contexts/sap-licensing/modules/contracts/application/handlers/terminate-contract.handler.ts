@@ -5,7 +5,7 @@ import { TerminateContractUseCase } from '../use-cases/terminate-contract-usecas
 export class TerminateContractHandler {
   constructor(private readonly useCase: TerminateContractUseCase) {}
 
-  async handle(input: { id: string }): Promise<void> {
+  async handle(input: { id: string; version: number }): Promise<void> {
     await this.useCase.invoke(input)
   }
 }

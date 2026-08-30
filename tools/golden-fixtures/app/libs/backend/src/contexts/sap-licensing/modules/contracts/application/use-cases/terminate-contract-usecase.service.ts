@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { ContractRepository } from '../../domain/contract-repository'
 import { ContractId } from '../../../../../shared/domain/value-objects/contracts/contract-id.vo'
 
@@ -8,12 +8,17 @@ import { ContractId } from '../../../../../shared/domain/value-objects/contracts
 export class TerminateContractUseCase {
   constructor(private readonly contractRepository: ContractRepository) {}
 
-  async invoke(input: { id: string }): Promise<void> {
+  async invoke(input: { id: string; version: number }): Promise<void> {
     const contractId = ContractId.create(input.id)
     const contract = await this.contractRepository.get(contractId)
 
     if (!contract) {
       throw new EntityNotFoundError('Contract', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): dos transiciones simultáneas — la segunda choca con 409
+    if (input.version !== contract.version) {
+      throw new ConcurrencyConflictError('Contract', input.id)
     }
 
     contract.terminate()

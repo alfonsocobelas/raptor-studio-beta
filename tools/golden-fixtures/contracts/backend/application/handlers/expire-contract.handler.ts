@@ -5,7 +5,7 @@ import { ExpireContractUseCase } from '../use-cases/expire-contract-usecase.serv
 export class ExpireContractHandler {
   constructor(private readonly useCase: ExpireContractUseCase) {}
 
-  async handle(input: { id: string }): Promise<void> {
+  async handle(input: { id: string; version: number }): Promise<void> {
     await this.useCase.invoke(input)
   }
 }
