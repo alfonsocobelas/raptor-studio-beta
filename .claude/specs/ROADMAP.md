@@ -565,3 +565,11 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     nada. Arreglo hoy: borrar los huérfanos a mano tras regenerar. Arreglo de verdad a
     debatir: manifiesto de ficheros emitidos por generación y barrido de los que sobren
     (cuidado con lo editado a mano y los huecos @ai fuera de los ficheros emitidos).
+
+41. **La bandera `detail` del recurso y la página `fields` del diseño son dos verdades**
+    (2026-08-30, caso ofertas). El chat pone `detail: true` al redactar el modelo aunque no
+    cree la página; el generador emite la ficha desde la bandera y el estudio solo dibuja
+    páginas — resultado: botones de transición emitidos sin representación en Vistas.
+    Mitigado con el aviso accionable del panel («+ Añadir la ficha», spec 74 extendida).
+    Fix de fondo a debatir: derivar la bandera de las páginas al generar (una sola fuente)
+    o que el chat cree la página cuando declara la bandera.
