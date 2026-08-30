@@ -54,6 +54,10 @@
         {
           "value": "raptor",
           "label": "Raptor Cloud (Infisical, R2, Grafana Loki, Brevo — low cost)"
+        },
+        {
+          "value": "gcp",
+          "label": "GCP (Secret Manager, GCS, Cloud Logging)"
         }
       ]
     },

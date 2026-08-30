@@ -8,7 +8,7 @@ import { SLOTS } from '../plugins/slots'
  */
 describe('INFRA', () => {
   it('registra un manifiesto por proveedor y cada uno declara su valor', () => {
-    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws', 'raptor'])
+    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws', 'raptor', 'gcp'])
     for (const [value, provider] of Object.entries(INFRA)) {
       expect(provider.value).toBe(value)
       expect(provider.label.length).toBeGreaterThan(0)

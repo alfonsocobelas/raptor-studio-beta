@@ -61,10 +61,10 @@ describe('SLOTS', () => {
     })
   })
 
-  it('infra ofrece azure, aws y raptor (default); none queda interno para los tests del kernel', () => {
+  it('infra ofrece azure, aws, raptor (default) y gcp; none queda interno para los tests del kernel', () => {
     // spec 24: los proveedores reales entran por app/infra/providers.ts, no aquí
     expect(SLOTS['infra'].default).toBe('raptor')
-    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws', 'raptor'])
+    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws', 'raptor', 'gcp'])
     // 2026-08-24: toda app sale con nube (raptor la aprovisionamos nosotros); «sin nube»
     // no se ofrece en ninguna superficie, igual que auth none desde la spec 58
     expect(SLOTS['infra'].providers.find(p => p.value === 'none')?.internal).toBe(true)

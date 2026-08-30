@@ -20,8 +20,8 @@ describe('proveedor infra=raptor', () => {
   const read = (file: string): string => tree.read(`apps/demo/${file}`, 'utf-8') ?? ''
 
   it('está registrado como proveedor elegible de la ranura, detrás de aws', () => {
-    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws', 'raptor'])
-    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws', 'raptor'])
+    expect(Object.keys(INFRA)).toEqual(['none', 'azure', 'aws', 'raptor', 'gcp'])
+    expect(SLOTS['infra'].providers.map(p => p.value)).toEqual(['none', 'azure', 'aws', 'raptor', 'gcp'])
   })
 
   it('emite el resolver de secretos de Infisical y su config loader', () => {

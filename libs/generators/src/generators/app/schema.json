@@ -80,7 +80,7 @@
       "type": "string",
       "default": "raptor",
       "description": "Infrastructure provider of the emitted app (exclusive slot; 'none' is internal — kernel tests and the mongo golden gate)",
-      "enum": ["none", "azure", "aws", "raptor"],
+      "enum": ["none", "azure", "aws", "raptor", "gcp"],
       "x-prompt": {
         "message": "¿Qué infraestructura?",
         "type": "list",
@@ -96,6 +96,10 @@
           {
             "value": "raptor",
             "label": "Raptor Cloud (Infisical, R2, Grafana Loki, Brevo — low cost)"
+          },
+          {
+            "value": "gcp",
+            "label": "GCP (Secret Manager, GCS, Cloud Logging)"
           }
         ]
       }

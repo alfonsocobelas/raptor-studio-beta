@@ -1,0 +1,16 @@
+import { RootValidator, validate } from '../../config-validation'
+import { loadRawConfig } from '../config-sources'
+import { containsVaultReferences, createSecretManagerReader, resolveSecrets } from './gcp-secret-resolver'
+
+/**
+ * GCP-backed loader: bundled JSON with every `vault.*` placeholder resolved
+ * against GCP Secret Manager. When the config has no placeholders (local/test)
+ * it skips GCP entirely, so no credentials are needed there.
+ */
+export default async (): Promise<RootValidator> => {
+  const config = loadRawConfig()
+
+  const resolved = containsVaultReferences(config) ? await resolveSecrets(config, createSecretManagerReader()) : config
+
+  return validate(resolved)
+}

@@ -75,6 +75,28 @@ export const awsInfra = defineInfra({
 })
 
 /**
+ * GCP (spec 77): los secretos se resuelven contra Secret Manager (marcadores `vault.*` con
+ * el prefijo de GCP_SECRETS_PREFIX y guiones, el contrato que iac/gcp ya fijó). Como en AWS
+ * no hay `instrument.ts`: el logger base escribe JSON a stdout y Cloud Run lo envía solo a
+ * Cloud Logging; el transporte directo (LoggingWinston, pieza oficial de Google — aquí no
+ * hay lib abandonada que sustituir, a diferencia de winston-cloudwatch) llega en TASK-04.
+ */
+export const gcpInfra = defineInfra({
+  value: 'gcp',
+  label: 'GCP (Secret Manager, GCS, Cloud Logging)',
+  files: 'files-infra-gcp',
+  dependencies: {
+    '@google-cloud/logging-winston': '^6.0.0',
+    '@google-cloud/secret-manager': '^6.3.0',
+    '@google-cloud/storage': '^7.21.0'
+  },
+
+  apply(tree: Tree, context: PluginContext): void {
+    useGcpConfigLoader(tree, context)
+  }
+})
+
+/**
  * Raptor Cloud (spec 50): la composición low-cost. No es una nube, es un stack de servicios
  * con capa gratuita —Infisical para secretos, Cloudflare R2 para ficheros, Grafana Cloud
  * Loki para logs, Brevo para email— sobre un VPS de Hetzner (ver `iac/hetzner`).
@@ -684,5 +706,15 @@ function useInfisicalConfigLoader(tree: Tree, context: PluginContext): void {
   )
 }
 
+/** Espejo de useAwsConfigLoader: la costura de secretos apunta al loader de Secret Manager. */
+function useGcpConfigLoader(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('gcp-config-loader')) {
+    return
+  }
+  tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/gcp/gcp-config-loader'"))
+}
+
 /** Orden del registro = orden en el formulario. */
-export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra, awsInfra, raptorInfra]
+export const INFRA_PROVIDERS: readonly InfraProvider[] = [noneInfra, azureInfra, awsInfra, raptorInfra, gcpInfra]
