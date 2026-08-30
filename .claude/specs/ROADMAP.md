@@ -510,9 +510,12 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     de colocarlos/curarlos en el lienzo. Mantener la doctrina: el botón siempre REFERENCIA un
     paso existente (idea 9), nunca lógica dibujada.
 
-37. **Pipeline de generación por fases: instalar → rellenar huecos IA → validar → reparar**
+37. ✅ **Pipeline de generación por fases: instalar → rellenar huecos IA → validar → reparar**
     (2026-08-29, pedido por Alfonso; extiende y concreta la idea 16 y el punto (b) de su
-    memoria). Fases nuevas en la pantalla de obra, después de instalar dependencias:
+    memoria). **HECHO en la spec 75 (2026-08-30)**: la obra encadena relleno por el puente,
+    validación (typecheck + jest unit + vitest de la app emitida) y reparación acotada
+    (2 propuestas/hueco + 1 ciclo repair + 1 re-validación; el canon jamás se toca).
+    Fases nuevas en la pantalla de obra, después de instalar dependencias:
     (1) **Ejecución de flujos/procesos con IA**: correr `fill-flow-slots` (ya existe como
     generador) sobre los huecos `@ai:begin…@ai:end` como fase integrada de la generación, no
     como paso manual; (2) **Validación**: ejecutar la suite de tests emitida (+ typecheck y,
