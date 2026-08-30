@@ -558,11 +558,12 @@ function renderTestBindings(definition: ResourceDefinition): TestBindings {
 
   const checkbox = fields.find(([, f]) => f.form?.control === 'checkbox')
   const optionalText = fields.find(([, f]) => f.form?.control === 'text' && !f.required)
+  // spec 78: todo update viaja con la versión leída — el sample la lleva siempre
   const updateSampleSrc = checkbox
-    ? `{ ${checkbox[0]}: true }`
+    ? `{ ${checkbox[0]}: true, version: 1 }`
     : optionalText
-      ? `{ ${optionalText[0]}: ${sampleScalar(optionalText[0], optionalText[1], 0)} }`
-      : `{}`
+      ? `{ ${optionalText[0]}: ${sampleScalar(optionalText[0], optionalText[1], 0)}, version: 1 }`
+      : `{ version: 1 }`
 
   const enums = [...new Set(fields.map(([, f]) => f.form?.optionsType).filter((t): t is string => t !== undefined))]
     // el mock solo importa lo que usa como valor: los enums reales (las unions van como literal)

@@ -153,12 +153,16 @@ function renderDtoBindings(model: ResourceDefinition) {
   // `serverAssigned` (spec 19): opcional al ALTA — el backend lo pone si no viene, pero una
   // importación puede traerlo (§2.bis) — y fuera del UPDATE, donde no se toca nunca.
   const registerLines = ['id: string', ...writable.map(c => writableLine(c, c.field.serverAssigned === true))]
-  const updateLines = writable.filter(c => !c.field.serverAssigned).map(c => writableLine(c, true))
+  const updateLines = [
+    ...writable.filter(c => !c.field.serverAssigned).map(c => writableLine(c, true)),
+    // spec 78: la edición reenvía la versión leída; el use case choca con 409 si ya no es la actual
+    'version: number'
+  ]
 
   return {
     unions,
     enums,
-    dtoLines: ['id: string', ...all.map(c => `${c.name}: ${dtoType(c)}`)],
+    dtoLines: ['id: string', ...all.map(c => `${c.name}: ${dtoType(c)}`), 'version: number'],
     registerLines,
     updateLines,
     registerUnions: namedTypesUsedIn(registerLines, unions),

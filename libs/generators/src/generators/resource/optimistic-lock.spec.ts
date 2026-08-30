@@ -2,6 +2,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import resourceGenerator from './resource'
 import { appGenerator } from '../app/app'
+import { sharedDomainGenerator } from '../shared-domain/shared-domain'
 import { MODELS, registerModels } from './models/registry'
 
 /**
@@ -165,6 +166,32 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     const tree = await generate('customer')
 
     expect(tree.exists('out/backend/infrastructure/entrypoints/dtos/transition-customer.dto.ts')).toBe(false)
+  })
+
+  it('los DTOs compartidos exponen y exigen version: lectura y update, register no (spec 78)', async () => {
+    const tree = createTreeWithEmptyWorkspace()
+    await sharedDomainGenerator(tree, {})
+    const read = tree.read('tmp/generated/shared-domain/customer/customer.dto.ts', 'utf-8') ?? ''
+    const update = tree.read('tmp/generated/shared-domain/customer/update-customer.dto.ts', 'utf-8') ?? ''
+    const register = tree.read('tmp/generated/shared-domain/customer/register-customer.dto.ts', 'utf-8') ?? ''
+
+    expect(read).toContain('version: number')
+    expect(update).toContain('version: number')
+    expect(register).not.toContain('version')
+  })
+
+  it('el listado emitido reenvía la version leída al editar', async () => {
+    const tree = await generate('customer')
+    const list = tree.read('out/frontend/customers-list.component.ts', 'utf-8') ?? ''
+
+    expect(list).toContain('version: editing.version')
+  })
+
+  it('el spec del servicio front emitido afirma que el update envía version', async () => {
+    const tree = await generate('customer')
+    const spec = tree.read('out/frontend/customer.service.spec.ts', 'utf-8') ?? ''
+
+    expect(spec).toContain('version: 1')
   })
 
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
