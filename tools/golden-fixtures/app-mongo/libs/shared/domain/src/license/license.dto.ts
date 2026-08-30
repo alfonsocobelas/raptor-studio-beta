@@ -21,4 +21,5 @@ export interface LicenseWithConsumptionDto {
   consumptionPct: number
   excessUnits: number
   annualValue: number
+  version: number
 }

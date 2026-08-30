@@ -33,4 +33,5 @@ export interface ContractDto {
   supportModel: string
   upcomingMaintenanceEnd: string | null
   upcomingMaintenanceFee: number | null
+  version: number
 }

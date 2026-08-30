@@ -17,4 +17,5 @@ export interface UpdateContractDto {
   billingFrequency?: BillingFrequencyEnum
   renewalType?: RenewalTypeEnum
   notes?: string
+  version: number
 }

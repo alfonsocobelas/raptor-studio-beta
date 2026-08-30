@@ -21,4 +21,5 @@ export interface ProjectDto {
   waveStage: string | null
   waveStatus: string | null
   planToGoLive: string | null
+  version: number
 }

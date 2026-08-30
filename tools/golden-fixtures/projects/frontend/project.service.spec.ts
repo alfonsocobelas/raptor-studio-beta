@@ -148,9 +148,9 @@ describe('ProjectService — mutaciones', () => {
     const reload = vi.spyOn(service.projects, 'reload')
     const id = '019eb713-19bb-7000-8000-000000000010'
 
-    await service.update(id, {})
+    await service.update(id, { version: 1 })
 
-    expect(httpPut).toHaveBeenCalledWith(`/api/v1/projects/${id}`, {})
+    expect(httpPut).toHaveBeenCalledWith(`/api/v1/projects/${id}`, { version: 1 })
     expect(reload).toHaveBeenCalledOnce()
   })
 

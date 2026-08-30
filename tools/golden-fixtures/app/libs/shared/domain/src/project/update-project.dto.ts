@@ -8,4 +8,5 @@ export interface UpdateProjectDto {
   endDate?: string | null
   status?: ProjectStatusEnum
   implementer?: ProjectImplementerEnum
+  version: number
 }

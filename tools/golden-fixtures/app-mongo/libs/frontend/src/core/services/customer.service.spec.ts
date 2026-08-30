@@ -147,9 +147,9 @@ describe('CustomerService — mutaciones', () => {
     const reload = vi.spyOn(service.customers, 'reload')
     const id = '019eb713-19bb-7000-8000-000000000010'
 
-    await service.update(id, { taxId: 'TaxId 1' })
+    await service.update(id, { taxId: 'TaxId 1', version: 1 })
 
-    expect(httpPut).toHaveBeenCalledWith(`/api/v1/customers/${id}`, { taxId: 'TaxId 1' })
+    expect(httpPut).toHaveBeenCalledWith(`/api/v1/customers/${id}`, { taxId: 'TaxId 1', version: 1 })
     expect(reload).toHaveBeenCalledOnce()
   })
 })

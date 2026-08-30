@@ -15,4 +15,5 @@ export interface CustomerDto {
   status: string
   archivedAt: string | null
   lastSeenInSyncAt: string | null
+  version: number
 }

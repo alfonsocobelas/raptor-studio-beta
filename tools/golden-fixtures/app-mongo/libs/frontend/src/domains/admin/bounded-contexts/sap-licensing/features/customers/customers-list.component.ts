@@ -203,7 +203,8 @@ export class CustomersListComponent {
     this.dialogOpen.set(false)
     try {
       if (editing) {
-        await this._service.update(editing.id, value)
+        // spec 78: la versión leída viaja con la edición (bloqueo optimista)
+        await this._service.update(editing.id, { ...value, version: editing.version })
         this._notify.success('Cliente actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })

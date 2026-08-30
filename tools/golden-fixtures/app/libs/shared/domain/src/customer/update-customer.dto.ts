@@ -11,4 +11,5 @@ export interface UpdateCustomerDto {
   city?: string
   country?: string
   customerType?: CustomerClassification
+  version: number
 }

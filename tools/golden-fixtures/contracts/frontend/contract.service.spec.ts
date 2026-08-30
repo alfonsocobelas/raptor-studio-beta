@@ -155,9 +155,9 @@ describe('ContractService — mutaciones', () => {
     const reload = vi.spyOn(service.contracts, 'reload')
     const id = '019eb713-19bb-7000-8000-000000000010'
 
-    await service.update(id, { isFavorite: true })
+    await service.update(id, { isFavorite: true, version: 1 })
 
-    expect(httpPut).toHaveBeenCalledWith(`/api/v1/contracts/${id}`, { isFavorite: true })
+    expect(httpPut).toHaveBeenCalledWith(`/api/v1/contracts/${id}`, { isFavorite: true, version: 1 })
     expect(reload).toHaveBeenCalledOnce()
   })
 
