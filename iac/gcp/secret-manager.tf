@@ -3,8 +3,8 @@ locals {
   secrets = {
     "typeorm-password" = random_password.db.result
     "typeorm-host"     = google_sql_database_instance.main.connection_name
-    "typeorm-username"     = var.db_username
-    "typeorm-database"     = var.db_name
+    "typeorm-username" = var.db_username
+    "typeorm-database" = var.db_name
   }
 }
 

@@ -17,3 +17,8 @@ output "frontend_url" {
 output "storage_bucket" {
   value = google_storage_bucket.storage.name
 }
+
+output "log_name" {
+  description = "The logName the app's `cloudLogging.logName` config should reference (Logs Explorer)."
+  value       = local.name
+}

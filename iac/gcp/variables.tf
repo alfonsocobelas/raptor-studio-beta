@@ -49,3 +49,9 @@ variable "frontend_image" {
   type        = string
   default     = ""
 }
+
+variable "log_retention_days" {
+  description = "Retention of the _Default Cloud Logging bucket (Logs Explorer queries read from it)."
+  type        = number
+  default     = 30
+}

@@ -17,6 +17,14 @@ resource "google_secret_manager_secret_iam_member" "backend" {
   member    = "serviceAccount:${google_service_account.backend.email}"
 }
 
+# El transporte directo (LoggingWinston) escribe entradas; el reenvío de stdout de Cloud
+# Run no necesita rol, pero logWriter es el mínimo que habilita los dos caminos.
+resource "google_project_iam_member" "logging" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
 resource "google_storage_bucket_iam_member" "backend" {
   bucket = google_storage_bucket.storage.name
   role   = "roles/storage.objectAdmin"
