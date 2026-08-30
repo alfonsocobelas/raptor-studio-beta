@@ -13,6 +13,7 @@ import { AppSelect, AppSelectOption } from '../../../../../../shared/components/
 import { AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { AppLookup } from '../../../../../../shared/components/ui/lookup'
 <%_ } _%>
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { generateId } from '../../../../../../shared/utils/uuid'
@@ -266,8 +267,13 @@ export class <%- className %>FormPageComponent {
         this._notify.success('<%- ui.toastCreated %>')
       }
       void this._router.navigate(['<%- route %>'])
-    } catch {
-      this._notify.error(id ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+    } catch (e) {
+      if (id && isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        await this.load(id)
+      } else {
+        this._notify.error(id ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+      }
     }
   }
 

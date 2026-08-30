@@ -4,6 +4,7 @@ import { Router } from '@angular/router'
 <%_ } _%>
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 <%_ if (features.edit) { _%>
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { AuthService } from '../../../../../../core/services/auth.service'
@@ -358,7 +359,12 @@ export class <%- pluralClassName %>CalendarComponent {
         await this._service.create({ id: generateId(), ...value })
         this._notify.success('<%- ui.toastCreated %>')
       }
-    } catch {
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        this._service.<%- plural %>.reload()
+        return
+      }
       this._notify.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
     }
   }

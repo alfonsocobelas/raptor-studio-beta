@@ -4,6 +4,7 @@ import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft<%- features.edit ? ', lucidePencil' : '' %><%- features.delete ? ', lucideTrash2' : '' %> } from '@ng-icons/lucide'
 <%_ if (features.edit || features.delete) { _%>
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 <%_ } _%>
@@ -315,8 +316,13 @@ export class <%- className %>DetailComponent {
       this.dialogOpen.set(false)
       this._notify.success('<%- ui.toastUpdated %>')
       await this.load()
-    } catch {
-      this._notify.error('<%- ui.toastUpdateError %>')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        await this.load()
+      } else {
+        this._notify.error('<%- ui.toastUpdateError %>')
+      }
     }
   }
 <%_ } _%>
@@ -353,8 +359,9 @@ export class <%- className %>DetailComponent {
     try {
       await this._service.<%- transition.method %>(id, version)
     } catch (e) {
+      // el 409 de concurrencia tiene su aviso propio; el de transición ilegal conserva el mensaje de dominio
       const message = (e as { error?: { message?: string } }).error?.message
-      this._notify.error(message ?? 'No se pudo aplicar «<%- transition.label %>»')
+      this._notify.error(isConcurrencyConflict(e) ? CONCURRENCY_CONFLICT_MESSAGE : (message ?? 'No se pudo aplicar «<%- transition.label %>»'))
     } finally {
       this.transitioning.set(false)
       await this.load()

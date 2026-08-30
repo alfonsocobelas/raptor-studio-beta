@@ -218,6 +218,18 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(kanban).not.toMatch(/_service\.update\(id, \{ [^}]*\}\)(?!.*version)/)
   })
 
+  it('el listado y la ficha avisan y recargan ante el 409 de concurrencia (spec 78)', async () => {
+    const tree = await generate('contract')
+    const list = tree.read('out/frontend/contracts-list.component.ts', 'utf-8') ?? ''
+    const detail = tree.read('out/frontend/contract-detail.component.ts', 'utf-8') ?? ''
+
+    expect(list).toContain('isConcurrencyConflict')
+    expect(list).toContain('CONCURRENCY_CONFLICT_MESSAGE')
+    expect(detail).toContain('isConcurrencyConflict')
+    // el 409 de transición ilegal conserva su mensaje de dominio: solo el de concurrencia se especializa
+    expect(detail).toContain('error?.message')
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

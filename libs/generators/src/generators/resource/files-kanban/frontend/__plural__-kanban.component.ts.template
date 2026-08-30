@@ -4,6 +4,7 @@ import { Router } from '@angular/router'
 <%_ } _%>
 import { <%- dtoName %> } from '<%- sharedDomainAlias %>'
 import { <%- className %>Service, OffsetPaginatedOutput } from '../../../../../../core/services/<%- fileName %>.service'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
 /**
@@ -186,8 +187,13 @@ export class <%- pluralClassName %>KanbanComponent {
 <%_ } else { _%>
       await this._service.update(id, { <%- kanban.field %>: value, version: card.version })
 <%_ } _%>
-    } catch {
-      this.moveError.set('No se pudo mover la tarjeta; vuelve a intentarlo')
+    } catch (e) {
+      this.moveError.set(
+        isConcurrencyConflict(e) ? CONCURRENCY_CONFLICT_MESSAGE : 'No se pudo mover la tarjeta; vuelve a intentarlo'
+      )
+      if (isConcurrencyConflict(e)) {
+        this._service.<%- plural %>.reload()
+      }
     }
   }
 <%_ if (detail) { _%>

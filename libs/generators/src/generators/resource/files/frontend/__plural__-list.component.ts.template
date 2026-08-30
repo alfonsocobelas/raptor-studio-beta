@@ -5,6 +5,7 @@ import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { <%- icons.join(', ') %> } from '@ng-icons/lucide'
 <%_ if (features.edit || features.delete) { _%>
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 <%_ } _%>
 <%_ if (features.delete) { _%>
@@ -331,8 +332,13 @@ export class <%- className %>sListComponent {
         await this._service.create({ id: generateId(), ...value })
         this._notify.success('<%- ui.toastCreated %>')
       }
-    } catch {
-      this._notify.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        this._service.<%- plural %>.reload()
+      } else {
+        this._notify.error(editing ? '<%- ui.toastUpdateError %>' : '<%- ui.toastCreateError %>')
+      }
     }
   }
 <%_ } _%>
