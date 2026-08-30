@@ -63,11 +63,15 @@ const EVENT_ALIASES: Record<string, PhaseKey> = { configure: 'write' }
  */
 export const EXPECTED_FILES = 1400
 export const EXPECTED_INSTALL_MS = 120_000
-/** El puente puede tardar minutos por hueco; esto es solo para que la barra respire. */
-export const EXPECTED_FILL_MS = 180_000
-/** La suite emitida ronda los 2 min (typecheck-emitted.sh, medido). */
+/** La suite emitida ronda los 2 min (typecheck-emitted.sh, medido): validar va lineal. */
 export const EXPECTED_VALIDATE_MS = 120_000
-export const EXPECTED_REPAIR_MS = 180_000
+/**
+ * Rellenar y reparar dependen del puente —de segundos a 15 min de timeout— así que no
+ * admiten estimación lineal: usan la misma curva que preparar (rápida al arrancar, se
+ * frena sola) con su propia escala. A la escala llevan el 63 % de su fase andado.
+ */
+export const FILL_SCALE_MS = 60_000
+export const REPAIR_SCALE_MS = 60_000
 /** Escala de la curva del arranque; no es una duración esperada, es lo rápido que se frena. */
 export const PREPARE_SCALE_MS = 15_000
 
@@ -176,10 +180,11 @@ function runningFraction(phase: PhaseState, nowMs: number): number {
   if (phase.key === 'write') return Math.min((phase.files ?? 0) / EXPECTED_FILES, ESTIMATE_CAP)
   if (phase.key === 'install') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_INSTALL_MS, ESTIMATE_CAP)
   if (phase.key === 'prepare') return decelerating(Math.max(elapsedOf(phase, nowMs) ?? 0, 0), PREPARE_SCALE_MS)
-  // las fases post-install no dan medida intermedia: reloj contra lo que suelen tardar
-  if (phase.key === 'fill') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_FILL_MS, ESTIMATE_CAP)
+  // validar tiene duración típica medida; rellenar y reparar dependen del puente y
+  // avanzan con la curva que se frena sola, como preparar
   if (phase.key === 'validate') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_VALIDATE_MS, ESTIMATE_CAP)
-  if (phase.key === 'repair') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_REPAIR_MS, ESTIMATE_CAP)
+  if (phase.key === 'fill') return decelerating(Math.max(elapsedOf(phase, nowMs) ?? 0, 0), FILL_SCALE_MS)
+  if (phase.key === 'repair') return decelerating(Math.max(elapsedOf(phase, nowMs) ?? 0, 0), REPAIR_SCALE_MS)
   return 0
 }
 

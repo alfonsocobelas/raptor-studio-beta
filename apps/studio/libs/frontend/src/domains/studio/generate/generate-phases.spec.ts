@@ -5,10 +5,10 @@ import {
   applySkip,
   elapsedOf,
   EXPECTED_FILES,
-  EXPECTED_FILL_MS,
   EXPECTED_INSTALL_MS,
-  EXPECTED_REPAIR_MS,
   EXPECTED_VALIDATE_MS,
+  FILL_SCALE_MS,
+  REPAIR_SCALE_MS,
   initialPhases,
   overallProgress,
   type PhaseState
@@ -297,20 +297,38 @@ describe('overallProgress', () => {
 
 /**
  * Spec 75: las fases post-install no pasan por describeProgress (no son la consola de Nx):
- * el runner las estima con el reloj, como instalar — el puente puede tardar minutos por
- * hueco y la suite ~2 min, y la barra tiene que moverse mientras tanto.
+ * el runner las estima con el reloj. Validar tiene duración típica medida (~2 min) y va
+ * lineal como instalar; rellenar y reparar dependen del puente —de segundos a 15 min— y
+ * usan la curva que se frena sola, como preparar: avance visible pronto, sin mentir al final.
  */
 describe('overallProgress — fases post-install (spec 75)', () => {
   const start = initialPhases({ skipInstall: false, startedAt: 0 })
 
+  it('la validación avanza con el reloj contra lo que suele tardar la suite', () => {
+    const phases = applyEvent(start, { phase: 'validate' }, 1000)
+
+    expect(overallProgress(phases, 1000 + EXPECTED_VALIDATE_MS / 2)).toBeCloseTo((4 + 0.5) / 6, 5)
+  })
+
   it.each([
-    ['fill', EXPECTED_FILL_MS, 3],
-    ['validate', EXPECTED_VALIDATE_MS, 4],
-    ['repair', EXPECTED_REPAIR_MS, 5]
-  ] as const)('la fase %s avanza con el reloj contra lo que suele tardar', (key, expectedMs, settled) => {
+    ['fill', FILL_SCALE_MS, 3],
+    ['repair', REPAIR_SCALE_MS, 5]
+  ] as const)('la fase %s arranca rápido: a su escala ya lleva ~el 60 %% de la fila andado', (key, scaleMs, settled) => {
     const phases = applyEvent(start, { phase: key }, 1000)
 
-    expect(overallProgress(phases, 1000 + expectedMs / 2)).toBeCloseTo((settled + 0.5) / 6, 5)
+    // curva 0.95·(1 − e^(−t/escala)): a t=escala lleva el 60 % de su fase
+    expect(overallProgress(phases, 1000 + scaleMs)).toBeCloseTo((settled + 0.95 * (1 - Math.exp(-1))) / 6, 5)
+  })
+
+  it.each([['fill'], ['repair']] as const)('la fase %s se frena y nunca se cierra sola', key => {
+    const phases = applyEvent(start, { phase: key }, 0)
+    const primero = overallProgress(phases, 60_000) - overallProgress(phases, 0)
+    const segundo = overallProgress(phases, 120_000) - overallProgress(phases, 60_000)
+
+    expect(segundo).toBeLessThan(primero)
+    // por mucho que el puente tarde, la fila no se cierra: eso lo hace el evento real
+    const settled = key === 'fill' ? 3 : 5
+    expect(overallProgress(phases, 30 * 60_000)).toBeLessThan((settled + 1) / 6)
   })
 })
 
