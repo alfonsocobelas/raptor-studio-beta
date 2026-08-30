@@ -670,4 +670,57 @@ describe('el pipeline por fases (spec 75)', () => {
       expect(run.output()).toContain('se conserva')
     })
   })
+
+  describe('la fase de reparación (TASK-09)', () => {
+    const redWithSuspects = (): string[] => [
+      line({ type: 'check', name: 'unit', status: 'failed' }),
+      line({
+        type: 'done',
+        ok: false,
+        failedCheck: 'unit',
+        suspects: ['flow-cie'],
+        output: 'FAIL ciclo.process.ts'
+      })
+    ]
+    const repairStream = (): string[] => [
+      line({ type: 'slot', id: 'flow-cie', status: 'proposing' }),
+      line({ type: 'slot', id: 'flow-cie', status: 'filled' }),
+      line({ type: 'done', ok: true, repaired: ['flow-cie'], rejected: [] })
+    ]
+    const greenValidation = (): string[] => [line({ type: 'done', ok: true, output: 'todo verde' })]
+
+    it('un rojo con sospechosos repara y re-valida una vez; en verde el desenlace es ok', async () => {
+      const { urls } = sequenced([generated([]), redWithSuspects(), repairStream(), greenValidation()])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(urls[2]).toContain('/studio/repair/stream')
+      expect(urls[3]).toContain('/studio/validate/stream')
+      expect(run.repaired()).toEqual(['flow-cie'])
+      expect(status(run, 'repair')).toBe('done')
+      expect(run.outcome()).toBe('ok')
+    })
+
+    it('el informe del fallo viaja al endpoint de reparación', async () => {
+      sequenced([generated([]), redWithSuspects(), repairStream(), greenValidation()])
+      const run = runner()
+
+      await run.run(request)
+
+      const call = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[2]
+      expect(JSON.parse((call[1] as RequestInit).body as string)).toMatchObject({ report: 'FAIL ciclo.process.ts' })
+    })
+
+    it('si la re-validación sigue roja, se acabó el presupuesto: fallo, sin segundo ciclo', async () => {
+      const { urls } = sequenced([generated([]), redWithSuspects(), repairStream(), redWithSuspects()])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(run.outcome()).toBe('failed')
+      expect(status(run, 'repair')).toBe('failed')
+      expect(urls).toHaveLength(4)
+    })
+  })
 })

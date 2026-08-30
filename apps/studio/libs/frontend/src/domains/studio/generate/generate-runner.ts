@@ -116,6 +116,8 @@ export class GenerateRunner {
   readonly validationOutput = signal<string | null>(null)
   /** Huecos IA implicados en el fallo; vacío = el rojo es del código canónico */
   readonly suspects = signal<string[]>([])
+  /** Huecos que la fase de reparación dejó arreglados y aceptados por su gate */
+  readonly repaired = signal<string[]>([])
   /** Directorio relativo de la app emitida: el endpoint de relleno lo exige del workspace */
   private requestedDir: string | null = null
 
@@ -219,6 +221,20 @@ export class GenerateRunner {
     const verdict = await this.validate()
     if (this.outcome() === 'cancelled') return
 
+    if (!verdict.ok && verdict.suspects.length) {
+      // presupuesto acotado (spec 75): UN ciclo de reparación y UNA re-validación
+      this.phases.update(phases => applyEvent(phases, { phase: 'repair' }, Date.now()))
+      await this.repair(verdict.output)
+      if (this.outcome() === 'cancelled') return
+      const second = await this.validate()
+      if (this.outcome() === 'cancelled') return
+      if (!second.ok) {
+        this.outcome.set('failed')
+        this.ok.set(false)
+      }
+      return
+    }
+
     // verde, o rojo canónico (sin huecos IA implicados): en ninguno de los dos se repara —
     // lo primero no lo necesita y lo segundo se arregla en el generador, nunca a mano
     this.phases.update(phases => applySkip(phases, 'repair'))
@@ -226,6 +242,29 @@ export class GenerateRunner {
       this.outcome.set('failed')
       this.ok.set(false)
     }
+  }
+
+  /**
+   * La fase «Reparando huecos» (spec 75): el generador re-propone SOLO los huecos IA
+   * citados en el informe, cada uno bajo su gate. Aquí solo se cuenta qué quedó arreglado.
+   */
+  private async repair(report: string): Promise<void> {
+    this.repaired.set([])
+    const response = await fetch('/api/v1/studio/repair/stream', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ directory: this.requestedDir, report }),
+      signal: this.aborter?.signal
+    })
+    if (!response.ok || !response.body) {
+      throw new Error(`el backend respondió ${response.status}`)
+    }
+    await this.readLines(response.body.getReader(), raw => {
+      const event = raw as unknown as FillEvent
+      if (event.type === 'slot' && event.id && event.status === 'filled') {
+        this.repaired.update(ids => [...ids, event.id as string])
+      }
+    })
   }
 
   /**
@@ -339,6 +378,7 @@ export class GenerateRunner {
     this.failedCheck.set(null)
     this.validationOutput.set(null)
     this.suspects.set([])
+    this.repaired.set([])
     this.output.set(null)
     this.elapsed.set(null)
     this.root.set(null)
