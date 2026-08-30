@@ -19,7 +19,8 @@ export class CustomerMapper {
         customerType: doc.customerType,
         status: doc.status,
         archivedAt: doc.archivedAt?.toISOString() ?? null,
-        lastSeenInSyncAt: doc.lastSeenInSyncAt?.toISOString() ?? null
+        lastSeenInSyncAt: doc.lastSeenInSyncAt?.toISOString() ?? null,
+        version: doc.version
       },
       (doc.contacts ?? []).map(contact => ({
         id: contact.id,
@@ -54,6 +55,7 @@ export class CustomerMapper {
       status: primitives.status ?? 'active',
       archivedAt: primitives.archivedAt ? new Date(primitives.archivedAt) : null,
       lastSeenInSyncAt: primitives.lastSeenInSyncAt ? new Date(primitives.lastSeenInSyncAt) : null,
+      version: primitives.version,
       contacts: domain.contacts.map(CustomerMapper.contactToPersistence)
     }
   }

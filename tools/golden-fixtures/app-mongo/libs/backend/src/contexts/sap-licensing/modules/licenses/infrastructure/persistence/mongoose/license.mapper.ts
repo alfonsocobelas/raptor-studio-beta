@@ -25,7 +25,8 @@ export class LicenseMapper {
       currentUnits: doc.currentUnits,
       consumptionPct: doc.consumptionPct,
       excessUnits: doc.excessUnits,
-      annualValue: doc.annualValue
+      annualValue: doc.annualValue,
+      version: doc.version
     })
   }
 
@@ -56,7 +57,8 @@ export class LicenseMapper {
       currentUnits: primitives.currentUnits,
       consumptionPct: primitives.consumptionPct,
       excessUnits: primitives.excessUnits,
-      annualValue: primitives.annualValue
+      annualValue: primitives.annualValue,
+      version: primitives.version
     }
   }
 

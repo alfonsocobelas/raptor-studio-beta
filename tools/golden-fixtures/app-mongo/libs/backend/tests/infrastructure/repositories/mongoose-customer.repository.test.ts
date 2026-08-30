@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from 'uuid'
 import { moduleFixture } from '../jest.setup.integration'
 import { MongooseCustomerRepository } from '../../../src/contexts/sap-licensing/modules/customers/infrastructure/persistence/mongoose/mongoose-customer.repository'
 import { CustomerWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/customers/domain/specifications/customer-with-id.specification'
+import { ConcurrencyConflictError } from '../../../src/contexts/shared/domain/errors'
 import { CustomerId } from '../../../src/contexts/shared/domain/value-objects/customers/customer-id.vo'
 import { SapId } from '../../../src/contexts/sap-licensing/modules/customers/domain/value-objects/sap-id.vo'
 import { TaxId } from '../../../src/contexts/sap-licensing/modules/customers/domain/value-objects/tax-id.vo'
@@ -30,6 +31,20 @@ describe('MongooseCustomerRepository (integration)', () => {
     it('returns null for a non-existent id', async () => {
       const found = await repository.get(CustomerId.create(uuidv7()))
       expect(found).toBeNull()
+    })
+
+    it('dos saves sobre la misma versión leída: el primero gana, el segundo choca con 409 (spec 78)', async () => {
+      const customer = CustomerMother.random()
+      await repository.register(customer)
+
+      const firstReader = await repository.get(customer.id)
+      const secondReader = await repository.get(customer.id)
+
+      await repository.save(firstReader!)
+      await expect(repository.save(secondReader!)).rejects.toThrow(ConcurrencyConflictError)
+
+      const persisted = await repository.get(customer.id)
+      expect(persisted?.version).toBe(2)
     })
 
     it('keeps the embedded contacts inside the aggregate document', async () => {

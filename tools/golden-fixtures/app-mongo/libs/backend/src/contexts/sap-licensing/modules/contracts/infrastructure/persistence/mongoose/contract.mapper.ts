@@ -29,7 +29,8 @@ export class ContractMapper {
       lastSeenInSyncAt: doc.lastSeenInSyncAt?.toISOString() ?? null,
       supportModel: doc.supportModel,
       upcomingMaintenanceEnd: doc.upcomingMaintenanceEnd,
-      upcomingMaintenanceFee: doc.upcomingMaintenanceFee
+      upcomingMaintenanceFee: doc.upcomingMaintenanceFee,
+      version: doc.version
     })
   }
 
@@ -64,7 +65,8 @@ export class ContractMapper {
       lastSeenInSyncAt: primitives.lastSeenInSyncAt ? new Date(primitives.lastSeenInSyncAt) : null,
       supportModel: primitives.supportModel ?? '',
       upcomingMaintenanceEnd: primitives.upcomingMaintenanceEnd ?? null,
-      upcomingMaintenanceFee: primitives.upcomingMaintenanceFee ?? null
+      upcomingMaintenanceFee: primitives.upcomingMaintenanceFee ?? null,
+      version: primitives.version
     }
   }
 

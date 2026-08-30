@@ -27,6 +27,7 @@ export interface CustomerDoc {
   status: string
   archivedAt: Nullable<Date>
   lastSeenInSyncAt: Nullable<Date>
+  version: number
   contacts: ContactDoc[]
   createdAt?: Date
   updatedAt?: Date
@@ -63,6 +64,7 @@ export const CustomerSchema = new Schema<CustomerDoc>(
     status: { type: String, default: 'active' },
     archivedAt: { type: Date, default: null },
     lastSeenInSyncAt: { type: Date, default: null },
+    version: { type: Number, required: true, default: 1 },
     contacts: { type: [ContactSchema], default: [] },
     deletedAt: { type: Date, default: null },
     deletedOp: { type: String, default: null }

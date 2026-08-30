@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from 'uuid'
 import { moduleFixture } from '../jest.setup.integration'
 import { MongooseLicenseRepository } from '../../../src/contexts/sap-licensing/modules/licenses/infrastructure/persistence/mongoose/mongoose-license.repository'
 import { LicenseWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/licenses/domain/specifications/license-with-id.specification'
+import { ConcurrencyConflictError } from '../../../src/contexts/shared/domain/errors'
 import { LicenseId } from '../../../src/contexts/shared/domain/value-objects/licenses/license-id.vo'
 import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { LicenseMother } from '../../modules/licenses/domain/mothers/license.mother'
@@ -28,6 +29,20 @@ describe('MongooseLicenseRepository (integration)', () => {
     it('returns null for a non-existent id', async () => {
       const found = await repository.get(LicenseId.create(uuidv7()))
       expect(found).toBeNull()
+    })
+
+    it('dos saves sobre la misma versión leída: el primero gana, el segundo choca con 409 (spec 78)', async () => {
+      const license = LicenseMother.random()
+      await repository.register(license)
+
+      const firstReader = await repository.get(license.id)
+      const secondReader = await repository.get(license.id)
+
+      await repository.save(firstReader!)
+      await expect(repository.save(secondReader!)).rejects.toThrow(ConcurrencyConflictError)
+
+      const persisted = await repository.get(license.id)
+      expect(persisted?.version).toBe(2)
     })
   })
 

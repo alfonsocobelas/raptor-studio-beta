@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { AlreadyExistsError } from '../../../../../../shared/domain/errors'
+import { AlreadyExistsError, ConcurrencyConflictError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -42,12 +42,23 @@ export class MongooseCustomerRepository extends MongooseRepository<CustomerDoc> 
 
   // Un solo write: los contacts van embebidos en el documento, así que el agregado se
   // reemplaza entero y no hay dos escrituras que coordinar (ni huérfanos que soft-borrar).
+  // Escritura condicional (spec 78): solo reemplaza el documento si nadie lo movió desde la lectura
   async save(customer: Customer): Promise<void> {
     const doc = CustomerMapper.toPersistence(customer)
 
     try {
-      await this.model().replaceOne({ id: doc.id }, doc, { upsert: true }).session(this.session()).exec()
+      const result = await this.model()
+        .replaceOne({ id: doc.id, version: doc.version }, { ...doc, version: doc.version + 1 })
+        .session(this.session())
+        .exec()
+
+      if (result.matchedCount === 0) {
+        throw new ConcurrencyConflictError('Customer', doc.id)
+      }
     } catch (error) {
+      if (error instanceof ConcurrencyConflictError) {
+        throw error
+      }
       throw this.asDomainError(error)
     }
   }
