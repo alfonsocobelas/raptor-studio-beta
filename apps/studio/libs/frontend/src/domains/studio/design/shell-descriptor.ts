@@ -17,7 +17,7 @@ import { PreviewPreset } from './preview-settings'
  * `app.component.ts.template`, que es Angular de verdad y no cabe en un descriptor.
  */
 export interface ShellDescriptor {
-  /** Clase de ancho de Tailwind ('w-56'): es una clase y no un número porque el JIT no ve valores */
+  /** Clase de ancho de Tailwind ('w-60'): es una clase y no un número porque el JIT no ve valores */
   railWidth: string
   /** Relleno de la sección de contenido ('p-6'): también clase, por el mismo motivo que el ancho */
   padding: string
@@ -25,8 +25,10 @@ export interface ShellDescriptor {
   adminNav: boolean
 }
 
+// El emitido usa `w-60` en su <aside> (app.component.ts.template): con w-56 el menú de sesión
+// (w-56) sobresalía 32px del raíl en el lienzo, el doble que en la app real.
 const ACTUAL: ShellDescriptor = {
-  railWidth: 'w-56',
+  railWidth: 'w-60',
   padding: 'p-6',
   adminNav: true
 }

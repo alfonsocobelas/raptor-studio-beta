@@ -69,4 +69,29 @@ describe('CanvasSessionFooterComponent', () => {
     expect(active.systemView()).toBe('login')
     expect(testId(fixture, 'mock-session-menu')).toBeNull()
   })
+
+  it('el menú se cierra con un click fuera, como el emitido', () => {
+    const fixture = mount()
+
+    testId(fixture, 'mock-session-footer')?.click()
+    fixture.detectChanges()
+    expect(testId(fixture, 'mock-session-menu')).not.toBeNull()
+
+    document.body.click()
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'mock-session-menu')).toBeNull()
+  })
+
+  it('el menú se cierra con Escape, como el emitido', () => {
+    const fixture = mount()
+
+    testId(fixture, 'mock-session-footer')?.click()
+    fixture.detectChanges()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    fixture.detectChanges()
+
+    expect(testId(fixture, 'mock-session-menu')).toBeNull()
+  })
 })

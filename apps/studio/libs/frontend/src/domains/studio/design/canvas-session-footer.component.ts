@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core'
+import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { lucideBadgeCheck, lucideChevronsUpDown, lucideLogOut } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
@@ -14,6 +14,10 @@ import { ActiveViewService } from './active-view.service'
   imports: [NgIcon],
   providers: [provideIcons({ lucideBadgeCheck, lucideChevronsUpDown, lucideLogOut })],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'menuOpen.set(false)'
+  },
   template: `
     <div class="relative mt-4 border-t pt-3">
       @if (menuOpen()) {
@@ -75,8 +79,16 @@ import { ActiveViewService } from './active-view.service'
   `
 })
 export class CanvasSessionFooterComponent {
+  private readonly _host = inject(ElementRef<HTMLElement>)
+
   protected readonly active = inject(ActiveViewService)
   protected readonly menuOpen = signal(false)
+
+  protected onDocumentClick(event: Event): void {
+    if (this.menuOpen() && !this._host.nativeElement.contains(event.target as Node)) {
+      this.menuOpen.set(false)
+    }
+  }
   /** El usuario sembrado por el plugin de auth en toda app generada. */
   protected readonly initials = 'AL'
   protected readonly name = 'Admin Local'
