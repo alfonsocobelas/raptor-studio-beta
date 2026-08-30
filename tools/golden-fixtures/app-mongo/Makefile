@@ -39,6 +39,5 @@ typecheck:
 local-setup: up
 	npm install
 	sleep 6
-	$(MAKE) migrate
 	$(MAKE) seed
 	@echo "Listo. 'make api' (http://localhost:3000/api/v1) y 'make web' (http://localhost:4200)"

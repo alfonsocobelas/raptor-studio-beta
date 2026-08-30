@@ -42,6 +42,34 @@ describe('applyPluginManifests — local-setup', () => {
     expect(authPlugin.localSetupSteps).toEqual(['seed-auth'])
   })
 
+  /**
+   * Spec 76: el esqueleto invoca `$(MAKE) migrate`, pero el target lo aporta el plugin de
+   * migraciones — que el motor mongo excluye. Sin plugin que lo declare, `make local-setup`
+   * moría con "No rule to make target 'migrate'" en toda app mongo.
+   */
+  it('strips the migrate step when no plugin provides the migrate target', () => {
+    const bare = definePlugin({ name: 'bare', description: 'sin migrate', makeTargets: { extra: '\techo extra' } })
+
+    applyPluginManifests(tree, 'apps/demo', [bare], { mongoose: '^8.0.0' })
+
+    const makefile = tree.read('apps/demo/Makefile', 'utf-8') ?? ''
+    expect(makefile).not.toContain('$(MAKE) migrate')
+    expect(makefile).toContain('$(MAKE) seed')
+  })
+
+  it('keeps the migrate step when a plugin provides the target', () => {
+    const migrations = definePlugin({
+      name: 'migrations',
+      description: 'aporta migrate',
+      makeTargets: { migrate: '\tNODE_ENV=local npm run migration:run' }
+    })
+
+    applyPluginManifests(tree, 'apps/demo', [migrations])
+
+    const makefile = tree.read('apps/demo/Makefile', 'utf-8') ?? ''
+    expect(makefile).toContain('$(MAKE) migrate')
+  })
+
   it('leaves local-setup untouched for plugins without localSetupSteps', () => {
     const bare = definePlugin({ name: 'bare', description: 'sin pasos', makeTargets: { extra: '\techo extra' } })
 

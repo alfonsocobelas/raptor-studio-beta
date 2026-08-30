@@ -484,11 +484,18 @@ export function applyPluginManifests(
   }
   tree.write(packagePath, `${JSON.stringify(pkg, null, 2)}\n`)
 
+  // el esqueleto invoca `$(MAKE) migrate`, pero el target lo aporta el plugin de migraciones:
+  // sin él (motor mongo, que lo excluye) local-setup moría con "No rule to make target" (spec 76)
+  const makefilePath = path.join(root, 'Makefile')
+  if (!plugins.some(p => p.makeTargets?.['migrate'])) {
+    const skeleton = tree.read(makefilePath, 'utf-8')
+    if (skeleton) tree.write(makefilePath, skeleton.replace('\t$(MAKE) migrate\n', ''))
+  }
+
   const targets = plugins.flatMap(p => Object.entries(p.makeTargets ?? {}))
   if (!targets.length) {
     return
   }
-  const makefilePath = path.join(root, 'Makefile')
   let makefile = tree.read(makefilePath, 'utf-8') ?? ''
   makefile = makefile.replace(
     /^\.PHONY: (.*)$/m,
