@@ -19,10 +19,10 @@ describe('el servicio frontend con máquina de estados', () => {
   it('emite un método por transición: POST al verbo y recarga', () => {
     const service = read('frontend/contract.service.ts')
 
-    expect(service).toContain('terminate(id: string): Promise<void> {')
-    expect(service).toMatch(/post<void>\(`\$\{API_URL\}\/\$\{id\}\/terminate`, \{\}\)/)
-    expect(service).toMatch(/terminate\(id: string\): Promise<void> \{[\s\S]{0,200}this\.contracts\.reload\(\)/)
-    expect(service).toContain('expire(id: string): Promise<void> {')
+    expect(service).toContain('terminate(id: string, version: number): Promise<void> {')
+    expect(service).toMatch(/post<void>\(`\$\{API_URL\}\/\$\{id\}\/terminate`, \{ version \}\)/)
+    expect(service).toMatch(/terminate\(id: string, version: number\): Promise<void> \{[\s\S]{0,200}this\.contracts\.reload\(\)/)
+    expect(service).toContain('expire(id: string, version: number): Promise<void> {')
   })
 
   it('el spec emitido del servicio cubre la transición', () => {

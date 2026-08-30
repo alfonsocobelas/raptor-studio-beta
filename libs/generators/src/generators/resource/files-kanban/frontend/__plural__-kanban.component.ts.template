@@ -99,9 +99,9 @@ export class <%- pluralClassName %>KanbanComponent {
     { from: '<%- move.from %>', to: '<%- move.to %>', method: '<%- move.method %>' },
 <%_ }) _%>
   ]
-  private readonly _transitions: Record<string, (id: string) => Promise<void>> = {
+  private readonly _transitions: Record<string, (id: string, version: number) => Promise<void>> = {
 <%_ [...new Set(kanban.moves.map(move => move.method))].forEach(method => { _%>
-    <%- method %>: id => this._service.<%- method %>(id),
+    <%- method %>: (id, version) => this._service.<%- method %>(id, version),
 <%_ }) _%>
   }
 <%_ } _%>
@@ -175,13 +175,16 @@ export class <%- pluralClassName %>KanbanComponent {
   /** Sin optimismo: la tarjeta cambia de columna cuando el reload trae el nuevo valor. */
   private async _move(id: string, from: string, value: string): Promise<void> {
     this.moveError.set(null)
+    // spec 78: la escritura viaja con la versión leída de la tarjeta (bloqueo optimista)
+    const card = this.items().find(item => item.id === id)
+    if (!card) return
     try {
 <%_ if (kanban.stateDriven) { _%>
       const move = this.legalMoves.find(m => m.from === from && m.to === value)
       if (!move) return
-      await this._transitions[move.method](id)
+      await this._transitions[move.method](id, card.version)
 <%_ } else { _%>
-      await this._service.update(id, { <%- kanban.field %>: value })
+      await this._service.update(id, { <%- kanban.field %>: value, version: card.version })
 <%_ } _%>
     } catch {
       this.moveError.set('No se pudo mover la tarjeta; vuelve a intentarlo')

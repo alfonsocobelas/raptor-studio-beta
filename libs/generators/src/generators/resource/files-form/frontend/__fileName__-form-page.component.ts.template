@@ -209,6 +209,8 @@ export class <%- className %>FormPageComponent {
 
   private readonly _route = inject(ActivatedRoute)
   protected readonly editingId = signal<string | null>(null)
+  // spec 78: versión leída del registro en edición; viaja con el update
+  protected readonly editingVersion = signal<number>(1)
   protected readonly loading = signal(false)
   protected readonly notFound = signal(false)
 
@@ -227,6 +229,7 @@ export class <%- className %>FormPageComponent {
     this.loading.set(true)
     try {
       const <%- propertyName %> = await this._service.findOne(id)
+      this.editingVersion.set(<%- propertyName %>.version)
       this.form.patchValue({
 <%_ formPatchLines.forEach(line => { _%>
         <%- line %>,
@@ -256,7 +259,7 @@ export class <%- className %>FormPageComponent {
     const id = this.editingId()
     try {
       if (id) {
-        await this._service.update(id, value)
+        await this._service.update(id, { ...value, version: this.editingVersion() })
         this._notify.success('<%- ui.toastUpdated %>')
       } else {
         await this._service.create({ id: generateId(), ...value })

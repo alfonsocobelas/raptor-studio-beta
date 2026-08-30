@@ -77,9 +77,9 @@ export class <%- className %>Service {
 <%_ } _%>
 <%_ entry.transitions.forEach(transition => { _%>
 
-  /** Transición «<%- transition.label %>» de la máquina de estados (spec 43). */
-  <%- transition.method %>(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/<%- transition.verb %>`, {})).then(() => {
+  /** Transición «<%- transition.label %>» de la máquina de estados (spec 43); viaja con la versión leída (spec 78). */
+  <%- transition.method %>(id: string, version: number): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/<%- transition.verb %>`, { version })).then(() => {
       this.<%- plural %>.reload()
     })
   }

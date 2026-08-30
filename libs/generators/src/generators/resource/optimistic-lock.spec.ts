@@ -194,6 +194,30 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(spec).toContain('version: 1')
   })
 
+  it('el servicio front envía la version con cada transición (spec 78)', async () => {
+    const tree = await generate('contract')
+    const service = tree.read('out/frontend/contract.service.ts', 'utf-8') ?? ''
+
+    expect(service).toContain('terminate(id: string, version: number)')
+    expect(service).toContain('{ version }')
+  })
+
+  it('la ficha reenvía la version del registro en transiciones y edición', async () => {
+    const tree = await generate('contract')
+    const detail = tree.read('out/frontend/contract-detail.component.ts', 'utf-8') ?? ''
+
+    expect(detail).toContain('item.id, item.version')
+    expect(detail).toContain('version: current.version')
+  })
+
+  it('kanban, calendario y página de formulario reenvían la version al escribir', async () => {
+    const contractTree = await generate('contract')
+    const kanban = contractTree.read('out/frontend/contracts-kanban.component.ts', 'utf-8') ?? ''
+
+    expect(kanban).toContain('version')
+    expect(kanban).not.toMatch(/_service\.update\(id, \{ [^}]*\}\)(?!.*version)/)
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

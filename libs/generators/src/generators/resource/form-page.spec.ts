@@ -60,7 +60,7 @@ describe('resource generator — página-formulario (spec 48)', () => {
     expect(page).toContain("this._route.snapshot.paramMap.get('id')")
     expect(page).toContain('await this._service.findOne(id)')
     expect(page).toContain('this.form.patchValue')
-    expect(page).toContain('await this._service.update(id, value)')
+    expect(page).toContain('await this._service.update(id, { ...value, version: this.editingVersion() })')
   })
 
   it('la cabecera y el botón cambian con el modo, con los textos del diálogo', async () => {

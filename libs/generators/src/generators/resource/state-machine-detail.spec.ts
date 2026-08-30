@@ -30,7 +30,7 @@ describe('la ficha emitida con máquina de estados', () => {
       const detail = read('frontend/contract-detail.component.ts')
 
       expect(detail).not.toContain('data-testid="transition-expire"')
-      expect(detail).not.toContain('async expire(id: string)')
+      expect(detail).not.toContain('async expire(id: string, version: number)')
       expect(detail).not.toContain("['expiring'].includes(item.status)")
       expect(detail).toContain('data-testid="transition-terminate"')
     })
@@ -45,7 +45,7 @@ describe('la ficha emitida con máquina de estados', () => {
     it('conserva su endpoint, su use case y su método del servicio front (el kanban lo usa)', () => {
       expect(read('backend/infrastructure/entrypoints/contracts.controller.ts')).toContain(":id/expire'")
       expect(read('backend/application/use-cases/expire-contract-usecase.service.ts')).toContain('ExpireContract')
-      expect(read('frontend/contract.service.ts')).toContain('expire(id: string)')
+      expect(read('frontend/contract.service.ts')).toContain('expire(id: string, version: number)')
     })
 
     it('el kanban sigue moviendo por la transición oculta', () => {
@@ -57,8 +57,8 @@ describe('la ficha emitida con máquina de estados', () => {
     const detail = read('frontend/contract-detail.component.ts')
 
     expect(detail).toContain('[disabled]="transitioning()"')
-    expect(detail).toContain('async terminate(id: string): Promise<void> {')
-    expect(detail).toContain('await this._service.terminate(id)')
+    expect(detail).toContain('async terminate(id: string, version: number): Promise<void> {')
+    expect(detail).toContain('await this._service.terminate(id, version)')
   })
 
   it('el rechazo avisa con el mensaje del dominio y la ficha se recarga siempre', () => {

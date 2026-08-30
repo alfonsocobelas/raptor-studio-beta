@@ -67,9 +67,9 @@ describe('<%- className %>DetailComponent — ficha', () => {
   it('la transición «<%- transition.label %>» llama al verbo del servicio y recarga la ficha', async () => {
     const { component, findOne, service } = setup(record().id)
 
-    await component.<%- transition.method %>(record().id)
+    await component.<%- transition.method %>(record().id, record().version)
 
-    expect(service.<%- transition.method %>).toHaveBeenCalledWith(record().id)
+    expect(service.<%- transition.method %>).toHaveBeenCalledWith(record().id, record().version)
     // la carga del constructor más la recarga tras transicionar
     expect(findOne).toHaveBeenCalledTimes(2)
     expect(component.transitioning()).toBe(false)
