@@ -121,7 +121,11 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     .map(([name, f]) => ({ name, field: f, required: f.required ?? false, nullable: f.nullable ?? false }))
 
   const registerDtoFields = [idDtoField('id'), ...dtoCtxs.map(c => dtoField(c, definition, false))]
-  const updateDtoFields = dtoCtxs.map(c => dtoField(c, definition, true))
+  const updateDtoFields = [
+    // spec 78: la versión leída viaja con la edición; el use case choca con 409 si ya no es la actual
+    { decorators: ['@IsInt()', '@Min(1)'], declaration: 'version!: number' },
+    ...dtoCtxs.map(c => dtoField(c, definition, true))
+  ]
 
   const childCtxs: Ctx[] = comp
     ? Object.entries(comp.fields)

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 <%_ if (app.hasUniqueChecks) { _%>
-import { AlreadyExistsError, EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { AlreadyExistsError, ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 <%_ } else { _%>
-import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 <%_ } _%>
 <%_ if (app.history) { _%>
 import { changesBetween } from '../../../../../shared/domain/audit/audit-changes'
@@ -36,6 +36,11 @@ export class Update<%- className %>UseCase {
 
     if (!<%- propertyName %>) {
       throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): la versión que el cliente leyó debe seguir siendo la actual
+    if (input.version !== <%- propertyName %>.version) {
+      throw new ConcurrencyConflictError('<%- className %>', input.id)
     }
 
 <%_ app.updateCheckBlocks.forEach(block => { _%>

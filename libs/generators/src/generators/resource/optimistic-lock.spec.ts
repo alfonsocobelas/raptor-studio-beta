@@ -116,6 +116,34 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(test).toContain('ConcurrencyConflictError')
   })
 
+  it('el use case de update exige la version leída y choca antes de mutar (spec 78)', async () => {
+    const tree = await generate('customer')
+    const input = tree.read('out/backend/application/dtos/update-customer-input.dto.ts', 'utf-8') ?? ''
+    const useCase = tree.read('out/backend/application/use-cases/update-customer-usecase.service.ts', 'utf-8') ?? ''
+
+    expect(input).toContain('version: number')
+    expect(useCase).toContain('ConcurrencyConflictError')
+    // el check va ANTES de updateDetails: no se muta un agregado que ya sabemos desfasado
+    expect(useCase.indexOf('ConcurrencyConflictError(')).toBeLessThan(useCase.indexOf('.updateDetails('))
+  })
+
+  it('el DTO HTTP de update valida version en el borde y el controller la separa de updates', async () => {
+    const tree = await generate('customer')
+    const dto = tree.read('out/backend/infrastructure/entrypoints/dtos/update-customer.dto.ts', 'utf-8') ?? ''
+    const controller = tree.read('out/backend/infrastructure/entrypoints/customers.controller.ts', 'utf-8') ?? ''
+
+    expect(dto).toMatch(/@IsInt\(\)\n\s*@Min\(1\)\n\s*version!: number/)
+    expect(controller).toContain('const { version, ...updates } = body')
+    expect(controller).toContain('version,')
+  })
+
+  it('el test emitido del use case de update cubre la versión desfasada', async () => {
+    const tree = await generate('customer')
+    const test = tree.read('out/backend-tests-application/update-customer-usecase.test.ts', 'utf-8') ?? ''
+
+    expect(test).toContain('ConcurrencyConflictError')
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

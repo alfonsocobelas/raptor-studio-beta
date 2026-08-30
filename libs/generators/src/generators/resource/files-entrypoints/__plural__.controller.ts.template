@@ -125,7 +125,8 @@ export class <%- pluralClassName %>Controller {
   @Roles(<%- entry.updateRoles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
   update(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Update<%- className %>Dto): Promise<void> {
-    return this.update<%- className %>Handler.handle({ id, updates: body as <%- className %>UpdateProps })
+    const { version, ...updates } = body
+    return this.update<%- className %>Handler.handle({ id, version, updates: updates as <%- className %>UpdateProps })
   }
 <%_ } _%>
 <%_ if (app.removes) { _%>
