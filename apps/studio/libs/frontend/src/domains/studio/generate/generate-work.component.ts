@@ -218,6 +218,9 @@ export class GenerateWorkComponent {
 
   /** El detalle de la fila: lo que el generador contó, o para qué sirve la fase. */
   protected detail(phase: PhaseState): string {
+    if (phase.key === 'fill') return this.fillDetail(phase)
+    if (phase.key === 'validate') return this.validateDetail(phase)
+    if (phase.key === 'repair') return this.repairDetail(phase)
     if (phase.packages !== undefined) {
       return `${phase.packages} paquetes`
     }
@@ -225,6 +228,30 @@ export class GenerateWorkComponent {
       return `${phase.files} ficheros`
     }
     return phase.hint
+  }
+
+  /** Huecos rellenos y rechazados, contados del runner (spec 75). */
+  private fillDetail(phase: PhaseState): string {
+    const slots = this.runner.slotStates()
+    if (!slots.length) return phase.hint
+    const filled = slots.filter(slot => slot.status === 'filled').length
+    const rejected = slots.filter(slot => slot.status === 'rejected').length
+    const detail = `${filled} de ${slots.length} huecos rellenos`
+    return rejected ? `${detail} · ${rejected} rechazado${rejected === 1 ? '' : 's'}` : detail
+  }
+
+  /** Cada comprobación con su marca: typecheck ✓ · unit ◐ · front ✕ (spec 75). */
+  private validateDetail(phase: PhaseState): string {
+    const checks = this.runner.checks()
+    if (!checks.length) return phase.hint
+    const mark = (status: string): string => (status === 'ok' ? '✓' : status === 'failed' ? '✕' : '◐')
+    return checks.map(check => `${check.name} ${mark(check.status)}`).join(' · ')
+  }
+
+  private repairDetail(phase: PhaseState): string {
+    const repaired = this.runner.repaired().length
+    if (!repaired) return phase.hint
+    return `${repaired} hueco${repaired === 1 ? '' : 's'} reparado${repaired === 1 ? '' : 's'}`
   }
 
   protected kindLabel(kind: 'entity' | 'view' | 'module'): string {

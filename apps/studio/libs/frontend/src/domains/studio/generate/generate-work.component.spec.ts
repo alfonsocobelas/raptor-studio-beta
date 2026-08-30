@@ -151,6 +151,55 @@ describe('GenerateWorkComponent', () => {
     })
   })
 
+  /**
+   * Spec 75: las fases post-install cuentan lo suyo en su fila — huecos rellenos,
+   * comprobaciones en verde, huecos reparados. Sin datos aún, el hint de siempre.
+   */
+  describe('los detalles de las fases post-install (spec 75)', () => {
+    it('la fila del relleno cuenta rellenos y rechazados', () => {
+      runner.slotStates.set([
+        { id: 'flow-a', status: 'filled' },
+        { id: 'flow-b', status: 'rejected', reason: 'gate en rojo' },
+        { id: 'flow-c', status: 'proposing' }
+      ])
+
+      const detail = at(mount(), 'phase-fill')?.textContent ?? ''
+
+      expect(detail).toContain('1 de 3 huecos rellenos')
+      expect(detail).toContain('1 rechazado')
+    })
+
+    it('sin huecos contados, la fila del relleno explica para qué sirve', () => {
+      runner.slotStates.set([])
+
+      expect(at(mount(), 'phase-fill')?.textContent).toContain('puente')
+    })
+
+    it('la fila de validación enseña cada comprobación con su marca', () => {
+      runner.checks.set([
+        { name: 'typecheck', status: 'ok' },
+        { name: 'unit', status: 'running' }
+      ])
+
+      const detail = at(mount(), 'phase-validate')?.textContent ?? ''
+
+      expect(detail).toContain('typecheck ✓')
+      expect(detail).toContain('unit ◐')
+    })
+
+    it('una comprobación en rojo lleva su cruz', () => {
+      runner.checks.set([{ name: 'unit', status: 'failed' }])
+
+      expect(at(mount(), 'phase-validate')?.textContent).toContain('unit ✕')
+    })
+
+    it('la fila de reparación cuenta lo reparado', () => {
+      runner.repaired.set(['flow-a', 'flow-b'])
+
+      expect(at(mount(), 'phase-repair')?.textContent).toContain('2 huecos reparados')
+    })
+  })
+
   describe('la barra', () => {
     /** Fases cumplidas sobre el total: el único avance que se sabe de verdad. */
     it('cuenta fases, no un porcentaje de ficheros inventado', () => {
