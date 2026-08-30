@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { EntityNotFoundError } from '../../../../../shared/domain/errors'
+import { ConcurrencyConflictError, EntityNotFoundError } from '../../../../../shared/domain/errors'
 import { <%- className %>Repository } from '../../domain/<%- fileName %>-repository'
 import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<%- plural %>/<%- fileName %>-id.vo'
 
@@ -8,12 +8,17 @@ import { <%- className %>Id } from '../../../../../shared/domain/value-objects/<
 export class <%- transition.className %>UseCase {
   constructor(private readonly <%- propertyName %>Repository: <%- className %>Repository) {}
 
-  async invoke(input: { id: string }): Promise<void> {
+  async invoke(input: { id: string; version: number }): Promise<void> {
     const <%- propertyName %>Id = <%- className %>Id.create(input.id)
     const <%- propertyName %> = await this.<%- propertyName %>Repository.get(<%- propertyName %>Id)
 
     if (!<%- propertyName %>) {
       throw new EntityNotFoundError('<%- className %>', input.id)
+    }
+
+    // Bloqueo optimista (spec 78): dos transiciones simultáneas — la segunda choca con 409
+    if (input.version !== <%- propertyName %>.version) {
+      throw new ConcurrencyConflictError('<%- className %>', input.id)
     }
 
     <%- propertyName %>.<%- transition.method %>()

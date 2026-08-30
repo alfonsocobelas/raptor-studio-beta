@@ -31,6 +31,9 @@ import { Search<%- pluralClassName %>Handler } from '../../application/handlers/
 <%_ entry.transitions.forEach(transition => { _%>
 import { <%- transition.className %>Handler } from '../../application/handlers/<%- transition.file %>.handler'
 <%_ }) _%>
+<%_ if (entry.transitions.length) { _%>
+import { Transition<%- className %>Dto } from './dtos/transition-<%- fileName %>.dto'
+<%_ } _%>
 <%_ if (app.writes) { _%>
 import { Update<%- className %>Handler } from '../../application/handlers/update-<%- fileName %>.handler'
 <%_ } _%>
@@ -144,8 +147,8 @@ export class <%- pluralClassName %>Controller {
   @Post(':id/<%- transition.verb %>')
   @Roles(<%- transition.roles %>)
   @HttpCode(HttpStatus.NO_CONTENT)
-  <%- transition.method %>(@Param('id', ParseUUIDv7Pipe) id: string): Promise<void> {
-    return this.<%- transition.method %><%- className %>Handler.handle({ id })
+  <%- transition.method %>(@Param('id', ParseUUIDv7Pipe) id: string, @Body() body: Transition<%- className %>Dto): Promise<void> {
+    return this.<%- transition.method %><%- className %>Handler.handle({ id, version: body.version })
   }
 <%_ }) _%>
 }

@@ -129,6 +129,10 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       tree.delete(path.join(entry, 'dtos', `register-${substitutions.fileName}.dto.ts`))
       tree.delete(path.join(entry, 'dtos', `update-${substitutions.fileName}.dto.ts`))
     }
+    // el DTO de transición solo tiene sentido con máquina de estados (spec 78)
+    if (!substitutions.entry.transitions.length) {
+      tree.delete(path.join(entry, 'dtos', `transition-${substitutions.fileName}.dto.ts`))
+    }
   }
 
   // seed local idempotente (solo recursos con formulario: siembra vía Register use case)

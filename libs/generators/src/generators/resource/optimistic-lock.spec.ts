@@ -144,6 +144,29 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(test).toContain('ConcurrencyConflictError')
   })
 
+  it('la transición exige la version leída: use case, handler, DTO y endpoint (spec 78)', async () => {
+    const tree = await generate('contract')
+    const useCase = tree.read('out/backend/application/use-cases/terminate-contract-usecase.service.ts', 'utf-8') ?? ''
+    const handler = tree.read('out/backend/application/handlers/terminate-contract.handler.ts', 'utf-8') ?? ''
+    const dto = tree.read('out/backend/infrastructure/entrypoints/dtos/transition-contract.dto.ts', 'utf-8') ?? ''
+    const controller = tree.read('out/backend/infrastructure/entrypoints/contracts.controller.ts', 'utf-8') ?? ''
+
+    expect(useCase).toContain('ConcurrencyConflictError')
+    expect(useCase).toContain('version: number')
+    // el check va ANTES del verbo de dominio
+    expect(useCase.indexOf('ConcurrencyConflictError(')).toBeLessThan(useCase.indexOf('.terminate()'))
+    expect(handler).toContain('version: number')
+    expect(dto).toMatch(/@IsInt\(\)\n\s*@Min\(1\)\n\s*version!: number/)
+    expect(controller).toContain('TransitionContractDto')
+    expect(controller).toContain('version: body.version')
+  })
+
+  it('sin máquina de estados no se emite el DTO de transición', async () => {
+    const tree = await generate('customer')
+
+    expect(tree.exists('out/backend/infrastructure/entrypoints/dtos/transition-customer.dto.ts')).toBe(false)
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

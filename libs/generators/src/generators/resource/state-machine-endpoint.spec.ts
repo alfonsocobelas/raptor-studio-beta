@@ -41,7 +41,8 @@ describe('el caso de uso y el endpoint de una transición', () => {
     expect(controller).toContain("@Post(':id/terminate')")
     expect(controller).toContain("@Post(':id/expire')")
     expect(controller).toMatch(/@Post\(':id\/terminate'\)[\s\S]{0,200}@HttpCode\(HttpStatus\.NO_CONTENT\)/)
-    expect(controller).toContain('this.terminateContractHandler.handle({ id })')
+    // spec 78: la transición viaja con la versión leída (bloqueo optimista)
+    expect(controller).toContain('this.terminateContractHandler.handle({ id, version: body.version })')
   })
 
   it('el módulo provee caso de uso y handler de cada transición', () => {
