@@ -38,9 +38,11 @@
 - [x] TASK-10a: Suites completas: schema 260 ✅ · generators 1101 ✅ (las 5 rojas son de la
       spec 78 concurrente: optimistic-lock + migrations version, ajenas a roles) ·
       studio 1170 front + 328 back ✅ · `web:build` AOT ✅.
-- [ ] TASK-10b: Verificación en vivo: generar una app con un rol `perito`, arrancarla y
-      comprobar a mano login con `perito@app.local`, 403 en endpoints no otorgados y nav
-      filtrada. (El seed local ya crea un usuario por rol.)
+- [x] TASK-10b: Verificación en vivo (2026-08-30, app `roles-demo` local sin trackear):
+      seed con 4 usuarios (CHECK acepta `perito`); login perito ✓; GET 200 · POST 403 ·
+      PUT 204 (edit otorgado) · transición `cerrar` 403 (no otorgada) ✓; viewer PUT 403;
+      user cierra con `{"version":N}` (el 400 sin version es el bloqueo optimista de la
+      spec 78, no de roles); nav emitida con PERITO en la entrada de Expedientes.
 
 ---
 
