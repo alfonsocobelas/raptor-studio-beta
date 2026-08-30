@@ -7,9 +7,8 @@ import { DashboardService } from './dashboard.service'
 
 /** Total devuelto por cada endpoint, distinto por recurso para detectar cruces. */
 const TOTALS: Record<string, number> = {
-  '/api/v1/customers': 7,
-  '/api/v1/contracts': 14,
-  '/api/v1/licenses': 21
+  '/api/v1/contracts': 7,
+  '/api/v1/customers': 14
 }
 
 describe('DashboardService — totales por recurso', () => {
@@ -36,21 +35,47 @@ describe('DashboardService — totales por recurso', () => {
 
   it('asks each resource for a single row (only the total matters)', async () => {
     await load()
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/customers', { params: { page: '1', pageSize: '1' } })
     expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
-    expect(httpGet).toHaveBeenCalledWith('/api/v1/licenses', { params: { page: '1', pageSize: '1' } })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/customers', { params: { page: '1', pageSize: '1' } })
   })
 
   it('exposes zero totals while there is no data', () => {
-    expect(service.customersTotal()).toBe(0)
     expect(service.contractsTotal()).toBe(0)
-    expect(service.licensesTotal()).toBe(0)
+    expect(service.customersTotal()).toBe(0)
   })
 
   it('exposes the total of every resource once loaded', async () => {
     await load()
-    expect(service.customersTotal()).toBe(7)
-    expect(service.contractsTotal()).toBe(14)
-    expect(service.licensesTotal()).toBe(21)
+    expect(service.contractsTotal()).toBe(7)
+    expect(service.customersTotal()).toBe(14)
+  })
+
+  it('spends exactly the requests the panel needs, and no more', async () => {
+    await load()
+
+    expect(httpGet).toHaveBeenCalledTimes(16)
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', {
+      params: expect.objectContaining({ page: '1', pageSize: '1', filters: expect.any(String) })
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/licenses', {
+      params: {
+        page: '1',
+        pageSize: '1',
+        filters: JSON.stringify([{ field: 'status', operator: 'eq', value: 'active' }])
+      }
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts', { params: { page: '1', pageSize: '1' } })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts/aggregate', {
+      params: { page: '1', pageSize: '1', op: 'sum', field: 'totalValue' }
+    })
+    expect(httpGet).toHaveBeenCalledWith('/api/v1/contracts/aggregate', {
+      params: {
+        page: '1',
+        pageSize: '1',
+        op: 'avg',
+        field: 'totalValue',
+        filters: JSON.stringify([{ field: 'contractType', operator: 'eq', value: 'cloud' }])
+      }
+    })
   })
 })

@@ -2,8 +2,8 @@ import { Global, Injectable, Module, type OnApplicationBootstrap } from '@nestjs
 import { ConfigService } from '@nestjs/config'
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose'
 import { Connection } from 'mongoose'
-import { CustomerSchema } from '../../../../sap-licensing/modules/customers/infrastructure/persistence/mongoose/customer.schema'
 import { ContractSchema } from '../../../../sap-licensing/modules/contracts/infrastructure/persistence/mongoose/contract.schema'
+import { CustomerSchema } from '../../../../sap-licensing/modules/customers/infrastructure/persistence/mongoose/customer.schema'
 import { LicenseSchema } from '../../../../sap-licensing/modules/licenses/infrastructure/persistence/mongoose/license.schema'
 import { TransactionManager } from '../../../domain/persistence/transaction-manager'
 import { MongooseCriteriaConverter } from './mongoose-criteria-converter'
@@ -12,8 +12,8 @@ import { MongooseTransactionManager } from './mongoose-transaction-manager'
 // forFeature global: los schemas se derivan del registro de modelos (los hijos de
 // composición van embebidos en su padre y no se registran como modelo raíz).
 const FEATURES = MongooseModule.forFeature([
-  { name: 'Customer', schema: CustomerSchema },
   { name: 'Contract', schema: ContractSchema },
+  { name: 'Customer', schema: CustomerSchema },
   { name: 'License', schema: LicenseSchema }
 ])
 

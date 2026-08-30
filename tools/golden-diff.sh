@@ -103,14 +103,15 @@ gate_app() {                       # <etiqueta> <nombre-app> <dir-fixture> <args
 # equivalentes) para que lleve BRIEF: la fixture congela también el CLAUDE.md (spec 22)
 gate_app "app" "app-golden" "app" --app=golden --ui=spartan --plugins=email --infra=azure
 
-# mongo: se añade customer porque es el único modelo con COMPOSICIÓN (contacts embebidos),
-# y trae además el único opcional (taxId → índice parcial) y fechas nullable; project aporta
-# softDelete. Sin plugins: auth exige postgres y email depende de auth.
-# mongo: license sustituye a project (spec 25) — project lleva adjuntos y los adjuntos emiten
-# persistencia TypeORM, que en una app mongo no pinta nada; license conserva el softDelete
+# mongo: el app-schema golden-mongo (spec 76) — espejo del feature-set de golden sobre los
+# modelos que el motor puede honrar: customer (composición embebida + índice parcial),
+# contract (period, transiciones, kanban, medidas) y license (softDelete). Sin project:
+# lleva adjuntos, que emiten TypeORM y mongo los rechaza antes de emitir (spec 25).
+# El schema ejercita lo que el gate plano no vigilaba: kpi-row (73), aggregate (71),
+# agregación agrupada (72) y el flujo con paso de transición (44).
 # infra=none (interno) fijado a propósito: este gate vigila mongo, no la infra — con el
 # default raptor (2026-08-24) la fixture se llenaría de adapters que ya gata la app postgres
-gate_app "app-mongo" "app-mongo-golden" "app-mongo" --models=customer,contract,license --database=mongo --dashboard --infra=none
+gate_app "app-mongo" "app-mongo-golden" "app-mongo" --app=golden-mongo --database=mongo --infra=none
 
 echo
 echo "🏅 Golden diff —$summary"
