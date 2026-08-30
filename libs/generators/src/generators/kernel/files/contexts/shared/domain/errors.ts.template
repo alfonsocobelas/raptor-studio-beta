@@ -44,6 +44,12 @@ export class AlreadyExistsError extends BaseCustomError {
   }
 }
 
+export class ConcurrencyConflictError extends BaseCustomError {
+  constructor(entity: string, id: string, cause?: unknown) {
+    super(`${entity} with id "${id}" was modified by another user. Reload and retry.`, http.CONFLICT, cause)
+  }
+}
+
 export abstract class BusinessRuleViolationError extends BaseCustomError {
   constructor(message = 'Domain validation error', entityName: string, cause?: unknown) {
     super(`[${entityName}]: ${message}`, http.UNPROCESSABLE_ENTITY, cause)

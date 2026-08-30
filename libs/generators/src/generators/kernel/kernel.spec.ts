@@ -108,6 +108,13 @@ describe('kernel generator', () => {
     expect(converter).toContain('generateCursor')
   })
 
+  it('emits the concurrency conflict error with 409 in the shared domain errors (spec 78)', () => {
+    const errors = tree.read('tmp/generated/kernel/contexts/shared/domain/errors.ts', 'utf-8') ?? ''
+    expect(errors).toContain('export class ConcurrencyConflictError extends BaseCustomError')
+    expect(errors).toContain('was modified by another user')
+    expect(errors).toMatch(/ConcurrencyConflictError[\s\S]*?http\.CONFLICT/)
+  })
+
   it('keeps the postgres config untouched by default', () => {
     const types = tree.read('tmp/generated/kernel/contexts/shared/infrastructure/config/config-types.ts', 'utf-8') ?? ''
     expect(types).toContain('TypeOrmConfig')
