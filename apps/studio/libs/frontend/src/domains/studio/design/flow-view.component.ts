@@ -10,6 +10,8 @@ import {
   viewChild
 } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideZap, lucideZapOff } from '@ng-icons/lucide'
 import type { BusinessFlow, FlowNode, FlowNodeKind } from '@raptor/schema'
 import {
   FLOW_DECISION,
@@ -79,7 +81,8 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
 @Component({
   selector: 'studio-flow-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, AppSelect, CanvasControlsComponent],
+  imports: [FormsModule, AppSelect, CanvasControlsComponent, NgIcon],
+  providers: [provideIcons({ lucideZap, lucideZapOff })],
   host: { '(document:keydown.delete)': 'onDeleteKey($event)', '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (!store.flows().length) {
@@ -579,6 +582,18 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                       >
                     }
                   </span>
+                  <!-- convergencia visible (spec 74): el paso que ejecuta un verbo ES un botón
+                       de la ficha; si la transición está oculta, hay endpoint pero no botón -->
+                  @if (item.node.transition; as verb) {
+                    <ng-icon
+                      class="shrink-0"
+                      [class.opacity-40]="transitionHidden(item.node)"
+                      [name]="transitionHidden(item.node) ? 'lucideZapOff' : 'lucideZap'"
+                      size="12"
+                      [attr.title]="convergenceTitle(item.node)"
+                      [attr.data-testid]="'flow-node-button-' + item.node.id"
+                    />
+                  }
                 </span>
               }
             </div>
@@ -759,6 +774,24 @@ export class FlowViewComponent {
 
   protected kindLabel(kind: FlowNodeKind): string {
     return FLOW_KIND_LABELS[kind]
+  }
+
+  /** La transición que ejecuta el paso, buscada en la máquina de su entidad (spec 74). */
+  private machineTransition(node: FlowNode) {
+    const machine = this.store.resources().find(r => r.name === node.entity)?.state
+    return machine?.transitions.find(t => t.name === node.transition)
+  }
+
+  protected transitionHidden(node: FlowNode): boolean {
+    return this.machineTransition(node)?.hidden === true
+  }
+
+  protected convergenceTitle(node: FlowNode): string {
+    const transition = this.machineTransition(node)
+    const label = transition?.label ?? node.transition
+    return transition?.hidden
+      ? `Ejecuta «${label}» (endpoint emitido, sin botón: la transición está oculta en la ficha)`
+      : `Botón «${label}» en la ficha de ${node.entity}`
   }
 
   /** Las medidas de la tarjeta las manda el dominio: la geometría y el CSS no pueden discrepar. */

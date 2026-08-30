@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
 import { NgIcon, provideIcons } from '@ng-icons/core'
-import { lucideEye, lucideEyeOff } from '@ng-icons/lucide'
+import { lucideEye, lucideEyeOff, lucideZap } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
+import { flowStepsForTransition, type FlowStepLink } from './flow-linkage'
 
 /**
  * Panel del bloque FICHA (spec 74): los botones de acción que emitirá la app,
@@ -14,14 +15,15 @@ import { DesignStore } from './design-store'
   selector: 'studio-detail-actions-config',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIcon],
-  providers: [provideIcons({ lucideEye, lucideEyeOff })],
+  providers: [provideIcons({ lucideEye, lucideEyeOff, lucideZap })],
   template: `
     @if (view(); as v) {
       <section class="mb-4 border-t pt-3" data-testid="detail-actions-config">
         <h3 class="mb-2 text-sm font-semibold">Ficha · acciones</h3>
         <div class="space-y-1 text-xs">
           @for (t of v.transitions; track t.name; let i = $index; let last = $last) {
-            <div class="flex items-center gap-1" [class.opacity-50]="t.hidden">
+            <div [class.opacity-50]="t.hidden">
+              <div class="flex items-center gap-1">
               <input
                 class="hover:border-input focus:border-input w-24 min-w-0 flex-1 rounded border border-transparent px-2 py-1 text-xs outline-none"
                 [value]="t.label"
@@ -55,6 +57,19 @@ import { DesignStore } from './design-store'
               >
                 <ng-icon [name]="t.hidden ? 'lucideEyeOff' : 'lucideEye'" size="14" />
               </button>
+              </div>
+              <!-- la otra punta del botón (spec 74): el paso de flujo que ejecuta este verbo -->
+              @for (link of v.linksOf[t.name]; track link.flowName + link.stepText) {
+                <p
+                  class="text-muted-foreground flex items-center gap-1 pl-2 text-[10px] leading-tight"
+                  [attr.data-testid]="'action-flow-' + i"
+                >
+                  <ng-icon name="lucideZap" size="10" class="shrink-0" />
+                  <span class="truncate" [attr.title]="link.flowName + ': ' + link.stepText">
+                    {{ link.stepText }} — <i>{{ link.flowName }}</i>
+                  </span>
+                </p>
+              }
             </div>
           }
           <p class="text-muted-foreground pt-1 text-[10px]">
@@ -76,7 +91,11 @@ export class DetailActionsConfigComponent {
     const hasDetail = blocks.some(b => b.kind === 'fields' && b.resource === this.resource())
     const draft = this.store.resources().find(r => r.name === this.resource())
     if (!hasDetail || !draft?.state?.transitions.length) return null
-    return { resource: draft.name, transitions: draft.state.transitions }
+    const linksOf: Record<string, FlowStepLink[]> = {}
+    for (const t of draft.state.transitions) {
+      linksOf[t.name] = flowStepsForTransition(this.store.flows(), draft.name, t.name)
+    }
+    return { resource: draft.name, transitions: draft.state.transitions, linksOf }
   })
 
   protected rename(name: string, event: Event): void {
