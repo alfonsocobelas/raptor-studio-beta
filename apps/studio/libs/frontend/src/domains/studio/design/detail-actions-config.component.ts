@@ -17,6 +17,25 @@ import { flowStepsForTransition, type FlowStepLink } from './flow-linkage'
   imports: [NgIcon],
   providers: [provideIcons({ lucideEye, lucideEyeOff, lucideZap })],
   template: `
+    @if (missing(); as m) {
+      <!-- el caso ofertas (spec 74): el generador emitirá la ficha con sus botones, pero
+           el diseño no tiene vista que los represente — se señala y se arregla de un clic -->
+      <section class="mb-4 border-t pt-3" data-testid="detail-actions-missing">
+        <h3 class="mb-2 text-sm font-semibold">Ficha · acciones</h3>
+        <p class="text-muted-foreground text-xs">
+          {{ m.label }} tiene {{ m.count }} {{ m.count === 1 ? 'botón' : 'botones' }} de transición, pero el diseño
+          no tiene su vista de ficha: se generará igualmente y aquí no se ve ni se cura.
+        </p>
+        <button
+          type="button"
+          class="border-input hover:bg-accent mt-2 w-full rounded-md border border-dashed px-2 py-1.5 text-xs"
+          data-testid="detail-actions-add"
+          (click)="store.addDetailPageFor(m.resource)"
+        >
+          + Añadir la ficha
+        </button>
+      </section>
+    }
     @if (view(); as v) {
       <section class="mb-4 border-t pt-3" data-testid="detail-actions-config">
         <h3 class="mb-2 text-sm font-semibold">Ficha · acciones</h3>
@@ -85,6 +104,22 @@ export class DetailActionsConfigComponent {
 
   protected readonly store = inject(DesignStore)
   private readonly active = inject(ActiveViewService)
+
+  /** Máquina con botones y ninguna página fields de la entidad en TODO el diseño. */
+  protected readonly missing = computed(() => {
+    const draft = this.store.resources().find(r => r.name === this.resource())
+    const transitions = draft?.state?.transitions ?? []
+    if (!draft || !transitions.length) return null
+    const hasFichaSomewhere = this.store
+      .pages()
+      .some(p => p.blocks.some(b => b.kind === 'fields' && b.resource === draft.name))
+    if (hasFichaSomewhere) return null
+    return {
+      resource: draft.name,
+      label: draft.labelSingular,
+      count: transitions.filter(t => !t.hidden).length
+    }
+  })
 
   protected readonly view = computed(() => {
     const blocks = this.store.pages()[this.active.index()]?.blocks ?? []

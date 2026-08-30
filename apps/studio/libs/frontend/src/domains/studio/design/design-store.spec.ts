@@ -859,6 +859,42 @@ describe('las transiciones de la máquina (spec 43)', () => {
   })
 })
 
+/**
+ * Spec 74 (coherencia flag↔página): el generador emite la ficha desde la bandera `detail`
+ * de la entidad, pero el estudio solo dibuja PÁGINAS — si nadie añadió la vista, los
+ * botones existen en el emitido y no tienen representación (caso ofertas de inmobiliaria).
+ * Este gesto crea la ficha de una entidad EXISTENTE, cosa que addPage no sabe hacer.
+ */
+describe('DesignStore.addDetailPageFor — la ficha de una entidad existente', () => {
+  it('crea la página con fields (+adjuntos si la entidad los declara), drillDown y la bandera detail', () => {
+    const store = new DesignStore()
+    store.addResource('Oferta')
+
+    expect(store.addDetailPageFor('oferta')).toBe(true)
+
+    const page = store.pages().at(-1)!
+    expect(page.blocks.map(b => b.kind)).toEqual(['fields'])
+    expect(page.drillDown).toBe(true)
+    expect(page.title.toLowerCase()).toContain('ficha')
+    expect(store.resources()[0].detail).toBe(true)
+  })
+
+  it('si ya hay una página de ficha para la entidad, no duplica y explica el error', () => {
+    const store = new DesignStore()
+    store.addResource('Oferta')
+    store.addDetailPageFor('oferta')
+
+    expect(store.addDetailPageFor('oferta')).toBe(false)
+    expect(store.lastError()).toContain('ficha')
+    expect(store.pages().filter(p => p.blocks.some(b => b.kind === 'fields')).length).toBe(1)
+  })
+
+  it('una entidad desconocida no pasa', () => {
+    const store = new DesignStore()
+    expect(store.addDetailPageFor('fantasma')).toBe(false)
+  })
+})
+
 describe('DesignStore — puertos locales', () => {
   it('conserva los puertos de un diseño aplicado desde fuera', () => {
     const store = new DesignStore()

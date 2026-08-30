@@ -81,6 +81,28 @@ describe('DetailActionsConfigComponent', () => {
     expect(machine().transitions[0].label).toBe('Aprobar ya')
   })
 
+  // El caso ofertas (spec 74): máquina con botones pero ninguna vista de ficha en el diseño.
+  it('sin vista de ficha de la entidad en el diseño, avisa y el botón la crea de un clic', () => {
+    store.addResource('Oferta')
+    store.updateField('oferta', 0, { type: 'enum' })
+    store.promoteState('oferta', 'nombre')
+    const [a, b] = store.resources().find(r => r.name === 'oferta')!.fields[0].values!.map(v => v.value)
+    store.addTransition('oferta', a, b)
+    store.addPage('blank', 'Tablero')
+    store.addBlock(1, { kind: 'kanban', resource: 'oferta' })
+    active.select(1)
+    active.selectResource('oferta')
+    const fixture = mount('oferta')
+
+    expect(query(fixture, 'detail-actions-missing')).not.toBeNull()
+
+    query(fixture, 'detail-actions-add')!.click()
+    fixture.detectChanges()
+
+    expect(store.pages().some(p => p.blocks.some(bl => bl.kind === 'fields' && bl.resource === 'oferta'))).toBe(true)
+    expect(query(fixture, 'detail-actions-missing')).toBeNull()
+  })
+
   it('las flechas reordenan (y el borde no rompe)', () => {
     const fixture = mount()
     const before = machine().transitions.map(t => t.name)

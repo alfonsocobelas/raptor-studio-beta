@@ -321,6 +321,31 @@ export class DesignStore {
     return this.mutate(resources, [...this._pages(), page])
   }
 
+  /**
+   * La ficha de una entidad EXISTENTE (spec 74): addPage siempre estrena entidad, pero
+   * el caso ofertas demostró que la bandera `detail` puede viajar sin página que la
+   * represente — los botones de transición se emiten y el estudio no los enseña.
+   */
+  addDetailPageFor(resource: string): boolean {
+    const draft = this._resources().find(r => r.name === resource)
+    if (!draft) {
+      this._lastError.set(`No existe la entidad «${resource}»`)
+      return false
+    }
+    if (this._pages().some(p => p.blocks.some(b => b.kind === 'fields' && b.resource === resource))) {
+      this._lastError.set(`«${draft.labelSingular}» ya tiene una vista de ficha`)
+      return false
+    }
+    const article = draft.gender === 'f' ? 'de la' : 'del'
+    const blocks: DesignBlock[] = [
+      { kind: 'fields', resource, width: 'full' },
+      ...(draft.attachments ? [{ kind: 'attachments' as const, resource, width: 'full' as const }] : [])
+    ]
+    const page: DesignPage = { title: `Ficha ${article} ${draft.labelSingular.toLowerCase()}`, blocks, drillDown: true }
+    const resources = this._resources().map(r => (r.name === resource ? { ...r, detail: true } : r))
+    return this.mutate(resources, [...this._pages(), page])
+  }
+
   /** Entidad suelta (sin vista): para componer a mano después. */
   addResource(label: string): boolean {
     const draft = newDraftResource(label)
