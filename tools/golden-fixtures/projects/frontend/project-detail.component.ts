@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
@@ -232,8 +233,13 @@ export class ProjectDetailComponent {
       this.dialogOpen.set(false)
       this._notify.success('Proyecto actualizado correctamente')
       await this.load()
-    } catch {
-      this._notify.error('No se pudo actualizar el proyecto')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        await this.load()
+      } else {
+        this._notify.error('No se pudo actualizar el proyecto')
+      }
     }
   }
 

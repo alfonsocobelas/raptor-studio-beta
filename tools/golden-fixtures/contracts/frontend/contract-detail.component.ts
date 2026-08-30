@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { NgIcon } from '@ng-icons/core'
 import { lucideArrowLeft, lucidePencil } from '@ng-icons/lucide'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
@@ -188,8 +189,13 @@ export class ContractDetailComponent {
       this.dialogOpen.set(false)
       this._notify.success('Contrato actualizado correctamente')
       await this.load()
-    } catch {
-      this._notify.error('No se pudo actualizar el contrato')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        await this.load()
+      } else {
+        this._notify.error('No se pudo actualizar el contrato')
+      }
     }
   }
 
@@ -202,8 +208,11 @@ export class ContractDetailComponent {
     try {
       await this._service.terminate(id, version)
     } catch (e) {
+      // el 409 de concurrencia tiene su aviso propio; el de transición ilegal conserva el mensaje de dominio
       const message = (e as { error?: { message?: string } }).error?.message
-      this._notify.error(message ?? 'No se pudo aplicar «Terminar»')
+      this._notify.error(
+        isConcurrencyConflict(e) ? CONCURRENCY_CONFLICT_MESSAGE : (message ?? 'No se pudo aplicar «Terminar»')
+      )
     } finally {
       this.transitioning.set(false)
       await this.load()

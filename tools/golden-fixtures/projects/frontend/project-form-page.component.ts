@@ -6,6 +6,7 @@ import { AppFormField } from '../../../../../../shared/components/ui/form-field'
 import { AppInput } from '../../../../../../shared/components/ui/input.directive'
 import { AppSelect, AppSelectOption } from '../../../../../../shared/components/ui/select'
 import { AppLookup } from '../../../../../../shared/components/ui/lookup'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AuthService } from '../../../../../../core/services/auth.service'
 import { generateId } from '../../../../../../shared/utils/uuid'
@@ -233,8 +234,13 @@ export class ProjectFormPageComponent {
         this._notify.success('Proyecto creado correctamente')
       }
       void this._router.navigate(['/sap-licensing/projects'])
-    } catch {
-      this._notify.error(id ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+    } catch (e) {
+      if (id && isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        await this.load(id)
+      } else {
+        this._notify.error(id ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+      }
     }
   }
 

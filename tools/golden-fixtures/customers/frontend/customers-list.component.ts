@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil } from '@ng-icons/lucide'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
 import { CustomerDto, ExportFormat } from '@sap-licenses/shared/domain'
@@ -210,8 +211,13 @@ export class CustomersListComponent {
         await this._service.create({ id: generateId(), ...value })
         this._notify.success('Cliente creado correctamente')
       }
-    } catch {
-      this._notify.error(editing ? 'No se pudo actualizar el cliente' : 'No se pudo crear el cliente')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        this._service.customers.reload()
+      } else {
+        this._notify.error(editing ? 'No se pudo actualizar el cliente' : 'No se pudo crear el cliente')
+      }
     }
   }
 

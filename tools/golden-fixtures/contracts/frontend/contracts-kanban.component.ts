@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, sig
 import { Router } from '@angular/router'
 import { ContractDto } from '@sap-licenses/shared/domain'
 import { ContractService, OffsetPaginatedOutput } from '../../../../../../core/services/contract.service'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { formatValue } from '../../../../../../shared/utils/format-value'
 
 /**
@@ -166,8 +167,13 @@ export class ContractsKanbanComponent {
       const move = this.legalMoves.find(m => m.from === from && m.to === value)
       if (!move) return
       await this._transitions[move.method](id, card.version)
-    } catch {
-      this.moveError.set('No se pudo mover la tarjeta; vuelve a intentarlo')
+    } catch (e) {
+      this.moveError.set(
+        isConcurrencyConflict(e) ? CONCURRENCY_CONFLICT_MESSAGE : 'No se pudo mover la tarjeta; vuelve a intentarlo'
+      )
+      if (isConcurrencyConflict(e)) {
+        this._service.contracts.reload()
+      }
     }
   }
 

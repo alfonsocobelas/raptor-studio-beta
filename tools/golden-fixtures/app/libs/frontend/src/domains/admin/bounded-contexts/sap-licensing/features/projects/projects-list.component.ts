@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSign
 import { Router } from '@angular/router'
 import { provideIcons } from '@ng-icons/core'
 import { lucideEye, lucidePencil, lucideTrash2 } from '@ng-icons/lucide'
+import { CONCURRENCY_CONFLICT_MESSAGE, isConcurrencyConflict } from '../../../../../../shared/components/ui/concurrency'
 import { NotificationService } from '../../../../../../shared/components/ui/notification.service'
 import { AppConfirmDialog } from '../../../../../../shared/components/ui/confirm-dialog'
 import { AppDialog } from '../../../../../../shared/components/ui/dialog'
@@ -257,8 +258,13 @@ export class ProjectsListComponent {
         await this._service.create({ id: generateId(), ...value })
         this._notify.success('Proyecto creado correctamente')
       }
-    } catch {
-      this._notify.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+    } catch (e) {
+      if (isConcurrencyConflict(e)) {
+        this._notify.error(CONCURRENCY_CONFLICT_MESSAGE)
+        this._service.projects.reload()
+      } else {
+        this._notify.error(editing ? 'No se pudo actualizar el proyecto' : 'No se pudo crear el proyecto')
+      }
     }
   }
 
