@@ -6,7 +6,8 @@ import {
   KpiRowCell,
   KpiOperator,
   KpiWindowPreset,
-  PageDefinition
+  PageDefinition,
+  ROLE_LIMITS
 } from './app-types'
 import { THEME_IDS } from './themes'
 import { validateFlows } from './validate-flows'
@@ -24,6 +25,7 @@ export function defineApp(definition: AppDefinition): AppDefinition {
   const problems = [
     ...validateIdentity(definition),
     ...validateTheme(definition),
+    ...validateRoles(definition.roles),
     ...validatePages(definition.pages),
     ...validateFlows(definition.flows),
     ...briefProblems(definition.brief)
@@ -39,6 +41,42 @@ function validateIdentity(definition: AppDefinition): string[] {
 
   if (definition.schemaVersion !== 1) problems.push('schemaVersion: must be 1')
   if (!KEBAB_CASE.test(definition.name)) problems.push('name: must be non-empty kebab-case')
+
+  return problems
+}
+
+const RESERVED_ROLE_NAMES = ['admin', 'user', 'viewer'] as const
+
+/**
+ * Roles personalizados (spec 76): actores extra de la matriz de accesos. Los fijos
+ * (admin implícito, user, viewer) no se declaran; el nombre casa con el VARCHAR(20)
+ * de la migración IAM y con los miembros del enum emitido.
+ */
+function validateRoles(roles: AppDefinition['roles']): string[] {
+  if (roles === undefined) return []
+  const problems: string[] = []
+
+  if (roles.length > ROLE_LIMITS.count) problems.push(`roles: at most ${ROLE_LIMITS.count} custom roles`)
+
+  const seen = new Set<string>()
+  roles.forEach((role, index) => {
+    const at = `roles[${index}]`
+    if (typeof role.name !== 'string' || !KEBAB_CASE.test(role.name)) {
+      problems.push(`${at}.name: must be non-empty kebab-case`)
+    } else {
+      if (role.name.length > ROLE_LIMITS.name) problems.push(`${at}.name: exceeds ${ROLE_LIMITS.name} characters`)
+      if ((RESERVED_ROLE_NAMES as readonly string[]).includes(role.name)) {
+        problems.push(`${at}.name: '${role.name}' is reserved (admin, user and viewer are built in)`)
+      }
+      if (seen.has(role.name)) problems.push(`${at}.name: duplicated role '${role.name}'`)
+      seen.add(role.name)
+    }
+    if (typeof role.label !== 'string' || !role.label.trim()) {
+      problems.push(`${at}.label: must be a non-empty label`)
+    } else if (role.label.length > ROLE_LIMITS.label) {
+      problems.push(`${at}.label: exceeds ${ROLE_LIMITS.label} characters`)
+    }
+  })
 
   return problems
 }

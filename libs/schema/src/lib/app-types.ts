@@ -310,12 +310,32 @@ export const BRIEF_LIMITS = {
   entity: 500
 } as const
 
+/**
+ * Rol personalizado de la app (spec 76): un actor más de la matriz de accesos, además de
+ * los fijos admin/user/viewer. Es configuración de generación: cambiar roles = regenerar.
+ */
+export interface RoleDefinition {
+  /** kebab-case; ≠ admin/user/viewer */
+  name: string
+  /** Etiqueta de presentación (badges y select de la pantalla IAM) */
+  label: string
+}
+
+/** Topes de roles: name casa con el VARCHAR(20) de la migración IAM. */
+export const ROLE_LIMITS = {
+  count: 7,
+  name: 20,
+  label: 40
+} as const
+
 export interface AppDefinition {
   schemaVersion: 1
   name: string
   theme?: ThemeDefinition
   /** Puertos locales; sin declarar se emiten los del esqueleto */
   ports?: PortsDefinition
+  /** Roles adicionales a admin/user/viewer; participan en la matriz de accesos (spec 76) */
+  roles?: RoleDefinition[]
   /** El orden de páginas gobierna nav, rutas y ruta por defecto (la primera) */
   pages: PageDefinition[]
   /** Procesos de negocio dibujados en el estudio; contexto, nunca fuente de código (spec 28) */

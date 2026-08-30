@@ -740,3 +740,72 @@ describe('defineApp — un conteo y una suma del mismo eje no son duplicados', (
     ).toContainEqual(expect.stringContaining('duplicated'))
   })
 })
+
+describe('defineApp — roles personalizados (spec 76)', () => {
+  const withRoles = (roles: unknown): AppDefinition =>
+    ({ ...validDefinition(), roles }) as AppDefinition
+
+  it('acepta roles personalizados bien formados', () => {
+    const app = defineApp(
+      withRoles([
+        { name: 'perito', label: 'Perito' },
+        { name: 'back-office', label: 'Back office' }
+      ])
+    )
+
+    expect(app.roles?.map(r => r.name)).toEqual(['perito', 'back-office'])
+  })
+
+  it('sin roles declarados no hay problema (diseños existentes intactos)', () => {
+    expect(problemsOf(validDefinition())).toEqual([])
+  })
+
+  it('rechaza un nombre que no es kebab-case', () => {
+    expect(problemsOf(withRoles([{ name: 'Perito', label: 'Perito' }]))).toContainEqual(
+      expect.stringContaining('kebab-case')
+    )
+    expect(problemsOf(withRoles([{ name: 'back office', label: 'X' }]))).toContainEqual(
+      expect.stringContaining('kebab-case')
+    )
+  })
+
+  it('rechaza la colisión con los roles fijos: admin, user y viewer ya existen', () => {
+    for (const reserved of ['admin', 'user', 'viewer']) {
+      expect(problemsOf(withRoles([{ name: reserved, label: 'X' }]))).toContainEqual(
+        expect.stringContaining('reserved')
+      )
+    }
+  })
+
+  it('rechaza nombres duplicados', () => {
+    expect(
+      problemsOf(
+        withRoles([
+          { name: 'perito', label: 'Perito' },
+          { name: 'perito', label: 'Otro' }
+        ])
+      )
+    ).toContainEqual(expect.stringContaining('duplicated'))
+  })
+
+  it('corta el nombre por el tope (20, el VARCHAR de la migración IAM)', () => {
+    expect(problemsOf(withRoles([{ name: 'a'.repeat(21), label: 'X' }]))).toContainEqual(
+      expect.stringContaining('20')
+    )
+  })
+
+  it('la etiqueta es obligatoria y tiene tope (40)', () => {
+    expect(problemsOf(withRoles([{ name: 'perito', label: '' }]))).toContainEqual(
+      expect.stringContaining('label')
+    )
+    expect(problemsOf(withRoles([{ name: 'perito', label: 'x'.repeat(41) }]))).toContainEqual(
+      expect.stringContaining('40')
+    )
+  })
+
+  it('corta la cantidad por el tope (7 roles personalizados)', () => {
+    const roles = Array.from({ length: 8 }, (_, i) => ({ name: `rol-${i}`, label: `Rol ${i}` }))
+
+    expect(problemsOf(withRoles(roles))).toContainEqual(expect.stringContaining('at most 7'))
+  })
+})
