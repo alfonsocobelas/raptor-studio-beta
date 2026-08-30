@@ -27,7 +27,8 @@ describe('iac emitida vs catálogo', () => {
   describe.each([
     ['azure', 'files-infra-azure'],
     ['aws', 'files-infra-aws'],
-    ['hetzner', 'files-infra-raptor']
+    ['hetzner', 'files-infra-raptor'],
+    ['gcp', 'files-infra-gcp']
   ])('%s', (provider, files) => {
     it('el subárbol del generador contiene exactamente los ficheros del catálogo', () => {
       const catalog = filesIn(catalogOf(provider))
@@ -65,6 +66,16 @@ describe('iac emitida vs catálogo', () => {
   description = "Name of the application database."
   type        = string
   default     = "acelerador"`)
+
+    // gcp usa el mismo mecanismo que aws: variable `project` como prefijo de nombres
+    const withGcp: Tree = createTreeWithEmptyWorkspace()
+    await appGenerator(withGcp, { name: 'demo', models: 'contract', skipInstall: true, infra: 'gcp' })
+    const gcpVariables = withGcp.read('apps/demo/iac/variables.tf', 'utf-8') ?? ''
+
+    expect(gcpVariables).toContain(`variable "project" {
+  description = "Short project slug used as naming prefix (e.g. acelerador)."
+  type        = string
+  default     = "demo"`)
 
     const withAzure: Tree = createTreeWithEmptyWorkspace()
     await appGenerator(withAzure, { name: 'demo', models: 'contract', skipInstall: true, infra: 'azure' })

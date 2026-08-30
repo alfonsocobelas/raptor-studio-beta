@@ -97,6 +97,7 @@ export const gcpInfra = defineInfra({
     bindGcsStorage(tree, context)
     addCloudLoggingConfigSection(tree, context)
     addGcpLogTransport(tree, context)
+    nameTerraformProject(tree, context)
   }
 })
 
