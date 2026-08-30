@@ -316,6 +316,102 @@ describe('fill-flow-slots — recolección (spec 39)', () => {
       expect(report.filled).toHaveLength(1)
     })
 
+    /**
+     * Spec 75, TASK-01: presupuesto de 2 propuestas por hueco. Un rechazo (frontera o
+     * gate) da UNA segunda oportunidad con el motivo en el prompt; el segundo rechazo
+     * es definitivo. Un ejecutor que no propone nada no consume segunda oportunidad.
+     */
+    describe('reintento por hueco (spec 75)', () => {
+      /** Ejecutor con guion: responde la propuesta n-ésima de la lista y anota los prompts */
+      const scriptedExecutor = (
+        responses: Array<(current: string) => string | undefined>
+      ): SlotExecutor & { prompts: string[] } => ({
+        name: 'fake',
+        prompts: [],
+        async propose(prompt, _slot, current) {
+          this.prompts.push(prompt)
+          const next = responses.shift()
+          return next ? next(current) : undefined
+        }
+      })
+
+      /** Gate con guion por llamada; la 1ª es siempre la línea base (verde aquí) */
+      const scriptedGate = (reasons: Array<string | undefined>): SlotGate & { calls: number } => ({
+        calls: 0,
+        async run(_slot, _content) {
+          this.calls++
+          return this.calls === 1 ? undefined : reasons.shift()
+        }
+      })
+
+      it('un rechazo del gate re-propone una vez con el motivo en el prompt', async () => {
+        const tree = emittedApp()
+        const executor = scriptedExecutor([
+          current => replaceSlotBody(current, 'flow-revisar', '    roto()\n'),
+          current => replaceSlotBody(current, 'flow-revisar', BODY)
+        ])
+        const gate = scriptedGate(["error TS2304: Cannot find name 'roto'", undefined])
+
+        const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+        expect(report.filled).toEqual([{ file: PROCESS, id: 'flow-revisar' }])
+        expect(report.rejected).toEqual([])
+        expect(executor.prompts).toHaveLength(2)
+        // el segundo prompt lleva el motivo del rechazo: sin él la IA repetiría el error
+        expect(executor.prompts[1]).toContain('rechaz')
+        expect(executor.prompts[1]).toContain("error TS2304: Cannot find name 'roto'")
+        expect(readSlotBody(tree.read(PROCESS, 'utf-8') ?? '', 'flow-revisar')).toBe(BODY)
+      })
+
+      it('el segundo rechazo es definitivo: el hueco queda vacío con el último motivo', async () => {
+        const tree = emittedApp()
+        const before = tree.read(PROCESS, 'utf-8')
+        const executor = scriptedExecutor([
+          current => replaceSlotBody(current, 'flow-revisar', '    roto()\n'),
+          current => replaceSlotBody(current, 'flow-revisar', '    sigueRoto()\n')
+        ])
+        const gate = scriptedGate(['error TS2304: roto', 'error TS2304: sigueRoto'])
+
+        const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+        expect(report.filled).toEqual([])
+        expect(report.rejected).toEqual([{ slot: { file: PROCESS, id: 'flow-revisar' }, reason: 'error TS2304: sigueRoto' }])
+        // presupuesto agotado: exactamente 2 propuestas, ni una tercera
+        expect(executor.prompts).toHaveLength(2)
+        expect(tree.read(PROCESS, 'utf-8')).toBe(before)
+      })
+
+      it('salirse del hueco también da segunda oportunidad, sin gastar gate en la fallida', async () => {
+        const tree = emittedApp()
+        const executor = scriptedExecutor([
+          current =>
+            replaceSlotBody(current, 'flow-revisar', BODY).replace(
+              'export class CicloProcess {',
+              "import { x } from 'fs'\nexport class CicloProcess {"
+            ),
+          current => replaceSlotBody(current, 'flow-revisar', BODY)
+        ])
+        const gate = scriptedGate([undefined])
+
+        const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate })
+
+        expect(report.filled.map(s => s.id)).toEqual(['flow-revisar'])
+        expect(executor.prompts[1]).toMatch(/fuera del hueco/i)
+        // línea base + solo el intento válido: la frontera barata no gasta gate
+        expect(gate.calls).toBe(2)
+      })
+
+      it('si el ejecutor no propone nada no hay segunda oportunidad: no hay motivo que darle', async () => {
+        const tree = emittedApp()
+        const executor = scriptedExecutor([() => undefined, current => replaceSlotBody(current, 'flow-revisar', BODY)])
+
+        const report = await fillPendingFlowSlots(tree, { directory: 'apps/demo', executor, gate: scriptedGate([]) })
+
+        expect(report.rejected[0].reason).toMatch(/no propuso/i)
+        expect(executor.prompts).toHaveLength(1)
+      })
+    })
+
     it('el informe nombra al ejecutor que se usó', async () => {
       const tree = emittedApp()
 

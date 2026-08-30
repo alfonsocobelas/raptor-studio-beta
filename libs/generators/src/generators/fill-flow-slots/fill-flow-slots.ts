@@ -8,6 +8,20 @@ import { validateSlotOnlyEdit } from './slot-write'
 /** Prefijo de los huecos que emite un flujo: `// @ai:begin flow-<nodeId>` */
 const FLOW_PREFIX = 'flow-'
 
+/** Presupuesto por hueco: la propuesta y una sola segunda oportunidad (spec 75) */
+const PROPOSALS_PER_SLOT = 2
+
+/** El segundo intento lleva el motivo del rechazo: sin él la IA repetiría el error. */
+function promptWithRejection(basePrompt: string, reason: string): string {
+  return [
+    basePrompt,
+    '',
+    'Tu intento anterior fue rechazado por el gate determinista. Motivo:',
+    reason,
+    'Corrige exactamente ese problema sin repetir el error. Sigue las mismas reglas.'
+  ].join('\n')
+}
+
 export interface FillFlowSlotsGeneratorSchema {
   /** Directorio de la app ya emitida sobre la que se rellena (p.ej. apps/solaris) */
   directory: string
@@ -109,37 +123,53 @@ export async function fillPendingFlowSlots(tree: Tree, options: FlowFillOptions)
   const rejected: FlowFillRejection[] = []
 
   for (const slot of pending) {
-    // la obra traduce esta línea a «proponiendo…» (spec 45): sin ella, el puente espera
-    // hasta 15 minutos en silencio y la pantalla parece colgada
-    console.log(`→ ${slot.id}: proponiendo por ${executor.name}…`)
     const original = tree.read(slot.file, 'utf-8') ?? ''
-    const candidate = await executor.propose(buildFlowSlotPrompt(tree, directory, slot), slot, original)
+    const basePrompt = buildFlowSlotPrompt(tree, directory, slot)
+    let lastReason: string | undefined
+    let accepted = false
 
-    if (candidate === undefined) {
-      rejected.push({ slot, reason: `el ejecutor no propuso nada para '${slot.id}'` })
-      continue
+    // presupuesto de 2 propuestas por hueco (spec 75): un rechazo da UNA segunda
+    // oportunidad con el motivo en el prompt; el segundo rechazo es definitivo
+    for (let attempt = 0; attempt < PROPOSALS_PER_SLOT && !accepted; attempt++) {
+      // la obra traduce esta línea a «proponiendo…» (spec 45): sin ella, el puente espera
+      // hasta 15 minutos en silencio y la pantalla parece colgada
+      console.log(`→ ${slot.id}: proponiendo por ${executor.name}…`)
+      const prompt = lastReason ? promptWithRejection(basePrompt, lastReason) : basePrompt
+      const candidate = await executor.propose(prompt, slot, original)
+
+      if (candidate === undefined) {
+        // sin propuesta no hay motivo que devolverle a la IA: no se reintenta
+        lastReason = `el ejecutor no propuso nada para '${slot.id}'`
+        break
+      }
+
+      // la frontera barata primero: no se gasta un gate de minutos en algo ya invalidado
+      const outsideEdit = validateSlotOnlyEdit(original, candidate, slot.id)
+      if (outsideEdit) {
+        lastReason = outsideEdit
+        continue
+      }
+
+      // se escribe SIEMPRE por replaceSlotBody: los bytes de fuera del hueco los pone el
+      // acelerador, y así el relleno sobrevive a la regeneración por construcción
+      const written = replaceSlotBody(original, slot.id, readSlotBody(candidate, slot.id) ?? '')
+      tree.write(slot.file, written)
+
+      const reason = await gate.run(slot, written)
+      if (reason) {
+        tree.write(slot.file, original)
+        lastReason = reason
+        continue
+      }
+
+      accepted = true
     }
 
-    // la frontera barata primero: no se gasta un gate de minutos en algo ya invalidado
-    const outsideEdit = validateSlotOnlyEdit(original, candidate, slot.id)
-    if (outsideEdit) {
-      rejected.push({ slot, reason: outsideEdit })
-      continue
+    if (accepted) {
+      filled.push(slot)
+    } else {
+      rejected.push({ slot, reason: lastReason ?? `el ejecutor no propuso nada para '${slot.id}'` })
     }
-
-    // se escribe SIEMPRE por replaceSlotBody: los bytes de fuera del hueco los pone el
-    // acelerador, y así el relleno sobrevive a la regeneración por construcción
-    const written = replaceSlotBody(original, slot.id, readSlotBody(candidate, slot.id) ?? '')
-    tree.write(slot.file, written)
-
-    const reason = await gate.run(slot, written)
-    if (reason) {
-      tree.write(slot.file, original)
-      rejected.push({ slot, reason })
-      continue
-    }
-
-    filled.push(slot)
   }
 
   return { executor: executor.name, pending: pendingFlowSlots(tree, directory), filled, rejected }
