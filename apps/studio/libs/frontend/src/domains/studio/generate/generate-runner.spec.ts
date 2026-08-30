@@ -177,7 +177,7 @@ describe('GenerateRunner', () => {
 
       await run.run(request)
 
-      expect(run.phases().map(p => p.key)).toEqual(['prepare', 'write', 'install'])
+      expect(run.phases().map(p => p.key)).toEqual(['prepare', 'write', 'install', 'fill', 'validate', 'repair'])
     })
 
     it('si no se instala, esa fase queda omitida desde el principio', async () => {

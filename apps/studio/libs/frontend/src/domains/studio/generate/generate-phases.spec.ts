@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   applyDone,
   applyEvent,
+  applySkip,
   elapsedOf,
   EXPECTED_FILES,
+  EXPECTED_FILL_MS,
   EXPECTED_INSTALL_MS,
+  EXPECTED_REPAIR_MS,
+  EXPECTED_VALIDATE_MS,
   initialPhases,
   overallProgress,
   type PhaseState
@@ -23,12 +27,20 @@ describe('initialPhases', () => {
     // no es el que ocurre, y la pantalla cuenta lo que pasa, no lo que se dibujó.
     // «Ajustando la configuración» NO está: en la generación real (log de 1421 líneas del
     // 2026-08-13) no salió ni un UPDATE, así que era una fila que nunca se encendía.
-    expect(initialPhases({ skipInstall: false }).map(p => p.key)).toEqual(['prepare', 'write', 'install'])
+    // …y desde la spec 75 la obra sigue después de instalar: rellenar IA, validar, reparar.
+    expect(initialPhases({ skipInstall: false }).map(p => p.key)).toEqual([
+      'prepare',
+      'write',
+      'install',
+      'fill',
+      'validate',
+      'repair'
+    ])
     expect(
       initialPhases({ skipInstall: false })
         .filter(p => p.status === 'pending')
         .map(p => p.key)
-    ).toEqual(['write', 'install'])
+    ).toEqual(['write', 'install', 'fill', 'validate', 'repair'])
   })
 
   /**
@@ -46,6 +58,15 @@ describe('initialPhases', () => {
 
   it('si se pidió no instalar, esa fase nace omitida y no pendiente para siempre', () => {
     expect(status(initialPhases({ skipInstall: true }), 'install')).toBe('skipped')
+  })
+
+  /** Spec 75: sin node_modules no hay gate ni suite — las fases post-install nacen omitidas. */
+  it('sin instalar tampoco hay relleno, validación ni reparación: nacen omitidas', () => {
+    const phases = initialPhases({ skipInstall: true })
+
+    expect(status(phases, 'fill')).toBe('skipped')
+    expect(status(phases, 'validate')).toBe('skipped')
+    expect(status(phases, 'repair')).toBe('skipped')
   })
 
   it('cada fase se presenta con su nombre y lo que hace', () => {
@@ -201,7 +222,11 @@ describe('overallProgress', () => {
   })
 
   it('todo cerrado, uno', () => {
-    const phases = applyDone(applyEvent(start, { phase: 'install' }, 1000), 2000, true)
+    const advanced = ['install', 'fill', 'validate', 'repair'].reduce(
+      (acc, key, i) => applyEvent(acc, { phase: key }, 1000 + i),
+      start
+    )
+    const phases = applyDone(advanced, 2000, true)
 
     expect(overallProgress(phases, 3000)).toBe(1)
   })
@@ -211,8 +236,8 @@ describe('overallProgress', () => {
     const phases = applyEvent(start, { phase: 'write', files: EXPECTED_FILES / 2 }, 1000)
     const fraction = overallProgress(phases, 60000)
 
-    // una de tres cerrada (prepare) + media fase escribiendo
-    expect(fraction).toBeCloseTo((1 + 0.5) / 3, 5)
+    // una de seis cerrada (prepare) + media fase escribiendo
+    expect(fraction).toBeCloseTo((1 + 0.5) / 6, 5)
   })
 
   /**
@@ -222,7 +247,7 @@ describe('overallProgress', () => {
   it('mientras instala avanza con el reloj contra lo que suele tardar', () => {
     const phases = applyEvent(start, { phase: 'install' }, 1000)
 
-    expect(overallProgress(phases, 1000 + EXPECTED_INSTALL_MS / 2)).toBeCloseTo((2 + 0.5) / 3, 5)
+    expect(overallProgress(phases, 1000 + EXPECTED_INSTALL_MS / 2)).toBeCloseTo((2 + 0.5) / 6, 5)
   })
 
   it('la estimación nunca llega al final sola: si tarda de más, se frena antes del tope', () => {
@@ -252,7 +277,7 @@ describe('overallProgress', () => {
   it('y por mucho que tarde el arranque, no termina su fase sola', () => {
     const phases = initialPhases({ skipInstall: false, startedAt: 0 })
 
-    expect(overallProgress(phases, 10 * 60_000)).toBeLessThan(1 / 3)
+    expect(overallProgress(phases, 10 * 60_000)).toBeLessThan(1 / 6)
   })
 
   it('la curva se frena: el segundo tramo de espera avanza menos que el primero', () => {
@@ -267,6 +292,55 @@ describe('overallProgress', () => {
     const phases = applyDone(applyEvent(initialPhases({ skipInstall: true }), { phase: 'write' }, 1000), 2000, true)
 
     expect(overallProgress(phases, 3000)).toBe(1)
+  })
+})
+
+/**
+ * Spec 75: las fases post-install no pasan por describeProgress (no son la consola de Nx):
+ * el runner las estima con el reloj, como instalar — el puente puede tardar minutos por
+ * hueco y la suite ~2 min, y la barra tiene que moverse mientras tanto.
+ */
+describe('overallProgress — fases post-install (spec 75)', () => {
+  const start = initialPhases({ skipInstall: false, startedAt: 0 })
+
+  it.each([
+    ['fill', EXPECTED_FILL_MS, 3],
+    ['validate', EXPECTED_VALIDATE_MS, 4],
+    ['repair', EXPECTED_REPAIR_MS, 5]
+  ] as const)('la fase %s avanza con el reloj contra lo que suele tardar', (key, expectedMs, settled) => {
+    const phases = applyEvent(start, { phase: key }, 1000)
+
+    expect(overallProgress(phases, 1000 + expectedMs / 2)).toBeCloseTo((settled + 0.5) / 6, 5)
+  })
+})
+
+/**
+ * Spec 75: cuántos huecos hay solo se sabe al TERMINAR la generación (el `done` trae los
+ * slots), así que rellenar y reparar no pueden nacer omitidas: se omiten sobre la marcha.
+ */
+describe('applySkip', () => {
+  const start = initialPhases({ skipInstall: false, startedAt: 0 })
+
+  it('marca omitida una fase pendiente', () => {
+    const phases = applySkip(start, 'fill')
+
+    expect(status(phases, 'fill')).toBe('skipped')
+  })
+
+  it('no toca una fase ya cerrada ni la que está en curso', () => {
+    const running = applyEvent(start, { phase: 'validate' }, 1000)
+
+    const phases = applySkip(applySkip(running, 'validate'), 'prepare')
+
+    expect(status(phases, 'validate')).toBe('running')
+    expect(status(phases, 'prepare')).toBe('done')
+  })
+
+  it('la fase omitida cuenta como andada en la barra', () => {
+    const phases = applySkip(applySkip(applySkip(start, 'fill'), 'validate'), 'repair')
+
+    // tres omitidas de seis: la barra parte de la mitad andada (prepare sigue en curso)
+    expect(overallProgress(phases, 0)).toBeCloseTo(3 / 6, 5)
   })
 })
 

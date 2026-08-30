@@ -17,7 +17,7 @@
  *   una fase anterior que reaparece no vuelve a ponerse en curso —la pantalla parpadearía
  *   entre dos filas toda la generación—, aunque sus contadores sí siguen subiendo.
  */
-export type PhaseKey = 'prepare' | 'write' | 'install'
+export type PhaseKey = 'prepare' | 'write' | 'install' | 'fill' | 'validate' | 'repair'
 export type PhaseStatus = 'pending' | 'running' | 'done' | 'skipped' | 'failed'
 
 export interface PhaseState {
@@ -45,7 +45,11 @@ export interface PhaseEvent {
 const CATALOG: { key: PhaseKey; label: string; hint: string }[] = [
   { key: 'prepare', label: 'Preparando el proyecto', hint: 'Estructura de carpetas y configuración base' },
   { key: 'write', label: 'Escribiendo el código', hint: 'Entidades, vistas y módulos' },
-  { key: 'install', label: 'Instalando dependencias', hint: 'npm install + los componentes · un par de minutos' }
+  { key: 'install', label: 'Instalando dependencias', hint: 'npm install + los componentes · un par de minutos' },
+  // las fases post-install (spec 75): la obra sigue sola después de instalar
+  { key: 'fill', label: 'Pasos de negocio (IA)', hint: 'El puente rellena los huecos, cada uno bajo su gate' },
+  { key: 'validate', label: 'Validando la app', hint: 'Typecheck + suites de la propia app · un par de minutos' },
+  { key: 'repair', label: 'Reparando huecos', hint: 'Solo dentro de los huecos IA; el canon no se toca' }
 ]
 
 /** El backend distingue el `UPDATE` como fase propia; aquí es el mismo momento que escribir. */
@@ -59,6 +63,11 @@ const EVENT_ALIASES: Record<string, PhaseKey> = { configure: 'write' }
  */
 export const EXPECTED_FILES = 1400
 export const EXPECTED_INSTALL_MS = 120_000
+/** El puente puede tardar minutos por hueco; esto es solo para que la barra respire. */
+export const EXPECTED_FILL_MS = 180_000
+/** La suite emitida ronda los 2 min (typecheck-emitted.sh, medido). */
+export const EXPECTED_VALIDATE_MS = 120_000
+export const EXPECTED_REPAIR_MS = 180_000
 /** Escala de la curva del arranque; no es una duración esperada, es lo rápido que se frena. */
 export const PREPARE_SCALE_MS = 15_000
 
@@ -81,8 +90,17 @@ export function initialPhases(options: { skipInstall: boolean; startedAt?: numbe
  * justo cuando más hace falta decir «te he oído».
  */
 function statusAtStart(key: PhaseKey, skipInstall: boolean): PhaseStatus {
-  if (key === 'install' && skipInstall) return 'skipped'
+  // sin node_modules no hay gate ni suite: todo lo post-install nace omitido (spec 75)
+  if (skipInstall && (key === 'install' || key === 'fill' || key === 'validate' || key === 'repair')) return 'skipped'
   return key === 'prepare' ? 'running' : 'pending'
+}
+
+/**
+ * Omite sobre la marcha una fase aún pendiente (spec 75): cuántos huecos hay solo se
+ * sabe al terminar la generación, y si hay que reparar solo lo dice la validación.
+ */
+export function applySkip(phases: PhaseState[], key: PhaseKey): PhaseState[] {
+  return phases.map(p => (p.key === key && p.status === 'pending' ? { ...p, status: 'skipped' } : p))
 }
 
 export function applyEvent(phases: PhaseState[], event: PhaseEvent, atMs: number): PhaseState[] {
@@ -158,6 +176,10 @@ function runningFraction(phase: PhaseState, nowMs: number): number {
   if (phase.key === 'write') return Math.min((phase.files ?? 0) / EXPECTED_FILES, ESTIMATE_CAP)
   if (phase.key === 'install') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_INSTALL_MS, ESTIMATE_CAP)
   if (phase.key === 'prepare') return decelerating(Math.max(elapsedOf(phase, nowMs) ?? 0, 0), PREPARE_SCALE_MS)
+  // las fases post-install no dan medida intermedia: reloj contra lo que suelen tardar
+  if (phase.key === 'fill') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_FILL_MS, ESTIMATE_CAP)
+  if (phase.key === 'validate') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_VALIDATE_MS, ESTIMATE_CAP)
+  if (phase.key === 'repair') return Math.min((elapsedOf(phase, nowMs) ?? 0) / EXPECTED_REPAIR_MS, ESTIMATE_CAP)
   return 0
 }
 

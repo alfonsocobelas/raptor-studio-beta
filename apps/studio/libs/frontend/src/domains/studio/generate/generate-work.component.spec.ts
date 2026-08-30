@@ -160,8 +160,8 @@ describe('GenerateWorkComponent', () => {
       const fixture = mount()
 
       expect(at(fixture, 'work-progress')?.getAttribute('aria-valuenow')).toBe('2')
-      expect(at(fixture, 'work-progress')?.getAttribute('aria-valuemax')).toBe('3')
-      expect(fixture.nativeElement.textContent).toContain('2 de 3')
+      expect(at(fixture, 'work-progress')?.getAttribute('aria-valuemax')).toBe('6')
+      expect(fixture.nativeElement.textContent).toContain('2 de 6')
     })
 
     /**
@@ -179,8 +179,8 @@ describe('GenerateWorkComponent', () => {
       vi.advanceTimersByTime(EXPECTED_INSTALL_MS / 2)
       fixture.detectChanges()
 
-      // dos fases cerradas de tres, más media fase instalando
-      expect(parseFloat(bar())).toBeCloseTo(((2 + 0.5) / 3) * 100, 0)
+      // dos fases cerradas de seis, más media fase instalando
+      expect(parseFloat(bar())).toBeCloseTo(((2 + 0.5) / 6) * 100, 0)
       expect(parseFloat(bar())).toBeGreaterThan(parseFloat(atStart))
       vi.useRealTimers()
     })
@@ -188,7 +188,8 @@ describe('GenerateWorkComponent', () => {
     it('lo omitido cuenta como resuelto: no va a pasar nada más ahí', () => {
       runner.phases.set(initialPhases({ skipInstall: true }))
 
-      expect(at(mount(), 'work-progress')?.getAttribute('aria-valuenow')).toBe('1')
+      // sin instalar se omite también todo lo post-install (spec 75): 4 filas resueltas
+      expect(at(mount(), 'work-progress')?.getAttribute('aria-valuenow')).toBe('4')
     })
   })
 
