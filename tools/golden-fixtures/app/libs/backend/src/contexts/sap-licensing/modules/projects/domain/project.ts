@@ -41,7 +41,8 @@ export class Project extends AggregateRoot {
     private _waveStage: Nullable<string>,
     private _waveStatus: Nullable<string>,
     private _planToGoLive: Nullable<ContractDate>,
-    private _period: Period
+    private _period: Period,
+    private readonly _version: number
   ) {
     super()
   }
@@ -104,6 +105,9 @@ export class Project extends AggregateRoot {
   get period(): Period {
     return this._period
   }
+  get version(): number {
+    return this._version
+  }
   //#endregion
 
   static create(props: ProjectAggregateProps): Project {
@@ -126,7 +130,8 @@ export class Project extends AggregateRoot {
       props.waveStage,
       props.waveStatus,
       props.planToGoLive,
-      props.period
+      props.period,
+      1
     )
   }
 
@@ -178,7 +183,8 @@ export class Project extends AggregateRoot {
       Period.create(
         props.startDate ? ContractDate.create(new Date(props.startDate)) : null,
         props.endDate ? ContractDate.create(new Date(props.endDate)) : null
-      )
+      ),
+      props.version
     )
   }
 
@@ -203,7 +209,8 @@ export class Project extends AggregateRoot {
       nbrOfWaves: this._nbrOfWaves,
       waveStage: this._waveStage,
       waveStatus: this._waveStatus,
-      planToGoLive: this._planToGoLive ? this._planToGoLive.toDateString() : null
+      planToGoLive: this._planToGoLive ? this._planToGoLive.toDateString() : null,
+      version: this._version
     }
   }
 

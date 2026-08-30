@@ -45,6 +45,7 @@ export interface CustomerPrimitiveProps {
   status?: string
   archivedAt?: Nullable<string>
   lastSeenInSyncAt?: Nullable<string>
+  version: number
 }
 
 export type CustomerUpdateProps = Partial<

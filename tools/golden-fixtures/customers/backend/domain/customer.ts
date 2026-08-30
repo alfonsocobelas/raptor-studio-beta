@@ -45,7 +45,8 @@ export class Customer extends AggregateRoot {
     private readonly _contacts: Contact[],
     private _status: CustomerStatus,
     private _archivedAt: Nullable<SyncTimestamp>,
-    private _lastSeenInSyncAt: Nullable<SyncTimestamp>
+    private _lastSeenInSyncAt: Nullable<SyncTimestamp>,
+    private readonly _version: number
   ) {
     super()
   }
@@ -96,6 +97,9 @@ export class Customer extends AggregateRoot {
   get lastSeenInSyncAt(): Nullable<SyncTimestamp> {
     return this._lastSeenInSyncAt
   }
+  get version(): number {
+    return this._version
+  }
   //#endregion
 
   static create(props: CustomerAggregateProps, contacts: Contact[] = []): Customer {
@@ -114,7 +118,8 @@ export class Customer extends AggregateRoot {
       contacts,
       CustomerStatus.create('active'),
       null,
-      null
+      null,
+      1
     )
   }
 
@@ -150,7 +155,8 @@ export class Customer extends AggregateRoot {
       contacts.map(Contact.fromPrimitives),
       props.status ? CustomerStatus.create(props.status) : CustomerStatus.create('active'),
       props.archivedAt ? SyncTimestamp.fromISOString(props.archivedAt) : null,
-      props.lastSeenInSyncAt ? SyncTimestamp.fromISOString(props.lastSeenInSyncAt) : null
+      props.lastSeenInSyncAt ? SyncTimestamp.fromISOString(props.lastSeenInSyncAt) : null,
+      props.version
     )
   }
 
@@ -169,7 +175,8 @@ export class Customer extends AggregateRoot {
       customerType: this._customerType.value,
       status: this._status.value,
       archivedAt: this._archivedAt?.toISOString() ?? null,
-      lastSeenInSyncAt: this._lastSeenInSyncAt?.toISOString() ?? null
+      lastSeenInSyncAt: this._lastSeenInSyncAt?.toISOString() ?? null,
+      version: this._version
     }
   }
 

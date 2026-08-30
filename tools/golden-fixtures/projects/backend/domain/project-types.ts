@@ -49,6 +49,7 @@ export interface ProjectPrimitiveProps {
   waveStage?: Nullable<string>
   waveStatus?: Nullable<string>
   planToGoLive?: Nullable<string>
+  version: number
 }
 
 export type ProjectUpdateProps = Partial<

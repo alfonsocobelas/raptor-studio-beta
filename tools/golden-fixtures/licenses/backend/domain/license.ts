@@ -42,7 +42,8 @@ export class License extends AggregateRoot {
     private _currentUnits: number,
     private _consumptionPct: number,
     private _excessUnits: number,
-    private _annualValue: AnnualValue
+    private _annualValue: AnnualValue,
+    private readonly _version: number
   ) {
     super()
   }
@@ -114,6 +115,9 @@ export class License extends AggregateRoot {
   get annualValue(): AnnualValue {
     return this._annualValue
   }
+  get version(): number {
+    return this._version
+  }
   //#endregion
 
   static create(props: LicenseAggregateProps): License {
@@ -139,7 +143,8 @@ export class License extends AggregateRoot {
       props.currentUnits,
       props.consumptionPct,
       props.excessUnits,
-      props.annualValue
+      props.annualValue,
+      1
     )
   }
 
@@ -191,7 +196,8 @@ export class License extends AggregateRoot {
       props.currentUnits,
       props.consumptionPct,
       props.excessUnits,
-      AnnualValue.create(props.annualValue)
+      AnnualValue.create(props.annualValue),
+      props.version
     )
   }
 
@@ -218,7 +224,8 @@ export class License extends AggregateRoot {
       currentUnits: this._currentUnits,
       consumptionPct: this._consumptionPct,
       excessUnits: this._excessUnits,
-      annualValue: this._annualValue.value
+      annualValue: this._annualValue.value,
+      version: this._version
     }
   }
 

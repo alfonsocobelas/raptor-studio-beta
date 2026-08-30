@@ -58,7 +58,8 @@ export class Contract extends AggregateRoot {
     private _supportModel: SupportModel,
     private _upcomingMaintenanceEnd: Nullable<ContractDate>,
     private _upcomingMaintenanceFee: Nullable<ContractValue>,
-    private _period: Period
+    private _period: Period,
+    private readonly _version: number
   ) {
     super()
   }
@@ -139,6 +140,9 @@ export class Contract extends AggregateRoot {
   get period(): Period {
     return this._period
   }
+  get version(): number {
+    return this._version
+  }
   //#endregion
 
   static create(props: ContractAggregateProps): Contract {
@@ -167,7 +171,8 @@ export class Contract extends AggregateRoot {
       props.supportModel,
       props.upcomingMaintenanceEnd,
       props.upcomingMaintenanceFee,
-      props.period
+      props.period,
+      1
     )
   }
 
@@ -235,7 +240,8 @@ export class Contract extends AggregateRoot {
       Period.create(
         props.startDate ? ContractDate.create(new Date(props.startDate)) : null,
         props.endDate ? ContractDate.create(new Date(props.endDate)) : null
-      )
+      ),
+      props.version
     )
   }
 
@@ -266,7 +272,8 @@ export class Contract extends AggregateRoot {
       lastSeenInSyncAt: this._lastSeenInSyncAt?.toISOString() ?? null,
       supportModel: this._supportModel.value,
       upcomingMaintenanceEnd: this._upcomingMaintenanceEnd ? this._upcomingMaintenanceEnd.toDateString() : null,
-      upcomingMaintenanceFee: this._upcomingMaintenanceFee ? this._upcomingMaintenanceFee.value : null
+      upcomingMaintenanceFee: this._upcomingMaintenanceFee ? this._upcomingMaintenanceFee.value : null,
+      version: this._version
     }
   }
 

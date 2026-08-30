@@ -32,7 +32,8 @@ export class CustomerBuilder {
     customerType: 'cloud',
     status: 'active',
     archivedAt: null,
-    lastSeenInSyncAt: null
+    lastSeenInSyncAt: null,
+    version: 1
   }
 
   static aCustomer(): CustomerBuilder {

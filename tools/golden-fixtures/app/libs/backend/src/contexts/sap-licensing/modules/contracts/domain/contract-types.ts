@@ -70,6 +70,7 @@ export interface ContractPrimitiveProps {
   supportModel?: string
   upcomingMaintenanceEnd?: Nullable<string>
   upcomingMaintenanceFee?: Nullable<number>
+  version: number
 }
 
 export type ContractUpdateProps = Partial<

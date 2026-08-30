@@ -51,7 +51,8 @@ export class ContractBuilder {
     lastSeenInSyncAt: null,
     supportModel: '',
     upcomingMaintenanceEnd: null,
-    upcomingMaintenanceFee: null
+    upcomingMaintenanceFee: null,
+    version: 1
   }
 
   static aContract(): ContractBuilder {

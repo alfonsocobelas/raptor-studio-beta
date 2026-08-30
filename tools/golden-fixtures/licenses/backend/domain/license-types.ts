@@ -58,6 +58,7 @@ export interface LicensePrimitiveProps {
   consumptionPct: number
   excessUnits: number
   annualValue: number
+  version: number
 }
 
 export type LicenseUpdateProps = Partial<

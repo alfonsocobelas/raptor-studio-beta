@@ -39,7 +39,8 @@ export class LicenseBuilder {
     currentUnits: 0,
     consumptionPct: 0,
     excessUnits: 0,
-    annualValue: 0
+    annualValue: 0,
+    version: 1
   }
 
   static aLicense(): LicenseBuilder {

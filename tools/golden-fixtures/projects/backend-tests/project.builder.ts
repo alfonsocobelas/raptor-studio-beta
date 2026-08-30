@@ -35,7 +35,8 @@ export class ProjectBuilder {
     nbrOfWaves: null,
     waveStage: null,
     waveStatus: null,
-    planToGoLive: null
+    planToGoLive: null,
+    version: 1
   }
 
   static aProject(): ProjectBuilder {
