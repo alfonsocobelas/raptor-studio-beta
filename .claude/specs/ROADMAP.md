@@ -579,6 +579,16 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     Fix de fondo a debatir: derivar la bandera de las páginas al generar (una sola fuente)
     o que el chat cree la página cuando declara la bandera.
 
+43. **La pata raptor del logger pisa la trampa del prettificado (spec 51 redux)** (2026-08-31,
+    cazado verificando la spec 78). Generando por CLI con la infra por defecto (raptor),
+    `addRaptorLogTransport` recibe `logger.module.ts` ya prettificado (comillas dobles): el
+    `.replace` del provider en `providers: [` acierta pero el del IMPORT (comillas simples)
+    falla en silencio — el emitido no compila (`raptorLogTransportsProvider is not defined`)
+    y el seed/arranque revientan. Los tests del plugin no lo ven (árbol sin prettificar) y
+    `typecheck-emitted` tampoco (su app canon es `--infra=azure`). Arreglo: replaces tolerantes
+    al formato (regex sobre ambas comillas) o parchear ANTES del format, como se hizo con
+    root.module en la spec 51; y valorar una pasada de typecheck-emitted con infra raptor.
+
 42. **Acciones en lote en las tablas emitidas (bulk delete)** (2026-08-30, apuntado por
     Alfonso; brainstorming inicial hecho, spec pendiente). Hoy el borrado es estrictamente
     unitario en toda la cadena: la DataTable del kernel no tiene concepto de selección
