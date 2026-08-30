@@ -114,9 +114,13 @@ export function renderMongo(definition: ResourceDefinition): MongoBindings {
 }
 
 function renderDocField(name: string, field: FieldDefinition): MongoDocField {
+  // columna array (p.ej. text[] en Postgres): en Mongoose el tipo va entre corchetes
+  // y el default es la lista vacía — un String pelado castea [] a string y revienta (spec 76)
+  const type = field.column?.array ? `[${MONGOOSE_TYPE[field.type]}]` : MONGOOSE_TYPE[field.type]
+  const options = field.column?.array ? ['default: []'] : renderDocOptions(field)
   return {
     name,
-    defSrc: `{ ${['type: ' + MONGOOSE_TYPE[field.type], ...renderDocOptions(field)].join(', ')} }`,
+    defSrc: `{ ${['type: ' + type, ...options].join(', ')} }`,
     tsType: field.column?.tsType ?? DEFAULT_TS_TYPE[field.type]
   }
 }

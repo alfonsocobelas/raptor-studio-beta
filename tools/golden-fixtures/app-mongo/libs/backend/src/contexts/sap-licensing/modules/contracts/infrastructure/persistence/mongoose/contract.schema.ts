@@ -46,7 +46,7 @@ export const ContractSchema = new Schema<ContractDoc>(
     customerName: { type: String, required: true },
     cmsCaseId: { type: String, default: '' },
     businessModel: { type: String, default: '' },
-    subSolutionAreas: { type: String },
+    subSolutionAreas: { type: [String], default: [] },
     nbrOfContracts: { type: Number, default: 1 },
     isFavorite: { type: Boolean, default: false },
     status: { type: String, default: 'active' },

@@ -37,6 +37,21 @@ describe('renderMongo', () => {
       expect(archivedAt?.tsType).toBe('Nullable<Date>')
     })
 
+    /**
+     * Spec 76: la demo licencias murió sembrando — `subSolutionAreas` es una columna array
+     * (`column.array: true`) y el schema emitido decía `String` pelado, así que Mongoose
+     * casteaba `[]` a string y el register fallaba en toda app mongo con contract.
+     */
+    it('los campos array emiten el tipo mongoose entre corchetes con default []', () => {
+      // WHEN
+      const mongo = renderMongo(contract)
+
+      // THEN
+      const areas = mongo.docFields.find(f => f.name === 'subSolutionAreas')
+      expect(areas?.defSrc).toBe('{ type: [String], default: [] }')
+      expect(areas?.tsType).toBe('string[]')
+    })
+
     it('mapea date a String, porque su primitive es una fecha ISO igual que en Postgres', () => {
       // WHEN
       const mongo = renderMongo(movement)
