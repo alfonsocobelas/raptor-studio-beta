@@ -91,6 +91,24 @@ describe('app generator — una app sin infra no lleva Azure dentro', () => {
     expect(Object.keys(all).filter(name => name.includes('infisical'))).toEqual([])
   })
 
+  /**
+   * Spec 77: mismo candado para GCP. Aquí no hay excepción tipo SES: ningún plugin
+   * aditivo declara SDKs de Google, así que una app sin infra no los nombra jamás.
+   */
+  it('ningún fichero importa un paquete @google-cloud/* ni el package.json lo declara', () => {
+    const offenders = emitted()
+      .filter(file => /from '@google-cloud\//.test(file.content))
+      .map(file => file.path)
+    expect(offenders).toEqual([])
+
+    const pkg = JSON.parse(tree.read('apps/demo/package.json', 'utf-8') ?? '{}') as {
+      dependencies?: Record<string, string>
+      devDependencies?: Record<string, string>
+    }
+    const all = { ...pkg.dependencies, ...pkg.devDependencies }
+    expect(Object.keys(all).filter(name => name.startsWith('@google-cloud/'))).toEqual([])
+  })
+
   /** Spec 50: sin infra elegida no hay nube que aprovisionar, así que tampoco IaC. */
   it('no emite directorio iac/', () => {
     expect(emitted().filter(file => file.path.startsWith('apps/demo/iac/'))).toEqual([])
