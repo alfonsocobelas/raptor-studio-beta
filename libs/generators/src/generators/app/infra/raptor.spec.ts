@@ -185,6 +185,8 @@ export class StorageModule {}
 
       const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
       expect(validation).toContain('LokiValidator')
+      // defecto 43: la sección apilada DESPUÉS (sentry tras loki) perdía su miembro en silencio
+      expect(validation).toContain('loki?: LokiValidator')
     })
 
     it('etiqueta los streams con la app y el entorno, nada de alta cardinalidad', () => {
@@ -230,6 +232,7 @@ export class StorageModule {}
 
       const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
       expect(validation).toContain('SentryValidator')
+      expect(validation).toContain('sentry?: SentryValidator')
     })
 
     it('carga el SDK perezosamente: sin la sección, nada importa @sentry/node', () => {

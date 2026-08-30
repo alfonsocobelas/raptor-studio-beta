@@ -579,7 +579,7 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     Fix de fondo a debatir: derivar la bandera de las páginas al generar (una sola fuente)
     o que el chat cree la página cuando declara la bandera.
 
-43. **La pata raptor del logger pisa la trampa del prettificado (spec 51 redux)** (2026-08-31,
+43. ✅ **RESUELTO 2026-08-31** — **La pata raptor del logger pisa la trampa del prettificado (spec 51 redux)** (2026-08-31,
     cazado verificando la spec 78). Generando por CLI con la infra por defecto (raptor),
     `addRaptorLogTransport` recibe `logger.module.ts` ya prettificado (comillas dobles): el
     `.replace` del provider en `providers: [` acierta pero el del IMPORT (comillas simples)
@@ -588,6 +588,13 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     `typecheck-emitted` tampoco (su app canon es `--infra=azure`). Arreglo: replaces tolerantes
     al formato (regex sobre ambas comillas) o parchear ANTES del format, como se hizo con
     root.module en la spec 51; y valorar una pasada de typecheck-emitted con infra raptor.
+    **Resuelto**: `seamPatch` en providers.ts — toda costura de infra tolera comillas
+    dobles/semicolons y LANZA si el anclaje no casa (el no-op silencioso era el defecto).
+    El throw destapó otro latente: en raptor, la sección apilada después (sentry tras loki)
+    perdía su miembro de validación en silencio desde la spec 50 — ahora las secciones se
+    anclan a la línea del miembro storage, no al cierre de la clase. Guard nuevo:
+    `prettified-seams.spec.ts` (las 4 infras sobre ficheros prettificados). Verificado
+    regenerando por CLI fuera del repo: import + provider + loader + miembros presentes.
 
 42. **Acciones en lote en las tablas emitidas (bulk delete)** (2026-08-30, apuntado por
     Alfonso; brainstorming inicial hecho, spec pendiente). Hoy el borrado es estrictamente

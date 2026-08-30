@@ -139,6 +139,28 @@ export const raptorInfra = defineInfra({
  * La telemetría se inicializa antes que cualquier otro import: el SDK de Azure Monitor debe
  * parchear los módulos (http, pg…) antes de que la app los cargue.
  */
+
+/**
+ * Defecto 43 (ROADMAP): al generar FUERA del repo, el formatFiles del kernel resuelve el
+ * prettier por DEFECTO (comillas dobles + semicolons) y un `.replace` literal sobre un
+ * fichero emitido falla EN SILENCIO — el provider entra en el array pero su import no, y
+ * el emitido no compila. Esta variante tolera ambos estilos (las comillas simples del
+ * anclaje casan con \' o ", y cada fin de línea admite un `;` opcional) y LANZA si el
+ * anclaje no aparece: una costura que no casa es un defecto del generador, no un no-op.
+ * El texto insertado va en el estilo de la casa; el formatFiles final lo renormaliza.
+ */
+function seamPatch(source: string, anchor: string, replacement: string): string {
+  const pattern = anchor
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/'/g, `['"]`)
+    .replace(/\n/g, ';?\n')
+  const regex = new RegExp(`${pattern};?`)
+  if (!regex.test(source)) {
+    throw new Error(`Infra seam not found: ${anchor.split('\n')[0]}…`)
+  }
+  return source.replace(regex, () => replacement)
+}
+
 function instrumentBeforeEverythingElse(tree: Tree, context: PluginContext): void {
   const mainPath = path.join(context.root, 'apps/backend-api/src/main.ts')
   const source = tree.read(mainPath, 'utf-8')
@@ -163,12 +185,12 @@ function addAzureLogTransport(tree: Tree, context: PluginContext): void {
   }
   tree.write(
     modulePath,
-    source
-      .replace(
+    seamPatch(
+      seamPatch(
+        source,
         "import { AppLoggerService } from './app-logger.service'",
         "import { AppLoggerService } from './app-logger.service'\nimport { azureLogTransportsProvider } from './azure-log-transports'"
-      )
-      .replace(
+      ),
         '  providers: [\n    AppLoggerService,',
         '  providers: [\n    azureLogTransportsProvider,\n    AppLoggerService,'
       )
@@ -288,7 +310,7 @@ function useAzureConfigLoader(tree: Tree, context: PluginContext): void {
   if (!source || source.includes('azure-config-loader')) {
     return
   }
-  tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/azure/azure-config-loader'"))
+  tree.write(modulePath, seamPatch(source, "from './loaders/config-loader'", "from './loaders/azure/azure-config-loader'"))
 }
 
 /**
@@ -302,7 +324,8 @@ function reshapeStorageConfigForS3(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('bucket: string')) {
     tree.write(
       typesPath,
-      types.replace(
+      seamPatch(
+        types,
         `export interface StorageConfig {
   connectionString: string
   container: string
@@ -323,7 +346,8 @@ function reshapeStorageConfigForS3(tree: Tree, context: PluginContext): void {
   if (validation && !validation.includes('bucket!: string')) {
     tree.write(
       validationPath,
-      validation.replace(
+      seamPatch(
+        validation,
         `class StorageValidator {
   @IsString()
   connectionString!: string
@@ -359,8 +383,9 @@ function addCloudWatchConfigSection(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('CloudWatchConfig')) {
     tree.write(
       typesPath,
-      types
-        .replace(
+      seamPatch(
+        seamPatch(
+          types,
           'export interface StorageConfig {',
           `export interface CloudWatchConfig {
   logGroup: string
@@ -369,8 +394,10 @@ function addCloudWatchConfigSection(tree: Tree, context: PluginContext): void {
 }
 
 export interface StorageConfig {`
-        )
-        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  cloudwatch?: CloudWatchConfig')
+        ),
+        '  storage?: StorageConfig',
+        '  storage?: StorageConfig\n  cloudwatch?: CloudWatchConfig'
+      )
     )
   }
 
@@ -379,8 +406,9 @@ export interface StorageConfig {`
   if (validation && !validation.includes('CloudWatchValidator')) {
     tree.write(
       validationPath,
-      validation
-        .replace(
+      seamPatch(
+        seamPatch(
+          validation,
           'class StorageValidator {',
           `class CloudWatchValidator {
   @IsString()
@@ -392,17 +420,17 @@ export interface StorageConfig {`
 }
 
 class StorageValidator {`
-        )
-        .replace(
-          '  storage?: StorageValidator\n}',
-          `  storage?: StorageValidator
+        ),
+        // anclado a la LÍNEA del miembro, no al cierre de la clase: así dos secciones
+        // apiladas (loki + sentry en raptor) no se pisan el anclaje (defecto 43)
+        '  storage?: StorageValidator',
+        `  storage?: StorageValidator
 
   @IsOptional()
   @ValidateNested()
   @Type(() => CloudWatchValidator)
-  cloudwatch?: CloudWatchValidator
-}`
-        )
+  cloudwatch?: CloudWatchValidator`
+      )
     )
   }
 }
@@ -416,12 +444,12 @@ function addAwsLogTransport(tree: Tree, context: PluginContext): void {
   }
   tree.write(
     modulePath,
-    source
-      .replace(
+    seamPatch(
+      seamPatch(
+        source,
         "import { AppLoggerService } from './app-logger.service'",
         "import { AppLoggerService } from './app-logger.service'\nimport { awsLogTransportsProvider } from './aws-log-transports'"
-      )
-      .replace('  providers: [\n    AppLoggerService,', '  providers: [\n    awsLogTransportsProvider,\n    AppLoggerService,')
+      ),'  providers: [\n    AppLoggerService,', '  providers: [\n    awsLogTransportsProvider,\n    AppLoggerService,')
   )
 }
 
@@ -473,7 +501,7 @@ function useAwsConfigLoader(tree: Tree, context: PluginContext): void {
   if (!source || source.includes('aws-config-loader')) {
     return
   }
-  tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/aws/aws-config-loader'"))
+  tree.write(modulePath, seamPatch(source, "from './loaders/config-loader'", "from './loaders/aws/aws-config-loader'"))
 }
 
 /**
@@ -489,7 +517,8 @@ function reshapeStorageConfigForR2(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('accessKeyId?: string')) {
     tree.write(
       typesPath,
-      types.replace(
+      seamPatch(
+        types,
         '  forcePathStyle?: boolean\n}',
         `  forcePathStyle?: boolean
   /** Resolved from Infisical: R2 has no instance role to inherit credentials from */
@@ -505,7 +534,8 @@ function reshapeStorageConfigForR2(tree: Tree, context: PluginContext): void {
   if (validation && !validation.includes('accessKeyId?: string')) {
     tree.write(
       validationPath,
-      validation.replace(
+      seamPatch(
+        validation,
         `  @IsOptional()
   @IsBoolean()
   forcePathStyle?: boolean
@@ -534,8 +564,9 @@ function addSentryConfigSection(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('SentryConfig')) {
     tree.write(
       typesPath,
-      types
-        .replace(
+      seamPatch(
+        seamPatch(
+          types,
           'export interface StorageConfig {',
           `export interface SentryConfig {
   dsn: string
@@ -544,8 +575,10 @@ function addSentryConfigSection(tree: Tree, context: PluginContext): void {
 }
 
 export interface StorageConfig {`
-        )
-        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  sentry?: SentryConfig')
+        ),
+        '  storage?: StorageConfig',
+        '  storage?: StorageConfig\n  sentry?: SentryConfig'
+      )
     )
   }
 
@@ -554,8 +587,9 @@ export interface StorageConfig {`
   if (validation && !validation.includes('SentryValidator')) {
     tree.write(
       validationPath,
-      validation
-        .replace(
+      seamPatch(
+        seamPatch(
+          validation,
           'class StorageValidator {',
           `class SentryValidator {
   @IsString()
@@ -567,17 +601,17 @@ export interface StorageConfig {`
 }
 
 class StorageValidator {`
-        )
-        .replace(
-          '  storage?: StorageValidator\n}',
-          `  storage?: StorageValidator
+        ),
+        // anclado a la LÍNEA del miembro, no al cierre de la clase: así dos secciones
+        // apiladas (loki + sentry en raptor) no se pisan el anclaje (defecto 43)
+        '  storage?: StorageValidator',
+        `  storage?: StorageValidator
 
   @IsOptional()
   @ValidateNested()
   @Type(() => SentryValidator)
-  sentry?: SentryValidator
-}`
-        )
+  sentry?: SentryValidator`
+      )
     )
   }
 }
@@ -589,8 +623,9 @@ function addLokiConfigSection(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('LokiConfig')) {
     tree.write(
       typesPath,
-      types
-        .replace(
+      seamPatch(
+        seamPatch(
+          types,
           'export interface StorageConfig {',
           `export interface LokiConfig {
   url: string
@@ -600,8 +635,10 @@ function addLokiConfigSection(tree: Tree, context: PluginContext): void {
 }
 
 export interface StorageConfig {`
-        )
-        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  loki?: LokiConfig')
+        ),
+        '  storage?: StorageConfig',
+        '  storage?: StorageConfig\n  loki?: LokiConfig'
+      )
     )
   }
 
@@ -610,8 +647,9 @@ export interface StorageConfig {`
   if (validation && !validation.includes('LokiValidator')) {
     tree.write(
       validationPath,
-      validation
-        .replace(
+      seamPatch(
+        seamPatch(
+          validation,
           'class StorageValidator {',
           `class LokiValidator {
   @IsString()
@@ -627,17 +665,17 @@ export interface StorageConfig {`
 }
 
 class StorageValidator {`
-        )
-        .replace(
-          '  storage?: StorageValidator\n}',
-          `  storage?: StorageValidator
+        ),
+        // anclado a la LÍNEA del miembro, no al cierre de la clase: así dos secciones
+        // apiladas (loki + sentry en raptor) no se pisan el anclaje (defecto 43)
+        '  storage?: StorageValidator',
+        `  storage?: StorageValidator
 
   @IsOptional()
   @ValidateNested()
   @Type(() => LokiValidator)
-  loki?: LokiValidator
-}`
-        )
+  loki?: LokiValidator`
+      )
     )
   }
 }
@@ -653,7 +691,7 @@ function nameLokiStream(tree: Tree, context: PluginContext): void {
   if (!source) {
     return
   }
-  tree.write(providerPath, source.replace("const APP_NAME = 'app'", `const APP_NAME = '${context.appName}'`))
+  tree.write(providerPath, seamPatch(source, "const APP_NAME = 'app'", `const APP_NAME = '${context.appName}'`))
 }
 
 /**
@@ -686,12 +724,12 @@ function addRaptorLogTransport(tree: Tree, context: PluginContext): void {
   }
   tree.write(
     modulePath,
-    source
-      .replace(
+    seamPatch(
+      seamPatch(
+        source,
         "import { AppLoggerService } from './app-logger.service'",
         "import { AppLoggerService } from './app-logger.service'\nimport { raptorLogTransportsProvider } from './raptor-log-transports'"
-      )
-      .replace(
+      ),
         '  providers: [\n    AppLoggerService,',
         '  providers: [\n    raptorLogTransportsProvider,\n    AppLoggerService,'
       )
@@ -707,7 +745,7 @@ function useInfisicalConfigLoader(tree: Tree, context: PluginContext): void {
   }
   tree.write(
     modulePath,
-    source.replace("from './loaders/config-loader'", "from './loaders/infisical/infisical-config-loader'")
+    seamPatch(source, "from './loaders/config-loader'", "from './loaders/infisical/infisical-config-loader'")
   )
 }
 
@@ -722,7 +760,8 @@ function reshapeStorageConfigForGcs(tree: Tree, context: PluginContext): void {
   if (types && !types.includes('bucket: string')) {
     tree.write(
       typesPath,
-      types.replace(
+      seamPatch(
+        types,
         `export interface StorageConfig {
   connectionString: string
   container: string
@@ -741,7 +780,8 @@ function reshapeStorageConfigForGcs(tree: Tree, context: PluginContext): void {
   if (validation && !validation.includes('bucket!: string')) {
     tree.write(
       validationPath,
-      validation.replace(
+      seamPatch(
+        validation,
         `class StorageValidator {
   @IsString()
   connectionString!: string
@@ -810,16 +850,19 @@ function addCloudLoggingConfigSection(tree: Tree, context: PluginContext): void 
   if (types && !types.includes('CloudLoggingConfig')) {
     tree.write(
       typesPath,
-      types
-        .replace(
+      seamPatch(
+        seamPatch(
+          types,
           'export interface StorageConfig {',
           `export interface CloudLoggingConfig {
   logName: string
 }
 
 export interface StorageConfig {`
-        )
-        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  cloudLogging?: CloudLoggingConfig')
+        ),
+        '  storage?: StorageConfig',
+        '  storage?: StorageConfig\n  cloudLogging?: CloudLoggingConfig'
+      )
     )
   }
 
@@ -828,8 +871,9 @@ export interface StorageConfig {`
   if (validation && !validation.includes('CloudLoggingValidator')) {
     tree.write(
       validationPath,
-      validation
-        .replace(
+      seamPatch(
+        seamPatch(
+          validation,
           'class StorageValidator {',
           `class CloudLoggingValidator {
   @IsString()
@@ -837,17 +881,17 @@ export interface StorageConfig {`
 }
 
 class StorageValidator {`
-        )
-        .replace(
-          '  storage?: StorageValidator\n}',
-          `  storage?: StorageValidator
+        ),
+        // anclado a la LÍNEA del miembro, no al cierre de la clase: así dos secciones
+        // apiladas (loki + sentry en raptor) no se pisan el anclaje (defecto 43)
+        '  storage?: StorageValidator',
+        `  storage?: StorageValidator
 
   @IsOptional()
   @ValidateNested()
   @Type(() => CloudLoggingValidator)
-  cloudLogging?: CloudLoggingValidator
-}`
-        )
+  cloudLogging?: CloudLoggingValidator`
+      )
     )
   }
 }
@@ -861,12 +905,12 @@ function addGcpLogTransport(tree: Tree, context: PluginContext): void {
   }
   tree.write(
     modulePath,
-    source
-      .replace(
+    seamPatch(
+      seamPatch(
+        source,
         "import { AppLoggerService } from './app-logger.service'",
         "import { AppLoggerService } from './app-logger.service'\nimport { gcpLogTransportsProvider } from './gcp-log-transports'"
-      )
-      .replace('  providers: [\n    AppLoggerService,', '  providers: [\n    gcpLogTransportsProvider,\n    AppLoggerService,')
+      ),'  providers: [\n    AppLoggerService,', '  providers: [\n    gcpLogTransportsProvider,\n    AppLoggerService,')
   )
 }
 
@@ -877,7 +921,7 @@ function useGcpConfigLoader(tree: Tree, context: PluginContext): void {
   if (!source || source.includes('gcp-config-loader')) {
     return
   }
-  tree.write(modulePath, source.replace("from './loaders/config-loader'", "from './loaders/gcp/gcp-config-loader'"))
+  tree.write(modulePath, seamPatch(source, "from './loaders/config-loader'", "from './loaders/gcp/gcp-config-loader'"))
 }
 
 /** Orden del registro = orden en el formulario. */
