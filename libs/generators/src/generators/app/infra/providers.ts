@@ -93,6 +93,8 @@ export const gcpInfra = defineInfra({
 
   apply(tree: Tree, context: PluginContext): void {
     useGcpConfigLoader(tree, context)
+    reshapeStorageConfigForGcs(tree, context)
+    bindGcsStorage(tree, context)
   }
 })
 
@@ -703,6 +705,98 @@ function useInfisicalConfigLoader(tree: Tree, context: PluginContext): void {
   tree.write(
     modulePath,
     source.replace("from './loaders/config-loader'", "from './loaders/infisical/infisical-config-loader'")
+  )
+}
+
+/**
+ * Como `reshapeStorageConfigForS3`, pero la forma GCS es más corta: bucket + apiEndpoint.
+ * apiEndpoint no es especulación — cubre un fake-gcs-server local con la MISMA sección,
+ * igual que endpoint/forcePathStyle cubren MinIO en S3. Proyecto y credenciales por ADC.
+ */
+function reshapeStorageConfigForGcs(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('bucket: string')) {
+    tree.write(
+      typesPath,
+      types.replace(
+        `export interface StorageConfig {
+  connectionString: string
+  container: string
+}`,
+        `export interface StorageConfig {
+  bucket: string
+  /** GCS endpoint override: omit for GCP, set it for a local fake-gcs-server */
+  apiEndpoint?: string
+}`
+      )
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('bucket!: string')) {
+    tree.write(
+      validationPath,
+      validation.replace(
+        `class StorageValidator {
+  @IsString()
+  connectionString!: string
+
+  @IsString()
+  container!: string
+}`,
+        `class StorageValidator {
+  @IsString()
+  bucket!: string
+
+  @IsOptional()
+  @IsString()
+  apiEndpoint?: string
+}`
+      )
+    )
+  }
+}
+
+/**
+ * Espejo de bindS3Storage: el adapter de ficheros lo decide la CONFIG, no el build — con
+ * `storage.bucket` configurado los ficheros van a GCS; sin él, a disco local.
+ */
+function bindGcsStorage(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/storage/storage.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('GcsFileStorage')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    `import { Global, Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { FileStoragePort } from '../../domain/storage/file-storage.port'
+import { GcsFileStorage } from './gcs-file-storage'
+import { LocalFileStorage } from './local-file-storage'
+
+/**
+ * Global: cualquier módulo con adjuntos inyecta FileStoragePort sin re-declararlo.
+ *
+ * El adapter lo decide la CONFIG, no el build: con la sección \`storage\` configurada los ficheros
+ * van a GCS; sin ella, a disco local. Así el mismo binario sirve para local y para la nube.
+ */
+@Global()
+@Module({
+  providers: [
+    {
+      provide: FileStoragePort,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        config.get<string>('storage.bucket') ? new GcsFileStorage(config) : new LocalFileStorage()
+    }
+  ],
+  exports: [FileStoragePort]
+})
+export class StorageModule {}
+`
   )
 }
 

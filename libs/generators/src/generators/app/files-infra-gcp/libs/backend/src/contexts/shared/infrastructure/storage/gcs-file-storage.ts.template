@@ -1,0 +1,35 @@
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { Bucket, Storage, StorageOptions } from '@google-cloud/storage'
+import { FileStoragePort } from '../../domain/storage/file-storage.port'
+
+/**
+ * Google Cloud Storage adapter for the FileStoragePort. One adapter covers GCS and a
+ * local fake-gcs-server through the same config section: omit `apiEndpoint` for GCS,
+ * set it for the emulator. Project and credentials resolve from Application Default
+ * Credentials.
+ */
+@Injectable()
+export class GcsFileStorage extends FileStoragePort {
+  private readonly bucket: Bucket
+
+  constructor(configService: ConfigService) {
+    super()
+    const apiEndpoint = configService.get<string>('storage.apiEndpoint')
+    const options: StorageOptions = { ...(apiEndpoint && { apiEndpoint }) }
+    this.bucket = new Storage(options).bucket(configService.get<string>('storage.bucket') ?? '')
+  }
+
+  async upload(key: string, content: Buffer, mimeType: string): Promise<void> {
+    await this.bucket.file(key).save(content, { contentType: mimeType, resumable: false })
+  }
+
+  async download(key: string): Promise<Buffer> {
+    const [contents] = await this.bucket.file(key).download()
+    return contents
+  }
+
+  async delete(key: string): Promise<void> {
+    await this.bucket.file(key).delete()
+  }
+}
