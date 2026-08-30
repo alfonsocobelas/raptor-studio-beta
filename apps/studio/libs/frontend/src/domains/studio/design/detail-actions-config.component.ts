@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { lucideEye, lucideEyeOff } from '@ng-icons/lucide'
 import { ActiveViewService } from './active-view.service'
 import { DesignStore } from './design-store'
 
@@ -11,6 +13,8 @@ import { DesignStore } from './design-store'
 @Component({
   selector: 'studio-detail-actions-config',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideEye, lucideEyeOff })],
   template: `
     @if (view(); as v) {
       <section class="mb-4 border-t pt-3" data-testid="detail-actions-config">
@@ -49,7 +53,7 @@ import { DesignStore } from './design-store'
                 [attr.data-testid]="'action-hide-' + i"
                 (click)="store.setTransitionHidden(v.resource, t.name, !t.hidden)"
               >
-                {{ t.hidden ? '🚫' : '👁' }}
+                <ng-icon [name]="t.hidden ? 'lucideEyeOff' : 'lucideEye'" size="14" />
               </button>
             </div>
           }
