@@ -867,3 +867,42 @@ describe('FlowViewComponent — la descripción no es del lienzo', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Cuando el almacén ajusta existencias')
   })
 })
+
+// El eslabón invisible (spec 74, caso visita de inmobiliaria): un paso que anota status
+// sobre una entidad SIN máquina no converge nunca — ni botón ni endpoint — y nada lo decía.
+describe('FlowViewComponent — el paso con estado sin máquina se señala', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'step', 'Agendar la visita')
+    store.addResource('Visita')
+    store.updateFlowNode(FLOW, 'agendar-la-visita', { entity: 'visita', status: 'pendiente' })
+  })
+
+  it('marca el paso cuando su entidad no tiene máquina de estados', () => {
+    const fixture = mount()
+
+    const marker = testId(fixture, 'flow-nostate-agendar-la-visita')
+    expect(marker).not.toBeNull()
+    expect(marker!.getAttribute('title')).toContain('máquina')
+  })
+
+  it('con la máquina promovida, la marca desaparece', () => {
+    store.updateField('visita', 0, { type: 'enum' })
+    store.promoteState('visita', 'nombre')
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-nostate-agendar-la-visita')).toBeNull()
+  })
+
+  it('un paso sin status no se marca', () => {
+    store.updateFlowNode(FLOW, 'agendar-la-visita', { status: undefined })
+    const fixture = mount()
+
+    expect(testId(fixture, 'flow-nostate-agendar-la-visita')).toBeNull()
+  })
+})

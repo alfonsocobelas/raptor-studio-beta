@@ -394,6 +394,15 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                                 [attr.data-testid]="'flow-step-transition-' + step.id"
                                 >⚡ {{ step.transition }}</span
                               >
+                            } @else if (statusWithoutMachine(step)) {
+                              <!-- el eslabón invisible (spec 74): el paso habla de un estado
+                                   que nadie modela — sin máquina no converge nunca -->
+                              <span
+                                class="text-muted-foreground rounded-sm border border-dashed px-1 opacity-70"
+                                [attr.title]="noStateTitle(step)"
+                                [attr.data-testid]="'flow-nostate-' + step.id"
+                                >estado sin máquina</span
+                              >
                             }
                           </span>
                         }
@@ -579,6 +588,14 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         [attr.title]="item.node.entity"
                         [attr.data-testid]="'flow-node-entity-' + item.node.id"
                         >{{ item.node.entity }}</span
+                      >
+                    }
+                    @if (statusWithoutMachine(item.node)) {
+                      <span
+                        class="text-muted-foreground block truncate rounded-sm border border-dashed px-1 text-[10px] opacity-70"
+                        [attr.title]="noStateTitle(item.node)"
+                        [attr.data-testid]="'flow-nostate-' + item.node.id"
+                        >estado sin máquina</span
                       >
                     }
                   </span>
@@ -784,6 +801,19 @@ export class FlowViewComponent {
 
   protected transitionHidden(node: FlowNode): boolean {
     return this.machineTransition(node)?.hidden === true
+  }
+
+  /** El paso anota un estado pero su entidad no tiene máquina: no convergerá nunca (spec 74). */
+  protected statusWithoutMachine(node: Pick<FlowNode, 'entity' | 'status'>): boolean {
+    if (!node.status || !node.entity) return false
+    return !this.store.resources().find(r => r.name === node.entity)?.state
+  }
+
+  protected noStateTitle(node: Pick<FlowNode, 'entity' | 'status'>): string {
+    return (
+      `El paso deja ${node.entity} en «${node.status}», pero ${node.entity} no tiene máquina de estados: ` +
+      `sin ella este paso no puede converger (ni botón ni endpoint). Promuévela en Modelo.`
+    )
   }
 
   protected convergenceTitle(node: FlowNode): string {
