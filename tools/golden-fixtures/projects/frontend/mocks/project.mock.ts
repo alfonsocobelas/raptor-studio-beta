@@ -24,7 +24,8 @@ export const MOCK_PROJECTS: ProjectDto[] = [
     nbrOfWaves: 100,
     waveStage: 'WaveStage 1',
     waveStatus: 'WaveStatus 1',
-    planToGoLive: '2026-01-15'
+    planToGoLive: '2026-01-15',
+    version: 1
   },
   {
     id: '019eb713-19bb-7000-8000-000000000002',
@@ -46,7 +47,8 @@ export const MOCK_PROJECTS: ProjectDto[] = [
     nbrOfWaves: null,
     waveStage: null,
     waveStatus: null,
-    planToGoLive: null
+    planToGoLive: null,
+    version: 1
   }
 ]
 

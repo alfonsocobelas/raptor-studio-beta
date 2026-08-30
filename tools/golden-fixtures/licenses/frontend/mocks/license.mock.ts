@@ -26,7 +26,8 @@ export const MOCK_LICENSES: LicenseWithConsumptionDto[] = [
     currentUnits: 100,
     consumptionPct: 100,
     excessUnits: 100,
-    annualValue: 100
+    annualValue: 100,
+    version: 1
   },
   {
     id: '019eb713-19bb-7000-8000-000000000002',
@@ -50,7 +51,8 @@ export const MOCK_LICENSES: LicenseWithConsumptionDto[] = [
     currentUnits: 101,
     consumptionPct: 101,
     excessUnits: 101,
-    annualValue: 101
+    annualValue: 101,
+    version: 1
   }
 ]
 

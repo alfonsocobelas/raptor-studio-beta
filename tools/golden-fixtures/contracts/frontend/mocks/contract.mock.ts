@@ -37,7 +37,8 @@ export const MOCK_CONTRACTS: ContractDto[] = [
     lastSeenInSyncAt: '2026-01-15T10:00:00.000Z',
     supportModel: 'SupportModel 1',
     upcomingMaintenanceEnd: '2026-01-15',
-    upcomingMaintenanceFee: 100
+    upcomingMaintenanceFee: 100,
+    version: 1
   },
   {
     id: '019eb713-19bb-7000-8000-000000000002',
@@ -65,7 +66,8 @@ export const MOCK_CONTRACTS: ContractDto[] = [
     lastSeenInSyncAt: null,
     supportModel: 'SupportModel 2',
     upcomingMaintenanceEnd: null,
-    upcomingMaintenanceFee: null
+    upcomingMaintenanceFee: null,
+    version: 1
   }
 ]
 
