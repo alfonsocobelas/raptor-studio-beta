@@ -670,3 +670,63 @@ describe('kanban — una columna por valor del enum (spec 61)', () => {
     )
   })
 })
+
+describe('roles personalizados en la matriz (spec 76)', () => {
+  const machine = () => ({
+    field: 'status',
+    initial: 'draft',
+    transitions: [{ name: 'sign', label: 'Firmar', from: ['draft'], to: 'signed' }]
+  })
+
+  const withAccess = (access: unknown, state?: unknown): ResourceDefinition => {
+    const definition = validDefinition()
+    definition.fields['status'] = {
+      type: 'string',
+      vo: { name: 'ContractStatus', fieldName: 'Status', values: ['draft', 'signed'] }
+    }
+    return { ...definition, access, state } as ResourceDefinition
+  }
+
+  const problemsWith = (definition: ResourceDefinition, extraRoles: string[]): string[] => {
+    try {
+      defineResource(definition, { extraRoles })
+      return []
+    } catch (e) {
+      return (e as { problems: string[] }).problems
+    }
+  }
+
+  it('acepta un rol declarado en cada capacidad y en transitions', () => {
+    const access = {
+      view: ['user', 'viewer', 'perito'],
+      create: ['perito'],
+      edit: ['user', 'perito'],
+      delete: [],
+      transitions: { sign: ['perito'] }
+    }
+
+    expect(() => defineResource(withAccess(access, machine()), { extraRoles: ['perito'] })).not.toThrow()
+  })
+
+  it('rechaza un rol no declarado, listando los válidos', () => {
+    const problems = problemsWith(withAccess({ view: ['boss'] }), ['perito'])
+
+    expect(problems).toContain(
+      "access.view: 'boss' is not a grantable role (use 'user', 'viewer' or 'perito'; admin is implicit)"
+    )
+  })
+
+  it('sin extraRoles el mensaje y el comportamiento actuales no cambian', () => {
+    const problems = problemsWith(withAccess({ view: ['perito'] }), [])
+
+    expect(problems).toContain(
+      "access.view: 'perito' is not a grantable role (use 'user' or 'viewer'; admin is implicit)"
+    )
+  })
+
+  it('un rol personalizado duplicado también se caza', () => {
+    expect(problemsWith(withAccess({ edit: ['perito', 'perito'] }), ['perito'])).toContain(
+      "access.edit: duplicated role 'perito'"
+    )
+  })
+})

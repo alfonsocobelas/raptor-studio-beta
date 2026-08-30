@@ -5,8 +5,16 @@ import { SchemaValidationError } from './validation-errors'
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 const SNAKE_CASE = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/
 
+/** Roles de app además de user/viewer (spec 76); los aporta quien conoce la app entera. */
+export interface DefineResourceOptions {
+  extraRoles?: string[]
+}
+
 // Structural validation only (v1): rules grow with the templates, never ahead of them.
-export function defineResource(definition: ResourceDefinition): ResourceDefinition {
+export function defineResource(
+  definition: ResourceDefinition,
+  options: DefineResourceOptions = {}
+): ResourceDefinition {
   const problems = [
     ...validateIdentity(definition),
     ...validateFields(definition),
@@ -18,7 +26,7 @@ export function defineResource(definition: ResourceDefinition): ResourceDefiniti
     ...validateCode(definition),
     ...validateBrief(definition.brief),
     ...validateState(definition),
-    ...validateAccess(definition)
+    ...validateAccess(definition, options.extraRoles ?? [])
   ]
 
   if (problems.length) throw new SchemaValidationError(definition.name, problems)
@@ -246,23 +254,30 @@ function validateState(definition: ResourceDefinition): string[] {
 
 const GRANTABLE_ROLES = ['user', 'viewer'] as const
 
+/** «'user' or 'viewer'» / «'user', 'viewer' or 'perito'»: lista legible para el mensaje de error. */
+function readableRoleList(roles: string[]): string {
+  const quoted = roles.map(role => `'${role}'`)
+  return quoted.length > 1 ? `${quoted.slice(0, -1).join(', ')} or ${quoted.at(-1)}` : (quoted[0] ?? '')
+}
+
 /**
- * La matriz de accesos (spec 46): admin es implícito y no se declara; la matriz solo
- * reparte entre user y viewer. Un array vacío es LEGAL («solo admin» es una decisión).
- * Las claves de transitions hablan de verbos REALES de la máquina — ambos viven en el
- * recurso, así que se valida aquí y no en la frontera.
+ * La matriz de accesos (spec 46): admin es implícito y no se declara; la matriz reparte
+ * entre user, viewer y los roles de la app (spec 76). Un array vacío es LEGAL («solo
+ * admin» es una decisión). Las claves de transitions hablan de verbos REALES de la
+ * máquina — ambos viven en el recurso, así que se valida aquí y no en la frontera.
  */
-function validateAccess(definition: ResourceDefinition): string[] {
+function validateAccess(definition: ResourceDefinition, extraRoles: string[]): string[] {
   const { access } = definition
   if (!access) return []
 
   const problems: string[] = []
+  const grantable = [...GRANTABLE_ROLES, ...extraRoles]
 
   const checkRoles = (at: string, roles: string[]) => {
     const seen = new Set<string>()
     for (const role of roles) {
-      if (!(GRANTABLE_ROLES as readonly string[]).includes(role)) {
-        problems.push(`${at}: '${role}' is not a grantable role (use 'user' or 'viewer'; admin is implicit)`)
+      if (!grantable.includes(role)) {
+        problems.push(`${at}: '${role}' is not a grantable role (use ${readableRoleList(grantable)}; admin is implicit)`)
       }
       if (seen.has(role)) problems.push(`${at}: duplicated role '${role}'`)
       seen.add(role)

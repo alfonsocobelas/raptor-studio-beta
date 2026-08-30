@@ -402,8 +402,13 @@ export const RESERVED_TRANSITION_NAMES = [
   'restore'
 ] as const
 
-/** Roles que obtienen la capacidad ADEMÁS de admin (admin siempre puede todo, spec 46) */
-export type AccessRole = 'user' | 'viewer'
+/**
+ * Roles que obtienen la capacidad ADEMÁS de admin (admin siempre puede todo, spec 46).
+ * Desde la spec 76 la unión está abierta: 'user', 'viewer' o un rol declarado en
+ * `AppDefinition.roles` — la seguridad la da la validación de `defineResource`, igual
+ * que con los verbos de transición.
+ */
+export type AccessRole = string
 
 /**
  * Matriz actor→capacidad (spec 46). Ausente = política actual: lecturas abiertas a
