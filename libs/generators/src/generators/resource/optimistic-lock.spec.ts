@@ -1,6 +1,7 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
 import resourceGenerator from './resource'
+import { appGenerator } from '../app/app'
 import { MODELS, registerModels } from './models/registry'
 
 /**
@@ -13,6 +14,13 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     registerModels([MODELS[name]])
     const tree = createTreeWithEmptyWorkspace()
     await resourceGenerator(tree, { name, directory: 'out' })
+    return tree
+  }
+
+  const generateMongo = async (name: string): Promise<Tree> => {
+    registerModels([MODELS[name]])
+    const tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name, directory: 'out', database: 'mongo' })
     return tree
   }
 
@@ -72,6 +80,38 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
   it('el test de integración emitido cubre el choque de dos saves', async () => {
     const tree = await generate('customer')
     const test = tree.read('out/backend-tests-integration/typeorm-customer.repository.test.ts', 'utf-8') ?? ''
+
+    expect(test).toContain('ConcurrencyConflictError')
+  })
+
+  it('el schema Mongoose declara version numérica con default 1 y el mapper la transporta', async () => {
+    const tree = await generateMongo('customer')
+    const schema = tree.read('out/backend/infrastructure/persistence/mongoose/customer.schema.ts', 'utf-8') ?? ''
+    const mapper = tree.read('out/backend/infrastructure/persistence/mongoose/customer.mapper.ts', 'utf-8') ?? ''
+
+    expect(schema).toContain('version: number')
+    expect(schema).toContain('version: { type: Number, required: true, default: 1 }')
+    expect(mapper).toContain('version: doc.version')
+    expect(mapper).toContain('version: primitives.version')
+  })
+
+  it('el save Mongoose es condicional por version, sin upsert, y choca con 409', async () => {
+    const tree = await generateMongo('customer')
+    const repo = tree.read('out/backend/infrastructure/persistence/mongoose/mongoose-customer.repository.ts', 'utf-8') ?? ''
+
+    expect(repo).toContain('ConcurrencyConflictError')
+    expect(repo).toContain('{ id: doc.id, version: doc.version }')
+    expect(repo).toContain('version: doc.version + 1')
+    expect(repo).not.toContain('upsert')
+  })
+
+  it('el test de integración Mongoose emitido cubre el choque de dos saves', async () => {
+    // la suite de integración la emite el proveedor de persistencia del app generator
+    const tree = createTreeWithEmptyWorkspace()
+    await appGenerator(tree, { name: 'demo', models: 'customer', skipInstall: true, database: 'mongo' })
+    const test =
+      tree.read('apps/demo/libs/backend/tests/infrastructure/repositories/mongoose-customer.repository.test.ts', 'utf-8') ??
+      ''
 
     expect(test).toContain('ConcurrencyConflictError')
   })

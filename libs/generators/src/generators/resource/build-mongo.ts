@@ -87,6 +87,12 @@ export function renderMongo(definition: ResourceDefinition): MongoBindings {
   const fields = Object.entries(definition.fields)
   // el id del dominio es un campo del documento como cualquier otro (su unicidad, un índice)
   const docFields = fields.map(([name, field]) => renderDocField(name, field))
+  // spec 78: contador de bloqueo optimista; lo incrementa el save condicional, nunca el dominio
+  docFields.push({
+    name: 'version',
+    defSrc: '{ type: Number, required: true, default: 1 }',
+    tsType: 'number'
+  })
   const child = renderChild(definition)
 
   return {
@@ -97,8 +103,11 @@ export function renderMongo(definition: ResourceDefinition): MongoBindings {
     optionalUniques: Object.entries(definition.fields)
       .filter(([, field]) => field.unique && !field.required)
       .map(([name]) => name),
-    toDomainProps: fields.map(([name, field]) => renderToDomainProp(name, field)),
-    toPersistenceProps: fields.map(([name, field]) => renderToPersistenceProp(name, field)),
+    toDomainProps: [...fields.map(([name, field]) => renderToDomainProp(name, field)), 'version: doc.version'],
+    toPersistenceProps: [
+      ...fields.map(([name, field]) => renderToPersistenceProp(name, field)),
+      'version: primitives.version'
+    ],
     child,
     needsNullable: [...docFields, ...(child?.docFields ?? [])].some(f => f.tsType.includes('Nullable<'))
   }
