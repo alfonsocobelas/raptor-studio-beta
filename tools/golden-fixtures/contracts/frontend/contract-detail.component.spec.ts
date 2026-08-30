@@ -69,9 +69,9 @@ describe('ContractDetailComponent — ficha', () => {
   it('la transición «Terminar» llama al verbo del servicio y recarga la ficha', async () => {
     const { component, findOne, service } = setup(record().id)
 
-    await component.terminate(record().id)
+    await component.terminate(record().id, record().version)
 
-    expect(service.terminate).toHaveBeenCalledWith(record().id)
+    expect(service.terminate).toHaveBeenCalledWith(record().id, record().version)
     // la carga del constructor más la recarga tras transicionar
     expect(findOne).toHaveBeenCalledTimes(2)
     expect(component.transitioning()).toBe(false)

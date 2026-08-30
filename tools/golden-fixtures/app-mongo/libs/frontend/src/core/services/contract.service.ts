@@ -67,16 +67,16 @@ export class ContractService {
     })
   }
 
-  /** Transición «Terminar» de la máquina de estados (spec 43). */
-  terminate(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/terminate`, {})).then(() => {
+  /** Transición «Terminar» de la máquina de estados (spec 43); viaja con la versión leída (spec 78). */
+  terminate(id: string, version: number): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/terminate`, { version })).then(() => {
       this.contracts.reload()
     })
   }
 
-  /** Transición «Expirar» de la máquina de estados (spec 43). */
-  expire(id: string): Promise<void> {
-    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/expire`, {})).then(() => {
+  /** Transición «Expirar» de la máquina de estados (spec 43); viaja con la versión leída (spec 78). */
+  expire(id: string, version: number): Promise<void> {
+    return firstValueFrom(this._http.post<void>(`${API_URL}/${id}/expire`, { version })).then(() => {
       this.contracts.reload()
     })
   }

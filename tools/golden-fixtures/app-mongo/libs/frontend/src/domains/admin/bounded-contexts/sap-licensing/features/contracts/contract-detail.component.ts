@@ -54,7 +54,7 @@ interface DetailRow {
                 class="border-input hover:bg-accent flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
                 [disabled]="transitioning()"
                 data-testid="transition-terminate"
-                (click)="terminate(item.id)"
+                (click)="terminate(item.id, item.version)"
               >
                 Terminar
               </button>
@@ -184,7 +184,7 @@ export class ContractDetailComponent {
     const current = this.contract()
     if (!current) return
     try {
-      await this._service.update(current.id, value)
+      await this._service.update(current.id, { ...value, version: current.version })
       this.dialogOpen.set(false)
       this._notify.success('Contrato actualizado correctamente')
       await this.load()
@@ -197,10 +197,10 @@ export class ContractDetailComponent {
   readonly transitioning = signal(false)
 
   /** Transición «Terminar» (spec 43): un 409 es el estado rechazándola — avisa y recarga. */
-  async terminate(id: string): Promise<void> {
+  async terminate(id: string, version: number): Promise<void> {
     this.transitioning.set(true)
     try {
-      await this._service.terminate(id)
+      await this._service.terminate(id, version)
     } catch (e) {
       const message = (e as { error?: { message?: string } }).error?.message
       this._notify.error(message ?? 'No se pudo aplicar «Terminar»')

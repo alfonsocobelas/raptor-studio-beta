@@ -168,6 +168,8 @@ export class ProjectFormPageComponent {
 
   private readonly _route = inject(ActivatedRoute)
   protected readonly editingId = signal<string | null>(null)
+  // spec 78: versión leída del registro en edición; viaja con el update
+  protected readonly editingVersion = signal<number>(1)
   protected readonly loading = signal(false)
   protected readonly notFound = signal(false)
 
@@ -184,6 +186,7 @@ export class ProjectFormPageComponent {
     this.loading.set(true)
     try {
       const project = await this._service.findOne(id)
+      this.editingVersion.set(project.version)
       this.form.patchValue({
         customerId: project.customerId,
         name: project.name,
@@ -223,7 +226,7 @@ export class ProjectFormPageComponent {
     const id = this.editingId()
     try {
       if (id) {
-        await this._service.update(id, value)
+        await this._service.update(id, { ...value, version: this.editingVersion() })
         this._notify.success('Proyecto actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })

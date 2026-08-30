@@ -228,7 +228,7 @@ export class ProjectDetailComponent {
     const current = this.project()
     if (!current) return
     try {
-      await this._service.update(current.id, value)
+      await this._service.update(current.id, { ...value, version: current.version })
       this.dialogOpen.set(false)
       this._notify.success('Proyecto actualizado correctamente')
       await this.load()

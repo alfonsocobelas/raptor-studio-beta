@@ -89,9 +89,9 @@ export class ContractsKanbanComponent {
     { from: 'expiring', to: 'terminated', method: 'terminate' },
     { from: 'expiring', to: 'expired', method: 'expire' }
   ]
-  private readonly _transitions: Record<string, (id: string) => Promise<void>> = {
-    terminate: id => this._service.terminate(id),
-    expire: id => this._service.expire(id)
+  private readonly _transitions: Record<string, (id: string, version: number) => Promise<void>> = {
+    terminate: (id, version) => this._service.terminate(id, version),
+    expire: (id, version) => this._service.expire(id, version)
   }
 
   readonly draggingFrom = signal<string | null>(null)
@@ -159,10 +159,13 @@ export class ContractsKanbanComponent {
   /** Sin optimismo: la tarjeta cambia de columna cuando el reload trae el nuevo valor. */
   private async _move(id: string, from: string, value: string): Promise<void> {
     this.moveError.set(null)
+    // spec 78: la escritura viaja con la versión leída de la tarjeta (bloqueo optimista)
+    const card = this.items().find(item => item.id === id)
+    if (!card) return
     try {
       const move = this.legalMoves.find(m => m.from === from && m.to === value)
       if (!move) return
-      await this._transitions[move.method](id)
+      await this._transitions[move.method](id, card.version)
     } catch {
       this.moveError.set('No se pudo mover la tarjeta; vuelve a intentarlo')
     }

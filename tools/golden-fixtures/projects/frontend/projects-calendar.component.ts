@@ -298,7 +298,7 @@ export class ProjectsCalendarComponent {
     this.dialogOpen.set(false)
     try {
       if (editing) {
-        await this._service.update(editing.id, value)
+        await this._service.update(editing.id, { ...value, version: editing.version })
         this._notify.success('Proyecto actualizado correctamente')
       } else {
         await this._service.create({ id: generateId(), ...value })
