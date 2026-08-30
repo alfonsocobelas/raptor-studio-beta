@@ -883,14 +883,13 @@ describe('FlowViewComponent — el paso con estado sin máquina se señala', () 
     store.updateFlowNode(FLOW, 'agendar-la-visita', { entity: 'visita', status: 'pendiente' })
   })
 
-  it('marca el paso cuando su entidad no tiene máquina de estados, con el valor huérfano en el rótulo', () => {
+  it('marca el paso con el rótulo genérico y el remedio en el tooltip', () => {
     const fixture = mount()
 
     const marker = testId(fixture, 'flow-nostate-agendar-la-visita')
     expect(marker).not.toBeNull()
-    // el rótulo habla el idioma del diseñador: cita el estado prometido, no nuestra jerga
-    expect(marker!.textContent).toContain('«pendiente» no está en el modelo')
-    // y el tooltip da el remedio en su pantalla: definir el ciclo en Modelo
+    // rótulo GENÉRICO a propósito (2026-08-30): citar el valor sugería que era editable a mano
+    expect(marker!.textContent?.trim()).toBe('estado sin máquina')
     expect(marker!.getAttribute('title')).toContain('Modelo')
     expect(marker!.getAttribute('title')).toContain('botón')
   })
@@ -908,5 +907,44 @@ describe('FlowViewComponent — el paso con estado sin máquina se señala', () 
     const fixture = mount()
 
     expect(testId(fixture, 'flow-nostate-agendar-la-visita')).toBeNull()
+  })
+})
+
+// El aviso en voz alta (petición 2026-08-30): las etiquetas por paso son fáciles de no ver;
+// al entrar en Flujos con promesas huérfanas, un banner las resume. No modal: señala, no interrumpe.
+describe('FlowViewComponent — banner de estados sin respaldo', () => {
+  let store: DesignStore
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({})
+    store = TestBed.inject(DesignStore)
+    TestBed.inject(ActiveViewService).selectFlow(FLOW)
+    store.addFlow(FLOW)
+    store.addFlowNode(FLOW, 'step', 'Agendar la visita')
+    store.addFlowNode(FLOW, 'step', 'Enseñar el inmueble')
+    store.addResource('Visita')
+    store.updateFlowNode(FLOW, 'agendar-la-visita', { entity: 'visita', status: 'pendiente' })
+    store.updateFlowNode(FLOW, 'ensenar-el-inmueble', { entity: 'visita', status: 'realizada' })
+  })
+
+  it('nombra las entidades con promesas huérfanas, sin citar valores (rótulo genérico)', () => {
+    const fixture = mount()
+
+    const banner = testId(fixture, 'flow-orphan-banner')
+    expect(banner).not.toBeNull()
+    expect(banner!.textContent).toContain('visita')
+    expect(banner!.textContent).not.toContain('«pendiente»')
+  })
+
+  it('cerrarlo lo quita, y con máquina promovida ni aparece', () => {
+    const fixture = mount()
+    testId(fixture, 'flow-orphan-dismiss')!.click()
+    fixture.detectChanges()
+    expect(testId(fixture, 'flow-orphan-banner')).toBeNull()
+
+    store.updateField('visita', 0, { type: 'enum' })
+    store.promoteState('visita', 'nombre')
+    const clean = mount()
+    expect(testId(clean, 'flow-orphan-banner')).toBeNull()
   })
 })

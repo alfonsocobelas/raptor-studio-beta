@@ -123,6 +123,35 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
           <studio-canvas-controls (fit)="fitToView()" />
         </div>
 
+        <!-- promesas huérfanas en voz alta (2026-08-30): las etiquetas por paso se pueden no
+             ver; el banner resume qué estados no existen. No modal y no se cierra solo. -->
+        @if (orphanBanner(); as orphan) {
+          <!-- el tinte es el naranja de la casa (--flow-accent), rebajado a superficie con la
+               misma receta que el rombo de decisión: avisa sin gritar y funciona en oscuro -->
+          <div
+            class="canvas-notice absolute left-1/2 top-4 z-30 flex max-w-2xl -translate-x-1/2 items-center gap-3 rounded-lg border px-3 py-2 text-sm"
+            style="
+              border-color: color-mix(in oklab, var(--flow-accent) 45%, var(--border));
+              background: color-mix(in oklab, var(--flow-accent) 8%, var(--card));
+            "
+            data-testid="flow-orphan-banner"
+          >
+            <span class="shrink-0 font-semibold" style="color: var(--flow-accent)">⚠</span>
+            <span class="min-w-0">
+              Este flujo anota estados sobre entidades sin máquina de estados ({{ orphan.summary }}). La app
+              generada no podrá moverlos: define el ciclo en Modelo y ata aquí cada paso a su transición.
+            </span>
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground shrink-0 text-xs"
+              data-testid="flow-orphan-dismiss"
+              (click)="dismissOrphanBanner()"
+            >
+              ✕
+            </button>
+          </div>
+        }
+
         <!-- conexión a medias: se dice qué falta, porque el lienzo por sí solo no lo cuenta -->
         @if (linkFrom()) {
           <div
@@ -401,7 +430,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                                 class="text-muted-foreground rounded-sm border border-dashed px-1 opacity-70"
                                 [attr.title]="noStateTitle(step)"
                                 [attr.data-testid]="'flow-nostate-' + step.id"
-                                >{{ noStateLabel(step) }}</span
+                                >estado sin máquina</span
                               >
                             }
                           </span>
@@ -595,7 +624,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         class="text-muted-foreground block truncate rounded-sm border border-dashed px-1 text-[10px] opacity-70"
                         [attr.title]="noStateTitle(item.node)"
                         [attr.data-testid]="'flow-nostate-' + item.node.id"
-                        >{{ noStateLabel(item.node) }}</span
+                        >estado sin máquina</span
                       >
                     }
                   </span>
@@ -803,15 +832,26 @@ export class FlowViewComponent {
     return this.machineTransition(node)?.hidden === true
   }
 
+  /** Banner descartado por flujo: cambiar de flujo lo vuelve a armar. */
+  private readonly orphanDismissedFor = signal<string | null>(null)
+
+  protected dismissOrphanBanner(): void {
+    this.orphanDismissedFor.set(this.activeName())
+  }
+
+  /** Las entidades del flujo activo con pasos que anotan estados sin máquina detrás. */
+  protected readonly orphanBanner = computed(() => {
+    if (this.orphanDismissedFor() === this.activeName()) return null
+    const flow = this.activeFlow()
+    if (!flow) return null
+    const entities = [...new Set(flow.nodes.filter(n => this.statusWithoutMachine(n)).map(n => n.entity as string))]
+    return entities.length ? { summary: entities.join(', ') } : null
+  })
+
   /** El paso anota un estado pero su entidad no tiene máquina: no convergerá nunca (spec 74). */
   protected statusWithoutMachine(node: Pick<FlowNode, 'entity' | 'status'>): boolean {
     if (!node.status || !node.entity) return false
     return !this.store.resources().find(r => r.name === node.entity)?.state
-  }
-
-  /** El rótulo cita el estado huérfano: «pendiente» no está en el modelo. */
-  protected noStateLabel(node: Pick<FlowNode, 'status'>): string {
-    return `«${node.status}» no está en el modelo`
   }
 
   protected noStateTitle(node: Pick<FlowNode, 'entity' | 'status'>): string {
