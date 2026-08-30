@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core'
 import { CanvasNoticeService } from '../design/canvas-notice.service'
-import { applyDone, applyEvent, initialPhases, type PhaseState } from './generate-phases'
+import { applyDone, applyEvent, applySkip, initialPhases, type PhaseState } from './generate-phases'
 import { markWritten, plannedItems, type WrittenItem } from './written-items'
 import type { buildDesignRequest } from './wizard-command'
 
@@ -121,6 +121,7 @@ export class GenerateRunner {
       }
 
       await this.consume(response.body.getReader())
+      await this.afterInstall(request)
     } catch (e) {
       this.ok.set(false)
       // cancelar no es fallar: el usuario lo pidió y el backend ya está parando el generador
@@ -159,6 +160,22 @@ export class GenerateRunner {
       return
     }
     this.noticeService.show('La generación falló', { label: 'Ver el motivo', ...view })
+  }
+
+  /**
+   * El pipeline post-install (spec 75): tras un done ok con dependencias instaladas, la
+   * obra sigue sola — rellenar los huecos por el puente (si los hay). Con skipInstall no
+   * hay nada que encadenar: sin node_modules no corren ni el gate ni la suite.
+   */
+  private async afterInstall(request: GenerateRequest): Promise<void> {
+    if (request.skipInstall || this.outcome() !== 'ok') return
+
+    if (this.slotStates().length) {
+      this.phases.update(phases => applyEvent(phases, { phase: 'fill' }, Date.now()))
+      await this.fillSlots()
+    } else {
+      this.phases.update(phases => applySkip(phases, 'fill'))
+    }
   }
 
   /**

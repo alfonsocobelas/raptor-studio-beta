@@ -146,11 +146,13 @@ describe('GenerateRunner', () => {
    * del diseño han salido y cómo acabó todo.
    */
   describe('la obra', () => {
+    // skipInstall a propósito: el pipeline post-install (spec 75) se prueba en su describe,
+    // con streams secuenciados; aquí se prueba la obra clásica sin fases encadenadas
     const request: GenerateRequest = {
       name: 'boutique',
       slots: { auth: 'single-tenant', infra: 'none', database: 'postgres' },
       plugins: [],
-      skipInstall: false,
+      skipInstall: true,
       design: {
         appName: 'boutique',
         palette: 'ocean',
@@ -451,6 +453,11 @@ describe('el relleno de huecos (spec 45)', () => {
     ])
   })
 
+  it('con fases encadenadas el relleno manual sigue existiendo para re-ejecuciones', async () => {
+    // el botón de la spec 45 no desaparece: quien quiera reintentar un hueco lo pulsa
+    expect(typeof runner().fillSlots).toBe('function')
+  })
+
   it('una generación nueva olvida los huecos de la anterior', async () => {
     vi.stubGlobal(
       'fetch',
@@ -463,5 +470,105 @@ describe('el relleno de huecos (spec 45)', () => {
     await run.run(request)
 
     expect(run.slotStates()).toEqual([])
+  })
+})
+
+/**
+ * Spec 75: la obra sigue sola después de instalar. Cada fase es su propio stream y el
+ * runner los encadena: relleno (si hay huecos), validación y, si el rojo es de la IA,
+ * reparación con una única re-validación.
+ */
+describe('el pipeline por fases (spec 75)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  const request: GenerateRequest = {
+    name: 'boutique',
+    slots: {},
+    plugins: [],
+    skipInstall: false,
+    design: { appName: 'boutique', palette: 'ocean', resources: [], pages: [] } as unknown as GenerateRequest['design']
+  }
+
+  const status = (run: GenerateRunner, key: string): string | undefined =>
+    run.phases().find(p => p.key === key)?.status
+
+  /** Un fetch que sirve un stream distinto por llamada y recuerda las URLs pedidas. */
+  const sequenced = (calls: string[][]): { urls: string[] } => {
+    const encoder = new TextEncoder()
+    const urls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        urls.push(String(url))
+        const chunks = calls[urls.length - 1] ?? []
+        let index = 0
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            getReader: () => ({
+              read: async () =>
+                index < chunks.length ? { done: false, value: encoder.encode(chunks[index++]) } : { done: true }
+            })
+          }
+        }
+      }) as unknown as typeof fetch
+    )
+    return { urls }
+  }
+
+  const generated = (slots: string[]): string[] => [
+    line({ type: 'progress', phase: 'install', packages: 1700 }),
+    line({ type: 'done', ok: true, files: 3, root: 'apps/boutique', slots, output: 'ok' })
+  ]
+
+  describe('la fase de relleno (TASK-07)', () => {
+    it('tras un done ok con huecos, el relleno arranca solo', async () => {
+      const { urls } = sequenced([
+        generated(['flow-cie']),
+        [
+          line({ type: 'slot', id: 'flow-cie', status: 'proposing' }),
+          line({ type: 'slot', id: 'flow-cie', status: 'filled' }),
+          line({ type: 'done', ok: true, filled: ['flow-cie'], rejected: [], pending: [] })
+        ]
+      ])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(urls[1]).toContain('/studio/fill-slots/stream')
+      expect(run.slotStates()).toEqual([{ id: 'flow-cie', status: 'filled' }])
+      expect(status(run, 'fill')).toBe('done')
+    })
+
+    it('sin huecos la fase de relleno se omite y no se llama al puente', async () => {
+      const { urls } = sequenced([generated([])])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(status(run, 'fill')).toBe('skipped')
+      expect(urls.filter(url => url.includes('fill-slots'))).toEqual([])
+    })
+
+    it('con skipInstall no hay pipeline: todo lo post-install queda omitido', async () => {
+      const { urls } = sequenced([generated(['flow-cie'])])
+      const run = runner()
+
+      await run.run({ ...request, skipInstall: true })
+
+      expect(status(run, 'fill')).toBe('skipped')
+      expect(urls).toHaveLength(1)
+    })
+
+    it('si la generación falla, el pipeline ni arranca', async () => {
+      const { urls } = sequenced([[line({ type: 'done', ok: false, output: 'reventó' })]])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(urls).toHaveLength(1)
+      expect(status(run, 'fill')).toBe('pending')
+    })
   })
 })
