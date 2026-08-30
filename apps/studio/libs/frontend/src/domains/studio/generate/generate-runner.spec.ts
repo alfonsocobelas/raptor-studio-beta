@@ -571,4 +571,103 @@ describe('el pipeline por fases (spec 75)', () => {
       expect(status(run, 'fill')).toBe('pending')
     })
   })
+
+  describe('la fase de validación (TASK-08)', () => {
+    const greenValidation = (): string[] => [
+      line({ type: 'check', name: 'typecheck', status: 'running' }),
+      line({ type: 'check', name: 'typecheck', status: 'ok' }),
+      line({ type: 'check', name: 'unit', status: 'running' }),
+      line({ type: 'check', name: 'unit', status: 'ok' }),
+      line({ type: 'check', name: 'front', status: 'running' }),
+      line({ type: 'check', name: 'front', status: 'ok' }),
+      line({ type: 'done', ok: true, output: 'todo verde' })
+    ]
+
+    it('tras el relleno (u omitirlo) corre la validación, y en verde la reparación se omite', async () => {
+      const { urls } = sequenced([generated([]), greenValidation()])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(urls[1]).toContain('/studio/validate/stream')
+      expect(run.checks()).toEqual([
+        { name: 'typecheck', status: 'ok' },
+        { name: 'unit', status: 'ok' },
+        { name: 'front', status: 'ok' }
+      ])
+      expect(status(run, 'validate')).toBe('done')
+      expect(status(run, 'repair')).toBe('skipped')
+      expect(run.outcome()).toBe('ok')
+    })
+
+    it('un rojo canónico deja el desenlace en fallo, sin reparación: eso se arregla en el generador', async () => {
+      sequenced([
+        generated([]),
+        [
+          line({ type: 'check', name: 'typecheck', status: 'running' }),
+          line({ type: 'check', name: 'typecheck', status: 'failed' }),
+          line({ type: 'done', ok: false, failedCheck: 'typecheck', suspects: [], output: 'error TS2307 en uuid.vo.ts' })
+        ]
+      ])
+      const run = runner()
+
+      await run.run(request)
+
+      expect(run.outcome()).toBe('failed')
+      expect(run.failedCheck()).toBe('typecheck')
+      expect(run.validationOutput()).toContain('TS2307')
+      expect(run.suspects()).toEqual([])
+      expect(status(run, 'validate')).toBe('failed')
+      expect(status(run, 'repair')).toBe('skipped')
+    })
+
+    it('cancelar durante la validación conserva la app: no hay nada a medias que borrar', async () => {
+      const encoder = new TextEncoder()
+      const generateChunks = generated([])
+      let calls = 0
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: { signal?: AbortSignal }) => {
+          calls++
+          if (calls === 1) {
+            let index = 0
+            return {
+              ok: true,
+              status: 200,
+              body: {
+                getReader: () => ({
+                  read: async () =>
+                    index < generateChunks.length
+                      ? { done: false, value: encoder.encode(generateChunks[index++]) }
+                      : { done: true }
+                })
+              }
+            }
+          }
+          return {
+            ok: true,
+            status: 200,
+            body: {
+              getReader: () => ({
+                read: () =>
+                  new Promise((_resolve, reject) =>
+                    init.signal?.addEventListener('abort', () => reject(new DOMException('abortada', 'AbortError')))
+                  )
+              })
+            }
+          }
+        }) as unknown as typeof fetch
+      )
+      const run = runner()
+
+      const running = run.run(request)
+      // dejar que el generate termine y la validación quede colgada del stream
+      await new Promise(resolve => setTimeout(resolve, 0))
+      run.cancel()
+      await running
+
+      expect(run.outcome()).toBe('cancelled')
+      expect(run.output()).toContain('se conserva')
+    })
+  })
 })

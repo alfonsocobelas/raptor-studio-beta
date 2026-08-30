@@ -43,6 +43,30 @@ export interface GenerateRequest {
 /** Cómo acabó. `null` mientras no ha acabado. */
 export type GenerateOutcome = 'ok' | 'failed' | 'cancelled' | null
 
+/** Lo que emite el endpoint de validación (spec 75) por cada comprobación. */
+interface ValidateEvent {
+  type: 'check' | 'done'
+  name?: string
+  status?: 'running' | 'ok' | 'failed'
+  ok?: boolean
+  failedCheck?: string
+  suspects?: string[]
+  output?: string
+}
+
+/** Una comprobación de la fase de validación, tal como la pinta la fila de la obra. */
+export interface CheckState {
+  name: string
+  status: 'running' | 'ok' | 'failed'
+}
+
+/** El veredicto de una pasada de validación, materia prima de la reparación. */
+interface ValidationVerdict {
+  ok: boolean
+  suspects: string[]
+  output: string
+}
+
 /** Un paso de negocio por rellenar (spec 45), con su recorrido por el puente. */
 export interface SlotState {
   id: string
@@ -84,6 +108,14 @@ export class GenerateRunner {
   /** Los pasos de negocio que quedaron por rellenar (spec 45) y su recorrido */
   readonly slotStates = signal<SlotState[]>([])
   readonly fillingSlots = signal(false)
+  /** Las comprobaciones de la fase de validación (spec 75) y cómo va cada una */
+  readonly checks = signal<CheckState[]>([])
+  /** La comprobación que puso el rojo, si lo hubo */
+  readonly failedCheck = signal<string | null>(null)
+  /** La salida del fallo de validación: el informe accionable del desenlace */
+  readonly validationOutput = signal<string | null>(null)
+  /** Huecos IA implicados en el fallo; vacío = el rojo es del código canónico */
+  readonly suspects = signal<string[]>([])
   /** Directorio relativo de la app emitida: el endpoint de relleno lo exige del workspace */
   private requestedDir: string | null = null
 
@@ -126,7 +158,13 @@ export class GenerateRunner {
       this.ok.set(false)
       // cancelar no es fallar: el usuario lo pidió y el backend ya está parando el generador
       if (this.outcome() === 'cancelled') {
-        this.output.set('Cancelada. El generador se paró y el código a medias se borró.')
+        // si la generación ya había terminado (hay root), lo cancelado son las fases
+        // finales: la app existe y NO se borra (spec 75)
+        this.output.set(
+          this.root()
+            ? `Cancelada durante las fases finales. La app generada en ${this.root()} se conserva.`
+            : 'Cancelada. El generador se paró y el código a medias se borró.'
+        )
       } else {
         this.outcome.set('failed')
         const detail = e instanceof Error ? e.message : String(e)
@@ -173,9 +211,64 @@ export class GenerateRunner {
     if (this.slotStates().length) {
       this.phases.update(phases => applyEvent(phases, { phase: 'fill' }, Date.now()))
       await this.fillSlots()
+      if (this.outcome() === 'cancelled') return
     } else {
       this.phases.update(phases => applySkip(phases, 'fill'))
     }
+
+    const verdict = await this.validate()
+    if (this.outcome() === 'cancelled') return
+
+    // verde, o rojo canónico (sin huecos IA implicados): en ninguno de los dos se repara —
+    // lo primero no lo necesita y lo segundo se arregla en el generador, nunca a mano
+    this.phases.update(phases => applySkip(phases, 'repair'))
+    if (!verdict.ok) {
+      this.outcome.set('failed')
+      this.ok.set(false)
+    }
+  }
+
+  /**
+   * La fase «Validando la app» (spec 75): corre las comprobaciones que la propia app
+   * declara y guarda el veredicto — incluida la atribución del rojo (huecos IA vs canon).
+   */
+  private async validate(): Promise<ValidationVerdict> {
+    this.phases.update(phases => applyEvent(phases, { phase: 'validate' }, Date.now()))
+    this.checks.set([])
+    const verdict: ValidationVerdict = { ok: false, suspects: [], output: '' }
+
+    const response = await fetch('/api/v1/studio/validate/stream', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ directory: this.requestedDir }),
+      signal: this.aborter?.signal
+    })
+    if (!response.ok || !response.body) {
+      throw new Error(`el backend respondió ${response.status}`)
+    }
+
+    await this.readLines(response.body.getReader(), raw => {
+      const event = raw as ValidateEvent
+      if (event.type === 'check' && event.name && event.status) {
+        const check: CheckState = { name: event.name, status: event.status }
+        this.checks.update(checks =>
+          checks.some(c => c.name === check.name)
+            ? checks.map(c => (c.name === check.name ? check : c))
+            : [...checks, check]
+        )
+        return
+      }
+      if (event.type === 'done') {
+        verdict.ok = event.ok ?? false
+        verdict.suspects = event.suspects ?? []
+        verdict.output = event.output ?? ''
+        this.failedCheck.set(event.failedCheck ?? null)
+        this.validationOutput.set(verdict.ok ? null : verdict.output)
+        this.suspects.set(verdict.suspects)
+      }
+    })
+
+    return verdict
   }
 
   /**
@@ -190,41 +283,35 @@ export class GenerateRunner {
       const response = await fetch('/api/v1/studio/fill-slots/stream', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ directory })
+        body: JSON.stringify({ directory }),
+        // encadenado en la obra (spec 75) el relleno se cancela con ella; suelto va sin señal
+        signal: this.aborter?.signal
       })
       if (!response.ok || !response.body) {
         throw new Error(`el backend respondió ${response.status}`)
       }
-      const decoder = new TextDecoder()
-      const reader = response.body.getReader()
-      let buffer = ''
-      for (;;) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const raw of lines) {
-          if (!raw.trim()) continue
-          const event = JSON.parse(raw) as FillEvent
-          if (event.type !== 'slot' || !event.id || !event.status) continue
-          this.slotStates.update(states =>
-            states.map(state =>
-              state.id === event.id
-                ? {
-                    id: state.id,
-                    status: event.status as SlotState['status'],
-                    ...(event.reason ? { reason: event.reason } : {})
-                  }
-                : state
-            )
+      await this.readLines(response.body.getReader(), raw => {
+        const event = raw as unknown as FillEvent
+        if (event.type !== 'slot' || !event.id || !event.status) return
+        this.slotStates.update(states =>
+          states.map(state =>
+            state.id === event.id
+              ? {
+                  id: state.id,
+                  status: event.status as SlotState['status'],
+                  ...(event.reason ? { reason: event.reason } : {})
+                }
+              : state
           )
-        }
-      }
+        )
+      })
     } catch (e) {
-      // un stream roto deja lo contado hasta ahí; los huecos siguen pendientes en disco
-      const detail = e instanceof Error ? e.message : String(e)
-      this.noticeService.show(`El relleno se cortó: ${detail}`)
+      // un stream roto deja lo contado hasta ahí; los huecos siguen pendientes en disco.
+      // Cancelar la obra no es un corte que avisar: quien canceló ya lo está viendo.
+      if (this.outcome() !== 'cancelled') {
+        const detail = e instanceof Error ? e.message : String(e)
+        this.noticeService.show(`El relleno se cortó: ${detail}`)
+      }
     } finally {
       this.fillingSlots.set(false)
     }
@@ -248,6 +335,10 @@ export class GenerateRunner {
     this.requestedDir = request.directory ?? `apps/${request.name}`
     this.slotStates.set([])
     this.fillingSlots.set(false)
+    this.checks.set([])
+    this.failedCheck.set(null)
+    this.validationOutput.set(null)
+    this.suspects.set([])
     this.output.set(null)
     this.elapsed.set(null)
     this.root.set(null)
@@ -270,6 +361,14 @@ export class GenerateRunner {
 
   /** El troceado no respeta las líneas: lo que quede a medias espera al siguiente trozo. */
   private async consume(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
+    await this.readLines(reader, event => this.apply(event as GenerateEvent))
+  }
+
+  /** El lector NDJSON común de todos los streams de la obra: parte por líneas y parsea. */
+  private async readLines(
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    onEvent: (event: Record<string, unknown>) => void
+  ): Promise<void> {
     const decoder = new TextDecoder()
     let buffer = ''
 
@@ -283,7 +382,7 @@ export class GenerateRunner {
       buffer = lines.pop() ?? ''
       for (const line of lines) {
         if (line.trim()) {
-          this.apply(JSON.parse(line) as GenerateEvent)
+          onEvent(JSON.parse(line) as Record<string, unknown>)
         }
       }
     }
