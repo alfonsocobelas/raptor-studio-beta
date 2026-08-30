@@ -1,13 +1,13 @@
-import { BadRequestException, Body, Controller, Post, Res } from '@nestjs/common'
+import { Body, Controller, Post, Res } from '@nestjs/common'
 import type { Response } from 'express'
 import { IsString } from 'class-validator'
 import { spawn } from 'child_process'
-import { existsSync } from 'fs'
 import * as path from 'path'
 import { killGroup } from './cancel-cleanup'
 import { describeFillLine } from './fill-progress'
 import { generatorEnv } from './generator-args'
 import { pendingFlowSlotIds } from './pending-slots'
+import { insideWorkspace } from './workspace-guard'
 
 class FillSlotsRequestDto {
   /** Directorio de la app emitida, relativo al workspace ('apps/mi-app') */
@@ -29,7 +29,7 @@ export class StudioFillController {
 
   @Post('stream')
   async stream(@Body() body: FillSlotsRequestDto, @Res() res: Response): Promise<void> {
-    const root = this.insideWorkspace(body.directory)
+    const root = insideWorkspace(this.acceleratorRoot, body.directory)
 
     res.setHeader('Content-Type', 'application/x-ndjson')
     res.setHeader('Cache-Control', 'no-cache')
@@ -101,17 +101,5 @@ export class StudioFillController {
         resolve()
       })
     })
-  }
-
-  /** Solo se rellena DENTRO del workspace: mismo cinturón que el borrado de generate. */
-  private insideWorkspace(directory: string): string {
-    const root = path.resolve(this.acceleratorRoot, directory)
-    if (!root.startsWith(this.acceleratorRoot + path.sep) || directory.includes('..')) {
-      throw new BadRequestException(`Directorio fuera del workspace: ${directory}`)
-    }
-    if (!existsSync(root)) {
-      throw new BadRequestException(`El directorio '${directory}' no existe`)
-    }
-    return root
   }
 }

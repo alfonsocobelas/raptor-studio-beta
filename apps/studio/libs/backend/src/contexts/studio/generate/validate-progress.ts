@@ -24,3 +24,43 @@ export const VALIDATION_CHECKS: ValidationCheck[] = [
 export type ValidateEvent =
   | { type: 'check'; name: CheckName; status: CheckStatus }
   | { type: 'done'; ok: boolean; failedCheck?: CheckName; suspects?: string[]; output: string }
+
+export interface CheckRun {
+  ok: boolean
+  output: string
+}
+
+export type CheckRunner = (check: ValidationCheck, root: string) => Promise<CheckRun>
+
+export interface ValidationResult {
+  ok: boolean
+  failedCheck?: CheckName
+  output: string
+}
+
+/**
+ * La orquestación de la fase: secuencial y al primer rojo se para — correr los tests
+ * sobre una app que no compila solo añade ruido al informe. Pura a propósito: quién
+ * corre cada comando (spawn real) y quién recibe los eventos (NDJSON) entran por
+ * parámetro, igual que el executor/gate del relleno.
+ */
+export async function runValidation(
+  root: string,
+  emit: (event: ValidateEvent) => void,
+  run: CheckRunner
+): Promise<ValidationResult> {
+  let output = ''
+
+  for (const check of VALIDATION_CHECKS) {
+    emit({ type: 'check', name: check.name, status: 'running' })
+    const result = await run(check, root)
+    output += result.output
+    if (!result.ok) {
+      emit({ type: 'check', name: check.name, status: 'failed' })
+      return { ok: false, failedCheck: check.name, output }
+    }
+    emit({ type: 'check', name: check.name, status: 'ok' })
+  }
+
+  return { ok: true, output }
+}
