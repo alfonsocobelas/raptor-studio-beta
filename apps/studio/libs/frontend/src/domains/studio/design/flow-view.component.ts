@@ -401,7 +401,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                                 class="text-muted-foreground rounded-sm border border-dashed px-1 opacity-70"
                                 [attr.title]="noStateTitle(step)"
                                 [attr.data-testid]="'flow-nostate-' + step.id"
-                                >estado sin máquina</span
+                                >{{ noStateLabel(step) }}</span
                               >
                             }
                           </span>
@@ -595,7 +595,7 @@ type FlowSelection = { kind: 'node'; id: string } | { kind: 'edge'; from: string
                         class="text-muted-foreground block truncate rounded-sm border border-dashed px-1 text-[10px] opacity-70"
                         [attr.title]="noStateTitle(item.node)"
                         [attr.data-testid]="'flow-nostate-' + item.node.id"
-                        >estado sin máquina</span
+                        >{{ noStateLabel(item.node) }}</span
                       >
                     }
                   </span>
@@ -809,10 +809,17 @@ export class FlowViewComponent {
     return !this.store.resources().find(r => r.name === node.entity)?.state
   }
 
+  /** El rótulo cita el estado huérfano: «pendiente» no está en el modelo. */
+  protected noStateLabel(node: Pick<FlowNode, 'status'>): string {
+    return `«${node.status}» no está en el modelo`
+  }
+
   protected noStateTitle(node: Pick<FlowNode, 'entity' | 'status'>): string {
     return (
-      `El paso deja ${node.entity} en «${node.status}», pero ${node.entity} no tiene máquina de estados: ` +
-      `sin ella este paso no puede converger (ni botón ni endpoint). Promuévela en Modelo.`
+      `Este paso promete que ${node.entity} queda en «${node.status}», pero ${node.entity} no tiene ` +
+      `ciclo de estados: la app generada no podrá hacerlo (ni botón ni endpoint). ` +
+      `Para arreglarlo: en Modelo, da a ${node.entity} un campo de estado con sus valores y sus flechas, ` +
+      `y vuelve aquí a elegir la transición del paso — entonces será un botón real en su ficha.`
     )
   }
 

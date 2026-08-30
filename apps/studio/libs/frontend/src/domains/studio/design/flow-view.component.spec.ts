@@ -883,12 +883,16 @@ describe('FlowViewComponent — el paso con estado sin máquina se señala', () 
     store.updateFlowNode(FLOW, 'agendar-la-visita', { entity: 'visita', status: 'pendiente' })
   })
 
-  it('marca el paso cuando su entidad no tiene máquina de estados', () => {
+  it('marca el paso cuando su entidad no tiene máquina de estados, con el valor huérfano en el rótulo', () => {
     const fixture = mount()
 
     const marker = testId(fixture, 'flow-nostate-agendar-la-visita')
     expect(marker).not.toBeNull()
-    expect(marker!.getAttribute('title')).toContain('máquina')
+    // el rótulo habla el idioma del diseñador: cita el estado prometido, no nuestra jerga
+    expect(marker!.textContent).toContain('«pendiente» no está en el modelo')
+    // y el tooltip da el remedio en su pantalla: definir el ciclo en Modelo
+    expect(marker!.getAttribute('title')).toContain('Modelo')
+    expect(marker!.getAttribute('title')).toContain('botón')
   })
 
   it('con la máquina promovida, la marca desaparece', () => {
