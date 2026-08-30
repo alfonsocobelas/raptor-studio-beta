@@ -163,7 +163,9 @@
    quitarle la calidez despega el naranja sin tocarlo. Descartados también el #302e2b
    claro (aplanaba la profundidad) y avivar el naranja (no bastaba). */
 :root.dark .studio-rail {
-  background-color: #1f1e22;
+  /* Prueba 2026-08-30: negro un paso más claro que el #050101 de las barras,
+     misma familia cálida, para ver si el marco gana profundidad. Antes #1f1e22. */
+  background-color: #151111;
   /* De noche la costura vuelve al token: sobre el marco oscuro el borde claro ya separa solo. */
   border-color: var(--border);
 }
