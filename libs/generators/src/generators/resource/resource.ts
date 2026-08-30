@@ -225,11 +225,14 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-types.ts`))
     tree.delete(path.join(outputDir, 'backend/domain', `${substitutions.fileName}-repository.ts`))
+    // el nombre del repositorio lo dicta el manifiesto del motor: sin esto, mongo se
+    // quedaba un mongoose-x.repository.ts vacío que nadie borraba (spec 76)
     tree.delete(
       path.join(
         outputDir,
-        'backend/infrastructure/persistence/typeorm',
-        `typeorm-${substitutions.fileName}.repository.ts`
+        'backend/infrastructure/persistence',
+        persistence.persistenceDir,
+        `${persistence.persistenceDir}-${substitutions.fileName}.repository.ts`
       )
     )
   } else {

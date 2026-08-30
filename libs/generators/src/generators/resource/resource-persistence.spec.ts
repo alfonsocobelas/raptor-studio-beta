@@ -1,6 +1,8 @@
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing'
 import type { Tree } from '@nx/devkit'
+import type { ResourceDefinition } from '@raptor/schema'
 import { resourceGenerator } from './resource'
+import { MODELS, registerModels } from './models/registry'
 
 /**
  * TASK-07 (spec 23): la persistencia POR RECURSO también la manda el manifiesto del motor.
@@ -52,6 +54,40 @@ describe('resource generator — persistencia por motor', () => {
 
     expect(files).toContain('out/backend-tests-integration/mongoose-customer.repository.test.ts')
     expect(files).not.toContain('out/backend-tests-integration/typeorm-customer.repository.test.ts')
+  })
+})
+
+/**
+ * TASK-01 (spec 76): con un modelo sin VOs (emitAggregate=false, típico de diseños del
+ * estudio) el borrado del repositorio estaba hardcodeado a la ruta TypeORM, así que una
+ * app mongo se quedaba un `mongoose-x.repository.ts` VACÍO que nadie borraba. El borrado
+ * sale del manifiesto del motor (persistenceDir), no de una ruta fija.
+ */
+describe('resource generator — modelo sin VOs (sin agregado)', () => {
+  beforeAll(() => {
+    const bare = structuredClone(MODELS['supplier']) as ResourceDefinition
+    for (const field of Object.values(bare.fields)) {
+      delete (field as unknown as Record<string, unknown>)['vo']
+    }
+    registerModels([{ ...bare, name: 'ticket', plural: 'tickets' }])
+  })
+
+  const emit = async (database: 'postgres' | 'mongo'): Promise<string[]> => {
+    const tree: Tree = createTreeWithEmptyWorkspace()
+    await resourceGenerator(tree, { name: 'ticket', directory: 'out', database })
+    return tree.listChanges().map(change => change.path)
+  }
+
+  it('postgres no deja el repositorio TypeORM vacío', async () => {
+    const files = await emit('postgres')
+
+    expect(files).not.toContain('out/backend/infrastructure/persistence/typeorm/typeorm-ticket.repository.ts')
+  })
+
+  it('mongo no deja el repositorio Mongoose vacío', async () => {
+    const files = await emit('mongo')
+
+    expect(files).not.toContain('out/backend/infrastructure/persistence/mongoose/mongoose-ticket.repository.ts')
   })
 })
 
