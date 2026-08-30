@@ -98,6 +98,10 @@ export class TypeOrmContractEntity {
   @Column('numeric', { precision: 15, scale: 2, nullable: true, transformer: nullableNumericTransformer })
   upcomingMaintenanceFee!: Nullable<number>
 
+  // Contador de bloqueo optimista (spec 78): lo incrementa el update condicional del save
+  @Column('int', { default: 1 })
+  version!: number
+
   // --- AUDIT FIELDS --- //
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date

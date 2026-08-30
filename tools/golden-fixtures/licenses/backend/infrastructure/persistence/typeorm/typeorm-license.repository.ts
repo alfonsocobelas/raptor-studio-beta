@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { In, IsNull } from 'typeorm'
+import { ConcurrencyConflictError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -27,8 +28,17 @@ export class TypeOrmLicenseRepository extends TypeOrmRepository<TypeOrmLicenseEn
     await this.repository().save(LicenseMapper.toPersistence(license))
   }
 
+  // Escritura condicional (spec 78): solo pisa la fila si nadie la movió desde la lectura
   async save(license: License): Promise<void> {
-    await this.repository().save(LicenseMapper.toPersistence(license))
+    const entity = LicenseMapper.toPersistence(license)
+    const result = await this.repository().update(
+      { id: entity.id, version: entity.version },
+      { ...entity, version: () => 'version + 1' }
+    )
+
+    if (!result.affected) {
+      throw new ConcurrencyConflictError('License', entity.id)
+    }
   }
 
   async removeDraggedByContractId(parentIds: string[], op: DeleteOperationId): Promise<string[]> {

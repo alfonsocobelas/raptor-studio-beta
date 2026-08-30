@@ -79,6 +79,10 @@ export class TypeOrmLicenseEntity {
   @Column('numeric', { precision: 15, scale: 2, default: 0, transformer: numericTransformer })
   annualValue!: number
 
+  // Contador de bloqueo optimista (spec 78): lo incrementa el update condicional del save
+  @Column('int', { default: 1 })
+  version!: number
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date
 

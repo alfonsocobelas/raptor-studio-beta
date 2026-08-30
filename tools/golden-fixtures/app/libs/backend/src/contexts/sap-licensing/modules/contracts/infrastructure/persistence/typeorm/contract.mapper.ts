@@ -29,7 +29,8 @@ export class ContractMapper {
       lastSeenInSyncAt: entity.lastSeenInSyncAt?.toISOString() ?? null,
       supportModel: entity.supportModel,
       upcomingMaintenanceEnd: entity.upcomingMaintenanceEnd,
-      upcomingMaintenanceFee: entity.upcomingMaintenanceFee
+      upcomingMaintenanceFee: entity.upcomingMaintenanceFee,
+      version: entity.version
     })
   }
 
@@ -62,6 +63,7 @@ export class ContractMapper {
     entity.supportModel = primitives.supportModel ?? ''
     entity.upcomingMaintenanceEnd = primitives.upcomingMaintenanceEnd ?? null
     entity.upcomingMaintenanceFee = primitives.upcomingMaintenanceFee ?? null
+    entity.version = primitives.version
 
     return entity
   }

@@ -67,6 +67,10 @@ export class TypeOrmProjectEntity {
   @Column('date', { nullable: true })
   planToGoLive!: Nullable<string>
 
+  // Contador de bloqueo optimista (spec 78): lo incrementa el update condicional del save
+  @Column('int', { default: 1 })
+  version!: number
+
   // --- AUDIT FIELDS --- //
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date

@@ -46,6 +46,10 @@ export class TypeOrmCustomerEntity {
   @Column('timestamptz', { nullable: true })
   lastSeenInSyncAt!: Nullable<Date>
 
+  // Contador de bloqueo optimista (spec 78): lo incrementa el update condicional del save
+  @Column('int', { default: 1 })
+  version!: number
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date
 

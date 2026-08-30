@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { In, IsNull } from 'typeorm'
+import { ConcurrencyConflictError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -28,8 +29,17 @@ export class TypeOrmProjectRepository extends TypeOrmRepository<TypeOrmProjectEn
     await this.repository().save(ProjectMapper.toPersistence(project))
   }
 
+  // Escritura condicional (spec 78): solo pisa la fila si nadie la movió desde la lectura
   async save(project: Project): Promise<void> {
-    await this.repository().save(ProjectMapper.toPersistence(project))
+    const entity = ProjectMapper.toPersistence(project)
+    const result = await this.repository().update(
+      { id: entity.id, version: entity.version },
+      { ...entity, version: () => 'version + 1' }
+    )
+
+    if (!result.affected) {
+      throw new ConcurrencyConflictError('Project', entity.id)
+    }
   }
 
   // Archiva la fila viva marcando QUÉ operación la tumbó; un update, se une a la tx ambiental

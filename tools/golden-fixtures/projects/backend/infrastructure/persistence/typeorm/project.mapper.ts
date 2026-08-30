@@ -23,7 +23,8 @@ export class ProjectMapper {
       nbrOfWaves: entity.nbrOfWaves,
       waveStage: entity.waveStage,
       waveStatus: entity.waveStatus,
-      planToGoLive: entity.planToGoLive
+      planToGoLive: entity.planToGoLive,
+      version: entity.version
     })
   }
 
@@ -50,6 +51,7 @@ export class ProjectMapper {
     entity.waveStage = primitives.waveStage ?? null
     entity.waveStatus = primitives.waveStatus ?? null
     entity.planToGoLive = primitives.planToGoLive ?? null
+    entity.version = primitives.version
 
     return entity
   }

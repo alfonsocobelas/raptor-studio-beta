@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from 'uuid'
 import { moduleFixture } from '../jest.setup.integration'
 import { TypeOrmContractRepository } from '../../../src/contexts/sap-licensing/modules/contracts/infrastructure/persistence/typeorm/typeorm-contract.repository'
 import { ContractWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/contracts/domain/specifications/contract-with-id.specification'
+import { ConcurrencyConflictError } from '../../../src/contexts/shared/domain/errors'
 import { ContractId } from '../../../src/contexts/shared/domain/value-objects/contracts/contract-id.vo'
 import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { ContractNumber } from '../../../src/contexts/sap-licensing/shared/domain/value-objects/contract-number.vo'
@@ -27,6 +28,22 @@ describe('TypeOrmContractRepository (integration)', () => {
     it('returns null for a non-existent id', async () => {
       const found = await repository.get(ContractId.create(uuidv7()))
       expect(found).toBeNull()
+    })
+  })
+
+  describe('save — bloqueo optimista (spec 78)', () => {
+    it('dos saves sobre la misma versión leída: el primero gana, el segundo choca con 409', async () => {
+      const contract = ContractMother.random()
+      await repository.register(contract)
+
+      const firstReader = await repository.get(contract.id)
+      const secondReader = await repository.get(contract.id)
+
+      await repository.save(firstReader!)
+      await expect(repository.save(secondReader!)).rejects.toThrow(ConcurrencyConflictError)
+
+      const persisted = await repository.get(contract.id)
+      expect(persisted?.version).toBe(2)
     })
   })
 

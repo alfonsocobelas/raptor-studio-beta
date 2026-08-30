@@ -20,7 +20,8 @@ export class CustomerMapper {
         customerType: entity.customerType,
         status: entity.status,
         archivedAt: entity.archivedAt?.toISOString() ?? null,
-        lastSeenInSyncAt: entity.lastSeenInSyncAt?.toISOString() ?? null
+        lastSeenInSyncAt: entity.lastSeenInSyncAt?.toISOString() ?? null,
+        version: entity.version
       },
       contactsEntities.map(contactEntity => ({
         id: contactEntity.id,
@@ -51,6 +52,7 @@ export class CustomerMapper {
     entity.status = primitives.status ?? 'active'
     entity.archivedAt = primitives.archivedAt ? new Date(primitives.archivedAt) : null
     entity.lastSeenInSyncAt = primitives.lastSeenInSyncAt ? new Date(primitives.lastSeenInSyncAt) : null
+    entity.version = primitives.version
 
     return entity
   }

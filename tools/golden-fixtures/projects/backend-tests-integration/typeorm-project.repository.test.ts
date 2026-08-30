@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from 'uuid'
 import { moduleFixture } from '../jest.setup.integration'
 import { TypeOrmProjectRepository } from '../../../src/contexts/sap-licensing/modules/projects/infrastructure/persistence/typeorm/typeorm-project.repository'
 import { ProjectWithIdSpecification } from '../../../src/contexts/sap-licensing/modules/projects/domain/specifications/project-with-id.specification'
+import { ConcurrencyConflictError } from '../../../src/contexts/shared/domain/errors'
 import { ProjectId } from '../../../src/contexts/shared/domain/value-objects/projects/project-id.vo'
 import { DeleteOperationId } from '../../../src/contexts/shared/domain/value-objects/delete-operation-id.vo'
 import { ProjectName } from '../../../src/contexts/sap-licensing/modules/projects/domain/value-objects/project-name.vo'
@@ -27,6 +28,22 @@ describe('TypeOrmProjectRepository (integration)', () => {
     it('returns null for a non-existent id', async () => {
       const found = await repository.get(ProjectId.create(uuidv7()))
       expect(found).toBeNull()
+    })
+  })
+
+  describe('save — bloqueo optimista (spec 78)', () => {
+    it('dos saves sobre la misma versión leída: el primero gana, el segundo choca con 409', async () => {
+      const project = ProjectMother.random()
+      await repository.register(project)
+
+      const firstReader = await repository.get(project.id)
+      const secondReader = await repository.get(project.id)
+
+      await repository.save(firstReader!)
+      await expect(repository.save(secondReader!)).rejects.toThrow(ConcurrencyConflictError)
+
+      const persisted = await repository.get(project.id)
+      expect(persisted?.version).toBe(2)
     })
   })
 

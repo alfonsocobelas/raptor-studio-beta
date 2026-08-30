@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { FindOptionsWhere, In, Not } from 'typeorm'
+import { ConcurrencyConflictError } from '../../../../../../shared/domain/errors'
 import { Nullable } from '../../../../../../shared/domain/types'
 import { AggregateGroup, AggregateOp, GroupedSpec } from '../../../../../../shared/domain/query/aggregate'
 import { Criteria } from '../../../../../../shared/domain/query/criteria'
@@ -33,8 +34,17 @@ export class TypeOrmCustomerRepository extends TypeOrmRepository<TypeOrmCustomer
   // ya no viven en el agregado (materializa removeContact). Usa this.client(), así que se une a la
   // transacción que abra el use case (el boundary transaccional vive en la aplicación, no aquí).
   // El agregado siempre llega hidratado, así que el diff nunca borra contacts por hidratación parcial.
+  // El check de versión vive SOLO en la fila del padre (spec 78): los hijos siguen a su agregado.
   async save(customer: Customer): Promise<void> {
-    await this.repository().save(CustomerMapper.toPersistence(customer))
+    const entity = CustomerMapper.toPersistence(customer)
+    const result = await this.repository().update(
+      { id: entity.id, version: entity.version },
+      { ...entity, version: () => 'version + 1' }
+    )
+
+    if (!result.affected) {
+      throw new ConcurrencyConflictError('Customer', entity.id)
+    }
 
     const contactRepository = this.client().getRepository(TypeOrmContactEntity)
     const contactEntities = CustomerMapper.contactsToPersistence(customer)
