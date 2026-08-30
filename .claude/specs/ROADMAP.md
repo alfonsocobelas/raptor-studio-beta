@@ -576,3 +576,22 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     Mitigado con el aviso accionable del panel («+ Añadir la ficha», spec 74 extendida).
     Fix de fondo a debatir: derivar la bandera de las páginas al generar (una sola fuente)
     o que el chat cree la página cuando declara la bandera.
+
+42. **Acciones en lote en las tablas emitidas (bulk delete)** (2026-08-30, apuntado por
+    Alfonso; brainstorming inicial hecho, spec pendiente). Hoy el borrado es estrictamente
+    unitario en toda la cadena: la DataTable del kernel no tiene concepto de selección
+    (ni checkboxes ni selection model) y el flujo es `TableAction 'delete'` → confirm →
+    `service.remove(id)` (un `DELETE /:id` y un `reload()` por fila). Ni la referencia
+    sap-licenses ni ninguna spec lo implementaron (la 29 lo dejó fuera de alcance).
+    Diseño esbozado en el debate: (a) DataTable kernel con input `selectable`, columna de
+    checkboxes + «seleccionar todo» (solo la página cargada en server-side), barra
+    contextual «N seleccionados» y output genérico `bulkActionClick` (acción + ids, espejo
+    de `actionClick`) — ajustar `totalColumnCount()` y vaciar la selección al cambiar
+    página/filtros; (b) el listado por recurso cablea la confirmación con el
+    `AppConfirmDialog` existente; (c) backend: use case `RemoveManyX` en UNA transacción y
+    endpoint de lote (`POST /:plural/bulk-delete` con ids en el body — N × `DELETE /:id`
+    desde el front queda descartado: N recargas y sin atomicidad); (d) sin ranura nueva en
+    el schema: `features.delete` gobierna también el lote (mismo permiso). Alcance primera
+    tanda: solo bulk delete; el output genérico deja la puerta abierta a transiciones de
+    estado en lote o export de seleccionados sin coste extra. Toca kernel + plantilla de
+    listado + build-entrypoints + re-baseline de oro (4 fixtures + app/ + app-mongo/).
