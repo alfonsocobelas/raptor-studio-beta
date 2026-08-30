@@ -7,6 +7,8 @@ export interface AppPorts {
   web?: number
   postgres?: number
   postgresTest?: number
+  mongo?: number
+  mongoTest?: number
 }
 
 /** Lo que se emite si nadie declara nada (los valores históricos del esqueleto). */
@@ -14,7 +16,9 @@ export const DEFAULT_PORTS: Required<AppPorts> = {
   api: 3000,
   web: 4321,
   postgres: 5433,
-  postgresTest: 5434
+  postgresTest: 5434,
+  mongo: 27017,
+  mongoTest: 27018
 }
 
 const CONFIG = 'libs/backend/src/contexts/shared/infrastructure/config/environments'
@@ -53,6 +57,16 @@ export function applyPorts(tree: Tree, root: string, appName: string, ports: App
   if (ports.postgresTest !== undefined) {
     replace(tree, at(COMPOSE_TEST), `'${DEFAULT_PORTS.postgresTest}:5432'`, `'${ports.postgresTest}:5432'`)
     replace(tree, at(`${CONFIG}/test.json`), `"port": ${DEFAULT_PORTS.postgresTest}`, `"port": ${ports.postgresTest}`)
+  }
+  // spec 76: el mismo hallazgo 14 sobre mongo — sin esto dos demos mongo comparten el 27017
+  // y un mongod nativo del desarrollador gana el loopback sin avisar (trampa de la spec 06)
+  if (ports.mongo !== undefined) {
+    replace(tree, at(COMPOSE_LOCAL), `'${DEFAULT_PORTS.mongo}:27017'`, `'${ports.mongo}:27017'`)
+    replace(tree, at(`${CONFIG}/local.json`), `localhost:${DEFAULT_PORTS.mongo}/`, `localhost:${ports.mongo}/`)
+  }
+  if (ports.mongoTest !== undefined) {
+    replace(tree, at(COMPOSE_TEST), `'${DEFAULT_PORTS.mongoTest}:27017'`, `'${ports.mongoTest}:27017'`)
+    replace(tree, at(`${CONFIG}/test.json`), `localhost:${DEFAULT_PORTS.mongoTest}/`, `localhost:${ports.mongoTest}/`)
   }
 }
 

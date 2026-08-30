@@ -107,7 +107,43 @@ describe('applyPorts', () => {
   })
 
   it('publica los valores por defecto que documenta el README', () => {
-    expect(DEFAULT_PORTS).toEqual({ api: 3000, web: 4321, postgres: 5433, postgresTest: 5434 })
+    expect(DEFAULT_PORTS).toEqual({ api: 3000, web: 4321, postgres: 5433, postgresTest: 5434, mongo: 27017, mongoTest: 27018 })
+  })
+
+  /**
+   * Spec 76: el mismo hallazgo 14 sobre el motor mongo — el compose clavaba 27017/27018,
+   * de modo que dos demos mongo chocan y un mongod nativo del desarrollador (la trampa
+   * anotada en la spec 06) gana el loopback sin que nada avise.
+   */
+  it('los puertos de Mongo van al compose y a la URI del config de cada entorno', () => {
+    const tree = withApp()
+    tree.write(
+      'docker/docker-compose.local.yml',
+      "services:\n  mongo-local:\n    container_name: app-mongo-local\n    ports:\n      - '27017:27017'\n"
+    )
+    tree.write(
+      'docker/docker-compose.test.yml',
+      "services:\n  mongo-test:\n    container_name: app-mongo-test\n    ports:\n      - '27018:27017'\n"
+    )
+    tree.write(
+      'libs/backend/src/contexts/shared/infrastructure/config/environments/local.json',
+      JSON.stringify({ mongo: { uri: 'mongodb://localhost:27017/app_local?replicaSet=rs0&directConnection=true' } }, null, 2)
+    )
+    tree.write(
+      'libs/backend/src/contexts/shared/infrastructure/config/environments/test.json',
+      JSON.stringify({ mongo: { uri: 'mongodb://localhost:27018/app_test?replicaSet=rs0&directConnection=true' } }, null, 2)
+    )
+
+    applyPorts(tree, '', 'demo', { mongo: 27047, mongoTest: 27048 })
+
+    expect(read(tree, 'docker/docker-compose.local.yml')).toContain("'27047:27017'")
+    expect(read(tree, 'docker/docker-compose.test.yml')).toContain("'27048:27017'")
+    expect(read(tree, 'libs/backend/src/contexts/shared/infrastructure/config/environments/local.json')).toContain(
+      'mongodb://localhost:27047/'
+    )
+    expect(read(tree, 'libs/backend/src/contexts/shared/infrastructure/config/environments/test.json')).toContain(
+      'mongodb://localhost:27048/'
+    )
   })
 
   it('el volumen lleva el nombre de la app: la demo nueva no hereda las tablas de la anterior', () => {

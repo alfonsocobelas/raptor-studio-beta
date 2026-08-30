@@ -226,6 +226,9 @@ export interface PortsDefinition {
   web?: number
   postgres?: number
   postgresTest?: number
+  /** Motor mongo (spec 76): el compose local y la URI del config */
+  mongo?: number
+  mongoTest?: number
 }
 
 /**
