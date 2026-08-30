@@ -95,6 +95,8 @@ export const gcpInfra = defineInfra({
     useGcpConfigLoader(tree, context)
     reshapeStorageConfigForGcs(tree, context)
     bindGcsStorage(tree, context)
+    addCloudLoggingConfigSection(tree, context)
+    addGcpLogTransport(tree, context)
   }
 })
 
@@ -797,6 +799,73 @@ import { LocalFileStorage } from './local-file-storage'
 })
 export class StorageModule {}
 `
+  )
+}
+
+/** Sección opcional `cloudLogging` en tipos y validación: presente → transporte directo. */
+function addCloudLoggingConfigSection(tree: Tree, context: PluginContext): void {
+  const typesPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-types.ts')
+  const types = tree.read(typesPath, 'utf-8')
+  if (types && !types.includes('CloudLoggingConfig')) {
+    tree.write(
+      typesPath,
+      types
+        .replace(
+          'export interface StorageConfig {',
+          `export interface CloudLoggingConfig {
+  logName: string
+}
+
+export interface StorageConfig {`
+        )
+        .replace('  storage?: StorageConfig', '  storage?: StorageConfig\n  cloudLogging?: CloudLoggingConfig')
+    )
+  }
+
+  const validationPath = path.join(context.backendSrc, 'contexts/shared/infrastructure/config/config-validation.ts')
+  const validation = tree.read(validationPath, 'utf-8')
+  if (validation && !validation.includes('CloudLoggingValidator')) {
+    tree.write(
+      validationPath,
+      validation
+        .replace(
+          'class StorageValidator {',
+          `class CloudLoggingValidator {
+  @IsString()
+  logName!: string
+}
+
+class StorageValidator {`
+        )
+        .replace(
+          '  storage?: StorageValidator\n}',
+          `  storage?: StorageValidator
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CloudLoggingValidator)
+  cloudLogging?: CloudLoggingValidator
+}`
+        )
+    )
+  }
+}
+
+/** Espejo de addAwsLogTransport: enchufa LoggingWinston en la costura del logger. */
+function addGcpLogTransport(tree: Tree, context: PluginContext): void {
+  const modulePath = path.join(context.backendSrc, 'contexts/shared/infrastructure/logger/logger.module.ts')
+  const source = tree.read(modulePath, 'utf-8')
+  if (!source || source.includes('gcpLogTransportsProvider')) {
+    return
+  }
+  tree.write(
+    modulePath,
+    source
+      .replace(
+        "import { AppLoggerService } from './app-logger.service'",
+        "import { AppLoggerService } from './app-logger.service'\nimport { gcpLogTransportsProvider } from './gcp-log-transports'"
+      )
+      .replace('  providers: [\n    AppLoggerService,', '  providers: [\n    gcpLogTransportsProvider,\n    AppLoggerService,')
   )
 }
 

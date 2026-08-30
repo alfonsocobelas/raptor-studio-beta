@@ -1,0 +1,27 @@
+import { ConfigService } from '@nestjs/config'
+import type { Provider } from '@nestjs/common'
+import * as winston from 'winston'
+import { LoggingWinston } from '@google-cloud/logging-winston'
+import { EXTRA_LOG_TRANSPORTS } from './app-logger.service'
+
+/**
+ * Transporte extra del logger, enchufado en la costura que deja el logger base. Lo decide
+ * la CONFIG, no el build: con la sección `cloudLogging` presente los logs viajan además a
+ * Cloud Logging (Logs Explorer); sin ella se quedan en stdout — que en Cloud Run ya llega
+ * solo a Cloud Logging, así que la sección solo hace falta donde nada recoge stdout.
+ *
+ * LoggingWinston es el transporte oficial de Google (batching, severidad y detección de
+ * recurso incluidos); proyecto y credenciales resuelven por Application Default Credentials.
+ */
+export const gcpLogTransportsProvider: Provider = {
+  provide: EXTRA_LOG_TRANSPORTS,
+  inject: [ConfigService],
+  useFactory: (config: ConfigService): winston.transport[] => {
+    const logName = config.get<string>('cloudLogging.logName')
+    if (!logName) {
+      return []
+    }
+
+    return [new LoggingWinston({ logName })]
+  }
+}

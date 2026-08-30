@@ -131,4 +131,53 @@ export class StorageModule {}
       expect(withoutStorage.exists(STORAGE_MODULE)).toBe(false)
     })
   })
+
+  /**
+   * TASK-04: sin instrument.ts ni OTel — el logger base ya escribe JSON a stdout (Cloud Run
+   * lo envía solo a Cloud Logging). El transporte directo es LoggingWinston (pieza oficial
+   * de Google, no un transporte propio como en aws: allí la lib de terceros estaba muerta),
+   * entra por la costura EXTRA_LOG_TRANSPORTS y solo si la sección `cloudLogging` está
+   * configurada (despliegues donde nada recoge stdout).
+   */
+  describe('logs', () => {
+    it('emite el provider del transporte para la costura del logger', () => {
+      expect(
+        tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/logger/gcp-log-transports.ts')
+      ).toBe(true)
+    })
+
+    it('enchufa su transporte en la costura del logger, sin tocar el logger base', () => {
+      const loggerModule = read('libs/backend/src/contexts/shared/infrastructure/logger/logger.module.ts')
+      expect(loggerModule).toContain('gcpLogTransportsProvider')
+
+      const baseLogger = read('libs/backend/src/contexts/shared/infrastructure/logger/app-logger.service.ts')
+      expect(baseLogger).not.toContain("from '@google-cloud/")
+    })
+
+    it('el transporte se activa por la sección cloudLogging de config, no por build', () => {
+      const provider = read('libs/backend/src/contexts/shared/infrastructure/logger/gcp-log-transports.ts')
+      expect(provider).toContain("config.get<string>('cloudLogging.logName')")
+      expect(provider).toContain('LoggingWinston')
+
+      const types = read('libs/backend/src/contexts/shared/infrastructure/config/config-types.ts')
+      expect(types).toContain('cloudLogging?: CloudLoggingConfig')
+
+      const validation = read('libs/backend/src/contexts/shared/infrastructure/config/config-validation.ts')
+      expect(validation).toContain('CloudLoggingValidator')
+    })
+
+    it('declara el transporte oficial de Google para winston', () => {
+      const pkg = JSON.parse(read('package.json')) as { dependencies: Record<string, string> }
+
+      expect(pkg.dependencies['@google-cloud/logging-winston']).toBeDefined()
+    })
+
+    it('no emite telemetría de arranque: no hay SDK que parchear antes de los imports', () => {
+      expect(tree.exists('apps/demo/libs/backend/src/contexts/shared/infrastructure/telemetry/instrument.ts')).toBe(
+        false
+      )
+      const main = read('apps/backend-api/src/main.ts')
+      expect(main).not.toContain('telemetry/instrument')
+    })
+  })
 })
