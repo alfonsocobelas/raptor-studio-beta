@@ -470,6 +470,8 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     algún día un preset escribe `@media`, selectores anidados o un `:root:not(...)`.
 
 33. **Concurrencia sobre datos: condiciones de carrera y bloqueos optimistas/pesimistas**
+    → **Spec 78 escrita (2026-08-30)** tras brainstorming: optimista por defecto end-to-end,
+    409 sin retry, update + transiciones, TypeORM y Mongoose; pesimista aparcado.
     (2026-08-29, apuntado por Alfonso; hablado entre sesiones sin registrar). El caso canónico
     es el stock: dos usuarios decrementan la misma existencia a la vez y el último en escribir
     pisa al primero. Hoy el código emitido no tiene ninguna protección: ni columna de versión
