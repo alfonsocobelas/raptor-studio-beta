@@ -198,3 +198,58 @@ describe('roles personalizados en la matriz (spec 76)', () => {
     expect(copied.create).toEqual(['user', 'perito'])
   })
 })
+
+/**
+ * Coherencia (revisión spec 76): quien no VE no puede actuar. El gesto del lienzo la
+ * mantiene solo: otorgar una escritura o transición otorga también ver; quitar ver
+ * retira todo lo demás de ese rol.
+ */
+describe('el toggle mantiene la coherencia view→actuar', () => {
+  const order = ['user', 'viewer', 'perito']
+
+  it('otorgar una escritura a un rol sin ver también le otorga ver', () => {
+    const sinVer = { ...cliente(), access: { view: ['user'], create: [], edit: [], delete: [] } }
+
+    const access = toggleCapability(sinVer, 'create', 'perito', order)
+
+    expect(access.create).toEqual(['perito'])
+    expect(access.view).toEqual(['user', 'perito'])
+  })
+
+  it('otorgar una transición a un rol sin ver también le otorga ver', () => {
+    const base = muestra()
+    base.access = { view: ['user'], create: [], edit: [], delete: [], transitions: { validate: [] } }
+
+    const access = toggleCapability(base, 'validate', 'viewer', order)
+
+    expect(access.transitions?.['validate']).toEqual(['viewer'])
+    expect(access.view).toEqual(['user', 'viewer'])
+  })
+
+  it('quitar ver retira también escrituras y transiciones de ese rol', () => {
+    const base = muestra()
+    base.access = {
+      view: ['user', 'viewer'],
+      create: ['user'],
+      edit: ['user'],
+      delete: [],
+      transitions: { validate: ['user'] }
+    }
+
+    const access = toggleCapability(base, 'view', 'user', order)
+
+    expect(access.view).toEqual(['viewer'])
+    expect(access.create).toEqual([])
+    expect(access.edit).toEqual([])
+    expect(access.transitions?.['validate']).toEqual([])
+  })
+
+  it('quitar una escritura suelta no toca ver', () => {
+    const base = { ...cliente(), access: { view: ['user', 'viewer'], create: ['user'], edit: [], delete: [] } }
+
+    const access = toggleCapability(base, 'create', 'user', order)
+
+    expect(access.create).toEqual([])
+    expect(access.view).toEqual(['user', 'viewer'])
+  })
+})

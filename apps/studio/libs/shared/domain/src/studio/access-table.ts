@@ -74,14 +74,45 @@ export function accessRows(resources: DraftResource[]): AccessTableRow[] {
   })
 }
 
-/** La matriz explícita siguiente al conmutar entidad+capacidad+rol (un click de celda). */
+/**
+ * La matriz explícita siguiente al conmutar entidad+capacidad+rol (un click de celda).
+ * Mantiene la coherencia view→actuar (revisión spec 76): otorgar una escritura o
+ * transición otorga también ver, y quitar ver retira todo lo demás del rol — el gate
+ * del schema rechaza la incoherencia, así que el gesto no puede producirla.
+ */
 export function toggleCapability(
   resource: DraftResource,
   capability: string,
   role: AccessRole,
   order: AccessRole[] = ROLE_ORDER
 ): AccessDefinition {
-  return rebuild(resource, (current, at) => (at === capability ? flip(current, role, order) : current))
+  const next = rebuild(resource, (current, at) => (at === capability ? flip(current, role, order) : current))
+
+  if (capability === 'view') {
+    if (next.view?.includes(role)) return next
+    return {
+      ...next,
+      create: revoke(next.create ?? [], role),
+      edit: revoke(next.edit ?? [], role),
+      delete: revoke(next.delete ?? [], role),
+      ...(next.transitions
+        ? {
+            transitions: Object.fromEntries(
+              Object.entries(next.transitions).map(([verb, granted]) => [verb, revoke(granted, role)])
+            )
+          }
+        : {})
+    }
+  }
+
+  const grantedNow =
+    capability === 'create' || capability === 'edit' || capability === 'delete'
+      ? (next[capability] ?? []).includes(role)
+      : (next.transitions?.[capability] ?? []).includes(role)
+  if (grantedNow && !next.view?.includes(role)) {
+    return { ...next, view: grant(next.view ?? [], role, order) }
+  }
+  return next
 }
 
 export interface RoleSummary {

@@ -730,3 +730,61 @@ describe('roles personalizados en la matriz (spec 76)', () => {
     )
   })
 })
+
+/**
+ * Coherencia de la matriz (spec 76, revisión de Alfonso): si un rol no puede VER la
+ * entidad, no puede actuar sobre ella — ni escribir ni ejecutar transiciones. Se valida
+ * sobre la matriz RESUELTA: los defectos también cuentan.
+ */
+describe('la matriz exige view para poder actuar', () => {
+  const machine = () => ({
+    field: 'status',
+    initial: 'draft',
+    transitions: [{ name: 'sign', label: 'Firmar', from: ['draft'], to: 'signed' }]
+  })
+
+  const withAccess = (access: unknown, state?: unknown): ResourceDefinition => {
+    const definition = validDefinition()
+    definition.fields['status'] = {
+      type: 'string',
+      vo: { name: 'ContractStatus', fieldName: 'Status', values: ['draft', 'signed'] }
+    }
+    return { ...definition, access, state } as ResourceDefinition
+  }
+
+  it('rechaza una escritura sin view, también para los roles fijos', () => {
+    const problems = problemsOf(withAccess({ view: ['user'], edit: ['user', 'viewer'], create: [], delete: [] }))
+
+    expect(problems).toContain(
+      "access.edit: 'viewer' is granted edit but not view (a role that cannot see the resource cannot act on it)"
+    )
+  })
+
+  it('rechaza una transición sin view', () => {
+    const access = { view: ['user'], create: [], edit: [], delete: [], transitions: { sign: ['user', 'perito'] } }
+    let problems: string[] = []
+    try {
+      defineResource(withAccess(access, machine()), { extraRoles: ['perito'] })
+    } catch (e) {
+      problems = (e as { problems: string[] }).problems
+    }
+
+    expect(problems).toContain(
+      "access.transitions.sign: 'perito' is granted 'sign' but not view (a role that cannot see the resource cannot act on it)"
+    )
+  })
+
+  it('la incoherencia también se caza contra los DEFECTOS resueltos', () => {
+    // view: [] explícito («solo admin ve»), pero create hereda el defecto ['user']
+    expect(problemsOf(withAccess({ view: [] }))).toContainEqual(expect.stringContaining('not view'))
+  })
+
+  it('una matriz coherente y los defectos de fábrica siguen siendo legales', () => {
+    expect(() => defineResource(withAccess({ view: ['user'], create: ['user'], edit: [], delete: [] }))).not.toThrow()
+    expect(() => defineResource(withAccess(undefined))).not.toThrow()
+    // «solo admin» del todo: nadie ve, nadie escribe
+    expect(() =>
+      defineResource(withAccess({ view: [], create: [], edit: [], delete: [], manage: [] }))
+    ).not.toThrow()
+  })
+})

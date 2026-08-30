@@ -1,5 +1,6 @@
 import { BRIEF_LIMITS } from './app-types'
-import { FieldDefinition, RESERVED_TRANSITION_NAMES, ResourceDefinition, STATE_LIMITS } from './resource-types'
+import { AccessRole, FieldDefinition, RESERVED_TRANSITION_NAMES, ResourceDefinition, STATE_LIMITS } from './resource-types'
+import { resolveAccess } from './access'
 import { SchemaValidationError } from './validation-errors'
 
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
@@ -301,6 +302,29 @@ function validateAccess(definition: ResourceDefinition, extraRoles: string[]): s
         }
         checkRoles(`access.transitions.${verb}`, roles)
       }
+    }
+  }
+
+  // Coherencia (spec 76, revisión): quien no VE la entidad no puede actuar sobre ella.
+  // Se mira la matriz RESUELTA: un view: [] explícito choca con el create heredado del
+  // defecto, y ese choque también es un diseño roto. Solo si los roles son legales:
+  // un rol desconocido ya tiene su problema arriba y aquí solo duplicaría ruido.
+  if (!problems.length) {
+    const resolved = resolveAccess(definition)
+    const incoherent = (at: string, granted: AccessRole[], verb: string) => {
+      for (const role of granted) {
+        if (!resolved.view.includes(role)) {
+          problems.push(
+            `${at}: '${role}' is granted ${verb} but not view (a role that cannot see the resource cannot act on it)`
+          )
+        }
+      }
+    }
+    incoherent('access.create', resolved.create, 'create')
+    incoherent('access.edit', resolved.edit, 'edit')
+    incoherent('access.delete', resolved.delete, 'delete')
+    for (const [verb, granted] of Object.entries(resolved.transitions)) {
+      incoherent(`access.transitions.${verb}`, granted, `'${verb}'`)
     }
   }
 
