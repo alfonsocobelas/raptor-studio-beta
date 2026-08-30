@@ -2,12 +2,15 @@ import { formatFiles, generateFiles, names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { selectModels } from '../resource/models/registry'
 import { denormTargets } from '../resource/denormalization'
-import { FieldDefinition, ResourceDefinition } from '@raptor/schema'
+import { FieldDefinition, ResourceDefinition, RoleDefinition } from '@raptor/schema'
+import { roleEnumMembersBlock } from '../app/plugins/role-emission'
 
 export interface SharedDomainGeneratorSchema {
   /** Comma-separated model names to include; defaults to the whole registry */
   models?: string
   directory?: string
+  /** Roles personalizados del app-schema (spec 76); amplían UserRoleEnum */
+  roles?: RoleDefinition[]
 }
 
 
@@ -84,7 +87,10 @@ export async function sharedDomainGenerator(tree: Tree, options: SharedDomainGen
   }
   exportLines.push(`export * from './export/export-format'`)
 
-  generateFiles(tree, path.join(__dirname, 'files'), outputDir, { exportLines })
+  generateFiles(tree, path.join(__dirname, 'files'), outputDir, {
+    exportLines,
+    roleEnumMembers: roleEnumMembersBlock(options.roles ?? [])
+  })
 
   await formatFiles(tree)
 }

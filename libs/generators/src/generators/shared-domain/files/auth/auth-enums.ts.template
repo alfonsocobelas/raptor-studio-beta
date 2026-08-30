@@ -1,7 +1,5 @@
 export enum UserRoleEnum {
-  ADMIN = 'admin',
-  USER = 'user',
-  VIEWER = 'viewer'
+<%- roleEnumMembers %>
 }
 
 export enum UserStatusEnum {

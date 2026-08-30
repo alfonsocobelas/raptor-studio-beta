@@ -2,6 +2,13 @@ import { names, type Tree } from '@nx/devkit'
 import * as path from 'path'
 import { copyVerbatim } from '../assets'
 import { definePlugin, type PluginContext } from './plugin'
+import {
+  roleLabelEntries,
+  roleSeedEntries,
+  roleValuesList,
+  roleValuesUnion,
+  roleVariantEntries
+} from './role-emission'
 
 const IAM_ENTITIES = [
   { className: 'TypeOrmUserEntity', file: 'typeorm-user.entity' },
@@ -54,6 +61,7 @@ export const authPlugin = definePlugin({
     brandEmailTemplates(tree, context)
     brandLoginTitle(tree, context)
     wireFrontend(tree, context)
+    widenRoles(tree, context)
   },
 
   /** Los schemas que el plugin añade, para que el docker/local los cree. */
@@ -448,7 +456,7 @@ export class CreateIamAuth${stamp} implements MigrationInterface {
         updated_at            TIMESTAMPTZ   NOT NULL DEFAULT now(),
         CONSTRAINT pk_user PRIMARY KEY (id),
         CONSTRAINT uq_user_email UNIQUE (email),
-        CONSTRAINT ck_user_role CHECK (role IN ('admin', 'user', 'viewer')),
+        CONSTRAINT ck_user_role CHECK (role IN (${roleValuesList(context.roles ?? [])})),
         CONSTRAINT ck_user_status CHECK (status IN ('pending', 'active', 'disabled'))
       )
     \`)${sessionTableUp}
@@ -475,5 +483,53 @@ export class CreateIamAuth${stamp} implements MigrationInterface {
   }
 }
 `
+  )
+}
+
+/**
+ * Roles personalizados (spec 76): los assets de auth traen los tres roles de fábrica
+ * (verbatim, como el resto de la plantilla) y aquí se ensanchan con los del app-schema —
+ * mismo patrón que emitSessionStore: la plantilla trae el default y no sabe de ranuras.
+ * El marcador que no aparece es deriva de plantilla: se rompe en la generación, no en
+ * el arranque de la app emitida.
+ */
+function widenRoles(tree: Tree, context: PluginContext): void {
+  const roles = context.roles ?? []
+  if (!roles.length) return
+
+  const patch = (relative: string, from: string, to: string): void => {
+    const file = path.join(context.root, relative)
+    const source = tree.read(file, 'utf-8')
+    if (source === null) return // el asset no está (p. ej. mongo sin auth): nada que ensanchar
+    if (!source.includes(from)) {
+      throw new Error(`Custom roles: marker not found in ${relative} (template drifted?): ${from}`)
+    }
+    tree.write(file, source.replace(from, to))
+  }
+
+  patch(
+    'libs/backend/src/contexts/iam/modules/auth/domain/auth-types.ts',
+    "export type UserRoleValue = 'admin' | 'user' | 'viewer'",
+    `export type UserRoleValue = ${roleValuesUnion(roles)}`
+  )
+  patch(
+    'libs/backend/src/contexts/iam/modules/auth/domain/value-objects/user-role.vo.ts',
+    "static readonly VALUES: readonly UserRoleValue[] = ['admin', 'user', 'viewer']",
+    `static readonly VALUES: readonly UserRoleValue[] = [${roleValuesList(roles)}]`
+  )
+  patch(
+    'libs/backend/src/contexts/iam/modules/auth/infrastructure/seed/local-seed.ts',
+    "  { email: 'viewer@app.local', name: 'Auditor Local', role: 'viewer' }",
+    `  { email: 'viewer@app.local', name: 'Auditor Local', role: 'viewer' }${roleSeedEntries(roles)}`
+  )
+  patch(
+    'libs/frontend/src/domains/iam/iam-labels.ts',
+    "  [UserRoleEnum.VIEWER]: 'Auditor'",
+    `  [UserRoleEnum.VIEWER]: 'Auditor'${roleLabelEntries(roles)}`
+  )
+  patch(
+    'libs/frontend/src/domains/iam/iam-labels.ts',
+    "  viewer: 'outline'",
+    `  viewer: 'outline'${roleVariantEntries(roles)}`
   )
 }

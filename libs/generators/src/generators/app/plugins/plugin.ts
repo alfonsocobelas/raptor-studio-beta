@@ -1,5 +1,5 @@
 import type { Tree } from '@nx/devkit'
-import { ResourceDefinition } from '@raptor/schema'
+import { ResourceDefinition, RoleDefinition } from '@raptor/schema'
 import type { SessionStore } from './slots'
 
 /** Lo que un plugin sabe de la app que se está generando. */
@@ -19,6 +19,8 @@ export interface PluginContext {
   sessionStore: SessionStore
   /** Proveedor de infraestructura elegido (`none`, `azure`, `aws`, `raptor`), spec 63 */
   infra: string
+  /** Roles personalizados del app-schema (spec 76); ausente = solo admin/user/viewer */
+  roles?: RoleDefinition[]
 }
 
 /**

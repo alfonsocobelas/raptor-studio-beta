@@ -187,7 +187,11 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
   persistence.alignEnvironment?.(tree, path.join(environments, 'test.json'), 'test')
 
   // 2. DTOs compartidos + kernel Angular
-  await sharedDomainGenerator(tree, { directory: path.join(root, 'libs/shared/domain/src'), models: modelNames })
+  await sharedDomainGenerator(tree, {
+    directory: path.join(root, 'libs/shared/domain/src'),
+    models: modelNames,
+    roles: composition.roles
+  })
   await frontendKernelGenerator(tree, { directory: frontendSrc, sharedDomainAlias: SHARED_DOMAIN_ALIAS, ui })
 
   // 3. un módulo por recurso, repartido al layout canónico
@@ -421,7 +425,8 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
     models,
     scope: SCOPE,
     sessionStore,
-    infra: infra.value
+    infra: infra.value,
+    roles: composition.roles
   }
   for (const plugin of plugins) {
     if (plugin.assets) {

@@ -18,7 +18,8 @@ import type {
   BusinessFlow,
   PageDefinition,
   PortsDefinition,
-  ResourceDefinition
+  ResourceDefinition,
+  RoleDefinition
 } from '@raptor/schema'
 
 /**
@@ -102,6 +103,8 @@ export interface AppComposition {
   flows?: BusinessFlow[]
   /** Brief de negocio del app-schema (spec 22); aterriza como CLAUDE.md en la app generada */
   brief?: BusinessBrief
+  /** Roles personalizados del app-schema (spec 76); amplían el IAM emitido */
+  roles?: RoleDefinition[]
 }
 
 /** Composición histórica de las opciones planas: [dashboard?] + una página por modelo. */
@@ -328,6 +331,7 @@ export function composeApp(definition: AppDefinition, registry: Record<string, R
     dashboardBlocks,
     ...(definition.brief ? { brief: definition.brief } : {}),
     ...(definition.flows?.length ? { flows: definition.flows } : {}),
+    ...(definition.roles?.length ? { roles: definition.roles } : {}),
     themeId: resolveThemeId(definition.theme),
     ...(definition.theme?.seed ? { themeSeed: definition.theme.seed } : {}),
     ports: definition.ports
