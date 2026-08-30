@@ -1,4 +1,4 @@
-import type { AccessDefinition, AccessRole } from '@raptor/schema'
+import type { AccessDefinition, AccessRole, RoleDefinition } from '@raptor/schema'
 import { resolveAccess } from '@raptor/schema'
 import type { DraftResource } from './draft-resource'
 
@@ -9,11 +9,19 @@ import type { DraftResource } from './draft-resource'
  * granular (nunca el azúcar legado `manage`): lo marcado es lo que hay.
  */
 
-/** Los tres actores del modelo de accesos (spec 46); admin es implícito y puede todo. */
-export type AccessActorRole = 'admin' | 'user' | 'viewer'
+/**
+ * Un actor del modelo de accesos: los fijos (spec 46; admin es implícito y puede todo)
+ * o un rol personalizado declarado en el diseño (spec 76).
+ */
+export type AccessActorRole = string
 
 /** Orden estable user→viewer: el emitido no depende del orden de los clicks. */
 const ROLE_ORDER: AccessRole[] = ['user', 'viewer']
+
+/** Los roles otorgables del diseño: los fijos delante, los personalizados en su orden declarado. */
+export function grantableRoles(custom: RoleDefinition[] = []): AccessRole[] {
+  return [...ROLE_ORDER, ...custom.map(role => role.name)]
+}
 
 export interface AccessColumn {
   capability: 'view' | 'create' | 'edit' | 'delete'
@@ -67,8 +75,13 @@ export function accessRows(resources: DraftResource[]): AccessTableRow[] {
 }
 
 /** La matriz explícita siguiente al conmutar entidad+capacidad+rol (un click de celda). */
-export function toggleCapability(resource: DraftResource, capability: string, role: AccessRole): AccessDefinition {
-  return rebuild(resource, (current, at) => (at === capability ? flip(current, role) : current))
+export function toggleCapability(
+  resource: DraftResource,
+  capability: string,
+  role: AccessRole,
+  order: AccessRole[] = ROLE_ORDER
+): AccessDefinition {
+  return rebuild(resource, (current, at) => (at === capability ? flip(current, role, order) : current))
 }
 
 export interface RoleSummary {
@@ -96,16 +109,26 @@ export function roleSummary(resources: DraftResource[], role: AccessActorRole): 
 export type ColumnAction = 'grant-view' | 'revoke-writes'
 
 /** Acción de columna del panel derecho, entidad a entidad: «Todo ver» / «Nada editar». */
-export function applyColumn(resource: DraftResource, role: AccessRole, action: ColumnAction): AccessDefinition {
+export function applyColumn(
+  resource: DraftResource,
+  role: AccessRole,
+  action: ColumnAction,
+  order: AccessRole[] = ROLE_ORDER
+): AccessDefinition {
   if (action === 'grant-view') {
-    return rebuild(resource, (current, at) => (at === 'view' ? grant(current, role) : current))
+    return rebuild(resource, (current, at) => (at === 'view' ? grant(current, role, order) : current))
   }
   return rebuild(resource, (current, at) => (at === 'view' ? current : revoke(current, role)))
 }
 
 /** «Copiar de {rol}»: el destino queda con EXACTAMENTE lo que tiene el origen. */
-export function copyRoleAccess(resource: DraftResource, from: AccessRole, to: AccessRole): AccessDefinition {
-  return rebuild(resource, current => (current.includes(from) ? grant(current, to) : revoke(current, to)))
+export function copyRoleAccess(
+  resource: DraftResource,
+  from: AccessRole,
+  to: AccessRole,
+  order: AccessRole[] = ROLE_ORDER
+): AccessDefinition {
+  return rebuild(resource, current => (current.includes(from) ? grant(current, to, order) : revoke(current, to)))
 }
 
 /** Reconstruye la matriz completa aplicando `fn` a cada capacidad — una sola forma de mutar. */
@@ -133,8 +156,8 @@ function rebuild(
   }
 }
 
-const ordered = (roles: AccessRole[]): AccessRole[] => ROLE_ORDER.filter(role => roles.includes(role))
-const grant = (roles: AccessRole[], role: AccessRole): AccessRole[] => ordered([...roles, role])
+const ordered = (roles: AccessRole[], order: AccessRole[]): AccessRole[] => order.filter(role => roles.includes(role))
+const grant = (roles: AccessRole[], role: AccessRole, order: AccessRole[]): AccessRole[] => ordered([...roles, role], order)
 const revoke = (roles: AccessRole[], role: AccessRole): AccessRole[] => roles.filter(r => r !== role)
-const flip = (roles: AccessRole[], role: AccessRole): AccessRole[] =>
-  roles.includes(role) ? revoke(roles, role) : grant(roles, role)
+const flip = (roles: AccessRole[], role: AccessRole, order: AccessRole[]): AccessRole[] =>
+  roles.includes(role) ? revoke(roles, role) : grant(roles, role, order)

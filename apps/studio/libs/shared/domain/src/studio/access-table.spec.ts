@@ -1,5 +1,6 @@
 import type { DraftResource } from './draft-resource'
 import {
+  grantableRoles,
   ACCESS_CRUD_COLUMNS,
   accessRows,
   applyColumn,
@@ -153,5 +154,47 @@ describe('copyRoleAccess', () => {
 
     expect(next.view).toEqual([])
     expect(next.create).toEqual([])
+  })
+})
+
+describe('roles personalizados en la matriz (spec 76)', () => {
+  const order = ['user', 'viewer', 'perito']
+
+  it('grantableRoles antepone los fijos y respeta el orden declarado', () => {
+    expect(
+      grantableRoles([
+        { name: 'perito', label: 'Perito' },
+        { name: 'back-office', label: 'Back office' }
+      ])
+    ).toEqual(['user', 'viewer', 'perito', 'back-office'])
+    expect(grantableRoles()).toEqual(['user', 'viewer'])
+  })
+
+  it('toggleCapability otorga a un rol personalizado', () => {
+    const access = toggleCapability(cliente(), 'view', 'perito', order)
+
+    expect(access.view).toEqual(['user', 'viewer', 'perito'])
+  })
+
+  it('el orden emitido es el del catálogo de roles, no el de los clicks', () => {
+    const conPerito = { ...cliente(), access: { view: ['viewer', 'perito'], create: [], edit: [], delete: [] } }
+
+    expect(toggleCapability(conPerito, 'view', 'user', order).view).toEqual(['user', 'viewer', 'perito'])
+  })
+
+  it('roleSummary cuenta para un rol personalizado', () => {
+    const conPerito = { ...muestra(), access: { view: ['perito'], create: ['perito'], edit: [], delete: [] } }
+
+    const summary = roleSummary([cliente(), conPerito], 'perito')
+
+    expect(summary).toEqual({ total: 2, view: 1, create: 1, edit: 0, delete: 0 })
+  })
+
+  it('applyColumn y copyRoleAccess funcionan con un rol personalizado', () => {
+    const granted = applyColumn(cliente(), 'perito', 'grant-view', order)
+    expect(granted.view).toEqual(['user', 'viewer', 'perito'])
+
+    const copied = copyRoleAccess(cliente(), 'user', 'perito', order)
+    expect(copied.create).toEqual(['user', 'perito'])
   })
 })
