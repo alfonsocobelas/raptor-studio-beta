@@ -230,6 +230,13 @@ describe('resource generator — bloqueo optimista (dominio)', () => {
     expect(detail).toContain('error?.message')
   })
 
+  it('los mocks front emitidos llevan version (el DTO la exige)', async () => {
+    const tree = await generate('customer')
+    const mock = tree.read('out/frontend/mocks/customer.mock.ts', 'utf-8') ?? ''
+
+    expect(mock).toContain('version: 1')
+  })
+
   it('los PrimitiveProps declaran version: number y los AggregateProps no', async () => {
     const tree = await generate('customer')
     const types = tree.read('out/backend/domain/customer-types.ts', 'utf-8') ?? ''

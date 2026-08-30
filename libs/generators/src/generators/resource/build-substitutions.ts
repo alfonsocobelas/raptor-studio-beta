@@ -605,6 +605,8 @@ function renderMockItem(definition: ResourceDefinition, id: string, index: numbe
   const lines = Object.entries(definition.fields)
     .filter(([name]) => name !== 'id')
     .map(([name, f]) => `    ${name}: ${f.nullable && index === 1 ? 'null' : sampleScalar(name, f, index)}`)
+  // spec 78: el DTO de lectura exige version — el mock nace en 1 como cualquier registro
+  lines.push('    version: 1')
   // Sin campos de auditoría: no están en el DTO ni los devuelve la API, y añadirlos
   // rompía la compilación del mock (la referencia tampoco los emite).
   return `  {\n    id: '${id}',\n${lines.join(',\n')}\n  }`
