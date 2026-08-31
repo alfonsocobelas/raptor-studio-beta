@@ -99,7 +99,9 @@ const SHARED_DOMAIN_ALIAS = `${SCOPE}/shared/domain`
  *   libs/backend          kernel + un módulo por recurso
  *   libs/frontend         kernel Angular + una feature por recurso
  *   libs/shared/domain    DTOs compartidos
- *   libs/ui               componentes Spartan (los materializa @spartan-ng/cli al crear la app)
+ *   libs/ui               componentes Spartan vendorizados en `files-skeleton-ui/`, copiados
+ *                         verbatim (antes los materializaba @spartan-ng/cli con 16 invocaciones
+ *                         de `nx g`, que tardaban 20 min y dejaban la app a medias)
  *
  * El esqueleto se copia tal cual (sin EJS): solo se generan por plantilla los tres
  * ficheros que dependen de los modelos — rutas, menú y seed.

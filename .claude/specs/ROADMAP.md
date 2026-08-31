@@ -191,18 +191,34 @@ el starter original las tenía cerradas pero no llegó a este repo.
 
 ## Defectos del generador detectados en demos (NO parchear la demo: arreglar aquí)
 
-13. **La instalación de Spartan tarda 20 min y revienta**: 16 invocaciones
+> **Revisión 2026-08-31 (limpieza).** Los cinco defectos 13-17 se auditaron uno a uno contra el
+> código: **los cinco están resueltos**, y llevaban semanas figurando como vivos. Se dejan escritos
+> con su evidencia porque el hallazgo interesante no es cada arreglo sino que la lista mentía —
+> misma lección que la tabla de la Fase 2. Lo que sí salió vivo de la auditoría es un defecto
+> NUEVO, de la familia del 43, anotado abajo como el 44.
+
+13. ~~**La instalación de Spartan tarda 20 min y revienta**: 16 invocaciones
     separadas de `nx g @spartan-ng/cli:ui`, cada una arrancando Nx de cero.
     Supera el tope de 15 min del studio-api y deja la app a medias (node_modules
-    sin `.bin`, sin `libs/ui`). Arreglo: vendorizar los helm una vez y copiarlos.
-14. **Regenerar sobre una app existente machaca `tsconfig.base.json`** y con él
-    las rutas `@spartan-ng/helm/*` que añadió `ui:add`. La app deja de compilar.
-15. **El script `web` no fija puerto**: `ng serve` toma el 4200 y choca con
-    cualquier otro Angular abierto; el proceso muere y parece que «tarda».
-16. **Un timeout de generación deja la carpeta a medias** sin avisar: parece
-    una app generada y no lo es.
-17. **Booleanos en el listado emitido salen como `true`/`false`** (la ficha ya
-    los pinta Sí/No).
+    sin `.bin`, sin `libs/ui`). Arreglo: vendorizar los helm una vez y copiarlos.~~
+    ✅ **RESUELTO**: los helm están vendorizados en `app/files-skeleton-ui/` y se copian
+    verbatim; ninguna ruta del generador invoca ya `@spartan-ng/cli`. Solo sobrevivía la
+    mentira en el comentario de cabecera de `app.ts`, corregida el 2026-08-31.
+14. ~~**Regenerar sobre una app existente machaca `tsconfig.base.json`** y con él
+    las rutas `@spartan-ng/helm/*` que añadió `ui:add`. La app deja de compilar.~~
+    ✅ **RESUELTO por el 13**: `files-skeleton/tsconfig.base.json.template` trae las
+    16 rutas de helm, así que regenerar las REPONE en vez de perderlas (ya no las pone
+    `ui:add`, las pone el generador).
+15. ~~**El script `web` no fija puerto**: `ng serve` toma el 4200 y choca con
+    cualquier otro Angular abierto; el proceso muere y parece que «tarda».~~
+    ✅ **RESUELTO**: el esqueleto emite `--port 4321` y `app/ports.ts` lo sustituye por el
+    `ports.web` del app-schema (hallazgo 14).
+16. ~~**Un timeout de generación deja la carpeta a medias** sin avisar: parece
+    una app generada y no lo es.~~ ✅ **RESUELTO**: `describeGenerationFailure` lo dice con
+    todas las letras («el directorio ha quedado INCOMPLETO … bórralo y vuelve a generar»)
+    y `shouldRemoveOnCancel` limpia al cancelar, con las dos guardas de seguridad.
+17. ~~**Booleanos en el listado emitido salen como `true`/`false`** (la ficha ya
+    los pinta Sí/No).~~ ✅ **RESUELTO** por el formateador único del kernel (ver punto 11).
 
 18. **La «paleta» de la spec 18 sólo tiñe la acción**, no viste la app: cambia
     botones y chips de enum, y deja fondos, tarjetas, bordes y sidebar en gris.
@@ -628,3 +644,19 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     tanda: solo bulk delete; el output genérico deja la puerta abierta a transiciones de
     estado en lote o export de seleccionados sin coste extra. Toca kernel + plantilla de
     listado + build-entrypoints + re-baseline de oro (4 fixtures + app/ + app-mongo/).
+
+44. ✅ **RESUELTO 2026-08-31** — **Los puertos y los nombres de contenedor se rendían en silencio**
+    (misma familia que el 43, cazado en la limpieza del 2026-08-31). `app/ports.ts` ajustaba
+    puertos, nombre de proyecto, contenedores y volúmenes con un `replace()` sobre texto literal
+    que hacía `if (!content.includes(from)) return`: si la plantilla derivaba, el anclaje dejaba
+    de casar y el valor se quedaba **en el default sin una sola línea de aviso**. El silencio era
+    peor aquí que en las costuras de infra del 43, porque el default es exactamente lo que ese
+    fichero existe para evitar: `renameContainers` corre SIEMPRE (antes del `if (!ports) return`),
+    así que un anclaje perdido devuelve el volumen compartido `app-postgres-local-data` y la demo
+    nueva arranca con las tablas de la anterior, da las migraciones por aplicadas y las semillas
+    fallan contra un esquema que no existe — el fallo que el propio comentario del fichero dice
+    estar evitando. **Arreglo**: `replace()` LANZA si el fichero existe y el anclaje no casa, y
+    los anclajes que son alternativos por motor (los `container_name` y volúmenes de postgres vs
+    mongo, ausentes por diseño en el compose del otro motor) pasan por `replaceIfPresent()`. Un
+    fichero que no existe sigue sin ser un fallo: no toda app emite todo. Cuatro tests nuevos en
+    `ports.spec.ts` fijan las dos mitades de la regla.

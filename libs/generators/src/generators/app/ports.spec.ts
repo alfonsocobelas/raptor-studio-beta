@@ -167,6 +167,49 @@ describe('applyPorts', () => {
 
     expect(template).toContain("get<number>('app.port')")
   })
+
+  /**
+   * Misma familia que el defecto 43 (spec 51 redux, resuelto con `seamPatch`): una
+   * sustitución sobre texto que no casa se rendía en SILENCIO y dejaba el valor por
+   * defecto. Aquí el silencio es peor que en las costuras de infra, porque lo que
+   * queda por defecto es justo lo que este fichero existe para evitar: dos demos
+   * compartiendo puerto, contenedor y VOLUMEN — la segunda arranca con las tablas
+   * de la primera y da las migraciones por aplicadas.
+   */
+  describe('un anclaje que no casa es un fallo, no un silencio', () => {
+    it('lanza si el script de la web ya no lleva el puerto por defecto', () => {
+      const tree = withApp()
+      tree.write('package.json', JSON.stringify({ scripts: { web: 'ng serve' } }, null, 2))
+
+      expect(() => applyPorts(tree, '', 'demo', { web: 4400 })).toThrow(/package\.json/)
+    })
+
+    it('lanza si el compose derivó y ya no se le puede poner el nombre de proyecto', () => {
+      const tree = withApp()
+      tree.write('docker/docker-compose.local.yml', 'version: "3"\n')
+
+      expect(() => applyPorts(tree, '', 'demo', undefined)).toThrow(/docker-compose\.local\.yml/)
+    })
+
+    it('el contenedor de un motor que no es el de la app no es un fallo: son alternativos', () => {
+      const tree = withApp()
+      tree.write(
+        'docker/docker-compose.local.yml',
+        "services:\n  mongo-local:\n    container_name: app-mongo-local\n"
+      )
+
+      expect(() => applyPorts(tree, '', 'demo', undefined)).not.toThrow()
+      expect(read(tree, 'docker/docker-compose.local.yml')).toContain('container_name: demo-mongo-local')
+    })
+
+    it('un fichero que no existe no es un fallo: no toda app emite todo', () => {
+      const tree = createTreeWithEmptyWorkspace()
+      tree.write('docker/docker-compose.local.yml', 'services:\n  postgres:\n    container_name: app-postgres-local\n')
+      tree.write('docker/docker-compose.test.yml', 'services:\n  postgres:\n    container_name: app-postgres-test\n')
+
+      expect(() => applyPorts(tree, '', 'demo', undefined)).not.toThrow()
+    })
+  })
 })
 
 import * as fs from 'fs'

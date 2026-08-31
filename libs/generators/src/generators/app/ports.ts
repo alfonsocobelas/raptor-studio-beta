@@ -85,17 +85,44 @@ function renameContainers(tree: Tree, root: string, appName: string): void {
     // el nombre de PROYECTO también: sin él Compose lo deriva del directorio (docker/),
     // dos apps comparten proyecto+servicio y el up de la segunda sustituye a la primera
     replace(tree, target, 'services:', `name: ${appName}-${suffix}\nservices:`)
-    replace(tree, target, `container_name: app-postgres-${suffix}`, `container_name: ${appName}-postgres-${suffix}`)
-    replace(tree, target, `container_name: app-mongo-${suffix}`, `container_name: ${appName}-mongo-${suffix}`)
+    // los contenedores y volúmenes son alternativos por motor: el compose de una app
+    // Postgres no tiene los de Mongo, así que aquí la ausencia no es deriva
+    replaceIfPresent(
+      tree,
+      target,
+      `container_name: app-postgres-${suffix}`,
+      `container_name: ${appName}-postgres-${suffix}`
+    )
+    replaceIfPresent(tree, target, `container_name: app-mongo-${suffix}`, `container_name: ${appName}-mongo-${suffix}`)
     for (const engine of ['postgres', 'mongo']) {
-      replace(tree, target, `app-${engine}-${suffix}-data`, `${appName}-${engine}-${suffix}-data`)
+      replaceIfPresent(tree, target, `app-${engine}-${suffix}-data`, `${appName}-${engine}-${suffix}-data`)
     }
   }
 }
 
-/** Sustitución literal sobre un fichero del Tree; si no existe, no hay nada que hacer. */
+/**
+ * Sustitución literal sobre un fichero del Tree. Si el fichero no existe no hay nada
+ * que hacer (no toda app emite todo), pero si existe y el anclaje NO casa es un fallo
+ * y se lanza: es la lección del defecto 43 (spec 51 redux). Rendirse en silencio deja
+ * el valor por defecto, y aquí el valor por defecto es exactamente lo que este fichero
+ * existe para evitar — dos demos con el mismo contenedor y el mismo volumen.
+ */
 function replace(tree: Tree, file: string, from: string, to: string): void {
   const content = tree.read(file, 'utf-8')
-  if (!content || !content.includes(from)) return
+  if (content === null) return
+  if (!content.includes(from)) {
+    throw new Error(`No se pudo anclar «${from}» en ${file}: la plantilla derivó y el valor se quedaría por defecto`)
+  }
+  tree.write(file, content.split(from).join(to))
+}
+
+/**
+ * Como `replace`, pero para anclajes que son ALTERNATIVOS entre sí: el compose de una
+ * app Postgres no tiene el contenedor de Mongo y al revés. Su ausencia es información,
+ * no deriva, así que no puede lanzar.
+ */
+function replaceIfPresent(tree: Tree, file: string, from: string, to: string): void {
+  const content = tree.read(file, 'utf-8')
+  if (content === null || !content.includes(from)) return
   tree.write(file, content.split(from).join(to))
 }
