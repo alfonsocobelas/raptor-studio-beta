@@ -251,6 +251,16 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
         path.join(outputDir, 'backend-tests-application'),
         substitutions
       )
+      // spec 80: cada transición emite su test junto al del CRUD, en el mismo bucle que la
+      // emitió — el estado legal y el ilegal ya vienen calculados en el binding
+      for (const transition of substitutions.entry.transitions) {
+        generateFiles(
+          tree,
+          path.join(__dirname, '..', 'resource', 'files-tests-transition'),
+          path.join(outputDir, 'backend-tests-application'),
+          { ...substitutions, transition, transitionFile: transition.file }
+        )
+      }
       const appTests = path.join(outputDir, 'backend-tests-application')
       if (!substitutions.app.writes) {
         tree.delete(path.join(appTests, `register-${substitutions.fileName}-usecase.test.ts`))

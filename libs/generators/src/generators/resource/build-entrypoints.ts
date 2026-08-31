@@ -39,6 +39,17 @@ export interface TransitionBinding {
   fromCheck: string
   /** Argumentos de @Roles(...) del endpoint, desde la matriz de accesos (spec 46) */
   roles: string
+  /** Campo enum que gobierna la máquina ('status') */
+  stateField: string
+  /** Estados desde los que la transición es legal */
+  from: string[]
+  /** Estado al que mueve */
+  to: string
+  /**
+   * Un estado de la máquina que esta transición debe RECHAZAR, para el test emitido (spec 80).
+   * `null` cuando la transición admite todos los valores: entonces no hay caso ilegal que fijar.
+   */
+  illegalFrom: string | null
 }
 
 export interface EntrypointBindings {
@@ -208,6 +219,11 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
 
   const access = resolveAccess(definition)
 
+  // los valores de la máquina viven en el VO del campo de estado, no en `state`
+  const stateField = definition.state?.field
+  const stateVo = stateField ? definition.fields[stateField]?.vo : undefined
+  const stateValues = typeof stateVo === 'object' ? (stateVo.values ?? []) : []
+
   const bindTransition = (t: StateTransition): TransitionBinding => ({
     verb: t.name,
     method: names(t.name).propertyName,
@@ -216,7 +232,14 @@ export function renderEntrypoints(definition: ResourceDefinition, emitAggregate:
     label: t.label,
     // la visibilidad del botón ES la máquina: solo se pinta si el from incluye el estado actual
     fromCheck: `[${t.from.map(v => `'${v}'`).join(', ')}].includes(item.${definition.state?.field})`,
-    roles: rolesArgs(access.transitions[t.name] ?? ['user'])
+    roles: rolesArgs(access.transitions[t.name] ?? ['user']),
+    stateField: stateField ?? '',
+    from: t.from,
+    to: t.to,
+    // spec 80: el test emitido necesita un estado que la transición DEBA rechazar, y se elige
+    // de la propia máquina — nunca se inventa uno, porque el dominio lo aceptaría. Si la
+    // transición admite todos los valores no hay tal estado y el caso no se emite.
+    illegalFrom: stateValues.find(value => !t.from.includes(value)) ?? null
   })
   const transitions = (definition.state?.transitions ?? []).map(bindTransition)
   // la curación (spec 74): hidden quita el botón de la ficha y nada más — el resto de
