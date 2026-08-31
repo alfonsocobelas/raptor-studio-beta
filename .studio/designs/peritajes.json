@@ -1,0 +1,609 @@
+{
+  "appName": "peritajes",
+  "resources": [
+    {
+      "name": "siniestro",
+      "plural": "siniestros",
+      "labelSingular": "Siniestro",
+      "labelPlural": "Siniestros",
+      "gender": "m",
+      "brief": "El encargo que abre la compañía. Avanza por estados; rechazado es final y no vuelve a moverse.",
+      "subtitle": "Los encargos vivos y su punto del recorrido.",
+      "detail": true,
+      "fields": [
+        {
+          "name": "referencia",
+          "label": "Referencia",
+          "type": "string",
+          "samples": [
+            "SIN-2026-0418",
+            "SIN-2026-0421",
+            "SIN-2026-0433"
+          ]
+        },
+        {
+          "name": "poliza",
+          "label": "Póliza",
+          "type": "ref",
+          "refTo": "poliza"
+        },
+        {
+          "name": "fechaSuceso",
+          "label": "Fecha del suceso",
+          "type": "date",
+          "samples": [
+            "2026-08-02",
+            "2026-07-28",
+            "2026-08-11"
+          ]
+        },
+        {
+          "name": "causa",
+          "label": "Causa",
+          "type": "enum",
+          "values": [
+            {
+              "value": "agua",
+              "label": "Daños por agua"
+            },
+            {
+              "value": "incendio",
+              "label": "Incendio"
+            },
+            {
+              "value": "robo",
+              "label": "Robo"
+            },
+            {
+              "value": "atmosferico",
+              "label": "Fenómeno atmosférico"
+            },
+            {
+              "value": "responsabilidad-civil",
+              "label": "Responsabilidad civil"
+            }
+          ],
+          "samples": [
+            "agua",
+            "atmosferico",
+            "robo"
+          ]
+        },
+        {
+          "name": "importeReclamado",
+          "label": "Importe reclamado",
+          "type": "number",
+          "samples": [
+            4200,
+            11800,
+            1750
+          ]
+        },
+        {
+          "name": "provincia",
+          "label": "Provincia",
+          "type": "string",
+          "samples": [
+            "Guadalajara",
+            "Valencia",
+            "Cuenca"
+          ]
+        },
+        {
+          "name": "perito",
+          "label": "Perito asignado",
+          "type": "ref",
+          "refTo": "perito"
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "recibido",
+              "label": "Recibido"
+            },
+            {
+              "value": "asignado",
+              "label": "Asignado"
+            },
+            {
+              "value": "visitado",
+              "label": "Visitado"
+            },
+            {
+              "value": "informado",
+              "label": "Informado"
+            },
+            {
+              "value": "reparos",
+              "label": "Devuelto con reparos"
+            },
+            {
+              "value": "aceptado",
+              "label": "Aceptado"
+            },
+            {
+              "value": "cerrado",
+              "label": "Cerrado"
+            },
+            {
+              "value": "rechazado",
+              "label": "Rechazado"
+            }
+          ],
+          "samples": [
+            "recibido",
+            "asignado",
+            "informado"
+          ]
+        }
+      ],
+      "state": {
+        "field": "estado",
+        "initial": "recibido",
+        "transitions": [
+          {
+            "name": "asignar",
+            "label": "Asignar perito",
+            "from": [
+              "recibido"
+            ],
+            "to": "asignado"
+          },
+          {
+            "name": "visitar",
+            "label": "Registrar visita",
+            "from": [
+              "asignado"
+            ],
+            "to": "visitado"
+          },
+          {
+            "name": "informar",
+            "label": "Entregar informe",
+            "from": [
+              "visitado",
+              "reparos"
+            ],
+            "to": "informado"
+          },
+          {
+            "name": "aceptar",
+            "label": "Aceptar informe",
+            "from": [
+              "informado"
+            ],
+            "to": "aceptado"
+          },
+          {
+            "name": "devolver",
+            "label": "Devolver con reparos",
+            "from": [
+              "informado"
+            ],
+            "to": "reparos"
+          },
+          {
+            "name": "cerrar",
+            "label": "Cerrar",
+            "from": [
+              "aceptado"
+            ],
+            "to": "cerrado"
+          },
+          {
+            "name": "rechazar",
+            "label": "Rechazar",
+            "from": [
+              "recibido",
+              "asignado",
+              "visitado",
+              "informado",
+              "reparos"
+            ],
+            "to": "rechazado"
+          }
+        ]
+      }
+    },
+    {
+      "name": "informe",
+      "plural": "informes",
+      "labelSingular": "Informe de peritación",
+      "labelPlural": "Informes",
+      "gender": "m",
+      "brief": "Lo que sale de la visita. Sin fotografías del daño ni presupuestos no es un informe válido.",
+      "subtitle": "Los informes de visita, con sus fotografías y presupuestos.",
+      "attachments": true,
+      "detail": true,
+      "fields": [
+        {
+          "name": "siniestro",
+          "label": "Siniestro",
+          "type": "ref",
+          "refTo": "siniestro"
+        },
+        {
+          "name": "perito",
+          "label": "Perito",
+          "type": "ref",
+          "refTo": "perito"
+        },
+        {
+          "name": "fechaVisita",
+          "label": "Fecha de la visita",
+          "type": "date",
+          "samples": [
+            "2026-08-05",
+            "2026-08-01",
+            "2026-08-14"
+          ]
+        },
+        {
+          "name": "danos",
+          "label": "Daños descritos",
+          "type": "text",
+          "samples": [
+            "Filtración desde el baño del piso superior; techo del salón y tabique medianero con humedad activa.",
+            "Voladura parcial de la cubierta de teja y rotura de dos ventanas en fachada norte.",
+            "Fuerza en puerta de acceso y sustracción de equipos informáticos del despacho."
+          ]
+        },
+        {
+          "name": "valoracion",
+          "label": "Valoración propuesta",
+          "type": "number",
+          "samples": [
+            3850,
+            10400,
+            1620
+          ]
+        },
+        {
+          "name": "recomiendaIndemnizar",
+          "label": "Recomienda indemnizar",
+          "type": "boolean",
+          "samples": [
+            true,
+            true,
+            false
+          ]
+        },
+        {
+          "name": "conclusiones",
+          "label": "Conclusiones",
+          "type": "text",
+          "samples": [
+            "Daño cubierto por la póliza; se propone indemnizar descontando franquicia.",
+            "Cubierto como fenómeno atmosférico; conviene reparar antes de las lluvias de otoño.",
+            "Indicios de forzamiento no concluyentes; se recomienda ampliar atestado antes de indemnizar."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "poliza",
+      "plural": "polizas",
+      "labelSingular": "Póliza",
+      "labelPlural": "Pólizas",
+      "gender": "f",
+      "brief": "El contrato de hogar contra el que se abre el encargo; su capital es el techo de cualquier valoración.",
+      "subtitle": "Las pólizas de hogar de las tres compañías con las que trabajamos.",
+      "attachments": true,
+      "detail": true,
+      "fields": [
+        {
+          "name": "numero",
+          "label": "Número",
+          "type": "string",
+          "samples": [
+            "HOG-2024-004512",
+            "HOG-2024-007731",
+            "HOG-2023-118902"
+          ]
+        },
+        {
+          "name": "compania",
+          "label": "Compañía",
+          "type": "enum",
+          "values": [
+            {
+              "value": "mapfre",
+              "label": "Mapfre"
+            },
+            {
+              "value": "allianz",
+              "label": "Allianz"
+            },
+            {
+              "value": "generali",
+              "label": "Generali"
+            }
+          ],
+          "samples": [
+            "mapfre",
+            "allianz",
+            "generali"
+          ]
+        },
+        {
+          "name": "tomador",
+          "label": "Tomador",
+          "type": "string",
+          "samples": [
+            "Lucía Ferrer Ibáñez",
+            "Grupo Residencial Alborán S.L.",
+            "Andrés Quintana Sarmiento"
+          ]
+        },
+        {
+          "name": "domicilio",
+          "label": "Domicilio asegurado",
+          "type": "string",
+          "samples": [
+            "C/ Mayor 118, 3ºB, Guadalajara",
+            "Avda. del Puerto 12, Valencia",
+            "Camino de la Vega 4, Cuenca"
+          ]
+        },
+        {
+          "name": "capital",
+          "label": "Capital asegurado",
+          "type": "number",
+          "samples": [
+            180000,
+            240000,
+            95000
+          ]
+        },
+        {
+          "name": "franquicia",
+          "label": "Franquicia",
+          "type": "number",
+          "samples": [
+            300,
+            150,
+            600
+          ]
+        },
+        {
+          "name": "vigenteDesde",
+          "label": "En vigor desde",
+          "type": "date",
+          "samples": [
+            "2023-04-01",
+            "2022-11-15",
+            "2024-01-01"
+          ]
+        }
+      ],
+      "state": {
+        "field": "compania",
+        "initial": "mapfre",
+        "transitions": []
+      }
+    },
+    {
+      "name": "perito",
+      "plural": "peritos",
+      "labelSingular": "Perito",
+      "labelPlural": "Peritos",
+      "gender": "m",
+      "brief": "Quien visita y valora. Es el recurso escaso: solo puede ir a las provincias que cubre.",
+      "subtitle": "El cuadro de peritos, sus provincias y sus especialidades.",
+      "detail": true,
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Rosa Belmonte Aguirre",
+            "Ignacio Trueba Salas",
+            "Nadia El Amrani Ruiz"
+          ]
+        },
+        {
+          "name": "colegiado",
+          "label": "Nº de colegiado",
+          "type": "string",
+          "samples": [
+            "COL-2841",
+            "COL-1177",
+            "COL-3390"
+          ]
+        },
+        {
+          "name": "provincias",
+          "label": "Provincias que cubre",
+          "type": "string",
+          "samples": [
+            "Madrid, Guadalajara, Toledo",
+            "Valencia, Castellón",
+            "Cuenca, Albacete"
+          ]
+        },
+        {
+          "name": "causas",
+          "label": "Causas que domina",
+          "type": "string",
+          "samples": [
+            "Agua e incendio",
+            "Fenómenos atmosféricos",
+            "Robo y responsabilidad civil"
+          ]
+        },
+        {
+          "name": "email",
+          "label": "Correo",
+          "type": "string",
+          "samples": [
+            "rosa.belmonte@peritajes.example",
+            "ignacio.trueba@peritajes.example",
+            "nadia.elamrani@peritajes.example"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "600 114 872",
+            "655 902 341",
+            "691 447 208"
+          ]
+        },
+        {
+          "name": "activo",
+          "label": "Activo",
+          "type": "boolean",
+          "samples": [
+            true,
+            true,
+            false
+          ]
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Panel",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "resources": [
+            "siniestro"
+          ],
+          "width": "full"
+        },
+        {
+          "kind": "text",
+          "text": "Encargos abiertos, lo valorado este mes y el reparto por causa. Los siniestros con más de diez días sin informe son los que hay que empujar.",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Siniestros",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "siniestro",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del siniestro",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "siniestro",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Informes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "informe",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del informe",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "informe",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "informe",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Pólizas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "poliza",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha de la póliza",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "poliza",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "poliza",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Peritos",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "perito",
+          "width": "full"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Gabinete de peritación de seguros de hogar que trabaja por encargo de tres compañías. La compañía abre un siniestro, el gabinete lo asigna a un perito que cubra su provincia, el perito visita, redacta un informe con fotografías y presupuestos, y la compañía lo acepta o lo devuelve con reparos. El recorrido acaba en cerrado o en rechazado. El cuello de botella es el cuadro de peritos, y el material probatorio (fotos y PDF) es parte del entregable, no un adorno.",
+    "rules": [
+      "No se puede asignar un perito que no cubra la provincia del siniestro.",
+      "No se puede dar por peritado un siniestro sin informe con fotografías.",
+      "La valoración nunca puede superar el capital de la póliza.",
+      "Un siniestro rechazado no vuelve a moverse.",
+      "Un informe devuelto con reparos vuelve a manos del perito.",
+      "Al asignar un siniestro, el perito recibe un correo con la referencia y la dirección de la visita.",
+      "Cuando la compañía acepta el informe, se avisa por correo al asegurado."
+    ],
+    "glossary": [
+      {
+        "term": "Encargo",
+        "means": "El siniestro que abre la compañía y que el gabinete debe peritar"
+      },
+      {
+        "term": "Reparos",
+        "means": "Devolución del informe por la compañía para que el perito lo corrija"
+      },
+      {
+        "term": "Franquicia",
+        "means": "Parte del daño que asume el asegurado y se descuenta de la indemnización"
+      },
+      {
+        "term": "Colegiado",
+        "means": "Número que acredita al perito ante las compañías"
+      }
+    ]
+  },
+  "ports": {
+    "api": 3002,
+    "web": 4202,
+    "postgres": 5453,
+    "postgresTest": 5454
+  }
+}

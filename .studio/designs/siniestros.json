@@ -1,0 +1,348 @@
+{
+  "appName": "siniestros",
+  "resources": [
+    {
+      "name": "siniestro",
+      "plural": "siniestros",
+      "labelSingular": "Siniestro",
+      "labelPlural": "Siniestros",
+      "gender": "m",
+      "brief": "El parte que abre el asegurado. Avanza por estados hasta pagarse; rechazado es final.",
+      "subtitle": "Los partes vivos y su punto del recorrido.",
+      "detail": true,
+      "fields": [
+        {
+          "name": "expediente",
+          "label": "Nº de expediente",
+          "type": "string",
+          "samples": [
+            "EXP-2026-0101",
+            "EXP-2026-0117",
+            "EXP-2026-0142"
+          ]
+        },
+        {
+          "name": "asegurado",
+          "label": "Asegurado",
+          "type": "string",
+          "samples": [
+            "Marta Ibáñez",
+            "Julián Cobo",
+            "Rosa Ferrer"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "612 44 87 21",
+            "699 10 32 54",
+            "677 55 09 18"
+          ]
+        },
+        {
+          "name": "direccion",
+          "label": "Dirección del inmueble",
+          "type": "string",
+          "samples": [
+            "C/ Olivar 12, 3ºB, Getafe",
+            "Av. del Puerto 88, Valencia",
+            "Pza. Mayor 4, Cuenca"
+          ]
+        },
+        {
+          "name": "fechaParte",
+          "label": "Fecha del parte",
+          "type": "date",
+          "samples": [
+            "2026-08-02",
+            "2026-08-14",
+            "2026-08-21"
+          ]
+        },
+        {
+          "name": "importeEstimado",
+          "label": "Importe estimado",
+          "type": "number",
+          "samples": [
+            3400,
+            12800,
+            950
+          ]
+        },
+        {
+          "name": "importeAprobado",
+          "label": "Importe aprobado",
+          "type": "number",
+          "samples": [
+            3100,
+            12800,
+            0
+          ]
+        },
+        {
+          "name": "observaciones",
+          "label": "Observaciones",
+          "type": "string",
+          "samples": [
+            "Daños por agua en cocina",
+            "Pendiente de nota del perito",
+            "Aviso al asegurado el día 22"
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "recibido",
+              "label": "Recibido"
+            },
+            {
+              "value": "en_peritacion",
+              "label": "En peritación"
+            },
+            {
+              "value": "aprobado",
+              "label": "Aprobado"
+            },
+            {
+              "value": "pagado",
+              "label": "Pagado"
+            },
+            {
+              "value": "rechazado",
+              "label": "Rechazado"
+            }
+          ],
+          "samples": [
+            "recibido",
+            "en_peritacion",
+            "aprobado"
+          ]
+        }
+      ],
+      "state": {
+        "field": "estado",
+        "initial": "recibido",
+        "transitions": [
+          {
+            "name": "asignar",
+            "label": "Asignar perito",
+            "from": [
+              "recibido"
+            ],
+            "to": "en_peritacion"
+          },
+          {
+            "name": "aprobar",
+            "label": "Aprobar",
+            "from": [
+              "en_peritacion"
+            ],
+            "to": "aprobado"
+          },
+          {
+            "name": "rechazar",
+            "label": "Rechazar",
+            "from": [
+              "en_peritacion"
+            ],
+            "to": "rechazado"
+          },
+          {
+            "name": "pagar",
+            "label": "Pagar la indemnización",
+            "from": [
+              "aprobado"
+            ],
+            "to": "pagado"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "title": "Panel",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "width": "full",
+          "items": [
+            {
+              "kind": "counter",
+              "resource": "siniestro"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "width": "full",
+          "text": "Partes vivos por estado e importe aprobado total. Los siniestros en peritación son los que hay que empujar."
+        }
+      ]
+    },
+    {
+      "title": "Siniestros",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "siniestro",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del siniestro",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "siniestro",
+          "width": "full"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "Del parte al pago",
+      "description": "El recorrido de un siniestro desde que entra el parte hasta que se paga o se rechaza",
+      "nodes": [
+        {
+          "id": "inicio",
+          "kind": "start",
+          "text": "Entra el parte del siniestro"
+        },
+        {
+          "id": "asignar",
+          "kind": "step",
+          "text": "Asignar perito",
+          "entity": "siniestro",
+          "status": "en_peritacion",
+          "transition": "asignar"
+        },
+        {
+          "id": "valorar",
+          "kind": "step",
+          "text": "Valorar los daños y anotar el importe estimado",
+          "entity": "siniestro",
+          "status": "en_peritacion"
+        },
+        {
+          "id": "avisar",
+          "kind": "step",
+          "text": "Avisar al asegurado y registrar la fecha del aviso",
+          "entity": "siniestro",
+          "status": "en_peritacion"
+        },
+        {
+          "id": "procede",
+          "kind": "decision",
+          "text": "¿Procede la indemnización?"
+        },
+        {
+          "id": "aprobar",
+          "kind": "step",
+          "text": "Aprobar con su importe",
+          "entity": "siniestro",
+          "status": "aprobado",
+          "transition": "aprobar"
+        },
+        {
+          "id": "rechazar",
+          "kind": "step",
+          "text": "Rechazar anotando el motivo",
+          "entity": "siniestro",
+          "status": "rechazado",
+          "transition": "rechazar"
+        },
+        {
+          "id": "pagar",
+          "kind": "step",
+          "text": "Pagar la indemnización",
+          "entity": "siniestro",
+          "status": "pagado",
+          "transition": "pagar"
+        },
+        {
+          "id": "fin",
+          "kind": "end",
+          "text": "Expediente cerrado"
+        }
+      ],
+      "edges": [
+        {
+          "from": "inicio",
+          "to": "asignar"
+        },
+        {
+          "from": "asignar",
+          "to": "valorar"
+        },
+        {
+          "from": "valorar",
+          "to": "avisar"
+        },
+        {
+          "from": "avisar",
+          "to": "procede"
+        },
+        {
+          "from": "procede",
+          "to": "aprobar",
+          "label": "sí"
+        },
+        {
+          "from": "procede",
+          "to": "rechazar",
+          "label": "no"
+        },
+        {
+          "from": "aprobar",
+          "to": "pagar"
+        },
+        {
+          "from": "rechazar",
+          "to": "fin"
+        },
+        {
+          "from": "pagar",
+          "to": "fin"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Correduría de seguros de hogar que tramita siniestros propios. Entra el parte del asegurado, se asigna un perito, se valoran los daños y se avisa al asegurado; si la indemnización procede se aprueba con su importe y se paga, y si no, se rechaza anotando el motivo. El recorrido acaba en pagado o en rechazado.",
+    "rules": [
+      "Un siniestro solo se perita después de asignarle perito.",
+      "El importe aprobado no puede superar el estimado en más de un 10 %.",
+      "Un siniestro rechazado no vuelve a moverse.",
+      "El motivo de un rechazo queda siempre en las observaciones."
+    ],
+    "glossary": [
+      {
+        "term": "Parte",
+        "means": "La comunicación del asegurado que abre el siniestro"
+      },
+      {
+        "term": "Peritación",
+        "means": "La visita y valoración de los daños por el perito"
+      },
+      {
+        "term": "Indemnización",
+        "means": "El importe aprobado que se paga al asegurado"
+      }
+    ]
+  },
+  "ports": {
+    "api": 3040,
+    "web": 4350,
+    "postgres": 5480,
+    "postgresTest": 5481
+  }
+}

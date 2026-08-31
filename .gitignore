@@ -30,11 +30,8 @@ probe.env
 .angular/
 
 # Apps de demo generadas: se crean en local para cazar defectos del generador
-# y NUNCA suben al remoto (los defectos se arreglan en el generador, no aquí)
-apps/taller/
-apps/peritajes/
-apps/veterinaria/
-apps/inmobiliaria/
-apps/inmobiliaria-cabina/
-apps/inmobiliaria-suite/
-apps/licencias/
+# y NUNCA suben al remoto (los defectos se arreglan en el generador, no aquí).
+# Lista blanca en vez de enumeración: la única app del repo es el estudio, así que
+# toda demo nueva queda ignorada sin tener que acordarse de añadirla aquí.
+apps/*
+!apps/studio/

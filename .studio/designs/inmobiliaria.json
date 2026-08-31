@@ -1,0 +1,1442 @@
+{
+  "appName": "inmobiliaria",
+  "resources": [
+    {
+      "name": "propietario",
+      "plural": "propietarios",
+      "labelSingular": "Propietario",
+      "labelPlural": "Propietarios",
+      "gender": "m",
+      "brief": "Quien cede el inmueble a la agencia. Datos de contacto y poco más.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Ana Belmonte Ruiz",
+            "Jorge Sanchís Prat",
+            "Marta Cifuentes Roldán",
+            "Luis Ibarra Cano",
+            "Carmen Solís Vega",
+            "Pedro Aguirre Nadal",
+            "Rosa Valdés Otero",
+            "Tomás Requena Gil",
+            "Elena Pardo Sanz",
+            "Víctor Melgar Ruano"
+          ]
+        },
+        {
+          "name": "nif",
+          "label": "NIF",
+          "type": "string",
+          "samples": [
+            "12345678Z",
+            "87654321X",
+            "45678912B",
+            "23456789C",
+            "34567891D",
+            "56789123F",
+            "67891234G",
+            "78912345H",
+            "89123456J",
+            "91234567L"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "600112233",
+            "610223344",
+            "620334455",
+            "630445566",
+            "640556677",
+            "650667788",
+            "660778899",
+            "670889900",
+            "680990011",
+            "690001122"
+          ]
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "string",
+          "samples": [
+            "ana.belmonte@correo.es",
+            "jsanchis@correo.es",
+            "marta.cifuentes@correo.es",
+            "libarra@correo.es",
+            "csolis@correo.es",
+            "paguirre@correo.es",
+            "rvaldes@correo.es",
+            "trequena@correo.es",
+            "epardo@correo.es",
+            "vmelgar@correo.es"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
+    },
+    {
+      "name": "cliente",
+      "plural": "clientes",
+      "labelSingular": "Cliente",
+      "labelPlural": "Clientes",
+      "gender": "m",
+      "detail": true,
+      "form": false,
+      "brief": "Quien busca casa. Es la entidad con más registros: se elige por buscador en visitas, ofertas y contratos.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Beatriz Lorca Miño",
+            "Andrés Quintana Sáez",
+            "Nuria Ferrer Ojeda",
+            "Iván Castaño Peña",
+            "Silvia Arroyo Mena",
+            "Rubén Cortés Lago",
+            "Patricia Nieto Bravo",
+            "Óscar Bermejo Ruiz",
+            "Lucía Ramos Adán",
+            "Javier Toledo Cid"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "611223344",
+            "622334455",
+            "633445566",
+            "644556677",
+            "655667788",
+            "666778899",
+            "677889900",
+            "688990011",
+            "699001122",
+            "600123456"
+          ]
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "string",
+          "samples": [
+            "blorca@correo.es",
+            "aquintana@correo.es",
+            "nferrer@correo.es",
+            "icastano@correo.es",
+            "sarroyo@correo.es",
+            "rcortes@correo.es",
+            "pnieto@correo.es",
+            "obermejo@correo.es",
+            "lramos@correo.es",
+            "jtoledo@correo.es"
+          ]
+        },
+        {
+          "name": "presupuesto",
+          "label": "Presupuesto",
+          "type": "number",
+          "samples": [
+            180000,
+            240000,
+            320000,
+            150000,
+            410000,
+            275000,
+            199000,
+            355000,
+            128000,
+            460000
+          ]
+        },
+        {
+          "name": "interes",
+          "label": "Interés",
+          "type": "enum",
+          "values": [
+            {
+              "value": "compra",
+              "label": "Compra"
+            },
+            {
+              "value": "alquiler",
+              "label": "Alquiler"
+            }
+          ],
+          "samples": [
+            "compra",
+            "compra",
+            "alquiler",
+            "compra",
+            "compra",
+            "alquiler",
+            "compra",
+            "alquiler",
+            "compra",
+            "compra"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
+    },
+    {
+      "name": "inmueble",
+      "plural": "inmuebles",
+      "labelSingular": "Inmueble",
+      "labelPlural": "Inmuebles",
+      "gender": "m",
+      "detail": true,
+      "gallery": true,
+      "attachments": true,
+      "subtitle": "La cartera de la agencia, del primer contacto con el propietario hasta la firma.",
+      "brief": "El activo que se comercializa. Nace captado, se publica, se reserva y se vende; o se retira.",
+      "state": {
+        "field": "estado",
+        "initial": "captado",
+        "transitions": [
+          {
+            "name": "publicar",
+            "label": "Publicar",
+            "from": [
+              "captado"
+            ],
+            "to": "en_venta"
+          },
+          {
+            "name": "reservar",
+            "label": "Reservar",
+            "from": [
+              "en_venta"
+            ],
+            "to": "reservado"
+          },
+          {
+            "name": "vender",
+            "label": "Vender",
+            "from": [
+              "reservado"
+            ],
+            "to": "vendido"
+          },
+          {
+            "name": "retirar",
+            "label": "Retirar",
+            "from": [
+              "captado",
+              "en_venta",
+              "reservado"
+            ],
+            "to": "retirado"
+          },
+          {
+            "name": "reactivar",
+            "label": "Devolver a venta",
+            "from": [
+              "reservado",
+              "retirado"
+            ],
+            "to": "en_venta"
+          }
+        ]
+      },
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": [],
+        "transitions": {
+          "publicar": [],
+          "reservar": [],
+          "vender": [],
+          "retirar": [],
+          "reactivar": []
+        }
+      },
+      "fields": [
+        {
+          "name": "referencia",
+          "label": "Referencia",
+          "type": "string",
+          "samples": [
+            "PIS-0142",
+            "CAS-0087",
+            "ATI-0031",
+            "PIS-0155",
+            "LOC-0012",
+            "PIS-0160",
+            "CAS-0094",
+            "GAR-0208",
+            "ATI-0038",
+            "PIS-0171"
+          ]
+        },
+        {
+          "name": "direccion",
+          "label": "Dirección",
+          "type": "string",
+          "samples": [
+            "C/ Bailén 24, 3º B",
+            "Av. del Puerto 118",
+            "C/ Serrano 9, ático",
+            "C/ Mayor 3, 1º A",
+            "Pl. de la Reina 5, bajo",
+            "C/ Colón 41, 4º C",
+            "Camí de Vera 88",
+            "C/ Xàtiva 12, sótano 2",
+            "C/ Sorní 15, ático",
+            "C/ Ruzafa 30, 2º D"
+          ]
+        },
+        {
+          "name": "municipio",
+          "label": "Municipio",
+          "type": "enum",
+          "values": [
+            {
+              "value": "valencia",
+              "label": "Valencia"
+            },
+            {
+              "value": "paterna",
+              "label": "Paterna"
+            },
+            {
+              "value": "torrent",
+              "label": "Torrent"
+            },
+            {
+              "value": "godella",
+              "label": "Godella"
+            },
+            {
+              "value": "sagunto",
+              "label": "Sagunto"
+            }
+          ],
+          "samples": [
+            "valencia",
+            "valencia",
+            "paterna",
+            "torrent",
+            "valencia",
+            "godella",
+            "paterna",
+            "valencia",
+            "sagunto",
+            "valencia"
+          ]
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo",
+          "type": "enum",
+          "values": [
+            {
+              "value": "piso",
+              "label": "Piso"
+            },
+            {
+              "value": "casa",
+              "label": "Casa"
+            },
+            {
+              "value": "atico",
+              "label": "Ático"
+            },
+            {
+              "value": "local",
+              "label": "Local"
+            },
+            {
+              "value": "garaje",
+              "label": "Garaje"
+            }
+          ],
+          "samples": [
+            "piso",
+            "casa",
+            "atico",
+            "piso",
+            "local",
+            "piso",
+            "casa",
+            "garaje",
+            "atico",
+            "piso"
+          ]
+        },
+        {
+          "name": "habitaciones",
+          "label": "Habitaciones",
+          "type": "integer",
+          "samples": [
+            3,
+            5,
+            2,
+            4,
+            0,
+            3,
+            6,
+            0,
+            2,
+            4
+          ]
+        },
+        {
+          "name": "superficie",
+          "label": "Superficie (m²)",
+          "type": "number",
+          "samples": [
+            92,
+            210,
+            68,
+            105,
+            140,
+            88,
+            245,
+            24,
+            74,
+            118
+          ]
+        },
+        {
+          "name": "precio",
+          "label": "Precio",
+          "type": "number",
+          "samples": [
+            235000,
+            420000,
+            310000,
+            189000,
+            275000,
+            198000,
+            495000,
+            32000,
+            289000,
+            342000
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "captado",
+              "label": "Captado"
+            },
+            {
+              "value": "en_venta",
+              "label": "En venta"
+            },
+            {
+              "value": "reservado",
+              "label": "Reservado"
+            },
+            {
+              "value": "vendido",
+              "label": "Vendido"
+            },
+            {
+              "value": "retirado",
+              "label": "Retirado"
+            }
+          ],
+          "samples": [
+            "en_venta",
+            "en_venta",
+            "reservado",
+            "captado",
+            "en_venta",
+            "vendido",
+            "en_venta",
+            "retirado",
+            "captado",
+            "en_venta"
+          ]
+        },
+        {
+          "name": "descripcion",
+          "label": "Descripción",
+          "type": "text",
+          "samples": [
+            "Piso reformado en 2023 en pleno centro, con dos balcones a calle y patio de manzana. Cocina office, armarios empotrados en las tres habitaciones y aire acondicionado por conductos. Finca con ascensor y portero de mañanas; comunidad de 42 € al mes. La calle es tranquila pese a estar a dos minutos del mercado.",
+            "Chalet independiente de dos plantas sobre parcela de 600 m², con piscina y porche cubierto orientado al sur. Cinco habitaciones, dos de ellas en suite, y garaje para dos coches. Necesita actualizar los baños; la estructura y la cubierta se revisaron el año pasado.",
+            "Ático con terraza de 30 m² y vistas despejadas. Dos habitaciones, salón con salida directa a la terraza y cocina abierta. Edificio de 2008, con ascensor y trastero incluido en el precio.",
+            "Piso a estrenar en promoción entregada este año, con garaje y trastero. Suelo radiante, aerotermia y calificación energética A. Zona en expansión con colegio y centro de salud a menos de 500 metros.",
+            "Local a pie de calle con dos escaparates y salida de humos concedida. Diáfano, 140 m² en planta más altillo de 35 m². Estuvo alquilado a una franquicia de restauración hasta marzo.",
+            "Piso luminoso para entrar a vivir, orientación este y oeste. Tres habitaciones, baño reformado y galería cerrada junto a la cocina. Gastos de comunidad bajos.",
+            "Casa de pueblo rehabilitada conservando vigas de madera y suelo hidráulico original. Seis habitaciones repartidas en tres plantas y patio trasero con pozo. Ideal para vivienda amplia o alojamiento turístico.",
+            "Plaza de garaje amplia en sótano 2, con acceso rodado directo y puerta automática. Admite coche grande y motocicleta.",
+            "Ático con dos terrazas y mucha luz durante todo el día. Reformado íntegramente hace cuatro años, con carpintería de aluminio con rotura de puente térmico.",
+            "Piso en finca clásica con techos altos y suelos de parqué. Cuatro habitaciones, dos baños y salón independiente. Requiere reforma de cocina; el precio ya lo contempla."
+          ]
+        },
+        {
+          "name": "propietario",
+          "label": "Propietario",
+          "type": "ref",
+          "refTo": "propietario",
+          "samples": [
+            "Ana Belmonte Ruiz",
+            "Jorge Sanchís Prat",
+            "Marta Cifuentes Roldán",
+            "Luis Ibarra Cano",
+            "Carmen Solís Vega",
+            "Pedro Aguirre Nadal",
+            "Rosa Valdés Otero",
+            "Tomás Requena Gil",
+            "Elena Pardo Sanz",
+            "Víctor Melgar Ruano"
+          ]
+        }
+      ],
+      "form": false
+    },
+    {
+      "name": "visita",
+      "plural": "visitas",
+      "labelSingular": "Visita",
+      "labelPlural": "Visitas",
+      "gender": "f",
+      "detail": true,
+      "calendar": {
+        "dateField": "fecha",
+        "colorField": "resultado"
+      },
+      "brief": "Enseñar un inmueble a un cliente: día, hora y qué salió de ahí.",
+      "fields": [
+        {
+          "name": "fecha",
+          "label": "Fecha",
+          "type": "date",
+          "samples": [
+            "2026-08-24",
+            "2026-08-25",
+            "2026-08-25",
+            "2026-08-26",
+            "2026-08-27",
+            "2026-08-27",
+            "2026-08-28",
+            "2026-08-31",
+            "2026-09-01",
+            "2026-09-02"
+          ]
+        },
+        {
+          "name": "hora",
+          "label": "Hora",
+          "type": "time",
+          "samples": [
+            "10:00",
+            "11:30",
+            "17:00",
+            "09:30",
+            "12:00",
+            "18:30",
+            "16:15",
+            "10:45",
+            "13:00",
+            "17:45"
+          ]
+        },
+        {
+          "name": "resultado",
+          "label": "Resultado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "pendiente",
+              "label": "Pendiente"
+            },
+            {
+              "value": "realizada",
+              "label": "Realizada"
+            },
+            {
+              "value": "no_asiste",
+              "label": "No asiste"
+            },
+            {
+              "value": "cancelada",
+              "label": "Cancelada"
+            }
+          ],
+          "samples": [
+            "realizada",
+            "realizada",
+            "no_asiste",
+            "pendiente",
+            "pendiente",
+            "cancelada",
+            "pendiente",
+            "realizada",
+            "pendiente",
+            "pendiente"
+          ]
+        },
+        {
+          "name": "comentario",
+          "label": "Comentario",
+          "type": "text",
+          "samples": [
+            "Les gusta la distribución pero ven cara la reforma de los baños; piden una segunda visita con el aparejador.",
+            "Encantados con la terraza. Preguntan si el trastero está incluido y si la comunidad tiene derrama prevista.",
+            "No se presentó ni avisó. Se le llamó dos veces por la tarde.",
+            "Primera visita concertada con la propietaria presente; conviene enseñarlo a partir de las once, que entra el sol.",
+            "Visita de pareja joven con hipoteca preconcedida. Muy interesados en la zona por el colegio.",
+            "Cancelan por avería del coche; quieren cambiarla al fin de semana siguiente.",
+            "Visita técnica con su arquitecto para valorar tirar el tabique del salón.",
+            "Segunda visita. Preguntan por el consumo real de la aerotermia y por los gastos de comunidad.",
+            "Cliente de inversión: solo le interesa la rentabilidad del alquiler en la zona.",
+            "Piden ver también la plaza de garaje del mismo edificio antes de decidirse."
+          ]
+        },
+        {
+          "name": "inmueble",
+          "label": "Inmueble",
+          "type": "ref",
+          "refTo": "inmueble",
+          "samples": [
+            "PIS-0142",
+            "CAS-0087",
+            "ATI-0031",
+            "PIS-0155",
+            "LOC-0012",
+            "PIS-0160",
+            "CAS-0094",
+            "GAR-0208",
+            "ATI-0038",
+            "PIS-0171"
+          ]
+        },
+        {
+          "name": "cliente",
+          "label": "Cliente",
+          "type": "ref",
+          "refTo": "cliente",
+          "samples": [
+            "Beatriz Lorca Miño",
+            "Andrés Quintana Sáez",
+            "Nuria Ferrer Ojeda",
+            "Iván Castaño Peña",
+            "Silvia Arroyo Mena",
+            "Rubén Cortés Lago",
+            "Patricia Nieto Bravo",
+            "Óscar Bermejo Ruiz",
+            "Lucía Ramos Adán",
+            "Javier Toledo Cid"
+          ]
+        }
+      ],
+      "form": false,
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      }
+    },
+    {
+      "name": "oferta",
+      "plural": "ofertas",
+      "labelSingular": "Oferta",
+      "labelPlural": "Ofertas",
+      "gender": "f",
+      "detail": true,
+      "kanban": {
+        "field": "estado",
+        "labelField": "referencia"
+      },
+      "brief": "Lo que un cliente pone encima de la mesa por un inmueble. Se negocia hasta aceptarla o rechazarla.",
+      "state": {
+        "field": "estado",
+        "initial": "recibida",
+        "transitions": [
+          {
+            "name": "negociar",
+            "label": "Pasar a negociación",
+            "from": [
+              "recibida"
+            ],
+            "to": "negociacion"
+          },
+          {
+            "name": "aceptar",
+            "label": "Aceptar",
+            "from": [
+              "recibida",
+              "negociacion"
+            ],
+            "to": "aceptada"
+          },
+          {
+            "name": "rechazar",
+            "label": "Rechazar",
+            "from": [
+              "recibida",
+              "negociacion"
+            ],
+            "to": "rechazada"
+          },
+          {
+            "name": "reabrir",
+            "label": "Reabrir",
+            "from": [
+              "rechazada"
+            ],
+            "to": "negociacion"
+          }
+        ]
+      },
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": [],
+        "transitions": {
+          "negociar": [],
+          "aceptar": [],
+          "rechazar": [],
+          "reabrir": []
+        }
+      },
+      "fields": [
+        {
+          "name": "referencia",
+          "label": "Referencia",
+          "type": "string",
+          "samples": [
+            "OF-0031",
+            "OF-0032",
+            "OF-0033",
+            "OF-0034",
+            "OF-0035",
+            "OF-0036",
+            "OF-0037",
+            "OF-0038",
+            "OF-0039",
+            "OF-0040"
+          ]
+        },
+        {
+          "name": "importe",
+          "label": "Importe",
+          "type": "number",
+          "samples": [
+            225000,
+            400000,
+            295000,
+            180000,
+            260000,
+            190000,
+            470000,
+            30000,
+            275000,
+            330000
+          ]
+        },
+        {
+          "name": "fecha",
+          "label": "Fecha",
+          "type": "date",
+          "samples": [
+            "2026-08-18",
+            "2026-08-19",
+            "2026-08-20",
+            "2026-08-21",
+            "2026-08-21",
+            "2026-08-24",
+            "2026-08-24",
+            "2026-08-25",
+            "2026-08-25",
+            "2026-08-26"
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "recibida",
+              "label": "Recibida"
+            },
+            {
+              "value": "negociacion",
+              "label": "En negociación"
+            },
+            {
+              "value": "aceptada",
+              "label": "Aceptada"
+            },
+            {
+              "value": "rechazada",
+              "label": "Rechazada"
+            }
+          ],
+          "samples": [
+            "negociacion",
+            "recibida",
+            "rechazada",
+            "aceptada",
+            "recibida",
+            "negociacion",
+            "recibida",
+            "rechazada",
+            "negociacion",
+            "recibida"
+          ]
+        },
+        {
+          "name": "condiciones",
+          "label": "Condiciones",
+          "type": "text",
+          "samples": [
+            "Oferta condicionada a la concesión de hipoteca por el 80%; plazo de firma de arras en quince días.",
+            "Pago al contado sin financiación, a cambio de entrega en dos meses.",
+            "Ofrecen el precio pedido si la propiedad deja los electrodomésticos y el mobiliario del salón.",
+            "Condicionada a que se resuelva la nota simple: aparece una carga antigua sin cancelar.",
+            "Suben la oferta anterior 8.000 € pero piden que la comisión la asuma la vendedora.",
+            "Piden dos semanas de exclusividad para hacer una inspección técnica antes de firmar.",
+            "Oferta de inversión por la totalidad de la finca, no solo por este inmueble.",
+            "Aceptan el precio pero necesitan retrasar la firma a enero por temas fiscales.",
+            "Condicionada a la venta de su vivienda actual, ya en el mercado con otra agencia.",
+            "Ofrecen arras penitenciales del 10% y firma en notaría antes de fin de año."
+          ]
+        },
+        {
+          "name": "inmueble",
+          "label": "Inmueble",
+          "type": "ref",
+          "refTo": "inmueble",
+          "samples": [
+            "PIS-0142",
+            "CAS-0087",
+            "ATI-0031",
+            "PIS-0155",
+            "LOC-0012",
+            "PIS-0160",
+            "CAS-0094",
+            "GAR-0208",
+            "ATI-0038",
+            "PIS-0171"
+          ]
+        },
+        {
+          "name": "cliente",
+          "label": "Cliente",
+          "type": "ref",
+          "refTo": "cliente",
+          "samples": [
+            "Beatriz Lorca Miño",
+            "Andrés Quintana Sáez",
+            "Nuria Ferrer Ojeda",
+            "Iván Castaño Peña",
+            "Silvia Arroyo Mena",
+            "Rubén Cortés Lago",
+            "Patricia Nieto Bravo",
+            "Óscar Bermejo Ruiz",
+            "Lucía Ramos Adán",
+            "Javier Toledo Cid"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contrato",
+      "plural": "contratos",
+      "labelSingular": "Contrato",
+      "labelPlural": "Contratos",
+      "gender": "m",
+      "detail": true,
+      "attachments": true,
+      "brief": "El papel firmado. Solo lo maneja la dirección.",
+      "access": {
+        "view": [
+          "user"
+        ],
+        "create": [],
+        "edit": [],
+        "delete": []
+      },
+      "fields": [
+        {
+          "name": "numero",
+          "label": "Número",
+          "type": "string",
+          "samples": [
+            "CTR-2026-011",
+            "CTR-2026-012",
+            "CTR-2026-013",
+            "CTR-2026-014",
+            "CTR-2026-015",
+            "CTR-2026-016",
+            "CTR-2026-017",
+            "CTR-2026-018",
+            "CTR-2026-019",
+            "CTR-2026-020"
+          ]
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo",
+          "type": "enum",
+          "values": [
+            {
+              "value": "arras",
+              "label": "Arras"
+            },
+            {
+              "value": "compraventa",
+              "label": "Compraventa"
+            },
+            {
+              "value": "alquiler",
+              "label": "Alquiler"
+            }
+          ],
+          "samples": [
+            "arras",
+            "compraventa",
+            "arras",
+            "alquiler",
+            "compraventa",
+            "arras",
+            "compraventa",
+            "alquiler",
+            "arras",
+            "compraventa"
+          ]
+        },
+        {
+          "name": "fechaFirma",
+          "label": "Fecha de firma",
+          "type": "date",
+          "samples": [
+            "2026-07-03",
+            "2026-07-15",
+            "2026-07-22",
+            "2026-07-30",
+            "2026-08-05",
+            "2026-08-07",
+            "2026-08-12",
+            "2026-08-14",
+            "2026-08-19",
+            "2026-08-21"
+          ]
+        },
+        {
+          "name": "importe",
+          "label": "Importe",
+          "type": "number",
+          "samples": [
+            22500,
+            400000,
+            29500,
+            1100,
+            260000,
+            19000,
+            470000,
+            950,
+            27500,
+            330000
+          ]
+        },
+        {
+          "name": "inmueble",
+          "label": "Inmueble",
+          "type": "ref",
+          "refTo": "inmueble",
+          "samples": [
+            "PIS-0142",
+            "CAS-0087",
+            "ATI-0031",
+            "PIS-0155",
+            "LOC-0012",
+            "PIS-0160",
+            "CAS-0094",
+            "GAR-0208",
+            "ATI-0038",
+            "PIS-0171"
+          ]
+        },
+        {
+          "name": "cliente",
+          "label": "Cliente",
+          "type": "ref",
+          "refTo": "cliente",
+          "samples": [
+            "Beatriz Lorca Miño",
+            "Andrés Quintana Sáez",
+            "Nuria Ferrer Ojeda",
+            "Iván Castaño Peña",
+            "Silvia Arroyo Mena",
+            "Rubén Cortés Lago",
+            "Patricia Nieto Bravo",
+            "Óscar Bermejo Ruiz",
+            "Lucía Ramos Adán",
+            "Javier Toledo Cid"
+          ]
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Panel",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "width": "full",
+          "items": []
+        }
+      ]
+    },
+    {
+      "title": "Cartera",
+      "blocks": [
+        {
+          "kind": "cards",
+          "resource": "inmueble",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del inmueble",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "inmueble",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "inmueble",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Inmuebles",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "inmueble",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Agenda",
+      "blocks": [
+        {
+          "kind": "calendar",
+          "resource": "visita",
+          "width": "full",
+          "dateField": "fecha",
+          "colorField": "resultado"
+        }
+      ]
+    },
+    {
+      "title": "Visitas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "visita",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Tablero de ofertas",
+      "blocks": [
+        {
+          "kind": "kanban",
+          "resource": "oferta",
+          "width": "full",
+          "columnsField": "estado",
+          "labelField": "referencia"
+        }
+      ]
+    },
+    {
+      "title": "Ofertas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "oferta",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Clientes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "cliente",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Alta de cliente",
+      "blocks": [
+        {
+          "kind": "form",
+          "resource": "cliente",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del cliente",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "cliente",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Contratos",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "contrato",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha del contrato",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "contrato",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "contrato",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Propietarios",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "propietario",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha de la oferta",
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "oferta",
+          "width": "full"
+        }
+      ],
+      "drillDown": true
+    },
+    {
+      "title": "Ficha de la visita",
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "visita",
+          "width": "full"
+        }
+      ],
+      "drillDown": true
+    }
+  ],
+  "flows": [
+    {
+      "name": "De la captación a la venta",
+      "nodes": [
+        {
+          "id": "inicio",
+          "kind": "start",
+          "text": "El propietario cede el inmueble"
+        },
+        {
+          "id": "captar",
+          "kind": "step",
+          "text": "Alta del inmueble en cartera",
+          "entity": "inmueble",
+          "status": "captado"
+        },
+        {
+          "id": "publicar",
+          "kind": "step",
+          "text": "Se publica y entra en venta",
+          "entity": "inmueble",
+          "status": "en_venta",
+          "transition": "publicar"
+        },
+        {
+          "id": "hay-oferta",
+          "kind": "decision",
+          "text": "¿Llega una oferta aceptable?"
+        },
+        {
+          "id": "reservar",
+          "kind": "step",
+          "text": "Se reserva para el comprador",
+          "entity": "inmueble",
+          "status": "reservado",
+          "transition": "reservar"
+        },
+        {
+          "id": "vender",
+          "kind": "step",
+          "text": "Firma y venta",
+          "entity": "inmueble",
+          "status": "vendido",
+          "transition": "vender"
+        },
+        {
+          "id": "retirar",
+          "kind": "step",
+          "text": "El propietario lo retira",
+          "entity": "inmueble",
+          "status": "retirado",
+          "transition": "retirar"
+        },
+        {
+          "id": "fin",
+          "kind": "end",
+          "text": "Inmueble fuera de cartera"
+        }
+      ],
+      "edges": [
+        {
+          "from": "inicio",
+          "to": "captar"
+        },
+        {
+          "from": "captar",
+          "to": "publicar"
+        },
+        {
+          "from": "publicar",
+          "to": "hay-oferta"
+        },
+        {
+          "from": "hay-oferta",
+          "to": "reservar",
+          "label": "sí"
+        },
+        {
+          "from": "hay-oferta",
+          "to": "retirar",
+          "label": "no"
+        },
+        {
+          "from": "reservar",
+          "to": "vender"
+        },
+        {
+          "from": "vender",
+          "to": "fin"
+        },
+        {
+          "from": "retirar",
+          "to": "fin"
+        }
+      ],
+      "description": "El recorrido de un inmueble desde que el propietario lo cede hasta la firma"
+    },
+    {
+      "name": "De la visita al contrato",
+      "description": "Lo que hace un agente con un cliente interesado.",
+      "nodes": [
+        {
+          "id": "inicio",
+          "kind": "start",
+          "text": "El cliente pide ver un inmueble"
+        },
+        {
+          "id": "agendar",
+          "kind": "step",
+          "text": "Se agenda la visita con día y hora",
+          "entity": "visita",
+          "status": "pendiente"
+        },
+        {
+          "id": "visitar",
+          "kind": "step",
+          "text": "Se enseña el inmueble",
+          "entity": "visita",
+          "status": "realizada"
+        },
+        {
+          "id": "interesa",
+          "kind": "decision",
+          "text": "¿Presenta oferta?"
+        },
+        {
+          "id": "ofertar",
+          "kind": "step",
+          "text": "Se registra la oferta",
+          "entity": "oferta",
+          "status": "recibida"
+        },
+        {
+          "id": "negociar",
+          "kind": "step",
+          "text": "Se negocia el importe",
+          "entity": "oferta",
+          "status": "negociacion",
+          "transition": "negociar"
+        },
+        {
+          "id": "aceptar",
+          "kind": "step",
+          "text": "La dirección la acepta",
+          "entity": "oferta",
+          "status": "aceptada",
+          "transition": "aceptar"
+        },
+        {
+          "id": "contrato",
+          "kind": "step",
+          "text": "Se firma el contrato de arras",
+          "entity": "contrato"
+        },
+        {
+          "id": "fin",
+          "kind": "end",
+          "text": "Operación cerrada"
+        },
+        {
+          "id": "descartar",
+          "kind": "end",
+          "text": "Se le buscan otras opciones"
+        }
+      ],
+      "edges": [
+        {
+          "from": "inicio",
+          "to": "agendar"
+        },
+        {
+          "from": "agendar",
+          "to": "visitar"
+        },
+        {
+          "from": "visitar",
+          "to": "interesa"
+        },
+        {
+          "from": "interesa",
+          "to": "ofertar",
+          "label": "sí"
+        },
+        {
+          "from": "interesa",
+          "to": "descartar",
+          "label": "no"
+        },
+        {
+          "from": "ofertar",
+          "to": "negociar"
+        },
+        {
+          "from": "negociar",
+          "to": "aceptar"
+        },
+        {
+          "from": "aceptar",
+          "to": "contrato"
+        },
+        {
+          "from": "contrato",
+          "to": "fin"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Agencia inmobiliaria de tamaño medio con seis agentes y cartera propia. Los propietarios ceden inmuebles en exclusiva; cada inmueble se capta, se publica, se enseña y acaba reservado y vendido, o se retira. La cartera se trabaja en tarjetas con foto y una ficha por inmueble donde viven la nota simple y los planos. Las visitas se agendan con día y hora y se preparan sobre un calendario. Las ofertas de los clientes se mueven en un tablero por estado hasta que se aceptan o se rechazan; una oferta aceptada acaba en contrato, que solo maneja la dirección.",
+    "rules": [
+      "Un inmueble solo se puede enseñar cuando está en venta; captado todavía no se publica.",
+      "Vender es la única transición reservada a dirección: el agente puede reservar, no cerrar.",
+      "Una oferta rechazada se puede reabrir, pero solo la dirección la acepta.",
+      "El contrato lo ve y lo toca únicamente la dirección.",
+      "Nada se borra de verdad: los registros se archivan.",
+      "El precio de un inmueble se guarda sin IVA ni impuestos de transmisión."
+    ],
+    "glossary": [
+      {
+        "term": "captación",
+        "means": "el momento en que un propietario cede el inmueble a la agencia"
+      },
+      {
+        "term": "exclusiva",
+        "means": "inmueble que solo comercializa esta agencia"
+      },
+      {
+        "term": "arras",
+        "means": "señal que firma el comprador para reservar el inmueble"
+      },
+      {
+        "term": "nota simple",
+        "means": "documento del registro con la titularidad y las cargas"
+      }
+    ]
+  },
+  "ports": {
+    "api": 3030,
+    "web": 4340,
+    "postgres": 5470,
+    "postgresTest": 5471
+  }
+}

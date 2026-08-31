@@ -1,0 +1,1258 @@
+{
+  "appName": "accesos",
+  "resources": [
+    {
+      "name": "cliente",
+      "plural": "clientes",
+      "labelSingular": "Cliente",
+      "labelPlural": "Clientes",
+      "gender": "m",
+      "brief": "Quien trae la máquina y paga la reparación: un agricultor, una cooperativa o una comunidad de regantes.",
+      "fields": [
+        {
+          "name": "nombre",
+          "label": "Nombre",
+          "type": "string",
+          "samples": [
+            "Agrícola Hermanos Sanz CB",
+            "Cooperativa del Campo San Isidro",
+            "Comunidad de Regantes del Zapardiel",
+            "Explotaciones Nava del Rey SL",
+            "Agroganadera Torozos SC",
+            "Cooperativa Cerealista de Medina",
+            "Finca La Serna SL",
+            "Juan Carlos Bermejo Rodríguez",
+            "Agrícola Villaverde SC",
+            "Cultivos del Duero SL"
+          ]
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo",
+          "type": "enum",
+          "values": [
+            {
+              "value": "agricultor",
+              "label": "Agricultor"
+            },
+            {
+              "value": "cooperativa",
+              "label": "Cooperativa"
+            },
+            {
+              "value": "regantes",
+              "label": "Comunidad de regantes"
+            }
+          ],
+          "samples": [
+            "agricultor",
+            "cooperativa",
+            "regantes",
+            "agricultor",
+            "agricultor",
+            "cooperativa",
+            "agricultor",
+            "agricultor",
+            "agricultor",
+            "cooperativa"
+          ]
+        },
+        {
+          "name": "telefono",
+          "label": "Teléfono",
+          "type": "string",
+          "samples": [
+            "983 80 12 44",
+            "983 81 07 96",
+            "983 83 21 50",
+            "983 85 44 18",
+            "983 82 66 03",
+            "983 80 39 71",
+            "983 86 15 27",
+            "620 44 18 03",
+            "983 84 90 62",
+            "983 81 55 39"
+          ]
+        },
+        {
+          "name": "localidad",
+          "label": "Localidad",
+          "type": "string",
+          "samples": [
+            "Medina del Campo",
+            "Rueda",
+            "Nava del Rey",
+            "Olmedo",
+            "Villanueva de Duero",
+            "Pozaldez",
+            "Serrada",
+            "Fresno el Viejo",
+            "Alaejos",
+            "Tordesillas"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [
+          "user"
+        ],
+        "edit": [
+          "user"
+        ],
+        "delete": []
+      }
+    },
+    {
+      "name": "maquina",
+      "plural": "maquinas",
+      "labelSingular": "Máquina",
+      "labelPlural": "Máquinas",
+      "gender": "f",
+      "brief": "La máquina del cliente, fichada por bastidor: vuelve al taller año tras año y su historial importa.",
+      "fields": [
+        {
+          "name": "bastidor",
+          "label": "Bastidor",
+          "type": "string",
+          "samples": [
+            "1RW6155RAKD012478",
+            "ZDFN1140TLE008321",
+            "WBK5810CJ0M114907",
+            "1CQ9670XPMH027744",
+            "ZKH2240NAJP003615",
+            "1RW7250MEND019062",
+            "WDG4410RTKB105233",
+            "ZAF1830QLMC004180",
+            "1CQ8340BPNH031205",
+            "WBK6120TJ2M118644"
+          ]
+        },
+        {
+          "name": "marca",
+          "label": "Marca",
+          "type": "enum",
+          "values": [
+            {
+              "value": "john_deere",
+              "label": "John Deere"
+            },
+            {
+              "value": "new_holland",
+              "label": "New Holland"
+            },
+            {
+              "value": "deutz_fahr",
+              "label": "Deutz-Fahr"
+            },
+            {
+              "value": "case_ih",
+              "label": "Case IH"
+            },
+            {
+              "value": "claas",
+              "label": "Claas"
+            }
+          ],
+          "samples": [
+            "john_deere",
+            "deutz_fahr",
+            "new_holland",
+            "case_ih",
+            "claas",
+            "john_deere",
+            "new_holland",
+            "deutz_fahr",
+            "case_ih",
+            "new_holland"
+          ]
+        },
+        {
+          "name": "modelo",
+          "label": "Modelo",
+          "type": "string",
+          "samples": [
+            "6155R",
+            "Agrotron 6165",
+            "T7.225",
+            "Puma 185 CVX",
+            "Lexion 6800",
+            "7250R",
+            "CR 8.80",
+            "Agrofarm 410",
+            "Maxxum 145",
+            "T6.180"
+          ]
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo",
+          "type": "enum",
+          "values": [
+            {
+              "value": "tractor",
+              "label": "Tractor"
+            },
+            {
+              "value": "cosechadora",
+              "label": "Cosechadora"
+            },
+            {
+              "value": "empacadora",
+              "label": "Empacadora"
+            },
+            {
+              "value": "remolque",
+              "label": "Remolque"
+            }
+          ],
+          "samples": [
+            "tractor",
+            "tractor",
+            "cosechadora",
+            "tractor",
+            "cosechadora",
+            "tractor",
+            "cosechadora",
+            "empacadora",
+            "tractor",
+            "remolque"
+          ]
+        },
+        {
+          "name": "horasUso",
+          "label": "Horas de uso",
+          "type": "integer",
+          "samples": [
+            4820,
+            7310,
+            2145,
+            9860,
+            1230,
+            6075,
+            11540,
+            3390,
+            5610,
+            880
+          ]
+        },
+        {
+          "name": "cliente",
+          "label": "Cliente",
+          "type": "ref",
+          "refTo": "cliente",
+          "samples": [
+            "Agrícola Hermanos Sanz CB",
+            "Cooperativa del Campo San Isidro",
+            "Comunidad de Regantes del Zapardiel",
+            "Explotaciones Nava del Rey SL",
+            "Agroganadera Torozos SC",
+            "Cooperativa Cerealista de Medina",
+            "Finca La Serna SL",
+            "Juan Carlos Bermejo Rodríguez",
+            "Agrícola Villaverde SC",
+            "Cultivos del Duero SL"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [
+          "user"
+        ],
+        "edit": [
+          "user"
+        ],
+        "delete": []
+      }
+    },
+    {
+      "name": "orden",
+      "plural": "ordenes",
+      "labelSingular": "Orden de reparación",
+      "labelPlural": "Órdenes de reparación",
+      "gender": "f",
+      "brief": "El trabajo sobre una máquina de principio a fin: avería, presupuesto, reparación, entrega y factura.",
+      "attachments": true,
+      "detail": true,
+      "fields": [
+        {
+          "name": "referencia",
+          "label": "Referencia",
+          "type": "string",
+          "samples": [
+            "OR-2026-0141",
+            "OR-2026-0142",
+            "OR-2026-0143",
+            "OR-2026-0144",
+            "OR-2026-0145",
+            "OR-2026-0146",
+            "OR-2026-0147",
+            "OR-2026-0148",
+            "OR-2026-0149",
+            "OR-2026-0150"
+          ]
+        },
+        {
+          "name": "maquina",
+          "label": "Máquina",
+          "type": "ref",
+          "refTo": "maquina",
+          "samples": [
+            "1RW6155RAKD012478",
+            "ZDFN1140TLE008321",
+            "WBK5810CJ0M114907",
+            "1CQ9670XPMH027744",
+            "ZKH2240NAJP003615",
+            "1RW7250MEND019062",
+            "WDG4410RTKB105233",
+            "ZAF1830QLMC004180",
+            "1CQ8340BPNH031205",
+            "WBK6120TJ2M118644"
+          ]
+        },
+        {
+          "name": "averia",
+          "label": "Avería que cuenta el cliente",
+          "type": "text",
+          "samples": [
+            "Pierde aceite por el cárter y salta el testigo de presión",
+            "No entra la tracción delantera en carga",
+            "El embrague patina al arrancar con remolque cargado",
+            "La cosechadora se para al llenar el granero, humo negro",
+            "Ruido metálico en la toma de fuerza a más de 1.500 rpm",
+            "Aire acondicionado sin frío y correa chirriando",
+            "El elevador hidráulico no sube el apero del todo",
+            "La empacadora rompe el cordel en cada tercera bala",
+            "Testigo de AdBlue encendido y pérdida de potencia",
+            "El remolque no frena por el circuito hidráulico"
+          ]
+        },
+        {
+          "name": "estado",
+          "label": "Estado",
+          "type": "enum",
+          "values": [
+            {
+              "value": "recibida",
+              "label": "Recibida"
+            },
+            {
+              "value": "presupuestada",
+              "label": "Presupuestada"
+            },
+            {
+              "value": "rechazada",
+              "label": "Rechazada"
+            },
+            {
+              "value": "en_reparacion",
+              "label": "En reparación"
+            },
+            {
+              "value": "esperando_recambio",
+              "label": "Esperando recambio"
+            },
+            {
+              "value": "reparada",
+              "label": "Reparada"
+            },
+            {
+              "value": "entregada",
+              "label": "Entregada"
+            },
+            {
+              "value": "facturada",
+              "label": "Facturada"
+            }
+          ],
+          "samples": [
+            "recibida",
+            "presupuestada",
+            "en_reparacion",
+            "esperando_recambio",
+            "reparada",
+            "entregada",
+            "facturada",
+            "rechazada",
+            "en_reparacion",
+            "presupuestada"
+          ]
+        },
+        {
+          "name": "fechaEntrada",
+          "label": "Fecha de entrada",
+          "type": "date",
+          "samples": [
+            "2026-07-27",
+            "2026-07-29",
+            "2026-07-31",
+            "2026-08-03",
+            "2026-08-04",
+            "2026-08-06",
+            "2026-08-07",
+            "2026-08-10",
+            "2026-08-11",
+            "2026-08-13"
+          ]
+        },
+        {
+          "name": "importePresupuesto",
+          "label": "Importe del presupuesto",
+          "type": "number",
+          "samples": [
+            412.5,
+            1875,
+            236.9,
+            3420.75,
+            148.2,
+            690.4,
+            2540,
+            315.6,
+            980.35,
+            1265.8
+          ]
+        },
+        {
+          "name": "horasManoObra",
+          "label": "Horas de mano de obra",
+          "type": "number",
+          "samples": [
+            3.5,
+            12,
+            1.5,
+            26.5,
+            2,
+            6,
+            18.5,
+            4,
+            9.5,
+            14
+          ]
+        },
+        {
+          "name": "enGarantia",
+          "label": "En garantía del fabricante",
+          "type": "boolean",
+          "samples": [
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            false
+          ]
+        }
+      ],
+      "state": {
+        "field": "estado",
+        "initial": "recibida",
+        "transitions": [
+          {
+            "name": "presupuestar",
+            "label": "Presupuestar",
+            "from": [
+              "recibida"
+            ],
+            "to": "presupuestada"
+          },
+          {
+            "name": "aprobar",
+            "label": "Aprobar presupuesto",
+            "from": [
+              "presupuestada"
+            ],
+            "to": "en_reparacion"
+          },
+          {
+            "name": "rechazar",
+            "label": "Rechazar presupuesto",
+            "from": [
+              "presupuestada"
+            ],
+            "to": "rechazada"
+          },
+          {
+            "name": "pedir-recambio",
+            "label": "Pedir recambio",
+            "from": [
+              "en_reparacion"
+            ],
+            "to": "esperando_recambio"
+          },
+          {
+            "name": "reanudar",
+            "label": "Reanudar reparación",
+            "from": [
+              "esperando_recambio"
+            ],
+            "to": "en_reparacion"
+          },
+          {
+            "name": "terminar",
+            "label": "Terminar reparación",
+            "from": [
+              "en_reparacion"
+            ],
+            "to": "reparada"
+          },
+          {
+            "name": "entregar",
+            "label": "Entregar máquina",
+            "from": [
+              "reparada"
+            ],
+            "to": "entregada"
+          },
+          {
+            "name": "facturar",
+            "label": "Facturar",
+            "from": [
+              "entregada"
+            ],
+            "to": "facturada"
+          },
+          {
+            "name": "reabrir",
+            "label": "Reabrir presupuesto",
+            "from": [
+              "rechazada"
+            ],
+            "to": "presupuestada"
+          }
+        ]
+      },
+      "access": {
+        "view": [
+          "user",
+          "viewer"
+        ],
+        "create": [
+          "user"
+        ],
+        "edit": [
+          "user"
+        ],
+        "delete": [],
+        "transitions": {
+          "presupuestar": [],
+          "aprobar": [],
+          "rechazar": [],
+          "pedir-recambio": [
+            "user"
+          ],
+          "reanudar": [
+            "user"
+          ],
+          "terminar": [
+            "user"
+          ],
+          "entregar": [],
+          "facturar": [],
+          "reabrir": [
+            "user"
+          ]
+        }
+      }
+    },
+    {
+      "name": "recambio",
+      "plural": "recambios",
+      "labelSingular": "Recambio",
+      "labelPlural": "Recambios",
+      "gender": "m",
+      "brief": "La pieza del almacenillo con su referencia de proveedor, precio y stock; su pedido lo lleva el almacén a mano.",
+      "fields": [
+        {
+          "name": "referencia",
+          "label": "Referencia",
+          "type": "string",
+          "samples": [
+            "RE-504121",
+            "AL-118740",
+            "JD-6155-0042",
+            "NH-T7-90318",
+            "CS-PUMA-2214",
+            "RE-509880",
+            "CL-LEX-77410",
+            "DF-6165-0518",
+            "AL-120366",
+            "NH-CR-45092"
+          ]
+        },
+        {
+          "name": "descripcion",
+          "label": "Descripción",
+          "type": "string",
+          "samples": [
+            "Filtro de aceite motor",
+            "Junta de cárter",
+            "Disco de embrague 330 mm",
+            "Bomba hidráulica de elevación",
+            "Correa del alternador",
+            "Filtro de AdBlue",
+            "Rodamiento de toma de fuerza",
+            "Manguito de refrigeración",
+            "Cordel de empacadora (rollo)",
+            "Latiguillo de freno hidráulico"
+          ]
+        },
+        {
+          "name": "proveedor",
+          "label": "Proveedor",
+          "type": "string",
+          "samples": [
+            "Recambios Agrícolas Duero SL",
+            "Suministros Medina SA",
+            "John Deere Ibérica",
+            "New Holland Recambios",
+            "Hidráulica Castellana SL",
+            "Recambios Agrícolas Duero SL",
+            "Claas Ibérica",
+            "Deutz-Fahr España",
+            "Suministros Medina SA",
+            "Frenos y Latiguillos Pisuerga SL"
+          ]
+        },
+        {
+          "name": "precio",
+          "label": "Precio",
+          "type": "number",
+          "samples": [
+            18.4,
+            32.75,
+            286.5,
+            1140.9,
+            24.2,
+            41.6,
+            96.3,
+            15.85,
+            58.4,
+            27.9
+          ]
+        },
+        {
+          "name": "stock",
+          "label": "Stock",
+          "type": "integer",
+          "samples": [
+            12,
+            4,
+            1,
+            0,
+            8,
+            6,
+            2,
+            15,
+            3,
+            0
+          ]
+        },
+        {
+          "name": "estadoPedido",
+          "label": "Estado del pedido",
+          "type": "enum",
+          "values": [
+            {
+              "value": "pendiente",
+              "label": "Pendiente"
+            },
+            {
+              "value": "pedido",
+              "label": "Pedido"
+            },
+            {
+              "value": "recibido",
+              "label": "Recibido"
+            }
+          ],
+          "samples": [
+            "recibido",
+            "pedido",
+            "pendiente",
+            "pedido",
+            "recibido",
+            "recibido",
+            "pendiente",
+            "recibido",
+            "pedido",
+            "pendiente"
+          ]
+        }
+      ],
+      "access": {
+        "view": [
+          "user"
+        ],
+        "create": [
+          "user"
+        ],
+        "edit": [
+          "user"
+        ],
+        "delete": []
+      }
+    }
+  ],
+  "pages": [
+    {
+      "title": "Panel",
+      "blocks": [
+        {
+          "kind": "kpis",
+          "resources": [
+            "orden",
+            "maquina",
+            "recambio"
+          ],
+          "width": "full"
+        },
+        {
+          "kind": "table",
+          "resource": "orden",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Órdenes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "orden",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Ficha de la orden",
+      "drillDown": true,
+      "blocks": [
+        {
+          "kind": "fields",
+          "resource": "orden",
+          "width": "full"
+        },
+        {
+          "kind": "attachments",
+          "resource": "orden",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Máquinas",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "maquina",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Clientes",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "cliente",
+          "width": "full"
+        }
+      ]
+    },
+    {
+      "title": "Recambios",
+      "blocks": [
+        {
+          "kind": "table",
+          "resource": "recambio",
+          "width": "full"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "name": "De la máquina averiada a la factura",
+      "description": "El recorrido completo de una orden: entra la máquina, se presupuesta, el cliente decide, se repara (con parada por recambio si falta pieza), se entrega con el parte firmado y administración factura.",
+      "nodes": [
+        {
+          "id": "entra-maquina",
+          "kind": "start",
+          "text": "Entra la máquina averiada en el taller"
+        },
+        {
+          "id": "abrir-orden",
+          "kind": "step",
+          "text": "Se abre la orden con la avería que cuenta el cliente",
+          "entity": "orden",
+          "status": "recibida"
+        },
+        {
+          "id": "presupuestar",
+          "kind": "step",
+          "text": "El jefe de taller presupuesta la reparación",
+          "entity": "orden",
+          "status": "presupuestada",
+          "transition": "presupuestar"
+        },
+        {
+          "id": "aprueba-cliente",
+          "kind": "decision",
+          "text": "¿Aprueba el cliente el presupuesto?"
+        },
+        {
+          "id": "aprobar",
+          "kind": "step",
+          "text": "Se aprueba y la máquina entra en reparación",
+          "entity": "orden",
+          "status": "en_reparacion",
+          "transition": "aprobar"
+        },
+        {
+          "id": "rechazar",
+          "kind": "step",
+          "text": "Se rechaza y se devuelve la máquina sin tocar",
+          "entity": "orden",
+          "status": "rechazada",
+          "transition": "rechazar"
+        },
+        {
+          "id": "fin-rechazada",
+          "kind": "end",
+          "text": "Máquina devuelta sin reparar"
+        },
+        {
+          "id": "reparar",
+          "kind": "step",
+          "text": "El mecánico repara y apunta horas y recambios",
+          "entity": "orden"
+        },
+        {
+          "id": "falta-recambio",
+          "kind": "decision",
+          "text": "¿Falta algún recambio?"
+        },
+        {
+          "id": "pedir-recambio",
+          "kind": "step",
+          "text": "La orden queda esperando el pedido al proveedor",
+          "entity": "orden",
+          "status": "esperando_recambio",
+          "transition": "pedir-recambio"
+        },
+        {
+          "id": "llega-recambio",
+          "kind": "step",
+          "text": "Llega el recambio y se reanuda la reparación",
+          "entity": "orden",
+          "status": "en_reparacion",
+          "transition": "reanudar"
+        },
+        {
+          "id": "terminar",
+          "kind": "step",
+          "text": "Se termina la reparación y se avisa al cliente",
+          "entity": "orden",
+          "status": "reparada",
+          "transition": "terminar"
+        },
+        {
+          "id": "entregar",
+          "kind": "step",
+          "text": "Se entrega la máquina con el parte de trabajo firmado",
+          "entity": "orden",
+          "status": "entregada",
+          "transition": "entregar"
+        },
+        {
+          "id": "facturar",
+          "kind": "step",
+          "text": "Administración factura la orden a fin de mes",
+          "entity": "orden",
+          "status": "facturada",
+          "transition": "facturar"
+        },
+        {
+          "id": "fin-cerrada",
+          "kind": "end",
+          "text": "Orden cerrada"
+        }
+      ],
+      "edges": [
+        {
+          "from": "entra-maquina",
+          "to": "abrir-orden"
+        },
+        {
+          "from": "abrir-orden",
+          "to": "presupuestar"
+        },
+        {
+          "from": "presupuestar",
+          "to": "aprueba-cliente"
+        },
+        {
+          "from": "aprueba-cliente",
+          "to": "aprobar",
+          "label": "sí"
+        },
+        {
+          "from": "aprueba-cliente",
+          "to": "rechazar",
+          "label": "no"
+        },
+        {
+          "from": "rechazar",
+          "to": "fin-rechazada"
+        },
+        {
+          "from": "aprobar",
+          "to": "reparar"
+        },
+        {
+          "from": "reparar",
+          "to": "falta-recambio"
+        },
+        {
+          "from": "falta-recambio",
+          "to": "pedir-recambio",
+          "label": "sí"
+        },
+        {
+          "from": "falta-recambio",
+          "to": "terminar",
+          "label": "no"
+        },
+        {
+          "from": "pedir-recambio",
+          "to": "llega-recambio"
+        },
+        {
+          "from": "llega-recambio",
+          "to": "reparar"
+        },
+        {
+          "from": "terminar",
+          "to": "entregar"
+        },
+        {
+          "from": "entregar",
+          "to": "facturar"
+        },
+        {
+          "from": "facturar",
+          "to": "fin-cerrada"
+        }
+      ]
+    },
+    {
+      "name": "JOB · Órdenes paradas por recambio",
+      "description": "El job diario mira las órdenes esperando recambio y, pasados siete días, arranca la reclamación al proveedor y avisa al jefe de taller.",
+      "nodes": [
+        {
+          "id": "job-diario",
+          "kind": "start",
+          "text": "El job diario recorre las órdenes esperando recambio"
+        },
+        {
+          "id": "mas-de-siete",
+          "kind": "decision",
+          "text": "¿Lleva más de 7 días esperando el recambio?"
+        },
+        {
+          "id": "reclamar",
+          "kind": "step",
+          "text": "Se reclama el recambio al proveedor y se avisa al jefe de taller",
+          "entity": "orden"
+        },
+        {
+          "id": "fin-reclamada",
+          "kind": "end",
+          "text": "Reclamación abierta con el proveedor"
+        },
+        {
+          "id": "fin-sin-aviso",
+          "kind": "end",
+          "text": "Nada que reclamar: se revisa en la siguiente pasada"
+        }
+      ],
+      "edges": [
+        {
+          "from": "job-diario",
+          "to": "mas-de-siete"
+        },
+        {
+          "from": "mas-de-siete",
+          "to": "reclamar",
+          "label": "más de 7 días"
+        },
+        {
+          "from": "mas-de-siete",
+          "to": "fin-sin-aviso",
+          "label": "menos de 7 días"
+        },
+        {
+          "from": "reclamar",
+          "to": "fin-reclamada"
+        }
+      ]
+    },
+    {
+      "name": "Decisión del presupuesto",
+      "description": "Encrucijada del proceso: decide si la reparación va por garantía del fabricante o a cargo del cliente. Aquí vuelven los caminos que no salen adelante.",
+      "nodes": [
+        {
+          "id": "hay-presupuesto",
+          "kind": "start",
+          "text": "Hay una orden presupuestada pendiente de decidir quién paga",
+          "entity": "orden",
+          "status": "presupuestada"
+        },
+        {
+          "id": "que-via",
+          "kind": "decision",
+          "text": "¿Garantía del fabricante o a cargo del cliente?"
+        },
+        {
+          "id": "via-garantia",
+          "kind": "step",
+          "text": "La reparación se tramita por garantía del fabricante",
+          "entity": "orden"
+        },
+        {
+          "id": "via-cliente",
+          "kind": "step",
+          "text": "La reparación va a cargo del cliente",
+          "entity": "orden"
+        },
+        {
+          "id": "fin-garantia",
+          "kind": "end",
+          "text": "→ Flujo: Presupuesto · Vía garantía del fabricante"
+        },
+        {
+          "id": "fin-cliente",
+          "kind": "end",
+          "text": "→ Flujo: Presupuesto · Vía cliente"
+        }
+      ],
+      "edges": [
+        {
+          "from": "hay-presupuesto",
+          "to": "que-via"
+        },
+        {
+          "from": "que-via",
+          "to": "via-garantia",
+          "label": "garantía"
+        },
+        {
+          "from": "que-via",
+          "to": "via-cliente",
+          "label": "cliente"
+        },
+        {
+          "from": "via-garantia",
+          "to": "fin-garantia"
+        },
+        {
+          "from": "via-cliente",
+          "to": "fin-cliente"
+        }
+      ]
+    },
+    {
+      "name": "Presupuesto · Vía garantía del fabricante",
+      "description": "Se manda el parte de garantía al fabricante. Si la acepta, la orden entra en reparación sin coste; si la deniega, el caso vuelve a la decisión del presupuesto.",
+      "nodes": [
+        {
+          "id": "enviar-parte",
+          "kind": "start",
+          "text": "Se envía el parte de garantía al fabricante"
+        },
+        {
+          "id": "acepta-fabricante",
+          "kind": "decision",
+          "text": "¿Acepta el fabricante la garantía?"
+        },
+        {
+          "id": "aprobar-garantia",
+          "kind": "step",
+          "text": "Se aprueba la orden y entra en reparación sin coste para el cliente",
+          "entity": "orden",
+          "status": "en_reparacion",
+          "transition": "aprobar"
+        },
+        {
+          "id": "fin-en-reparacion",
+          "kind": "end",
+          "text": "→ Flujo: De la máquina averiada a la factura"
+        },
+        {
+          "id": "fin-denegada",
+          "kind": "end",
+          "text": "Garantía denegada → Flujo: Decisión del presupuesto"
+        }
+      ],
+      "edges": [
+        {
+          "from": "enviar-parte",
+          "to": "acepta-fabricante"
+        },
+        {
+          "from": "acepta-fabricante",
+          "to": "aprobar-garantia",
+          "label": "acepta"
+        },
+        {
+          "from": "acepta-fabricante",
+          "to": "fin-denegada",
+          "label": "deniega"
+        },
+        {
+          "from": "aprobar-garantia",
+          "to": "fin-en-reparacion"
+        }
+      ]
+    },
+    {
+      "name": "Presupuesto · Vía cliente",
+      "description": "Se llama al cliente con el importe. Acepta y entra en reparación, lo rechaza y se le devuelve la máquina, o no contesta y el caso vuelve a la decisión del presupuesto.",
+      "nodes": [
+        {
+          "id": "llamar-cliente",
+          "kind": "start",
+          "text": "Se llama al cliente con el importe del presupuesto"
+        },
+        {
+          "id": "contesta",
+          "kind": "decision",
+          "text": "¿Contesta el cliente en 7 días?"
+        },
+        {
+          "id": "acepta-importe",
+          "kind": "decision",
+          "text": "¿Acepta el importe?"
+        },
+        {
+          "id": "aprobar-cliente",
+          "kind": "step",
+          "text": "Se aprueba el presupuesto y entra en reparación",
+          "entity": "orden",
+          "status": "en_reparacion",
+          "transition": "aprobar"
+        },
+        {
+          "id": "rechazar-cliente",
+          "kind": "step",
+          "text": "El cliente rechaza: se devuelve la máquina sin tocar",
+          "entity": "orden",
+          "status": "rechazada",
+          "transition": "rechazar"
+        },
+        {
+          "id": "fin-aprobada",
+          "kind": "end",
+          "text": "→ Flujo: De la máquina averiada a la factura"
+        },
+        {
+          "id": "fin-devuelta",
+          "kind": "end",
+          "text": "Máquina devuelta sin reparar"
+        },
+        {
+          "id": "fin-sin-respuesta",
+          "kind": "end",
+          "text": "Sin respuesta → Flujo: Decisión del presupuesto"
+        }
+      ],
+      "edges": [
+        {
+          "from": "llamar-cliente",
+          "to": "contesta"
+        },
+        {
+          "from": "contesta",
+          "to": "acepta-importe",
+          "label": "sí"
+        },
+        {
+          "from": "contesta",
+          "to": "fin-sin-respuesta",
+          "label": "no"
+        },
+        {
+          "from": "acepta-importe",
+          "to": "aprobar-cliente",
+          "label": "acepta"
+        },
+        {
+          "from": "acepta-importe",
+          "to": "rechazar-cliente",
+          "label": "no acepta"
+        },
+        {
+          "from": "aprobar-cliente",
+          "to": "fin-aprobada"
+        },
+        {
+          "from": "rechazar-cliente",
+          "to": "fin-devuelta"
+        }
+      ]
+    }
+  ],
+  "brief": {
+    "business": "Taller de reparación de maquinaria agrícola en Medina del Campo: cinco mecánicos, un jefe de taller y una persona en administración. Los clientes son agricultores, dos cooperativas y una comunidad de regantes, y traen tractores, cosechadoras, empacadoras y remolques que vuelven al taller año tras año. El trabajo se organiza por órdenes de reparación: entra la máquina, se anota la avería que cuenta el cliente, el jefe de taller presupuesta y hasta que el cliente no aprueba nadie toca la máquina. Aprobada, un mecánico repara apuntando horas de mano de obra y recambios; si falta un recambio la orden se queda esperando el pedido al proveedor, y eso es lo que más atasca. Reparada, se avisa al cliente, se entrega con el parte de trabajo firmado escaneado en la orden y administración factura a fin de mes. Lo que más duele: una orden presupuestada de la que nadie vuelve a llamar al cliente, una máquina entregada sin parte firmado y una orden entregada que se queda meses sin facturar.",
+    "rules": [
+      "Hasta que el cliente no aprueba el presupuesto, nadie toca la máquina.",
+      "Una orden no se entrega si no está reparada, y una orden rechazada no se repara.",
+      "Una orden facturada no se reabre nunca ni vuelve atrás.",
+      "No se factura una orden sin horas de mano de obra apuntadas.",
+      "No se entrega sin el parte de trabajo firmado adjunto en la orden.",
+      "Una orden que lleva más de siete días esperando recambio se reclama al proveedor.",
+      "Presupuestar, aprobar, rechazar, entregar y facturar son cosa del jefe de taller y de administración; los mecánicos empiezan la reparación, piden recambio y la terminan.",
+      "El comercial consulta y no toca nada.",
+      "El estado del pedido de un recambio lo cambia el almacén a mano en la ficha: ahí no hay reglas."
+    ],
+    "glossary": [
+      {
+        "term": "orden de reparación",
+        "means": "El trabajo sobre una máquina de principio a fin: avería, presupuesto, reparación, entrega y factura"
+      },
+      {
+        "term": "parte de trabajo",
+        "means": "El documento que firma el cliente al recoger la máquina; se escanea y se cuelga en la orden"
+      },
+      {
+        "term": "esperando recambio",
+        "means": "La reparación está parada porque falta una pieza pedida al proveedor"
+      },
+      {
+        "term": "garantía del fabricante",
+        "means": "La reparación la paga el fabricante y no el cliente; la autoriza él"
+      },
+      {
+        "term": "recambio",
+        "means": "La pieza que se gasta en una reparación, con su referencia de proveedor"
+      }
+    ]
+  },
+  "ports": {
+    "api": 3021,
+    "web": 4331,
+    "postgres": 5453,
+    "postgresTest": 5454
+  }
+}
