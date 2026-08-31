@@ -5,12 +5,14 @@ import { definePersistence } from './provider'
 
 /**
  * Mongo/Mongoose. Emite su config y su persistencia compartida (`files-mongo` en el kernel)
- * y, por recurso, el schema del documento + el mapper (`files-persistence-mongoose`).
+ * y, por recurso, el schema del documento + el mapper + el repositorio concreto
+ * (`files-persistence-mongoose`), con su test de integración contra el replSet del compose.
  *
- * Los campos que siguen ausentes son huecos a propósito, no olvidos: el repositorio
- * concreto, el arranque de la suite de integración y el servicio de compose son las
- * tareas TASK-07..10 de la spec 06. El manifiesto describe lo que el generador emite
- * de verdad, no lo que nos gustaría que emitiera.
+ * Verificado de punta a punta por la spec 76 (2026-08-31, demo `licencias`). Los campos que
+ * siguen ausentes son huecos a propósito, no olvidos: `codeFiles` (Mongo no tiene secuencias),
+ * `supportsAttachments` (los adjuntos emiten TypeORM) y `compositionFiles` (los hijos van
+ * embebidos en el documento del padre, no en árbol aparte). El manifiesto describe lo que el
+ * generador emite de verdad, no lo que nos gustaría que emitiera.
  */
 export const mongoPersistence = definePersistence({
   engine: 'mongo',

@@ -42,11 +42,12 @@
       el op de la fila archivada (`deletedOpOf`, ambos motores) y revierte el árbol en
       transacción. 404 antes de tocar nada; hojas como siempre. El «hijo borrado aparte no
       vuelve» queda garantizado por diseño (otro op) y se verifica e2e en TASK-12.
-- [ ] **TASK-07**: ~~adapter Mongoose~~ (entró con TASK-04). Lo que queda —probar el arrastre
-      y el restore contra una BD real— NO cabe en la integración emitida: es por entidad, y
-      un hijo no puede insertarse sin su padre (la FK es real, las migraciones corren). Se
-      **pliega en TASK-12**, que tiene padre, hijo y base de datos de verdad. El manager de
-      transacción mongo ya existe y usa `withTransaction` sobre replSet.
+- [x] **TASK-07**: ~~adapter Mongoose~~ (entró con TASK-04). Lo que quedaba —probar el arrastre
+      contra una BD real por el camino Mongoose— se **cerró en la spec 76** (2026-08-31, demo
+      `apps/licencias`): DELETE del padre por HTTP ⇒ 204, las dos hijas marcadas con el MISMO
+      `deletedOp` (una transacción del replSet, verificado con mongosh contra la base) y fuera
+      de los listados. El restore ya no aplica: la papelera se retiró el 2026-08-28 (spec 29
+      fuera del generador). TASK-12 había verificado solo Postgres (Solaris).
 
 ## Frontend
 

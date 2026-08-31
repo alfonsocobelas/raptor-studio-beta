@@ -44,7 +44,7 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 | —     | `ui-nivel-2`              | Contratos headless + adapters de piel (ADR-003)                                                                                                                 | Solo con cliente real                                                                                     |
 | —     | `adapter-storage-s3`      | 2º proveedor: valida la abstracción del puerto                                                                                                                  | Solo con cliente AWS                                                                                      |
 | —     | `arquetipo-bridge-api`    | Perfil `bridge-api` (ref. ip-opentext-cmis-api)                                                                                                                 | Solo con proyecto real                                                                                    |
-| 06    | `mongo-persistence`       | Motor alternativo `--database=mongo` (Mongoose): adapters de persistencia + arrange de tests (docker replSet) + fixture golden mongo                            | **Activa, re-encajada sobre la spec 23** (TASK-01..05 hechas; TASK-06..12 = rellenar `mongo.provider.ts`) |
+| ✅ 06 | `mongo-persistence`       | Motor alternativo `--database=mongo` (Mongoose): adapters de persistencia + arrange de tests (docker replSet) + fixture golden mongo                            | **Hecha** (12/12 el 2026-08-04; verificada end-to-end y re-gateada por la spec 76 el 2026-08-31)          |
 | ✅ 05 | `generador-app-y-plugins` | Proyecto arrancable en un comando: esqueleto literal, plugins (auth/email/observability), migraciones de fábrica, 2 pieles, tests emitidos ejecutables, CI, CLI | **Hecha (retroactiva 2026-07-31)**                                                                        |
 | —     | `demo-app-gate-visual`    | ~~App de demo~~ → cubierto por spec 05 (demos verificadas con Playwright); queda solo integrar el gate visual como paso reproducible                            | Parcialmente cubierta                                                                                     |
 | —     | `gitflow-completo`        | Reinstaurar ramas/PRs/rulesets (base: spec 51 de la referencia)                                                                                                 | Cuando madure                                                                                             |
@@ -208,7 +208,9 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 
 ```
   RANURA      PROVEEDORES HOY                 PENDIENTE (spec que lo rellena)
-  database    postgres ✅ | mongo ✅          spec 06: falta golden mongo + suite integración
+  database    postgres ✅ | mongo ✅          spec 76: mongo end-to-end (golden rico + demo real);
+                                              quedan como degradación declarada: auth (y su séquito),
+                                              adjuntos, código de negocio, IaC (siempre Postgres)
   ui          spartan ✅ (único proveedor)      material retirada (spec 36, 2026-08-10)
   infra       none ✅ | azure ✅ | aws ✅       (completa)
               raptor ✅ (low cost) | gcp ✅
@@ -528,15 +530,14 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     Pendiente de spec; decidir presupuesto de reintentos de la reparación y qué corre el gate
     (vitest de la app emitida vs. suite completa).
 
-38. **La opción `database=mongo` debe funcionar al generar, de punta a punta** (2026-08-29).
-    La ranura existe (`schema.d.ts: database?: 'postgres' | 'mongo'`) y hay fixture de oro
-    `app-mongo` con repositorios Mongoose, pero la opción no está al día con todo lo que ha
-    entrado después por el camino TypeORM (aggregate/KPIs de las specs 71-72, composición,
-    borrado, transiciones…) ni verificada end-to-end desde el estudio (elegir Mongo en «Antes
-    de generar» → app que arranca, migra/seeds y pasa su suite contra un Mongo real). Tarea:
-    auditar qué emite hoy el camino mongo, completar los huecos y verificarlo con una demo
-    como se hizo con las de Postgres. Se ata con el fleco de la spec 38 (arrastre del adapter
-    Mongoose) y con la parte (c) de la idea 35.
+38. ~~**La opción `database=mongo` debe funcionar de punta a punta**~~ — **resuelta por la
+    spec 76** (2026-08-31). La auditoría desmintió el desfase: aggregate 71-72, composición
+    embebida, arrastre, transiciones, denormalización, auditoría y seeds ya tenían equivalente
+    Mongoose. Lo real era cobertura del gate (el comando plano no ejercitaba KPIs ni flujo:
+    ahora `--app=golden-mongo`) y verificación: la demo `apps/licencias` (replSet en Docker)
+    cazó 6 defectos —arreglados en el generador con test rojo + golden— y cerró el fleco de la
+    spec 38 (arrastre Mongoose contra base real). Quedan como degradación declarada: auth (y
+    sessionStore/IAM UI/mi-cuenta/rate-limit), adjuntos, código de negocio e IaC.
 
 39. **Sistema de conocimiento de modelado para la IA de los bordes** (2026-08-29, apuntado por
     Alfonso como importante). Diseñar/pensar un corpus de conocimiento (ficheros .md curados,
