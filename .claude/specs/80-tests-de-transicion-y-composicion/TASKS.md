@@ -32,12 +32,32 @@
         ejecutándose fuera del acelerador ✅ · oro vacío tras re-baseline (customer 82→85,
         app 812→815, app-mongo 633→636), solo adiciones.
 
-- [ ] **TASK-04** — `files-tests/__fileName__.aggregate.test.ts.template`.
-      Redondeo `create() → toPrimitives()`, y con máquina: cada transición mueve al destino y
-      rechaza desde el estado ilegal. Podado cuando no hay nada que afirmar.
+- [x] **TASK-04** — el test del agregado, en **carpeta propia** `files-tests-domain/`.
+      · No pudo ir en `files-tests/`: la recolocación del generador de app manda TODO lo de
+        `backend-tests/` a `domain/mothers/` salvo el mock, y el agregado pertenece a `domain/`
+        (además la profundidad de import cambia: 4 niveles y no 5).
+      · Afirma el **redondeo de primitivos** (`fromPrimitives(p).toPrimitives()` === p), que es lo
+        que se rompe al añadir un campo y olvidarlo en el mapeo, y —si hay máquina— que cada verbo
+        mueve al destino y es rechazado desde `illegalFrom`. Un recurso sin máquina emite solo el
+        redondeo, sin sección de transiciones.
+      · Gates: generador 136 suites / 1167 ✅ · suite del emitido **457** backend (+8) ✅ ·
+        oro vacío (contract 81→82, customer 85→86, license 48→49, project 77→78, app 815→818,
+        app-mongo 636→639).
 
-- [ ] **TASK-05** — Cierre: `typecheck:emitted --suite` (la suite emitida en VERDE, no solo
-      compilando), re-baseline definitivo de las seis fixtures, ROADMAP (fila 14 a ✅) y memoria.
+- [x] **TASK-05** — Cierre: el gate del emitido se corrió en CADA tarea (no solo al final), las
+      seis fixtures quedan vacías y el ROADMAP recoge la fila 14 como cerrada.
+
+---
+
+## Resultado
+
+El emitido pasa de **37 a 54 tests de backend** por app de oro (443 → 457 ejecutándose de verdad
+fuera del acelerador). Las tres familias que iban sin red —transición, composición y agregado— ya
+la tienen, y el CRUD sigue como estaba.
+
+Un defecto latente cazado de paso: `builderDefault` producía literales inválidos para VOs con
+formato (email, charset de Phone). No se veía porque ningún campo del padre en los cuatro modelos
+de oro es un formato sin `column.default`.
 
 ---
 

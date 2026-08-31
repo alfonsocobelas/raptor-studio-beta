@@ -243,6 +243,14 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
       path.join(outputDir, 'backend-tests'),
       substitutions
     )
+    // spec 80: el test del agregado va en `domain/`, no junto a las mothers — carpeta propia
+    // porque la recolocación manda TODO lo de backend-tests/ a domain/mothers/
+    generateFiles(
+      tree,
+      path.join(__dirname, '..', 'resource', 'files-tests-domain'),
+      path.join(outputDir, 'backend-tests-domain'),
+      substitutions
+    )
     // tests de use case (unit, sobre el mock del repositorio)
     if (substitutions.app.emit) {
       generateFiles(

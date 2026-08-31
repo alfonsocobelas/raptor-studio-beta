@@ -239,6 +239,9 @@ export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Pro
         : path.join(testsRoot, 'domain/mothers')
       move(tree, path.join(stagedTests, file), path.join(target, file))
     }
+    // spec 80: el test del agregado vive en domain/ (4 niveles hasta la raíz del backend),
+    // no en domain/mothers/ como el resto de backend-tests
+    relocate(tree, path.join(staging, 'backend-tests-domain'), path.join(testsRoot, 'domain'))
     relocate(tree, path.join(staging, 'backend-tests-application'), path.join(testsRoot, 'application/use-cases'))
     relocate(
       tree,

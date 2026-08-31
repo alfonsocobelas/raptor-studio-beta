@@ -28,7 +28,7 @@
 | 12b | `auth-plugin`           | ✅ Puertos (PasswordHasher, SecureTokenGenerator, Clock, SessionStore sobre primitivas) + adapters argon2/crypto/system-clock/in-memory + **RedisSessionStore** (TTL nativo + índice por usuario para logout-everywhere; single-tenant, cookie-session) | ✅ 2026-07-30 |
 | 12  | `secrets-port`          | `SecretsPort` + adapters: **Azure Key Vault** (referencia) · **Doppler** · **Bitwarden/Infisical** (free-tier para stacks Cloudflare)                                                                                                                   | ✅ specs 24+50 |
 | 13  | `observability-port`    | `AppLogger`/telemetría: **App Insights** (referencia) · **Prometheus+Grafana** (prom-client, self-host free) · **Sentry**                                                                                                                               | ✅ specs 24/47/50/51/77 |
-| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases)                                                                                                                                             | 🟡 **Casi** — faltan transición y composición |
+| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases)                                                                                                                                             | ✅ spec 80    |
 | 15  | `kernel-config-infra`   | Replicar del esqueleto de referencia: config por entornos JSON, logger, filtros/interceptores, health checks, Dockerfiles, CI                                                                                                                           | ✅ spec 05 + infra |
 
 Nota (regla de los dos, ADR-004): la ampliación multi-cloud la pidió Alfonso el 2026-07-30. Orden de
@@ -53,12 +53,19 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 >    cero de dominio): la premisa original de esta fila —«los módulos de oro los tienen»— nunca fue
 >    cierta. Aquí el emitido va POR DELANTE del canon, no por detrás.
 >
-> **El hueco real, medido comparando use cases emitidos contra sus tests**, es más estrecho y más
-> interesante: se quedan sin test las dos familias de casos de uso que no nacieron con el CRUD —
+> **El hueco real, medido comparando use cases emitidos contra sus tests**, era más estrecho y más
+> interesante: se quedaban sin test las dos familias de casos de uso que no nacieron con el CRUD —
 > las **transiciones** de la máquina de estados (`expire-contract`, `terminate-contract`) y la
 > **composición** (`add/update/remove-contact`). Es decir, justo la lógica de negocio con guardas
-> (estado de origen válido → 409) va sin red, mientras el CRUD está bien cubierto. Tampoco hay test
-> del **agregado** en sí.
+> (estado de origen válido → 409) iba sin red, mientras el CRUD estaba bien cubierto. Tampoco había
+> test del **agregado** en sí.
+>
+> ✅ **Cerrado por la spec 80** (2026-08-31): las tres familias emiten test. El emitido pasa de 37 a
+> 54 tests de backend por app de oro (443 → 457 ejecutándose fuera del acelerador). El estado
+> ilegal de cada transición se elige de la propia máquina del modelo, nunca se inventa. De paso se
+> cazó un defecto latente: `builderDefault` daba literales inválidos a los VOs con formato (email,
+> charset de `Phone`) — invisible hasta ahora porque ningún campo del padre en los cuatro modelos
+> de oro es un formato sin `column.default`.
 
 ## Fase 3 — Bordes (bajo demanda, no especulativo)
 

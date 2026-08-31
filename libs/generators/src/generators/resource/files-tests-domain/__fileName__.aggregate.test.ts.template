@@ -1,0 +1,36 @@
+import { <%- className %> } from '../../../../src/contexts/<%- context %>/modules/<%- plural %>/domain/<%- fileName %>'
+import { <%- className %>Mother } from './mothers/<%- fileName %>.mother'
+
+describe('<%- className %>', () => {
+  /**
+   * El mapeo es lo que más se rompe al añadir un campo: si `toPrimitives` se olvida de uno,
+   * o `fromPrimitives` lo pierde por el camino, el redondeo deja de cerrar.
+   */
+  it('round-trips through primitives without losing fields', () => {
+    const primitives = <%- className %>Mother.primitives()
+
+    expect(<%- className %>.fromPrimitives(primitives).toPrimitives()).toEqual(primitives)
+  })
+<%_ if (entry.transitions.length) { _%>
+
+  describe('transitions', () => {
+<%_ entry.transitions.forEach(t => { _%>
+    it('<%- t.method %>() moves it from <%- t.from[0] %> to <%- t.to %>', () => {
+      const <%- propertyName %> = <%- className %>Mother.reconstruct({ <%- t.stateField %>: '<%- t.from[0] %>' })
+
+      <%- propertyName %>.<%- t.method %>()
+
+      expect(<%- propertyName %>.toPrimitives().<%- t.stateField %>).toBe('<%- t.to %>')
+    })
+<%_ if (t.illegalFrom) { _%>
+
+    it('<%- t.method %>() is rejected from <%- t.illegalFrom %>', () => {
+      const <%- propertyName %> = <%- className %>Mother.reconstruct({ <%- t.stateField %>: '<%- t.illegalFrom %>' })
+
+      expect(() => <%- propertyName %>.<%- t.method %>()).toThrow()
+    })
+<%_ } _%>
+<%_ }) _%>
+  })
+<%_ } _%>
+})
