@@ -88,7 +88,9 @@ const GROUPS: Record<string, GroupCopy> = {
     heading: 'Base de datos',
     entries: [
       { value: 'postgres', title: 'PostgreSQL', hint: 'Tus tablas tienen relaciones: Postgres encaja mejor' },
-      { value: 'mongo', title: 'MongoDB', hint: 'Documentos sin esquema fijo; sin autenticación hasta el port a Mongoose' }
+      // spec 76: mongo está verificado de punta a punta; lo que aún no lleva se dice aquí,
+      // en lenguaje de diseñador — nada de specs ni de «ports»
+      { value: 'mongo', title: 'MongoDB', hint: 'Cada ficha y sus hijas viajan en un documento; hoy sin usuarios ni adjuntos' }
     ]
   },
   // el grupo de autenticación se retiró con auth=none (spec 58): toda app lleva single-tenant
