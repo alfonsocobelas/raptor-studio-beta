@@ -28,7 +28,7 @@
 | 12b | `auth-plugin`           | ✅ Puertos (PasswordHasher, SecureTokenGenerator, Clock, SessionStore sobre primitivas) + adapters argon2/crypto/system-clock/in-memory + **RedisSessionStore** (TTL nativo + índice por usuario para logout-everywhere; single-tenant, cookie-session) | ✅ 2026-07-30 |
 | 12  | `secrets-port`          | `SecretsPort` + adapters: **Azure Key Vault** (referencia) · **Doppler** · **Bitwarden/Infisical** (free-tier para stacks Cloudflare)                                                                                                                   | ✅ specs 24+50 |
 | 13  | `observability-port`    | `AppLogger`/telemetría: **App Insights** (referencia) · **Prometheus+Grafana** (prom-client, self-host free) · **Sentry**                                                                                                                               | ✅ specs 24/47/50/51/77 |
-| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases) — hoy los módulos de oro los tienen y el generador no los produce                                                                          | 🟡 **Parcial** |
+| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases)                                                                                                                                             | 🟡 **Casi** — faltan transición y composición |
 | 15  | `kernel-config-infra`   | Replicar del esqueleto de referencia: config por entornos JSON, logger, filtros/interceptores, health checks, Dockerfiles, CI                                                                                                                           | ✅ spec 05 + infra |
 
 Nota (regla de los dos, ADR-004): la ampliación multi-cloud la pidió Alfonso el 2026-07-30. Orden de
@@ -38,11 +38,27 @@ sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
 > **Revisión 2026-08-31 (limpieza).** Esta tabla llevaba semanas marcando «Pendiente» trabajo que
 > las specs de infra (24 azure, 47 aws, 50 raptor, 77 gcp) y la 05 ya habían absorbido y cerrado;
 > los estados de arriba se han verificado uno a uno contra el código (`libs/infra/*` y las
-> plantillas del generador), no contra el recuerdo. El **único hueco real que queda es la fila 14**:
-> el generador emite `files-tests/` con `.mother.ts` y `.builder.ts`, y ocho plantillas `.spec` de
-> FRONTEND (servicio, ficha, formulario, DataTable, dashboard), pero **no emite ni un solo test de
-> backend** — ni de value objects ni de casos de uso, que es justo lo que los cuatro módulos de oro
-> sí tienen escrito a mano. Una app entregada nace con su dominio sin cubrir.
+> plantillas del generador), no contra el recuerdo. El único hueco que queda es la fila 14.
+>
+> ⚠️ **Corrección del 2026-08-31 (el mismo día).** La primera redacción de esta nota afirmaba que
+> el generador «no emite ni un solo test de backend» y que «los cuatro módulos de oro sí los tienen
+> escritos a mano». **Las dos mitades eran falsas**, y por dos errores distintos que conviene dejar
+> escritos porque son fáciles de repetir:
+>
+> 1. El backend emitido nombra sus tests `*.test.ts`, no `*.spec.ts` (el frontend sí usa `.spec.ts`).
+>    Buscar `*.spec.ts` bajo `libs/backend` devuelve cero y parece una ausencia: en realidad el
+>    generador emite **15 plantillas de test de backend** (8 de casos de uso, 2 de VOs, mother,
+>    builder, repository mock, integración TypeORM y Mongoose) y la fixture `app/` trae **37 tests**.
+> 2. La referencia sap-licenses **no tiene ni un test de backend** (50 specs de frontend y 3 e2e,
+>    cero de dominio): la premisa original de esta fila —«los módulos de oro los tienen»— nunca fue
+>    cierta. Aquí el emitido va POR DELANTE del canon, no por detrás.
+>
+> **El hueco real, medido comparando use cases emitidos contra sus tests**, es más estrecho y más
+> interesante: se quedan sin test las dos familias de casos de uso que no nacieron con el CRUD —
+> las **transiciones** de la máquina de estados (`expire-contract`, `terminate-contract`) y la
+> **composición** (`add/update/remove-contact`). Es decir, justo la lógica de negocio con guardas
+> (estado de origen válido → 409) va sin red, mientras el CRUD está bien cubierto. Tampoco hay test
+> del **agregado** en sí.
 
 ## Fase 3 — Bordes (bajo demanda, no especulativo)
 
