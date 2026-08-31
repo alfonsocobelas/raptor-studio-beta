@@ -251,6 +251,15 @@ export async function resourceGenerator(tree: Tree, options: ResourceGeneratorSc
         path.join(outputDir, 'backend-tests-application'),
         substitutions
       )
+      // spec 80: la hija de composición también trae sus tres tests
+      if (substitutions.aggregate.composition) {
+        generateFiles(
+          tree,
+          path.join(__dirname, '..', 'resource', 'files-tests-composition'),
+          path.join(outputDir, 'backend-tests-application'),
+          { ...substitutions, childFileName: substitutions.aggregate.composition.childFileName }
+        )
+      }
       // spec 80: cada transición emite su test junto al del CRUD, en el mismo bucle que la
       // emitió — el estado legal y el ilegal ya vienen calculados en el binding
       for (const transition of substitutions.entry.transitions) {

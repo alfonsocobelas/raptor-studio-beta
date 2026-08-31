@@ -1,0 +1,51 @@
+import { v7 as uuidv7 } from 'uuid'
+import { Add<%- aggregate.composition.childClass %>UseCase } from '../../../../../src/contexts/<%- context %>/modules/<%- plural %>/application/use-cases/add-<%- aggregate.composition.childFileName %>-usecase.service'
+import { EntityNotFoundError } from '../../../../../src/contexts/shared/domain/errors'
+import { TransactionManager } from '../../../../../src/contexts/shared/domain/persistence/transaction-manager'
+import { <%- className %>Mother } from '../../domain/mothers/<%- fileName %>.mother'
+import { <%- className %>RepositoryMock } from '../../mocks/<%- fileName %>.repository.mock'
+
+describe('Add<%- aggregate.composition.childClass %>UseCase', () => {
+  let repositoryMock: <%- className %>RepositoryMock
+  let useCase: Add<%- aggregate.composition.childClass %>UseCase
+  // el cuerpo del caso de uso vive DENTRO de la transacción: un doble que no ejecutase el
+  // trabajo dejaría pasar estos tests sin correr una sola línea de lo que afirman
+  const txManager = {
+    runInTransaction: jest.fn(<T>(work: () => Promise<T>) => work())
+  } as unknown as TransactionManager
+
+  const <%- aggregate.composition.childProp %> = {
+<%_ domainTests.childSampleLines.forEach(line => { _%>
+    <%- line %>,
+<%_ }) _%>
+  }
+
+  beforeEach(() => {
+    repositoryMock = new <%- className %>RepositoryMock()
+    useCase = new Add<%- aggregate.composition.childClass %>UseCase(repositoryMock, txManager)
+  })
+
+  describe('given the <%- propertyName %> does not exist', () => {
+    it('throws EntityNotFoundError and does not save', async () => {
+      repositoryMock.givenNotFound()
+
+      await expect(
+        useCase.invoke({ <%- aggregate.composition.parentField %>: uuidv7(), <%- aggregate.composition.childProp %> })
+      ).rejects.toThrow(EntityNotFoundError)
+      repositoryMock.assertNotCalled('save')
+    })
+  })
+
+  describe('given an existing <%- propertyName %>', () => {
+    it('adds the <%- aggregate.composition.childProp %> to the collection and saves once', async () => {
+      const parent = <%- className %>Mother.reconstruct()
+      repositoryMock.givenFound(parent)
+      repositoryMock.whenSaveSuccess()
+
+      await useCase.invoke({ <%- aggregate.composition.parentField %>: parent.id.value, <%- aggregate.composition.childProp %> })
+
+      expect(parent.<%- aggregate.composition.childrenProp %>).toHaveLength(1)
+      repositoryMock.assertCalledTimes('save', 1)
+    })
+  })
+})

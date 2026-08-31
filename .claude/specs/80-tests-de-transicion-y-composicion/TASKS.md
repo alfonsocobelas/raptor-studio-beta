@@ -16,9 +16,21 @@
         ejecutándose fuera del acelerador** ✅ · oro vacío tras re-baseline (contract 79→81
         ficheros, app 810→812, app-mongo 631→633), **solo adiciones**.
 
-- [ ] **TASK-03** — `files-tests-composition/` + poda por bandera de composición.
-      Los tres tests de la hija (`add`/`update`/`remove`). Gate: `customers` los emite;
-      `contracts` (sin composición) no emite ninguno.
+- [x] **TASK-03** — `files-tests-composition/` con los tres tests de la hija, emitidos solo si el
+      recurso declara composición. `customers` los emite; `contracts` no emite ninguno.
+      · **Defecto latente destapado**: los campos de la hija no declaran columna, así que caían al
+        literal genérico de `builderDefault` (`'<Campo> 1'`) — y eso REVIENTA en cuanto el VO tiene
+        formato: `ContactEmail` valida email y el `Phone` compartido solo admite dígitos y
+        símbolos (`^[0-9+()\-/.\s]+$`), así que `'Email 1'` y `'Phone 1'` no pasaban. No se veía
+        antes porque ningún campo del PADRE en los 4 modelos de oro es un formato sin
+        `column.default`. Arreglado con `childSample()`: el opcional de tipo texto va a `''`, que
+        es el valor que el propio caso de uso emitido ya usa (`input.contact.email ?? ''`).
+      · El doble de `TransactionManager` EJECUTA el trabajo (`work()`): uno que no lo hiciera
+        dejaría pasar los tests sin correr una línea del cuerpo. Hay un test del generador que lo
+        fija, para que nadie lo simplifique a `jest.fn()`.
+      · Gates: generador 135 suites / 1161 ✅ · suite del emitido **449** backend (+6) y 124 front,
+        ejecutándose fuera del acelerador ✅ · oro vacío tras re-baseline (customer 82→85,
+        app 812→815, app-mongo 633→636), solo adiciones.
 
 - [ ] **TASK-04** — `files-tests/__fileName__.aggregate.test.ts.template`.
       Redondeo `create() → toPrimitives()`, y con máquina: cada transición mueve al destino y

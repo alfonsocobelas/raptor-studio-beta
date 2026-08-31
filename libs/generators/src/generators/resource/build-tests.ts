@@ -28,6 +28,12 @@ export interface DomainTestBindings {
   builderCreateArgs: string[]
   randomHelpers: string[]
   motherUniqueShortcuts: { cap: string; name: string }[]
+  /**
+   * Spec 80: los tests de composición necesitan un hijo VÁLIDO, y sus VOs validan de verdad
+   * (longitudes, email, enums). Se construye con el mismo `builderDefault` que da valores al
+   * builder del padre, así que respeta constraints y defaults en vez de inventar literales.
+   */
+  childSampleLines: string[]
   voTests: {
     enums: { voName: string; valuesList: string; comment?: string }[]
     numbers: { voName: string; integer: boolean; unset: boolean; minKey: string }[]
@@ -100,6 +106,7 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
       builderCreateArgs: [],
       randomHelpers: [],
       motherUniqueShortcuts: [],
+      childSampleLines: [],
       voTests: { enums: [], numbers: [], texts: [], exacts: [], arrays: [], booleans: [], sanitizations: [] }
     }
   }
@@ -135,6 +142,7 @@ export function renderDomainTests(definition: ResourceDefinition): DomainTestBin
     portImports: renderPortImports(definition, uniques),
     builderImports: renderBuilderImports(definition, ctxs, moduleBase, contextShared, globalShared),
     builderDefaultLines: [...ctxs.map(c => `${c.name}: ${builderDefault(definition, c)}`), 'version: 1'],
+    childSampleLines: childCtxs(definition).map(c => `${c.name}: ${childSample(definition, c)}`),
     builderWiths: withFields.map(c => ({ cap: cap(c.name), name: c.name, tsType: builderWithType(c) })),
     builderCreateArgs: [
       `id: ${className}Id.create(this.props.id)`,
@@ -234,6 +242,40 @@ function voName(field: FieldDefinition): string {
   if (field.voShared) return field.voShared.name
   if (field.relation && field.type === 'uuid') return `${names(field.relation.to).className}Id`
   return ''
+}
+
+/**
+ * Los campos de la hija de composición, en la misma forma que los del padre, para poder pasarlos
+ * por `builderDefault`. El `id` SÍ entra (a diferencia del padre): el input del caso de uso lo
+ * lleva explícito, porque la hija no lo genera el repositorio.
+ */
+function childCtxs(definition: ResourceDefinition): Ctx[] {
+  return Object.entries(definition.composition?.fields ?? {}).map(([name, field]) => ({
+    name,
+    field,
+    voName: voName(field),
+    nullable: field.nullable ?? false,
+    sync: field.syncManaged ?? false,
+    maint: (field.optionalPrimitive ?? false) && !(field.syncManaged ?? false),
+    unique: field.unique ?? false,
+    isState: false,
+    unset:
+      (typeof field.vo === 'object' && field.vo.unset === true) ||
+      field.voShared?.unset === true ||
+      field.voRef?.unset === true
+  }))
+}
+
+/**
+ * Valor de muestra de un campo de la hija. Los campos de la hija no declaran columna, así que
+ * caerían al literal genérico `'<Campo> 1'` de `builderDefault` — y eso REVIENTA en cuanto el VO
+ * tiene formato: ContactEmail valida email y el Phone compartido solo admite dígitos y símbolos.
+ * El propio caso de uso emitido ya dice cuál es el valor de un opcional ausente
+ * (`input.contact.email ?? ''`), así que el test usa ese mismo y no inventa nada.
+ */
+function childSample(definition: ResourceDefinition, c: Ctx): string {
+  if (!c.field.required && c.field.type === 'string') return "''"
+  return builderDefault(definition, c)
 }
 
 function builderDefault(definition: ResourceDefinition, c: Ctx): string {
