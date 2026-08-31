@@ -58,18 +58,26 @@ export class AggregateLicensesUseCase {
     // indexable y deja al techo sin nada que recortar en una serie.
     const months = input.months ?? 12
     const baseFilters = Array.isArray(input.filters) ? (input.filters as unknown[]) : []
+    // los filtros del DTO llegan como Map (ParseCriteriaPipe): los de la ventana deben serlo
+    // también — un objeto plano revienta Filter.fromValues con "map.get is not a function" (spec 76)
     const scopedFilters = input.bucket
       ? [
           ...baseFilters,
-          { field: input.bucketField, operator: 'gte', value: monthWindowStart(months) },
-          { field: input.bucketField, operator: 'lt', value: nextMonthStart() }
+          windowFilter(input.bucketField as string, 'gte', monthWindowStart(months)),
+          windowFilter(input.bucketField as string, 'lt', nextMonthStart())
         ]
       : baseFilters
 
-    // el mismo lenguaje de filtro que el listado: una sola sintaxis en toda la app
+    // el mismo lenguaje de filtro que el listado: una sola sintaxis en toda la app.
+    // El campo de la ventana ya pasó SU lista blanca (fecha agregable, arriba): se admite
+    // aquí como filtro aunque el recurso no lo exponga en ALLOWED_FILTERS (spec 76)
+    const scopedAllowed =
+      input.bucket && !(allowedFilters as readonly string[]).includes(input.bucketField as string)
+        ? [...(allowedFilters as readonly string[]), input.bucketField as string]
+        : [...(allowedFilters as readonly string[])]
     const criteria = Criteria.fromOffset(
       { page: 1, pageSize: 1, filters: scopedFilters } as never,
-      allowedFilters,
+      scopedAllowed,
       allowedOrders,
       searchableFields
     )
@@ -115,6 +123,15 @@ function monthsOf(groups: AggregateGroup[], months: number, op: string): Aggrega
     const key = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}`
     return { key, value: found.has(key) ? (found.get(key) ?? null) : empty }
   })
+}
+
+/** Un filtro con la forma que espera Filter.fromValues: un Map, como los que emite el pipe. */
+function windowFilter(field: string, operator: string, value: string): Map<string, string> {
+  return new Map([
+    ['field', field],
+    ['operator', operator],
+    ['value', value]
+  ])
 }
 
 /** Primer día del PRIMER mes de la ventana, en hora local del servidor (la misma de monthsOf). */

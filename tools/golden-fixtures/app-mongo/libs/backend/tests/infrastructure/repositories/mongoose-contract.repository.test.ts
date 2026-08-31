@@ -165,8 +165,11 @@ describe('MongooseContractRepository (integration)', () => {
         limit: 50
       })
 
-      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos
-      for (const group of groups) expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+      // los meses vacíos los rellena el caso de uso: aquí solo vuelven los que tienen datos.
+      // Un registro SIN fecha cae en el grupo '' (groupKeyOf(null)): también es contrato.
+      for (const group of groups) {
+        if (group.key !== '') expect(group.key).toMatch(/^\d{4}-\d{2}$/)
+      }
     })
   })
 

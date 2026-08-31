@@ -16,6 +16,8 @@ describe('AggregateProjectsUseCase', () => {
     useCase = new AggregateProjectsUseCase(repositoryMock)
   })
 
+  // sin condicionar al modelo: contar filas vale para CUALQUIER recurso, y así la suite
+  // nunca se emite vacía (jest trata una suite sin tests como fallo) — spec 76
   it('cuenta sin campo: contar filas no mide ninguna columna (spec 72)', async () => {
     repositoryMock.givenCount(7)
 
@@ -44,6 +46,23 @@ describe('AggregateProjectsUseCase', () => {
     await expect(
       useCase.invoke({ op: 'count', groupBy: 'customerId', bucket: 'month', bucketField: 'x' })
     ).rejects.toThrow(InvalidArgumentError)
+  })
+
+  it('la serie mensual empuja la ventana como filtros válidos (spec 76)', async () => {
+    // el camino bucket construye filtros de ventana ADEMÁS de los del DTO: deben tener la
+    // misma forma (Map) que los del pipe — un objeto plano moría en Filter.fromValues
+    repositoryMock.givenCount(3)
+    repositoryMock.givenAggregateGrouped([{ key: '2026-08', value: 3 }])
+
+    const result = await useCase.invoke({
+      op: 'count',
+      bucket: 'month',
+      bucketField: 'startDate',
+      months: 3
+    })
+
+    expect(result.groups).toHaveLength(3)
+    expect(result.groups?.every(group => /^\d{4}-\d{2}$/.test(group.key))).toBe(true)
   })
 
   it('rechaza sumar o promediar una fecha: no es una pregunta con respuesta', async () => {

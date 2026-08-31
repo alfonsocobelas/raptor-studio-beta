@@ -88,8 +88,26 @@ export abstract class MongooseRepository<T> {
     const query = this.criteriaConverter.buildQuery(criteria)
     const match = this.excludeSoftDeleted(query.filter)
 
+    // el bucket mensual debe servir a los DOS almacenamientos de fecha del motor: timestamptz
+    // es BSON Date ($dateToString) y date es la cadena ISO 'YYYY-MM-DD' (sus 7 primeros bytes
+    // ya son el mes). Un $dateToString sobre la cadena revienta el pipeline (spec 76).
     const axis = spec.bucketField
-      ? { $dateToString: { format: '%Y-%m', date: `$${spec.bucketField}` } }
+      ? {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: [{ $type: `$${spec.bucketField}` }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m', date: `$${spec.bucketField}` } }
+              },
+              {
+                case: { $eq: [{ $type: `$${spec.bucketField}` }, 'string'] },
+                then: { $substrBytes: [`$${spec.bucketField}`, 0, 7] }
+              }
+            ],
+            // null u otro tipo: sin mes — el caso de uso ya trata la clave nula
+            default: null
+          }
+        }
       : `$${spec.groupBy}`
     const measure =
       spec.op === 'count' || spec.op === 'distinct' ? { $sum: 1 } : { [`$${spec.op}`]: `$${spec.field}` }
