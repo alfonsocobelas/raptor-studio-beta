@@ -3,6 +3,7 @@ import { customer } from './models/customer.model'
 import { contract } from './models/contract.model'
 import { license } from './models/license.model'
 import { movement } from './models/movement.model'
+import { supplier } from './models/supplier.model'
 
 describe('renderMongo', () => {
   describe('doc fields', () => {
@@ -35,6 +36,20 @@ describe('renderMongo', () => {
       const archivedAt = mongo.docFields.find(f => f.name === 'archivedAt')
       expect(archivedAt?.defSrc).toBe('{ type: Date, default: null }')
       expect(archivedAt?.tsType).toBe('Nullable<Date>')
+    })
+
+    /**
+     * Spec 76: un modelo SIN campos nullable pero con borrado suave (el default) emite
+     * `deletedAt?: Nullable<Date>` sin el import de Nullable — la suite de integración
+     * de la demo licencias no compilaba (TS2304 en pedido.schema.ts).
+     */
+    it('needsNullable cuenta el soft delete aunque ningún campo sea nullable', () => {
+      // WHEN — supplier no tiene nullables propios y borra en suave por defecto
+      const mongo = renderMongo(supplier)
+
+      // THEN
+      expect(mongo.docFields.some(f => f.tsType.includes('Nullable<'))).toBe(false)
+      expect(mongo.needsNullable).toBe(true)
     })
 
     /**

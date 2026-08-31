@@ -1,5 +1,5 @@
 import { names } from '@nx/devkit'
-import type { FieldDefinition, FieldType, ResourceDefinition } from '@raptor/schema'
+import { wantsSoftDelete, type FieldDefinition, type FieldType, type ResourceDefinition } from '@raptor/schema'
 
 /**
  * Bindings de la persistencia Mongoose de un recurso (spec 06). Toda la lógica vive aquí:
@@ -109,7 +109,10 @@ export function renderMongo(definition: ResourceDefinition): MongoBindings {
       'version: primitives.version'
     ],
     child,
-    needsNullable: [...docFields, ...(child?.docFields ?? [])].some(f => f.tsType.includes('Nullable<'))
+    // el soft delete también tipa con Nullable (deletedAt/deletedOp), tenga o no nullables el modelo (spec 76)
+    needsNullable:
+      [...docFields, ...(child?.docFields ?? [])].some(f => f.tsType.includes('Nullable<')) ||
+      wantsSoftDelete(definition)
   }
 }
 
