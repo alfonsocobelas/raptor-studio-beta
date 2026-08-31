@@ -33,8 +33,10 @@
       filas de una línea, avería cortada, nada partido) y el listado de la app emitida (columnas de
       importe y garantía otra vez en pantalla). Gates de la app emitida: `web:build`, `typecheck` y su
       suite. ROADMAP (el defecto de `stickyLeftOffsets`, la copia del DataTable del estudio sin
-      regenerar) y memoria. De paso, la línea huérfana `- [ ] TASK-04` de la spec 53, que se fusionó
-      en la `TASK-03+04` y hace que `/spec-status` señale una tarea inexistente.
+      regenerar) y memoria. De paso, la línea huérfana de la «TASK-04» de la spec 53, que se fusionó
+      en la `TASK-03+04` y hacía que `/spec-status` señalase una tarea inexistente (la casilla se
+      escribe aquí en prosa a propósito: escrita como casilla, este mismo párrafo se contaba como
+      tarea pendiente de la spec 54).
 
 ---
 

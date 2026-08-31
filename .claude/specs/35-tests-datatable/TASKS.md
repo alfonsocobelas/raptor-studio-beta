@@ -30,7 +30,9 @@
 
 ## Pendiente (fuera del alcance de esta spec)
 
-- [ ] La piel **material declara `sortColumnInput` y no lo usa en ningún sitio**: no restaura el
+- [~] ~~La piel **material declara `sortColumnInput` y no lo usa en ningún sitio**: no restaura el
       indicador de orden al volver a la pantalla. Mismo defecto de fondo que el de spartan, otra
-      piel; y su tabla no tiene suite. Tarea propia cuando la piel material se descongele.
+      piel; y su tabla no tiene suite. Tarea propia cuando la piel material se descongele.~~
+      **ANULADA 2026-08-31**: la piel material se retiró entera del generador (spec 36,
+      2026-08-10); no hay defecto que arreglar porque no hay código que lo tenga.
 - [ ] Siguiente tanda de suites del kernel si esta demuestra valor: KpiCard, dialogs, RelatedTable.

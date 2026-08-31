@@ -21,19 +21,28 @@
 | --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 06  | `infra-ports`           | `FileStoragePort` + suite de conformidad reutilizable                                                                                                                                                                                                   | ✅ 2026-07-30 |
 | 07  | `adapter-storage-azure` | `AzureBlobFileStorage` (Blob) con tests de SDK mockeado                                                                                                                                                                                                 | ✅ 2026-07-30 |
-| 08  | `config-azure`          | Plugin de config: loader JSON por entorno + resolver `vault.*` de Key Vault (copiar de referencia)                                                                                                                                                      | Pendiente     |
-| 09  | `composition-root`      | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`)                                                                                                                                                     | Pendiente     |
-| 10  | `adapter-storage-s3`    | Adapter S3-compatible (cubre **AWS S3, Cloudflare R2, MinIO local**) — valida el puerto con el 2º proveedor real; conformidad contra MinIO en docker                                                                                                    | Pendiente     |
-| 11  | `adapter-storage-gcs`   | Adapter Google Cloud Storage (3º barato una vez validado el puerto)                                                                                                                                                                                     | Pendiente     |
+| 08  | `config-azure`          | Plugin de config: loader JSON por entorno + resolver `vault.*` de Key Vault (copiar de referencia)                                                                                                                                                      | ✅ spec 24    |
+| 09  | `composition-root`      | Registro de adapters + `.env.template` + scaffolding Terraform Azure (desde `docs/referencia/iac/`)                                                                                                                                                     | ✅ specs 24+50 |
+| 10  | `adapter-storage-s3`    | Adapter S3-compatible (cubre **AWS S3, Cloudflare R2, MinIO local**) — valida el puerto con el 2º proveedor real; conformidad contra MinIO en docker                                                                                                    | ✅ specs 47+50 |
+| 11  | `adapter-storage-gcs`   | Adapter Google Cloud Storage (3º barato una vez validado el puerto)                                                                                                                                                                                     | ✅ spec 77    |
 | 12b | `auth-plugin`           | ✅ Puertos (PasswordHasher, SecureTokenGenerator, Clock, SessionStore sobre primitivas) + adapters argon2/crypto/system-clock/in-memory + **RedisSessionStore** (TTL nativo + índice por usuario para logout-everywhere; single-tenant, cookie-session) | ✅ 2026-07-30 |
-| 12  | `secrets-port`          | `SecretsPort` + adapters: **Azure Key Vault** (referencia) · **Doppler** · **Bitwarden/Infisical** (free-tier para stacks Cloudflare)                                                                                                                   | Pendiente     |
-| 13  | `observability-port`    | `AppLogger`/telemetría: **App Insights** (referencia) · **Prometheus+Grafana** (prom-client, self-host free) · **Sentry**                                                                                                                               | Pendiente     |
-| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases) — hoy los módulos de oro los tienen y el generador no los produce                                                                          | Pendiente     |
-| 15  | `kernel-config-infra`   | Replicar del esqueleto de referencia: config por entornos JSON, logger, filtros/interceptores, health checks, Dockerfiles, CI                                                                                                                           | Pendiente     |
+| 12  | `secrets-port`          | `SecretsPort` + adapters: **Azure Key Vault** (referencia) · **Doppler** · **Bitwarden/Infisical** (free-tier para stacks Cloudflare)                                                                                                                   | ✅ specs 24+50 |
+| 13  | `observability-port`    | `AppLogger`/telemetría: **App Insights** (referencia) · **Prometheus+Grafana** (prom-client, self-host free) · **Sentry**                                                                                                                               | ✅ specs 24/47/50/51/77 |
+| 14  | `plantillas-tests`      | El generador emite también los tests del módulo (mothers, builders, repository mock, tests de VOs/use cases) — hoy los módulos de oro los tienen y el generador no los produce                                                                          | 🟡 **Parcial** |
+| 15  | `kernel-config-infra`   | Replicar del esqueleto de referencia: config por entornos JSON, logger, filtros/interceptores, health checks, Dockerfiles, CI                                                                                                                           | ✅ spec 05 + infra |
 
 Nota (regla de los dos, ADR-004): la ampliación multi-cloud la pidió Alfonso el 2026-07-30. Orden de
 ROI: S3-compatible primero (un adapter cubre 3 proveedores y valida el puerto), GCS después. Cómputo
 sigue fuera (Cloudflare Workers ≠ contenedor Node — ADR-004 §6).
+
+> **Revisión 2026-08-31 (limpieza).** Esta tabla llevaba semanas marcando «Pendiente» trabajo que
+> las specs de infra (24 azure, 47 aws, 50 raptor, 77 gcp) y la 05 ya habían absorbido y cerrado;
+> los estados de arriba se han verificado uno a uno contra el código (`libs/infra/*` y las
+> plantillas del generador), no contra el recuerdo. El **único hueco real que queda es la fila 14**:
+> el generador emite `files-tests/` con `.mother.ts` y `.builder.ts`, y ocho plantillas `.spec` de
+> FRONTEND (servicio, ficha, formulario, DataTable, dashboard), pero **no emite ni un solo test de
+> backend** — ni de value objects ni de casos de uso, que es justo lo que los cuatro módulos de oro
+> sí tienen escrito a mano. Una app entregada nace con su dominio sin cubrir.
 
 ## Fase 3 — Bordes (bajo demanda, no especulativo)
 
@@ -208,9 +217,10 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
 
 ```
   RANURA      PROVEEDORES HOY                 PENDIENTE (spec que lo rellena)
-  database    postgres ✅ | mongo ✅          spec 76: mongo end-to-end (golden rico + demo real);
-                                              quedan como degradación declarada: auth (y su séquito),
-                                              adjuntos, código de negocio, IaC (siempre Postgres)
+  database    postgres ✅ | mongo ✅          spec 76 ✅ mongo end-to-end (golden rico + demo real);
+                                              spec 79 ABIERTA: auth/IAM y adjuntos sobre Mongoose
+                                              (levanta las dos degradaciones grandes de la 76);
+                                              siguen degradados: código de negocio e IaC (Postgres)
   ui          spartan ✅ (único proveedor)      material retirada (spec 36, 2026-08-10)
   infra       none ✅ | azure ✅ | aws ✅       (completa)
               raptor ✅ (low cost) | gcp ✅
@@ -538,6 +548,9 @@ registrarlo ahí + `npm run slots`, y aparece solo en el CLI y en el wizard del 
     cazó 6 defectos —arreglados en el generador con test rojo + golden— y cerró el fleco de la
     spec 38 (arrastre Mongoose contra base real). Quedan como degradación declarada: auth (y
     sessionStore/IAM UI/mi-cuenta/rate-limit), adjuntos, código de negocio e IaC.
+    → **Las dos primeras las ataca la spec 79** (`79-auth-y-adjuntos-mongo`, REQUIREMENTS escrito
+    el 2026-08-31 con la auditoría hecha: auth está bien puesto en capas y son 9 ficheros de
+    persistencia TypeORM-bound, pero los adjuntos NO tienen port y hay que extraerlo antes).
 
 39. **Sistema de conocimiento de modelado para la IA de los bordes** (2026-08-29, apuntado por
     Alfonso como importante). Diseñar/pensar un corpus de conocimiento (ficheros .md curados,

@@ -27,9 +27,11 @@
         `withCode` y lanza `AlreadyExistsError`.
       · bandera nueva `serverAssigned` en `FieldDefinition`: obligatorio en el dominio,
         opcional en la entrada, nunca en el update. Es la tensión que destapó el caso del Excel.
-- [ ] TASK-05 — import (spec 33): la plantilla CSV incluye `code` como columna
-      opcional y el importador respeta el que venga; colisión → 409 por fila
+- [~] ~~TASK-05 — import (spec 33): la plantilla CSV incluye `code` como columna
+      opcional y el importador respeta el que venga; colisión → 409 por fila~~
+      **ANULADA 2026-08-31**: el import CSV se retiró entero del generador (spec 33,
+      2026-08-28), así que esta tarea ya no tiene sujeto.
 - [ ] TASK-06 — frontend: columna en listado y fila en ficha, nunca en el formulario
 - [ ] TASK-07 — estudio: declarar código y que el chat lo proponga
-- [ ] TASK-08 — e2e: alta desde el navegador con código correlativo + import de un
-      CSV con códigos externos que se respetan
+- [ ] TASK-08 — e2e: alta desde el navegador con código correlativo
+      (la pata de import desaparece con la TASK-05)
