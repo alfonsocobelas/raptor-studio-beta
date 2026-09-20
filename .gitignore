@@ -10,6 +10,12 @@ tmp/
 # y un repositorio git embebido.
 docs/referencia/
 
+# Estado local de Terraform: los binarios de los providers pesan cientos de MB
+# y GitHub rechaza ficheros de mas de 100 MB.
+**/.terraform/
+*.tfstate
+*.tfstate.*
+
 # Secretos y entorno
 .env
 .env.*
